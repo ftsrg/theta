@@ -18,11 +18,13 @@ package hu.bme.mit.theta.xcfa.model.utils;
 
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -98,7 +100,18 @@ public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolT
 	@Override
 	public Void visit(IfStmt stmt, Collection<Expr<BoolType>> param) {
 		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+		return null;
+	}
 
+	@Override
+	public Void visit(DelayStmt stmt, Collection<Expr<BoolType>> param) {
+		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+		return null;
+	}
+
+	@Override
+	public Void visit(ResetStmt stmt, Collection<Expr<BoolType>> param) {
+		param.addAll(StmtAtomCollector.collectAtoms(stmt));
 		return null;
 	}
 

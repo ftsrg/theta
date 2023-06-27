@@ -14,6 +14,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class XstsType {
@@ -72,6 +73,11 @@ final class XstsType {
 			final hu.bme.mit.theta.xsts.type.XstsType indexType = ctx.indexType.accept(this);
 			final hu.bme.mit.theta.xsts.type.XstsType elemType = ctx.elemType.accept(this);
 			return XstsArrayType.of(indexType, elemType);
+		}
+
+		@Override
+		public hu.bme.mit.theta.xsts.type.XstsType visitClockType(final ClockTypeContext ctx) {
+			return XstsPrimitiveType.of(Clock());
 		}
 
 	}

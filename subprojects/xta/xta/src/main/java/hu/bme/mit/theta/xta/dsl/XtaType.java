@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
 import hu.bme.mit.theta.xta.utils.ChanType;
-import hu.bme.mit.theta.xta.utils.ClockType;
 import hu.bme.mit.theta.xta.utils.RangeType;
 
 import java.util.List;
@@ -34,6 +33,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class XtaType {
@@ -102,7 +102,7 @@ final class XtaType {
 
 		@Override
 		public Type visitClockType(final ClockTypeContext ctx) {
-			return ClockType.getInstance();
+			return Clock();
 		}
 
 		@Override

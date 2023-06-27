@@ -37,4 +37,7 @@ public interface StmtVisitor<P, R> {
 
 	R visit(IfStmt stmt, P param);
 
+    R visit(DelayStmt stmt, P param);
+
+	R visit(ResetStmt stmt, P param);
 }

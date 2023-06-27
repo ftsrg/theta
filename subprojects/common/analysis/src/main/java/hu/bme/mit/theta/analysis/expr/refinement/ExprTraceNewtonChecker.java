@@ -31,11 +31,13 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -310,6 +312,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			public Stmt visit(IfStmt stmt, Void param) {
 				throw new UnsupportedOperationException();
 			}
+
+			@Override
+			public Stmt visit(DelayStmt stmt, Void param) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Stmt visit(ResetStmt stmt, Void param) {
+				throw new UnsupportedOperationException();
+			}
 		}, null);
 	}
 
@@ -435,6 +447,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
 				throw new UnsupportedOperationException();
 			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(DelayStmt stmt, Void param) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(ResetStmt stmt, Void param) {
+				return Collections.emptySet();
+			}
 		}, null);
 	}
 
@@ -483,6 +505,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
 				throw new UnsupportedOperationException();
 			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(DelayStmt stmt, Void param) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(ResetStmt stmt, Void param) {
+				return Collections.singletonList(stmt.getClockDecl());
+			}
 		}, null);
 	}
 
@@ -530,6 +562,16 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
 			public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
 				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(DelayStmt stmt, Void param) {
+				return Collections.emptySet();
+			}
+
+			@Override
+			public Collection<VarDecl<?>> visit(ResetStmt stmt, Void param) {
+				return Collections.emptySet();
 			}
 		}, null);
 	}

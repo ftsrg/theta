@@ -10,6 +10,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xcfa.analysis.common.XcfaAction;
 
@@ -84,6 +85,16 @@ public class XcfaExplActionPost implements ExplActionPost<XcfaAction> {
 
             @Override
             public ExplState visit(IfStmt stmt, ExplState param) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public ExplState visit(DelayStmt stmt, ExplState param) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public ExplState visit(ResetStmt stmt, ExplState param) {
                 throw new UnsupportedOperationException();
             }
         }, state);

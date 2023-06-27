@@ -21,11 +21,13 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -114,6 +116,16 @@ public class StmtVarToArrayItemVisitor<P extends Type> implements XcfaLabelVisit
 	@Override
 	public List<XcfaLabel> visit(IfStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	@Override
+	public List<XcfaLabel> visit(DelayStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<XcfaLabel> visit(ResetStmt stmt, Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> param) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

@@ -21,11 +21,13 @@ import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -183,6 +185,16 @@ public final class WpState {
 		}
 
 		@Override
+		public WpState visit(DelayStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public WpState visit(ResetStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public WpState visit(final AssumeStmt stmt, final WpState state) {
 			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
 			final int constCount = state.constCount;
@@ -239,6 +251,16 @@ public final class WpState {
 		}
 
 		public WpState visit(IfStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public WpState visit(DelayStmt stmt, WpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public WpState visit(ResetStmt stmt, WpState param) {
 			throw new UnsupportedOperationException();
 		}
 

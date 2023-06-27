@@ -11,7 +11,11 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
 import hu.bme.mit.theta.xsts.type.XstsCustomType;
@@ -25,6 +29,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.*;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -115,6 +120,10 @@ public class XstsStatement {
                     @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
                     @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
                     return Assign(tVar, tExpr);
+                } else if (var.getType() instanceof ClockType && ExprUtils.simplify(expr) instanceof final IntLitExpr value) {
+                    final VarDecl<ClockType> clock = TypeUtils.cast(var, Clock());
+                    final int intValue = value.getValue().intValueExact();
+                    return ResetStmt.of(clock, intValue);
                 } else {
                     throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + expr);
                 }
@@ -256,6 +265,11 @@ public class XstsStatement {
                 final Stmt elze = ctx.elze.accept(this);
                 return IfStmt.of(cond, then, elze);
             }
+        }
+
+        @Override
+        public Stmt visitDelayStmt(DelayStmtContext ctx) {
+            return DelayStmt.getInstance();
         }
     }
 

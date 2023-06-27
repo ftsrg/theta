@@ -20,11 +20,13 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -97,6 +99,17 @@ public class XcfaLabelVarCollector implements XcfaLabelVisitor<Tuple2<Set<VarDec
 	@Override
 	public Void visit(IfStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	@Override
+	public Void visit(DelayStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+		return null;
+	}
+
+	@Override
+	public Void visit(ResetStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+		param.get1().add(stmt.getClockDecl());
+		return null;
 	}
 
 	@Override

@@ -19,11 +19,13 @@ package hu.bme.mit.theta.xcfa.model.utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -104,6 +106,16 @@ public class LabelExpressionMappingVisitor<T extends Type> implements XcfaLabelV
 			return Optional.of(Stmt(IfStmt.of(condOpt.orElse(stmt.getCond()), thenOpt.map(XcfaLabel::getStmt).orElse(stmt.getThen()), elzeOpt.map(XcfaLabel::getStmt).orElse(stmt.getElze()))));
 		}
 		return Optional.empty();
+	}
+
+	@Override
+	public Optional<XcfaLabel> visit(DelayStmt stmt, Mapper<T> param) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Optional<XcfaLabel> visit(ResetStmt stmt, Mapper<T> param) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

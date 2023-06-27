@@ -40,6 +40,7 @@ type:	boolType
 	|	intType
 	|	arrayType
 	|   customType
+	|   clockType
 	;
 
 boolType
@@ -58,6 +59,10 @@ customType
     :   name=ID
     ;
 
+clockType
+    :   CLOCKTYPE
+    ;
+
 BOOLTYPE
 	:	'boolean'
 	;
@@ -65,6 +70,10 @@ BOOLTYPE
 INTTYPE
 	:	'integer'
 	;
+
+CLOCKTYPE
+    :   'clock'
+    ;
 
 // E X P R E S S I O N S
 
@@ -258,6 +267,7 @@ stmt:	localVarDeclStmt
 	|   ifStmt
 	|   blockStmt
 	|   loopStmt
+	|   delayStmt
 	;
 
 nonDetStmt
@@ -295,6 +305,10 @@ havocStmt
 assumeStmt
 	:	ASSUME cond=expr SEMICOLON
 	;
+
+delayStmt
+    :   DELAY SEMICOLON
+    ;
 
 //
 
@@ -350,6 +364,10 @@ RCURLY
 
 LOCAL
     :   'local'
+    ;
+
+DELAY
+    :   '__delay'
     ;
 
 // T R A N S I T I O N S

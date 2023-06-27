@@ -20,11 +20,13 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -140,6 +142,16 @@ public class XcfaLabelVarReplacer implements XcfaLabelVisitor<Map<VarDecl<?>, Va
 
 	@Override
 	public XcfaLabel visit(IfStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	@Override
+	public XcfaLabel visit(DelayStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
+		throw new UnsupportedOperationException("Not yet implemented!");
+	}
+
+	@Override
+	public XcfaLabel visit(ResetStmt stmt, Map<VarDecl<?>, VarDecl<?>> param) {
 		throw new UnsupportedOperationException("Not yet implemented!");
 	}
 

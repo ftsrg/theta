@@ -20,7 +20,11 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.clocktype.ClockDiffExpr;
+import hu.bme.mit.theta.core.type.clocktype.ClockExprs;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import org.antlr.v4.runtime.Token;
 
@@ -61,6 +65,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Diff;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -240,6 +246,25 @@ final class XstsExpression {
 				final Expr<?> leftOp = ctx.leftOp.accept(this);
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
 
+				if (leftOp.getType() instanceof ClockType) {
+					final Expr<ClockType> clock = cast(leftOp, Clock());
+					final Expr<IntType> value = cast(rightOp, Int());
+					switch (ctx.oper.getType()) {
+						case LT:
+							return ClockExprs.Lt(clock, value);
+						case LEQ:
+							return ClockExprs.Leq(clock, value);
+						case GT:
+							return ClockExprs.Gt(clock, value);
+						case GEQ:
+							return ClockExprs.Geq(clock, value);
+						case EQ:
+							return ClockExprs.Eq(clock, value);
+						default:
+							throw new ParseException(ctx, "Unknown operator");
+					}
+				}
+
 				switch (ctx.oper.getType()) {
 					case LT:
 						return Lt(leftOp, rightOp);
@@ -286,6 +311,12 @@ final class XstsExpression {
 				final Token operHead = opers.get(0);
 				final List<? extends Token> opersTail = opers.subList(1, opers.size());
 
+				if (opsHead.getType() instanceof ClockType) {
+					checkArgument(opsTail.size() == 1);
+					checkArgument(operHead.getType() == MINUS);
+					return createClockDiffExpr(opsHead, opsTail.get(0));
+				}
+
 				final Expr<?> subExpr = createAdditiveSubExpr(opsHead, newOpsHead, operHead, ctx);
 
 				return createAdditiveExpr(subExpr, newOpsTail, opersTail, ctx);
@@ -320,6 +351,12 @@ final class XstsExpression {
 
 		private SubExpr<?> createSubExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 			return Sub(leftOp, rightOp);
+		}
+
+		private ClockDiffExpr createClockDiffExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
+			final Expr<ClockType> leftClock = cast(leftOp, Clock());
+			final Expr<ClockType> rightClock = cast(rightOp, Clock());
+			return Diff(leftClock, rightClock);
 		}
 
 		@Override

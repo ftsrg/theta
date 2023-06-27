@@ -19,11 +19,13 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -201,6 +203,16 @@ final class StmtToExprTransformer {
 
 			final Expr<BoolType> ite = cast(Ite(condExpr, thenExprExtended, elzeExprExtended), Bool());
 			return StmtUnfoldResult.of(ImmutableList.of(ite), jointIndexing);
+		}
+
+		@Override
+		public StmtUnfoldResult visit(DelayStmt stmt, VarIndexing param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public StmtUnfoldResult visit(ResetStmt stmt, VarIndexing indexing) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

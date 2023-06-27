@@ -22,11 +22,13 @@ import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -183,6 +185,16 @@ public class SpState {
 
 
 		public SpState visit(IfStmt stmt, SpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public SpState visit(DelayStmt stmt, SpState param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public SpState visit(ResetStmt stmt, SpState state) {
 			throw new UnsupportedOperationException();
 		}
 	}

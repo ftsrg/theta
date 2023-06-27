@@ -23,11 +23,13 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -235,6 +237,16 @@ public class StmtSimplifier {
 				for (Decl<?> decl : toRemove) valuation.remove(decl);
 				return SimplifyResult.of(IfStmt.of(cond, thenResult.stmt, elzeResult.stmt), SimplifyStatus.SUCCESS);
 			}
+		}
+
+		@Override
+		public SimplifyResult visit(DelayStmt stmt, MutableValuation valuation) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public SimplifyResult visit(ResetStmt stmt, MutableValuation valuation) {
+			throw new UnsupportedOperationException();
 		}
 	}
 

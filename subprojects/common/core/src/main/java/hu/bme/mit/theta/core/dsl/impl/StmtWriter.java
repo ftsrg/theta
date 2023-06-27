@@ -17,11 +17,13 @@ package hu.bme.mit.theta.core.dsl.impl;
 
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
@@ -76,6 +78,16 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 
 	public String visit(IfStmt stmt, Void param) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String visit(DelayStmt stmt, Void param) {
+		return "delay";
+	}
+
+	@Override
+	public String visit(ResetStmt stmt, Void param) {
+		return "reset " + stmt.getClockDecl().getName() + " := " + stmt.getValue();
 	}
 
 }

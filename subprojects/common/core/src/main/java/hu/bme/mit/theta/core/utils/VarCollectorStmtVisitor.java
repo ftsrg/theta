@@ -18,11 +18,13 @@ package hu.bme.mit.theta.core.utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -104,6 +106,17 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 		ExprUtils.collectVars(stmt.getCond(), vars);
 		stmt.getThen().accept(VarCollectorStmtVisitor.getInstance(), vars);
 		stmt.getElze().accept(VarCollectorStmtVisitor.getInstance(), vars);
+		return null;
+	}
+
+	@Override
+	public Void visit(DelayStmt stmt, Collection<VarDecl<?>> vars) {
+		return null;
+	}
+
+	@Override
+	public Void visit(ResetStmt stmt, Collection<VarDecl<?>> vars) {
+		vars.add(stmt.getClockDecl());
 		return null;
 	}
 
