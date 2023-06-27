@@ -26,6 +26,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
 class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation> (refToPrec: RefutationToPrec<P, R>) :
@@ -39,7 +40,8 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation> (refToPrec: Refut
         var runningPrec: P = prec.p
         for (i in trace.states.indices) {
             val reverseLookup = trace.states[i].processes.values.map { it.varLookup.map { it.map { Pair(it.value, it.key) } }.flatten() }.flatten().toMap()
-            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(reverseLookup)
+            val additionalLookup = if(i > 0) getTempLookup(trace.actions[i - 1].edge.label).entries.associateBy({ it.value }) { it.key } else emptyMap()
+            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(reverseLookup + additionalLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
         }
         return prec.refine(runningPrec)

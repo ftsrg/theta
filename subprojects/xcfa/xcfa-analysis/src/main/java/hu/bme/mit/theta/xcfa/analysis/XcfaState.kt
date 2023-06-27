@@ -77,7 +77,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                             proc.params.withIndex().
                             filter { it.value.second != ParamDirection.IN }.
                             map { iVal -> StmtLabel(Assign(cast((it.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>, iVal.value.first.type), cast(iVal.value.first.ref, iVal.value.first.type)), metadata = it.metadata) } )
-                    changes.add { state -> state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap()) }
+                    changes.add { state -> state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), it.tempLookup) }
                     false
                 }
                 is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { true }
@@ -90,7 +90,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 NopLabel -> false
                 is ReadLabel -> error("Read/Write labels not yet supported")
                 is SequenceLabel -> true
-                is StartLabel ->  changes.add { state -> state.start(it) }.let { false }
+                is StartLabel ->  changes.add { state -> state.start(it) }.let { true }
                 is StmtLabel -> true
                 is WriteLabel -> error("Read/Write labels not yet supported")
             }
@@ -106,10 +106,25 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
 
         val procedure = checkNotNull(xcfa?.procedures?.find { it.name == startLabel.name })
+        val paramList = procedure.params.toMap()
+        val tempLookup = startLabel.tempLookup
+        val returnStmt = SequenceLabel(
+                procedure.params.withIndex().
+                filter { it.value.second != ParamDirection.IN }.
+                map { iVal -> StmtLabel(Assign(cast((startLabel.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>, iVal.value.first.type), cast(iVal.value.first.ref, iVal.value.first.type)), metadata = startLabel.metadata) } )
 
         val pid = nameCnt++
+        val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
         newThreadLookup[startLabel.pidVar] = pid
-        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), prefix = "T$pid", varLookup = LinkedList(listOf(XcfaProcessState.createLookup(procedure, "T$pid", ""))))
+        newProcesses[pid] = XcfaProcessState(
+                LinkedList(listOf(procedure.initLoc)),
+                prefix = "T$pid",
+                varLookup = LinkedList(listOf(lookup)),
+                returnStmts = LinkedList(listOf(returnStmt)),
+                paramStmts = LinkedList(listOf(Pair(
+                        /* init */   SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map { StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type), cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata=EmptyMetaData) }),
+                        /* deinit */ SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map { StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type), cast(it.key.changeVars(lookup).ref, it.key.type)), metadata=EmptyMetaData) }),
+                ))))
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes["$pid"] = pid
 
@@ -124,9 +139,9 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         return copy(processes=newProcesses, mutexes = newMutexes)
     }
 
-    private fun invokeFunction(pid: Int, proc: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>): XcfaState<S> {
+    private fun invokeFunction(pid: Int, proc: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>, tempLookup: Map<VarDecl<*>, VarDecl<*>>): XcfaState<S> {
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-        newProcesses[pid] = checkNotNull(processes[pid]?.enterFunction(proc, returnStmt, paramList))
+        newProcesses[pid] = checkNotNull(processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup))
         return copy(processes = newProcesses)
     }
 
@@ -184,7 +199,7 @@ data class XcfaProcessState(
         else -> "${locs.peek()!!} [${locs.size}], initilized=$paramsInitialized"
     }
 
-    fun enterFunction(xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>): XcfaProcessState {
+    fun enterFunction(xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>, tempLookup: Map<VarDecl<*>, VarDecl<*>>): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(varLookup)
         val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
@@ -194,8 +209,8 @@ data class XcfaProcessState(
         varLookup.push(lookup)
         returnStmts.push(returnStmt)
         paramStmts.push(Pair(
-                /* init */   SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map { StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type), cast(it.key.ref, it.key.type)), metadata=EmptyMetaData) }),
-                /* deinit */ SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map { StmtLabel(Assign(cast(it.key, it.key.type), cast(it.key.changeVars(lookup).ref, it.key.type)), metadata=EmptyMetaData) }),
+                /* init */   SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map { StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type), cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata=EmptyMetaData) }),
+                /* deinit */ SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map { StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type), cast(it.key.changeVars(lookup).ref, it.key.type)), metadata=EmptyMetaData) }),
         ))
         return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts, paramsInitialized = false)
     }

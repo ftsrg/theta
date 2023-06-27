@@ -31,6 +31,8 @@ import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
@@ -56,7 +58,7 @@ open class XcfaAnalysis<S: ExprState, P: Prec> (
 }
 
 /// Common
-
+private var tempCnt: Int = 0
 fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
     s -> s.processes.map {
             proc -> if (proc.value.locs.peek().final) {
@@ -70,17 +72,34 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
                         proc.value.locs.peek().outgoingEdges.map { edge ->
                             val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
                             val flatLabels = newLabel.getFlatLabels()
-                            if(flatLabels.any {it is InvokeLabel}) {
+                            if(flatLabels.any {it is InvokeLabel || it is StartLabel}) {
                                 val newNewLabel = SequenceLabel(flatLabels.map { label ->
                                     if (label is InvokeLabel) {
                                         val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
                                             ?: error("No such method ${label.name}.")
+                                        val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
                                         SequenceLabel(listOf(procedure.params.withIndex().filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                                            val originalVar = iVal.value.first
+                                            val tempVar = Var("tmp${tempCnt++}_" + originalVar.name, originalVar.type)
+                                            lookup[originalVar] = tempVar
                                             StmtLabel(
                                                 Stmts.Assign(
-                                                    TypeUtils.cast(iVal.value.first, iVal.value.first.type),
-                                                    TypeUtils.cast(label.params[iVal.index], iVal.value.first.type)), metadata = label.metadata)
-                                        }, listOf(label)).flatten())
+                                                    TypeUtils.cast(tempVar, tempVar.type),
+                                                    TypeUtils.cast(label.params[iVal.index], tempVar.type)), metadata = label.metadata)
+                                        }, listOf(label.copy(tempLookup = lookup))).flatten())
+                                    } else if (label is StartLabel){
+                                        val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                                                ?: error("No such method ${label.name}.")
+                                        val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+                                        SequenceLabel(listOf(procedure.params.withIndex().filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                                            val originalVar = iVal.value.first
+                                            val tempVar = Var("tmp${tempCnt++}_" + originalVar.name, originalVar.type)
+                                            lookup[originalVar] = tempVar
+                                            StmtLabel(
+                                                    Stmts.Assign(
+                                                            TypeUtils.cast(tempVar, tempVar.type),
+                                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)), metadata = label.metadata)
+                                        }, listOf(label.copy(tempLookup = lookup))).flatten())
                                     } else label
                                 })
                                 XcfaAction(proc.key, edge.withLabel(newNewLabel))
@@ -175,7 +194,7 @@ private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int): (XcfaState<ExplS
     val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
-        explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(s.processes.map { it.value.varLookup }.flatten())).map { newSt.withState(it) }
+        explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(listOf(s.processes.map { it.value.varLookup }.flatten(), listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
     }
 }
 
@@ -199,7 +218,7 @@ private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor)
     val predTransFunc = PredTransFunc.create<XcfaAction>(predAbstractor)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
-        predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(s.processes.map { it.value.varLookup }.flatten())).map { newSt.withState(it) }
+        predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(listOf(s.processes.map { it.value.varLookup }.flatten(), listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
     }
 }
 

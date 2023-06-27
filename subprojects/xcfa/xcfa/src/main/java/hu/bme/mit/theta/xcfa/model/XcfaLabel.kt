@@ -35,7 +35,8 @@ sealed class XcfaLabel(open val metadata: MetaData) {
 data class InvokeLabel(
         val name: String,
         val params: List<Expr<*>>,
-        override val metadata: MetaData
+        override val metadata: MetaData,
+        val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()
 ) : XcfaLabel(metadata) {
     override fun toString(): String {
         val sj = StringJoiner(", ", "(", ")")
@@ -64,7 +65,8 @@ data class StartLabel(
         val name: String,
         val params: List<Expr<*>>,
         val pidVar: VarDecl<*>,
-        override val metadata: MetaData
+        override val metadata: MetaData,
+        val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()
 ) : XcfaLabel(metadata=metadata){
     override fun toString(): String {
         val sj = StringJoiner(", ", "(", ")")
@@ -202,5 +204,34 @@ object NopLabel : XcfaLabel(metadata=EmptyMetaData) {
 
     override fun toString(): String {
         return "Nop"
+    }
+}
+
+fun getTempLookup(label: XcfaLabel): Map<VarDecl<*>, VarDecl<*>> {
+    return when (label) {
+        is InvokeLabel -> {
+            label.tempLookup
+        }
+        is StartLabel -> {
+            label.tempLookup
+        }
+
+        is SequenceLabel -> {
+            val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+            for(sublabel in label.labels) {
+                lookup.putAll(getTempLookup(sublabel))
+            }
+            lookup
+        }
+
+        is NondetLabel -> {
+            val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+            for(sublabel in label.labels) {
+                lookup.putAll(getTempLookup(sublabel))
+            }
+            lookup
+        }
+
+        else -> emptyMap()
     }
 }
