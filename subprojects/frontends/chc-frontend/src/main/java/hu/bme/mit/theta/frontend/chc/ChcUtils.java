@@ -44,6 +44,8 @@ public class ChcUtils {
     private static SmtLibTermTransformer termTransformer = new GenericSmtLibTermTransformer(initialSymbolTable);
     private static CharStream charStream;
 
+    private ChcUtils() {}
+
     public static void init(CharStream cs) {
         initialSymbolTable = new GenericSmtLibSymbolTable();
         typeTransformer = new GenericSmtLibTypeTransformer(null);

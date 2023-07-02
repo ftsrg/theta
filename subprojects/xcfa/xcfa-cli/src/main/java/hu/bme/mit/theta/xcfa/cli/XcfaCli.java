@@ -73,6 +73,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -296,6 +297,7 @@ public class XcfaCli {
 			try {
 				CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
 				if (chc) {
+					XcfaPassManager.removeProcedurePass(new UnusedVarRemovalPass());
 					ChcFrontend chcFrontend;
 					if (chcTransformation == null) { // try forward, fallback to backward
 						chcFrontend = new ChcFrontend(ChcFrontend.ChcTransformation.FORWARD);

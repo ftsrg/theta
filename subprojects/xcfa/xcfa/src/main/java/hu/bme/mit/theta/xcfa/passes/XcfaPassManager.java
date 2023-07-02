@@ -83,7 +83,7 @@ public class XcfaPassManager {
 //				new AssignmentChainRemoval(),
 //				new NoReadVarRemovalPass(),
 //				new GlobalVarsToStoreLoad(),
-//				new UnusedVarRemovalPass(),
+				new UnusedVarRemovalPass(),
 				new EmptyEdgeRemovalPass(),
 				new RemoveDeadEnds()
 		));
@@ -101,12 +101,24 @@ public class XcfaPassManager {
 		procedurePasses.add(pass);
 	}
 
+	public static void removeProcedurePass(ProcedurePass pass) {
+		procedurePasses.removeIf(p -> p.getClass().isInstance(pass));
+	}
+
 	public static void addProcessPass(ProcessPass pass) {
 		processPasses.add(pass);
 	}
 
+	public static void removeProcessPass(ProcessPass pass) {
+		processPasses.removeIf(p -> p.getClass().isInstance(pass));
+	}
+
 	public static void addXcfaPass(XcfaPass pass) {
 		xcfaPasses.add(pass);
+	}
+
+	public static void removeXcfaPass(XcfaPass pass) {
+		xcfaPasses.removeIf(p -> p.getClass().isInstance(pass));
 	}
 
 	public static void clearProcedurePasses() {
