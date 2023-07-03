@@ -35,22 +35,22 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 			builder.removeEdge(loop);
 		}
 
-		// removing paralell empty edges
-		// (there can be more than two between two given locations and there can be more sets of paralell empty edges going out from a given locations)
+		// removing parallel empty edges
+		// (there can be more than two between two given locations and there can be more sets of parallel empty edges going out from a given locations)
 		for (XcfaLocation loc : builder.getLocs()) {
 			List<XcfaEdge> emptyEdges = loc.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).collect(Collectors.toList());
 			List<XcfaEdge> toRemove = new ArrayList<>();
 
 			while (!emptyEdges.isEmpty()) {
 				XcfaEdge emptyEdge = emptyEdges.get(0);
-				List<XcfaEdge> paralells = loc.getOutgoingEdges().stream().filter(edge -> emptyEdge != edge && emptyEdge.getTarget() == edge.getTarget()).collect(Collectors.toList());
+				List<XcfaEdge> parallels = loc.getOutgoingEdges().stream().filter(edge -> emptyEdge != edge && emptyEdge.getTarget() == edge.getTarget()).collect(Collectors.toList());
 				emptyEdges.remove(emptyEdge);
-				emptyEdges.removeAll(paralells);
-				toRemove.addAll(paralells);
+				emptyEdges.removeAll(parallels);
+				toRemove.addAll(parallels);
 			}
 
-			for (XcfaEdge paralell : toRemove) {
-				builder.removeEdge(paralell);
+			for (XcfaEdge parallel : toRemove) {
+				builder.removeEdge(parallel);
 			}
 		}
 
@@ -81,7 +81,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 	}
 
 	// Finding empty sequences (location-empty edge-location-empty edge-...-location)
-	// The sequence pattern we use is rather rigorous: starting locations have no other requirements but and outgoing empty edge
+	// The sequence pattern we use is rather rigorous: starting locations have no other requirements but an outgoing empty edge
 	// but the other locations can have no other edges except one incoming and one outgoing empty edge
 	// these locations are then merged into the starting location, which means, that one empty edge will remain
 	// but this way, if the starting location can start more than one sequence, we can easily merge them all

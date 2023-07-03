@@ -42,6 +42,7 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.frontend.chc.ChcFrontend;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
@@ -72,6 +73,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 import hu.bme.mit.theta.xcfa.model.utils.FrontendXcfaBuilder;
 import hu.bme.mit.theta.xcfa.passes.XcfaPassManager;
 import hu.bme.mit.theta.xcfa.passes.procedurepass.SimpleLbePass;
+import hu.bme.mit.theta.xcfa.passes.procedurepass.UnusedVarRemovalPass;
 import hu.bme.mit.theta.xcfa.passes.processpass.FunctionInlining;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -202,6 +204,12 @@ public class XcfaCli {
 	@Parameter(names = "--precheck", description = "Perform a pre-check when refining a multithreaded program for possibly higher efficiency", arity = 1)
 	boolean preCheck = true;
 
+	@Parameter(names = "--chc", description = "Parse the input as a Constrained Horn Clause in the CHC-comp format")
+	boolean chc = false;
+
+	@Parameter(names="--chc-transformation", description = "Direction of transformation from CHC to XCFA")
+	ChcFrontend.ChcTransformation chcTransformation;
+
 	@Parameter(names = "--algorithm", description = "Algorithm to use when solving multithreaded programs")
 	XcfaConfigBuilder.Algorithm algorithm = XcfaConfigBuilder.Algorithm.SINGLETHREAD;
 
@@ -287,18 +295,37 @@ public class XcfaCli {
 		XCFA xcfa = null;
 		if (input != null) {
 			try {
-				final CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
-				final CLexer lexer = new CLexer(input);
-				final CommonTokenStream tokens = new CommonTokenStream(lexer);
-				final CParser parser = new CParser(tokens);
-				final CParser.CompilationUnitContext context = parser.compilationUnit();
+				CharStream input = CharStreams.fromStream(new FileInputStream(this.input));
+				if (chc) {
+					XcfaPassManager.removeProcedurePass(new UnusedVarRemovalPass());
+					ChcFrontend chcFrontend;
+					if (chcTransformation == null) { // try forward, fallback to backward
+						chcFrontend = new ChcFrontend(ChcFrontend.ChcTransformation.FORWARD);
+						try {
+							xcfaBuilder = chcFrontend.buildXcfa(input);
+						} catch (UnsupportedOperationException e) {
+							System.err.println("Non-linear CHC found, retrying using backward transformation...");
+							chcFrontend = new ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD);
+							input = CharStreams.fromStream(new FileInputStream(this.input));
+							xcfaBuilder = chcFrontend.buildXcfa(input);
+						}
+					} else {
+						chcFrontend = new ChcFrontend(chcTransformation);
+						xcfaBuilder = chcFrontend.buildXcfa(input);
+					}
+				} else {
+					final CLexer lexer = new CLexer(input);
+					final CommonTokenStream tokens = new CommonTokenStream(lexer);
+					final CParser parser = new CParser(tokens);
+					final CParser.CompilationUnitContext context = parser.compilationUnit();
 
-				CStatement program = context.accept(FunctionVisitor.instance);
-				checkState(program instanceof CProgram, "Parsing did not return a program!");
+					CStatement program = context.accept(FunctionVisitor.instance);
+					checkState(program instanceof CProgram, "Parsing did not return a program!");
 
-				FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
+					FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
 
-				xcfaBuilder = frontendXcfaBuilder.buildXcfa((CProgram) program);
+					xcfaBuilder = frontendXcfaBuilder.buildXcfa((CProgram) program);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.err.println("Frontend failed!");

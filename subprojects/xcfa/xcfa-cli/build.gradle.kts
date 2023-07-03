@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
+    implementation(project(":theta-chc-frontend"))
     implementation(project(":theta-core"))
     implementation(project(":theta-analysis"))
     implementation(project(":theta-solver-smtlib"))
