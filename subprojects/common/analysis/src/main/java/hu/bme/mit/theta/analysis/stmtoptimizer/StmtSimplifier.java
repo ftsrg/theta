@@ -241,12 +241,12 @@ public class StmtSimplifier {
 
 		@Override
 		public SimplifyResult visit(DelayStmt stmt, MutableValuation valuation) {
-			throw new UnsupportedOperationException();
+			return SimplifyResult.of(stmt, SimplifyStatus.SUCCESS);
 		}
 
 		@Override
 		public SimplifyResult visit(ResetStmt stmt, MutableValuation valuation) {
-			throw new UnsupportedOperationException();
+			return SimplifyResult.of(stmt, SimplifyStatus.SUCCESS);
 		}
 	}
 

@@ -80,6 +80,7 @@ import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsNewAtomsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsNewOperandsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsStaticAutoExpl;
+import hu.bme.mit.theta.xsts.analysis.clocks.XstsClockReplacers;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsAllVarsInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsCtrlInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsEmptyInitPrec;
@@ -161,6 +162,18 @@ public class XstsConfigBuilder {
 		ON, OFF
 	}
 
+	public enum ClockImpl {
+		CLOCK(XstsClockReplacers.None()),
+
+		INT(XstsClockReplacers.Int()),
+
+		RAT(XstsClockReplacers.Rat());
+
+		public final XstsClockReplacers.XstsClockReplacer clockReplacer;
+
+		private ClockImpl(final XstsClockReplacers.XstsClockReplacer clockReplacer) { this.clockReplacer = clockReplacer; }
+	}
+
 	private Logger logger = NullLogger.getInstance();
 	private final SolverFactory solverFactory;
 	private final Domain domain;
@@ -172,6 +185,7 @@ public class XstsConfigBuilder {
 	private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 	private OptimizeStmts optimizeStmts = OptimizeStmts.ON;
 	private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
+	private ClockImpl clockImpl = ClockImpl.CLOCK;
 
 	public XstsConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
 		this.domain = domain;
@@ -219,8 +233,16 @@ public class XstsConfigBuilder {
 		return this;
 	}
 
-	public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
+	public XstsConfigBuilder clockImpl(final ClockImpl clockImpl) {
+		this.clockImpl = clockImpl;
+		return this;
+	}
+
+	public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(XSTS xsts) {
 		final Solver abstractionSolver = solverFactory.createSolver();
+
+		xsts = clockImpl.clockReplacer.apply(xsts);
+
 		final Expr<BoolType> negProp = Not(xsts.getProp());
 
 		if (domain == Domain.EXPL) {
