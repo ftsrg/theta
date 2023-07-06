@@ -13,6 +13,10 @@ dependencies {
     implementation(fileTree(mapOf("dir" to libPath, "include" to listOf("*.jar"))))
     implementation("org.fusesource.hawtjni:hawtjni-runtime:1.18")
     testImplementation(Deps.junit4)
+    testImplementation(Deps.junit4engine)
+    testImplementation(Deps.junit5)
+    testImplementation(Deps.junit5param)
+    testImplementation(Deps.junit5engine)
     testImplementation(Deps.Mockito.core)
 }
 
@@ -32,5 +36,9 @@ tasks {
 
     named("jacocoTestReport") {
         dependsOn(named("test"))
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
     }
 }

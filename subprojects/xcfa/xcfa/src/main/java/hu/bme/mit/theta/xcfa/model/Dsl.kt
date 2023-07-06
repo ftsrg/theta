@@ -32,9 +32,9 @@ class VarContext(val builder: XcfaBuilder, private val local: Boolean) {
     }
 }
 
-fun XcfaProcedureBuilder.lookup(name: String): VarDecl<out Type>? =
+fun XcfaProcedureBuilder.lookup(name: String): VarDecl<out Type> =
     getVars().find { it.name.equals(name) } ?:
-    parent.getVars().map { it.wrappedVar }.find { it.name.equals(name) }
+    parent.getVars().map { it.wrappedVar }.find { it.name.equals(name) } ?: error("Variable $name not found in scope.")
 
 data class NamedSymbol(val _name: String) : Symbol {
     override fun getName(): String {
@@ -89,91 +89,105 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
     inner class SequenceLabelContext {
         private val labelList: MutableList<XcfaLabel> = ArrayList()
 
-        infix fun String.assign(to: String): XcfaLabel {
+        infix fun String.assign(to: String): SequenceLabel {
             val lhs: VarDecl<Type> = this@XcfaProcedureBuilderContext.builder.lookup(this) as VarDecl<Type>
             val rhs: Expr<Type> = this@XcfaProcedureBuilderContext.builder.parse(to) as Expr<Type>
             val label = StmtLabel(Assign(lhs, rhs), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        infix fun VarDecl<*>.assign(to: String): XcfaLabel {
+        infix fun VarDecl<*>.assign(to: String): SequenceLabel {
             val rhs: Expr<Type> = this@XcfaProcedureBuilderContext.builder.parse(to) as Expr<Type>
             val label = StmtLabel(Assign(this as VarDecl<Type>, rhs), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        infix fun String.assign(to: Expr<*>): XcfaLabel {
+        infix fun String.assign(to: Expr<*>): SequenceLabel {
             val lhs: VarDecl<Type> = this@XcfaProcedureBuilderContext.builder.lookup(this) as VarDecl<Type>
             val rhs: Expr<Type> = to as Expr<Type>
             val label = StmtLabel(Assign(lhs, rhs), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        infix fun VarDecl<*>.assign(to: Expr<*>): XcfaLabel {
+        infix fun VarDecl<*>.assign(to: Expr<*>): SequenceLabel {
             val rhs: Expr<Type> = to as Expr<Type>
             val label = StmtLabel(Assign(this as VarDecl<Type>, rhs), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
-        fun assume(value: String): XcfaLabel {
+        fun assume(value: String): SequenceLabel {
             val expr = this@XcfaProcedureBuilderContext.builder.parse(value) as Expr<BoolType>
             val label = StmtLabel(Assume(expr), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        fun assume(expr: Expr<BoolType>): XcfaLabel {
+        fun assume(expr: Expr<BoolType>): SequenceLabel {
             val label = StmtLabel(Assume(expr), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
-        fun havoc(value: String): XcfaLabel {
+        fun havoc(value: String): SequenceLabel {
             val varDecl = this@XcfaProcedureBuilderContext.builder.lookup(value)
             val label = StmtLabel(Havoc(varDecl), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        fun havoc(varDecl: VarDecl<*>): XcfaLabel {
+        fun havoc(varDecl: VarDecl<*>): SequenceLabel {
             val label = StmtLabel(Havoc(varDecl), metadata=EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
-        operator fun XcfaProcedureBuilderContext.invoke(vararg expr: Any): XcfaLabel {
+        operator fun XcfaProcedureBuilderContext.invoke(vararg expr: Any): SequenceLabel {
             val exprs = expr.map { if(it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(it) else error("Bad type") }
             val label = InvokeLabel(this.builder.name, exprs, EmptyMetaData)
             this@SequenceLabelContext.labelList.add(label)
             return SequenceLabel(this@SequenceLabelContext.labelList)
         }
 
-        fun String.start(ctx: XcfaProcedureBuilderContext, vararg expr: Any): XcfaLabel {
-            val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)!!
+        fun String.start(ctx: XcfaProcedureBuilderContext, vararg expr: Any): SequenceLabel {
+            val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)
             val exprs = expr.map { if(it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(it) else error("Bad type") }
             val label = StartLabel(ctx.builder.name, exprs, lhs, EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        fun VarDecl<*>.start(ctx: XcfaProcedureBuilderContext, vararg expr: Any): XcfaLabel {
+        fun VarDecl<*>.start(ctx: XcfaProcedureBuilderContext, vararg expr: Any): SequenceLabel {
             val exprs = expr.map { if(it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(it) else error("Bad type") }
             val label = StartLabel(ctx.builder.name, exprs, this, EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        fun String.join(): XcfaLabel {
-            val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)!!
+        fun String.join(): SequenceLabel {
+            val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)
             val label = JoinLabel(lhs, EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
-        fun VarDecl<*>.join(): XcfaLabel {
+        fun VarDecl<*>.join(): SequenceLabel {
             val label = JoinLabel(this, EmptyMetaData)
+            labelList.add(label)
+            return SequenceLabel(labelList)
+        }
+
+        fun sequence(lambda: SequenceLabelContext.() -> SequenceLabel): SequenceLabel {
+            val innerCtx = this@XcfaProcedureBuilderContext.SequenceLabelContext()
+            val label = lambda(innerCtx)
+            labelList.add(label)
+            return SequenceLabel(labelList)
+        }
+
+        fun nondet(lambda: SequenceLabelContext.() -> SequenceLabel): SequenceLabel {
+            val innerCtx = this@XcfaProcedureBuilderContext.SequenceLabelContext()
+            val label = NondetLabel(lambda(innerCtx).labels.toSet())
             labelList.add(label)
             return SequenceLabel(labelList)
         }
     }
 
-    infix fun String.to(to: String): (lambda: SequenceLabelContext.() -> XcfaLabel) -> Unit {
+    infix fun String.to(to: String): (lambda: SequenceLabelContext.() -> SequenceLabel) -> Unit {
         val loc1 = locationLut.getOrElse(this) { XcfaLocation(this) }
         locationLut.putIfAbsent(this, loc1)
         builder.addLoc(loc1)

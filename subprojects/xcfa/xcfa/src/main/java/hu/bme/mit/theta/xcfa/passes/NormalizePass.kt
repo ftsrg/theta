@@ -45,7 +45,20 @@ class NormalizePass : ProcedurePass {
     private fun normalize(label: XcfaLabel, collector: MutableList<MutableList<XcfaLabel>>) {
         when(label) {
             is SequenceLabel -> label.labels.forEach {normalize(it, collector)}
-            is NondetLabel -> TODO("Not yet implemented")
+            is NondetLabel -> {
+                val labelList = label.labels.toList()
+                ArrayList(collector).forEach {list ->
+                    for ((i, xcfaLabel) in labelList.withIndex()) {
+                        if(i == labelList.size - 1) {
+                            list.add(xcfaLabel)
+                        } else {
+                            val newList = ArrayList(list)
+                            newList.add(xcfaLabel)
+                            collector.add(newList)
+                        }
+                    }
+                }
+            }
             is NopLabel -> { }
             else -> collector.forEach {it.add(label)}
         }
