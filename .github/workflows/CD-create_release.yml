@@ -35,13 +35,15 @@ jobs:
         with:
           fetch-depth: 0
       - name: Creating versions
+        id: 'value'
         run: |
-          echo "version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )" >> $GITHUB_OUTPUT
-          echo "tagname=v$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )" >> $GITHUB_OUTPUT
-          echo "subprojects=$(git diff $(git describe --abbrev=0 --tags) --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)" >> $GITHUB_OUTPUT
-      - name: Creating message
-        run: |
-          echo "message=${{ inputs.message }}\n\nModified subprojects:\n${{steps.value.outputs.subprojects}}" >> $GITHUB_OUTPUT
+          export version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )
+          export subprojects=$(git diff $(git describe --abbrev=0 --tags) --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
+          export message=$(printf ${{ inputs.message }}\n\nModified subprojects:\n${{steps.value.outputs.subprojects}})
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "tagname=v$version" >> $GITHUB_OUTPUT
+          echo "subprojects=$subprojects" >> $GITHUB_OUTPUT
+          echo "message=$message" >> $GITHUB_OUTPUT
       - name: Verify variables
         run: |
           echo version "${{steps.value.outputs.version}}
