@@ -33,6 +33,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
+import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
@@ -44,6 +45,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import org.antlr.v4.runtime.CharStreams
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
@@ -68,6 +70,12 @@ class XcfaCli(private val args: Array<String>) {
 
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ
+
+    @Parameter(names = ["--chc"], description = "Parse the input as a Constrained Horn Clause in the CHC-comp format")
+    var chc = false;
+
+    @Parameter(names=["--chc-transformation"], description = "Direction of transformation from CHC to XCFA")
+    var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.FORWARD;
 
     //////////// backend options ////////////
     @Parameter(names = ["--backend"], description = "Backend analysis to use")
@@ -172,11 +180,29 @@ class XcfaCli(private val args: Array<String>) {
         if(randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
 
         val xcfa = try {
-            val stream = FileInputStream(input!!)
-            val xcfaFromC = getXcfaFromC(stream, explicitProperty == ErrorDetection.OVERFLOW)
-            logger.write(Logger.Level.INFO, "Frontend finished: ${xcfaFromC.name}  (in ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
-            logger.write(Logger.Level.RESULT, "Arithmetic: ${BitwiseChecker.getBitwiseOption()}\n")
-            xcfaFromC
+            if(chc) {
+                var chcFrontend: ChcFrontend
+                val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.FORWARD) { // try forward, fallback to backward
+                    chcFrontend = ChcFrontend(chcTransformation)
+                    try {
+                        chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+                    } catch (e: UnsupportedOperationException) {
+                        logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...")
+                        chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
+                        chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+                    }
+                } else {
+                    chcFrontend = ChcFrontend(chcTransformation)
+                    chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+                }
+                xcfaBuilder.build()
+            } else {
+                val stream = FileInputStream(input!!)
+                val xcfaFromC = getXcfaFromC(stream, explicitProperty == ErrorDetection.OVERFLOW)
+                logger.write(Logger.Level.INFO, "Frontend finished: ${xcfaFromC.name}  (in ${swFrontend.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                logger.write(Logger.Level.RESULT, "Arithmetic: ${BitwiseChecker.getBitwiseOption()}\n")
+                xcfaFromC
+            }
         } catch (e: Exception) {
             if (stacktrace) e.printStackTrace();
             logger.write(Logger.Level.RESULT, "Frontend failed!\n")

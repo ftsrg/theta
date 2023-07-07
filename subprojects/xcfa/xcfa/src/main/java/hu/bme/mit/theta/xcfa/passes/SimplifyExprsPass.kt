@@ -43,7 +43,8 @@ class SimplifyExprsPass : ProcedurePass {
             val newLabels = (edge.label as SequenceLabel).labels.map { if(it is StmtLabel) when(it.stmt) {
                 is AssignStmt<*> -> {
                         val simplified = simplify(it.stmt.expr)
-                        FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.expr))
+                        if(FrontendMetadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
+                            FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.expr))
                         StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type), cast(simplified, it.stmt.varDecl.type)),  metadata = it.metadata)
                     }
                 is AssumeStmt -> {

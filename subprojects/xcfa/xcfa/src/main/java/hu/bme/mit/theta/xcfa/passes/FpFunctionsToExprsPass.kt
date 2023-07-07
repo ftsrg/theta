@@ -85,7 +85,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
                     FpRoundToIntegralExpr.of(FpRoundingMode.RTZ, callStmt.params[1] as Expr<FpType?>))
-            FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
+            if(FrontendMetadata.getMetadataValue(expr, "cType").isPresent) { FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr)) }
             return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
@@ -95,7 +95,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
                     FpRoundToIntegralExpr.of(FpRoundingMode.RTP, callStmt.params[1] as Expr<FpType?>))
-            FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
+            if(FrontendMetadata.getMetadataValue(expr, "cType").isPresent) { FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr)) }
             return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
@@ -148,7 +148,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             val expr = callStmt.params[0]
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpRoundToIntegralExpr.of(FpRoundingMode.RNA, callStmt.params[1] as Expr<FpType?>))
-            FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
+            if(FrontendMetadata.getMetadataValue(expr, "cType").isPresent) { FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr)) }
             return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
@@ -157,7 +157,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             val expr = callStmt.params[0]
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpSqrtExpr.of(FpRoundingMode.RNE, callStmt.params[1] as Expr<FpType?>))
-            FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
+            if(FrontendMetadata.getMetadataValue(expr, "cType").isPresent) { FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr)) }
             return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
@@ -170,7 +170,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             val expr = callStmt.params[0]
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpMinExpr.of(callStmt.params[1] as Expr<FpType?>, callStmt.params[2] as Expr<FpType?>))
-            FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
+            if(FrontendMetadata.getMetadataValue(expr, "cType").isPresent) { FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr)) }
             return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
@@ -188,7 +188,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             val expr = callStmt.params[0]
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpRoundToIntegralExpr.of(FpRoundingMode.RTN, callStmt.params[1] as Expr<FpType?>))
-            FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
+            if(FrontendMetadata.getMetadataValue(expr, "cType").isPresent) { FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr)) }
             return StmtLabel(assign, metadata = callStmt.metadata)
         }
 
@@ -197,7 +197,7 @@ class FpFunctionsToExprsPass : ProcedurePass {
             val expr = callStmt.params[0]
             Preconditions.checkState(expr is RefExpr<*>)
             val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>, FpAbsExpr.of(callStmt.params[1] as Expr<FpType?>))
-            FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr))
+            if(FrontendMetadata.getMetadataValue(expr, "cType").isPresent) { FrontendMetadata.create(assign.expr, "cType", CComplexType.getType(expr)) }
             return StmtLabel(assign, metadata = callStmt.metadata)
         }
     }

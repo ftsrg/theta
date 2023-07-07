@@ -47,4 +47,33 @@ class CPasses(checkOverflow: Boolean) : ProcedurePassManager(listOf(
         UnusedVarPass(),
 ))
 
+class ChcPasses : ProcedurePassManager(/*listOf(
+        // formatting
+        NormalizePass(),
+        DeterministicPass(),
+        // removing redundant elements
+        EmptyEdgeRemovalPass(),
+        UnusedLocRemovalPass(),
+        // optimizing
+        SimplifyExprsPass(),
+        // handling intrinsics
+//        ErrorLocationPass(false),
+//        FinalLocationPass(false),
+//        SvCompIntrinsicsPass(),
+//        FpFunctionsToExprsPass(),
+//        PthreadFunctionsPass(),
+        // trying to inline procedures
+        InlineProceduresPass(),
+        RemoveDeadEnds(),
+        EliminateSelfLoops(),
+        // handling remaining function calls
+//        NondetFunctionPass(),
+        LbePass(),
+        NormalizePass(), // needed after lbe, TODO
+        DeterministicPass(), // needed after lbe, TODO
+//        HavocPromotionAndRange(),
+        // Final cleanup
+        UnusedVarPass(),
+))*/emptyList())
+
 class LitmusPasses : ProcedurePassManager(emptyList())

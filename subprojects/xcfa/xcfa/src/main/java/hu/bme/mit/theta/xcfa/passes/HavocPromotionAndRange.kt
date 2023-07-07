@@ -98,7 +98,7 @@ class HavocPromotionAndRange : ProcedurePass {
                 val reversed = list.withIndex().filter { it.value is StmtLabel && (it.value as StmtLabel).stmt is HavocStmt<*> }.reversed()
                 for ((index, value) in reversed) {
                     val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
-                    val type = CComplexType.getType(varDecl.ref)
+                    val type = CComplexType.getType(varDecl.ref) // TODO: what to do when no info is available?
                     if(type !is CVoid) {
                         list.add(index + 1, StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
                     }

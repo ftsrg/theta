@@ -32,7 +32,7 @@ sealed class XcfaLabel(open val metadata: MetaData) {
     open fun toStmt(): Stmt = Skip()
 }
 
-data class InvokeLabel(
+data class InvokeLabel @JvmOverloads constructor(
         val name: String,
         val params: List<Expr<*>>,
         override val metadata: MetaData,

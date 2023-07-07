@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
@@ -77,7 +78,7 @@ fun Stmt.flatten(): List<Stmt> {
     }
 }
 
-fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
+fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): XcfaLabel =
         if(varLut.isNotEmpty())
             when(this) {
                 is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) }, metadata = metadata)
@@ -92,7 +93,7 @@ fun XcfaLabel.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): XcfaLabel =
             }
         else this
 
-fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt {
+fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Stmt {
     val stmt = when (this) {
         is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type), cast(expr.changeVars(varLut), varDecl.type))
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
@@ -106,8 +107,8 @@ fun Stmt.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Stmt {
     return stmt
 }
 
-fun <T : Type> Expr<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Expr<T> =
-        if (this is RefExpr<T>) (decl as VarDecl<T>).changeVars(varLut).ref
+fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Expr<T> =
+        if (this is RefExpr<T>) (decl as Decl<T>).changeVars(varLut).ref
         else {
             val ret = this.withOps(this.ops.map { it.changeVars(varLut) })
             if(FrontendMetadata.getMetadataValue(this, "cType").isPresent) {
@@ -116,7 +117,7 @@ fun <T : Type> Expr<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): Expr<T> 
             ret
         }
 
-fun <T : Type> VarDecl<T>.changeVars(varLut: Map<VarDecl<*>, VarDecl<*>>): VarDecl<T> =
+fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
         (varLut[this] ?: this) as VarDecl<T>
 
 fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
