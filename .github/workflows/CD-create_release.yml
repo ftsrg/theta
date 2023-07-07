@@ -1,24 +1,28 @@
 name: Create release file
 'on':
-  workflow_dispatch: null
+  workflow_dispatch: 
+    inputs:
+        message:
+          required: false
+          default: 'Auto generated release'
 jobs:
   gradle:
     name: Run Gradle
     runs-on:
       - ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
         with:
           distribution: temurin
           java-version: 17
       - name: Setup and execute Gradle 'build' task
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629 # v2.4.2
         id: build
         with:
-          arguments: build --scan
+          arguments: build -x test --scan
       - run: 'echo "${{steps.build.outputs.build}}"'
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: ThetaJars
           path: subprojects/**/*-all.jar
@@ -27,27 +31,42 @@ jobs:
     needs: gradle
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Creating version number
-        run: >-
-          echo "version=v$(grep "version" build.gradle.kts | tail -n 1 | cut -d
-          "=" -f2 | xargs echo )" >> $GITHUB_OUTPUT
-        id: value
-        shell: bash
-      - run: 'echo "${{steps.value.outputs.version}}"'
-      - uses: actions/download-artifact@v3
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          fetch-depth: 0
+      - name: Creating versions
+        id: 'value'
+        run: |
+          export version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )
+          export lasttag=$(git describe --abbrev=0 --tags)
+          echo Last tag: $lasttag
+          export subprojects=$(git diff $lasttag --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
+          echo Modified subprojects: $subprojects
+          export message=$(printf "${{ inputs.message }}\n\nModified subprojects (since $lasttag):\n$subprojects")
+          echo Message: $message
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "tagname=v$version" >> $GITHUB_OUTPUT
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "message<<$EOF" >> $GITHUB_OUTPUT
+          echo $message >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+      - name: Verify variables
+        run: |
+          echo version "${{steps.value.outputs.version}}"
+          echo tagname "${{steps.value.outputs.tagname}}"
+          echo message "${{steps.value.outputs.message}}"
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: ThetaJars
           path: jar/
       - name: Display structure of downloaded files
         run: ls -R
-      - run: find jar
-      - run: for i in $(find jar -name "*-all.jar"); do mv $i jar/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
+      - run: for i in $(find jar -name "*-all.jar"); do mv -v $i jar/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1.0
         with:
           files: jar/**/*.jar
-          body: "Auto-generated release"
-          name: ${{steps.value.outputs.version}}
-          tag_name: ${{steps.value.outputs.version}}
+          body: ${{steps.value.outputs.message}}
+          name: ${{steps.value.outputs.tagname}}
+          tag_name: ${{steps.value.outputs.tagname}}
          
