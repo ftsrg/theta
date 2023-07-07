@@ -41,16 +41,19 @@ jobs:
           export lasttag=$(git describe --abbrev=0 --tags)
           echo Last tag: $lasttag
           export subprojects=$(git diff $lasttag --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
-          export message=$(printf "${{ inputs.message }}\n\nModified subprojects (since $lasttag):\n${{steps.value.outputs.subprojects}}")
+          echo Modified subprojects: $subprojects
+          export message=$(printf "${{ inputs.message }}\n\nModified subprojects (since $lasttag):\n$subprojects")
+          echo Message: $message
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "tagname=v$version" >> $GITHUB_OUTPUT
-          echo "subprojects=$subprojects" >> $GITHUB_OUTPUT
-          echo "message=$message" >> $GITHUB_OUTPUT
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "message<<$EOF" >> $GITHUB_OUTPUT
+          echo $message >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
       - name: Verify variables
         run: |
           echo version "${{steps.value.outputs.version}}
           echo tagname "${{steps.value.outputs.tagname}}
-          echo subprojects "${{steps.value.outputs.subprojects}}
           echo message "${{steps.value.outputs.message}}
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
