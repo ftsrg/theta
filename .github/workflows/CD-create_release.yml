@@ -38,8 +38,10 @@ jobs:
         id: 'value'
         run: |
           export version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )
-          export subprojects=$(git diff $(git describe --abbrev=0 --tags) --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
-          export message=$(printf ${{ inputs.message }}\n\nModified subprojects:\n${{steps.value.outputs.subprojects}})
+          export lasttag=$(git describe --abbrev=0 --tags)
+          echo Last tag: $lasttag
+          export subprojects=$(git diff $lasttag --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
+          export message=$(printf "${{ inputs.message }}\n\nModified subprojects (since $lasttag):\n${{steps.value.outputs.subprojects}}")
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "tagname=v$version" >> $GITHUB_OUTPUT
           echo "subprojects=$subprojects" >> $GITHUB_OUTPUT
