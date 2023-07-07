@@ -16,3 +16,6 @@ dest/
 .idea/
 *.iml
 *.iws
+bin
+*.dot
+.vscode
