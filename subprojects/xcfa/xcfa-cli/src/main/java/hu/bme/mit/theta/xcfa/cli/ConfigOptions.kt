@@ -48,6 +48,13 @@ import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.lang.reflect.Type
 
+enum class InputType {
+    C,
+    XCFA_JSON,
+    XCFA_DSL,
+    CHC
+}
+
 enum class Backend {
     CEGAR,
     BMC,

@@ -75,7 +75,7 @@ class XcfaCegarServer {
         final Logger logger = new ConsoleLabelledLogger();
         logger.write(Logger.Level.INFO, "Server started on port " + port + ".\n");
 
-        exitOnError( () -> {
+        exitOnError(false, () -> {
             SolverRegistrationKt.registerAllSolverManagers(solverHome, logger);
             try (final ServerSocket socket = new ServerSocket(port)) {
                 System.out.println("Port=(" + socket.getLocalPort() + ")");
