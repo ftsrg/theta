@@ -63,7 +63,7 @@ jobs:
 
   deploy-release:
     needs: build
-    if: "!contains(github.event.head_commit.message, 'Version bump')"
+    if: "contains(github.event.head_commit.message, 'Version bump')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -79,7 +79,7 @@ jobs:
 
   deploy-maven:
     needs: build
-    if: "!contains(github.event.head_commit.message, 'Version bump')"
+    if: "contains(github.event.head_commit.message, 'Version bump')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -95,7 +95,7 @@ jobs:
   
   deploy-docker:
     needs: build
-    if: "!contains(github.event.head_commit.message, 'Version bump')"    
+    if: "contains(github.event.head_commit.message, 'Version bump')"    
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
