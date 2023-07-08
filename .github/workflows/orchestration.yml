@@ -67,7 +67,7 @@ jobs:
 
   deploy-release:
     needs: build
-    if: "contains(github.event.head_commit.message, 'Version bump')"
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -83,7 +83,7 @@ jobs:
 
   deploy-maven:
     needs: build
-    if: "contains(github.event.head_commit.message, 'Version bump')"
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
