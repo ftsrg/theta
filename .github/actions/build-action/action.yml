@@ -10,7 +10,12 @@ runs:
       with:
         distribution: temurin
         java-version: 17
-    - name: build gradle
+    - name: Build using gradle (without tests)
       uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
       with:
         arguments: build -x test
+    - name: Upload JARs
+      uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      with:
+        name: ThetaJars
+        path: subprojects/**/*-all.jar
