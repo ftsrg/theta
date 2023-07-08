@@ -11,6 +11,6 @@ runs:
         distribution: temurin
         java-version: 17
     - name: build gradle
-      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
+      uses: ./.github/actions/cache-build
       with:
         arguments: test
