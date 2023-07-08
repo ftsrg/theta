@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Run tests, submit coverage report to codacy
+      - name: Run tests
         uses: ./.github/actions/test-action
       - name: Send test coverage to Codacy
         if: matrix.os == 'ubuntu-latest'
@@ -59,7 +59,7 @@ jobs:
           $VcList = Get-VcList -Export All | Where-Object { $_.Release -eq "2010" -or $_.Release -eq "2012" }
           Save-VcRedist -VcList $VcList
           Install-VcRedist -VcList $VcList -Silent
-      - name: Run tests, submit coverage report to codacy
+      - name: Run tests
         uses: ./.github/actions/test-action
 
   
