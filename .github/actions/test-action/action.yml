@@ -1,5 +1,8 @@
 name: 'Gradle build action'
 description: 'Running gradle build without tests'
+inputs:
+    CODACY_PROJECT_TOKEN:
+        required: true
 runs:
   using: "composite"
   steps:
@@ -15,6 +18,7 @@ runs:
       with:
         arguments: test
     - name: Send test coverage to Codacy
+      shell: bash
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Java $(find '**/jacoco*.xml' -printf '-r %p ')
       env:
-        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        CODACY_PROJECT_TOKEN: ${{ inputs.CODACY_PROJECT_TOKEN }}
