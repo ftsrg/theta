@@ -11,6 +11,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - run: ls -lR .github
-      - run: pwd
+        with:
+          sparse-checkout: '.github'
       - uses: ./.github/actions/build-action
+  
+  javadoc: # deploys to GH pages
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          sparse-checkout: '.github'
+      - uses: ./.github/actions/deploy-javadoc
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          sparse-checkout: '.github'
+      - uses: ./.github/actions/test-action

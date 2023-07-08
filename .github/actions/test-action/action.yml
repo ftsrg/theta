@@ -11,4 +11,8 @@ runs:
     - name: build gradle
       uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
       with:
-        arguments: build -x test
+        arguments: test
+    - name: Send test coverage to Codacy
+      run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Java $(find '**/jacoco*.xml' -printf '-r %p ')
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
