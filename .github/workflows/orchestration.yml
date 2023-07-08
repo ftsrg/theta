@@ -74,8 +74,8 @@ jobs:
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Retrieve message
         run: |
-          export message=$( echo ${{ github.event.workflow_run.head_commit.message }} | grep -oP "\[.*\]" |tail -c +2 | head -c -2 || echo 'Auto-generated release')
-          echo Commit message: ${{ github.event.workflow_run.head_commit.message }}
+          export message=$( echo $(git log -1 --format=%s) | grep -oP "\[.*\]" |tail -c +2 | head -c -2 || echo 'Auto-generated release')
+          echo Commit message: $(git log -1 --format=%s)
           echo Message: $message
           echo "MESSAGE=$message" >> $GITHUB_OUTPUT
         id: message
