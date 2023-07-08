@@ -10,10 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout .github folder
+      - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-        with:
-          sparse-checkout: '.github'
       - name: Build
         uses: ./.github/actions/build-action
   
@@ -21,10 +19,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout .github folder
+      - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-        with:
-          sparse-checkout: '.github'
       - name: Deploy javadoc to github-pages
         uses: ./.github/actions/deploy-javadoc
 
@@ -32,9 +28,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout .github folder
+      - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-        with:
-          sparse-checkout: '.github'
       - name: Run tests, submit coverage report to codacy
         uses: ./.github/actions/test-action
