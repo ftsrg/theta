@@ -12,4 +12,4 @@ jobs:
     steps:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - run: ls -lR .github
-      - uses: ${GITHUB_ACTION_PATH}/.github/actions/build
+      - uses: ./../.github/actions/build
