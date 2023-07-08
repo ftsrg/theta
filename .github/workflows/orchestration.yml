@@ -74,7 +74,10 @@ jobs:
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Retrieve message
         run: |
-          echo "MESSAGE=$( echo ${{ github.event.head_commit.message }} | grep -oP "\[.*\]" |tail -c +2 | head -c -2 || echo 'Auto-generated release' )" >> $GITHUB_OUTPUT
+          export message=$( echo ${{ github.event.workflow_run.head_commit.message }} | grep -oP "\[.*\]" |tail -c +2 | head -c -2 || echo 'Auto-generated release')
+          echo Commit message: ${{ github.event.workflow_run.head_commit.message }}
+          echo Message: $message
+          echo "MESSAGE=$message" >> $GITHUB_OUTPUT
         id: message
       - name: Create release and deploy JARs
         uses: ./.github/actions/create-release
