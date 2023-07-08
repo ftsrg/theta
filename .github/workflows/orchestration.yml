@@ -1,0 +1,11 @@
+name: CI/CD job orchestration
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+  workflow_call:
+  
+jobs:
+  build:
+    uses: ./.github/actions/build
