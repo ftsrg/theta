@@ -43,12 +43,11 @@ jobs:
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
-  test-windows:
+  test-windows: # does not need build, does not benefit from caching
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, windows-2019, windows-2022]
-    needs: build
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -62,4 +61,57 @@ jobs:
       - name: Run tests
         uses: ./.github/actions/test-action
 
+  deploy-release:
+    needs: build
+    if: "!contains(github.event.head_commit.message, 'Version bump')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Retrieve message
+        run: |
+          echo "MESSAGE=$( echo ${{ github.event.head_commit.message }} | grep -oP "\[.*\]" |tail -c +2 | head -c -2 || echo 'Auto-generated release' )" >> $GITHUB_OUTPUT
+        id: message
+      - name: Create release and deploy JARs
+        uses: ./.github/actions/create-release
+        with:
+          message: ${{ steps.message.outputs.MESSAGE }}
+
+  deploy-maven:
+    needs: build
+    if: "!contains(github.event.head_commit.message, 'Version bump')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Create and publish maven release 
+        uses: ./.github/actions/deploy-maven
+        with:
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          PGP_KEY: ${{ secrets.PGP_KEY }}
+          PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
+          PGP_PWD: ${{ secrets.PGP_PWD }}
   
+  deploy-docker:
+    needs: build
+    if: "!contains(github.event.head_commit.message, 'Version bump')"    
+    strategy:
+      matrix:
+        dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: ./.github/workflows/docker-login
+        with:
+          username: ${{secrets.DOCKER_USERNAME}}
+          token: ${{secrets.DOCKER_TOKEN}}
+      - name: Build and publish docker file 
+        uses: ./.github/actions/deploy-maven
+        with:
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          PGP_KEY: ${{ secrets.PGP_KEY }}
+          PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
+          PGP_PWD: ${{ secrets.PGP_PWD }}

@@ -1,5 +1,5 @@
 
-name: Version Bump and Release
+name: Version Bump
 on: 
   workflow_dispatch:
     inputs:
@@ -12,6 +12,10 @@ on:
             - minor
             - patch
         default: 'patch'
+      message:
+        description: 'Summarize the contents since the last version'
+        required: false
+        default: 'Auto-generated release'
 
 jobs:
   version-bump:
@@ -40,5 +44,5 @@ jobs:
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit_message: "Version bump"
+        commit_message: "Version bump [${{ inputs.message }}]"
         file_pattern: "build.gradle.kts"
