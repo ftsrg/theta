@@ -28,6 +28,7 @@ runs:
       run: |
         export folder=badges/build-${{ runner.os }}
         mkdir -p $folder
+        echo "fullpath=$PWD/$fullpath" >> $GITHUB_OUTPUT
         echo "folder=$folder" >> $GITHUB_OUTPUT 
         echo "name=$folder/badge.svg" >> $GITHUB_OUTPUT 
         echo "label=${{ runner.os }} build" >> $GITHUB_OUTPUT 
@@ -63,6 +64,6 @@ runs:
       uses: leventeBajczi/github-pages-deploy-action-winfix@b32094842ed7f893eb3521b7e663a97c952fc96c # v0.3
       with:
         branch: badges
-        folder: ${{ steps.name.outputs.folder }}
+        folder: ${{ steps.name.outputs.fullpath }}
         target-folder: ${{ steps.name.outputs.folder }}
         single-commit: true
