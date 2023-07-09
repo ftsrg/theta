@@ -64,5 +64,5 @@ runs:
       with:
         branch: badges
         folder: ${{ steps.winhack.outputs.fullpath }}
-        target_folder: ${{ steps.name.outputs.folder }}
-        single_commit: true
+        target-folder: ${{ steps.name.outputs.folder }}
+        single-commit: true
