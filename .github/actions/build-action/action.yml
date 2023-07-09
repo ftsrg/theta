@@ -51,6 +51,6 @@ runs:
       uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v3.7.1
       with:
         branch: badges
-        folder: ${{ steps.name.outputs.label }}
-        target_folder: ${{ steps.name.outputs.label }}
+        folder: ${{ steps.name.outputs.folder }}
+        target_folder: ${{ steps.name.outputs.folder }}
         single_commit: true
