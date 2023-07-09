@@ -40,6 +40,9 @@ runs:
         status: Failure
         color: 'red'
         path: ${{ steps.name.outputs.name }}
+    - name: setup rsync for windows
+      if: runner.os == 'Windows'
+      uses: GuillaumeFalourd/setup-rsync@v1.1
     - name: Deploy badges
       if: github.ref == 'refs/heads/master'
       uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v3.7.1
