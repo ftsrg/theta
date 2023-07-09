@@ -27,6 +27,9 @@ runs:
       shell: bash
       run: |
         export folder=$PWD/badges/build-${{ runner.os }}
+        if [ "${{ runner.os }}" = "Windows" ]; then
+            folder="/cygdrive/$folder"
+        fi
         mkdir -p $folder
         echo "folder=$folder" >> $GITHUB_OUTPUT 
         echo "name=$folder/badge.svg" >> $GITHUB_OUTPUT 
