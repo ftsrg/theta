@@ -74,10 +74,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Set DYLD_LIBRARY_PATH
+        run: |
+          echo "export DYLD_LIBRARY_PATH=$PWD/lib" >> $GITHUB_ENV
       - name: Run tests
         uses: ./.github/actions/test-action
-        env:
-          DYLD_LIBRARY_PATH: "./lib"
 
   deploy-release:
     needs: build
