@@ -1,0 +1,17 @@
+name: Check copyright
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: write-all
+
+jobs:
+  check-copyright:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Check copyright
+        uses: ./.github/actions/check-copyright
