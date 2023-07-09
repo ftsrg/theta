@@ -62,6 +62,8 @@ jobs:
           $VcList = Get-VcList -Export All | Where-Object { $_.Release -eq "2010" -or $_.Release -eq "2012" }
           Save-VcRedist -VcList $VcList
           Install-VcRedist -VcList $VcList -Silent
+      - name: Build
+        uses: ./.github/actions/build-action
       - name: Run tests
         uses: ./.github/actions/test-action
 
@@ -74,11 +76,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Set up libraries (could this be done better?)
-        run: |
-          cp lib/*dylib ./
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      - name: Build
+        uses: ./.github/actions/build-action
       - name: Run tests
         uses: ./.github/actions/test-action
 

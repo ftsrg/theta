@@ -14,3 +14,28 @@ runs:
       uses: ./.github/actions/cache-build
       with:
         arguments: test
+
+    - name: Badge name generation
+      if: ${{ always() }}
+      id: name
+      shell: bash
+      run: |
+        echo "name=test-${{ runner.os }}" >> $GITHUB_OUTPUT 
+        echo "label=${{ runner.os }} test" >> $GITHUB_OUTPUT 
+    - name: Positive outcome badge
+      uses: RubbaBoy/BYOB@27b128c2a65c3b64184f44d2249d0882391b1767
+      with:
+        NAME: ${{ steps.name.outputs.name }}
+        LABEL: ${{ steps.name.outputs.label }}
+        STATUS: Success
+        COLOR: green
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Negative outcome badge
+      if: ${{ failure() }}
+      uses: RubbaBoy/BYOB@27b128c2a65c3b64184f44d2249d0882391b1767
+      with:
+        NAME: ${{ steps.name.outputs.name }}
+        LABEL: ${{ steps.name.outputs.label }}
+        STATUS: Failure
+        COLOR: red
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

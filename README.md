@@ -1,5 +1,13 @@
 # Theta
 
+![](https://byob.yarr.is/leventeBajczi/theta/build-Linux)
+![](https://byob.yarr.is/leventeBajczi/theta/build-Windows)
+![](https://byob.yarr.is/leventeBajczi/theta/build-macOS)
+
+![](https://byob.yarr.is/leventeBajczi/theta/test-Linux)
+![](https://byob.yarr.is/leventeBajczi/theta/test-Windows)
+![](https://byob.yarr.is/leventeBajczi/theta/test-macOS)
+
 [![Windows build](https://github.com/ftsrg/theta/actions/workflows/build-win.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-win.yml)
 [![Linux build](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml)
 ![Build dockerfiles](https://github.com/ftsrg/theta/workflows/Build%20dockerfiles/badge.svg)
