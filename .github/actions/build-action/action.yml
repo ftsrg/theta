@@ -63,6 +63,6 @@ runs:
       uses: leventeBajczi/github-pages-deploy-action-winfix@b32094842ed7f893eb3521b7e663a97c952fc96c # v0.3
       with:
         branch: badges
-        folder: ${{ steps.winhack.outputs.fullpath }}
+        folder: ${{ steps.name.outputs.folder }}
         target-folder: ${{ steps.name.outputs.folder }}
         single-commit: true
