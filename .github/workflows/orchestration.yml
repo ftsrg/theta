@@ -74,11 +74,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-      - name: Set DYLD_LIBRARY_PATH
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
+      - name: Set up libraries (could this be done better?)
         run: |
-          echo "DYLD_LIBRARY_PATH=$PWD/lib" >> $GITHUB_ENV
+          cp lib/*dylib ./
       - name: Run tests
         uses: ./.github/actions/test-action
 
