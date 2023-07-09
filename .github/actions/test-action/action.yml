@@ -44,8 +44,7 @@ runs:
       if: runner.os == 'Windows'
       uses: GuillaumeFalourd/setup-rsync@v1.1
     - name: Deploy badges
-      if: github.ref == 'refs/heads/master'
-      if: ${{ always() }}
+      if: github.ref == 'refs/heads/master' && ${{ always() }}
       uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v3.7.1
       with:
         branch: badges
