@@ -20,7 +20,7 @@ runs:
       id: name
       shell: bash
       run: |
-        export folder=$PWD/badges/build-${{ runner.os }}
+        export folder=$PWD/badges/test-${{ runner.os }}
         mkdir -p $folder
         echo "folder=$folder" >> $GITHUB_OUTPUT 
         echo "name=$folder/badge.svg" >> $GITHUB_OUTPUT 
