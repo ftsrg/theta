@@ -19,8 +19,11 @@ jobs:
       with:
         settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
         file-mask: ${{ inputs.file_mask }}
-      
-    - name: Commit changes
-      uses: stefanzweifel/git-auto-commit-action@v4
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
       with:
-        commit_message: "Reformatted code"
+        commit-message: "Reformatted code"
+        branch: "code-reformat"
+        title: '[AutoPR] Reformatted code'
+

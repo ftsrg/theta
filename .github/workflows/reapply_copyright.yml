@@ -1,0 +1,48 @@
+name: Reapply Copyright
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copyright_checker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
+    - name: Run Copyright Checker
+      shell: bash {0} 
+      run: |
+        set +x
+
+        for file in $(find . -type f \( -name "*.java" -o -name "*.kt" -o -name "*.kts" \)); do
+            last_modified_year=$(git log -1 --format=%ad --date=format:%Y "$file")
+            echo "Checking file $file, last modified $last_modified_year"
+            
+            header_exists=$(head -n 2 "$file" | tail -n 1 | grep -c "Budapest University of Technology")
+
+            echo "Header exists for $file: $header_exists"
+
+            if [[ $header_exists -eq 0 ]]; then
+                echo "Adding copyright header to $file"
+                cat ./doc/copyright-header.txt "$file" > tmp_026204264
+                mv tmp_026204264 "$file"
+            fi
+
+            header_year=$(head -n 2 "$file" | tail -n 1 | grep -o -E '[0-9]{4}')
+
+            echo "Header year for $file: $header_year"
+
+            if [[ "$header_year" != "$last_modified_year" ]]; then
+                echo "Updating copyright year to $last_modified_year in $file (was $header_year)"
+                sed -i "s/Copyright [0-9]\{4\}/Copyright $last_modified_year/g" "$file"
+            fi
+        done
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        commit-message: "Reapplied copyright"
+        branch: "copyright-reapply"
+        title: '[AutoPR] Reaplied copyright'
