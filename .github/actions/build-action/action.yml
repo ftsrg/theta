@@ -60,7 +60,7 @@ runs:
     #     echo "fullpath=$folder" >> $GITHUB_OUTPUT 
     - name: Deploy badges
       if: github.ref == 'refs/heads/master' && ${{ always() }}
-      uses: leventeBajczi/github-pages-deploy-action-winfix@85e9c314d0b4a31d7a9710767915c5a648768446 # v0.2
+      uses: leventeBajczi/github-pages-deploy-action-winfix@b32094842ed7f893eb3521b7e663a97c952fc96c # v0.3
       with:
         branch: badges
         folder: ${{ steps.winhack.outputs.fullpath }}
