@@ -1,12 +1,11 @@
 # Theta
 
-![](https://byob.yarr.is/leventeBajczi/theta/build-Linux)
-![](https://byob.yarr.is/leventeBajczi/theta/build-Windows)
-![](https://byob.yarr.is/leventeBajczi/theta/build-macOS)
-
-![](https://byob.yarr.is/leventeBajczi/theta/test-Linux)
-![](https://byob.yarr.is/leventeBajczi/theta/test-Windows)
-![](https://byob.yarr.is/leventeBajczi/theta/test-macOS)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-Linux/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-Windows/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-macOS/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Linux/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Windows/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-macOS/badge.svg)
 
 [![Windows build](https://github.com/ftsrg/theta/actions/workflows/build-win.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-win.yml)
 [![Linux build](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml)
