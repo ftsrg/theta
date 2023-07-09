@@ -59,17 +59,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: setup rsync for windows
-        if: runner.os == 'Windows'
-        uses: GuillaumeFalourd/setup-rsync@v1.1
-      - name: Deploy badges
-        if: github.ref == 'refs/heads/master' && ${{ always() }}
-        uses: leventeBajczi/github-pages-deploy-action-winfix@6d31a3c68a3912555731864c0d5ef4239b02369d # v0.3
-        with:
-          branch: badges
-          folder: lib
-          target-folder: badges/proba
-          single-commit: true
       - name: Install VC-Redist 2010 and 2012
         run: |
           Install-Module -Name VcRedist -Force
