@@ -20,22 +20,29 @@ runs:
       id: name
       shell: bash
       run: |
-        echo "name=test-${{ runner.os }}" >> $GITHUB_OUTPUT 
+        echo "folder=badges/test-${{ runner.os }}" >> $GITHUB_OUTPUT 
+        echo "name=badges/test-${{ runner.os }}/badge.svg" >> $GITHUB_OUTPUT 
         echo "label=${{ runner.os }} test" >> $GITHUB_OUTPUT 
     - name: Positive outcome badge
-      uses: RubbaBoy/BYOB@27b128c2a65c3b64184f44d2249d0882391b1767
+      uses: emibcn/badge-action@v2.0.2
       with:
-        NAME: ${{ steps.name.outputs.name }}
-        LABEL: ${{ steps.name.outputs.label }}
-        STATUS: Success
-        COLOR: green
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        label: ${{ steps.name.outputs.label }}
+        status: Success
+        color: 'green'
+        path: ${{ steps.name.outputs.name }}
     - name: Negative outcome badge
       if: ${{ failure() }}
-      uses: RubbaBoy/BYOB@27b128c2a65c3b64184f44d2249d0882391b1767
+      uses: emibcn/badge-action@v2.0.2
       with:
-        NAME: ${{ steps.name.outputs.name }}
-        LABEL: ${{ steps.name.outputs.label }}
-        STATUS: Failure
-        COLOR: red
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        label: ${{ steps.name.outputs.label }}
+        status: Failure
+        color: 'red'
+        path: ${{ steps.name.outputs.name }}
+    - name: Deploy badges
+      if: github.ref == 'refs/heads/master'
+      uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v3.7.1
+      with:
+        branch: badges
+        folder: ${{ steps.name.outputs.label }}
+        target_folder: ${{ steps.name.outputs.label }}
+        single_commit: true
