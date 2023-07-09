@@ -20,9 +20,9 @@ runs:
       id: name
       shell: bash
       run: |
-        export folder=$PWD/badges/test-${{ runner.os }}
+        export folder=badges/test-${{ runner.os }}
         if [ "${{ runner.os }}" = "Windows" ]; then
-            folder="/cygdrive/$folder"
+            folder="/cygdrive/$PWD/$folder"
         fi
         mkdir -p $folder
         echo "folder=$folder" >> $GITHUB_OUTPUT 
