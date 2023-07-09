@@ -14,10 +14,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-    - name: Permission fix
-      run: sudo chown -R $(whoami) .
     - name: Do reformat
-      uses: leventeBajczi/intellij-idea-format@v0.1.1
+      uses: leventeBajczi/intellij-idea-format@v0.2
       with:
         settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
         file-mask: ${{ inputs.file_mask }}
