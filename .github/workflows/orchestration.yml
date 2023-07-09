@@ -9,7 +9,10 @@ on:
     workflows: ["Version Bump"]
     types:
       - completed
-  
+
+permissions: write-all
+
+
 jobs:
   build:
     runs-on: ubuntu-latest
