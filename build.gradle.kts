@@ -33,11 +33,13 @@ allprojects {
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
 
-sonarqube {
+sonar {
     properties {
-        property ("sonar.host.url", "https://sonarcloud.io")
+      property("sonar.projectKey"), "leventeBajczi_theta"
+      property("sonar.organization"), "bajczi-levente"
+      property("sonar.host"), "https://sonarcloud.io"
     }
-}
+  }
 
 evaluationDependsOnChildren()
 
