@@ -1,4 +1,4 @@
-name: Check formatting
+name: Check version
 on:
   push:
   pull_request:
