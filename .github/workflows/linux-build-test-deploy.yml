@@ -1,4 +1,4 @@
-name: CI/CD job orchestration
+name: Linux build-test-deploy
 on:
   push:
   pull_request:

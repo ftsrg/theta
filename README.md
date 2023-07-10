@@ -6,6 +6,10 @@
 ![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Linux/badge.svg)
 ![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Windows/badge.svg)
 ![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-macOS/badge.svg)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
+
 
 [![Windows build](https://github.com/ftsrg/theta/actions/workflows/build-win.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-win.yml)
 [![Linux build](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml)
