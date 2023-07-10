@@ -25,21 +25,23 @@ import java.util.Optional;
 
 public class ConditionalFinalsToAssumes extends ProcedurePass {
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		Optional<XcfaEdge> edgeOpt;
-		do {
-			edgeOpt = builder.getEdges().stream().filter(
-					xcfaEdge -> xcfaEdge.getTarget().isEndLoc() &&
-							xcfaEdge.getLabels().stream().anyMatch(stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel && stmt.getStmt() instanceof AssumeStmt) &&
-							xcfaEdge.getSource().getOutgoingEdges().size() == 2).findAny();
-			edgeOpt.ifPresent(builder::removeEdge);
-		} while (edgeOpt.isPresent());
-		return builder;
-	}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        Optional<XcfaEdge> edgeOpt;
+        do {
+            edgeOpt = builder.getEdges().stream().filter(
+                xcfaEdge -> xcfaEdge.getTarget().isEndLoc() &&
+                    xcfaEdge.getLabels().stream().anyMatch(
+                        stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel
+                            && stmt.getStmt() instanceof AssumeStmt) &&
+                    xcfaEdge.getSource().getOutgoingEdges().size() == 2).findAny();
+            edgeOpt.ifPresent(builder::removeEdge);
+        } while (edgeOpt.isPresent());
+        return builder;
+    }
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

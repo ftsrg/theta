@@ -38,7 +38,8 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     }
 
     @Override
-    protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
+    protected void installSolver(final Path installDir, final String version)
+        throws SmtLibSolverInstallerException {
         final var downloadUrl = URI.create(String.format(
             "https://github.com/bitwuzla/bitwuzla/archive/%s.zip",
             version
@@ -46,10 +47,9 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
 
-        try(final var inputStream = downloadUrl.toURL().openStream()) {
+        try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
 
@@ -57,10 +57,12 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
         logger.write(Logger.Level.MAINSTEP, "Starting compilation\n");
 
-        installDir.resolve("contrib").resolve("setup-cadical.sh").toFile().setExecutable(true, true);
+        installDir.resolve("contrib").resolve("setup-cadical.sh").toFile()
+            .setExecutable(true, true);
         executeCommand(installDir, "./contrib/setup-cadical.sh");
 
-        installDir.resolve("contrib").resolve("setup-btor2tools.sh").toFile().setExecutable(true, true);
+        installDir.resolve("contrib").resolve("setup-btor2tools.sh").toFile()
+            .setExecutable(true, true);
         executeCommand(installDir, "./contrib/setup-btor2tools.sh");
 
         installDir.resolve("contrib").resolve("setup-symfpu.sh").toFile().setExecutable(true, true);
@@ -69,7 +71,8 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
         installDir.resolve("configure.sh").toFile().setExecutable(true, true);
         executeCommand(installDir, "./configure.sh");
         executeCommand(installDir.resolve("build"), "make");
-        installDir.resolve("build").resolve("bin").resolve("bitwuzla").toFile().setExecutable(true, true);
+        installDir.resolve("build").resolve("bin").resolve("bitwuzla").toFile()
+            .setExecutable(true, true);
 
         logger.write(Logger.Level.MAINSTEP, "Finished compilation\n");
     }
@@ -88,8 +91,10 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("build").resolve("bin").resolve("bitwuzla");
+    public SolverFactory getSolverFactory(final Path installDir, final String version,
+        final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath = solverPath != null ? solverPath
+            : installDir.resolve("build").resolve("bin").resolve("bitwuzla");
         return BitwuzlaSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
@@ -98,7 +103,8 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
         return List.of("3ea759df11285e722b565c0b5c132dc0bb77066f");
     }
 
-    private void executeCommand(final Path workingPath, final String command) throws SmtLibSolverInstallerException {
+    private void executeCommand(final Path workingPath, final String command)
+        throws SmtLibSolverInstallerException {
         try {
             logger.write(Logger.Level.SUBSTEP, "Execute command: %s\n", command);
             final var process = new ProcessBuilder()
@@ -108,12 +114,13 @@ public class BitwuzlaSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start();
 
-            if(process.waitFor() != 0) {
-                throw new SmtLibSolverInstallerException(String.format("Error executing command: %s", command));
+            if (process.waitFor() != 0) {
+                throw new SmtLibSolverInstallerException(
+                    String.format("Error executing command: %s", command));
             }
-        }
-        catch (IOException | InterruptedException e) {
-            throw new SmtLibSolverInstallerException(String.format("Error executing command: %s", command), e);
+        } catch (IOException | InterruptedException e) {
+            throw new SmtLibSolverInstallerException(
+                String.format("Error executing command: %s", command), e);
         }
     }
 }

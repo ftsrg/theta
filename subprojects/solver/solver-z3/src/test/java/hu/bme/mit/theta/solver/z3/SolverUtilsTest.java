@@ -35,20 +35,20 @@ import hu.bme.mit.theta.solver.utils.SolverUtils;
 
 public class SolverUtilsTest {
 
-	@Test
-	public void testModels() {
-		// Arrange
-		final SolverFactory factory = Z3SolverFactory.getInstance();
+    @Test
+    public void testModels() {
+        // Arrange
+        final SolverFactory factory = Z3SolverFactory.getInstance();
 
-		final ConstDecl<IntType> cx = Const("x", Int());
-		final ConstDecl<IntType> cy = Const("y", Int());
-		final Expr<IntType> x = cx.getRef();
-		final Expr<IntType> y = cy.getRef();
-		final Expr<BoolType> expr = Gt(x, y);
-		final Stream<Valuation> models = SolverUtils.models(factory, expr);
+        final ConstDecl<IntType> cx = Const("x", Int());
+        final ConstDecl<IntType> cy = Const("y", Int());
+        final Expr<IntType> x = cx.getRef();
+        final Expr<IntType> y = cy.getRef();
+        final Expr<BoolType> expr = Gt(x, y);
+        final Stream<Valuation> models = SolverUtils.models(factory, expr);
 
-		// Act
-		models.limit(5).forEach(m -> Assert.assertTrue(((BoolLitExpr)(expr.eval(m))).getValue()));
-	}
+        // Act
+        models.limit(5).forEach(m -> Assert.assertTrue(((BoolLitExpr) (expr.eval(m))).getValue()));
+    }
 
 }

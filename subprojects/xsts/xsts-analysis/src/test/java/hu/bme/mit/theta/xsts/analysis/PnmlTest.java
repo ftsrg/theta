@@ -44,53 +44,58 @@ import static org.junit.Assert.assertTrue;
 @RunWith(value = Parameterized.class)
 public class PnmlTest {
 
-	@Parameterized.Parameter(value = 0)
-	public String filePath;
+    @Parameterized.Parameter(value = 0)
+    public String filePath;
 
-	@Parameterized.Parameter(value = 1)
-	public String targetMarking;
+    @Parameterized.Parameter(value = 1)
+    public String targetMarking;
 
-	@Parameterized.Parameter(value = 2)
-	public String initialMarking;
+    @Parameterized.Parameter(value = 2)
+    public String initialMarking;
 
-	@Parameterized.Parameter(value = 3)
-	public boolean safe;
+    @Parameterized.Parameter(value = 3)
+    public boolean safe;
 
-	@Parameterized.Parameter(value = 4)
-	public XstsConfigBuilder.Domain domain;
+    @Parameterized.Parameter(value = 4)
+    public XstsConfigBuilder.Domain domain;
 
-	@Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}")
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
 //				{ "src/test/resources/model/pnml/DPhil-10.pnml", "0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0", "0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1", true, XstsConfigBuilder.Domain.EXPL},
 
 //				{ "src/test/resources/model/pnml/DPhil-100.pnml", "0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0", "0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 1 1", true, XstsConfigBuilder.Domain.EXPL},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() throws IOException, XPathExpressionException, SAXException, ParserConfigurationException {
+    @Test
+    public void test()
+        throws IOException, XPathExpressionException, SAXException, ParserConfigurationException {
 
-		final Logger logger = new ConsoleLogger(Level.SUBSTEP);
+        final Logger logger = new ConsoleLogger(Level.SUBSTEP);
 
-		final PnmlNet pnmlNet = PnmlParser.parse(filePath,initialMarking);
+        final PnmlNet pnmlNet = PnmlParser.parse(filePath, initialMarking);
 
-		XSTS xsts;
-		try (InputStream propStream = new ByteArrayInputStream(("prop { " + targetMarking + " }").getBytes())) {
-			xsts = PnmlToXSTS.createXSTS(pnmlNet, propStream);
-		}
+        XSTS xsts;
+        try (InputStream propStream = new ByteArrayInputStream(
+            ("prop { " + targetMarking + " }").getBytes())) {
+            xsts = PnmlToXSTS.createXSTS(pnmlNet, propStream);
+        }
 
-		final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance(), Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
-		final SafetyResult<?, ?> status = configuration.check();
-		if (safe) {
-			assertTrue(status.isSafe());
-		} else {
-			assertTrue(status.isUnsafe());
-		}
+        final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain,
+            XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance(),
+            Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS)
+            .maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
+        final SafetyResult<?, ?> status = configuration.check();
+        if (safe) {
+            assertTrue(status.isSafe());
+        } else {
+            assertTrue(status.isUnsafe());
+        }
 
 
-	}
+    }
 
 }

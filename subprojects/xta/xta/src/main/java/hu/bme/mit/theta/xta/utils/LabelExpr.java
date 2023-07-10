@@ -29,76 +29,77 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xta.Label;
 
 public final class LabelExpr extends NullaryExpr<Type> {
-	private static final int HASH_SEED = 4703;
 
-	private volatile int hashCode = 0;
-	private volatile Type type = null;
+    private static final int HASH_SEED = 4703;
 
-	private final Label label;
+    private volatile int hashCode = 0;
+    private volatile Type type = null;
 
-	private LabelExpr(final Label label) {
-		this.label = checkNotNull(label);
-	}
+    private final Label label;
 
-	public static LabelExpr of(final Label label) {
-		return new LabelExpr(label);
-	}
+    private LabelExpr(final Label label) {
+        this.label = checkNotNull(label);
+    }
 
-	public Label getLabel() {
-		return label;
-	}
+    public static LabelExpr of(final Label label) {
+        return new LabelExpr(label);
+    }
 
-	@Override
-	public Type getType() {
-		Type result = type;
-		if (result == null) {
-			result = extractType(label.getParamTypes());
-			type = result;
-		}
-		return result;
-	}
+    public Label getLabel() {
+        return label;
+    }
 
-	@Override
-	public LitExpr<Type> eval(final Valuation val) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public Type getType() {
+        Type result = type;
+        if (result == null) {
+            result = extractType(label.getParamTypes());
+            type = result;
+        }
+        return result;
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + label.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public LitExpr<Type> eval(final Valuation val) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof LabelExpr) {
-			final LabelExpr that = (LabelExpr) obj;
-			return this.label.equals(that.label);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + label.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return label.getName();
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof LabelExpr) {
+            final LabelExpr that = (LabelExpr) obj;
+            return this.label.equals(that.label);
+        } else {
+            return false;
+        }
+    }
 
-	private Type extractType(final List<? extends Type> types) {
-		if (types.isEmpty()) {
-			return ChanType.getInstance();
-		} else {
-			final Type head = head(types);
-			final List<? extends Type> tail = tail(types);
-			return Array(head, extractType(tail));
-		}
-	}
+    @Override
+    public String toString() {
+        return label.getName();
+    }
+
+    private Type extractType(final List<? extends Type> types) {
+        if (types.isEmpty()) {
+            return ChanType.getInstance();
+        } else {
+            final Type head = head(types);
+            final List<? extends Type> tail = tail(types);
+            return Array(head, extractType(tail));
+        }
+    }
 
 }

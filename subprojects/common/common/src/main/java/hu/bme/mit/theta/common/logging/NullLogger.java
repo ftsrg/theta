@@ -17,20 +17,21 @@ package hu.bme.mit.theta.common.logging;
 
 public final class NullLogger implements Logger {
 
-	private static final class LazyHolder {
-		private static final NullLogger INSTANCE = new NullLogger();
-	}
+    private static final class LazyHolder {
 
-	private NullLogger() {
-	}
+        private static final NullLogger INSTANCE = new NullLogger();
+    }
 
-	public static NullLogger getInstance() {
-		return LazyHolder.INSTANCE;
-	}
+    private NullLogger() {
+    }
 
-	@Override
-	public Logger write(final Level level, final String pattern, final Object... objects) {
-		return this;
-	}
+    public static NullLogger getInstance() {
+        return LazyHolder.INSTANCE;
+    }
+
+    @Override
+    public Logger write(final Level level, final String pattern, final Object... objects) {
+        return this;
+    }
 
 }

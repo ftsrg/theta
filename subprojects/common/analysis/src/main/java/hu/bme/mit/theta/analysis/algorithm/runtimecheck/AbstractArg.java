@@ -30,34 +30,40 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * An abstract ARG is a normal ARG combined with its precision.
- * It is used to check is the analysis makes any refinement progress or not by the {@link ArgCexCheckHandler}
+ * An abstract ARG is a normal ARG combined with its precision. It is used to check is the analysis
+ * makes any refinement progress or not by the {@link ArgCexCheckHandler}
  */
 public class AbstractArg<S extends State, A extends Action, P extends Prec> {
-	private final Collection<State> states;
-	private final List<Optional<ArgEdge<S, A>>> inEdges;
-	private final P prec;
 
-	public AbstractArg(final ARG<S, A> arg, P prec) {
-		inEdges = arg.getNodes().map(ArgNode::getInEdge).collect(Collectors.toList());
-		states = arg.getNodes().map(ArgNode::getState).collect(Collectors.toList());
-		this.prec = prec;
-	}
+    private final Collection<State> states;
+    private final List<Optional<ArgEdge<S, A>>> inEdges;
+    private final P prec;
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		AbstractArg<S, A, P> that = (AbstractArg<S, A, P>) o;
-		// return (states.equals(that.states) && prec.equals(that.prec));
-		return (states.equals(that.states) && prec.equals(that.prec) && inEdges.equals(that.inEdges));
-	}
+    public AbstractArg(final ARG<S, A> arg, P prec) {
+        inEdges = arg.getNodes().map(ArgNode::getInEdge).collect(Collectors.toList());
+        states = arg.getNodes().map(ArgNode::getState).collect(Collectors.toList());
+        this.prec = prec;
+    }
 
-	@Override
-	public int hashCode() {
-		// return Objects.hash(states, prec);
-		return Objects.hash(states, prec, inEdges);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        AbstractArg<S, A, P> that = (AbstractArg<S, A, P>) o;
+        // return (states.equals(that.states) && prec.equals(that.prec));
+        return (states.equals(that.states) && prec.equals(that.prec) && inEdges.equals(
+            that.inEdges));
+    }
+
+    @Override
+    public int hashCode() {
+        // return Objects.hash(states, prec);
+        return Objects.hash(states, prec, inEdges);
+    }
 
 }
 

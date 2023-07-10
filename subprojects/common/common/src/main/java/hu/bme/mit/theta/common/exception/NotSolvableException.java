@@ -17,7 +17,8 @@
 package hu.bme.mit.theta.common.exception;
 
 public class NotSolvableException extends RuntimeException {
-	public NotSolvableException() {
-		super("Task is not solvable with this configuration!");
-	}
+
+    public NotSolvableException() {
+        super("Task is not solvable with this configuration!");
+    }
 }

@@ -26,29 +26,32 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 
-final class XtaTransFunc<S extends State, P extends Prec> implements TransFunc<XtaState<S>, XtaAction, P> {
+final class XtaTransFunc<S extends State, P extends Prec> implements
+    TransFunc<XtaState<S>, XtaAction, P> {
 
-	private final TransFunc<S, ? super XtaAction, ? super P> transFunc;
+    private final TransFunc<S, ? super XtaAction, ? super P> transFunc;
 
-	private XtaTransFunc(final TransFunc<S, ? super XtaAction, ? super P> transFunc) {
-		this.transFunc = checkNotNull(transFunc);
-	}
+    private XtaTransFunc(final TransFunc<S, ? super XtaAction, ? super P> transFunc) {
+        this.transFunc = checkNotNull(transFunc);
+    }
 
-	public static <S extends State, P extends Prec> XtaTransFunc<S, P> create(
-			final TransFunc<S, ? super XtaAction, ? super P> transferFunc) {
-		return new XtaTransFunc<>(transferFunc);
-	}
+    public static <S extends State, P extends Prec> XtaTransFunc<S, P> create(
+        final TransFunc<S, ? super XtaAction, ? super P> transferFunc) {
+        return new XtaTransFunc<>(transferFunc);
+    }
 
-	@Override
-	public Collection<XtaState<S>> getSuccStates(final XtaState<S> state, final XtaAction action, final P prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
-		checkArgument(state.getLocs().equals(action.getSourceLocs()));
-		final List<Loc> succLocs = action.getTargetLocs();
-		final S subState = state.getState();
-		final Collection<? extends S> succSubStates = transFunc.getSuccStates(subState, action, prec);
-		return XtaState.collectionOf(succLocs, succSubStates);
-	}
+    @Override
+    public Collection<XtaState<S>> getSuccStates(final XtaState<S> state, final XtaAction action,
+        final P prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
+        checkArgument(state.getLocs().equals(action.getSourceLocs()));
+        final List<Loc> succLocs = action.getTargetLocs();
+        final S subState = state.getState();
+        final Collection<? extends S> succSubStates = transFunc.getSuccStates(subState, action,
+            prec);
+        return XtaState.collectionOf(succLocs, succSubStates);
+    }
 
 }

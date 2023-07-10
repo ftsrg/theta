@@ -26,66 +26,67 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 
 public final class RangeType implements Type {
-	private static final int HASH_SEED = 5441;
-	private volatile int hashCode = 0;
 
-	private final int lower;
-	private final int upper;
+    private static final int HASH_SEED = 5441;
+    private volatile int hashCode = 0;
 
-	private RangeType(final int lower, final int upper) {
-		checkArgument(lower <= upper);
-		this.lower = lower;
-		this.upper = upper;
-	}
+    private final int lower;
+    private final int upper;
 
-	public static RangeType Range(final int lower, final int upper) {
-		return new RangeType(lower, upper);
-	}
+    private RangeType(final int lower, final int upper) {
+        checkArgument(lower <= upper);
+        this.lower = lower;
+        this.upper = upper;
+    }
 
-	public IntLitExpr Int(final int value) {
-		checkArgument(value >= lower && value <= upper);
-		return IntExprs.Int(value);
-	}
+    public static RangeType Range(final int lower, final int upper) {
+        return new RangeType(lower, upper);
+    }
 
-	public Stream<IntLitExpr> values() {
-		return IntStream.rangeClosed(lower, upper).mapToObj(IntExprs::Int);
-	}
+    public IntLitExpr Int(final int value) {
+        checkArgument(value >= lower && value <= upper);
+        return IntExprs.Int(value);
+    }
 
-	public int getLower() {
-		return lower;
-	}
+    public Stream<IntLitExpr> values() {
+        return IntStream.rangeClosed(lower, upper).mapToObj(IntExprs::Int);
+    }
 
-	public int getUpper() {
-		return upper;
-	}
+    public int getLower() {
+        return lower;
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + lower;
-			result = 31 * result + upper;
-			hashCode = result;
-		}
-		return result;
-	}
+    public int getUpper() {
+        return upper;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RangeType) {
-			final RangeType that = (RangeType) obj;
-			return this.lower == that.lower && this.upper == that.upper;
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + lower;
+            result = 31 * result + upper;
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("Range").add(lower).add(upper).toString();
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof RangeType) {
+            final RangeType that = (RangeType) obj;
+            return this.lower == that.lower && this.upper == that.upper;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("Range").add(lower).add(upper).toString();
+    }
 
 }

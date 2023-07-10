@@ -25,19 +25,19 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.IteratorDeclContext;
 
 final class XtaIteratorSymbol implements Symbol {
 
-	private final String name;
-	@SuppressWarnings("unused")
-	private final XtaType type;
+    private final String name;
+    @SuppressWarnings("unused")
+    private final XtaType type;
 
-	public XtaIteratorSymbol(final Scope scope, final IteratorDeclContext context) {
-		checkNotNull(context);
-		name = context.fId.getText();
-		type = new XtaType(scope, context.fType, Collections.emptyList());
-	}
+    public XtaIteratorSymbol(final Scope scope, final IteratorDeclContext context) {
+        checkNotNull(context);
+        name = context.fId.getText();
+        type = new XtaType(scope, context.fType, Collections.emptyList());
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
 }

@@ -20,36 +20,36 @@ package hu.bme.mit.theta.sts.aiger.elements;
  */
 public final class AigerWire {
 
-	private AigerNode source;
-	private final AigerNode target;
-	private boolean isPonated;
+    private AigerNode source;
+    private final AigerNode target;
+    private boolean isPonated;
 
-	public AigerWire(final AigerNode source, final AigerNode target, final boolean isPonated) {
-		this.source = source;
-		this.target = target;
-		this.isPonated = isPonated;
-	}
+    public AigerWire(final AigerNode source, final AigerNode target, final boolean isPonated) {
+        this.source = source;
+        this.target = target;
+        this.isPonated = isPonated;
+    }
 
-	public AigerNode getSource() {
-		return source;
-	}
+    public AigerNode getSource() {
+        return source;
+    }
 
-	public AigerNode getTarget() {
-		return target;
-	}
+    public AigerNode getTarget() {
+        return target;
+    }
 
-	public boolean isPonated() {
-		return isPonated;
-	}
+    public boolean isPonated() {
+        return isPonated;
+    }
 
-	public void modifySource(final AigerNode node) {
-		this.source.getOutWires().remove(this);
-		this.source = node;
-		node.getOutWires().add(this);
-	}
+    public void modifySource(final AigerNode node) {
+        this.source.getOutWires().remove(this);
+        this.source = node;
+        node.getOutWires().add(this);
+    }
 
-	public void invert() {
-		isPonated = !isPonated;
-	}
+    public void invert() {
+        isPonated = !isPonated;
+    }
 
 }

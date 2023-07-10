@@ -42,21 +42,23 @@ public class TypeDslTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-                {"int", IntExprs.Int()},
+            {"int", IntExprs.Int()},
 
-                {"rat", RatExprs.Rat()},
+            {"rat", RatExprs.Rat()},
 
-                {"bool", BoolExprs.Bool()},
+            {"bool", BoolExprs.Bool()},
 
-                {"[int] -> bool", ArrayExprs.Array(IntExprs.Int(), BoolExprs.Bool())},
+            {"[int] -> bool", ArrayExprs.Array(IntExprs.Int(), BoolExprs.Bool())},
 
-                {"[bool] -> rat", ArrayExprs.Array(BoolExprs.Bool(), RatExprs.Rat())},
+            {"[bool] -> rat", ArrayExprs.Array(BoolExprs.Bool(), RatExprs.Rat())},
 
-                {"[bool] -> [int] -> rat",
-                        ArrayExprs.Array(BoolExprs.Bool(), ArrayExprs.Array(IntExprs.Int(), RatExprs.Rat()))},
+            {"[bool] -> [int] -> rat",
+                ArrayExprs.Array(BoolExprs.Bool(),
+                    ArrayExprs.Array(IntExprs.Int(), RatExprs.Rat()))},
 
-                {"[[bool] -> int] -> rat",
-                        ArrayExprs.Array(ArrayExprs.Array(BoolExprs.Bool(), IntExprs.Int()), RatExprs.Rat())},
+            {"[[bool] -> int] -> rat",
+                ArrayExprs.Array(ArrayExprs.Array(BoolExprs.Bool(), IntExprs.Int()),
+                    RatExprs.Rat())},
 
         });
     }

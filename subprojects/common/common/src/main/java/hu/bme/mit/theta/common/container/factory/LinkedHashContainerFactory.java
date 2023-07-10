@@ -17,25 +17,26 @@ package hu.bme.mit.theta.common.container.factory;
 
 import java.util.*;
 
-public class LinkedHashContainerFactory implements ContainerFactory{
+public class LinkedHashContainerFactory implements ContainerFactory {
+
     @Override
     public <K, V> Map<K, V> createMap() {
-        return new LinkedHashMap<K,V>();
+        return new LinkedHashMap<K, V>();
     }
 
     @Override
     public <K, V> Map<K, V> createMap(int initialCapacity) {
-        return new LinkedHashMap<K,V>(initialCapacity);
+        return new LinkedHashMap<K, V>(initialCapacity);
     }
 
     @Override
     public <K, V> Map<K, V> createMap(int initialCapacity, float loadFactor) {
-        return new LinkedHashMap<K,V>(initialCapacity,loadFactor);
+        return new LinkedHashMap<K, V>(initialCapacity, loadFactor);
     }
 
     @Override
     public <K, V> Map<K, V> createMap(Map<? extends K, ? extends V> m) {
-        return new LinkedHashMap<K,V>(m);
+        return new LinkedHashMap<K, V>(m);
     }
 
     @Override
@@ -50,7 +51,7 @@ public class LinkedHashContainerFactory implements ContainerFactory{
 
     @Override
     public <E> Set<E> createSet(int initialCapacity, float loadFactor) {
-        return new LinkedHashSet<E>(initialCapacity,loadFactor);
+        return new LinkedHashSet<E>(initialCapacity, loadFactor);
     }
 
     @Override

@@ -18,18 +18,19 @@ package hu.bme.mit.theta.xta.analysis.zone.lu;
 import hu.bme.mit.theta.analysis.PartialOrd;
 
 public final class LuZoneOrd implements PartialOrd<LuZoneState> {
-	private static final LuZoneOrd INSTANCE = new LuZoneOrd();
 
-	private LuZoneOrd() {
-	}
+    private static final LuZoneOrd INSTANCE = new LuZoneOrd();
 
-	public static LuZoneOrd getInstance() {
-		return INSTANCE;
-	}
+    private LuZoneOrd() {
+    }
 
-	@Override
-	public boolean isLeq(final LuZoneState state1, final LuZoneState state2) {
-		return state1.isLeq(state2);
-	}
+    public static LuZoneOrd getInstance() {
+        return INSTANCE;
+    }
+
+    @Override
+    public boolean isLeq(final LuZoneState state1, final LuZoneState state2) {
+        return state1.isLeq(state2);
+    }
 
 }

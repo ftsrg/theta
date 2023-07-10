@@ -25,9 +25,9 @@ import hu.bme.mit.theta.analysis.Trace;
  */
 public interface PrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation> {
 
-	/**
-	 * Refine a precision based on a trace and a refutation.
-	 */
-	P refine(P prec, Trace<S, A> trace, R refutation);
+    /**
+     * Refine a precision based on a trace and a refutation.
+     */
+    P refine(P prec, Trace<S, A> trace, R refutation);
 
 }

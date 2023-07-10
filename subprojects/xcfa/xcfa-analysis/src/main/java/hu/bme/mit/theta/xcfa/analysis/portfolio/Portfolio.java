@@ -17,11 +17,10 @@
 package hu.bme.mit.theta.xcfa.analysis.portfolio;
 
 /**
- * Possible portfolios to use
- * Extend with new values when new portfolio are implemented
+ * Possible portfolios to use Extend with new values when new portfolio are implemented
  */
 public enum Portfolio {
-	NONE,
-	SEQUENTIAL,
-	COMPLEX
+    NONE,
+    SEQUENTIAL,
+    COMPLEX
 }

@@ -27,6 +27,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvAndExpr extends MultiaryExpr<BvType, BvType> {
+
     private static final int HASH_SEED = 9125;
     private static final String OPERATOR_LABEL = "bvand";
 

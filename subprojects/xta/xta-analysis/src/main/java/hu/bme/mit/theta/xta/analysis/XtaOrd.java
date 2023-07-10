@@ -22,21 +22,22 @@ import hu.bme.mit.theta.analysis.State;
 
 final class XtaOrd<S extends State> implements PartialOrd<XtaState<S>> {
 
-	private final PartialOrd<S> partialOrd;
+    private final PartialOrd<S> partialOrd;
 
-	private XtaOrd(final PartialOrd<S> partialOrd) {
-		this.partialOrd = checkNotNull(partialOrd);
-	}
+    private XtaOrd(final PartialOrd<S> partialOrd) {
+        this.partialOrd = checkNotNull(partialOrd);
+    }
 
-	public static <S extends State> XtaOrd<S> create(final PartialOrd<S> partialOrd) {
-		return new XtaOrd<>(partialOrd);
-	}
+    public static <S extends State> XtaOrd<S> create(final PartialOrd<S> partialOrd) {
+        return new XtaOrd<>(partialOrd);
+    }
 
-	@Override
-	public boolean isLeq(final XtaState<S> state1, final XtaState<S> state2) {
-		checkNotNull(state1);
-		checkNotNull(state2);
-		return state1.getLocs().equals(state2.getLocs()) && partialOrd.isLeq(state1.getState(), state2.getState());
-	}
+    @Override
+    public boolean isLeq(final XtaState<S> state1, final XtaState<S> state2) {
+        checkNotNull(state1);
+        checkNotNull(state2);
+        return state1.getLocs().equals(state2.getLocs()) && partialOrd.isLeq(state1.getState(),
+            state2.getState());
+    }
 
 }

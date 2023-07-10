@@ -22,6 +22,7 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import java.nio.file.Path;
 
 public class BitwuzlaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
+
     private BitwuzlaSmtLibSolverFactory(Path solverPath, String[] args) {
         super(solverPath, args);
     }

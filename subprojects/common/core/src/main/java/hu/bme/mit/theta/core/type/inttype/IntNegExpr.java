@@ -24,62 +24,62 @@ import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 public final class IntNegExpr extends NegExpr<IntType> {
 
-	private static final int HASH_SEED = 3359;
-	private static final String OPERATOR_LABEL = "-";
+    private static final int HASH_SEED = 3359;
+    private static final String OPERATOR_LABEL = "-";
 
-	private IntNegExpr(final Expr<IntType> op) {
-		super(op);
-	}
+    private IntNegExpr(final Expr<IntType> op) {
+        super(op);
+    }
 
-	public static IntNegExpr of(final Expr<IntType> op) {
-		return new IntNegExpr(op);
-	}
+    public static IntNegExpr of(final Expr<IntType> op) {
+        return new IntNegExpr(op);
+    }
 
-	public static IntNegExpr create(final Expr<?> op) {
-		final Expr<IntType> newOp = cast(op, Int());
-		return IntNegExpr.of(newOp);
-	}
+    public static IntNegExpr create(final Expr<?> op) {
+        final Expr<IntType> newOp = cast(op, Int());
+        return IntNegExpr.of(newOp);
+    }
 
-	@Override
-	public IntType getType() {
-		return Int();
-	}
+    @Override
+    public IntType getType() {
+        return Int();
+    }
 
-	@Override
-	public IntLitExpr eval(final Valuation val) {
-		final IntLitExpr opVal = (IntLitExpr) getOp().eval(val);
-		return opVal.neg();
-	}
+    @Override
+    public IntLitExpr eval(final Valuation val) {
+        final IntLitExpr opVal = (IntLitExpr) getOp().eval(val);
+        return opVal.neg();
+    }
 
-	@Override
-	public IntNegExpr with(final Expr<IntType> op) {
-		if (op == getOp()) {
-			return this;
-		} else {
-			return IntNegExpr.of(op);
-		}
-	}
+    @Override
+    public IntNegExpr with(final Expr<IntType> op) {
+        if (op == getOp()) {
+            return this;
+        } else {
+            return IntNegExpr.of(op);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof IntNegExpr) {
-			final IntNegExpr that = (IntNegExpr) obj;
-			return this.getOp().equals(that.getOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof IntNegExpr) {
+            final IntNegExpr that = (IntNegExpr) obj;
+            return this.getOp().equals(that.getOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

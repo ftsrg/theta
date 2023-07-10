@@ -20,14 +20,14 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.FunctionDeclContext;
 
 final class XtaFunctionSymbol implements Symbol {
 
-	public XtaFunctionSymbol(final FunctionDeclContext context) {
-		throw new UnsupportedOperationException();
-	}
+    public XtaFunctionSymbol(final FunctionDeclContext context) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
+    @Override
+    public String getName() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("TODO: auto-generated method stub");
+    }
 
 }

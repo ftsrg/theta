@@ -20,11 +20,11 @@ package hu.bme.mit.theta.analysis;
  */
 public interface State {
 
-	/**
-	 * Checks if the state is a bottom element.
-	 *
-	 * @return
-	 */
-	boolean isBottom();
+    /**
+     * Checks if the state is a bottom element.
+     *
+     * @return
+     */
+    boolean isBottom();
 
 }

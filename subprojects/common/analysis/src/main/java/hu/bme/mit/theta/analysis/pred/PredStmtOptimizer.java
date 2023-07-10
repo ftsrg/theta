@@ -22,18 +22,20 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 
 public class PredStmtOptimizer implements StmtOptimizer<PredState> {
 
-	private PredStmtOptimizer(){}
+    private PredStmtOptimizer() {
+    }
 
-	private static class LazyHolder {
-		static final PredStmtOptimizer INSTANCE = new PredStmtOptimizer();
-	}
+    private static class LazyHolder {
 
-	public static PredStmtOptimizer getInstance() {
-		return PredStmtOptimizer.LazyHolder.INSTANCE;
-	}
+        static final PredStmtOptimizer INSTANCE = new PredStmtOptimizer();
+    }
 
-	@Override
-	public Stmt optimizeStmt(final PredState state, final Stmt stmt){
-		return StmtSimplifier.simplifyStmt(ImmutableValuation.empty(),stmt);
-	}
+    public static PredStmtOptimizer getInstance() {
+        return PredStmtOptimizer.LazyHolder.INSTANCE;
+    }
+
+    @Override
+    public Stmt optimizeStmt(final PredState state, final Stmt stmt) {
+        return StmtSimplifier.simplifyStmt(ImmutableValuation.empty(), stmt);
+    }
 }

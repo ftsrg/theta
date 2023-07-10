@@ -28,6 +28,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 import java.nio.file.Path;
 
 public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
+
     private final Path solverPath;
     private final String[] args;
 
@@ -47,7 +48,8 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, false);
+        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
+            false);
     }
 
     @Override
@@ -57,7 +59,8 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, true);
+        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
+            true);
     }
 
     @Override
@@ -67,7 +70,8 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
-        return new SMTInterpolSmtLibItpSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+        return new SMTInterpolSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
+            solverBinary);
     }
 
     private Path getJavaBinary() {
@@ -78,7 +82,7 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var solverArgs = new String[args.length + 2];
         solverArgs[0] = "-jar";
         solverArgs[1] = solverPath.toAbsolutePath().toString();
-        for(var i = 0; i < args.length; i++) {
+        for (var i = 0; i < args.length; i++) {
             solverArgs[i + 2] = args[i];
         }
         return solverArgs;

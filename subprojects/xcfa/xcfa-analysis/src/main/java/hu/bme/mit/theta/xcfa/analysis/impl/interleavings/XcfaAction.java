@@ -28,59 +28,61 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XcfaAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction {
-	private final Integer process;
-	private final XcfaEdge edge;
-	private final List<XcfaLabel> labels;
-	private final XcfaLocation source;
-	private final XcfaLocation target;
 
-	protected XcfaAction(final Integer process, final XcfaEdge edge, final List<XcfaLabel> labels) {
-		this.process = checkNotNull(process);
-		this.edge = checkNotNull(edge);
-		this.source = checkNotNull(edge.getSource());
-		this.target = checkNotNull(edge.getTarget());
-		this.labels = checkNotNull(labels);
-	}
+    private final Integer process;
+    private final XcfaEdge edge;
+    private final List<XcfaLabel> labels;
+    private final XcfaLocation source;
+    private final XcfaLocation target;
 
-	public static XcfaAction create(final Integer process, final XcfaEdge edge) {
-		return new XcfaAction(process, edge, edge.getLabels());
-	}
+    protected XcfaAction(final Integer process, final XcfaEdge edge, final List<XcfaLabel> labels) {
+        this.process = checkNotNull(process);
+        this.edge = checkNotNull(edge);
+        this.source = checkNotNull(edge.getSource());
+        this.target = checkNotNull(edge.getTarget());
+        this.labels = checkNotNull(labels);
+    }
 
-	public XcfaEdge getEdge() {
-		return edge;
-	}
+    public static XcfaAction create(final Integer process, final XcfaEdge edge) {
+        return new XcfaAction(process, edge, edge.getLabels());
+    }
 
-	public XcfaLocation getSource() {
-		return source;
-	}
+    public XcfaEdge getEdge() {
+        return edge;
+    }
 
-	public XcfaLocation getTarget() {
-		return target;
-	}
+    public XcfaLocation getSource() {
+        return source;
+    }
 
-	@Override
-	public List<Stmt> getStmts() {
-		return labels.stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
-	}
+    public XcfaLocation getTarget() {
+        return target;
+    }
 
-	public List<XcfaLabel> getLabels() {
-		return labels;
-	}
+    @Override
+    public List<Stmt> getStmts() {
+        return labels.stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(labels).toString();
-	}
+    public List<XcfaLabel> getLabels() {
+        return labels;
+    }
 
-	public boolean touchesGlobal() {
-		return labels.stream().anyMatch(label -> LabelUtils.isGlobal(label, source.getParent().getParent().getParent()));
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(labels).toString();
+    }
 
-	public Integer getProcess() {
-		return process;
-	}
+    public boolean touchesGlobal() {
+        return labels.stream().anyMatch(
+            label -> LabelUtils.isGlobal(label, source.getParent().getParent().getParent()));
+    }
 
-	public XcfaAction withLabels(final List<XcfaLabel> stmts) {
-		return new XcfaAction(process, edge, stmts);
-	}
+    public Integer getProcess() {
+        return process;
+    }
+
+    public XcfaAction withLabels(final List<XcfaLabel> stmts) {
+        return new XcfaAction(process, edge, stmts);
+    }
 }

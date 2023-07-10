@@ -23,8 +23,8 @@ import java.util.Set;
 
 public class PrecStub implements Prec {
 
-	@Override
-	public Collection<VarDecl<?>> getUsedVars() {
-		return Set.of();
-	}
+    @Override
+    public Collection<VarDecl<?>> getUsedVars() {
+        return Set.of();
+    }
 }

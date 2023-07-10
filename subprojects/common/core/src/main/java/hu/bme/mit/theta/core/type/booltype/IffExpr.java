@@ -24,75 +24,76 @@ import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 
 public final class IffExpr extends EqExpr<BoolType> {
 
-	private static final int HASH_SEED = 67;
+    private static final int HASH_SEED = 67;
 
-	private static final String OPERATOR_LABEL = "iff";
+    private static final String OPERATOR_LABEL = "iff";
 
-	private IffExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    private IffExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static IffExpr of(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
-		return new IffExpr(leftOp, rightOp);
-	}
+    public static IffExpr of(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+        return new IffExpr(leftOp, rightOp);
+    }
 
-	public static IffExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Expr<BoolType> newLeftOp = cast(leftOp, Bool());
-		final Expr<BoolType> newRightOp = cast(rightOp, Bool());
-		return IffExpr.of(newLeftOp, newRightOp);
-	}
+    public static IffExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+        final Expr<BoolType> newLeftOp = cast(leftOp, Bool());
+        final Expr<BoolType> newRightOp = cast(rightOp, Bool());
+        return IffExpr.of(newLeftOp, newRightOp);
+    }
 
-	@Override
-	public BoolType getType() {
-		return Bool();
-	}
+    @Override
+    public BoolType getType() {
+        return Bool();
+    }
 
-	@Override
-	public BoolLitExpr eval(final Valuation val) {
-		final BoolLitExpr leftOpVal = (BoolLitExpr) getLeftOp().eval(val);
-		final BoolLitExpr rightOpVal = (BoolLitExpr) getRightOp().eval(val);
-		return Bool(leftOpVal.getValue() == rightOpVal.getValue());
-	}
+    @Override
+    public BoolLitExpr eval(final Valuation val) {
+        final BoolLitExpr leftOpVal = (BoolLitExpr) getLeftOp().eval(val);
+        final BoolLitExpr rightOpVal = (BoolLitExpr) getRightOp().eval(val);
+        return Bool(leftOpVal.getValue() == rightOpVal.getValue());
+    }
 
-	@Override
-	public IffExpr with(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return new IffExpr(leftOp, rightOp);
-		}
-	}
+    @Override
+    public IffExpr with(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+            return this;
+        } else {
+            return new IffExpr(leftOp, rightOp);
+        }
+    }
 
-	@Override
-	public IffExpr withLeftOp(final Expr<BoolType> leftOp) {
-		return with(leftOp, getRightOp());
-	}
+    @Override
+    public IffExpr withLeftOp(final Expr<BoolType> leftOp) {
+        return with(leftOp, getRightOp());
+    }
 
-	@Override
-	public IffExpr withRightOp(final Expr<BoolType> rightOp) {
-		return with(getLeftOp(), rightOp);
-	}
+    @Override
+    public IffExpr withRightOp(final Expr<BoolType> rightOp) {
+        return with(getLeftOp(), rightOp);
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof IffExpr) {
-			final IffExpr that = (IffExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof IffExpr) {
+            final IffExpr that = (IffExpr) obj;
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                .equals(that.getRightOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

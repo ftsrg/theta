@@ -20,9 +20,9 @@ import hu.bme.mit.theta.analysis.State;
 
 public class PartialOrdStub implements PartialOrd<State> {
 
-	@Override
-	public boolean isLeq(final State state1, final State state2) {
-		return state1.equals(state2);
-	}
+    @Override
+    public boolean isLeq(final State state1, final State state2) {
+        return state1.equals(state2);
+    }
 
 }

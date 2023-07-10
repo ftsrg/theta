@@ -24,16 +24,18 @@ import java.util.List;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.MultiaryExpr;
 
-public abstract class AddExpr<ExprType extends Additive<ExprType>> extends MultiaryExpr<ExprType, ExprType> {
+public abstract class AddExpr<ExprType extends Additive<ExprType>> extends
+    MultiaryExpr<ExprType, ExprType> {
 
-	protected AddExpr(final Iterable<? extends Expr<ExprType>> ops) {
-		super(ops);
-	}
+    protected AddExpr(final Iterable<? extends Expr<ExprType>> ops) {
+        super(ops);
+    }
 
-	public static <ExprType extends Additive<ExprType>> AddExpr<?> create2(final List<? extends Expr<?>> ops) {
-		checkArgument(!ops.isEmpty());
-		@SuppressWarnings("unchecked") final ExprType type = (ExprType) ops.get(0).getType();
-		return type.Add(ops.stream().map(op -> cast(op, type)).collect(toImmutableList()));
-	}
+    public static <ExprType extends Additive<ExprType>> AddExpr<?> create2(
+        final List<? extends Expr<?>> ops) {
+        checkArgument(!ops.isEmpty());
+        @SuppressWarnings("unchecked") final ExprType type = (ExprType) ops.get(0).getType();
+        return type.Add(ops.stream().map(op -> cast(op, type)).collect(toImmutableList()));
+    }
 
 }

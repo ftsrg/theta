@@ -31,25 +31,26 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.SpecContext;
 
 public final class CfaDslManager {
 
-	private CfaDslManager() {
-	}
+    private CfaDslManager() {
+    }
 
-	public static CFA createCfa(final String inputString) throws IOException {
-		final InputStream stream = new ByteArrayInputStream(inputString.getBytes(StandardCharsets.UTF_8.name()));
-		return createCfa(stream);
-	}
+    public static CFA createCfa(final String inputString) throws IOException {
+        final InputStream stream = new ByteArrayInputStream(
+            inputString.getBytes(StandardCharsets.UTF_8.name()));
+        return createCfa(stream);
+    }
 
-	public static CFA createCfa(final InputStream inputStream) throws IOException {
-		final CharStream input = CharStreams.fromStream(inputStream);
+    public static CFA createCfa(final InputStream inputStream) throws IOException {
+        final CharStream input = CharStreams.fromStream(inputStream);
 
-		final CfaDslLexer lexer = new CfaDslLexer(input);
-		final CommonTokenStream tokens = new CommonTokenStream(lexer);
-		final CfaDslParser parser = new CfaDslParser(tokens);
+        final CfaDslLexer lexer = new CfaDslLexer(input);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final CfaDslParser parser = new CfaDslParser(tokens);
 
-		final SpecContext context = parser.spec();
-		final CfaSpecification specification = CfaSpecification.fromContext(context);
-		final CFA cfa = specification.instantiate();
-		return cfa;
-	}
+        final SpecContext context = parser.spec();
+        final CfaSpecification specification = CfaSpecification.fromContext(context);
+        final CFA cfa = specification.instantiate();
+        return cfa;
+    }
 
 }

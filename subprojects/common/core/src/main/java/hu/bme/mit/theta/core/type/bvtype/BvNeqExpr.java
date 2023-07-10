@@ -26,6 +26,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvNeqExpr extends NeqExpr<BvType> {
+
     private static final int HASH_SEED = 2488;
     private static final String OPERATOR_LABEL = "/=";
 
@@ -82,7 +83,8 @@ public final class BvNeqExpr extends NeqExpr<BvType> {
             return true;
         } else if (obj instanceof BvNeqExpr) {
             final BvNeqExpr that = (BvNeqExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                .equals(that.getRightOp());
         } else {
             return false;
         }

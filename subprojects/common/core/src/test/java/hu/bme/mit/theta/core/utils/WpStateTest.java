@@ -40,68 +40,68 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 @RunWith(Parameterized.class)
 public final class WpStateTest {
 
-	private static final VarDecl<IntType> VX = Var("x", Int());
-	private static final VarDecl<IntType> VY = Var("y", Int());
+    private static final VarDecl<IntType> VX = Var("x", Int());
+    private static final VarDecl<IntType> VY = Var("y", Int());
 
-	private static final Expr<IntType> X = VX.getRef();
-	private static final Expr<IntType> Y = VY.getRef();
+    private static final Expr<IntType> X = VX.getRef();
+    private static final Expr<IntType> Y = VY.getRef();
 
-	private static final Expr<BoolType> TRUE = True();
-	private static final Expr<BoolType> GEQ_X_1 = Geq(X, Int(1));
-	private static final Expr<BoolType> GEQ_1_X = Geq(Int(1), X);
-	private static final Expr<BoolType> GEQ_1_Y = Geq(Int(1), Y);
-	private static final Expr<BoolType> GEQ_X_Y = Geq(X, Y);
+    private static final Expr<BoolType> TRUE = True();
+    private static final Expr<BoolType> GEQ_X_1 = Geq(X, Int(1));
+    private static final Expr<BoolType> GEQ_1_X = Geq(Int(1), X);
+    private static final Expr<BoolType> GEQ_1_Y = Geq(Int(1), Y);
+    private static final Expr<BoolType> GEQ_X_Y = Geq(X, Y);
 
-	private static final Stmt ASSIGN_X_1 = Assign(VX, Int(1));
-	private static final Stmt ASSIGN_Y_X = Assign(VY, X);
+    private static final Stmt ASSIGN_X_1 = Assign(VX, Int(1));
+    private static final Stmt ASSIGN_Y_X = Assign(VY, X);
 
-	@Parameter(0)
-	public Expr<BoolType> expr;
+    @Parameter(0)
+    public Expr<BoolType> expr;
 
-	@Parameter(1)
-	public Stmt stmt;
+    @Parameter(1)
+    public Stmt stmt;
 
-	@Parameter(2)
-	public Expr<BoolType> expectedWp;
+    @Parameter(2)
+    public Expr<BoolType> expectedWp;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{TRUE, ASSIGN_X_1, TRUE},
+            {TRUE, ASSIGN_X_1, TRUE},
 
-				{GEQ_X_1, ASSIGN_X_1, TRUE},
+            {GEQ_X_1, ASSIGN_X_1, TRUE},
 
-				{GEQ_1_X, ASSIGN_X_1, TRUE},
+            {GEQ_1_X, ASSIGN_X_1, TRUE},
 
-				{GEQ_1_Y, ASSIGN_X_1, GEQ_1_Y},
+            {GEQ_1_Y, ASSIGN_X_1, GEQ_1_Y},
 
-				{GEQ_X_Y, ASSIGN_X_1, GEQ_1_Y},
+            {GEQ_X_Y, ASSIGN_X_1, GEQ_1_Y},
 
-				{TRUE, ASSIGN_Y_X, TRUE},
+            {TRUE, ASSIGN_Y_X, TRUE},
 
-				{GEQ_X_1, ASSIGN_Y_X, GEQ_X_1},
+            {GEQ_X_1, ASSIGN_Y_X, GEQ_X_1},
 
-				{GEQ_1_X, ASSIGN_Y_X, GEQ_1_X},
+            {GEQ_1_X, ASSIGN_Y_X, GEQ_1_X},
 
-				{GEQ_1_Y, ASSIGN_Y_X, GEQ_1_X},
+            {GEQ_1_Y, ASSIGN_Y_X, GEQ_1_X},
 
-				{GEQ_X_Y, ASSIGN_Y_X, TRUE},
+            {GEQ_X_Y, ASSIGN_Y_X, TRUE},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		// Arrange
-		final WpState state = WpState.of(expr);
+    @Test
+    public void test() {
+        // Arrange
+        final WpState state = WpState.of(expr);
 
-		// Act
-		final WpState actualState = state.wp(stmt);
-		final Expr<BoolType> actualWp = ExprUtils.simplify(actualState.getExpr());
+        // Act
+        final WpState actualState = state.wp(stmt);
+        final Expr<BoolType> actualWp = ExprUtils.simplify(actualState.getExpr());
 
-		// Assert
-		assertEquals(expectedWp, actualWp);
-	}
+        // Assert
+        assertEquals(expectedWp, actualWp);
+    }
 
 }

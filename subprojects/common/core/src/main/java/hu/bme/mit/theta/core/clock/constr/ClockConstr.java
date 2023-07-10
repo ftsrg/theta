@@ -24,10 +24,10 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public interface ClockConstr {
 
-	Collection<VarDecl<RatType>> getVars();
+    Collection<VarDecl<RatType>> getVars();
 
-	Expr<BoolType> toExpr();
+    Expr<BoolType> toExpr();
 
-	<P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param);
+    <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param);
 
 }

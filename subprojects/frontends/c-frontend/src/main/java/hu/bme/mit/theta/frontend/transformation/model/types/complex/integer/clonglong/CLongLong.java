@@ -20,29 +20,30 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInt
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public abstract class CLongLong extends CInteger {
-	private static final int RANK = 50;
 
-	protected CLongLong(CSimpleType origin) {
-		super(origin);
-		rank = RANK;
-	}
+    private static final int RANK = 50;
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    protected CLongLong(CSimpleType origin) {
+        super(origin);
+        rank = RANK;
+    }
 
-	@Override
-	public String getTypeName() {
-		return "longlong";
-	}
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public CInteger getSignedVersion() {
-		return new CSignedLongLong(null);
-	}
+    @Override
+    public String getTypeName() {
+        return "longlong";
+    }
 
-	@Override
-	public CInteger getUnsignedVersion() {
-		return new CUnsignedLongLong(null);
-	}
+    @Override
+    public CInteger getSignedVersion() {
+        return new CSignedLongLong(null);
+    }
+
+    @Override
+    public CInteger getUnsignedVersion() {
+        return new CUnsignedLongLong(null);
+    }
 }

@@ -53,13 +53,16 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public class ChcUtils {
+
     private static GenericSmtLibSymbolTable initialSymbolTable = new GenericSmtLibSymbolTable();
     private static GenericSmtLibSymbolTable symbolTable;
     private static SmtLibTypeTransformer typeTransformer = new GenericSmtLibTypeTransformer(null);
-    private static SmtLibTermTransformer termTransformer = new GenericSmtLibTermTransformer(initialSymbolTable);
+    private static SmtLibTermTransformer termTransformer = new GenericSmtLibTermTransformer(
+        initialSymbolTable);
     private static CharStream charStream;
 
-    private ChcUtils() {}
+    private ChcUtils() {
+    }
 
     public static void init(CharStream cs) {
         initialSymbolTable = new GenericSmtLibSymbolTable();
@@ -68,10 +71,12 @@ public class ChcUtils {
         charStream = cs;
     }
 
-    public static List<XcfaLabel> getTailConditionLabels(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
+    public static List<XcfaLabel> getTailConditionLabels(CHCParser.Chc_tailContext tail,
+        Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
         tail.i_formula().forEach(i_formula -> {
-            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), Bool(), null); // null as SmtLibModel, because it is unused
+            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), Bool(),
+                null); // null as SmtLibModel, because it is unused
             List<ConstDecl<?>> exprVars = new ArrayList<>();
             ExprUtils.collectConstants(expr, exprVars);
             Map<Decl<?>, VarDecl<?>> varsToLocal = new HashMap<>();
@@ -90,7 +95,8 @@ public class ChcUtils {
         return charStream.getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 
-    public static Map<String, VarDecl<?>> createVars(XcfaProcedure.Builder builder, List<CHCParser.Var_declContext> var_decls) {
+    public static Map<String, VarDecl<?>> createVars(XcfaProcedure.Builder builder,
+        List<CHCParser.Var_declContext> var_decls) {
         resetSymbolTable();
         Map<String, VarDecl<?>> vars = new HashMap<>();
         for (CHCParser.Var_declContext var_decl : var_decls) {
@@ -140,12 +146,12 @@ public class ChcUtils {
 
         final String returnSort = typeTransformer.toSort(returnType);
         final String[] paramSorts = paramTypes.stream().map(typeTransformer::toSort)
-                .toArray(String[]::new);
+            .toArray(String[]::new);
 
         final String symbolName = decl.getName();
         final String symbolDeclaration = String.format(
-                "(declare-fun %s (%s) %s)",
-                symbolName, String.join(" ", paramSorts), returnSort
+            "(declare-fun %s (%s) %s)",
+            symbolName, String.join(" ", paramSorts), returnSort
         );
         (initial ? initialSymbolTable : symbolTable).put(decl, symbolName, symbolDeclaration);
     }
@@ -162,7 +168,8 @@ public class ChcUtils {
             final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
-            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
+            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
+                .addAll(paramTypes).build();
             final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
             return result;

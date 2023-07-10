@@ -19,20 +19,20 @@ import java.util.Collection;
 
 public interface Stack<T> extends Iterable<T> {
 
-	void add(final T elem);
+    void add(final T elem);
 
-	void add(final Collection<? extends T> elems);
+    void add(final Collection<? extends T> elems);
 
-	void push();
+    void push();
 
-	void pop(final int n);
+    void pop(final int n);
 
-	default void pop() {
-		pop(1);
-	}
+    default void pop() {
+        pop(1);
+    }
 
-	Collection<T> toCollection();
+    Collection<T> toCollection();
 
-	void clear();
+    void clear();
 
 }

@@ -33,44 +33,47 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 
 //TODO: designators
 public class CInitializerList extends CStatement {
-	private final List<Tuple2<Optional<CStatement>, CStatement>> statements;
-	private final CComplexType type;
 
-	public CInitializerList(CComplexType type) {
-		this.type = type;
-		this.statements = new ArrayList<>();
-	}
+    private final List<Tuple2<Optional<CStatement>, CStatement>> statements;
+    private final CComplexType type;
 
-	@Override
-	public Expr<?> getExpression() {
-		return getTemplatedExpression();
-	}
+    public CInitializerList(CComplexType type) {
+        this.type = type;
+        this.statements = new ArrayList<>();
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    @Override
+    public Expr<?> getExpression() {
+        return getTemplatedExpression();
+    }
 
-	@SuppressWarnings("unchecked")
-	private <I extends Type, E extends Type> Expr<?> getTemplatedExpression() {
-		List<Tuple2<Expr<I>, Expr<E>>> list = new ArrayList<>();
-		LitExpr<I> currentValue = (LitExpr<I>) CComplexType.getUnsignedLong().getNullValue();
-		LitExpr<I> unitValue = (LitExpr<I>) CComplexType.getUnsignedLong().getUnitValue();
-		for (Tuple2<Optional<CStatement>, CStatement> cStatement : statements) {
-			Expr<E> expr = (Expr<E>) type.castTo(cStatement.get2().getExpression());
-			list.add(Tuple2.of(currentValue, expr));
-			currentValue = (LitExpr<I>) Add(currentValue, unitValue).eval(ImmutableValuation.empty());
-		}
-		return ArrayInitExpr.of(list,
-				(Expr<E>) type.getNullValue(),
-				(ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong().getSmtType(), type.getSmtType()));
-	}
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 
-	public void addStatement(CStatement index, CStatement value) {
-		statements.add(Tuple2.of(Optional.ofNullable(index), value));
-	}
+    @SuppressWarnings("unchecked")
+    private <I extends Type, E extends Type> Expr<?> getTemplatedExpression() {
+        List<Tuple2<Expr<I>, Expr<E>>> list = new ArrayList<>();
+        LitExpr<I> currentValue = (LitExpr<I>) CComplexType.getUnsignedLong().getNullValue();
+        LitExpr<I> unitValue = (LitExpr<I>) CComplexType.getUnsignedLong().getUnitValue();
+        for (Tuple2<Optional<CStatement>, CStatement> cStatement : statements) {
+            Expr<E> expr = (Expr<E>) type.castTo(cStatement.get2().getExpression());
+            list.add(Tuple2.of(currentValue, expr));
+            currentValue = (LitExpr<I>) Add(currentValue, unitValue).eval(
+                ImmutableValuation.empty());
+        }
+        return ArrayInitExpr.of(list,
+            (Expr<E>) type.getNullValue(),
+            (ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong().getSmtType(),
+                type.getSmtType()));
+    }
 
-	public List<Tuple2<Optional<CStatement>, CStatement>> getStatements() {
-		return statements;
-	}
+    public void addStatement(CStatement index, CStatement value) {
+        statements.add(Tuple2.of(Optional.ofNullable(index), value));
+    }
+
+    public List<Tuple2<Optional<CStatement>, CStatement>> getStatements() {
+        return statements;
+    }
 }

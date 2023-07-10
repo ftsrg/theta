@@ -23,15 +23,16 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class LeqExpr<OpType extends Ordered<OpType>> extends BinaryExpr<OpType, BoolType> {
 
-	protected LeqExpr(final Expr<OpType> leftOp, final Expr<OpType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    protected LeqExpr(final Expr<OpType> leftOp, final Expr<OpType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static <OpType extends Ordered<OpType>> LeqExpr<?> create2(final Expr<?> leftOp, final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
-		final Expr<OpType> newLeftOp = cast(leftOp, type);
-		final Expr<OpType> newRightOp = cast(rightOp, type);
-		return type.Leq(newLeftOp, newRightOp);
-	}
+    public static <OpType extends Ordered<OpType>> LeqExpr<?> create2(final Expr<?> leftOp,
+        final Expr<?> rightOp) {
+        @SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
+        final Expr<OpType> newLeftOp = cast(leftOp, type);
+        final Expr<OpType> newRightOp = cast(rightOp, type);
+        return type.Leq(newLeftOp, newRightOp);
+    }
 
 }

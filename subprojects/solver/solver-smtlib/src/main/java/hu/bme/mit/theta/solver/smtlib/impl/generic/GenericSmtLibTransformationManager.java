@@ -25,6 +25,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationMan
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
 
 public class GenericSmtLibTransformationManager implements SmtLibTransformationManager {
+
     private final SmtLibTypeTransformer typeTransformer;
     private final SmtLibDeclTransformer declTransformer;
     private final SmtLibExprTransformer exprTransformer;
@@ -50,7 +51,8 @@ public class GenericSmtLibTransformationManager implements SmtLibTransformationM
         return exprTransformer.toTerm(expr);
     }
 
-    protected SmtLibTypeTransformer instantiateTypeTransformer(final SmtLibTransformationManager transformer) {
+    protected SmtLibTypeTransformer instantiateTypeTransformer(
+        final SmtLibTransformationManager transformer) {
         return new GenericSmtLibTypeTransformer(transformer);
     }
 
@@ -60,7 +62,8 @@ public class GenericSmtLibTransformationManager implements SmtLibTransformationM
         return new GenericSmtLibDeclTransformer(transformer, symbolTable);
     }
 
-    protected SmtLibExprTransformer instantiateExprTransformer(final SmtLibTransformationManager transformer) {
+    protected SmtLibExprTransformer instantiateExprTransformer(
+        final SmtLibTransformationManager transformer) {
         return new GenericSmtLibExprTransformer(transformer);
     }
 }

@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class ItpMarkerTree<T extends ItpMarker> {
+
     private final T marker;
     private final List<ItpMarkerTree<T>> children;
 
@@ -44,12 +45,14 @@ public final class ItpMarkerTree<T extends ItpMarker> {
     }
 
     @SafeVarargs
-    public static <T extends ItpMarker> ItpMarkerTree<T> Tree(final T marker, final ItpMarkerTree<T> ...subtrees) {
+    public static <T extends ItpMarker> ItpMarkerTree<T> Tree(final T marker,
+        final ItpMarkerTree<T>... subtrees) {
         return new ItpMarkerTree<>(marker, Arrays.asList(subtrees));
     }
 
     @SafeVarargs
-    public static <T extends ItpMarker> ItpMarkerTree<T> Subtree(final T marker, final ItpMarkerTree<T> ...subtrees) {
+    public static <T extends ItpMarker> ItpMarkerTree<T> Subtree(final T marker,
+        final ItpMarkerTree<T>... subtrees) {
         return Tree(marker, subtrees);
     }
 

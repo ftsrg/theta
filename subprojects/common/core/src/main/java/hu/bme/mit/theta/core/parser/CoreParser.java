@@ -29,40 +29,40 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class CoreParser {
 
-	private final LispParser parser;
-	private final CoreInterpreter interpreter;
+    private final LispParser parser;
+    private final CoreInterpreter interpreter;
 
-	public CoreParser(final Reader reader) {
-		checkNotNull(reader);
-		final LispLexer lexer = new LispLexer(reader);
-		parser = new LispParser(lexer);
-		final Env env = new Env();
-		interpreter = new CoreInterpreter(env);
-		interpreter.defineCommonTypes();
-		interpreter.defineCommonExprs();
-		interpreter.defineCommonStmts();
-	}
+    public CoreParser(final Reader reader) {
+        checkNotNull(reader);
+        final LispLexer lexer = new LispLexer(reader);
+        parser = new LispParser(lexer);
+        final Env env = new Env();
+        interpreter = new CoreInterpreter(env);
+        interpreter.defineCommonTypes();
+        interpreter.defineCommonExprs();
+        interpreter.defineCommonStmts();
+    }
 
-	public void declare(final Decl<?> decl) {
-		interpreter.declare(decl);
-	}
+    public void declare(final Decl<?> decl) {
+        interpreter.declare(decl);
+    }
 
-	public Type type() {
-		final SExpr sexpr = parser.sexpr();
-		final Type type = interpreter.type(sexpr);
-		return type;
-	}
+    public Type type() {
+        final SExpr sexpr = parser.sexpr();
+        final Type type = interpreter.type(sexpr);
+        return type;
+    }
 
-	public Expr<?> expr() {
-		final SExpr sexpr = parser.sexpr();
-		final Expr<?> expr = interpreter.expr(sexpr);
-		return expr;
-	}
+    public Expr<?> expr() {
+        final SExpr sexpr = parser.sexpr();
+        final Expr<?> expr = interpreter.expr(sexpr);
+        return expr;
+    }
 
-	public Stmt stmt() {
-		final SExpr sexpr = parser.sexpr();
-		final Stmt stmt = interpreter.stmt(sexpr);
-		return stmt;
-	}
+    public Stmt stmt() {
+        final SExpr sexpr = parser.sexpr();
+        final Stmt stmt = interpreter.stmt(sexpr);
+        return stmt;
+    }
 
 }

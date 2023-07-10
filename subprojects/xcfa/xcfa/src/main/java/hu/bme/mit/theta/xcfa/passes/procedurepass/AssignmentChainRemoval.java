@@ -40,49 +40,58 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class AssignmentChainRemoval extends ProcedurePass {
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			List<XcfaLabel> newLabels = new ArrayList<>();
-			Map<VarDecl<?>, Expr<?>> lastExprs = new LinkedHashMap<>();
-			for (XcfaLabel label : edge.getLabels()) {
-				VarDecl<?> newVar = null;
-				Expr<?> newExpr = null;
-				if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssignStmt) {
-					Expr<?> lastExpr = ((AssignStmt<?>) label.getStmt()).getExpr();
-					VarDecl<?> lastVar = ((AssignStmt<?>) label.getStmt()).getVarDecl();
-					if (lastExpr instanceof RefExpr<?> && lastExprs.containsKey((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl())) {
-						newLabels.add(Stmt(Assign(cast(lastVar, lastVar.getType()), cast(lastExprs.get((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl()), lastVar.getType()))));
-						newVar = lastVar;
-						newExpr = lastExprs.get((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl());
-					} else {
-						newVar = lastVar;
-						newExpr = lastExpr;
-						newLabels.add(label);
-					}
-				} else {
-					newLabels.add(label);
-				}
-				final Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> assortedVars = LabelUtils.getAssortedVars(label);
-				for (Map.Entry<VarDecl<?>, Expr<?>> entry : new LinkedHashSet<>(lastExprs.entrySet())) {
-					VarDecl<?> lastVar = entry.getKey();
-					Expr<?> lastExpr = entry.getValue();
-					final Set<VarDecl<?>> usedVars = ExprUtils.getVars(lastExpr);
-					if (assortedVars.get1().contains(lastVar) || assortedVars.get1().stream().anyMatch(usedVars::contains)) {
-						lastExprs.remove(lastVar);
-					}
-				}
-				if (newVar != null && newExpr != null) lastExprs.put(newVar, newExpr);
-			}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+            List<XcfaLabel> newLabels = new ArrayList<>();
+            Map<VarDecl<?>, Expr<?>> lastExprs = new LinkedHashMap<>();
+            for (XcfaLabel label : edge.getLabels()) {
+                VarDecl<?> newVar = null;
+                Expr<?> newExpr = null;
+                if (label instanceof XcfaLabel.StmtXcfaLabel
+                    && label.getStmt() instanceof AssignStmt) {
+                    Expr<?> lastExpr = ((AssignStmt<?>) label.getStmt()).getExpr();
+                    VarDecl<?> lastVar = ((AssignStmt<?>) label.getStmt()).getVarDecl();
+                    if (lastExpr instanceof RefExpr<?> && lastExprs.containsKey(
+                        (VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl())) {
+                        newLabels.add(Stmt(Assign(cast(lastVar, lastVar.getType()),
+                            cast(lastExprs.get((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl()),
+                                lastVar.getType()))));
+                        newVar = lastVar;
+                        newExpr = lastExprs.get((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl());
+                    } else {
+                        newVar = lastVar;
+                        newExpr = lastExpr;
+                        newLabels.add(label);
+                    }
+                } else {
+                    newLabels.add(label);
+                }
+                final Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> assortedVars = LabelUtils.getAssortedVars(
+                    label);
+                for (Map.Entry<VarDecl<?>, Expr<?>> entry : new LinkedHashSet<>(
+                    lastExprs.entrySet())) {
+                    VarDecl<?> lastVar = entry.getKey();
+                    Expr<?> lastExpr = entry.getValue();
+                    final Set<VarDecl<?>> usedVars = ExprUtils.getVars(lastExpr);
+                    if (assortedVars.get1().contains(lastVar) || assortedVars.get1().stream()
+                        .anyMatch(usedVars::contains)) {
+                        lastExprs.remove(lastVar);
+                    }
+                }
+                if (newVar != null && newExpr != null) {
+                    lastExprs.put(newVar, newExpr);
+                }
+            }
 
-			builder.removeEdge(edge);
-			builder.addEdge(edge.withLabels(newLabels));
-		}
-		return builder;
-	}
+            builder.removeEdge(edge);
+            builder.addEdge(edge.withLabels(newLabels));
+        }
+        return builder;
+    }
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

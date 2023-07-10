@@ -26,6 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
+
     private static final String problematicCharactersRegex = ":";
     private static final String problematicCharactersReplacement = "\\$";
 
@@ -51,7 +52,8 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
     @Override
     public boolean definesSymbol(final String symbol) {
-        return constToSymbol.inverse().containsKey(symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+        return constToSymbol.inverse().containsKey(
+            symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
     }
 
     @Override
@@ -78,7 +80,9 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
         checkNotNull(symbol);
         checkNotNull(declaration);
         checkState(!constToSymbol.containsKey(constDecl), "Constant not found.");
-        constToSymbol.put(constDecl, symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
-        constToDeclaration.put(constDecl, declaration.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+        constToSymbol.put(constDecl,
+            symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+        constToDeclaration.put(constDecl,
+            declaration.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
     }
 }

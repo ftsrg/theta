@@ -27,21 +27,21 @@ import hu.bme.mit.theta.sts.STS;
 
 public final class StsParser {
 
-	private final LispParser parser;
-	private final StsInterpreter interpreter;
+    private final LispParser parser;
+    private final StsInterpreter interpreter;
 
-	public StsParser(final Reader reader) {
-		checkNotNull(reader);
-		final LispLexer lexer = new LispLexer(reader);
-		parser = new LispParser(lexer);
-		final Env env = new Env();
-		interpreter = new StsInterpreter(env);
-	}
+    public StsParser(final Reader reader) {
+        checkNotNull(reader);
+        final LispLexer lexer = new LispLexer(reader);
+        parser = new LispParser(lexer);
+        final Env env = new Env();
+        interpreter = new StsInterpreter(env);
+    }
 
-	public STS sts() {
-		final SExpr sexpr = parser.sexpr();
-		final STS sts = interpreter.sts(sexpr);
-		return sts;
-	}
+    public STS sts() {
+        final SExpr sexpr = parser.sexpr();
+        final STS sts = interpreter.sts(sexpr);
+        return sts;
+    }
 
 }

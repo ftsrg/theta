@@ -27,28 +27,28 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 final class LuZoneInitFunc implements InitFunc<LuZoneState, ZonePrec> {
 
-	private final InitFunc<ZoneState, ZonePrec> initFunc;
+    private final InitFunc<ZoneState, ZonePrec> initFunc;
 
-	private LuZoneInitFunc(final InitFunc<ZoneState, ZonePrec> initFunc) {
-		this.initFunc = checkNotNull(initFunc);
-	}
+    private LuZoneInitFunc(final InitFunc<ZoneState, ZonePrec> initFunc) {
+        this.initFunc = checkNotNull(initFunc);
+    }
 
-	public static LuZoneInitFunc create(final InitFunc<ZoneState, ZonePrec> initFunc) {
-		return new LuZoneInitFunc(initFunc);
-	}
+    public static LuZoneInitFunc create(final InitFunc<ZoneState, ZonePrec> initFunc) {
+        return new LuZoneInitFunc(initFunc);
+    }
 
-	////
+    ////
 
-	@Override
-	public Collection<? extends LuZoneState> getInitStates(final ZonePrec prec) {
-		checkNotNull(prec);
-		final Collection<LuZoneState> result = new ArrayList<>();
-		final Collection<? extends ZoneState> subInitStates = initFunc.getInitStates(prec);
-		for (final ZoneState subInitState : subInitStates) {
-			final LuZoneState initState = LuZoneState.of(subInitState, BoundFunc.top());
-			result.add(initState);
-		}
-		return result;
-	}
+    @Override
+    public Collection<? extends LuZoneState> getInitStates(final ZonePrec prec) {
+        checkNotNull(prec);
+        final Collection<LuZoneState> result = new ArrayList<>();
+        final Collection<? extends ZoneState> subInitStates = initFunc.getInitStates(prec);
+        for (final ZoneState subInitState : subInitStates) {
+            final LuZoneState initState = LuZoneState.of(subInitState, BoundFunc.top());
+            result.add(initState);
+        }
+        return result;
+    }
 
 }

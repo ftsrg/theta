@@ -14,9 +14,8 @@
  *  limitations under the License.
  */
 /**
- * This package contains various utilities. The utilities are usually
- * implemented as package private classes and their functionality is exposed
- * through static utility classes:
+ * This package contains various utilities. The utilities are usually implemented as package private
+ * classes and their functionality is exposed through static utility classes:
  *
  * @see hu.bme.mit.theta.core.utils.ExprUtils
  * @see hu.bme.mit.theta.core.utils.PathUtils

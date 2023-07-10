@@ -28,63 +28,65 @@ import java.util.Collection;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class SolverValidatorWrapper implements Solver {
-	private final Solver solver;
 
-	SolverValidatorWrapper(String solver) throws Exception {
-		this.solver = SolverManager.resolveSolverFactory(solver).createSolver();
-	}
+    private final Solver solver;
 
-	@Override
-	public void add(Expr<BoolType> assertion) {
-		solver.add(assertion);
-	}
+    SolverValidatorWrapper(String solver) throws Exception {
+        this.solver = SolverManager.resolveSolverFactory(solver).createSolver();
+    }
 
-	@Override
-	public SolverStatus check() {
-		SolverStatus check = solver.check();
-		if (check.isSat()) {
-			final Valuation model = solver.getModel();
-			for (Expr<BoolType> assertion : solver.getAssertions()) {
-				if (!assertion.eval(model).equals(True())) {
-					throw new RuntimeException("Solver problem: " + assertion + " not True over {" + model + "}");
-				}
-			}
-		}
-		return check;
-	}
+    @Override
+    public void add(Expr<BoolType> assertion) {
+        solver.add(assertion);
+    }
 
-	@Override
-	public void push() {
-		solver.push();
-	}
+    @Override
+    public SolverStatus check() {
+        SolverStatus check = solver.check();
+        if (check.isSat()) {
+            final Valuation model = solver.getModel();
+            for (Expr<BoolType> assertion : solver.getAssertions()) {
+                if (!assertion.eval(model).equals(True())) {
+                    throw new RuntimeException(
+                        "Solver problem: " + assertion + " not True over {" + model + "}");
+                }
+            }
+        }
+        return check;
+    }
 
-	@Override
-	public void pop(int n) {
-		solver.pop();
-	}
+    @Override
+    public void push() {
+        solver.push();
+    }
 
-	@Override
-	public void reset() {
-		solver.reset();
-	}
+    @Override
+    public void pop(int n) {
+        solver.pop();
+    }
 
-	@Override
-	public SolverStatus getStatus() {
-		return solver.getStatus();
-	}
+    @Override
+    public void reset() {
+        solver.reset();
+    }
 
-	@Override
-	public Valuation getModel() {
-		return solver.getModel();
-	}
+    @Override
+    public SolverStatus getStatus() {
+        return solver.getStatus();
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getAssertions() {
-		return solver.getAssertions();
-	}
+    @Override
+    public Valuation getModel() {
+        return solver.getModel();
+    }
 
-	@Override
-	public void close() throws Exception {
-		solver.close();
-	}
+    @Override
+    public Collection<Expr<BoolType>> getAssertions() {
+        return solver.getAssertions();
+    }
+
+    @Override
+    public void close() throws Exception {
+        solver.close();
+    }
 }

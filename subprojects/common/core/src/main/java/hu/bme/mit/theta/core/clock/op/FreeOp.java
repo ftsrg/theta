@@ -29,67 +29,67 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class FreeOp implements ClockOp {
 
-	private static final int HASH_SEED = 2281;
+    private static final int HASH_SEED = 2281;
 
-	private final VarDecl<RatType> varDecl;
+    private final VarDecl<RatType> varDecl;
 
-	private volatile int hashCode = 0;
-	private volatile HavocStmt<RatType> stmt = null;
+    private volatile int hashCode = 0;
+    private volatile HavocStmt<RatType> stmt = null;
 
-	FreeOp(final VarDecl<RatType> varDecl) {
-		this.varDecl = checkNotNull(varDecl);
-	}
+    FreeOp(final VarDecl<RatType> varDecl) {
+        this.varDecl = checkNotNull(varDecl);
+    }
 
-	public VarDecl<RatType> getVar() {
-		return varDecl;
-	}
+    public VarDecl<RatType> getVar() {
+        return varDecl;
+    }
 
-	@Override
-	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(varDecl);
-	}
+    @Override
+    public Collection<VarDecl<RatType>> getVars() {
+        return ImmutableSet.of(varDecl);
+    }
 
-	@Override
-	public HavocStmt<RatType> toStmt() {
-		HavocStmt<RatType> result = stmt;
-		if (result == null) {
-			result = Havoc(varDecl);
-			stmt = result;
-		}
-		return result;
-	}
+    @Override
+    public HavocStmt<RatType> toStmt() {
+        HavocStmt<RatType> result = stmt;
+        if (result == null) {
+            result = Havoc(varDecl);
+            stmt = result;
+        }
+        return result;
+    }
 
-	@Override
-	public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
+    @Override
+    public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + varDecl.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + varDecl.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof FreeOp) {
-			final FreeOp that = (FreeOp) obj;
-			return this.getVar().equals(that.getVar());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof FreeOp) {
+            final FreeOp that = (FreeOp) obj;
+            return this.getVar().equals(that.getVar());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("free").add(varDecl.getName()).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("free").add(varDecl.getName()).toString();
+    }
 
 }

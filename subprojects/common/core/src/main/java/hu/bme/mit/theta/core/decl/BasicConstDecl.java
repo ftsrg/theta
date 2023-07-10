@@ -19,12 +19,13 @@ import hu.bme.mit.theta.core.type.Type;
 
 /**
  * A basic constant declaration that can be directly passed to the SMT solver.
+ *
  * @param <DeclType>
  */
 public final class BasicConstDecl<DeclType extends Type> extends ConstDecl<DeclType> {
 
-	BasicConstDecl(final String name, final DeclType type) {
-		super(name, type);
-	}
+    BasicConstDecl(final String name, final DeclType type) {
+        super(name, type);
+    }
 
 }

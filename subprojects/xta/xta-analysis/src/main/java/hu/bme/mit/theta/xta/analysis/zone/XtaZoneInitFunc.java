@@ -26,19 +26,19 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 final class XtaZoneInitFunc implements InitFunc<ZoneState, ZonePrec> {
 
-	private static final XtaZoneInitFunc INSTANCE = new XtaZoneInitFunc();
+    private static final XtaZoneInitFunc INSTANCE = new XtaZoneInitFunc();
 
-	private XtaZoneInitFunc() {
-	}
+    private XtaZoneInitFunc() {
+    }
 
-	static XtaZoneInitFunc getInstance() {
-		return INSTANCE;
-	}
+    static XtaZoneInitFunc getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public Collection<ZoneState> getInitStates(final ZonePrec prec) {
-		checkNotNull(prec);
-		return Collections.singleton(ZoneState.zero(prec.getVars()).transform().up().build());
-	}
+    @Override
+    public Collection<ZoneState> getInitStates(final ZonePrec prec) {
+        checkNotNull(prec);
+        return Collections.singleton(ZoneState.zero(prec.getVars()).transform().up().build());
+    }
 
 }

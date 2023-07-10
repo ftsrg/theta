@@ -27,39 +27,40 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
 /**
- * Class representing a nested substitution. If a declaration is not present in
- * the actual substitution it is searched in the enclosing substitutions
- * recursively.
+ * Class representing a nested substitution. If a declaration is not present in the actual
+ * substitution it is searched in the enclosing substitutions recursively.
  */
 public final class NestedSubstitution implements Substitution {
 
-	private final Substitution enclosingSubst;
-	private final Substitution subst;
+    private final Substitution enclosingSubst;
+    private final Substitution subst;
 
-	private NestedSubstitution(final Substitution enclosingSubst, final Substitution subst) {
-		this.enclosingSubst = checkNotNull(enclosingSubst);
-		this.subst = checkNotNull(subst);
-	}
+    private NestedSubstitution(final Substitution enclosingSubst, final Substitution subst) {
+        this.enclosingSubst = checkNotNull(enclosingSubst);
+        this.subst = checkNotNull(subst);
+    }
 
-	public static NestedSubstitution create(final Substitution enclosingSubst, final Substitution subst) {
-		return new NestedSubstitution(enclosingSubst, subst);
-	}
+    public static NestedSubstitution create(final Substitution enclosingSubst,
+        final Substitution subst) {
+        return new NestedSubstitution(enclosingSubst, subst);
+    }
 
-	@Override
-	public Collection<? extends Decl<?>> getDecls() {
-		final Set<Decl<?>> decls = Containers.createSet();
-		decls.addAll(subst.getDecls());
-		decls.addAll(enclosingSubst.getDecls());
-		return decls;
-	}
+    @Override
+    public Collection<? extends Decl<?>> getDecls() {
+        final Set<Decl<?>> decls = Containers.createSet();
+        decls.addAll(subst.getDecls());
+        decls.addAll(enclosingSubst.getDecls());
+        return decls;
+    }
 
-	@Override
-	public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl) {
-		final Optional<? extends Expr<DeclType>> optExpr = subst.eval(decl);
-		if (optExpr.isPresent()) {
-			return optExpr;
-		} else {
-			return enclosingSubst.eval(decl);
-		}
-	}
+    @Override
+    public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(
+        final Decl<DeclType> decl) {
+        final Optional<? extends Expr<DeclType>> optExpr = subst.eval(decl);
+        if (optExpr.isPresent()) {
+            return optExpr;
+        } else {
+            return enclosingSubst.eval(decl);
+        }
+    }
 }

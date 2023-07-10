@@ -22,24 +22,26 @@ import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 
 /**
- * Single block encoding (SBE) implementation for CFA LTS. It returns a single
- * CFA edges as actions.
+ * Single block encoding (SBE) implementation for CFA LTS. It returns a single CFA edges as
+ * actions.
  */
 public final class CfaSbeLts implements CfaLts {
 
-	private static final class LazyHolder {
-		private static final CfaSbeLts INSTANCE = new CfaSbeLts();
-	}
+    private static final class LazyHolder {
 
-	private CfaSbeLts() {
-	}
+        private static final CfaSbeLts INSTANCE = new CfaSbeLts();
+    }
 
-	public static CfaSbeLts getInstance() {
-		return LazyHolder.INSTANCE;
-	}
+    private CfaSbeLts() {
+    }
 
-	@Override
-	public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
-		return state.getLoc().getOutEdges().stream().map(CfaAction::create).collect(Collectors.toList());
-	}
+    public static CfaSbeLts getInstance() {
+        return LazyHolder.INSTANCE;
+    }
+
+    @Override
+    public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
+        return state.getLoc().getOutEdges().stream().map(CfaAction::create)
+            .collect(Collectors.toList());
+    }
 }

@@ -25,60 +25,61 @@ import hu.bme.mit.theta.solver.SolverStatus;
 
 public final class NullSolver implements Solver {
 
-	private NullSolver() {
-	}
+    private NullSolver() {
+    }
 
-	private static class LazyHolder {
-		static final NullSolver INSTANCE = new NullSolver();
-	}
+    private static class LazyHolder {
 
-	public static NullSolver getInstance() {
-		return LazyHolder.INSTANCE;
-	}
+        static final NullSolver INSTANCE = new NullSolver();
+    }
 
-	@Override
-	public void add(final Expr<BoolType> assertion) {
-		throw new UnsupportedOperationException();
-	}
+    public static NullSolver getInstance() {
+        return LazyHolder.INSTANCE;
+    }
 
-	@Override
-	public SolverStatus check() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void add(final Expr<BoolType> assertion) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void push() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public SolverStatus check() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void pop(final int n) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void push() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void reset() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void pop(final int n) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public SolverStatus getStatus() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void reset() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public Valuation getModel() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public SolverStatus getStatus() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getAssertions() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public Valuation getModel() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void close() throws Exception {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public Collection<Expr<BoolType>> getAssertions() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void close() throws Exception {
+        throw new UnsupportedOperationException();
+    }
 
 }

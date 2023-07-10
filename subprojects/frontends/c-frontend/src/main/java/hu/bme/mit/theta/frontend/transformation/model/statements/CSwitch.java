@@ -17,24 +17,25 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 public class CSwitch extends CStatement {
-	private final CStatement testValue;
-	private final CStatement body;
 
-	public CSwitch(CStatement testValue, CStatement body) {
-		this.testValue = testValue;
-		this.body = body;
-	}
+    private final CStatement testValue;
+    private final CStatement body;
 
-	public CStatement getBody() {
-		return body;
-	}
+    public CSwitch(CStatement testValue, CStatement body) {
+        this.testValue = testValue;
+        this.body = body;
+    }
 
-	public CStatement getTestValue() {
-		return testValue;
-	}
+    public CStatement getBody() {
+        return body;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public CStatement getTestValue() {
+        return testValue;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

@@ -27,33 +27,34 @@ import java.util.Optional;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 public class CCall extends CStatement {
-	private final VarDecl<?> ret;
-	private final String functionId;
-	private final List<CStatement> params;
 
-	public CCall(String functionId, List<CStatement> params) {
-		this.functionId = functionId;
-		this.params = params;
-		Optional<Object> cTypeOpt = FrontendMetadata.getMetadataValue(functionId, "cType");
-		CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CVoid(null));
-		ret = Var("call_" + functionId + "_ret" + counter++, type.getSmtType());
-		FrontendMetadata.create(ret.getRef(), "cType", type);
-	}
+    private final VarDecl<?> ret;
+    private final String functionId;
+    private final List<CStatement> params;
 
-	public List<CStatement> getParams() {
-		return params;
-	}
+    public CCall(String functionId, List<CStatement> params) {
+        this.functionId = functionId;
+        this.params = params;
+        Optional<Object> cTypeOpt = FrontendMetadata.getMetadataValue(functionId, "cType");
+        CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CVoid(null));
+        ret = Var("call_" + functionId + "_ret" + counter++, type.getSmtType());
+        FrontendMetadata.create(ret.getRef(), "cType", type);
+    }
 
-	public VarDecl<?> getRet() {
-		return ret;
-	}
+    public List<CStatement> getParams() {
+        return params;
+    }
 
-	public String getFunctionId() {
-		return functionId;
-	}
+    public VarDecl<?> getRet() {
+        return ret;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public String getFunctionId() {
+        return functionId;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

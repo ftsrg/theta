@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public final class XstsPrimitiveType<T extends Type> implements XstsType<T> {
+
     private final T type;
 
     private XstsPrimitiveType(T type) {

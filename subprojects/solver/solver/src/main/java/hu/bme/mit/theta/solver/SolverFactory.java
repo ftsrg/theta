@@ -16,27 +16,30 @@
 package hu.bme.mit.theta.solver;
 
 /**
- * Interface for solver factories that can instantiate solvers.
- * Stores a configuration of a solver, and creates instances with that configuration.
+ * Interface for solver factories that can instantiate solvers. Stores a configuration of a solver,
+ * and creates instances with that configuration.
  */
 public interface SolverFactory {
 
-	/**
-	 * Create a basic solver instance.
-	 * @return Solver instance
-	 */
-	Solver createSolver();
+    /**
+     * Create a basic solver instance.
+     *
+     * @return Solver instance
+     */
+    Solver createSolver();
 
-	/**
-	 * Create a solver that is capable of producing unsat cores.
-	 * @return Solver instance
-	 */
-	UCSolver createUCSolver();
+    /**
+     * Create a solver that is capable of producing unsat cores.
+     *
+     * @return Solver instance
+     */
+    UCSolver createUCSolver();
 
-	/**
-	 * Create a solver that is capable of interpolation.
-	 * @return Solver instance
-	 */
-	ItpSolver createItpSolver();
+    /**
+     * Create a solver that is capable of interpolation.
+     *
+     * @return Solver instance
+     */
+    ItpSolver createItpSolver();
 
 }

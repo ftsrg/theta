@@ -28,6 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public final class BvZExtExpr implements Expr<BvType> {
+
     private static final int HASH_SEED = 6526;
     private static final String OPERATOR_LABEL = "bv_zero_extend";
 

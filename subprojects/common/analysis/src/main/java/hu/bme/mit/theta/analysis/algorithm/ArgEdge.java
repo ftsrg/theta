@@ -21,53 +21,58 @@ import hu.bme.mit.theta.analysis.State;
 import java.util.Objects;
 
 public final class ArgEdge<S extends State, A extends Action> {
-	private static final int HASH_SEED = 3653;
-	private volatile int hashCode = 0;
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		ArgEdge<?, ?> argEdge = (ArgEdge<?, ?>) o;
-		return Objects.equals(source.getState(), argEdge.source.getState())
-				&& Objects.equals(target.getState(), argEdge.target.getState())
-				&& Objects.equals(action.toString(), argEdge.action.toString());
-	}
+    private static final int HASH_SEED = 3653;
+    private volatile int hashCode = 0;
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + source.getState().hashCode();
-			result = 31 * result + target.getState().hashCode();
-			result = 31 * result + action.toString().hashCode();
-			hashCode = result;
-		}
-		return result;
-		// return Objects.hash(source.getState(), target.getState(), action.toString());
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ArgEdge<?, ?> argEdge = (ArgEdge<?, ?>) o;
+        return Objects.equals(source.getState(), argEdge.source.getState())
+            && Objects.equals(target.getState(), argEdge.target.getState())
+            && Objects.equals(action.toString(), argEdge.action.toString());
+    }
 
-	private final ArgNode<S, A> source;
-	private final ArgNode<S, A> target;
-	private final A action;
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + source.getState().hashCode();
+            result = 31 * result + target.getState().hashCode();
+            result = 31 * result + action.toString().hashCode();
+            hashCode = result;
+        }
+        return result;
+        // return Objects.hash(source.getState(), target.getState(), action.toString());
+    }
 
-	ArgEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
-		this.source = source;
-		this.action = action;
-		this.target = target;
-	}
+    private final ArgNode<S, A> source;
+    private final ArgNode<S, A> target;
+    private final A action;
 
-	public ArgNode<S, A> getSource() {
-		return source;
-	}
+    ArgEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
+        this.source = source;
+        this.action = action;
+        this.target = target;
+    }
 
-	public ArgNode<S, A> getTarget() {
-		return target;
-	}
+    public ArgNode<S, A> getSource() {
+        return source;
+    }
 
-	public A getAction() {
-		return action;
-	}
+    public ArgNode<S, A> getTarget() {
+        return target;
+    }
+
+    public A getAction() {
+        return action;
+    }
 
 }

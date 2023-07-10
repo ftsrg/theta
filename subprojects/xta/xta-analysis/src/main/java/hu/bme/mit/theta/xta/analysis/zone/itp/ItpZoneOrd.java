@@ -19,20 +19,20 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 
 public final class ItpZoneOrd implements PartialOrd<ItpZoneState> {
 
-	private static final ItpZoneOrd INSTANCE = new ItpZoneOrd();
+    private static final ItpZoneOrd INSTANCE = new ItpZoneOrd();
 
-	private ItpZoneOrd() {
-	}
+    private ItpZoneOrd() {
+    }
 
-	public static ItpZoneOrd getInstance() {
-		return INSTANCE;
-	}
+    public static ItpZoneOrd getInstance() {
+        return INSTANCE;
+    }
 
-	////
+    ////
 
-	@Override
-	public boolean isLeq(final ItpZoneState state1, final ItpZoneState state2) {
-		return state1.isLeq(state2);
-	}
+    @Override
+    public boolean isLeq(final ItpZoneState state1, final ItpZoneState state2) {
+        return state1.isLeq(state2);
+    }
 
 }

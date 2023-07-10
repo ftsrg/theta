@@ -20,16 +20,17 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
 
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public abstract class PosExpr<ExprType extends Additive<ExprType>> extends UnaryExpr<ExprType, ExprType> {
+public abstract class PosExpr<ExprType extends Additive<ExprType>> extends
+    UnaryExpr<ExprType, ExprType> {
 
-	protected PosExpr(final Expr<ExprType> op) {
-		super(op);
-	}
+    protected PosExpr(final Expr<ExprType> op) {
+        super(op);
+    }
 
-	public static <ExprType extends Additive<ExprType>> PosExpr<?> create2(final Expr<?> op) {
-		@SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
-		final Expr<ExprType> newOp = cast(op, type);
-		return type.Pos(newOp);
-	}
+    public static <ExprType extends Additive<ExprType>> PosExpr<?> create2(final Expr<?> op) {
+        @SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
+        final Expr<ExprType> newOp = cast(op, type);
+        return type.Pos(newOp);
+    }
 
 }

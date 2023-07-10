@@ -23,83 +23,88 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class FpSubExpr extends SubExpr<FpType> {
-	private static final int HASH_SEED = 2498;
-	private static final String OPERATOR = "fpsub";
 
-	private final FpRoundingMode roundingMode;
+    private static final int HASH_SEED = 2498;
+    private static final String OPERATOR = "fpsub";
 
-	private FpSubExpr(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		super(leftOp, rightOp);
-		checkAllTypesEqual(leftOp, rightOp);
-		this.roundingMode = roundingMode;
-	}
+    private final FpRoundingMode roundingMode;
 
-	public static FpSubExpr of(final FpRoundingMode roundingMode, final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		return new FpSubExpr(roundingMode, leftOp, rightOp);
-	}
+    private FpSubExpr(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
+        final Expr<FpType> rightOp) {
+        super(leftOp, rightOp);
+        checkAllTypesEqual(leftOp, rightOp);
+        this.roundingMode = roundingMode;
+    }
 
-	public static FpSubExpr create(final FpRoundingMode roundingMode, final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Expr<FpType> newLeftOp = castFp(leftOp);
-		final Expr<FpType> newRightOp = castFp(rightOp);
-		return FpSubExpr.of(roundingMode, newLeftOp, newRightOp);
-	}
+    public static FpSubExpr of(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
+        final Expr<FpType> rightOp) {
+        return new FpSubExpr(roundingMode, leftOp, rightOp);
+    }
 
-	public FpRoundingMode getRoundingMode() {
-		return roundingMode;
-	}
+    public static FpSubExpr create(final FpRoundingMode roundingMode, final Expr<?> leftOp,
+        final Expr<?> rightOp) {
+        final Expr<FpType> newLeftOp = castFp(leftOp);
+        final Expr<FpType> newRightOp = castFp(rightOp);
+        return FpSubExpr.of(roundingMode, newLeftOp, newRightOp);
+    }
 
-	@Override
-	public FpType getType() {
-		return getOps().get(0).getType();
-	}
+    public FpRoundingMode getRoundingMode() {
+        return roundingMode;
+    }
 
-	@Override
-	public FpLitExpr eval(final Valuation val) {
-		final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
-		final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
+    @Override
+    public FpType getType() {
+        return getOps().get(0).getType();
+    }
 
-		return leftOpVal.sub(roundingMode, rightOpVal);
-	}
+    @Override
+    public FpLitExpr eval(final Valuation val) {
+        final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
+        final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
 
-	@Override
-	public FpSubExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return FpSubExpr.of(roundingMode, leftOp, rightOp);
-		}
-	}
+        return leftOpVal.sub(roundingMode, rightOpVal);
+    }
 
-	@Override
-	public FpSubExpr withLeftOp(final Expr<FpType> leftOp) {
-		return with(leftOp, getRightOp());
-	}
+    @Override
+    public FpSubExpr with(final Expr<FpType> leftOp, final Expr<FpType> rightOp) {
+        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+            return this;
+        } else {
+            return FpSubExpr.of(roundingMode, leftOp, rightOp);
+        }
+    }
 
-	@Override
-	public FpSubExpr withRightOp(final Expr<FpType> rightOp) {
-		return with(getLeftOp(), rightOp);
-	}
+    @Override
+    public FpSubExpr withLeftOp(final Expr<FpType> leftOp) {
+        return with(leftOp, getRightOp());
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof FpSubExpr) {
-			final FpSubExpr that = (FpSubExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp()) && roundingMode == that.roundingMode;
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public FpSubExpr withRightOp(final Expr<FpType> rightOp) {
+        return with(getLeftOp(), rightOp);
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof FpSubExpr) {
+            final FpSubExpr that = (FpSubExpr) obj;
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                .equals(that.getRightOp()) && roundingMode == that.roundingMode;
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
+
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR;
+    }
 }
  

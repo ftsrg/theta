@@ -17,10 +17,10 @@ package hu.bme.mit.theta.common.parser;
 
 public final class ParserException extends RuntimeException {
 
-	private static final long serialVersionUID = 7882772882877868743L;
+    private static final long serialVersionUID = 7882772882877868743L;
 
-	public ParserException(final String message) {
-		super(message);
-	}
+    public ParserException(final String message) {
+        super(message);
+    }
 
 }

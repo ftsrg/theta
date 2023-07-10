@@ -37,6 +37,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class SmtLibValuation extends Valuation {
+
     private final SmtLibSymbolTable symbolTable;
     private final SmtLibTransformationManager transformationManager;
     private final SmtLibTermTransformer termTransformer;
@@ -46,7 +47,8 @@ public final class SmtLibValuation extends Valuation {
     private volatile Collection<ConstDecl<?>> constDecls = null;
 
     public SmtLibValuation(
-        final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
+        final SmtLibSymbolTable symbolTable,
+        final SmtLibTransformationManager transformationManager,
         final SmtLibTermTransformer termTransformer, final SmtLibModel model
     ) {
         this.symbolTable = symbolTable;

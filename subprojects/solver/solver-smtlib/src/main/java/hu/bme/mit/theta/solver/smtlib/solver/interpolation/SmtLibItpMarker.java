@@ -27,6 +27,7 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SmtLibItpMarker implements ItpMarker {
+
     private final Stack<Tuple2<Expr<BoolType>, String>> terms;
 
     public SmtLibItpMarker() {

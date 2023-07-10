@@ -21,9 +21,11 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 
 public class ExplStmtOptimizer implements StmtOptimizer<ExplState> {
 
-    private ExplStmtOptimizer(){}
+    private ExplStmtOptimizer() {
+    }
 
     private static class LazyHolder {
+
         static final ExplStmtOptimizer INSTANCE = new ExplStmtOptimizer();
     }
 
@@ -33,6 +35,6 @@ public class ExplStmtOptimizer implements StmtOptimizer<ExplState> {
 
     @Override
     public Stmt optimizeStmt(final ExplState state, final Stmt stmt) {
-        return StmtSimplifier.simplifyStmt(state,stmt);
+        return StmtSimplifier.simplifyStmt(state, stmt);
     }
 }

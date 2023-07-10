@@ -28,40 +28,40 @@ public class Containers {
 
     private static ContainerFactory containerFactory = new LinkedHashContainerFactory();
 
-    public static void setContainerFactory(final ContainerFactory containerFactory){
+    public static void setContainerFactory(final ContainerFactory containerFactory) {
         checkNotNull(containerFactory);
         Containers.containerFactory = containerFactory;
     }
 
-    public static <K, V> Map<K, V> createMap(){
+    public static <K, V> Map<K, V> createMap() {
         return containerFactory.createMap();
     }
 
-    public static <K, V> Map<K, V> createMap(int initialCapacity){
+    public static <K, V> Map<K, V> createMap(int initialCapacity) {
         return containerFactory.createMap(initialCapacity);
     }
 
-    public static <K, V> Map<K, V> createMap(int initialCapacity, float loadFactor){
-        return containerFactory.createMap(initialCapacity,loadFactor);
+    public static <K, V> Map<K, V> createMap(int initialCapacity, float loadFactor) {
+        return containerFactory.createMap(initialCapacity, loadFactor);
     }
 
-    public static <K, V> Map<K, V> createMap(Map<? extends K,? extends V> m){
+    public static <K, V> Map<K, V> createMap(Map<? extends K, ? extends V> m) {
         return containerFactory.createMap(m);
     }
 
-    public static <E> Set<E> createSet(){
+    public static <E> Set<E> createSet() {
         return containerFactory.createSet();
     }
 
-    public static <E> Set<E> createSet(int initialCapacity){
+    public static <E> Set<E> createSet(int initialCapacity) {
         return containerFactory.createSet(initialCapacity);
     }
 
-    public static <E> Set<E> createSet(int initialCapacity, float loadFactor){
-        return containerFactory.createSet(initialCapacity,loadFactor);
+    public static <E> Set<E> createSet(int initialCapacity, float loadFactor) {
+        return containerFactory.createSet(initialCapacity, loadFactor);
     }
 
-    public static <E> Set<E> createSet(Collection<? extends E> c){
+    public static <E> Set<E> createSet(Collection<? extends E> c) {
         return containerFactory.createSet(c);
     }
 

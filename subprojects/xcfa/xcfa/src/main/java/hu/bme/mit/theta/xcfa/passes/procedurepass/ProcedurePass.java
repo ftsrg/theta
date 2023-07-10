@@ -19,12 +19,13 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 public abstract class ProcedurePass {
-	public static boolean postInlining = false;
 
-	public abstract XcfaProcedure.Builder run(XcfaProcedure.Builder builder);
+    public static boolean postInlining = false;
 
-	public boolean isPostInlining() {
-		return false;
-	}
+    public abstract XcfaProcedure.Builder run(XcfaProcedure.Builder builder);
+
+    public boolean isPostInlining() {
+        return false;
+    }
 
 }

@@ -40,7 +40,8 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     }
 
     @Override
-    protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
+    protected void installSolver(final Path installDir, final String version)
+        throws SmtLibSolverInstallerException {
 
         final var downloadUrl = Integer.parseInt(version.substring(0, 4)) > 2021 ?
             URI.create(String.format(
@@ -54,11 +55,10 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
 
-        try(final var inputStream = downloadUrl.toURL().openStream()) {
+        try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
             installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
 
@@ -72,7 +72,7 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] {
+        return new String[]{
             "+stdin",
             "+incremental",
             "+quiet"
@@ -80,8 +80,10 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
+    public SolverFactory getSolverFactory(final Path installDir, final String version,
+        final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath =
+            solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
         return PrincessSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
@@ -95,7 +97,7 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     }
 
     private String getSolverBinaryName() {
-        switch(OsHelper.getOs()) {
+        switch (OsHelper.getOs()) {
             case WINDOWS:
                 return "princess.bat";
             case MAC:

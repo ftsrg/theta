@@ -24,7 +24,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
  */
 public interface GraphWriter {
 
-	String writeString(Graph graph);
+    String writeString(Graph graph);
 
-	void writeFile(Graph graph, String fileName) throws FileNotFoundException;
+    void writeFile(Graph graph, String fileName) throws FileNotFoundException;
 }

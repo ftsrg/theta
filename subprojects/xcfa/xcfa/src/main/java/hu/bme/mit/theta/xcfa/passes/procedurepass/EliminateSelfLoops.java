@@ -24,25 +24,32 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class EliminateSelfLoops extends ProcedurePass {
-	static final EliminateSelfLoops instance = new EliminateSelfLoops();
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		Set<XcfaEdge> selfLoops = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget()).collect(Collectors.toSet());
-		Map<XcfaLocation, List<XcfaEdge>> locSelfLoops = new HashMap<>();
-		for (XcfaEdge selfLoop : selfLoops) {
-			List<XcfaEdge> loops = locSelfLoops.getOrDefault(selfLoop.getSource(), new ArrayList<>());
-			loops.add(selfLoop);
-			locSelfLoops.put(selfLoop.getSource(), loops);
-		}
-		for (XcfaLocation source : locSelfLoops.keySet()) {
-			for (XcfaEdge selfLoop : locSelfLoops.get(source)) builder.removeEdge(selfLoop);
-			XcfaLocation target = XcfaLocation.uniqeCopyOf(source);
-			builder.addLoc(target);
-			for (XcfaEdge selfLoop : locSelfLoops.get(source))
-				builder.addEdge(XcfaEdge.of(source, target, selfLoop.getLabels()));
-			builder.addEdge(XcfaEdge.of(target, source, List.of()));
-		}
-		return builder;
-	}
+    static final EliminateSelfLoops instance = new EliminateSelfLoops();
+
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        Set<XcfaEdge> selfLoops = builder.getEdges().stream()
+            .filter(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget())
+            .collect(Collectors.toSet());
+        Map<XcfaLocation, List<XcfaEdge>> locSelfLoops = new HashMap<>();
+        for (XcfaEdge selfLoop : selfLoops) {
+            List<XcfaEdge> loops = locSelfLoops.getOrDefault(selfLoop.getSource(),
+                new ArrayList<>());
+            loops.add(selfLoop);
+            locSelfLoops.put(selfLoop.getSource(), loops);
+        }
+        for (XcfaLocation source : locSelfLoops.keySet()) {
+            for (XcfaEdge selfLoop : locSelfLoops.get(source)) {
+                builder.removeEdge(selfLoop);
+            }
+            XcfaLocation target = XcfaLocation.uniqeCopyOf(source);
+            builder.addLoc(target);
+            for (XcfaEdge selfLoop : locSelfLoops.get(source)) {
+                builder.addEdge(XcfaEdge.of(source, target, selfLoop.getLabels()));
+            }
+            builder.addEdge(XcfaEdge.of(target, source, List.of()));
+        }
+        return builder;
+    }
 }

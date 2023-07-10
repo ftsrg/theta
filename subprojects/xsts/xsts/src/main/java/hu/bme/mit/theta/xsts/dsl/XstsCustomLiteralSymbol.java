@@ -25,29 +25,29 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class XstsCustomLiteralSymbol implements Symbol {
 
-	private final XstsCustomType.XstsCustomLiteral literal;
+    private final XstsCustomType.XstsCustomLiteral literal;
 
-	private static int counter = 0;
+    private static int counter = 0;
 
-	public XstsCustomLiteralSymbol(String name) {
-		this.literal = XstsCustomType.XstsCustomLiteral.of(name, BigInteger.valueOf(counter++));
-	}
+    public XstsCustomLiteralSymbol(String name) {
+        this.literal = XstsCustomType.XstsCustomLiteral.of(name, BigInteger.valueOf(counter++));
+    }
 
-	@Override
-	public String getName() {
-		return literal.getName();
-	}
+    @Override
+    public String getName() {
+        return literal.getName();
+    }
 
-	@Override
-	public String toString() {
-		return literal.toString();
-	}
+    @Override
+    public String toString() {
+        return literal.toString();
+    }
 
-	public Expr instantiate(){
-		return Int(literal.getIntValue());
-	}
+    public Expr instantiate() {
+        return Int(literal.getIntValue());
+    }
 
-	public XstsCustomType.XstsCustomLiteral getLiteral() {
-		return literal;
-	}
+    public XstsCustomType.XstsCustomLiteral getLiteral() {
+        return literal;
+    }
 }

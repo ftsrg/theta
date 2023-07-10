@@ -25,12 +25,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  */
 public interface Interpolant {
 
-	/**
-	 * Get the expression in the interpolant corresponding to a given marker.
-	 *
-	 * @param marker Marker
-	 * @return Expression
-	 */
-	Expr<BoolType> eval(final ItpMarker marker);
+    /**
+     * Get the expression in the interpolant corresponding to a given marker.
+     *
+     * @param marker Marker
+     * @return Expression
+     */
+    Expr<BoolType> eval(final ItpMarker marker);
 
 }

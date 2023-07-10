@@ -28,65 +28,65 @@ import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 
 public final class IntAddExpr extends AddExpr<IntType> {
 
-	private static final int HASH_SEED = 5653;
-	private static final String OPERATOR_LABEL = "+";
+    private static final int HASH_SEED = 5653;
+    private static final String OPERATOR_LABEL = "+";
 
-	private IntAddExpr(final Iterable<? extends Expr<IntType>> ops) {
-		super(ops);
-	}
+    private IntAddExpr(final Iterable<? extends Expr<IntType>> ops) {
+        super(ops);
+    }
 
-	public static IntAddExpr of(final Iterable<? extends Expr<IntType>> ops) {
-		return new IntAddExpr(ops);
-	}
+    public static IntAddExpr of(final Iterable<? extends Expr<IntType>> ops) {
+        return new IntAddExpr(ops);
+    }
 
-	public static IntAddExpr create(final List<? extends Expr<?>> ops) {
-		return IntAddExpr.of(ops.stream().map(op -> cast(op, Int())).collect(toImmutableList()));
-	}
+    public static IntAddExpr create(final List<? extends Expr<?>> ops) {
+        return IntAddExpr.of(ops.stream().map(op -> cast(op, Int())).collect(toImmutableList()));
+    }
 
-	@Override
-	public IntType getType() {
-		return Int();
-	}
+    @Override
+    public IntType getType() {
+        return Int();
+    }
 
-	@Override
-	public IntLitExpr eval(final Valuation val) {
-		var sum = BigInteger.ZERO;
-		for (final Expr<IntType> op : getOps()) {
-			final IntLitExpr opVal = (IntLitExpr) op.eval(val);
-			sum = sum.add(opVal.getValue());
-		}
-		return Int(sum);
-	}
+    @Override
+    public IntLitExpr eval(final Valuation val) {
+        var sum = BigInteger.ZERO;
+        for (final Expr<IntType> op : getOps()) {
+            final IntLitExpr opVal = (IntLitExpr) op.eval(val);
+            sum = sum.add(opVal.getValue());
+        }
+        return Int(sum);
+    }
 
-	@Override
-	public IntAddExpr with(final Iterable<? extends Expr<IntType>> ops) {
-		if (ops == getOps()) {
-			return this;
-		} else {
-			return IntAddExpr.of(ops);
-		}
-	}
+    @Override
+    public IntAddExpr with(final Iterable<? extends Expr<IntType>> ops) {
+        if (ops == getOps()) {
+            return this;
+        } else {
+            return IntAddExpr.of(ops);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof IntAddExpr) {
-			final IntAddExpr that = (IntAddExpr) obj;
-			return this.getOps().equals(that.getOps());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof IntAddExpr) {
+            final IntAddExpr that = (IntAddExpr) obj;
+            return this.getOps().equals(that.getOps());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

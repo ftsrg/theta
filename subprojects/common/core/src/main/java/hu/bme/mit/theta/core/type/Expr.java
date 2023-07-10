@@ -24,18 +24,18 @@ import hu.bme.mit.theta.core.model.Valuation;
 
 public interface Expr<ExprType extends Type> {
 
-	int getArity();
+    int getArity();
 
-	ExprType getType();
+    ExprType getType();
 
-	LitExpr<ExprType> eval(Valuation val);
+    LitExpr<ExprType> eval(Valuation val);
 
-	List<? extends Expr<?>> getOps();
+    List<? extends Expr<?>> getOps();
 
-	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
+    Expr<ExprType> withOps(List<? extends Expr<?>> ops);
 
-	default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
-		return withOps(getOps().stream().map(function::apply).collect(toImmutableList()));
-	}
+    default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
+        return withOps(getOps().stream().map(function::apply).collect(toImmutableList()));
+    }
 
 }

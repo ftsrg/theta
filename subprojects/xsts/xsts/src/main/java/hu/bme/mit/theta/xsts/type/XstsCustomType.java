@@ -32,6 +32,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public final class XstsCustomType implements XstsType<IntType> {
+
     private final String name;
     private final List<XstsCustomLiteral> literals;
 
@@ -53,6 +54,7 @@ public final class XstsCustomType implements XstsType<IntType> {
     }
 
     public static final class XstsCustomLiteral {
+
         private final BigInteger intValue;
         private final String name;
 
@@ -81,15 +83,17 @@ public final class XstsCustomType implements XstsType<IntType> {
     @Override
     public Expr<BoolType> createBoundExpr(VarDecl<IntType> decl) {
         return Or(literals.stream()
-                .map(lit -> Eq(decl.getRef(), Int(lit.getIntValue())))
-                .collect(Collectors.toList()));
+            .map(lit -> Eq(decl.getRef(), Int(lit.getIntValue())))
+            .collect(Collectors.toList()));
     }
 
     @Override
     public String serializeLiteral(LitExpr<IntType> literal) {
         final IntLitExpr intLitExpr = (IntLitExpr) literal;
-        final var customLiteral = literals.stream().filter(lit -> lit.getIntValue().equals(intLitExpr.getValue())).findFirst();
-        Preconditions.checkArgument(customLiteral.isPresent(), "Literal %s not found", intLitExpr.getValue());
+        final var customLiteral = literals.stream()
+            .filter(lit -> lit.getIntValue().equals(intLitExpr.getValue())).findFirst();
+        Preconditions.checkArgument(customLiteral.isPresent(), "Literal %s not found",
+            intLitExpr.getValue());
         return customLiteral.get().getName();
     }
 }

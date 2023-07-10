@@ -34,209 +34,220 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Base class of portfolio classes
- * {@link #executeConfiguration(CegarConfiguration, XCFA, long)} is already implemented and can/should be used by subclasses
- * {@link #executeAnalysis} is not implemented and should be the "main" method in the subclasses (concrete portfolios)
- * Uses 2 threads when executing analysis
- * Uses thread.stop() if analysis times out - use at your own risk
+ * Base class of portfolio classes {@link #executeConfiguration(CegarConfiguration, XCFA, long)} is
+ * already implemented and can/should be used by subclasses {@link #executeAnalysis} is not
+ * implemented and should be the "main" method in the subclasses (concrete portfolios) Uses 2
+ * threads when executing analysis Uses thread.stop() if analysis times out - use at your own risk
  */
 public abstract class AbstractPortfolio {
-	protected final ConsoleLogger logger;
-	protected final String modelName;
-	protected final String smtlibHome;
 
-	public AbstractPortfolio(Logger.Level logLevel, String modelName, String smtlibHome) throws Exception {
-		logger = new ConsoleLogger(logLevel);
-		closeAndRegisterAllSolverManagers(smtlibHome, logger);
-		this.modelName = modelName;
-		this.smtlibHome = smtlibHome;
-	}
+    protected final ConsoleLogger logger;
+    protected final String modelName;
+    protected final String smtlibHome;
 
-	/**
-	 * Not implemented by the base class, should be used as the main method for concrete portfolios
-	 *
-	 * @param xcfa               the model to execute the portfolio on
-	 * @param initializationTime how long the model transformation and optimization took (can be subtracted from the global time limit to get the time limit for the analysis)
-	 * @return the result of the analysis
-	 * @throws Exception
-	 */
-	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
+    public AbstractPortfolio(Logger.Level logLevel, String modelName, String smtlibHome)
+        throws Exception {
+        logger = new ConsoleLogger(logLevel);
+        closeAndRegisterAllSolverManagers(smtlibHome, logger);
+        this.modelName = modelName;
+        this.smtlibHome = smtlibHome;
+    }
 
-	/**
-	 * Creates and saves the counterexample into a file, also saves statistics into files (implemented by {@link OutputHandler} )
-	 *
-	 * @param status           result of the given configuration
-	 * @param refinementSolver the solver to be used to generate a counterexample
-	 * @throws Exception most likely solver exception
-	 */
-	public void outputResultFiles(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
-		if (status != null && status.isUnsafe()) {
-			OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
-		} else if (status != null && status.isSafe()) {
-			OutputHandler.getInstance().writeDummyCorrectnessWitness();
-		}
-	}
+    /**
+     * Not implemented by the base class, should be used as the main method for concrete portfolios
+     *
+     * @param xcfa               the model to execute the portfolio on
+     * @param initializationTime how long the model transformation and optimization took (can be
+     *                           subtracted from the global time limit to get the time limit for the
+     *                           analysis)
+     * @return the result of the analysis
+     * @throws Exception
+     */
+    public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?, ?> executeAnalysis(
+        XCFA xcfa, Duration initializationTime) throws Exception;
 
-	/**
-	 * The main reason this class exists - all subclasses should use this method to execute their given configurations
-	 * Handles solver lifecycles, threads, etc.
-	 * Uses 2 threads when executing analysis
-	 * Uses thread.stop() if analysis times out - use at your own risk
-	 *
-	 * @param configuration the configuration to execute
-	 * @param xcfa          the model to execute the analysis on
-	 * @param timeout       in ms
-	 * @return the result of the analysis
-	 */
-	protected Tuple2<Result, Optional<SafetyResult<?, ?>>> executeConfiguration(CegarConfiguration configuration, XCFA xcfa, long timeout) {
-		logger.write(Logger.Level.RESULT, "Executing ");
-		logger.write(Logger.Level.RESULT, configuration.toString());
-		logger.write(Logger.Level.RESULT, System.lineSeparator());
-		logger.write(Logger.Level.RESULT, "Timeout is set to " + timeout / 1000.0 + " sec (cputime)...");
-		logger.write(Logger.Level.RESULT, System.lineSeparator());
-		logger.write(Logger.Level.RESULT, System.lineSeparator());
+    /**
+     * Creates and saves the counterexample into a file, also saves statistics into files
+     * (implemented by {@link OutputHandler} )
+     *
+     * @param status           result of the given configuration
+     * @param refinementSolver the solver to be used to generate a counterexample
+     * @throws Exception most likely solver exception
+     */
+    public void outputResultFiles(SafetyResult<?, ?> status, String refinementSolver)
+        throws Exception {
+        if (status != null && status.isUnsafe()) {
+            OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
+        } else if (status != null && status.isSafe()) {
+            OutputHandler.getInstance().writeDummyCorrectnessWitness();
+        }
+    }
 
-		long startCpuTime = CpuTimeKeeper.getCurrentCpuTime();
+    /**
+     * The main reason this class exists - all subclasses should use this method to execute their
+     * given configurations Handles solver lifecycles, threads, etc. Uses 2 threads when executing
+     * analysis Uses thread.stop() if analysis times out - use at your own risk
+     *
+     * @param configuration the configuration to execute
+     * @param xcfa          the model to execute the analysis on
+     * @param timeout       in ms
+     * @return the result of the analysis
+     */
+    protected Tuple2<Result, Optional<SafetyResult<?, ?>>> executeConfiguration(
+        CegarConfiguration configuration, XCFA xcfa, long timeout) {
+        logger.write(Logger.Level.RESULT, "Executing ");
+        logger.write(Logger.Level.RESULT, configuration.toString());
+        logger.write(Logger.Level.RESULT, System.lineSeparator());
+        logger.write(Logger.Level.RESULT,
+            "Timeout is set to " + timeout / 1000.0 + " sec (cputime)...");
+        logger.write(Logger.Level.RESULT, System.lineSeparator());
+        logger.write(Logger.Level.RESULT, System.lineSeparator());
 
-		com.microsoft.z3.Global.resetParameters(); // TODO not sure if this is needed or not
+        long startCpuTime = CpuTimeKeeper.getCurrentCpuTime();
 
-		CegarAnalysisThread cegarAnalysisThread;
-		try {
-			cegarAnalysisThread = new CegarAnalysisThread(xcfa, logger, configuration);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return Tuple2.of(Result.UNKNOWN, Optional.empty());
-		}
+        com.microsoft.z3.Global.resetParameters(); // TODO not sure if this is needed or not
 
-		Stopwatch stopwatch = Stopwatch.createStarted();
-		cegarAnalysisThread.setName("analysis-worker");
-		cegarAnalysisThread.start();
+        CegarAnalysisThread cegarAnalysisThread;
+        try {
+            cegarAnalysisThread = new CegarAnalysisThread(xcfa, logger, configuration);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Tuple2.of(Result.UNKNOWN, Optional.empty());
+        }
 
-		try {
-			if (timeout == -1) {
-				synchronized (cegarAnalysisThread) {
-					cegarAnalysisThread.wait();
-				}
-			} else {
-				long startTime;
-				long decreasingTimeout = timeout / 1000; // in seconds!
-				while (decreasingTimeout > 0 && cegarAnalysisThread.isAlive()) {
-					startTime = CpuTimeKeeper.getCurrentCpuTime();
-					synchronized (cegarAnalysisThread) {
-						cegarAnalysisThread.wait(decreasingTimeout * 1000 / 2, 0);
-					}
-					long elapsedCpuTime = CpuTimeKeeper.getCurrentCpuTime() - startTime;
-					decreasingTimeout -= elapsedCpuTime;
-				}
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        cegarAnalysisThread.setName("analysis-worker");
+        cegarAnalysisThread.start();
 
-		if (cegarAnalysisThread.isAlive()) {
-			Stopwatch dieTimer = Stopwatch.createStarted();
-			cegarAnalysisThread.interrupt();
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			cegarAnalysisThread.stop(); // Not a good idea, but no better option
+        try {
+            if (timeout == -1) {
+                synchronized (cegarAnalysisThread) {
+                    cegarAnalysisThread.wait();
+                }
+            } else {
+                long startTime;
+                long decreasingTimeout = timeout / 1000; // in seconds!
+                while (decreasingTimeout > 0 && cegarAnalysisThread.isAlive()) {
+                    startTime = CpuTimeKeeper.getCurrentCpuTime();
+                    synchronized (cegarAnalysisThread) {
+                        cegarAnalysisThread.wait(decreasingTimeout * 1000 / 2, 0);
+                    }
+                    long elapsedCpuTime = CpuTimeKeeper.getCurrentCpuTime() - startTime;
+                    decreasingTimeout -= elapsedCpuTime;
+                }
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-			try {
-				closeAllSolverManagers();
-			} catch (Exception e) {
-				System.err.println("Could not close solver; possible resource leak");
-				e.printStackTrace();
-			}
-			cegarAnalysisThread.interrupt();
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			cegarAnalysisThread.stop(); // Not a good idea, but no better option
+        if (cegarAnalysisThread.isAlive()) {
+            Stopwatch dieTimer = Stopwatch.createStarted();
+            cegarAnalysisThread.interrupt();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
-			synchronized (cegarAnalysisThread) {
-				while (cegarAnalysisThread.isAlive()) {
-					try {
-						cegarAnalysisThread.wait(1000, 0);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-			System.err.println("Timeouting thread dead after " + dieTimer.elapsed(TimeUnit.MILLISECONDS) + "ms");
+            try {
+                closeAllSolverManagers();
+            } catch (Exception e) {
+                System.err.println("Could not close solver; possible resource leak");
+                e.printStackTrace();
+            }
+            cegarAnalysisThread.interrupt();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            cegarAnalysisThread.stop(); // Not a good idea, but no better option
 
-			cegarAnalysisThread.timeout(); // set the result to TIMEOUT and null
-			dieTimer.stop();
-			try {
-				registerAllSolverManagers(smtlibHome, logger);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+            synchronized (cegarAnalysisThread) {
+                while (cegarAnalysisThread.isAlive()) {
+                    try {
+                        cegarAnalysisThread.wait(1000, 0);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            System.err.println(
+                "Timeouting thread dead after " + dieTimer.elapsed(TimeUnit.MILLISECONDS) + "ms");
 
-		stopwatch.stop();
+            cegarAnalysisThread.timeout(); // set the result to TIMEOUT and null
+            dieTimer.stop();
+            try {
+                registerAllSolverManagers(smtlibHome, logger);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
-		Result result = cegarAnalysisThread.getResult();
-		SafetyResult<?, ?> safetyResult = cegarAnalysisThread.getSafetyResult();
+        stopwatch.stop();
 
-		long timeTaken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-		long cpuTimeTaken = CpuTimeKeeper.getCurrentCpuTime() - startCpuTime;
+        Result result = cegarAnalysisThread.getResult();
+        SafetyResult<?, ?> safetyResult = cegarAnalysisThread.getSafetyResult();
 
-		logger.write(Logger.Level.RESULT, System.lineSeparator());
-		logger.write(Logger.Level.RESULT, "Execution done, result: ");
-		logger.write(Logger.Level.RESULT, result.toString());
-		logger.write(Logger.Level.RESULT, System.lineSeparator());
-		logger.write(Logger.Level.RESULT, "Time taken in this configuration: ");
-		logger.write(Logger.Level.RESULT, cpuTimeTaken + " sec (cputime)");
-		logger.write(Logger.Level.RESULT, System.lineSeparator());
-		logger.write(Logger.Level.RESULT, System.lineSeparator());
+        long timeTaken = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+        long cpuTimeTaken = CpuTimeKeeper.getCurrentCpuTime() - startCpuTime;
 
-		OutputHandler.getInstance().writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
-		OutputHandler.getInstance().writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
-		try {
-			closeAndRegisterAllSolverManagers(smtlibHome, logger);
-		} catch (Exception e) {
-			System.err.println("Could not close solver; possible resource leak");
-			e.printStackTrace();
-		}
-		return Tuple2.of(result, Optional.ofNullable(safetyResult));
-	}
+        logger.write(Logger.Level.RESULT, System.lineSeparator());
+        logger.write(Logger.Level.RESULT, "Execution done, result: ");
+        logger.write(Logger.Level.RESULT, result.toString());
+        logger.write(Logger.Level.RESULT, System.lineSeparator());
+        logger.write(Logger.Level.RESULT, "Time taken in this configuration: ");
+        logger.write(Logger.Level.RESULT, cpuTimeTaken + " sec (cputime)");
+        logger.write(Logger.Level.RESULT, System.lineSeparator());
+        logger.write(Logger.Level.RESULT, System.lineSeparator());
 
-	/**
-	 * We can only keep track of cpu time by using {@link CpuTimeKeeper}, which this method calls properly
-	 * also, it is important to close all unused solvers,
-	 * so they don't take up time/leave behind partial data, that is outdated
-	 *
-	 * @param home   smt solver home
-	 * @param logger logger passed on to the solvers
-	 * @throws Exception SMT solver exceptions
-	 */
-	private static void closeAndRegisterAllSolverManagers(String home, Logger logger) throws Exception {
-		CpuTimeKeeper.saveSolverTimes();
-		SolverManager.closeAll();
-		// register solver managers
-		SolverManager.registerSolverManager(Z3SolverManager.create());
-		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-			final var homePath = Path.of(home);
-			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
-			SolverManager.registerSolverManager(smtLibSolverManager);
-		}
-	}
+        OutputHandler.getInstance()
+            .writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+        OutputHandler.getInstance()
+            .writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+        try {
+            closeAndRegisterAllSolverManagers(smtlibHome, logger);
+        } catch (Exception e) {
+            System.err.println("Could not close solver; possible resource leak");
+            e.printStackTrace();
+        }
+        return Tuple2.of(result, Optional.ofNullable(safetyResult));
+    }
 
-	private static void closeAllSolverManagers() throws Exception {
-		CpuTimeKeeper.saveSolverTimes();
-		SolverManager.closeAll();
-	}
+    /**
+     * We can only keep track of cpu time by using {@link CpuTimeKeeper}, which this method calls
+     * properly also, it is important to close all unused solvers, so they don't take up time/leave
+     * behind partial data, that is outdated
+     *
+     * @param home   smt solver home
+     * @param logger logger passed on to the solvers
+     * @throws Exception SMT solver exceptions
+     */
+    private static void closeAndRegisterAllSolverManagers(String home, Logger logger)
+        throws Exception {
+        CpuTimeKeeper.saveSolverTimes();
+        SolverManager.closeAll();
+        // register solver managers
+        SolverManager.registerSolverManager(Z3SolverManager.create());
+        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+            final var homePath = Path.of(home);
+            final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+            SolverManager.registerSolverManager(smtLibSolverManager);
+        }
+    }
 
-	private static void registerAllSolverManagers(String home, Logger logger) throws Exception {
-		SolverManager.registerSolverManager(Z3SolverManager.create());
-		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-			final var homePath = Path.of(home);
-			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
-			SolverManager.registerSolverManager(smtLibSolverManager);
-		}
-	}
+    private static void closeAllSolverManagers() throws Exception {
+        CpuTimeKeeper.saveSolverTimes();
+        SolverManager.closeAll();
+    }
+
+    private static void registerAllSolverManagers(String home, Logger logger) throws Exception {
+        SolverManager.registerSolverManager(Z3SolverManager.create());
+        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+            final var homePath = Path.of(home);
+            final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+            SolverManager.registerSolverManager(smtLibSolverManager);
+        }
+    }
 }

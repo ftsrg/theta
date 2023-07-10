@@ -41,7 +41,8 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
     }
 
     @Override
-    protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
+    protected void installSolver(final Path installDir, final String version)
+        throws SmtLibSolverInstallerException {
         final var downloadUrl = URI.create(String.format(
             "https://github.com/Boolector/boolector/archive/refs/tags/%s.tar.gz",
             version
@@ -49,10 +50,9 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
 
-        try(final var inputStream = downloadUrl.toURL().openStream()) {
+        try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
 
@@ -60,16 +60,19 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
 
         logger.write(Logger.Level.MAINSTEP, "Starting compilation\n");
 
-        installDir.resolve("contrib").resolve("setup-lingeling.sh").toFile().setExecutable(true, true);
+        installDir.resolve("contrib").resolve("setup-lingeling.sh").toFile()
+            .setExecutable(true, true);
         executeCommand(installDir, "alias nproc=\"echo 1\" && ./contrib/setup-lingeling.sh");
 
-        installDir.resolve("contrib").resolve("setup-btor2tools.sh").toFile().setExecutable(true, true);
+        installDir.resolve("contrib").resolve("setup-btor2tools.sh").toFile()
+            .setExecutable(true, true);
         executeCommand(installDir, "alias nproc=\"echo 1\" && ./contrib/setup-btor2tools.sh");
 
         installDir.resolve("configure.sh").toFile().setExecutable(true, true);
         executeCommand(installDir, "./configure.sh");
         executeCommand(installDir.resolve("build"), "make");
-        installDir.resolve("build").resolve("bin").resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
+        installDir.resolve("build").resolve("bin").resolve(getSolverBinaryName()).toFile()
+            .setExecutable(true, true);
 
         logger.write(Logger.Level.MAINSTEP, "Finished compilation\n");
     }
@@ -81,13 +84,12 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        if(SemVer.of(version).compareTo(SemVer.of("3.2.2")) >= 0) {
+        if (SemVer.of(version).compareTo(SemVer.of("3.2.2")) >= 0) {
             return new String[]{
                 "--smt2",
                 "-i"
             };
-        }
-        else {
+        } else {
             return new String[]{
                 "--smt2",
                 "--smt2-model",
@@ -97,8 +99,10 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve("build").resolve("bin").resolve(getSolverBinaryName());
+    public SolverFactory getSolverFactory(final Path installDir, final String version,
+        final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath = solverPath != null ? solverPath
+            : installDir.resolve("build").resolve("bin").resolve(getSolverBinaryName());
         return BoolectorSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
@@ -108,7 +112,7 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
     }
 
     private String getSolverBinaryName() {
-        switch(OsHelper.getOs()) {
+        switch (OsHelper.getOs()) {
             case LINUX:
                 return "boolector";
             default:
@@ -116,7 +120,8 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
         }
     }
 
-    private void executeCommand(final Path workingPath, final String command) throws SmtLibSolverInstallerException {
+    private void executeCommand(final Path workingPath, final String command)
+        throws SmtLibSolverInstallerException {
         try {
             logger.write(Logger.Level.SUBSTEP, "Execute command: %s\n", command);
             final var process = new ProcessBuilder()
@@ -126,12 +131,13 @@ public class BoolectorSmtLibSolverInstaller extends SmtLibSolverInstaller.Defaul
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start();
 
-            if(process.waitFor() != 0) {
-                throw new SmtLibSolverInstallerException(String.format("Error executing command: %s", command));
+            if (process.waitFor() != 0) {
+                throw new SmtLibSolverInstallerException(
+                    String.format("Error executing command: %s", command));
             }
-        }
-        catch (IOException | InterruptedException e) {
-            throw new SmtLibSolverInstallerException(String.format("Error executing command: %s", command), e);
+        } catch (IOException | InterruptedException e) {
+            throw new SmtLibSolverInstallerException(
+                String.format("Error executing command: %s", command), e);
         }
     }
 }

@@ -32,8 +32,8 @@ public interface SolverBase extends AutoCloseable {
     SolverStatus check();
 
     /**
-     * Push the current solver state. When calling {@link #pop()}, all expressions added after
-     * the last push will be removed.
+     * Push the current solver state. When calling {@link #pop()}, all expressions added after the
+     * last push will be removed.
      */
     void push();
 
@@ -64,9 +64,8 @@ public interface SolverBase extends AutoCloseable {
     SolverStatus getStatus();
 
     /**
-     * Get the satisfying assignment for the currently added expressions.
-     * Should only be called if {@link #check()} was already called and
-     * the result is SAT.
+     * Get the satisfying assignment for the currently added expressions. Should only be called if
+     * {@link #check()} was already called and the result is SAT.
      *
      * @return Satisfying assignment
      */

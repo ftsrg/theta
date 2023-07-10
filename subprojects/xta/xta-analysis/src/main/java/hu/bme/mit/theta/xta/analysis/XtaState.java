@@ -32,118 +32,120 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 
 public final class XtaState<S extends State> implements ExprState {
-	private static final int HASH_SEED = 8291;
-	private volatile int hashCode = 0;
 
-	private final List<Loc> locs;
-	private final S state;
-	private final boolean committed;
-	private final boolean urgent;
+    private static final int HASH_SEED = 8291;
+    private volatile int hashCode = 0;
 
-	private XtaState(final List<Loc> locs, final S state) {
-		this.locs = ImmutableList.copyOf(checkNotNull(locs));
-		this.state = checkNotNull(state);
-		final LocKind locKind = extractKind(locs);
-		committed = locKind == LocKind.COMMITTED;
-		urgent = locKind != LocKind.NORMAL;
-	}
+    private final List<Loc> locs;
+    private final S state;
+    private final boolean committed;
+    private final boolean urgent;
 
-	private static final LocKind extractKind(final List<Loc> locs) {
-		boolean urgent = false;
-		for (final Loc loc : locs) {
-			switch (loc.getKind()) {
-				case COMMITTED:
-					return LocKind.COMMITTED;
-				case URGENT:
-					urgent = true;
-					break;
-				case NORMAL:
-					break;
-				default:
-					throw new AssertionError();
-			}
-		}
-		return urgent ? LocKind.URGENT : LocKind.NORMAL;
-	}
+    private XtaState(final List<Loc> locs, final S state) {
+        this.locs = ImmutableList.copyOf(checkNotNull(locs));
+        this.state = checkNotNull(state);
+        final LocKind locKind = extractKind(locs);
+        committed = locKind == LocKind.COMMITTED;
+        urgent = locKind != LocKind.NORMAL;
+    }
 
-	public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state) {
-		return new XtaState<>(locs, state);
-	}
+    private static final LocKind extractKind(final List<Loc> locs) {
+        boolean urgent = false;
+        for (final Loc loc : locs) {
+            switch (loc.getKind()) {
+                case COMMITTED:
+                    return LocKind.COMMITTED;
+                case URGENT:
+                    urgent = true;
+                    break;
+                case NORMAL:
+                    break;
+                default:
+                    throw new AssertionError();
+            }
+        }
+        return urgent ? LocKind.URGENT : LocKind.NORMAL;
+    }
 
-	public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
-																		 final Collection<? extends S> states) {
-		final Collection<XtaState<S>> result = new ArrayList<>();
-		for (final S state : states) {
-			final XtaState<S> initXtaState = XtaState.of(locs, state);
-			result.add(initXtaState);
-		}
-		return result;
-	}
+    public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state) {
+        return new XtaState<>(locs, state);
+    }
 
-	public List<Loc> getLocs() {
-		return locs;
-	}
+    public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
+        final Collection<? extends S> states) {
+        final Collection<XtaState<S>> result = new ArrayList<>();
+        for (final S state : states) {
+            final XtaState<S> initXtaState = XtaState.of(locs, state);
+            result.add(initXtaState);
+        }
+        return result;
+    }
 
-	public S getState() {
-		return state;
-	}
+    public List<Loc> getLocs() {
+        return locs;
+    }
 
-	public boolean isCommitted() {
-		return committed;
-	}
+    public S getState() {
+        return state;
+    }
 
-	public boolean isUrgent() {
-		return urgent;
-	}
+    public boolean isCommitted() {
+        return committed;
+    }
 
-	public <S2 extends State> XtaState<S2> withState(final S2 state) {
-		return XtaState.of(this.locs, state);
-	}
+    public boolean isUrgent() {
+        return urgent;
+    }
 
-	@Override
-	public boolean isBottom() {
-		return state.isBottom();
-	}
+    public <S2 extends State> XtaState<S2> withState(final S2 state) {
+        return XtaState.of(this.locs, state);
+    }
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		if (state instanceof ExprState) {
-			final ExprState exprState = (ExprState) state;
-			return exprState.toExpr();
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}
+    @Override
+    public boolean isBottom() {
+        return state.isBottom();
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + locs.hashCode();
-			result = 31 * result + state.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public Expr<BoolType> toExpr() {
+        if (state instanceof ExprState) {
+            final ExprState exprState = (ExprState) state;
+            return exprState.toExpr();
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof XtaState) {
-			final XtaState<?> that = (XtaState<?>) obj;
-			return this.locs.equals(that.locs) && this.state.equals(that.state);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + locs.hashCode();
+            result = 31 * result + state.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		final String prefix = getClass().getSimpleName();
-		final String locString = Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName)).toString();
-		return Utils.lispStringBuilder(prefix).add(locString).body().add(state).toString();
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof XtaState) {
+            final XtaState<?> that = (XtaState<?>) obj;
+            return this.locs.equals(that.locs) && this.state.equals(that.state);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        final String prefix = getClass().getSimpleName();
+        final String locString = Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName))
+            .toString();
+        return Utils.lispStringBuilder(prefix).add(locString).body().add(state).toString();
+    }
 
 }

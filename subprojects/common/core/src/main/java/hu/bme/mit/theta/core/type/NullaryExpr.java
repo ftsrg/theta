@@ -24,21 +24,21 @@ import com.google.common.collect.ImmutableList;
 
 public abstract class NullaryExpr<ExprType extends Type> implements Expr<ExprType> {
 
-	@Override
-	public final List<Expr<?>> getOps() {
-		return ImmutableList.of();
-	}
+    @Override
+    public final List<Expr<?>> getOps() {
+        return ImmutableList.of();
+    }
 
-	@Override
-	public final NullaryExpr<ExprType> withOps(final List<? extends Expr<?>> ops) {
-		checkNotNull(ops);
-		checkArgument(ops.isEmpty());
-		return this;
-	}
+    @Override
+    public final NullaryExpr<ExprType> withOps(final List<? extends Expr<?>> ops) {
+        checkNotNull(ops);
+        checkArgument(ops.isEmpty());
+        return this;
+    }
 
-	@Override
-	public final int getArity() {
-		return 0;
-	}
+    @Override
+    public final int getArity() {
+        return 0;
+    }
 
 }

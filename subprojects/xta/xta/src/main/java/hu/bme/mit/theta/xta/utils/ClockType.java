@@ -19,18 +19,18 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class ClockType implements Type {
 
-	private static final ClockType INSTANCE = new ClockType();
+    private static final ClockType INSTANCE = new ClockType();
 
-	private ClockType() {
-	}
+    private ClockType() {
+    }
 
-	public static ClockType getInstance() {
-		return INSTANCE;
-	}
+    public static ClockType getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public String toString() {
-		return "Clock";
-	}
+    @Override
+    public String toString() {
+        return "Clock";
+    }
 
 }

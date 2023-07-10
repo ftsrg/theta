@@ -28,53 +28,54 @@ import java.util.Set;
  */
 public final class StmtUtils {
 
-	private StmtUtils() {
-	}
+    private StmtUtils() {
+    }
 
-	/**
-	 * Get variables appearing in a statement
-	 *
-	 * @param stmt Statement
-	 * @return Variables
-	 */
-	public static Set<VarDecl<?>> getVars(final Stmt stmt) {
-		final Set<VarDecl<?>> vars = Containers.createSet();
-		stmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
-		return vars;
-	}
+    /**
+     * Get variables appearing in a statement
+     *
+     * @param stmt Statement
+     * @return Variables
+     */
+    public static Set<VarDecl<?>> getVars(final Stmt stmt) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        stmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
+        return vars;
+    }
 
-	/**
-	 * Get variables appearing in statements
-	 *
-	 * @param stmts Statements
-	 * @return Variables
-	 */
-	public static Set<VarDecl<?>> getVars(final Iterable<? extends Stmt> stmts) {
-		final Set<VarDecl<?>> vars = Containers.createSet();
-		stmts.forEach(s -> s.accept(VarCollectorStmtVisitor.getInstance(), vars));
-		return vars;
-	}
+    /**
+     * Get variables appearing in statements
+     *
+     * @param stmts Statements
+     * @return Variables
+     */
+    public static Set<VarDecl<?>> getVars(final Iterable<? extends Stmt> stmts) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        stmts.forEach(s -> s.accept(VarCollectorStmtVisitor.getInstance(), vars));
+        return vars;
+    }
 
-	/**
-	 * Unfold a statement into expressions with a given indexing
-	 *
-	 * @param stmt     Statement
-	 * @param indexing Indexing
-	 * @return Expressions and new indexing
-	 */
-	public static StmtUnfoldResult toExpr(final Stmt stmt, final VarIndexing indexing) {
-		return StmtToExprTransformer.toExpr(stmt, indexing);
-	}
+    /**
+     * Unfold a statement into expressions with a given indexing
+     *
+     * @param stmt     Statement
+     * @param indexing Indexing
+     * @return Expressions and new indexing
+     */
+    public static StmtUnfoldResult toExpr(final Stmt stmt, final VarIndexing indexing) {
+        return StmtToExprTransformer.toExpr(stmt, indexing);
+    }
 
-	/**
-	 * Unfold statements into expressions with a given indexing
-	 *
-	 * @param stmts    Statements
-	 * @param indexing Indexing
-	 * @return Expressions and new indexing
-	 */
-	public static StmtUnfoldResult toExpr(final List<? extends Stmt> stmts, final VarIndexing indexing) {
-		return StmtToExprTransformer.toExpr(stmts, indexing);
-	}
+    /**
+     * Unfold statements into expressions with a given indexing
+     *
+     * @param stmts    Statements
+     * @param indexing Indexing
+     * @return Expressions and new indexing
+     */
+    public static StmtUnfoldResult toExpr(final List<? extends Stmt> stmts,
+        final VarIndexing indexing) {
+        return StmtToExprTransformer.toExpr(stmts, indexing);
+    }
 
 }

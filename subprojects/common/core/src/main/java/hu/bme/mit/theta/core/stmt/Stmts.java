@@ -29,31 +29,31 @@ import java.util.List;
  */
 public final class Stmts {
 
-	private Stmts() {
-	}
+    private Stmts() {
+    }
 
-	public static SkipStmt Skip() {
-		return SkipStmt.getInstance();
-	}
+    public static SkipStmt Skip() {
+        return SkipStmt.getInstance();
+    }
 
-	public static AssumeStmt Assume(final Expr<BoolType> cond) {
-		return AssumeStmt.of(cond);
-	}
+    public static AssumeStmt Assume(final Expr<BoolType> cond) {
+        return AssumeStmt.of(cond);
+    }
 
-	public static <T extends Type> AssignStmt<T> Assign(final VarDecl<T> lhs, final Expr<T> rhs) {
-		return AssignStmt.of(lhs, rhs);
-	}
+    public static <T extends Type> AssignStmt<T> Assign(final VarDecl<T> lhs, final Expr<T> rhs) {
+        return AssignStmt.of(lhs, rhs);
+    }
 
-	public static <T extends Type> HavocStmt<T> Havoc(final VarDecl<T> varDecl) {
-		return HavocStmt.of(varDecl);
-	}
+    public static <T extends Type> HavocStmt<T> Havoc(final VarDecl<T> varDecl) {
+        return HavocStmt.of(varDecl);
+    }
 
-	public static SequenceStmt SequenceStmt(final List<Stmt> stmts) {
-		return SequenceStmt.of(stmts);
-	}
+    public static SequenceStmt SequenceStmt(final List<Stmt> stmts) {
+        return SequenceStmt.of(stmts);
+    }
 
-	public static NonDetStmt NonDetStmt(final List<Stmt> stmts) {
-		return NonDetStmt.of(stmts);
-	}
+    public static NonDetStmt NonDetStmt(final List<Stmt> stmts) {
+        return NonDetStmt.of(stmts);
+    }
 
 }

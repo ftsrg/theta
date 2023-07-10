@@ -16,17 +16,18 @@
 package hu.bme.mit.theta.solver.smtlib.solver.installer;
 
 public class SmtLibSolverInstallerException extends Exception {
-	private static final long serialVersionUID = -7472824180590329943L;
 
-	public SmtLibSolverInstallerException(Exception e) {
-		super(e);
-	}
+    private static final long serialVersionUID = -7472824180590329943L;
 
-	public SmtLibSolverInstallerException(String e) {
-		super(e);
-	}
+    public SmtLibSolverInstallerException(Exception e) {
+        super(e);
+    }
 
-	public SmtLibSolverInstallerException(String e, Throwable c) {
-		super(e, c);
-	}
+    public SmtLibSolverInstallerException(String e) {
+        super(e);
+    }
+
+    public SmtLibSolverInstallerException(String e, Throwable c) {
+        super(e, c);
+    }
 }

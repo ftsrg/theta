@@ -30,12 +30,14 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
+
     private final SmtLibTransformationManager transformer;
     private final SmtLibSymbolTable symbolTable;
 
     private int symbolCount;
 
-    public GenericSmtLibDeclTransformer(final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
+    public GenericSmtLibDeclTransformer(final SmtLibTransformationManager transformer,
+        final SmtLibSymbolTable symbolTable) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
 
@@ -46,7 +48,7 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
     public String toSymbol(final Decl<?> decl) {
         if (decl instanceof ConstDecl) {
             final ConstDecl<?> cdecl = (ConstDecl<?>) decl;
-            if(!symbolTable.definesConst(cdecl)) {
+            if (!symbolTable.definesConst(cdecl)) {
                 transformConst(cdecl);
             }
             return symbolTable.getSymbol(cdecl);
@@ -59,7 +61,7 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
     public String toDeclaration(final Decl<?> decl) {
         if (decl instanceof ConstDecl) {
             final ConstDecl<?> cdecl = (ConstDecl<?>) decl;
-            if(!symbolTable.definesConst(cdecl)) {
+            if (!symbolTable.definesConst(cdecl)) {
                 transformConst(cdecl);
             }
             return symbolTable.getDeclaration(cdecl);
@@ -77,7 +79,7 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
 
         final String returnSort = transformer.toSort(returnType);
         final String[] paramSorts = paramTypes.stream().map(transformer::toSort)
-                .toArray(String[]::new);
+            .toArray(String[]::new);
 
         final String symbolName = symbolNameFor(decl);
         final String symbolDeclaration = String.format(
@@ -99,7 +101,8 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
             final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
-            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
+            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
+                .addAll(paramTypes).build();
             final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
             return result;

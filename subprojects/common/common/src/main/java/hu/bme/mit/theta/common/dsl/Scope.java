@@ -19,8 +19,8 @@ import java.util.Optional;
 
 public interface Scope {
 
-	Optional<? extends Scope> enclosingScope();
+    Optional<? extends Scope> enclosingScope();
 
-	Optional<? extends Symbol> resolve(String name);
+    Optional<? extends Symbol> resolve(String name);
 
 }

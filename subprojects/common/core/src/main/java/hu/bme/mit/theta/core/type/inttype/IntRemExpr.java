@@ -24,75 +24,76 @@ import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 
 public final class IntRemExpr extends RemExpr<IntType> {
 
-	private static final int HASH_SEED = 199;
+    private static final int HASH_SEED = 199;
 
-	private static final String OPERATOR_LABEL = "rem";
+    private static final String OPERATOR_LABEL = "rem";
 
-	private IntRemExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    private IntRemExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static IntRemExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		return new IntRemExpr(leftOp, rightOp);
-	}
+    public static IntRemExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+        return new IntRemExpr(leftOp, rightOp);
+    }
 
-	public static IntRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Expr<IntType> newLeftOp = cast(leftOp, Int());
-		final Expr<IntType> newRightOp = cast(rightOp, Int());
-		return IntRemExpr.of(newLeftOp, newRightOp);
-	}
+    public static IntRemExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+        final Expr<IntType> newLeftOp = cast(leftOp, Int());
+        final Expr<IntType> newRightOp = cast(rightOp, Int());
+        return IntRemExpr.of(newLeftOp, newRightOp);
+    }
 
-	@Override
-	public IntType getType() {
-		return Int();
-	}
+    @Override
+    public IntType getType() {
+        return Int();
+    }
 
-	@Override
-	public IntLitExpr eval(final Valuation val) {
-		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
-		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
-		return leftOpVal.rem(rightOpVal);
-	}
+    @Override
+    public IntLitExpr eval(final Valuation val) {
+        final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
+        final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
+        return leftOpVal.rem(rightOpVal);
+    }
 
-	@Override
-	public IntRemExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return IntRemExpr.of(leftOp, rightOp);
-		}
-	}
+    @Override
+    public IntRemExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+            return this;
+        } else {
+            return IntRemExpr.of(leftOp, rightOp);
+        }
+    }
 
-	@Override
-	public IntRemExpr withLeftOp(final Expr<IntType> leftOp) {
-		return with(leftOp, getRightOp());
-	}
+    @Override
+    public IntRemExpr withLeftOp(final Expr<IntType> leftOp) {
+        return with(leftOp, getRightOp());
+    }
 
-	@Override
-	public IntRemExpr withRightOp(final Expr<IntType> rightOp) {
-		return with(getLeftOp(), rightOp);
-	}
+    @Override
+    public IntRemExpr withRightOp(final Expr<IntType> rightOp) {
+        return with(getLeftOp(), rightOp);
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof IntRemExpr) {
-			final IntRemExpr that = (IntRemExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof IntRemExpr) {
+            final IntRemExpr that = (IntRemExpr) obj;
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                .equals(that.getRightOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

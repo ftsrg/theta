@@ -32,57 +32,58 @@ import hu.bme.mit.theta.core.stmt.Stmts;
 
 final class CfaEdgeDefinition {
 
-	private final CfaProcessSymbol scope;
+    private final CfaProcessSymbol scope;
 
-	private final String source;
-	private final String target;
-	private final List<CfaStatement> statements;
+    private final String source;
+    private final String target;
+    private final List<CfaStatement> statements;
 
-	public CfaEdgeDefinition(final CfaProcessSymbol scope, final EdgeContext context) {
-		checkNotNull(context);
-		this.scope = checkNotNull(scope);
+    public CfaEdgeDefinition(final CfaProcessSymbol scope, final EdgeContext context) {
+        checkNotNull(context);
+        this.scope = checkNotNull(scope);
 
-		source = context.source.getText();
-		target = context.target.getText();
-		statements = createStatements(context.stmts);
-	}
+        source = context.source.getText();
+        target = context.target.getText();
+        statements = createStatements(context.stmts);
+    }
 
-	////
+    ////
 
-	public List<Edge> instantiate(final CFA.Builder cfa, final Env env) {
-		final CfaLocationSymbol sourceSymbol = (CfaLocationSymbol) scope.resolve(source).get();
-		final CfaLocationSymbol targetSymbol = (CfaLocationSymbol) scope.resolve(target).get();
+    public List<Edge> instantiate(final CFA.Builder cfa, final Env env) {
+        final CfaLocationSymbol sourceSymbol = (CfaLocationSymbol) scope.resolve(source).get();
+        final CfaLocationSymbol targetSymbol = (CfaLocationSymbol) scope.resolve(target).get();
 
-		final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
-		final Loc targetLoc = (Loc) env.eval(targetSymbol);
-		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(Collectors.toList());
-		if (stmts.isEmpty()) {
-			stmts.add(Stmts.Skip());
-		}
-		final List<Edge> edges = new ArrayList<>(stmts.size());
-		final List<Loc> locs = new ArrayList<>(stmts.size() + 1);
-		locs.add(sourceLoc);
-		for (int i = 0; i < stmts.size() - 1; ++i) {
-			locs.add(cfa.createLoc());
-		}
-		locs.add(targetLoc);
+        final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
+        final Loc targetLoc = (Loc) env.eval(targetSymbol);
+        final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env))
+            .collect(Collectors.toList());
+        if (stmts.isEmpty()) {
+            stmts.add(Stmts.Skip());
+        }
+        final List<Edge> edges = new ArrayList<>(stmts.size());
+        final List<Loc> locs = new ArrayList<>(stmts.size() + 1);
+        locs.add(sourceLoc);
+        for (int i = 0; i < stmts.size() - 1; ++i) {
+            locs.add(cfa.createLoc());
+        }
+        locs.add(targetLoc);
 
-		for (int i = 0; i < stmts.size(); ++i) {
-			edges.add(cfa.createEdge(locs.get(i), locs.get(i + 1), stmts.get(i)));
-		}
+        for (int i = 0; i < stmts.size(); ++i) {
+            edges.add(cfa.createEdge(locs.get(i), locs.get(i + 1), stmts.get(i)));
+        }
 
-		return edges;
-	}
+        return edges;
+    }
 
-	////
+    ////
 
-	private List<CfaStatement> createStatements(final List<StmtContext> stmtContexts) {
-		final List<CfaStatement> result = new ArrayList<>();
-		for (final StmtContext stmtContext : stmtContexts) {
-			final CfaStatement statement = new CfaStatement(scope, stmtContext);
-			result.add(statement);
-		}
-		return result;
-	}
+    private List<CfaStatement> createStatements(final List<StmtContext> stmtContexts) {
+        final List<CfaStatement> result = new ArrayList<>();
+        for (final StmtContext stmtContext : stmtContexts) {
+            final CfaStatement statement = new CfaStatement(scope, stmtContext);
+            result.add(statement);
+        }
+        return result;
+    }
 
 }

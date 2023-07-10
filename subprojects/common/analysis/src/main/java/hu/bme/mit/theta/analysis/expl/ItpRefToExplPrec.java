@@ -28,23 +28,23 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 
 public class ItpRefToExplPrec implements RefutationToPrec<ExplPrec, ItpRefutation> {
 
-	@Override
-	public ExplPrec toPrec(final ItpRefutation refutation, final int index) {
-		final Expr<BoolType> expr = refutation.get(index);
-		final Collection<VarDecl<?>> vars = ExprUtils.getVars(expr);
-		final ExplPrec prec = ExplPrec.of(vars);
-		return prec;
-	}
+    @Override
+    public ExplPrec toPrec(final ItpRefutation refutation, final int index) {
+        final Expr<BoolType> expr = refutation.get(index);
+        final Collection<VarDecl<?>> vars = ExprUtils.getVars(expr);
+        final ExplPrec prec = ExplPrec.of(vars);
+        return prec;
+    }
 
-	@Override
-	public ExplPrec join(final ExplPrec prec1, final ExplPrec prec2) {
-		checkNotNull(prec1);
-		checkNotNull(prec2);
-		return prec1.join(prec2);
-	}
+    @Override
+    public ExplPrec join(final ExplPrec prec1, final ExplPrec prec2) {
+        checkNotNull(prec1);
+        checkNotNull(prec2);
+        return prec1.join(prec2);
+    }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

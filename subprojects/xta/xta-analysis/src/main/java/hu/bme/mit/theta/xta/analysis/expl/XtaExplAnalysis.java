@@ -29,32 +29,32 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 
 public final class XtaExplAnalysis implements Analysis<ExplState, XtaAction, UnitPrec> {
 
-	private final XtaExplInitFunc initFunc;
-	private final XtaExplTransFunc transFunc;
+    private final XtaExplInitFunc initFunc;
+    private final XtaExplTransFunc transFunc;
 
-	private XtaExplAnalysis(final XtaSystem system) {
-		checkNotNull(system);
-		initFunc = XtaExplInitFunc.create(system);
-		transFunc = XtaExplTransFunc.create(system);
-	}
+    private XtaExplAnalysis(final XtaSystem system) {
+        checkNotNull(system);
+        initFunc = XtaExplInitFunc.create(system);
+        transFunc = XtaExplTransFunc.create(system);
+    }
 
-	public static XtaExplAnalysis create(final XtaSystem system) {
-		return new XtaExplAnalysis(system);
-	}
+    public static XtaExplAnalysis create(final XtaSystem system) {
+        return new XtaExplAnalysis(system);
+    }
 
-	@Override
-	public PartialOrd<ExplState> getPartialOrd() {
-		return ExplOrd.getInstance();
-	}
+    @Override
+    public PartialOrd<ExplState> getPartialOrd() {
+        return ExplOrd.getInstance();
+    }
 
-	@Override
-	public InitFunc<ExplState, UnitPrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<ExplState, UnitPrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<ExplState, XtaAction, UnitPrec> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<ExplState, XtaAction, UnitPrec> getTransFunc() {
+        return transFunc;
+    }
 
 }

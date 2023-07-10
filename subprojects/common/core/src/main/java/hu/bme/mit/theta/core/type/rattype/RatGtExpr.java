@@ -27,74 +27,75 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class RatGtExpr extends GtExpr<RatType> {
 
-	private static final int HASH_SEED = 8161;
-	private static final String OPERATOR_LABEL = ">";
+    private static final int HASH_SEED = 8161;
+    private static final String OPERATOR_LABEL = ">";
 
-	private RatGtExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    private RatGtExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static RatGtExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatGtExpr(leftOp, rightOp);
-	}
+    public static RatGtExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        return new RatGtExpr(leftOp, rightOp);
+    }
 
-	public static RatGtExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Expr<RatType> newLeftOp = cast(leftOp, Rat());
-		final Expr<RatType> newRightOp = cast(rightOp, Rat());
-		return RatGtExpr.of(newLeftOp, newRightOp);
-	}
+    public static RatGtExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+        final Expr<RatType> newLeftOp = cast(leftOp, Rat());
+        final Expr<RatType> newRightOp = cast(rightOp, Rat());
+        return RatGtExpr.of(newLeftOp, newRightOp);
+    }
 
-	@Override
-	public BoolType getType() {
-		return Bool();
-	}
+    @Override
+    public BoolType getType() {
+        return Bool();
+    }
 
-	@Override
-	public BoolLitExpr eval(final Valuation val) {
-		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
-		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
-		return leftOpVal.gt(rightOpVal);
-	}
+    @Override
+    public BoolLitExpr eval(final Valuation val) {
+        final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
+        final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
+        return leftOpVal.gt(rightOpVal);
+    }
 
-	@Override
-	public RatGtExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return RatGtExpr.of(leftOp, rightOp);
-		}
-	}
+    @Override
+    public RatGtExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+            return this;
+        } else {
+            return RatGtExpr.of(leftOp, rightOp);
+        }
+    }
 
-	@Override
-	public RatGtExpr withLeftOp(final Expr<RatType> leftOp) {
-		return with(leftOp, getRightOp());
-	}
+    @Override
+    public RatGtExpr withLeftOp(final Expr<RatType> leftOp) {
+        return with(leftOp, getRightOp());
+    }
 
-	@Override
-	public RatGtExpr withRightOp(final Expr<RatType> rightOp) {
-		return with(getLeftOp(), rightOp);
-	}
+    @Override
+    public RatGtExpr withRightOp(final Expr<RatType> rightOp) {
+        return with(getLeftOp(), rightOp);
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RatGtExpr) {
-			final RatGtExpr that = (RatGtExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof RatGtExpr) {
+            final RatGtExpr that = (RatGtExpr) obj;
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                .equals(that.getRightOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

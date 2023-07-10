@@ -19,14 +19,15 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ParamDecl<DeclType extends Type> extends Decl<DeclType> {
-	private static final String DECL_LABEL = "Param";
 
-	ParamDecl(final String name, final DeclType type) {
-		super(name, type);
-	}
+    private static final String DECL_LABEL = "Param";
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
-	}
+    ParamDecl(final String name, final DeclType type) {
+        super(name, type);
+    }
+
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
+    }
 }

@@ -30,83 +30,86 @@ import static hu.bme.mit.theta.xta.Sync.Kind.RECV;
 
 public final class Sync {
 
-	private static final int HASH_SEED = 6547;
+    private static final int HASH_SEED = 6547;
 
-	private volatile int hashCode = 0;
+    private volatile int hashCode = 0;
 
-	public enum Kind {
-		EMIT, RECV
-	}
+    public enum Kind {
+        EMIT, RECV
+    }
 
-	private final Label label;
-	private final List<Expr<?>> args;
-	private final Kind kind;
+    private final Label label;
+    private final List<Expr<?>> args;
+    private final Kind kind;
 
-	private Sync(final Label label, final List<? extends Expr<?>> args, final Kind kind) {
-		checkNotNull(label);
-		checkNotNull(args);
-		checkNotNull(kind);
-		final List<Type> types = label.getParamTypes();
-		checkArgument(args.size() == types.size());
-		checkArgument(zip(args.stream(), types.stream(), (a, t) -> a.getType() == t).allMatch(p -> p));
-		this.label = label;
-		this.args = ImmutableList.copyOf(args);
-		this.kind = kind;
-	}
+    private Sync(final Label label, final List<? extends Expr<?>> args, final Kind kind) {
+        checkNotNull(label);
+        checkNotNull(args);
+        checkNotNull(kind);
+        final List<Type> types = label.getParamTypes();
+        checkArgument(args.size() == types.size());
+        checkArgument(
+            zip(args.stream(), types.stream(), (a, t) -> a.getType() == t).allMatch(p -> p));
+        this.label = label;
+        this.args = ImmutableList.copyOf(args);
+        this.kind = kind;
+    }
 
-	public static Sync emit(final Label label, final List<? extends Expr<?>> args) {
-		return new Sync(label, args, EMIT);
-	}
+    public static Sync emit(final Label label, final List<? extends Expr<?>> args) {
+        return new Sync(label, args, EMIT);
+    }
 
-	public static Sync recv(final Label label, final List<? extends Expr<?>> args) {
-		return new Sync(label, args, RECV);
-	}
+    public static Sync recv(final Label label, final List<? extends Expr<?>> args) {
+        return new Sync(label, args, RECV);
+    }
 
-	public Label getLabel() {
-		return label;
-	}
+    public Label getLabel() {
+        return label;
+    }
 
-	public List<Expr<?>> getArgs() {
-		return args;
-	}
+    public List<Expr<?>> getArgs() {
+        return args;
+    }
 
-	public Kind getKind() {
-		return kind;
-	}
+    public Kind getKind() {
+        return kind;
+    }
 
-	public boolean mayReceive(final Sync that) {
-		checkArgument(that.kind.equals(EMIT));
-		return this.label.equals(that.label) && this.kind.equals(RECV);
-	}
+    public boolean mayReceive(final Sync that) {
+        checkArgument(that.kind.equals(EMIT));
+        return this.label.equals(that.label) && this.kind.equals(RECV);
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + label.hashCode();
-			result = 31 * result + args.hashCode();
-			result = 31 * result + kind.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + label.hashCode();
+            result = 31 * result + args.hashCode();
+            result = 31 * result + kind.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof Sync) {
-			final Sync that = (Sync) obj;
-			return this.label.equals(that.label) && this.kind.equals(that.kind) && this.args.equals(that.args);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof Sync) {
+            final Sync that = (Sync) obj;
+            return this.label.equals(that.label) && this.kind.equals(that.kind) && this.args.equals(
+                that.args);
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(label.getName()).add(kind == EMIT ? "!" : "?").addAll(args).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(label.getName()).add(kind == EMIT ? "!" : "?").addAll(args)
+            .toString();
+    }
 
 }

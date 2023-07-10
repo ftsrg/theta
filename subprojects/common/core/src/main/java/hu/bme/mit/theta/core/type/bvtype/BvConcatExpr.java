@@ -28,6 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 public final class BvConcatExpr implements Expr<BvType> {
+
     private static final int HASH_SEED = 8264;
     private static final String OPERATOR_LABEL = "++";
 

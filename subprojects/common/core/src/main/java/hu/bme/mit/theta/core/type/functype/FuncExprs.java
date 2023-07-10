@@ -21,22 +21,22 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class FuncExprs {
 
-	private FuncExprs() {
-	}
+    private FuncExprs() {
+    }
 
-	public static <ParamType extends Type, ResultType extends Type> FuncType<ParamType, ResultType> Func(
-			final ParamType paramType, final ResultType resultType) {
-		return FuncType.of(paramType, resultType);
-	}
+    public static <ParamType extends Type, ResultType extends Type> FuncType<ParamType, ResultType> Func(
+        final ParamType paramType, final ResultType resultType) {
+        return FuncType.of(paramType, resultType);
+    }
 
-	public static <ParamType extends Type, ResultType extends Type> FuncLitExpr<ParamType, ResultType> Func(
-			final ParamDecl<ParamType> paramDecl, final Expr<ResultType> result) {
-		return FuncLitExpr.of(paramDecl, result);
-	}
+    public static <ParamType extends Type, ResultType extends Type> FuncLitExpr<ParamType, ResultType> Func(
+        final ParamDecl<ParamType> paramDecl, final Expr<ResultType> result) {
+        return FuncLitExpr.of(paramDecl, result);
+    }
 
-	public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
-			final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
-		return FuncAppExpr.of(func, param);
-	}
+    public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
+        final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
+        return FuncAppExpr.of(func, param);
+    }
 
 }

@@ -26,19 +26,20 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 
 final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec> {
 
-	private final static XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
+    private final static XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
 
-	private XtaZoneTransFunc() {
-	}
+    private XtaZoneTransFunc() {
+    }
 
-	static XtaZoneTransFunc getInstance() {
-		return INSTANCE;
-	}
+    static XtaZoneTransFunc getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action, final ZonePrec prec) {
-		final ZoneState succState = XtaZoneUtils.post(state, action, prec);
-		return ImmutableList.of(succState);
-	}
+    @Override
+    public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action,
+        final ZonePrec prec) {
+        final ZoneState succState = XtaZoneUtils.post(state, action, prec);
+        return ImmutableList.of(succState);
+    }
 
 }

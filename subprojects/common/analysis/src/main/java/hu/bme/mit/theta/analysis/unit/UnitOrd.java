@@ -21,20 +21,20 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 
 final class UnitOrd implements PartialOrd<UnitState> {
 
-	private static final UnitOrd INSTANCE = new UnitOrd();
+    private static final UnitOrd INSTANCE = new UnitOrd();
 
-	private UnitOrd() {
-	}
+    private UnitOrd() {
+    }
 
-	public static UnitOrd getInstance() {
-		return INSTANCE;
-	}
+    public static UnitOrd getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public boolean isLeq(final UnitState state1, final UnitState state2) {
-		checkNotNull(state1);
-		checkNotNull(state2);
-		return true;
-	}
+    @Override
+    public boolean isLeq(final UnitState state1, final UnitState state2) {
+        checkNotNull(state1);
+        checkNotNull(state2);
+        return true;
+    }
 
 }

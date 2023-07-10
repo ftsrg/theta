@@ -23,31 +23,31 @@ import hu.bme.mit.theta.core.type.Type;
 
 final class Z3TransformationManager {
 
-	private final Z3TypeTransformer typeTransformer;
-	private final Z3DeclTransformer declTransformer;
-	private final Z3ExprTransformer exprTransformer;
+    private final Z3TypeTransformer typeTransformer;
+    private final Z3DeclTransformer declTransformer;
+    private final Z3ExprTransformer exprTransformer;
 
-	public Z3TransformationManager(final Z3SymbolTable symbolTable, final Context context) {
-		this.typeTransformer = new Z3TypeTransformer(this, context);
-		this.declTransformer = new Z3DeclTransformer(this, symbolTable, context);
-		this.exprTransformer = new Z3ExprTransformer(this, context);
-	}
+    public Z3TransformationManager(final Z3SymbolTable symbolTable, final Context context) {
+        this.typeTransformer = new Z3TypeTransformer(this, context);
+        this.declTransformer = new Z3DeclTransformer(this, symbolTable, context);
+        this.exprTransformer = new Z3ExprTransformer(this, context);
+    }
 
-	public com.microsoft.z3.Sort toSort(final Type type) {
-		return typeTransformer.toSort(type);
-	}
+    public com.microsoft.z3.Sort toSort(final Type type) {
+        return typeTransformer.toSort(type);
+    }
 
-	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
-		return declTransformer.toSymbol(decl);
-	}
+    public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
+        return declTransformer.toSymbol(decl);
+    }
 
-	public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
-		return exprTransformer.toTerm(expr);
-	}
+    public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
+        return exprTransformer.toTerm(expr);
+    }
 
-	public void reset() {
-		typeTransformer.reset();
-		// declTransformer does not have to be resetted
-		exprTransformer.reset();
-	}
+    public void reset() {
+        typeTransformer.reset();
+        // declTransformer does not have to be resetted
+        exprTransformer.reset();
+    }
 }

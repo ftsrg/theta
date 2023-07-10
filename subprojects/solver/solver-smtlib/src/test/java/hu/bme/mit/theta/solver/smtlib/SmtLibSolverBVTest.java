@@ -43,6 +43,7 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
+
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
     private static final String SOLVER = "z3";
@@ -59,7 +60,7 @@ public class SmtLibSolverBVTest {
 
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
 
             solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
@@ -73,7 +74,9 @@ public class SmtLibSolverBVTest {
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
+        if (solverInstalled) {
+            solverManager.uninstall(SOLVER, VERSION);
+        }
     }
 
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
@@ -98,17 +101,19 @@ public class SmtLibSolverBVTest {
 
         // Type checks
         assertTrue(
-            "The type of actual is " + actual.getClass().getName() + " instead of " + exprType.getName(),
+            "The type of actual is " + actual.getClass().getName() + " instead of "
+                + exprType.getName(),
             exprType.isInstance(actual)
         );
         assertEquals(
-            "The type of expected (" + expected.getType() + ") must match the type of actual (" + actual.getType() + ")",
+            "The type of expected (" + expected.getType() + ") must match the type of actual ("
+                + actual.getType() + ")",
             expected.getType(),
             actual.getType()
         );
 
         // Equality check
-        try(final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
+        try (final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
             solver.push();
 
             solver.add(EqExpr.create2(expected, actual));

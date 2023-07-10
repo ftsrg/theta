@@ -20,16 +20,17 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 
-public abstract class NegExpr<ExprType extends Additive<ExprType>> extends UnaryExpr<ExprType, ExprType> {
+public abstract class NegExpr<ExprType extends Additive<ExprType>> extends
+    UnaryExpr<ExprType, ExprType> {
 
-	protected NegExpr(final Expr<ExprType> op) {
-		super(op);
-	}
+    protected NegExpr(final Expr<ExprType> op) {
+        super(op);
+    }
 
-	public static <ExprType extends Additive<ExprType>> NegExpr<?> create2(final Expr<?> op) {
-		@SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
-		final Expr<ExprType> newOp = cast(op, type);
-		return type.Neg(newOp);
-	}
+    public static <ExprType extends Additive<ExprType>> NegExpr<?> create2(final Expr<?> op) {
+        @SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
+        final Expr<ExprType> newOp = cast(op, type);
+        return type.Neg(newOp);
+    }
 
 }

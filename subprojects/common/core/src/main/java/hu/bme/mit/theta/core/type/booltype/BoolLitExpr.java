@@ -20,10 +20,10 @@ import hu.bme.mit.theta.core.type.NullaryExpr;
 
 public abstract class BoolLitExpr extends NullaryExpr<BoolType> implements LitExpr<BoolType> {
 
-	public abstract boolean getValue();
+    public abstract boolean getValue();
 
-	public static BoolLitExpr of(final boolean value) {
-		return value ? TrueExpr.getInstance() : FalseExpr.getInstance();
-	}
+    public static BoolLitExpr of(final boolean value) {
+        return value ? TrueExpr.getInstance() : FalseExpr.getInstance();
+    }
 
 }

@@ -32,21 +32,24 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitExpr<?>> {
-	public static final ValueVisitor instance = new ValueVisitor();
 
-	@Override
-	public LitExpr<?> visit(CInteger type, String param) {
-		return Int(new BigInteger(param));
-	}
+    public static final ValueVisitor instance = new ValueVisitor();
 
-	@Override
-	public LitExpr<?> visit(CArray type, String param) {
-		return getExpr(type, param);
-	}
+    @Override
+    public LitExpr<?> visit(CInteger type, String param) {
+        return Int(new BigInteger(param));
+    }
 
-	private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(CArray type, String param) {
-		//noinspection unchecked
-		ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
-		return Array(List.of(), cast(type.getEmbeddedType().getValue(param), smtType.getElemType()), smtType);
-	}
+    @Override
+    public LitExpr<?> visit(CArray type, String param) {
+        return getExpr(type, param);
+    }
+
+    private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(
+        CArray type, String param) {
+        //noinspection unchecked
+        ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
+        return Array(List.of(), cast(type.getEmbeddedType().getValue(param), smtType.getElemType()),
+            smtType);
+    }
 }

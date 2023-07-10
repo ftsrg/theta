@@ -21,6 +21,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 
 public interface XcfaAutoExpl {
 
-	AutoExpl create(final XCFA xcfa);
+    AutoExpl create(final XCFA xcfa);
 
 }

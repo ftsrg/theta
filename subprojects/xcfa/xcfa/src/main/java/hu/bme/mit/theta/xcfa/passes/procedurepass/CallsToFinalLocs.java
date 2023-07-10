@@ -27,52 +27,55 @@ import java.util.List;
 import java.util.Optional;
 
 public class CallsToFinalLocs extends ProcedurePass {
-	private static final List<String> errorFunc = List.of("reach_error");
-	private static final List<String> abortFunc = List.of("abort", "exit");
-	public boolean postInlining = false;
 
-	private int nameCounter = 0;
+    private static final List<String> errorFunc = List.of("reach_error");
+    private static final List<String> abortFunc = List.of("abort", "exit");
+    public boolean postInlining = false;
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		XcfaLocation errorLoc = XcfaLocation.create(builder.getName() + "_error" + nameCounter++);
-		XcfaLocation finalLoc = XcfaLocation.create(builder.getName() + "_final" + nameCounter++);
-		builder.addLoc(errorLoc);
-		builder.addLoc(finalLoc);
-		XcfaLocation oldFinalLoc = builder.getFinalLoc();
-		XcfaLocation oldErrorLoc = builder.getErrorLoc();
-		builder.setFinalLoc(finalLoc);
-		if (oldErrorLoc != null) {
-			XcfaEdge toError = XcfaEdge.of(oldErrorLoc, errorLoc, List.of());
-			builder.addEdge(toError);
-		}
-		XcfaEdge toFinal = XcfaEdge.of(oldFinalLoc, finalLoc, List.of());
-		builder.addEdge(toFinal);
-		builder.setErrorLoc(errorLoc);
+    private int nameCounter = 0;
 
-		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel).findAny();
-			if (e.isPresent()) {
-				String procedure = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getProcedure();
-				if (errorFunc.contains(procedure)) {
-					XcfaEdge xcfaEdge = XcfaEdge.of(edge.getSource(), errorLoc, List.of());
-					builder.addEdge(xcfaEdge);
-					builder.removeEdge(edge);
-					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-						FrontendMetadata.create(xcfaEdge, s, o);
-					});
-				} else if (abortFunc.contains(procedure)) {
-					ArrayList<XcfaEdge> edgesAfterAbort = new ArrayList<>(edge.getSource().getOutgoingEdges());
-					edgesAfterAbort.forEach(builder::removeEdge);
-				}
-			}
-		}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        XcfaLocation errorLoc = XcfaLocation.create(builder.getName() + "_error" + nameCounter++);
+        XcfaLocation finalLoc = XcfaLocation.create(builder.getName() + "_final" + nameCounter++);
+        builder.addLoc(errorLoc);
+        builder.addLoc(finalLoc);
+        XcfaLocation oldFinalLoc = builder.getFinalLoc();
+        XcfaLocation oldErrorLoc = builder.getErrorLoc();
+        builder.setFinalLoc(finalLoc);
+        if (oldErrorLoc != null) {
+            XcfaEdge toError = XcfaEdge.of(oldErrorLoc, errorLoc, List.of());
+            builder.addEdge(toError);
+        }
+        XcfaEdge toFinal = XcfaEdge.of(oldFinalLoc, finalLoc, List.of());
+        builder.addEdge(toFinal);
+        builder.setErrorLoc(errorLoc);
 
-		return builder;
-	}
+        for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+            Optional<XcfaLabel> e = edge.getLabels().stream()
+                .filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel).findAny();
+            if (e.isPresent()) {
+                String procedure = ((XcfaLabel.ProcedureCallXcfaLabel) e.get()).getProcedure();
+                if (errorFunc.contains(procedure)) {
+                    XcfaEdge xcfaEdge = XcfaEdge.of(edge.getSource(), errorLoc, List.of());
+                    builder.addEdge(xcfaEdge);
+                    builder.removeEdge(edge);
+                    FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+                        FrontendMetadata.create(xcfaEdge, s, o);
+                    });
+                } else if (abortFunc.contains(procedure)) {
+                    ArrayList<XcfaEdge> edgesAfterAbort = new ArrayList<>(
+                        edge.getSource().getOutgoingEdges());
+                    edgesAfterAbort.forEach(builder::removeEdge);
+                }
+            }
+        }
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+        return builder;
+    }
+
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

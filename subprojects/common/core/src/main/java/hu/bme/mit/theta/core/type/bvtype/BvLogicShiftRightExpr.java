@@ -23,6 +23,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvLogicShiftRightExpr extends BinaryExpr<BvType, BvType> {
+
     private static final int HASH_SEED = 962;
     private static final String OPERATOR_LABEL = "bvlshr";
 
@@ -78,7 +79,8 @@ public final class BvLogicShiftRightExpr extends BinaryExpr<BvType, BvType> {
             return true;
         } else if (obj instanceof BvLogicShiftRightExpr) {
             final BvLogicShiftRightExpr that = (BvLogicShiftRightExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                .equals(that.getRightOp());
         } else {
             return false;
         }

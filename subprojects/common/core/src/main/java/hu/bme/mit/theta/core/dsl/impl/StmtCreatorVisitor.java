@@ -36,38 +36,40 @@ import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 
-	final Scope scope;
+    final Scope scope;
 
-	public StmtCreatorVisitor(final Scope scope) {
-		this.scope = checkNotNull(scope);
-	}
+    public StmtCreatorVisitor(final Scope scope) {
+        this.scope = checkNotNull(scope);
+    }
 
-	@Override
-	public Stmt visitAssignStmt(final AssignStmtContext ctx) {
-		@SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope, ctx.lhs.getText());
-		final Expr<?> expr = CoreDslHelper.createExpr(scope, ctx.value);
-		final Expr<Type> value = TypeUtils.cast(expr, lhs.getType());
-		return Assign(lhs, value);
-	}
+    @Override
+    public Stmt visitAssignStmt(final AssignStmtContext ctx) {
+        @SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope,
+            ctx.lhs.getText());
+        final Expr<?> expr = CoreDslHelper.createExpr(scope, ctx.value);
+        final Expr<Type> value = TypeUtils.cast(expr, lhs.getType());
+        return Assign(lhs, value);
+    }
 
-	private VarDecl<?> resolveVar(final Scope scope, final String name) {
-		final DeclSymbol declSymbol = CoreDslHelper.resolveDecl(scope, name);
-		final Decl<?> decl = declSymbol.getDecl();
-		checkArgument(decl instanceof VarDecl);
-		final VarDecl<?> varDecl = (VarDecl<?>) decl;
-		return varDecl;
-	}
+    private VarDecl<?> resolveVar(final Scope scope, final String name) {
+        final DeclSymbol declSymbol = CoreDslHelper.resolveDecl(scope, name);
+        final Decl<?> decl = declSymbol.getDecl();
+        checkArgument(decl instanceof VarDecl);
+        final VarDecl<?> varDecl = (VarDecl<?>) decl;
+        return varDecl;
+    }
 
-	@Override
-	public AssumeStmt visitAssumeStmt(final AssumeStmtContext ctx) {
-		final Expr<BoolType> cond = CoreDslHelper.createBoolExpr(scope, ctx.cond);
-		return Assume(cond);
-	}
+    @Override
+    public AssumeStmt visitAssumeStmt(final AssumeStmtContext ctx) {
+        final Expr<BoolType> cond = CoreDslHelper.createBoolExpr(scope, ctx.cond);
+        return Assume(cond);
+    }
 
-	@Override
-	public Stmt visitHavocStmt(final HavocStmtContext ctx) {
-		@SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope, ctx.lhs.getText());
-		return Havoc(lhs);
-	}
+    @Override
+    public Stmt visitHavocStmt(final HavocStmtContext ctx) {
+        @SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope,
+            ctx.lhs.getText());
+        return Havoc(lhs);
+    }
 
 }

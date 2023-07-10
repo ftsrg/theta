@@ -24,16 +24,17 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 
 public class CVC4SmtLibSolverFactory extends GenericSmtLibSolverFactory {
-	private CVC4SmtLibSolverFactory(Path solverPath, String[] args) {
-		super(solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.CVC4));
-	}
 
-	public static CVC4SmtLibSolverFactory create(Path solverPath, String[] args) {
-		return new CVC4SmtLibSolverFactory(solverPath, args);
-	}
+    private CVC4SmtLibSolverFactory(Path solverPath, String[] args) {
+        super(solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.CVC4));
+    }
 
-	@Override
-	public ItpSolver createItpSolver() {
-		throw new UnsupportedOperationException("CVC4 does not support interpolation");
-	}
+    public static CVC4SmtLibSolverFactory create(Path solverPath, String[] args) {
+        return new CVC4SmtLibSolverFactory(solverPath, args);
+    }
+
+    @Override
+    public ItpSolver createItpSolver() {
+        throw new UnsupportedOperationException("CVC4 does not support interpolation");
+    }
 }

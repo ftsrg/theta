@@ -20,19 +20,18 @@ import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.sts.STS;
 
 /**
- * An implementation for initial precision that returns empty initial
- * precisions.
+ * An implementation for initial precision that returns empty initial precisions.
  */
 public class StsEmptyInitPrec implements StsInitPrec {
 
-	@Override
-	public ExplPrec createExpl(final STS sts) {
-		return ExplPrec.empty();
-	}
+    @Override
+    public ExplPrec createExpl(final STS sts) {
+        return ExplPrec.empty();
+    }
 
-	@Override
-	public PredPrec createPred(final STS sts) {
-		return PredPrec.of();
-	}
+    @Override
+    public PredPrec createPred(final STS sts) {
+        return PredPrec.of();
+    }
 
 }

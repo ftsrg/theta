@@ -28,25 +28,26 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
-	public static final TypeVisitor instance = new TypeVisitor();
 
-	@Override
-	public Type visit(CInteger type, Void param) {
-		return Int();
-	}
+    public static final TypeVisitor instance = new TypeVisitor();
 
-	@Override
-	public Type visit(CVoid type, Void param) {
-		return Int();
-	}
+    @Override
+    public Type visit(CInteger type, Void param) {
+        return Int();
+    }
 
-	@Override
-	public Type visit(CArray type, Void param) {
-		return ArrayType.of(Int(), type.getEmbeddedType().getSmtType());
-	}
+    @Override
+    public Type visit(CVoid type, Void param) {
+        return Int();
+    }
 
-	@Override
-	public Type visit(CStruct type, Void param) {
-		return Bool();
-	}
+    @Override
+    public Type visit(CArray type, Void param) {
+        return ArrayType.of(Int(), type.getEmbeddedType().getSmtType());
+    }
+
+    @Override
+    public Type visit(CStruct type, Void param) {
+        return Bool();
+    }
 }

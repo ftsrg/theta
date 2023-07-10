@@ -25,37 +25,38 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-public final class ItpZoneAnalysis<A extends Action> implements Analysis<ItpZoneState, A, ZonePrec> {
+public final class ItpZoneAnalysis<A extends Action> implements
+    Analysis<ItpZoneState, A, ZonePrec> {
 
-	private final InitFunc<ItpZoneState, ZonePrec> initFunc;
-	private final TransFunc<ItpZoneState, A, ZonePrec> transFunc;
+    private final InitFunc<ItpZoneState, ZonePrec> initFunc;
+    private final TransFunc<ItpZoneState, A, ZonePrec> transFunc;
 
-	private ItpZoneAnalysis(final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
-		checkNotNull(analysis);
-		initFunc = ItpZoneInitFunc.create(analysis.getInitFunc());
-		transFunc = ItpZoneTransFunc.create(analysis.getTransFunc());
-	}
+    private ItpZoneAnalysis(final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
+        checkNotNull(analysis);
+        initFunc = ItpZoneInitFunc.create(analysis.getInitFunc());
+        transFunc = ItpZoneTransFunc.create(analysis.getTransFunc());
+    }
 
-	public static <A extends Action> ItpZoneAnalysis<A> create(
-			final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
-		return new ItpZoneAnalysis<>(analysis);
-	}
+    public static <A extends Action> ItpZoneAnalysis<A> create(
+        final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
+        return new ItpZoneAnalysis<>(analysis);
+    }
 
-	////
+    ////
 
-	@Override
-	public PartialOrd<ItpZoneState> getPartialOrd() {
-		return ItpZoneOrd.getInstance();
-	}
+    @Override
+    public PartialOrd<ItpZoneState> getPartialOrd() {
+        return ItpZoneOrd.getInstance();
+    }
 
-	@Override
-	public InitFunc<ItpZoneState, ZonePrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<ItpZoneState, ZonePrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<ItpZoneState, A, ZonePrec> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<ItpZoneState, A, ZonePrec> getTransFunc() {
+        return transFunc;
+    }
 
 }

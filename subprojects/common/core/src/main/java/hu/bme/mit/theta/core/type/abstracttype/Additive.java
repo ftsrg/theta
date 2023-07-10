@@ -20,12 +20,12 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface Additive<ExprType extends Additive<ExprType>> extends Type {
 
-	AddExpr<ExprType> Add(Iterable<? extends Expr<ExprType>> ops);
+    AddExpr<ExprType> Add(Iterable<? extends Expr<ExprType>> ops);
 
-	SubExpr<ExprType> Sub(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
+    SubExpr<ExprType> Sub(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
 
-	PosExpr<ExprType> Pos(Expr<ExprType> op);
+    PosExpr<ExprType> Pos(Expr<ExprType> op);
 
-	NegExpr<ExprType> Neg(Expr<ExprType> op);
+    NegExpr<ExprType> Neg(Expr<ExprType> op);
 
 }

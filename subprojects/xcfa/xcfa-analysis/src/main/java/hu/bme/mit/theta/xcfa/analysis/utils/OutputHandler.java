@@ -48,223 +48,258 @@ import java.util.TimeZone;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * This class handles the creation of output files, including
- * - a file for the xcfa
- * - witnesses (violation/dummy)
- * - statistics (csv and txt)
- * (all of these files take place in the same timestamped results directory)
+ * This class handles the creation of output files, including - a file for the xcfa - witnesses
+ * (violation/dummy) - statistics (csv and txt) (all of these files take place in the same
+ * timestamped results directory)
  */
 public final class OutputHandler {
-	private static String basicFileName;
-	private static File model;
 
-	public void writeXcfa(XCFA xcfa) {
-		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
+    private static String basicFileName;
+    private static File model;
 
-		checkState(xcfa != null);
-		File xcfafile = new File(basicFileName + ".xcfa");
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
-			bw.write(xcfa.toDot());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+    public void writeXcfa(XCFA xcfa) {
+        if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) {
+            return;
+        }
 
-	static OutputHandler INSTANCE;
+        checkState(xcfa != null);
+        File xcfafile = new File(basicFileName + ".xcfa");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(xcfafile))) {
+            bw.write(xcfa.toDot());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-	private OutputOptions outputConfiguration = OutputOptions.NONE;
+    static OutputHandler INSTANCE;
 
-	public static void create(OutputOptions outputConfiguration, File model) {
-		if (INSTANCE == null) {
-			INSTANCE = new OutputHandler(outputConfiguration, model);
-		}
-	}
+    private OutputOptions outputConfiguration = OutputOptions.NONE;
 
-	public static OutputHandler getInstance() {
-		checkState(INSTANCE != null);
-		return INSTANCE;
-	}
+    public static void create(OutputOptions outputConfiguration, File model) {
+        if (INSTANCE == null) {
+            INSTANCE = new OutputHandler(outputConfiguration, model);
+        }
+    }
 
-	private OutputHandler(OutputOptions outputConfiguration, File model) {
-		this.outputConfiguration = outputConfiguration;
-		this.model = model;
-	}
+    public static OutputHandler getInstance() {
+        checkState(INSTANCE != null);
+        return INSTANCE;
+    }
 
-	public void createResultsDirectory() {
-		checkState(model != null);
-		// portfolio and output-results needs a results directory
-		// create the directory only, if needed
-		if (outputConfiguration == OutputOptions.OUTPUT_RESULTS) {
-			File resultsDir = new File(model + "-" + LocalDateTime.now().toString().replace(":", "-") + "-results");
-			boolean bool = resultsDir.mkdir();
-			if (!bool) {
-				throw new RuntimeException("Couldn't create results directory");
-			}
-			basicFileName = resultsDir + "/" + model.getName();
-		} else {
-			basicFileName = null;
-		}
-	}
+    private OutputHandler(OutputOptions outputConfiguration, File model) {
+        this.outputConfiguration = outputConfiguration;
+        this.model = model;
+    }
 
-	public void setOutput(OutputOptions outputConfiguration) {
-		this.outputConfiguration = outputConfiguration;
-	}
+    public void createResultsDirectory() {
+        checkState(model != null);
+        // portfolio and output-results needs a results directory
+        // create the directory only, if needed
+        if (outputConfiguration == OutputOptions.OUTPUT_RESULTS) {
+            File resultsDir = new File(
+                model + "-" + LocalDateTime.now().toString().replace(":", "-") + "-results");
+            boolean bool = resultsDir.mkdir();
+            if (!bool) {
+                throw new RuntimeException("Couldn't create results directory");
+            }
+            basicFileName = resultsDir + "/" + model.getName();
+        } else {
+            basicFileName = null;
+        }
+    }
 
-	public void writeCounterexamples(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
-		if (outputConfiguration == OutputOptions.NONE) return;
-		SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
-		final Trace<XcfaState<?>, XcfaAction> trace = (Trace<XcfaState<?>, XcfaAction>) status.asUnsafe().getTrace();
-		final Trace<XcfaState<ExplState>, XcfaAction> concrTrace = XcfaTraceConcretizer.concretize(trace, cexSolverFactory);
+    public void setOutput(OutputOptions outputConfiguration) {
+        this.outputConfiguration = outputConfiguration;
+    }
 
-		if (outputConfiguration == OutputOptions.WITNESS_ONLY) {
-			Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
-			File witnessfile = new File(workdir + File.separator + "witness.graphml");
+    public void writeCounterexamples(SafetyResult<?, ?> status, String refinementSolver)
+        throws Exception {
+        if (outputConfiguration == OutputOptions.NONE) {
+            return;
+        }
+        SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+        final Trace<XcfaState<?>, XcfaAction> trace = (Trace<XcfaState<?>, XcfaAction>) status.asUnsafe()
+            .getTrace();
+        final Trace<XcfaState<ExplState>, XcfaAction> concrTrace = XcfaTraceConcretizer.concretize(
+            trace, cexSolverFactory);
 
-			Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
-			// TODO make WitnessWriter singleton
-			WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
-			try {
-				ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-		} else if (outputConfiguration == OutputOptions.OUTPUT_RESULTS) {
-			File witnessfile = new File(basicFileName + ".witness.graphml");
-			File cexfile = new File(basicFileName + ".cex");
-			File dotwitnessfile = new File(basicFileName + ".witness.dot");
+        if (outputConfiguration == OutputOptions.WITNESS_ONLY) {
+            Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
+            File witnessfile = new File(workdir + File.separator + "witness.graphml");
 
-			PrintWriter printWriter = null;
-			try {
-				printWriter = new PrintWriter(cexfile);
-				printWriter.write(concrTrace.toString());
-			} finally {
-				if (printWriter != null) {
-					printWriter.close();
-				}
-			}
+            Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
+            // TODO make WitnessWriter singleton
+            WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(),
+                "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
+            try {
+                ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else if (outputConfiguration == OutputOptions.OUTPUT_RESULTS) {
+            File witnessfile = new File(basicFileName + ".witness.graphml");
+            File cexfile = new File(basicFileName + ".cex");
+            File dotwitnessfile = new File(basicFileName + ".witness.dot");
 
-			Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
-			// TODO make WitnessWriter singleton
-			WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(), "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
-			try {
-				ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-			WitnessGraphvizWriter.getInstance().writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
-		}
-		CpuTimeKeeper.saveSolverTimes();
-		SolverManager.closeAll();
-	}
+            PrintWriter printWriter = null;
+            try {
+                printWriter = new PrintWriter(cexfile);
+                printWriter.write(concrTrace.toString());
+            } finally {
+                if (printWriter != null) {
+                    printWriter.close();
+                }
+            }
 
-	public void writeDummyCorrectnessWitness() {
-		if (outputConfiguration != OutputOptions.WITNESS_ONLY) return;
-		Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
-		File witnessfile = new File(workdir + File.separator + "witness.graphml");
+            Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
+            // TODO make WitnessWriter singleton
+            WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(),
+                "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
+            try {
+                ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            WitnessGraphvizWriter.getInstance()
+                .writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
+        }
+        CpuTimeKeeper.saveSolverTimes();
+        SolverManager.closeAll();
+    }
 
-		String taskHash = WitnessWriter.createTaskHash(model.getAbsolutePath());
-		StringBuilder dummyWitness = new StringBuilder();
-		dummyWitness.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator()).append(
-				"<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>").append(System.lineSeparator()).append(
-				"<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>").append(System.lineSeparator()).append(
-				"<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator()).append(
-				"<default>false</default>").append(System.lineSeparator()).append(
-				"</key>").append(System.lineSeparator()).append(
-				"<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">").append(System.lineSeparator()).append(
-				"<default>false</default>").append(System.lineSeparator()).append(
-				"</key>").append(System.lineSeparator()).append(
-				"<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>").append(System.lineSeparator()).append(
-				"<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>").append(System.lineSeparator()).append(
-				"<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
-				"<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator()).append(
-				"<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
-				"<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>").append(System.lineSeparator()).append(
-				"<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
-				"<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
-				"<data key=\"programhash\">");
-		dummyWitness.append(taskHash);
-		dummyWitness.append("</data>").append(System.lineSeparator()).append(
-				"<data key=\"creationtime\">");
+    public void writeDummyCorrectnessWitness() {
+        if (outputConfiguration != OutputOptions.WITNESS_ONLY) {
+            return;
+        }
+        Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
+        File witnessfile = new File(workdir + File.separator + "witness.graphml");
 
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
-		df.setTimeZone(tz);
-		String ISOdate = df.format(new Date());
+        String taskHash = WitnessWriter.createTaskHash(model.getAbsolutePath());
+        StringBuilder dummyWitness = new StringBuilder();
+        dummyWitness.append(
+                "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
+            .append(System.lineSeparator()).append(
+                "<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>")
+            .append(System.lineSeparator()).append(
+                "<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>")
+            .append(System.lineSeparator()).append(
+                "<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator())
+            .append(
+                "<default>false</default>").append(System.lineSeparator()).append(
+                "</key>").append(System.lineSeparator()).append(
+                "<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">")
+            .append(System.lineSeparator()).append(
+                "<default>false</default>").append(System.lineSeparator()).append(
+                "</key>").append(System.lineSeparator()).append(
+                "<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>")
+            .append(System.lineSeparator()).append(
+                "<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>")
+            .append(System.lineSeparator()).append(
+                "<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>")
+            .append(System.lineSeparator()).append(
+                "<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>")
+            .append(System.lineSeparator()).append(
+                "<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>")
+            .append(System.lineSeparator()).append(
+                "<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>")
+            .append(System.lineSeparator()).append(
+                "<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
+                "<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator())
+            .append(
+                "<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
+                "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>")
+            .append(System.lineSeparator()).append(
+                "<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
+                "<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
+                "<data key=\"programhash\">");
+        dummyWitness.append(taskHash);
+        dummyWitness.append("</data>").append(System.lineSeparator()).append(
+            "<data key=\"creationtime\">");
 
-		dummyWitness.append(ISOdate);
-		dummyWitness.append("</data>").append(System.lineSeparator()).append(
-				"<data key=\"programfile\">");
-		dummyWitness.append(model.getName());
-		dummyWitness.append("</data>").append(System.lineSeparator()).append(
-				"<node id=\"N0\">").append(System.lineSeparator()).append(
-				"<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
-				"</node>").append(System.lineSeparator()).append(
-				"</graph>").append(System.lineSeparator()).append(
-				"</graphml>");
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        df.setTimeZone(tz);
+        String ISOdate = df.format(new Date());
 
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(witnessfile))) {
-			bw.write(dummyWitness.toString());
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-	}
+        dummyWitness.append(ISOdate);
+        dummyWitness.append("</data>").append(System.lineSeparator()).append(
+            "<data key=\"programfile\">");
+        dummyWitness.append(model.getName());
+        dummyWitness.append("</data>").append(System.lineSeparator()).append(
+            "<node id=\"N0\">").append(System.lineSeparator()).append(
+            "<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
+            "</node>").append(System.lineSeparator()).append(
+            "</graph>").append(System.lineSeparator()).append(
+            "</graphml>");
 
-	public void writeInputStatistics(XCFA xcfa) {
-		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(witnessfile))) {
+            bw.write(dummyWitness.toString());
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+    }
 
-		checkState(xcfa != null);
-		checkState(model != null);
-		ModelStatistics statistics = ModelStatistics.createXcfaStatistics(xcfa, model.getName());
-		File statisticstxtfile = new File(basicFileName + ".statistics.txt");
-		File statisticscsvfile = new File(basicFileName + ".csv");
-		statistics.writeToCsv(statisticscsvfile);
-		statistics.writeToTxt(statisticstxtfile);
-	}
+    public void writeInputStatistics(XCFA xcfa) {
+        if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) {
+            return;
+        }
 
-	public void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
-		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
-		File configurationTxt = new File(basicFileName + ".portfolio.txt");
+        checkState(xcfa != null);
+        checkState(model != null);
+        ModelStatistics statistics = ModelStatistics.createXcfaStatistics(xcfa, model.getName());
+        File statisticstxtfile = new File(basicFileName + ".statistics.txt");
+        File statisticscsvfile = new File(basicFileName + ".csv");
+        statistics.writeToCsv(statisticscsvfile);
+        statistics.writeToTxt(statisticstxtfile);
+    }
 
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append(configuration);
-		stringBuilder.append(", timeout (ms, cputime): ").append(timeout);
-		stringBuilder.append(", walltime taken (ms): ").append(timeTaken);
-		stringBuilder.append(", cputime taken (s): ").append(cpuTimeTaken);
-		stringBuilder.append(", result: ").append(result);
-		stringBuilder.append(System.lineSeparator());
+    public void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken,
+        long cpuTimeTaken, Result result) {
+        if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) {
+            return;
+        }
+        File configurationTxt = new File(basicFileName + ".portfolio.txt");
 
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(configurationTxt, true))) {
-			bw.write(stringBuilder.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(configuration);
+        stringBuilder.append(", timeout (ms, cputime): ").append(timeout);
+        stringBuilder.append(", walltime taken (ms): ").append(timeTaken);
+        stringBuilder.append(", cputime taken (s): ").append(cpuTimeTaken);
+        stringBuilder.append(", result: ").append(result);
+        stringBuilder.append(System.lineSeparator());
 
-	public void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken, long cpuTimeTaken, Result result) {
-		if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) return;
-		File configurationCsv = new File(basicFileName + ".portfolio.csv");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(configurationTxt, true))) {
+            bw.write(stringBuilder.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append(model.getName()).append("\t");
-		stringBuilder.append(configuration).append("\t");
-		stringBuilder.append(timeout).append("\t");
-		stringBuilder.append(timeTaken).append("\t");
-		stringBuilder.append(cpuTimeTaken).append("\t");
-		stringBuilder.append(result).append("\t");
-		stringBuilder.append(System.lineSeparator());
+    public void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken,
+        long cpuTimeTaken, Result result) {
+        if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) {
+            return;
+        }
+        File configurationCsv = new File(basicFileName + ".portfolio.csv");
 
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(configurationCsv, true))) {
-			bw.write(stringBuilder.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(model.getName()).append("\t");
+        stringBuilder.append(configuration).append("\t");
+        stringBuilder.append(timeout).append("\t");
+        stringBuilder.append(timeTaken).append("\t");
+        stringBuilder.append(cpuTimeTaken).append("\t");
+        stringBuilder.append(result).append("\t");
+        stringBuilder.append(System.lineSeparator());
 
-	// TODO use XCFA instead of CFA
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(configurationCsv, true))) {
+            bw.write(stringBuilder.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // TODO use XCFA instead of CFA
 	/*
 	private void writeXcfaWithCex(final XCFA xcfa, final SafetyResult.Unsafe<?, ?> status) throws Exception {
 		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();

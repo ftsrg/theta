@@ -24,25 +24,25 @@ package hu.bme.mit.theta.analysis;
  */
 public interface Analysis<S extends State, A extends Action, P extends Prec> {
 
-	/**
-	 * Gets the partial order.
-	 *
-	 * @return
-	 */
-	PartialOrd<S> getPartialOrd();
+    /**
+     * Gets the partial order.
+     *
+     * @return
+     */
+    PartialOrd<S> getPartialOrd();
 
-	/**
-	 * Gets the initial function.
-	 *
-	 * @return
-	 */
-	InitFunc<S, P> getInitFunc();
+    /**
+     * Gets the initial function.
+     *
+     * @return
+     */
+    InitFunc<S, P> getInitFunc();
 
-	/**
-	 * Gets the transfer function.
-	 *
-	 * @return
-	 */
-	TransFunc<S, A, P> getTransFunc();
+    /**
+     * Gets the transfer function.
+     *
+     * @return
+     */
+    TransFunc<S, A, P> getTransFunc();
 
 }

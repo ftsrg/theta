@@ -24,24 +24,27 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 
 public class CVC5SmtLibSolverFactory extends GenericSmtLibSolverFactory {
-	private CVC5SmtLibSolverFactory(Path solverPath, String[] args) {
-		super(solverPath, args);
-	}
 
-	public static CVC5SmtLibSolverFactory create(Path solverPath, String[] args) {
-		return new CVC5SmtLibSolverFactory(solverPath, args);
-	}
+    private CVC5SmtLibSolverFactory(Path solverPath, String[] args) {
+        super(solverPath, args);
+    }
 
-	@Override
-	public ItpSolver createItpSolver() {
-		final var symbolTable = new GenericSmtLibSymbolTable();
-		final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
-		final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-		final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
+    public static CVC5SmtLibSolverFactory create(Path solverPath, String[] args) {
+        return new CVC5SmtLibSolverFactory(solverPath, args);
+    }
 
-		return new CVC5SmtLibItpSolver(
-			symbolTable, transformationManager, termTransformer, solverBinary,
-			() -> new GenericSmtLibSolverBinary(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class))
-		);
-	}
+    @Override
+    public ItpSolver createItpSolver() {
+        final var symbolTable = new GenericSmtLibSymbolTable();
+        final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args,
+            EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
+
+        return new CVC5SmtLibItpSolver(
+            symbolTable, transformationManager, termTransformer, solverBinary,
+            () -> new GenericSmtLibSolverBinary(solverPath, args,
+                EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class))
+        );
+    }
 }

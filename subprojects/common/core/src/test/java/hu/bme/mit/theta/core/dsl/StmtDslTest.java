@@ -35,6 +35,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.*;
 
 @RunWith(Parameterized.class)
 public class StmtDslTest {
+
     @Parameterized.Parameter(value = 0)
     public String actual;
 
@@ -50,11 +51,11 @@ public class StmtDslTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-                {"assume true", Assume(True()), null},
+            {"assume true", Assume(True()), null},
 
-                {"x := x + 1", Assign(x, Add(x.getRef(), Int(1))) , Collections.singleton(x)},
+            {"x := x + 1", Assign(x, Add(x.getRef(), Int(1))), Collections.singleton(x)},
 
-                {"havoc x", Havoc(x) , Collections.singleton(x)}
+            {"havoc x", Havoc(x), Collections.singleton(x)}
 
         });
     }

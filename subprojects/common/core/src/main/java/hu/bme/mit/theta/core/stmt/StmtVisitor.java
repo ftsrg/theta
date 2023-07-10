@@ -19,22 +19,22 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface StmtVisitor<P, R> {
 
-	R visit(SkipStmt stmt, P param);
+    R visit(SkipStmt stmt, P param);
 
-	R visit(AssumeStmt stmt, P param);
+    R visit(AssumeStmt stmt, P param);
 
-	<DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
+    <DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
 
-	<DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
+    <DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 
-	R visit(SequenceStmt stmt, P param);
+    R visit(SequenceStmt stmt, P param);
 
-	R visit(NonDetStmt stmt, P param);
+    R visit(NonDetStmt stmt, P param);
 
-	R visit(OrtStmt stmt, P param);
+    R visit(OrtStmt stmt, P param);
 
-	R visit(LoopStmt stmt, P param);
+    R visit(LoopStmt stmt, P param);
 
-	R visit(IfStmt stmt, P param);
+    R visit(IfStmt stmt, P param);
 
 }

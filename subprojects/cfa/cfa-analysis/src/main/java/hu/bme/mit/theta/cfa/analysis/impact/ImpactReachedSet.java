@@ -30,47 +30,50 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 
-public final class ImpactReachedSet<S extends State, A extends Action, K> implements ReachedSet<S, A> {
+public final class ImpactReachedSet<S extends State, A extends Action, K> implements
+    ReachedSet<S, A> {
 
-	private final Function<? super S, ? extends K> partitioning;
+    private final Function<? super S, ? extends K> partitioning;
 
-	private final Map<K, List<ArgNode<S, A>>> partitions;
+    private final Map<K, List<ArgNode<S, A>>> partitions;
 
-	private ImpactReachedSet(final Function<? super S, ? extends K> partitioning) {
-		this.partitioning = checkNotNull(partitioning);
-		partitions = Containers.createMap();
-	}
+    private ImpactReachedSet(final Function<? super S, ? extends K> partitioning) {
+        this.partitioning = checkNotNull(partitioning);
+        partitions = Containers.createMap();
+    }
 
-	public static <S extends State, A extends Action, K> ImpactReachedSet<S, A, K> create(
-			final Function<? super S, ? extends K> partitioning) {
-		return new ImpactReachedSet<>(partitioning);
-	}
+    public static <S extends State, A extends Action, K> ImpactReachedSet<S, A, K> create(
+        final Function<? super S, ? extends K> partitioning) {
+        return new ImpactReachedSet<>(partitioning);
+    }
 
-	@Override
-	public void add(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		final S state = node.getState();
-		final K key = partitioning.apply(state);
-		final Collection<ArgNode<S, A>> partition = partitions.computeIfAbsent(key, k -> new ArrayList<>());
-		partition.add(node);
-	}
+    @Override
+    public void add(final ArgNode<S, A> node) {
+        checkNotNull(node);
+        final S state = node.getState();
+        final K key = partitioning.apply(state);
+        final Collection<ArgNode<S, A>> partition = partitions.computeIfAbsent(key,
+            k -> new ArrayList<>());
+        partition.add(node);
+    }
 
-	@Override
-	public void tryToCover(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		final S state = node.getState();
-		final K key = partitioning.apply(state);
-		final Collection<ArgNode<S, A>> partition = partitions.getOrDefault(key, Collections.emptyList());
-		for (final ArgNode<S, A> nodeToCoverWith : partition) {
-			if (nodeToCoverWith.getId() < node.getId()) {
-				if (nodeToCoverWith.mayCover(node)) {
-					node.cover(nodeToCoverWith);
-					return;
-				}
-			} else {
-				return;
-			}
-		}
-	}
+    @Override
+    public void tryToCover(final ArgNode<S, A> node) {
+        checkNotNull(node);
+        final S state = node.getState();
+        final K key = partitioning.apply(state);
+        final Collection<ArgNode<S, A>> partition = partitions.getOrDefault(key,
+            Collections.emptyList());
+        for (final ArgNode<S, A> nodeToCoverWith : partition) {
+            if (nodeToCoverWith.getId() < node.getId()) {
+                if (nodeToCoverWith.mayCover(node)) {
+                    node.cover(nodeToCoverWith);
+                    return;
+                }
+            } else {
+                return;
+            }
+        }
+    }
 
 }

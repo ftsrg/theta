@@ -26,7 +26,9 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-public class Z3ItpPattern implements ItpPattern.Binary<Z3ItpMarker>, ItpPattern.Sequence<Z3ItpMarker>, ItpPattern.Tree<Z3ItpMarker> {
+public class Z3ItpPattern implements ItpPattern.Binary<Z3ItpMarker>,
+    ItpPattern.Sequence<Z3ItpMarker>, ItpPattern.Tree<Z3ItpMarker> {
+
     final ItpMarkerTree<Z3ItpMarker> markerTree;
 
     Z3ItpPattern(final ItpMarkerTree<Z3ItpMarker> markerTree) {
@@ -37,7 +39,7 @@ public class Z3ItpPattern implements ItpPattern.Binary<Z3ItpMarker>, ItpPattern.
     static Z3ItpPattern of(final ItpMarkerTree<? extends ItpMarker> markerTree) {
         final var list = new ArrayList<ItpMarkerTree<? extends ItpMarker>>();
         list.add(markerTree);
-        while(!list.isEmpty()) {
+        while (!list.isEmpty()) {
             final var node = list.get(0);
             list.remove(0);
 
@@ -67,7 +69,7 @@ public class Z3ItpPattern implements ItpPattern.Binary<Z3ItpMarker>, ItpPattern.
         final var markerList = new ArrayList<Z3ItpMarker>();
 
         var current = markerTree;
-        while(current.getChildrenNumber() > 0) {
+        while (current.getChildrenNumber() > 0) {
             markerList.add(current.getMarker());
             current = current.getChild(0);
         }
@@ -89,18 +91,17 @@ public class Z3ItpPattern implements ItpPattern.Binary<Z3ItpMarker>, ItpPattern.
     private boolean isBinary() {
         return
             markerTree != null &&
-            markerTree.getChildrenNumber() == 1 &&
-            markerTree.getChild(0) != null &&
-            markerTree.getChild(0).getChildrenNumber() == 0;
+                markerTree.getChildrenNumber() == 1 &&
+                markerTree.getChild(0) != null &&
+                markerTree.getChild(0).getChildrenNumber() == 0;
     }
 
     private boolean isSequence() {
         var current = markerTree;
-        while(current.getChildrenNumber() > 0) {
-            if(current.getChildrenNumber() > 1) {
+        while (current.getChildrenNumber() > 0) {
+            if (current.getChildrenNumber() > 1) {
                 return false;
-            }
-            else {
+            } else {
                 current = current.getChild(0);
             }
         }

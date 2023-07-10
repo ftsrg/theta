@@ -20,17 +20,19 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 
-public abstract class SubExpr<ExprType extends Additive<ExprType>> extends BinaryExpr<ExprType, ExprType> {
+public abstract class SubExpr<ExprType extends Additive<ExprType>> extends
+    BinaryExpr<ExprType, ExprType> {
 
-	protected SubExpr(final Expr<ExprType> leftOp, final Expr<ExprType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    protected SubExpr(final Expr<ExprType> leftOp, final Expr<ExprType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static <ExprType extends Additive<ExprType>> SubExpr<?> create2(final Expr<?> leftOp, final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked") final ExprType type = (ExprType) leftOp.getType();
-		final Expr<ExprType> newLeftOp = cast(leftOp, type);
-		final Expr<ExprType> newRightOp = cast(rightOp, type);
-		return type.Sub(newLeftOp, newRightOp);
-	}
+    public static <ExprType extends Additive<ExprType>> SubExpr<?> create2(final Expr<?> leftOp,
+        final Expr<?> rightOp) {
+        @SuppressWarnings("unchecked") final ExprType type = (ExprType) leftOp.getType();
+        final Expr<ExprType> newLeftOp = cast(leftOp, type);
+        final Expr<ExprType> newRightOp = cast(rightOp, type);
+        return type.Sub(newLeftOp, newRightOp);
+    }
 
 }

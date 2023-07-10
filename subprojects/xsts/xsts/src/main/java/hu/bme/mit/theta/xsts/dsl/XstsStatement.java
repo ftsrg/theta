@@ -50,7 +50,9 @@ public class XstsStatement {
     private final StmtContext context;
     private final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType;
 
-    public XstsStatement(final DynamicScope scope, final SymbolTable typeTable, final StmtContext context, final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
+    public XstsStatement(final DynamicScope scope, final SymbolTable typeTable,
+        final StmtContext context,
+        final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
         this.scope = checkNotNull(scope);
         this.typeTable = checkNotNull(typeTable);
         this.context = checkNotNull(context);
@@ -74,7 +76,9 @@ public class XstsStatement {
         final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType;
         private final Env env;
 
-        public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable, final Env env, final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
+        public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable,
+            final Env env,
+            final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
             this.currentScope = checkNotNull(scope);
             this.typeTable = checkNotNull(typeTable);
             this.env = checkNotNull(env);
@@ -87,7 +91,8 @@ public class XstsStatement {
         }
 
         private void pop() {
-            checkState(currentScope.enclosingScope().isPresent(), "Enclosing scope is not present.");
+            checkState(currentScope.enclosingScope().isPresent(),
+                "Enclosing scope is not present.");
             currentScope = currentScope.enclosingScope().get();
             env.pop();
         }
@@ -123,7 +128,8 @@ public class XstsStatement {
                 final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
                 final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
 
-                final XstsExpression expression = new XstsExpression(currentScope, typeTable, ctx.value);
+                final XstsExpression expression = new XstsExpression(currentScope, typeTable,
+                    ctx.value);
                 final Expr<?> expr = expression.instantiate(env);
 
                 if (expr.getType().equals(var.getType())) {
@@ -131,7 +137,8 @@ public class XstsStatement {
                     @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
                     return Assign(tVar, tExpr);
                 } else {
-                    throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + expr);
+                    throw new IllegalArgumentException(
+                        "Type of " + var + " is incompatilbe with " + expr);
                 }
             } catch (Exception e) {
                 throw new ParseException(ctx, e.getMessage());
@@ -162,20 +169,23 @@ public class XstsStatement {
                 final XstsExpression value = new XstsExpression(currentScope, typeTable, ctx.value);
                 final Expr<?> valueExpr = value.instantiate(env);
 
-                final Expr<?> arrayWriteExpr = createArrayWriteExpr(var.getRef(), indexExpr, valueExpr);
+                final Expr<?> arrayWriteExpr = createArrayWriteExpr(var.getRef(), indexExpr,
+                    valueExpr);
                 if (arrayWriteExpr.getType().equals(var.getType())) {
                     @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
                     @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) arrayWriteExpr;
                     return Assign(tVar, tExpr);
                 } else {
-                    throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + arrayWriteExpr);
+                    throw new IllegalArgumentException(
+                        "Type of " + var + " is incompatilbe with " + arrayWriteExpr);
                 }
             } catch (Exception e) {
                 throw new ParseException(ctx, e.getMessage());
             }
         }
 
-        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(Expr<?> var, Expr<?> indexExpr, Expr<?> valueExpr) {
+        private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(Expr<?> var,
+            Expr<?> indexExpr, Expr<?> valueExpr) {
             @SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) var;
             final Expr<T1> index = cast(indexExpr, array.getType().getIndexType());
             final Expr<T2> value = cast(valueExpr, array.getType().getElemType());
@@ -187,15 +197,20 @@ public class XstsStatement {
             push();
 
             final String loopVarId = ctx.loopVar.getText();
-            if (currentScope.resolve(loopVarId).isPresent())
-                throw new ParseException(ctx, String.format("Loop variable %s is already declared in this scope.", loopVarId));
+            if (currentScope.resolve(loopVarId).isPresent()) {
+                throw new ParseException(ctx,
+                    String.format("Loop variable %s is already declared in this scope.",
+                        loopVarId));
+            }
             final var decl = Decls.Var(loopVarId, Int());
             final Symbol symbol = DeclSymbol.of(decl);
             currentScope.declare(symbol);
             env.define(symbol, decl);
 
-            final Expr<IntType> from = cast(new XstsExpression(currentScope, typeTable, ctx.from).instantiate(env), Int());
-            final Expr<IntType> to = cast(new XstsExpression(currentScope, typeTable, ctx.to).instantiate(env), Int());
+            final Expr<IntType> from = cast(
+                new XstsExpression(currentScope, typeTable, ctx.from).instantiate(env), Int());
+            final Expr<IntType> to = cast(
+                new XstsExpression(currentScope, typeTable, ctx.to).instantiate(env), Int());
             final Stmt stmt = ctx.subStmt.accept(this);
 
             pop();
@@ -207,7 +222,8 @@ public class XstsStatement {
         @SuppressWarnings("unchecked")
         public Stmt visitLocalVarDeclStmt(LocalVarDeclStmtContext ctx) {
             final String name = ctx.name.getText();
-            final hu.bme.mit.theta.xsts.type.XstsType xstsType = new XstsType(typeTable, ctx.ttype).instantiate(env);
+            final hu.bme.mit.theta.xsts.type.XstsType xstsType = new XstsType(typeTable,
+                ctx.ttype).instantiate(env);
             final Type type = xstsType.getType();
             final var decl = Decls.Var(name, type);
             final Symbol symbol = DeclSymbol.of(decl);
@@ -222,13 +238,15 @@ public class XstsStatement {
                     result = SkipStmt.getInstance();
                 }
             } else {
-                var expr = new XstsExpression(currentScope, typeTable, ctx.initValue).instantiate(env);
+                var expr = new XstsExpression(currentScope, typeTable, ctx.initValue).instantiate(
+                    env);
                 if (expr.getType().equals(decl.getType())) {
                     @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) decl;
                     @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
                     result = Assign(tVar, tExpr);
                 } else {
-                    throw new IllegalArgumentException("Type of " + decl + " is incompatilbe with " + expr);
+                    throw new IllegalArgumentException(
+                        "Type of " + decl + " is incompatilbe with " + expr);
                 }
             }
 
@@ -244,9 +262,11 @@ public class XstsStatement {
             push();
 
             final Stmt result;
-            if (ctx.stmts.size() == 0) result = SkipStmt.getInstance();
-            else if (ctx.stmts.size() == 1) result = ctx.stmt.accept(this);
-            else {
+            if (ctx.stmts.size() == 0) {
+                result = SkipStmt.getInstance();
+            } else if (ctx.stmts.size() == 1) {
+                result = ctx.stmt.accept(this);
+            } else {
                 final List<Stmt> stmts = new ArrayList<>();
                 for (var stmtCtx : ctx.stmts) {
                     final Stmt stmt = stmtCtx.accept(this);

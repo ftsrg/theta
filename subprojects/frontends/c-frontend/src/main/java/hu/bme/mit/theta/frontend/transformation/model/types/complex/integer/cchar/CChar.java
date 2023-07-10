@@ -20,30 +20,31 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInt
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public abstract class CChar extends CInteger {
-	private static final int RANK = 10;
 
-	protected CChar(CSimpleType origin) {
-		super(origin);
-		rank = RANK;
-	}
+    private static final int RANK = 10;
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    protected CChar(CSimpleType origin) {
+        super(origin);
+        rank = RANK;
+    }
 
-	@Override
-	public String getTypeName() {
-		return "char";
-	}
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public CInteger getSignedVersion() {
-		return new CSignedChar(null);
-	}
+    @Override
+    public String getTypeName() {
+        return "char";
+    }
 
-	@Override
-	public CInteger getUnsignedVersion() {
-		return new CUnsignedChar(null);
-	}
+    @Override
+    public CInteger getSignedVersion() {
+        return new CSignedChar(null);
+    }
+
+    @Override
+    public CInteger getUnsignedVersion() {
+        return new CUnsignedChar(null);
+    }
 
 }

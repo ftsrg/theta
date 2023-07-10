@@ -24,51 +24,55 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 public abstract class XcfaState<S extends ExprState> implements ExprState {
-	public static XcfaState<ExplState> create(final XcfaLocation currentLoc, final ExplState state) {
-		return new SimpleXcfaState<>(currentLoc, state);
-	}
 
-	public abstract S getGlobalState();
+    public static XcfaState<ExplState> create(final XcfaLocation currentLoc,
+        final ExplState state) {
+        return new SimpleXcfaState<>(currentLoc, state);
+    }
 
-	public abstract XcfaLocation getCurrentLoc();
+    public abstract S getGlobalState();
 
-	public boolean isError() {
-		return getCurrentLoc().isErrorLoc();
-	}
+    public abstract XcfaLocation getCurrentLoc();
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("XcfaState").add(getCurrentLoc()).add(getGlobalState()).toString();
-	}
+    public boolean isError() {
+        return getCurrentLoc().isErrorLoc();
+    }
 
-	private static class SimpleXcfaState<S extends ExprState> extends XcfaState<S> {
-		private final XcfaLocation currentLoc;
-		;
-		private final S globalState;
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("XcfaState").add(getCurrentLoc()).add(getGlobalState())
+            .toString();
+    }
 
-		private SimpleXcfaState(final XcfaLocation currentLoc, final S globalState) {
-			this.currentLoc = currentLoc;
-			this.globalState = globalState;
-		}
+    private static class SimpleXcfaState<S extends ExprState> extends XcfaState<S> {
 
-		@Override
-		public boolean isBottom() {
-			return globalState.isBottom();
-		}
+        private final XcfaLocation currentLoc;
+        ;
+        private final S globalState;
 
-		@Override
-		public Expr<BoolType> toExpr() {
-			return globalState.toExpr();
-		}
+        private SimpleXcfaState(final XcfaLocation currentLoc, final S globalState) {
+            this.currentLoc = currentLoc;
+            this.globalState = globalState;
+        }
 
-		@Override
-		public S getGlobalState() {
-			return globalState;
-		}
+        @Override
+        public boolean isBottom() {
+            return globalState.isBottom();
+        }
 
-		@Override
-		public XcfaLocation getCurrentLoc() {
-			return currentLoc;
-		}
-	}
+        @Override
+        public Expr<BoolType> toExpr() {
+            return globalState.toExpr();
+        }
+
+        @Override
+        public S getGlobalState() {
+            return globalState;
+        }
+
+        @Override
+        public XcfaLocation getCurrentLoc() {
+            return currentLoc;
+        }
+    }
 }

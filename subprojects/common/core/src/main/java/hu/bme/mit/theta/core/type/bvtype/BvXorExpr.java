@@ -27,6 +27,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvXorExpr extends MultiaryExpr<BvType, BvType> {
+
     private static final int HASH_SEED = 9457;
     private static final String OPERATOR_LABEL = "bvxor";
 

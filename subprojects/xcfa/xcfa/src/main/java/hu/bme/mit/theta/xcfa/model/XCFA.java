@@ -38,212 +38,226 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 /**
- * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
- * create a new instance.
+ * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to create a
+ * new instance.
  */
 @SuppressWarnings("unused")
 public final class XCFA {
-	private final ImmutableMap<VarDecl<? extends Type>, Optional<LitExpr<?>>> globalVars;
-	private final ImmutableList<XcfaProcess> processes;
-	private final XcfaProcess mainProcess;
-	private final String name;
-	private final boolean dynamic;
 
-	private XCFA(Builder builder) {
-		globalVars = ImmutableMap.copyOf(builder.globalVars);
-		processes = builder.processes.stream().map(builder1 -> builder1.build(this)).collect(ImmutableList.toImmutableList());
-		mainProcess = builder.mainProcess.build(this);
-		name = builder.name;
-		dynamic = builder.dynamic;
-	}
+    private final ImmutableMap<VarDecl<? extends Type>, Optional<LitExpr<?>>> globalVars;
+    private final ImmutableList<XcfaProcess> processes;
+    private final XcfaProcess mainProcess;
+    private final String name;
+    private final boolean dynamic;
 
-	public static Builder builder() {
-		return new Builder();
-	}
+    private XCFA(Builder builder) {
+        globalVars = ImmutableMap.copyOf(builder.globalVars);
+        processes = builder.processes.stream().map(builder1 -> builder1.build(this))
+            .collect(ImmutableList.toImmutableList());
+        mainProcess = builder.mainProcess.build(this);
+        name = builder.name;
+        dynamic = builder.dynamic;
+    }
 
-	/*
-	 * Returns the equivalent CFA, if it exists.
-	 */
-	public CFA createCFA() {
-		checkState(getProcesses().size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
-		checkState(getMainProcess().getProcedures().size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
+    public static Builder builder() {
+        return new Builder();
+    }
 
-		CFA.Builder builder = CFA.builder();
+    /*
+     * Returns the equivalent CFA, if it exists.
+     */
+    public CFA createCFA() {
+        checkState(getProcesses().size() == 1,
+            "XCFA cannot be converted to CFA because it has more than one process.");
+        checkState(getMainProcess().getProcedures().size() == 1,
+            "XCFA cannot be converted to CFA because it has more than one procedure.");
 
-		int tmpcnt = 0;
+        CFA.Builder builder = CFA.builder();
 
-		Map<XcfaLocation, CFA.Loc> locationLUT = new LinkedHashMap<>();
+        int tmpcnt = 0;
 
-		LinkedHashMap<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
-		int counter = 0;
+        Map<XcfaLocation, CFA.Loc> locationLUT = new LinkedHashMap<>();
 
-		for (VarDecl<?> localVar : getMainProcess().getMainProcedure().getLocalVars()) {
-			varLut.put(localVar, Var(localVar.getName() + "_id" + counter++, localVar.getType()));
-		}
+        LinkedHashMap<VarDecl<?>, VarDecl<?>> varLut = new LinkedHashMap<>();
+        int counter = 0;
 
-		for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
-			CFA.Loc cfaLoc = builder.createLoc(loc.getName() + "_id" + counter++);
-			FrontendMetadata.create(loc, "cfaLoc", cfaLoc);
-			locationLUT.put(loc, cfaLoc);
-		}
+        for (VarDecl<?> localVar : getMainProcess().getMainProcedure().getLocalVars()) {
+            varLut.put(localVar, Var(localVar.getName() + "_id" + counter++, localVar.getType()));
+        }
 
-		for (XcfaEdge e : getMainProcess().getMainProcedure().getEdges()) {
+        for (XcfaLocation loc : getMainProcess().getMainProcedure().getLocs()) {
+            CFA.Loc cfaLoc = builder.createLoc(loc.getName() + "_id" + counter++);
+            FrontendMetadata.create(loc, "cfaLoc", cfaLoc);
+            locationLUT.put(loc, cfaLoc);
+        }
 
-			List<CFA.Loc> locations = new ArrayList<>();
-			// Adding source
-			locations.add(locationLUT.get(e.getSource()));
-			// Adding intermediate locations (CFAs can only have one per edge)
-			for (int i = 1; i < e.getLabels().size(); ++i) {
-				CFA.Loc loc = builder.createLoc("tmp" + tmpcnt++);
-				locations.add(loc);
-				FrontendMetadata.create(e, "xcfaInterLoc", loc);
-			}
-			// Adding target
-			locations.add(locationLUT.get(e.getTarget()));
-			// Adding edges
-			for (int i = 0; i < e.getLabels().size(); ++i) {
-				CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1), e.getLabels().get(i).accept(new XcfaLabelVarReplacer(), varLut).getStmt());
-				FrontendMetadata.create(e, "cfaEdge", edge);
-			}
-			if (e.getLabels().size() == 0) {
-				CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1), SkipStmt.getInstance());
-				FrontendMetadata.create(e, "cfaEdge", edge);
-			}
-		}
+        for (XcfaEdge e : getMainProcess().getMainProcedure().getEdges()) {
 
-		// Setting special locations (initial and final locations are mandatory, error location is not)
-		builder.setInitLoc(locationLUT.get(getMainProcess().getMainProcedure().getInitLoc()));
-		if (locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()) != null)
-			builder.setErrorLoc(locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()));
-		else builder.setErrorLoc(builder.createLoc());
-		builder.setFinalLoc(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc()));
+            List<CFA.Loc> locations = new ArrayList<>();
+            // Adding source
+            locations.add(locationLUT.get(e.getSource()));
+            // Adding intermediate locations (CFAs can only have one per edge)
+            for (int i = 1; i < e.getLabels().size(); ++i) {
+                CFA.Loc loc = builder.createLoc("tmp" + tmpcnt++);
+                locations.add(loc);
+                FrontendMetadata.create(e, "xcfaInterLoc", loc);
+            }
+            // Adding target
+            locations.add(locationLUT.get(e.getTarget()));
+            // Adding edges
+            for (int i = 0; i < e.getLabels().size(); ++i) {
+                CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1),
+                    e.getLabels().get(i).accept(new XcfaLabelVarReplacer(), varLut).getStmt());
+                FrontendMetadata.create(e, "cfaEdge", edge);
+            }
+            if (e.getLabels().size() == 0) {
+                CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1),
+                    SkipStmt.getInstance());
+                FrontendMetadata.create(e, "cfaEdge", edge);
+            }
+        }
 
-		return builder.build();
-	}
+        // Setting special locations (initial and final locations are mandatory, error location is not)
+        builder.setInitLoc(locationLUT.get(getMainProcess().getMainProcedure().getInitLoc()));
+        if (locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()) != null) {
+            builder.setErrorLoc(locationLUT.get(getMainProcess().getMainProcedure().getErrorLoc()));
+        } else {
+            builder.setErrorLoc(builder.createLoc());
+        }
+        builder.setFinalLoc(locationLUT.get(getMainProcess().getMainProcedure().getFinalLoc()));
 
-	/*
-	 * Getters
-	 */
+        return builder.build();
+    }
 
-	public String getName() {
-		return name;
-	}
+    /*
+     * Getters
+     */
 
-	public boolean isDynamic() {
-		return dynamic;
-	}
+    public String getName() {
+        return name;
+    }
 
-	/*
-	 * Returns the XCFA as its graphviz representation
-	 */
-	public String toDot() {
-		return toDot(List.of(), List.of());
-	}
+    public boolean isDynamic() {
+        return dynamic;
+    }
 
-	public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
-		StringBuilder ret = new StringBuilder("digraph G{\n");
-		for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
-			ret.append("\"var ").append(globalVar).append(" = ").append(getInitValue(globalVar).get()).append("\";\n");
-		}
-		ret.append(getMainProcess().toDot(cexLocations, cexEdges));
-		ret.append("}\n");
-		return ret.toString();
-	}
+    /*
+     * Returns the XCFA as its graphviz representation
+     */
+    public String toDot() {
+        return toDot(List.of(), List.of());
+    }
 
-	public List<VarDecl<? extends Type>> getGlobalVars() {
-		return List.copyOf(globalVars.keySet());
-	}
+    public String toDot(Collection<String> cexLocations, Collection<XcfaEdge> cexEdges) {
+        StringBuilder ret = new StringBuilder("digraph G{\n");
+        for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
+            ret.append("\"var ").append(globalVar).append(" = ")
+                .append(getInitValue(globalVar).get()).append("\";\n");
+        }
+        ret.append(getMainProcess().toDot(cexLocations, cexEdges));
+        ret.append("}\n");
+        return ret.toString();
+    }
 
-	public Optional<LitExpr<?>> getInitValue(final VarDecl<?> varDecl) {
-		return globalVars.get(varDecl);
-	}
+    public List<VarDecl<? extends Type>> getGlobalVars() {
+        return List.copyOf(globalVars.keySet());
+    }
 
-	public List<XcfaProcess> getProcesses() {
-		return processes;
-	}
+    public Optional<LitExpr<?>> getInitValue(final VarDecl<?> varDecl) {
+        return globalVars.get(varDecl);
+    }
 
-	public XcfaProcess getMainProcess() {
-		return mainProcess;
-	}
+    public List<XcfaProcess> getProcesses() {
+        return processes;
+    }
 
-	public static final class Builder {
-		private final Map<VarDecl<?>, Optional<LitExpr<?>>> globalVars;
-		private final List<XcfaProcess.Builder> processes;
-		private XcfaProcess.Builder mainProcess;
-		private String name;
-		private boolean dynamic;
+    public XcfaProcess getMainProcess() {
+        return mainProcess;
+    }
 
-		private XCFA built = null;
+    public static final class Builder {
 
-		private Builder() {
-			globalVars = new LinkedHashMap<>();
-			processes = new ArrayList<>();
-		}
+        private final Map<VarDecl<?>, Optional<LitExpr<?>>> globalVars;
+        private final List<XcfaProcess.Builder> processes;
+        private XcfaProcess.Builder mainProcess;
+        private String name;
+        private boolean dynamic;
 
-		private void checkNotBuilt() {
-			checkState(built == null, "An XCFA was already built.");
-		}
+        private XCFA built = null;
 
-		// globalVars
-		public Map<VarDecl<?>, Optional<LitExpr<?>>> getGlobalVars() {
-			return globalVars;
-		}
+        private Builder() {
+            globalVars = new LinkedHashMap<>();
+            processes = new ArrayList<>();
+        }
 
-		public void addGlobalVar(final VarDecl<?> var, final LitExpr<?> initValue) {
-			checkNotBuilt();
-			globalVars.put(var, Optional.ofNullable(initValue));
-		}
+        private void checkNotBuilt() {
+            checkState(built == null, "An XCFA was already built.");
+        }
 
-		// processes
-		public List<XcfaProcess.Builder> getProcesses() {
-			return processes;
-		}
+        // globalVars
+        public Map<VarDecl<?>, Optional<LitExpr<?>>> getGlobalVars() {
+            return globalVars;
+        }
 
-		public void addProcess(final XcfaProcess.Builder process) {
-			checkNotBuilt();
-			processes.add(process);
-		}
+        public void addGlobalVar(final VarDecl<?> var, final LitExpr<?> initValue) {
+            checkNotBuilt();
+            globalVars.put(var, Optional.ofNullable(initValue));
+        }
 
-		// mainProcess
-		public XcfaProcess.Builder getMainProcess() {
-			return mainProcess;
-		}
+        // processes
+        public List<XcfaProcess.Builder> getProcesses() {
+            return processes;
+        }
 
-		public void setMainProcess(final XcfaProcess.Builder mainProcess) {
-			checkNotBuilt();
-			checkArgument(processes.contains(mainProcess), "Invalid main process.");
-			this.mainProcess = mainProcess;
-		}
+        public void addProcess(final XcfaProcess.Builder process) {
+            checkNotBuilt();
+            processes.add(process);
+        }
 
-		//name
-		public void setName(String name) {
-			this.name = name;
-		}
+        // mainProcess
+        public XcfaProcess.Builder getMainProcess() {
+            return mainProcess;
+        }
 
-		//dynamic
-		public void setDynamic(boolean dynamic) {
-			this.dynamic = dynamic;
-		}
+        public void setMainProcess(final XcfaProcess.Builder mainProcess) {
+            checkNotBuilt();
+            checkArgument(processes.contains(mainProcess), "Invalid main process.");
+            this.mainProcess = mainProcess;
+        }
 
-		public XCFA build() {
-			if (built != null) return built;
+        //name
+        public void setName(String name) {
+            this.name = name;
+        }
 
-			checkState(mainProcess != null, "Main process must be set.");
-			Builder builder = XcfaPassManager.run(this);
-			XCFA xcfa = new XCFA(builder);
-			built = xcfa;
-			return xcfa;
-		}
+        //dynamic
+        public void setDynamic(boolean dynamic) {
+            this.dynamic = dynamic;
+        }
 
-		public void runProcessPasses() {
-			final ArrayList<XcfaProcess.Builder> newProcesses = new ArrayList<>();
-			for (XcfaProcess.Builder process : processes) {
-				final XcfaProcess.Builder newProc = XcfaPassManager.run(process);
-				newProcesses.add(newProc);
-				if (mainProcess == process) mainProcess = newProc;
-			}
-			this.processes.clear();
-			this.processes.addAll(newProcesses);
-		}
-	}
+        public XCFA build() {
+            if (built != null) {
+                return built;
+            }
+
+            checkState(mainProcess != null, "Main process must be set.");
+            Builder builder = XcfaPassManager.run(this);
+            XCFA xcfa = new XCFA(builder);
+            built = xcfa;
+            return xcfa;
+        }
+
+        public void runProcessPasses() {
+            final ArrayList<XcfaProcess.Builder> newProcesses = new ArrayList<>();
+            for (XcfaProcess.Builder process : processes) {
+                final XcfaProcess.Builder newProc = XcfaPassManager.run(process);
+                newProcesses.add(newProc);
+                if (mainProcess == process) {
+                    mainProcess = newProc;
+                }
+            }
+            this.processes.clear();
+            this.processes.addAll(newProcesses);
+        }
+    }
 }

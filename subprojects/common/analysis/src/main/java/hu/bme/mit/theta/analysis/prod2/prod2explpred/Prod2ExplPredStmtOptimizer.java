@@ -29,12 +29,12 @@ public class Prod2ExplPredStmtOptimizer implements StmtOptimizer<Prod2State<Expl
         this.stmtOptimizer = stmtOptimizer;
     }
 
-    public static Prod2ExplPredStmtOptimizer create(final StmtOptimizer<ExplState> stmtOptimizer){
+    public static Prod2ExplPredStmtOptimizer create(final StmtOptimizer<ExplState> stmtOptimizer) {
         return new Prod2ExplPredStmtOptimizer(stmtOptimizer);
     }
 
     @Override
     public Stmt optimizeStmt(Prod2State<ExplState, PredState> state, Stmt stmt) {
-        return stmtOptimizer.optimizeStmt(state.getState1(),stmt);
+        return stmtOptimizer.optimizeStmt(state.getState1(), stmt);
     }
 }

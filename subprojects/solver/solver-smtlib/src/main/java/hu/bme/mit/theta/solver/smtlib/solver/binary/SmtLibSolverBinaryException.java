@@ -18,13 +18,14 @@ package hu.bme.mit.theta.solver.smtlib.solver.binary;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 
 public class SmtLibSolverBinaryException extends SmtLibSolverException {
-	private static final long serialVersionUID = -7472824180590829943L;
 
-	public SmtLibSolverBinaryException(Exception e) {
-		super(e);
-	}
+    private static final long serialVersionUID = -7472824180590829943L;
 
-	public SmtLibSolverBinaryException(String e) {
-		super(e);
-	}
+    public SmtLibSolverBinaryException(Exception e) {
+        super(e);
+    }
+
+    public SmtLibSolverBinaryException(String e) {
+        super(e);
+    }
 }

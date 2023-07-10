@@ -24,22 +24,22 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 
 final class CfaVariableSymbol implements Symbol {
 
-	private final String name;
-	private final CfaType type;
+    private final String name;
+    private final CfaType type;
 
-	public CfaVariableSymbol(final VarDeclContext context) {
-		checkNotNull(context);
-		name = context.ddecl.name.getText();
-		type = new CfaType(context.ddecl.ttype);
-	}
+    public CfaVariableSymbol(final VarDeclContext context) {
+        checkNotNull(context);
+        name = context.ddecl.name.getText();
+        type = new CfaType(context.ddecl.ttype);
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	public VarDecl<?> instantiate() {
-		return Var(name, type.instantiate());
-	}
+    public VarDecl<?> instantiate() {
+        return Var(name, type.instantiate());
+    }
 
 }

@@ -23,8 +23,9 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import java.util.Set;
 
 public class XcfaGlobalStaticAutoExpl implements XcfaAutoExpl {
-	@Override
-	public AutoExpl create(XCFA xcfa) {
-		return new StaticAutoExpl(Set.copyOf(xcfa.getGlobalVars()));
-	}
+
+    @Override
+    public AutoExpl create(XCFA xcfa) {
+        return new StaticAutoExpl(Set.copyOf(xcfa.getGlobalVars()));
+    }
 }

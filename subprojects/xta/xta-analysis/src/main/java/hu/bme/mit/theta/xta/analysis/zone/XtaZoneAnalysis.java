@@ -26,28 +26,28 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 
 public final class XtaZoneAnalysis implements Analysis<ZoneState, XtaAction, ZonePrec> {
 
-	private static final XtaZoneAnalysis INSTANCE = new XtaZoneAnalysis();
+    private static final XtaZoneAnalysis INSTANCE = new XtaZoneAnalysis();
 
-	private XtaZoneAnalysis() {
-	}
+    private XtaZoneAnalysis() {
+    }
 
-	public static XtaZoneAnalysis getInstance() {
-		return INSTANCE;
-	}
+    public static XtaZoneAnalysis getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public PartialOrd<ZoneState> getPartialOrd() {
-		return ZoneOrd.getInstance();
-	}
+    @Override
+    public PartialOrd<ZoneState> getPartialOrd() {
+        return ZoneOrd.getInstance();
+    }
 
-	@Override
-	public InitFunc<ZoneState, ZonePrec> getInitFunc() {
-		return XtaZoneInitFunc.getInstance();
-	}
+    @Override
+    public InitFunc<ZoneState, ZonePrec> getInitFunc() {
+        return XtaZoneInitFunc.getInstance();
+    }
 
-	@Override
-	public TransFunc<ZoneState, XtaAction, ZonePrec> getTransFunc() {
-		return XtaZoneTransFunc.getInstance();
-	}
+    @Override
+    public TransFunc<ZoneState, XtaAction, ZonePrec> getTransFunc() {
+        return XtaZoneTransFunc.getInstance();
+    }
 
 }

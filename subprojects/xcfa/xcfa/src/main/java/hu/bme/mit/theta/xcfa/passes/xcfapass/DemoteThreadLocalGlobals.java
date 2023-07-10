@@ -27,19 +27,21 @@ import java.util.Map;
 import java.util.Optional;
 
 public class DemoteThreadLocalGlobals extends XcfaPass {
-	@Override
-	public XCFA.Builder run(XCFA.Builder builder) {
-		for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> entry : new ArrayList<>(builder.getGlobalVars().entrySet())) {
-			VarDecl<?> varDecl = entry.getKey();
-			Optional<LitExpr<?>> litExpr = entry.getValue();
 
-			if (CComplexType.getType(varDecl.getRef()).isThreadLocal()) {
-				builder.getGlobalVars().remove(varDecl);
-				for (XcfaProcess.Builder process : builder.getProcesses()) {
-					process.createVar(varDecl, litExpr.orElse(null));
-				}
-			}
-		}
-		return builder;
-	}
+    @Override
+    public XCFA.Builder run(XCFA.Builder builder) {
+        for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> entry : new ArrayList<>(
+            builder.getGlobalVars().entrySet())) {
+            VarDecl<?> varDecl = entry.getKey();
+            Optional<LitExpr<?>> litExpr = entry.getValue();
+
+            if (CComplexType.getType(varDecl.getRef()).isThreadLocal()) {
+                builder.getGlobalVars().remove(varDecl);
+                for (XcfaProcess.Builder process : builder.getProcesses()) {
+                    process.createVar(varDecl, litExpr.orElse(null));
+                }
+            }
+        }
+        return builder;
+    }
 }

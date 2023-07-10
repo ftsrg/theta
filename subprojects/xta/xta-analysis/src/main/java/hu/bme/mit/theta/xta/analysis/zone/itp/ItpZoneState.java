@@ -25,93 +25,96 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class ItpZoneState implements ExprState {
-	private final ZoneState concrState;
-	private final ZoneState abstrState;
 
-	private static final int HASH_SEED = 3361;
-	private volatile int hashCode = 0;
+    private final ZoneState concrState;
+    private final ZoneState abstrState;
 
-	private ItpZoneState(final ZoneState concrState, final ZoneState abstrState) {
-		this.concrState = checkNotNull(concrState);
-		this.abstrState = checkNotNull(abstrState);
-		assert concrState.isLeq(abstrState);
-	}
+    private static final int HASH_SEED = 3361;
+    private volatile int hashCode = 0;
 
-	public static ItpZoneState of(final ZoneState state, final ZoneState interpolant) {
-		return new ItpZoneState(state, interpolant);
-	}
+    private ItpZoneState(final ZoneState concrState, final ZoneState abstrState) {
+        this.concrState = checkNotNull(concrState);
+        this.abstrState = checkNotNull(abstrState);
+        assert concrState.isLeq(abstrState);
+    }
 
-	////
+    public static ItpZoneState of(final ZoneState state, final ZoneState interpolant) {
+        return new ItpZoneState(state, interpolant);
+    }
 
-	public ZoneState getConcrState() {
-		return concrState;
-	}
+    ////
 
-	public ZoneState getAbstrState() {
-		return abstrState;
-	}
+    public ZoneState getConcrState() {
+        return concrState;
+    }
 
-	////
+    public ZoneState getAbstrState() {
+        return abstrState;
+    }
 
-	public boolean isLeq(final ItpZoneState that) {
-		return this.abstrState.isLeq(that.abstrState);
-	}
+    ////
 
-	////
+    public boolean isLeq(final ItpZoneState that) {
+        return this.abstrState.isLeq(that.abstrState);
+    }
 
-	public ItpZoneState withConcrState(final ZoneState concrState) {
-		return ItpZoneState.of(concrState, abstrState);
-	}
+    ////
 
-	public ItpZoneState withAbstrState(final ZoneState abstrState) {
-		return ItpZoneState.of(concrState, abstrState);
-	}
+    public ItpZoneState withConcrState(final ZoneState concrState) {
+        return ItpZoneState.of(concrState, abstrState);
+    }
 
-	////
+    public ItpZoneState withAbstrState(final ZoneState abstrState) {
+        return ItpZoneState.of(concrState, abstrState);
+    }
 
-	@Override
-	public boolean isBottom() {
-		return concrState.isBottom();
-	}
+    ////
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		if (isBottom()) {
-			return False();
-		} else {
-			return abstrState.toExpr();
-		}
-	}
+    @Override
+    public boolean isBottom() {
+        return concrState.isBottom();
+    }
 
-	////
+    @Override
+    public Expr<BoolType> toExpr() {
+        if (isBottom()) {
+            return False();
+        } else {
+            return abstrState.toExpr();
+        }
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 37 * result + concrState.hashCode();
-			result = 37 * result + abstrState.hashCode();
+    ////
+
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 37 * result + concrState.hashCode();
+            result = 37 * result + abstrState.hashCode();
             hashCode = result;
-		}
-		return result;
-	}
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof ItpZoneState) {
-			final ItpZoneState that = (ItpZoneState) obj;
-			return this.concrState.equals(that.concrState) && this.abstrState.equals(that.abstrState);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof ItpZoneState) {
+            final ItpZoneState that = (ItpZoneState) obj;
+            return this.concrState.equals(that.concrState) && this.abstrState.equals(
+                that.abstrState);
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(concrState).add(abstrState).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(concrState)
+            .add(abstrState).toString();
+    }
 
 }

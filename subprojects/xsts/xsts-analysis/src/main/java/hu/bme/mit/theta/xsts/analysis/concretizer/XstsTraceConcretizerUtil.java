@@ -36,26 +36,28 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public final class XstsTraceConcretizerUtil {
 
-	private XstsTraceConcretizerUtil() {
-	}
+    private XstsTraceConcretizerUtil() {
+    }
 
-	public static XstsStateSequence concretize(
-			final Trace<XstsState<?>, XstsAction> trace, SolverFactory solverFactory, final XSTS xsts) {
+    public static XstsStateSequence concretize(
+        final Trace<XstsState<?>, XstsAction> trace, SolverFactory solverFactory, final XSTS xsts) {
 
-		final VarFilter varFilter = VarFilter.of(xsts);
-		final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(xsts.getInitFormula(),
-				Not(xsts.getProp()), solverFactory.createItpSolver());
-		final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
-		checkArgument(status.isFeasible(), "Infeasible trace.");
-		final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+        final VarFilter varFilter = VarFilter.of(xsts);
+        final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(
+            xsts.getInitFormula(),
+            Not(xsts.getProp()), solverFactory.createItpSolver());
+        final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
+        checkArgument(status.isFeasible(), "Infeasible trace.");
+        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
 
-		assert valuations.getStates().size() == trace.getStates().size();
+        assert valuations.getStates().size() == trace.getStates().size();
 
-		final List<XstsState<ExplState>> xstsStates = new ArrayList<>();
-		for (int i = 0; i < trace.getStates().size(); ++i) {
-			xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))), trace.getState(i).lastActionWasEnv(), trace.getState(i).isInitialized()));
-		}
+        final List<XstsState<ExplState>> xstsStates = new ArrayList<>();
+        for (int i = 0; i < trace.getStates().size(); ++i) {
+            xstsStates.add(XstsState.of(ExplState.of(varFilter.filter(valuations.getState(i))),
+                trace.getState(i).lastActionWasEnv(), trace.getState(i).isInitialized()));
+        }
 
-		return XstsStateSequence.of(xstsStates, xsts);
-	}
+        return XstsStateSequence.of(xstsStates, xsts);
+    }
 }

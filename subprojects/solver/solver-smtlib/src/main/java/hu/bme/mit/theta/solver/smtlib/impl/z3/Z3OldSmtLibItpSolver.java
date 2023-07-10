@@ -56,10 +56,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
+
     private boolean topMostContainsAssertions = false;
 
     public Z3OldSmtLibItpSolver(
-        final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
+        final SmtLibSymbolTable symbolTable,
+        final SmtLibTransformationManager transformationManager,
         final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
@@ -79,10 +81,9 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
     }
 
 
-
     @Override
     public void add(ItpMarker marker, Expr<BoolType> assertion) {
-        if(topMostContainsAssertions) {
+        if (topMostContainsAssertions) {
             issueGeneralCommand("(pop 1)"); // Topmost frame contains marker assertions
             topMostContainsAssertions = false;
         }
@@ -90,13 +91,14 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
     }
 
     @Override
-    protected void add(final Z3SmtLibItpMarker marker, final Expr<BoolType> assertion, final Set<ConstDecl<?>> consts, final String term) {
+    protected void add(final Z3SmtLibItpMarker marker, final Expr<BoolType> assertion,
+        final Set<ConstDecl<?>> consts, final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
     }
 
     @Override
     public SolverStatus check() {
-        if(topMostContainsAssertions) {
+        if (topMostContainsAssertions) {
             issueGeneralCommand("(pop 1)"); // Topmost frame contains marker assertions
             topMostContainsAssertions = false;
         }
@@ -104,15 +106,18 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
         issueGeneralCommand("(push 1)"); // Topmost frame contains marker assertions
         topMostContainsAssertions = true;
 
-        for(final var marker : markers.toCollection()) {
+        for (final var marker : markers.toCollection()) {
             final var terms = marker.getTerms();
-            if(terms.size() == 0) {
-                issueGeneralCommand(String.format("(assert (! true :named %s))", marker.getMarkerName()));
-            }
-            else {
-                final var term = String.format("(and %s)", String.join(" ", marker.getTerms().stream().map(Tuple2::get2).collect(Collectors.toUnmodifiableList())));
+            if (terms.size() == 0) {
+                issueGeneralCommand(
+                    String.format("(assert (! true :named %s))", marker.getMarkerName()));
+            } else {
+                final var term = String.format("(and %s)", String.join(" ",
+                    marker.getTerms().stream().map(Tuple2::get2)
+                        .collect(Collectors.toUnmodifiableList())));
 
-                issueGeneralCommand(String.format("(assert (! %s :named %s))", term, marker.getMarkerName()));
+                issueGeneralCommand(
+                    String.format("(assert (! %s :named %s))", term, marker.getMarkerName()));
             }
         }
 
@@ -121,7 +126,7 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
 
     @Override
     public void push() {
-        if(topMostContainsAssertions) {
+        if (topMostContainsAssertions) {
             issueGeneralCommand("(pop 1)"); // Topmost frame contains marker assertions
             topMostContainsAssertions = false;
         }
@@ -130,7 +135,7 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
 
     @Override
     public void pop(int n) {
-        if(topMostContainsAssertions) {
+        if (topMostContainsAssertions) {
             issueGeneralCommand("(pop 1)"); // Topmost frame contains marker assertions
             topMostContainsAssertions = false;
         }
@@ -139,10 +144,10 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
-        checkState(getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
+        checkState(getStatus() == SolverStatus.UNSAT,
+            "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
-        @SuppressWarnings("unchecked")
-        final var z3ItpPattern = (SmtLibItpPattern<Z3SmtLibItpMarker>) pattern;
+        @SuppressWarnings("unchecked") final var z3ItpPattern = (SmtLibItpPattern<Z3SmtLibItpMarker>) pattern;
 
         final var term = patternToTerm(z3ItpPattern.getRoot());
         final var markerCount = getMarkerCount(z3ItpPattern.getRoot());
@@ -150,9 +155,10 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
         final List<Expr<BoolType>> itpList = new LinkedList<>();
 
         solverBinary.issueCommand(String.format("(get-interpolant %s)", term));
-        for(var i = 0; i < markerCount; i++) {
+        for (var i = 0; i < markerCount; i++) {
             final var res = parseItpResponse(solverBinary.readResponse());
-            itpList.add(termTransformer.toExpr(res, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
+            itpList.add(termTransformer.toExpr(res, BoolExprs.Bool(),
+                new SmtLibModel(Collections.emptyMap())));
         }
         // itpList.add(False());
 
@@ -176,8 +182,9 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
         return String.format("(interp (and %s))", String.join(" ", opTerms));
     }
 
-    private void buildItpMapFormList(final ItpMarkerTree<Z3SmtLibItpMarker> pattern, final List<Expr<BoolType>> itpList,
-                                     final Map<ItpMarker, Expr<BoolType>> itpMap) {
+    private void buildItpMapFormList(final ItpMarkerTree<Z3SmtLibItpMarker> pattern,
+        final List<Expr<BoolType>> itpList,
+        final Map<ItpMarker, Expr<BoolType>> itpMap) {
         for (final ItpMarkerTree<Z3SmtLibItpMarker> child : pattern.getChildren()) {
             buildItpMapFormList(child, itpList, itpMap);
         }
@@ -208,18 +215,18 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
             parser.removeErrorListeners();
             parser.addErrorListener(new ThrowExceptionErrorListener());
             return extractString(parser.term());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             try {
-                throw new SmtLibSolverException(parser.response().general_response_error().reason.getText());
-            }
-            catch(Exception ex) {
+                throw new SmtLibSolverException(
+                    parser.response().general_response_error().reason.getText());
+            } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
         }
     }
 
     private static String extractString(final ParserRuleContext ctx) {
-        return ctx.start.getInputStream().getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+        return ctx.start.getInputStream()
+            .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

@@ -38,130 +38,136 @@ import java.util.Collection;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolType>>, Void> {
-	public static XcfaAtomCollecter INSTANCE = new XcfaAtomCollecter();
 
-	@Override
-	public Void visit(SkipStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
-		return null;
-	}
+    public static XcfaAtomCollecter INSTANCE = new XcfaAtomCollecter();
 
-	@Override
-	public Void visit(AssumeStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+    @Override
+    public Void visit(SkipStmt stmt, Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public Void visit(AssumeStmt stmt, Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt,
+        Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt,
+        Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public Void visit(SequenceStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public Void visit(SequenceStmt stmt, Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public Void visit(NonDetStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public Void visit(NonDetStmt stmt, Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public Void visit(OrtStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public Void visit(OrtStmt stmt, Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public Void visit(LoopStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public Void visit(LoopStmt stmt, Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public Void visit(IfStmt stmt, Collection<Expr<BoolType>> param) {
-		param.addAll(StmtAtomCollector.collectAtoms(stmt));
+        return null;
+    }
 
-		return null;
-	}
+    @Override
+    public Void visit(IfStmt stmt, Collection<Expr<BoolType>> param) {
+        param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
-	@Override
-	public Void visit(XcfaLabel.AtomicBeginXcfaLabel label, Collection<Expr<BoolType>> param) {
-		return null;
-	}
+        return null;
+    }
 
-	@Override
-	public Void visit(XcfaLabel.AtomicEndXcfaLabel label, Collection<Expr<BoolType>> param) {
-		return null;
-	}
+    @Override
+    public Void visit(XcfaLabel.AtomicBeginXcfaLabel label, Collection<Expr<BoolType>> param) {
+        return null;
+    }
 
-	@Override
-	public Void visit(XcfaLabel.ProcedureCallXcfaLabel label, Collection<Expr<BoolType>> param) {
-		throw new UnsupportedOperationException("Cannot get atoms of ProcedureCalls - did you mean to inline before?");
-	}
+    @Override
+    public Void visit(XcfaLabel.AtomicEndXcfaLabel label, Collection<Expr<BoolType>> param) {
+        return null;
+    }
 
-	@Override
-	public Void visit(XcfaLabel.StartThreadXcfaLabel label, Collection<Expr<BoolType>> param) {
-		return null;
-	}
+    @Override
+    public Void visit(XcfaLabel.ProcedureCallXcfaLabel label, Collection<Expr<BoolType>> param) {
+        throw new UnsupportedOperationException(
+            "Cannot get atoms of ProcedureCalls - did you mean to inline before?");
+    }
 
-	@Override
-	public Void visit(XcfaLabel.JoinThreadXcfaLabel label, Collection<Expr<BoolType>> param) {
-		return null;
-	}
+    @Override
+    public Void visit(XcfaLabel.StartThreadXcfaLabel label, Collection<Expr<BoolType>> param) {
+        return null;
+    }
 
-	@Override
-	public <T extends Type> Void visit(XcfaLabel.LoadXcfaLabel<T> label, Collection<Expr<BoolType>> param) {
-		ExprUtils.collectAtoms(Eq(label.getGlobal().getRef(), label.getLocal().getRef()), param);
-		return null;
-	}
+    @Override
+    public Void visit(XcfaLabel.JoinThreadXcfaLabel label, Collection<Expr<BoolType>> param) {
+        return null;
+    }
 
-	@Override
-	public <T extends Type> Void visit(XcfaLabel.StoreXcfaLabel<T> label, Collection<Expr<BoolType>> param) {
-		ExprUtils.collectAtoms(Eq(label.getGlobal().getRef(), label.getLocal().getRef()), param);
-		return null;
-	}
+    @Override
+    public <T extends Type> Void visit(XcfaLabel.LoadXcfaLabel<T> label,
+        Collection<Expr<BoolType>> param) {
+        ExprUtils.collectAtoms(Eq(label.getGlobal().getRef(), label.getLocal().getRef()), param);
+        return null;
+    }
 
-	@Override
-	public Void visit(XcfaLabel.FenceXcfaLabel label, Collection<Expr<BoolType>> param) {
-		return null;
-	}
+    @Override
+    public <T extends Type> Void visit(XcfaLabel.StoreXcfaLabel<T> label,
+        Collection<Expr<BoolType>> param) {
+        ExprUtils.collectAtoms(Eq(label.getGlobal().getRef(), label.getLocal().getRef()), param);
+        return null;
+    }
 
-	@Override
-	public Void visit(XcfaLabel.StmtXcfaLabel label, Collection<Expr<BoolType>> param) {
-		return label.getStmt().accept(this, param);
-	}
+    @Override
+    public Void visit(XcfaLabel.FenceXcfaLabel label, Collection<Expr<BoolType>> param) {
+        return null;
+    }
 
-	@Override
-	public Void visit(XcfaLabel.SequenceLabel sequenceLabel, Collection<Expr<BoolType>> param) {
-		for (XcfaLabel label : sequenceLabel.getLabels()) {
-			label.accept(this, param);
-		}
-		return null;
-	}
+    @Override
+    public Void visit(XcfaLabel.StmtXcfaLabel label, Collection<Expr<BoolType>> param) {
+        return label.getStmt().accept(this, param);
+    }
 
-	@Override
-	public Void visit(XcfaLabel.NondetLabel nondetLabel, Collection<Expr<BoolType>> param) {
-		for (XcfaLabel label : nondetLabel.getLabels()) {
-			label.accept(this, param);
-		}
-		return null;
-	}
+    @Override
+    public Void visit(XcfaLabel.SequenceLabel sequenceLabel, Collection<Expr<BoolType>> param) {
+        for (XcfaLabel label : sequenceLabel.getLabels()) {
+            label.accept(this, param);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(XcfaLabel.NondetLabel nondetLabel, Collection<Expr<BoolType>> param) {
+        for (XcfaLabel label : nondetLabel.getLabels()) {
+            label.accept(this, param);
+        }
+        return null;
+    }
 }

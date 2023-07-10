@@ -68,6 +68,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class SmtLibSolverTest {
+
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
     private static SolverFactory solverFactory;
@@ -77,7 +78,7 @@ public final class SmtLibSolverTest {
 
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
 
             solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
@@ -94,7 +95,9 @@ public final class SmtLibSolverTest {
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
+        if (solverInstalled) {
+            solverManager.uninstall(SOLVER, VERSION);
+        }
     }
 
     @Before
@@ -111,12 +114,13 @@ public final class SmtLibSolverTest {
         symbolTable.put(x, "x", "(declare-fun x () (_ BitVec 4))");
 
         final var expr = termTransformer.toExpr(
-                "(forall ((y (Array (_ BitVec 4) Int))) (= (select y x) 0))",
-                BoolExprs.Bool(), new SmtLibModel(Map.of())
+            "(forall ((y (Array (_ BitVec 4) Int))) (= (select y x) 0))",
+            BoolExprs.Bool(), new SmtLibModel(Map.of())
         );
         assertNotNull(expr);
         assertTrue(expr instanceof ForallExpr);
-        assertEquals(Array(x.getType(), IntExprs.Int()), ((ForallExpr) expr).getParamDecls().get(0).getType());
+        assertEquals(Array(x.getType(), IntExprs.Int()),
+            ((ForallExpr) expr).getParamDecls().get(0).getType());
     }
 
     @Test
@@ -237,10 +241,13 @@ public final class SmtLibSolverTest {
     public void testArray() {
         final Solver solver = solverFactory.createSolver();
 
-        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(IntExprs.Int(), IntExprs.Int()));
+        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr",
+            Array(IntExprs.Int(), IntExprs.Int()));
 
-        solver.add(ArrayExprs.Eq(Write(arr.getRef(), IntExprs.Int(0), IntExprs.Int(1)), arr.getRef()));
-        solver.add(ArrayExprs.Eq(Write(arr.getRef(), IntExprs.Int(1), IntExprs.Int(2)), arr.getRef()));
+        solver.add(
+            ArrayExprs.Eq(Write(arr.getRef(), IntExprs.Int(0), IntExprs.Int(1)), arr.getRef()));
+        solver.add(
+            ArrayExprs.Eq(Write(arr.getRef(), IntExprs.Int(1), IntExprs.Int(2)), arr.getRef()));
 
         // Check, the expression should be satisfiable
         SolverStatus status = solver.check();
@@ -250,10 +257,12 @@ public final class SmtLibSolverTest {
         final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
         final Expr<ArrayType<IntType, IntType>> val = optVal.get();
         assertTrue(val instanceof ArrayLitExpr);
-        var valLit = (ArrayLitExpr<IntType, IntType>)val;
+        var valLit = (ArrayLitExpr<IntType, IntType>) val;
         assertTrue(2 <= valLit.getElements().size());
-        assertEquals(IntExprs.Int(1), Read(valLit, IntExprs.Int(0)).eval(ImmutableValuation.empty()));
-        assertEquals(IntExprs.Int(2), Read(valLit, IntExprs.Int(1)).eval(ImmutableValuation.empty()));
+        assertEquals(IntExprs.Int(1),
+            Read(valLit, IntExprs.Int(0)).eval(ImmutableValuation.empty()));
+        assertEquals(IntExprs.Int(2),
+            Read(valLit, IntExprs.Int(1)).eval(ImmutableValuation.empty()));
     }
 
     @Test
@@ -306,8 +315,9 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, false, false})));
-        solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[] {false, false, false, true})))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+            BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[]{false, false, false, true})))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -328,8 +338,9 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
-        solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Sub(cx.getRef(), Bv(new boolean[] {false, false, false, true}))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+            BvExprs.Sub(cx.getRef(), Bv(new boolean[]{false, false, false, true}))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -350,7 +361,7 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
         solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Neg(cx.getRef())));
 
         SolverStatus status = solver.check();
@@ -372,8 +383,9 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
-        solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[] {false, false, true, false})))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+            BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[]{false, false, true, false})))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -394,8 +406,8 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.ULt(cx.getRef(), Bv(new boolean[] {true, true, true, true})));
-        solver.add(BvExprs.ULt(cy.getRef(), Bv(new boolean[] {true, true, true, true})));
+        solver.add(BvExprs.ULt(cx.getRef(), Bv(new boolean[]{true, true, true, true})));
+        solver.add(BvExprs.ULt(cy.getRef(), Bv(new boolean[]{true, true, true, true})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -416,8 +428,9 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {true, false, true, false})));
-        solver.add(BvExprs.Eq(cy.getRef(), BvExprs.SMod(cx.getRef(), Bv(new boolean[] {false, true, false, false}))));
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{true, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+            BvExprs.SMod(cx.getRef(), Bv(new boolean[]{false, true, false, false}))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -438,8 +451,9 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-        solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {true, true, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())),
+            Bv(new boolean[]{true, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -460,8 +474,9 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-        solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())),
+            Bv(new boolean[]{false, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -482,8 +497,9 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-        solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())),
+            Bv(new boolean[]{false, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -504,8 +520,10 @@ public final class SmtLibSolverTest {
 
         solver.push();
 
-        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-        solver.add(BvExprs.Eq(BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[] {false, false, false, true})), cx.getRef()));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(
+            BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[]{false, false, false, true})),
+            cx.getRef()));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());

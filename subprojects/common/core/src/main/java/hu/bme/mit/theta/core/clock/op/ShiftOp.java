@@ -31,74 +31,74 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class ShiftOp implements ClockOp {
 
-	private static final int HASH_SEED = 5521;
+    private static final int HASH_SEED = 5521;
 
-	private final VarDecl<RatType> varDecl;
-	private final int offset;
+    private final VarDecl<RatType> varDecl;
+    private final int offset;
 
-	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType> stmt = null;
+    private volatile int hashCode = 0;
+    private volatile AssignStmt<RatType> stmt = null;
 
-	ShiftOp(final VarDecl<RatType> varDecl, final int offset) {
-		this.varDecl = checkNotNull(varDecl);
-		this.offset = offset;
-	}
+    ShiftOp(final VarDecl<RatType> varDecl, final int offset) {
+        this.varDecl = checkNotNull(varDecl);
+        this.offset = offset;
+    }
 
-	public VarDecl<RatType> getVar() {
-		return varDecl;
-	}
+    public VarDecl<RatType> getVar() {
+        return varDecl;
+    }
 
-	public int getOffset() {
-		return offset;
-	}
+    public int getOffset() {
+        return offset;
+    }
 
-	@Override
-	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(varDecl);
-	}
+    @Override
+    public Collection<VarDecl<RatType>> getVars() {
+        return ImmutableSet.of(varDecl);
+    }
 
-	@Override
-	public AssignStmt<RatType> toStmt() {
-		AssignStmt<RatType> result = stmt;
-		if (result == null) {
-			result = Assign(varDecl, Add(varDecl.getRef(), Rat(offset, 1)));
-			stmt = result;
-		}
-		return result;
-	}
+    @Override
+    public AssignStmt<RatType> toStmt() {
+        AssignStmt<RatType> result = stmt;
+        if (result == null) {
+            result = Assign(varDecl, Add(varDecl.getRef(), Rat(offset, 1)));
+            stmt = result;
+        }
+        return result;
+    }
 
-	@Override
-	public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
+    @Override
+    public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + varDecl.hashCode();
-			result = 31 * result + offset;
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + varDecl.hashCode();
+            result = 31 * result + offset;
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof ShiftOp) {
-			final ShiftOp that = (ShiftOp) obj;
-			return this.getVar().equals(that.getVar()) && this.getOffset() == that.getOffset();
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof ShiftOp) {
+            final ShiftOp that = (ShiftOp) obj;
+            return this.getVar().equals(that.getVar()) && this.getOffset() == that.getOffset();
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("shift").add(varDecl.getName()).add(offset).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("shift").add(varDecl.getName()).add(offset).toString();
+    }
 
 }

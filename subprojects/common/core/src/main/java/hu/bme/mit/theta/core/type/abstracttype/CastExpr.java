@@ -20,10 +20,10 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 
 public abstract class CastExpr<SourceType extends Castable<SourceType>, TargetType extends Type>
-		extends UnaryExpr<SourceType, TargetType> {
+    extends UnaryExpr<SourceType, TargetType> {
 
-	public CastExpr(final Expr<SourceType> op) {
-		super(op);
-	}
+    public CastExpr(final Expr<SourceType> op) {
+        super(op);
+    }
 
 }

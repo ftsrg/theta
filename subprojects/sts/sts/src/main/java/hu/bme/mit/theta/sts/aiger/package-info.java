@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 /**
- * This package contains the AIGER (Hardware Model Checking Competition)
- * frontend for STSs.
+ * This package contains the AIGER (Hardware Model Checking Competition) frontend for STSs.
  *
  * @see hu.bme.mit.theta.sts.aiger.AigerParser
  * @see hu.bme.mit.theta.sts.aiger.AigerToSts

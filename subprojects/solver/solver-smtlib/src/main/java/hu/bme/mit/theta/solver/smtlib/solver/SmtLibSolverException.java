@@ -16,17 +16,18 @@
 package hu.bme.mit.theta.solver.smtlib.solver;
 
 public class SmtLibSolverException extends RuntimeException {
-	private static final long serialVersionUID = -7472824180590829943L;
 
-	public SmtLibSolverException(Exception e) {
-		super(e);
-	}
+    private static final long serialVersionUID = -7472824180590829943L;
 
-	public SmtLibSolverException(String e) {
-		super(e);
-	}
+    public SmtLibSolverException(Exception e) {
+        super(e);
+    }
 
-	public SmtLibSolverException(String e, Throwable c) {
-		super(e, c);
-	}
+    public SmtLibSolverException(String e) {
+        super(e);
+    }
+
+    public SmtLibSolverException(String e, Throwable c) {
+        super(e, c);
+    }
 }

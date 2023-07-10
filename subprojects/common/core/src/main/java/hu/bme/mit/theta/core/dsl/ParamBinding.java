@@ -34,39 +34,43 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class ParamBinding implements Substitution {
 
-	private final List<ParamDecl<?>> params;
-	private final Map<Decl<?>, Expr<?>> paramToArg;
+    private final List<ParamDecl<?>> params;
+    private final Map<Decl<?>, Expr<?>> paramToArg;
 
-	public ParamBinding(final List<? extends ParamDecl<?>> params, final List<? extends Expr<?>> args) {
-		checkNotNull(params);
-		checkNotNull(args);
-		checkArgument(params.size() == args.size());
+    public ParamBinding(final List<? extends ParamDecl<?>> params,
+        final List<? extends Expr<?>> args) {
+        checkNotNull(params);
+        checkNotNull(args);
+        checkArgument(params.size() == args.size());
 
-		this.params = ImmutableList.copyOf(params);
-		this.paramToArg = Containers.createMap();
+        this.params = ImmutableList.copyOf(params);
+        this.paramToArg = Containers.createMap();
 
-		for (int i = 0; i < params.size(); i++) {
-			final ParamDecl<?> param = params.get(i);
-			final Expr<?> arg = args.get(i);
-			checkArgument(arg.getType().equals(param.getType()));
-			paramToArg.put(param, arg);
-		}
-	}
+        for (int i = 0; i < params.size(); i++) {
+            final ParamDecl<?> param = params.get(i);
+            final Expr<?> arg = args.get(i);
+            checkArgument(arg.getType().equals(param.getType()));
+            paramToArg.put(param, arg);
+        }
+    }
 
-	public static ParamBinding create(final List<? extends ParamDecl<?>> params, final List<? extends Expr<?>> args) {
-		return new ParamBinding(params, args);
-	}
+    public static ParamBinding create(final List<? extends ParamDecl<?>> params,
+        final List<? extends Expr<?>> args) {
+        return new ParamBinding(params, args);
+    }
 
-	////
+    ////
 
-	@Override
-	public Collection<ParamDecl<?>> getDecls() {
-		return params;
-	}
+    @Override
+    public Collection<ParamDecl<?>> getDecls() {
+        return params;
+    }
 
-	@Override
-	public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl) {
-		@SuppressWarnings("unchecked") final Expr<DeclType> value = (Expr<DeclType>) paramToArg.get(decl);
-		return Optional.ofNullable(value);
-	}
+    @Override
+    public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(
+        final Decl<DeclType> decl) {
+        @SuppressWarnings("unchecked") final Expr<DeclType> value = (Expr<DeclType>) paramToArg.get(
+            decl);
+        return Optional.ofNullable(value);
+    }
 }

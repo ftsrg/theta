@@ -20,21 +20,20 @@ import hu.bme.mit.theta.solver.SolverBase;
 import java.io.Closeable;
 
 /**
- * A helper class for automatic push and pop for solvers using the
- * try-with-resources statement.
+ * A helper class for automatic push and pop for solvers using the try-with-resources statement.
  */
 public class WithPushPop implements Closeable {
 
-	private final SolverBase solver;
+    private final SolverBase solver;
 
-	public WithPushPop(final SolverBase solver) {
-		this.solver = solver;
-		solver.push();
-	}
+    public WithPushPop(final SolverBase solver) {
+        this.solver = solver;
+        solver.push();
+    }
 
-	@Override
-	public void close() {
-		solver.pop();
-	}
+    @Override
+    public void close() {
+        solver.pop();
+    }
 
 }

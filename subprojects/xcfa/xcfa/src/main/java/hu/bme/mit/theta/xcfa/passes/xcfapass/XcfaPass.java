@@ -20,6 +20,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 
 public abstract class XcfaPass {
 
-	public abstract XCFA.Builder run(XCFA.Builder builder);
+    public abstract XCFA.Builder run(XCFA.Builder builder);
 
 }

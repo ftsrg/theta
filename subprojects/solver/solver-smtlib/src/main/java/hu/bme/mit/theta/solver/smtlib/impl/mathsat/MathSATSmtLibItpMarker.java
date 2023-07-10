@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.smtlib.impl.mathsat;
 import hu.bme.mit.theta.solver.smtlib.solver.interpolation.SmtLibItpMarker;
 
 public class MathSATSmtLibItpMarker extends SmtLibItpMarker {
+
     private static final String markerPattern = "_mathsat_marker_%d";
     private static long markerCount = 0;
 

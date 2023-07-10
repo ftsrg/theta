@@ -32,42 +32,43 @@ import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 final class ExplStrategy<S extends State> implements AlgorithmStrategy<S, ExplState> {
 
-	private final Lens<S, ExplState> lens;
-	private final Analysis<ExplState, XtaAction, UnitPrec> analysis;
-	private final Function<ExplState, ?> projection;
+    private final Lens<S, ExplState> lens;
+    private final Analysis<ExplState, XtaAction, UnitPrec> analysis;
+    private final Function<ExplState, ?> projection;
 
-	public ExplStrategy(final XtaSystem system, final Lens<S, ExplState> lens) {
-		checkNotNull(system);
-		this.lens = checkNotNull(lens);
-		analysis = XtaExplAnalysis.create(system);
-		projection = s -> s;
-	}
+    public ExplStrategy(final XtaSystem system, final Lens<S, ExplState> lens) {
+        checkNotNull(system);
+        this.lens = checkNotNull(lens);
+        analysis = XtaExplAnalysis.create(system);
+        projection = s -> s;
+    }
 
-	@Override
-	public Analysis<ExplState, XtaAction, UnitPrec> getAnalysis() {
-		return analysis;
-	}
+    @Override
+    public Analysis<ExplState, XtaAction, UnitPrec> getAnalysis() {
+        return analysis;
+    }
 
-	@Override
-	public Function<ExplState, ?> getProjection() {
-		return projection;
-	}
+    @Override
+    public Function<ExplState, ?> getProjection() {
+        return projection;
+    }
 
-	@Override
-	public boolean mightCover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer) {
-		assert lens.get(coveree.getState()).equals(lens.get(coverer.getState()));
-		return true;
-	}
+    @Override
+    public boolean mightCover(final ArgNode<S, XtaAction> coveree,
+        final ArgNode<S, XtaAction> coverer) {
+        assert lens.get(coveree.getState()).equals(lens.get(coverer.getState()));
+        return true;
+    }
 
-	@Override
-	public void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
-					  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
-	}
+    @Override
+    public void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
+        final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+    }
 
-	@Override
-	public void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
-					  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
-		assert lens.get(succState).isBottom();
-	}
+    @Override
+    public void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
+        final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+        assert lens.get(succState).isBottom();
+    }
 
 }

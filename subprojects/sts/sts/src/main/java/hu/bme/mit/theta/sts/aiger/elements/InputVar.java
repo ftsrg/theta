@@ -25,26 +25,27 @@ import java.util.Collections;
  * Represents an input variable.
  */
 public final class InputVar extends AigerNode {
-	private final Collection<AigerWire> outWires;
 
-	public InputVar(final int nr, final int varId) {
-		super(String.format("IN%d_v%d", nr, varId));
-		this.outWires = new ArrayList<>();
-	}
+    private final Collection<AigerWire> outWires;
 
-	@Override
-	public Collection<AigerWire> getInWires() {
-		return Collections.emptyList();
-	}
+    public InputVar(final int nr, final int varId) {
+        super(String.format("IN%d_v%d", nr, varId));
+        this.outWires = new ArrayList<>();
+    }
 
-	@Override
-	public Collection<AigerWire> getOutWires() {
-		return outWires;
-	}
+    @Override
+    public Collection<AigerWire> getInWires() {
+        return Collections.emptyList();
+    }
 
-	@Override
-	public void addOutWire(final AigerWire outWire) {
-		checkArgument(outWire.getSource().equals(this));
-		outWires.add(outWire);
-	}
+    @Override
+    public Collection<AigerWire> getOutWires() {
+        return outWires;
+    }
+
+    @Override
+    public void addOutWire(final AigerWire outWire) {
+        checkArgument(outWire.getSource().equals(this));
+        outWires.add(outWire);
+    }
 }

@@ -23,23 +23,26 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import java.util.Collection;
 
 public final class StmtUnfoldResult {
-	final Collection<Expr<BoolType>> exprs;
-	final VarIndexing indexing;
 
-	private StmtUnfoldResult(final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
-		this.exprs = ImmutableList.copyOf(exprs);
-		this.indexing = indexing;
-	}
+    final Collection<Expr<BoolType>> exprs;
+    final VarIndexing indexing;
 
-	public static StmtUnfoldResult of(final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
-		return new StmtUnfoldResult(exprs, indexing);
-	}
+    private StmtUnfoldResult(final Iterable<? extends Expr<BoolType>> exprs,
+        final VarIndexing indexing) {
+        this.exprs = ImmutableList.copyOf(exprs);
+        this.indexing = indexing;
+    }
 
-	public Collection<Expr<BoolType>> getExprs() {
-		return exprs;
-	}
+    public static StmtUnfoldResult of(final Iterable<? extends Expr<BoolType>> exprs,
+        final VarIndexing indexing) {
+        return new StmtUnfoldResult(exprs, indexing);
+    }
 
-	public VarIndexing getIndexing() {
-		return indexing;
-	}
+    public Collection<Expr<BoolType>> getExprs() {
+        return exprs;
+    }
+
+    public VarIndexing getIndexing() {
+        return indexing;
+    }
 }

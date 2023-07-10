@@ -19,21 +19,22 @@ import java.util.Collection;
 import java.util.stream.Stream;
 
 /**
- * Generic interface for waitlists. Elements added to a waitlist are removed in
- * a specific order that the implementations determine.
+ * Generic interface for waitlists. Elements added to a waitlist are removed in a specific order
+ * that the implementations determine.
  */
 public interface Waitlist<T> {
-	void add(T item);
 
-	void addAll(Collection<? extends T> items);
+    void add(T item);
 
-	void addAll(Stream<? extends T> items);
+    void addAll(Collection<? extends T> items);
 
-	boolean isEmpty();
+    void addAll(Stream<? extends T> items);
 
-	T remove();
+    boolean isEmpty();
 
-	int size();
+    T remove();
 
-	void clear();
+    int size();
+
+    void clear();
 }

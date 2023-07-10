@@ -23,11 +23,11 @@ import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-public class StaticAutoExpl implements AutoExpl{
+public class StaticAutoExpl implements AutoExpl {
 
     private final Set<VarDecl<?>> ctrlVars;
 
-    public StaticAutoExpl(final Set<VarDecl<?>> ctrlVars){
+    public StaticAutoExpl(final Set<VarDecl<?>> ctrlVars) {
         this.ctrlVars = ctrlVars;
     }
 
@@ -37,5 +37,6 @@ public class StaticAutoExpl implements AutoExpl{
     }
 
     @Override
-    public void update(final Expr<BoolType> itp) {}
+    public void update(final Expr<BoolType> itp) {
+    }
 }

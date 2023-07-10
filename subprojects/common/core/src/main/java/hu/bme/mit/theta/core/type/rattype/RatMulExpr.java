@@ -28,67 +28,67 @@ import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 
 public final class RatMulExpr extends MulExpr<RatType> {
 
-	private static final int HASH_SEED = 9479;
-	private static final String OPERATOR_LABEL = "*";
+    private static final int HASH_SEED = 9479;
+    private static final String OPERATOR_LABEL = "*";
 
-	private RatMulExpr(final Iterable<? extends Expr<RatType>> ops) {
-		super(ops);
-	}
+    private RatMulExpr(final Iterable<? extends Expr<RatType>> ops) {
+        super(ops);
+    }
 
-	public static RatMulExpr of(final Iterable<? extends Expr<RatType>> ops) {
-		return new RatMulExpr(ops);
-	}
+    public static RatMulExpr of(final Iterable<? extends Expr<RatType>> ops) {
+        return new RatMulExpr(ops);
+    }
 
-	public static RatMulExpr create(final List<? extends Expr<?>> ops) {
-		return RatMulExpr.of(ops.stream().map(op -> cast(op, Rat())).collect(toImmutableList()));
-	}
+    public static RatMulExpr create(final List<? extends Expr<?>> ops) {
+        return RatMulExpr.of(ops.stream().map(op -> cast(op, Rat())).collect(toImmutableList()));
+    }
 
-	@Override
-	public RatType getType() {
-		return Rat();
-	}
+    @Override
+    public RatType getType() {
+        return Rat();
+    }
 
-	@Override
-	public RatLitExpr eval(final Valuation val) {
-		var prodNum = BigInteger.ONE;
-		var prodDenom = BigInteger.ONE;
-		for (final Expr<RatType> op : getOps()) {
-			final RatLitExpr opLit = (RatLitExpr) op.eval(val);
-			prodNum = prodNum.multiply(opLit.getNum());
-			prodDenom = prodDenom.multiply(opLit.getDenom());
-		}
-		return Rat(prodNum, prodDenom);
-	}
+    @Override
+    public RatLitExpr eval(final Valuation val) {
+        var prodNum = BigInteger.ONE;
+        var prodDenom = BigInteger.ONE;
+        for (final Expr<RatType> op : getOps()) {
+            final RatLitExpr opLit = (RatLitExpr) op.eval(val);
+            prodNum = prodNum.multiply(opLit.getNum());
+            prodDenom = prodDenom.multiply(opLit.getDenom());
+        }
+        return Rat(prodNum, prodDenom);
+    }
 
-	@Override
-	public RatMulExpr with(final Iterable<? extends Expr<RatType>> ops) {
-		if (ops == getOps()) {
-			return this;
-		} else {
-			return new RatMulExpr(ops);
-		}
-	}
+    @Override
+    public RatMulExpr with(final Iterable<? extends Expr<RatType>> ops) {
+        if (ops == getOps()) {
+            return this;
+        } else {
+            return new RatMulExpr(ops);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RatMulExpr) {
-			final RatMulExpr that = (RatMulExpr) obj;
-			return this.getOps().equals(that.getOps());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof RatMulExpr) {
+            final RatMulExpr that = (RatMulExpr) obj;
+            return this.getOps().equals(that.getOps());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

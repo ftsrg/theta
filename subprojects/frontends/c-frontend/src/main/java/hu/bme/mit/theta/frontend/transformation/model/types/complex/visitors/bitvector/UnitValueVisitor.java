@@ -41,64 +41,67 @@ import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class UnitValueVisitor extends CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> {
-	public static final UnitValueVisitor instance = new UnitValueVisitor();
 
-	@Override
-	public LitExpr<?> visit(CDouble type, Void param) {
-		return FpUtils.bigFloatToFpLitExpr(
-				new BigFloat(
-						"1.0",
-						new BinaryMathContext(
-								ArchitectureConfig.architecture.getBitWidth("double_e"),
-								ArchitectureConfig.architecture.getBitWidth("double_s"))),
-				FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("double_e"),
-						ArchitectureConfig.architecture.getBitWidth("double_s")));
-	}
+    public static final UnitValueVisitor instance = new UnitValueVisitor();
 
-	@Override
-	public LitExpr<?> visit(CFloat type, Void param) {
-		return FpUtils.bigFloatToFpLitExpr(
-				new BigFloat(
-						"1.0",
-						new BinaryMathContext(
-								ArchitectureConfig.architecture.getBitWidth("float_e"),
-								ArchitectureConfig.architecture.getBitWidth("float_s"))),
-				FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("float_e"),
-						ArchitectureConfig.architecture.getBitWidth("float_s")));
-	}
+    @Override
+    public LitExpr<?> visit(CDouble type, Void param) {
+        return FpUtils.bigFloatToFpLitExpr(
+            new BigFloat(
+                "1.0",
+                new BinaryMathContext(
+                    ArchitectureConfig.architecture.getBitWidth("double_e"),
+                    ArchitectureConfig.architecture.getBitWidth("double_s"))),
+            FpType.of(
+                ArchitectureConfig.architecture.getBitWidth("double_e"),
+                ArchitectureConfig.architecture.getBitWidth("double_s")));
+    }
 
-	@Override
-	public LitExpr<?> visit(CLongDouble type, Void param) {
-		return FpUtils.bigFloatToFpLitExpr(
-				new BigFloat(
-						"1.0",
-						new BinaryMathContext(
-								ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
-								ArchitectureConfig.architecture.getBitWidth("longdouble_s"))),
-				FpType.of(
-						ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
-						ArchitectureConfig.architecture.getBitWidth("longdouble_s")));
-	}
+    @Override
+    public LitExpr<?> visit(CFloat type, Void param) {
+        return FpUtils.bigFloatToFpLitExpr(
+            new BigFloat(
+                "1.0",
+                new BinaryMathContext(
+                    ArchitectureConfig.architecture.getBitWidth("float_e"),
+                    ArchitectureConfig.architecture.getBitWidth("float_s"))),
+            FpType.of(
+                ArchitectureConfig.architecture.getBitWidth("float_e"),
+                ArchitectureConfig.architecture.getBitWidth("float_s")));
+    }
 
-	@Override
-	public LitExpr<?> visit(CInteger type, Void param) {
-		if (type instanceof Signed) {
-			return BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.ONE, type.width());
-		} else {
-			return BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.ONE, type.width());
-		}
-	}
+    @Override
+    public LitExpr<?> visit(CLongDouble type, Void param) {
+        return FpUtils.bigFloatToFpLitExpr(
+            new BigFloat(
+                "1.0",
+                new BinaryMathContext(
+                    ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+                    ArchitectureConfig.architecture.getBitWidth("longdouble_s"))),
+            FpType.of(
+                ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+                ArchitectureConfig.architecture.getBitWidth("longdouble_s")));
+    }
 
-	@Override
-	public LitExpr<?> visit(CArray type, Void param) {
-		return getExpr(type);
-	}
+    @Override
+    public LitExpr<?> visit(CInteger type, Void param) {
+        if (type instanceof Signed) {
+            return BvUtils.bigIntegerToSignedBvLitExpr(BigInteger.ONE, type.width());
+        } else {
+            return BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.ONE, type.width());
+        }
+    }
 
-	private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(CArray type) {
-		//noinspection unchecked
-		ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
-		return Array(List.of(), cast(type.getEmbeddedType().getUnitValue(), smtType.getElemType()), smtType);
-	}
+    @Override
+    public LitExpr<?> visit(CArray type, Void param) {
+        return getExpr(type);
+    }
+
+    private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(
+        CArray type) {
+        //noinspection unchecked
+        ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
+        return Array(List.of(), cast(type.getEmbeddedType().getUnitValue(), smtType.getElemType()),
+            smtType);
+    }
 }

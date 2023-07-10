@@ -31,50 +31,54 @@ import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getModifiedVars;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
 public class UnusedVarRemovalPass extends ProcedurePass {
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		removeUnusedVars(builder, null);
-		return builder;
-	}
 
-	public static void removeUnusedVars(XcfaProcedure.Builder builder, Set<VarDecl<?>> usedVars) {
-		boolean atLeastOne = true;
-		while (atLeastOne) {
-			atLeastOne = false;
-			Set<VarDecl<?>> vars;
-			if (usedVars == null) {
-				vars = new LinkedHashSet<>();
-				for (XcfaEdge edge : builder.getEdges()) {
-					for (XcfaLabel label : edge.getLabels()) {
-						Set<VarDecl<?>> vars1 = new LinkedHashSet<>(getVars(label));
-						Set<VarDecl<?>> modifiedVars = getModifiedVars(label);
-						vars1.removeIf(varDecl ->
-								modifiedVars.contains(varDecl) &&
-										!builder.getParams().containsKey(varDecl) &&
-										builder.getLocalVars().containsKey(varDecl)
-						);
-						vars.addAll(vars1);
-					}
-				}
-			} else vars = usedVars;
-			List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
-			for (XcfaEdge edge : edges) {
-				XcfaEdge newEdge = edge.mapLabels(label -> {
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        removeUnusedVars(builder, null);
+        return builder;
+    }
+
+    public static void removeUnusedVars(XcfaProcedure.Builder builder, Set<VarDecl<?>> usedVars) {
+        boolean atLeastOne = true;
+        while (atLeastOne) {
+            atLeastOne = false;
+            Set<VarDecl<?>> vars;
+            if (usedVars == null) {
+                vars = new LinkedHashSet<>();
+                for (XcfaEdge edge : builder.getEdges()) {
+                    for (XcfaLabel label : edge.getLabels()) {
+                        Set<VarDecl<?>> vars1 = new LinkedHashSet<>(getVars(label));
+                        Set<VarDecl<?>> modifiedVars = getModifiedVars(label);
+                        vars1.removeIf(varDecl ->
+                            modifiedVars.contains(varDecl) &&
+                                !builder.getParams().containsKey(varDecl) &&
+                                builder.getLocalVars().containsKey(varDecl)
+                        );
+                        vars.addAll(vars1);
+                    }
+                }
+            } else {
+                vars = usedVars;
+            }
+            List<XcfaEdge> edges = new ArrayList<>(builder.getEdges());
+            for (XcfaEdge edge : edges) {
+                XcfaEdge newEdge = edge.mapLabels(label -> {
 //					if (getModifiedVars(label).containsAll(vars)) {
 //						return Stmt(Skip());
 //					} else return label;
-					return label;
-				});
-				if (!edge.getLabels().equals(newEdge.getLabels())) {
-					atLeastOne = true;
-					builder.removeEdge(edge);
-					builder.addEdge(newEdge);
-				}
-			}
-			List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream().filter(var -> !vars.contains(var)).collect(Collectors.toList());
-			for (VarDecl<?> varDecl : unused) {
-				builder.removeVar(varDecl);
-			}
-		}
-	}
+                    return label;
+                });
+                if (!edge.getLabels().equals(newEdge.getLabels())) {
+                    atLeastOne = true;
+                    builder.removeEdge(edge);
+                    builder.addEdge(newEdge);
+                }
+            }
+            List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream()
+                .filter(var -> !vars.contains(var)).collect(Collectors.toList());
+            for (VarDecl<?> varDecl : unused) {
+                builder.removeVar(varDecl);
+            }
+        }
+    }
 }

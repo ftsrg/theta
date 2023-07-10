@@ -21,6 +21,6 @@ import hu.bme.mit.theta.analysis.State;
 
 public interface SafetyChecker<S extends State, A extends Action, P extends Prec> {
 
-	SafetyResult<S, A> check(final P prec);
+    SafetyResult<S, A> check(final P prec);
 
 }

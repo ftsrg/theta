@@ -38,102 +38,107 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Represents an immutable local precision that can assign a precision to each
- * location. A refiner is also implemented.
+ * Represents an immutable local precision that can assign a precision to each location. A refiner
+ * is also implemented.
  *
  * @see LocalCfaPrecRefiner
  */
 public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
-	private final Map<Loc, P> mapping;
-	private final Optional<P> defaultPrec;
 
-	private LocalCfaPrec(final Map<Loc, P> mapping, final Optional<P> defaultPrec) {
-		this.defaultPrec = defaultPrec;
-		final Builder<Loc, P> builder = ImmutableMap.builder();
-		for (final Entry<Loc, P> entry : mapping.entrySet()) {
-			if (!defaultPrec.isPresent() || !defaultPrec.get().equals(entry.getValue())) {
-				builder.put(entry);
-			}
-		}
-		this.mapping = builder.build();
-	}
+    private final Map<Loc, P> mapping;
+    private final Optional<P> defaultPrec;
 
-	public static <P extends Prec> LocalCfaPrec<P> create(final Map<Loc, P> mapping) {
-		return new LocalCfaPrec<>(mapping, Optional.empty());
-	}
+    private LocalCfaPrec(final Map<Loc, P> mapping, final Optional<P> defaultPrec) {
+        this.defaultPrec = defaultPrec;
+        final Builder<Loc, P> builder = ImmutableMap.builder();
+        for (final Entry<Loc, P> entry : mapping.entrySet()) {
+            if (!defaultPrec.isPresent() || !defaultPrec.get().equals(entry.getValue())) {
+                builder.put(entry);
+            }
+        }
+        this.mapping = builder.build();
+    }
 
-	public static <P extends Prec> LocalCfaPrec<P> create(final P defaultPrec) {
-		return new LocalCfaPrec<>(Collections.emptyMap(), Optional.of(defaultPrec));
-	}
+    public static <P extends Prec> LocalCfaPrec<P> create(final Map<Loc, P> mapping) {
+        return new LocalCfaPrec<>(mapping, Optional.empty());
+    }
 
-	public static <P extends Prec> LocalCfaPrec<P> create(final Map<Loc, P> mapping, final P defaultPrec) {
-		return new LocalCfaPrec<>(mapping, Optional.of(defaultPrec));
-	}
+    public static <P extends Prec> LocalCfaPrec<P> create(final P defaultPrec) {
+        return new LocalCfaPrec<>(Collections.emptyMap(), Optional.of(defaultPrec));
+    }
 
-	@Override
-	public P getPrec(final Loc loc) {
-		if (mapping.containsKey(loc)) {
-			return mapping.get(loc);
-		} else if (defaultPrec.isPresent()) {
-			return defaultPrec.get();
-		} else {
-			throw new NoSuchElementException("Location not found.");
-		}
-	}
+    public static <P extends Prec> LocalCfaPrec<P> create(final Map<Loc, P> mapping,
+        final P defaultPrec) {
+        return new LocalCfaPrec<>(mapping, Optional.of(defaultPrec));
+    }
 
-	public LocalCfaPrec<P> refine(final Map<Loc, P> refinedPrecs) {
-		checkNotNull(refinedPrecs);
+    @Override
+    public P getPrec(final Loc loc) {
+        if (mapping.containsKey(loc)) {
+            return mapping.get(loc);
+        } else if (defaultPrec.isPresent()) {
+            return defaultPrec.get();
+        } else {
+            throw new NoSuchElementException("Location not found.");
+        }
+    }
 
-		final Map<Loc, P> refinedMapping = Containers.createMap(this.mapping);
+    public LocalCfaPrec<P> refine(final Map<Loc, P> refinedPrecs) {
+        checkNotNull(refinedPrecs);
 
-		for (final Entry<Loc, P> entry : refinedPrecs.entrySet()) {
-			final Loc loc = entry.getKey();
-			final P prec = entry.getValue();
+        final Map<Loc, P> refinedMapping = Containers.createMap(this.mapping);
 
-			// TODO: instead of == this should be 'equals' (it is correct this
-			// way as well, but it would be more efficient)
-			if (defaultPrec.isPresent() && !mapping.containsKey(loc) && defaultPrec.get() == prec) {
-				continue;
-			}
-			refinedMapping.put(loc, prec);
-		}
+        for (final Entry<Loc, P> entry : refinedPrecs.entrySet()) {
+            final Loc loc = entry.getKey();
+            final P prec = entry.getValue();
 
-		return new LocalCfaPrec<>(refinedMapping, this.defaultPrec);
-	}
+            // TODO: instead of == this should be 'equals' (it is correct this
+            // way as well, but it would be more efficient)
+            if (defaultPrec.isPresent() && !mapping.containsKey(loc) && defaultPrec.get() == prec) {
+                continue;
+            }
+            refinedMapping.put(loc, prec);
+        }
 
-	public LocalCfaPrec<P> refine(final Loc loc, final P refinedPrec) {
-		return refine(Collections.singletonMap(loc, refinedPrec));
-	}
+        return new LocalCfaPrec<>(refinedMapping, this.defaultPrec);
+    }
 
-	@Override
-	public String toString() {
-		final LispStringBuilder builder = Utils.lispStringBuilder(getClass().getSimpleName());
-		if (defaultPrec.isPresent()) {
-			builder.add(Utils.lispStringBuilder("default").add(defaultPrec.get()).toString());
-		}
-		mapping.entrySet().forEach(e -> builder.add(Utils.lispStringBuilder(e.getKey() + "").add(e.getValue())));
-		return builder.toString();
-	}
+    public LocalCfaPrec<P> refine(final Loc loc, final P refinedPrec) {
+        return refine(Collections.singletonMap(loc, refinedPrec));
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof LocalCfaPrec) {
-			final LocalCfaPrec<?> that = (LocalCfaPrec<?>) obj;
-			return this.defaultPrec.equals(that.defaultPrec) && this.mapping.equals(that.mapping);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public String toString() {
+        final LispStringBuilder builder = Utils.lispStringBuilder(getClass().getSimpleName());
+        if (defaultPrec.isPresent()) {
+            builder.add(Utils.lispStringBuilder("default").add(defaultPrec.get()).toString());
+        }
+        mapping.entrySet()
+            .forEach(e -> builder.add(Utils.lispStringBuilder(e.getKey() + "").add(e.getValue())));
+        return builder.toString();
+    }
 
-	@Override
-	public int hashCode() {
-		return 31 * (defaultPrec.hashCode() + 13 * mapping.hashCode());
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof LocalCfaPrec) {
+            final LocalCfaPrec<?> that = (LocalCfaPrec<?>) obj;
+            return this.defaultPrec.equals(that.defaultPrec) && this.mapping.equals(that.mapping);
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public Collection<VarDecl<?>> getUsedVars() {
-		return mapping.values().stream().map(Prec::getUsedVars).reduce((varDecls, varDecls2) -> Streams.concat(varDecls.stream(), varDecls2.stream()).collect(Collectors.toSet())).orElse(Set.of());
-	}
+    @Override
+    public int hashCode() {
+        return 31 * (defaultPrec.hashCode() + 13 * mapping.hashCode());
+    }
+
+    @Override
+    public Collection<VarDecl<?>> getUsedVars() {
+        return mapping.values().stream().map(Prec::getUsedVars).reduce(
+            (varDecls, varDecls2) -> Streams.concat(varDecls.stream(), varDecls2.stream())
+                .collect(Collectors.toSet())).orElse(Set.of());
+    }
 }

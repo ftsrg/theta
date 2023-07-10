@@ -24,28 +24,28 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 final class BasicExprState implements ExprState {
 
-	private final Expr<BoolType> expr;
+    private final Expr<BoolType> expr;
 
-	private BasicExprState(final Expr<BoolType> expr) {
-		this.expr = checkNotNull(expr);
-	}
+    private BasicExprState(final Expr<BoolType> expr) {
+        this.expr = checkNotNull(expr);
+    }
 
-	public static BasicExprState of(final Expr<BoolType> expr) {
-		return new BasicExprState(expr);
-	}
+    public static BasicExprState of(final Expr<BoolType> expr) {
+        return new BasicExprState(expr);
+    }
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		return expr;
-	}
+    @Override
+    public Expr<BoolType> toExpr() {
+        return expr;
+    }
 
-	@Override
-	public boolean isBottom() {
-		return expr.equals(False());
-	}
+    @Override
+    public boolean isBottom() {
+        return expr.equals(False());
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(expr).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(expr).toString();
+    }
 }

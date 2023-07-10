@@ -33,6 +33,7 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class Z3SolverBVTest {
+
     @Parameterized.Parameter(0)
     public Class<?> exprType;
 
@@ -62,11 +63,13 @@ public class Z3SolverBVTest {
 
         // Type checks
         assertTrue(
-            "The type of actual is " + actual.getClass().getName() + " instead of " + exprType.getName(),
+            "The type of actual is " + actual.getClass().getName() + " instead of "
+                + exprType.getName(),
             exprType.isInstance(actual)
         );
         assertEquals(
-            "The type of expected (" + expected.getType() + ") must match the type of actual (" + actual.getType() + ")",
+            "The type of expected (" + expected.getType() + ") must match the type of actual ("
+                + actual.getType() + ")",
             expected.getType(),
             actual.getType()
         );

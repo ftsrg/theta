@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 
 public class PrincessSmtLibSolverFactory extends GenericSmtLibSolverFactory {
+
     private PrincessSmtLibSolverFactory(Path solverPath, String[] args) {
         super(solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS));
     }
@@ -41,8 +42,10 @@ public class PrincessSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS));
+        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args,
+            EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS));
 
-        return new PrincessSmtLibItpSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+        return new PrincessSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
+            solverBinary);
     }
 }

@@ -17,8 +17,8 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 
 public interface Lens<T, E> {
 
-	E get(T t);
+    E get(T t);
 
-	T set(T t, E e);
+    T set(T t, E e);
 
 }

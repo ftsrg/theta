@@ -19,5 +19,6 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 
 public interface CfaPrec<P extends Prec> extends Prec {
-	P getPrec(final Loc loc);
+
+    P getPrec(final Loc loc);
 }

@@ -17,14 +17,14 @@ package hu.bme.mit.theta.common.parser;
 
 public final class LexerException extends RuntimeException {
 
-	private static final long serialVersionUID = 1646917145187066377L;
+    private static final long serialVersionUID = 1646917145187066377L;
 
-	public LexerException(final String message) {
-		super(message);
-	}
+    public LexerException(final String message) {
+        super(message);
+    }
 
-	public LexerException(final Throwable cause) {
-		super(cause);
-	}
+    public LexerException(final Throwable cause) {
+        super(cause);
+    }
 
 }

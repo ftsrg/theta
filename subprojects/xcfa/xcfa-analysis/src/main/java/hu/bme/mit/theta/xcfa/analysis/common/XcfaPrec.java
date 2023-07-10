@@ -34,60 +34,66 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class XcfaPrec<P extends Prec> implements Prec {
-	private final P globalPrec;
 
-	private XcfaPrec(final P globalPrec) {
-		this.globalPrec = globalPrec;
-	}
+    private final P globalPrec;
 
-	public static <P extends Prec> XcfaPrec<P> create(final P globalPrec) {
-		return new XcfaPrec<P>(globalPrec);
-	}
+    private XcfaPrec(final P globalPrec) {
+        this.globalPrec = globalPrec;
+    }
 
-	public static XcfaPrec<PredPrec> collectAssumes(XCFA xcfa) {
-		Set<Expr<BoolType>> assumes = Containers.createSet();
-		for (XcfaProcess process : xcfa.getProcesses()) {
-			for (XcfaProcedure procedure : process.getProcedures()) {
-				for (XcfaEdge edge : procedure.getEdges()) {
-					for (XcfaLabel label : edge.getLabels()) {
-						if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssumeStmt) {
-							AssumeStmt assumeStmt = (AssumeStmt) label.getStmt();
-							assumes.add(ExprUtils.ponate(assumeStmt.getCond()));
-						}
-					}
-				}
-			}
-		}
-		return XcfaPrec.create(PredPrec.of(assumes));
-	}
+    public static <P extends Prec> XcfaPrec<P> create(final P globalPrec) {
+        return new XcfaPrec<P>(globalPrec);
+    }
 
-	public P getGlobalPrec() {
-		return globalPrec;
-	}
+    public static XcfaPrec<PredPrec> collectAssumes(XCFA xcfa) {
+        Set<Expr<BoolType>> assumes = Containers.createSet();
+        for (XcfaProcess process : xcfa.getProcesses()) {
+            for (XcfaProcedure procedure : process.getProcedures()) {
+                for (XcfaEdge edge : procedure.getEdges()) {
+                    for (XcfaLabel label : edge.getLabels()) {
+                        if (label instanceof XcfaLabel.StmtXcfaLabel
+                            && label.getStmt() instanceof AssumeStmt) {
+                            AssumeStmt assumeStmt = (AssumeStmt) label.getStmt();
+                            assumes.add(ExprUtils.ponate(assumeStmt.getCond()));
+                        }
+                    }
+                }
+            }
+        }
+        return XcfaPrec.create(PredPrec.of(assumes));
+    }
 
-	public XcfaPrec<P> refine(P runningPrec) {
-		if (this.globalPrec.equals(runningPrec)) {
-			return this;
-		} else {
-			return create(runningPrec);
-		}
-	}
+    public P getGlobalPrec() {
+        return globalPrec;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		XcfaPrec<?> xcfaPrec = (XcfaPrec<?>) o;
-		return Objects.equals(globalPrec, xcfaPrec.globalPrec);
-	}
+    public XcfaPrec<P> refine(P runningPrec) {
+        if (this.globalPrec.equals(runningPrec)) {
+            return this;
+        } else {
+            return create(runningPrec);
+        }
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(globalPrec);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        XcfaPrec<?> xcfaPrec = (XcfaPrec<?>) o;
+        return Objects.equals(globalPrec, xcfaPrec.globalPrec);
+    }
 
-	@Override
-	public Collection<VarDecl<?>> getUsedVars() {
-		return globalPrec.getUsedVars();
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(globalPrec);
+    }
+
+    @Override
+    public Collection<VarDecl<?>> getUsedVars() {
+        return globalPrec.getUsedVars();
+    }
 }

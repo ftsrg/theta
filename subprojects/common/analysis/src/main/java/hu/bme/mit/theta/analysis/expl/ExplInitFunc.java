@@ -29,24 +29,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ExplInitFunc implements InitFunc<ExplState, ExplPrec> {
 
-	private final Solver solver;
-	private final Expr<BoolType> initExpr;
+    private final Solver solver;
+    private final Expr<BoolType> initExpr;
 
-	private ExplInitFunc(final Solver solver, final Expr<BoolType> initExpr) {
-		this.solver = checkNotNull(solver);
-		this.initExpr = checkNotNull(initExpr);
-	}
+    private ExplInitFunc(final Solver solver, final Expr<BoolType> initExpr) {
+        this.solver = checkNotNull(solver);
+        this.initExpr = checkNotNull(initExpr);
+    }
 
-	public static ExplInitFunc create(final Solver solver, final Expr<BoolType> initExpr) {
-		return new ExplInitFunc(solver, initExpr);
-	}
+    public static ExplInitFunc create(final Solver solver, final Expr<BoolType> initExpr) {
+        return new ExplInitFunc(solver, initExpr);
+    }
 
-	@Override
-	public Collection<? extends ExplState> getInitStates(final ExplPrec prec) {
-		checkNotNull(prec);
-		final Collection<ExplState> initStates = ExprStates.createStatesForExpr(solver, initExpr, 0, prec::createState,
-				VarIndexingFactory.indexing(0));
-		return initStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : initStates;
-	}
+    @Override
+    public Collection<? extends ExplState> getInitStates(final ExplPrec prec) {
+        checkNotNull(prec);
+        final Collection<ExplState> initStates = ExprStates.createStatesForExpr(solver, initExpr, 0,
+            prec::createState,
+            VarIndexingFactory.indexing(0));
+        return initStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : initStates;
+    }
 
 }

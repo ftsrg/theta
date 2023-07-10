@@ -26,41 +26,43 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 
-final class CfaTransFunc<S extends ExprState, P extends Prec> implements TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> {
+final class CfaTransFunc<S extends ExprState, P extends Prec> implements
+    TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> {
 
-	private final TransFunc<S, ? super CfaAction, ? super P> transFunc;
+    private final TransFunc<S, ? super CfaAction, ? super P> transFunc;
 
-	private CfaTransFunc(final TransFunc<S, ? super CfaAction, ? super P> transFunc) {
-		this.transFunc = checkNotNull(transFunc);
-	}
+    private CfaTransFunc(final TransFunc<S, ? super CfaAction, ? super P> transFunc) {
+        this.transFunc = checkNotNull(transFunc);
+    }
 
-	public static <S extends ExprState, P extends Prec> CfaTransFunc<S, P> create(
-			final TransFunc<S, ? super CfaAction, ? super P> transFunc) {
-		return new CfaTransFunc<>(transFunc);
-	}
+    public static <S extends ExprState, P extends Prec> CfaTransFunc<S, P> create(
+        final TransFunc<S, ? super CfaAction, ? super P> transFunc) {
+        return new CfaTransFunc<>(transFunc);
+    }
 
-	@Override
-	public Collection<CfaState<S>> getSuccStates(final CfaState<S> state, final CfaAction action,
-												 final CfaPrec<P> prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
+    @Override
+    public Collection<CfaState<S>> getSuccStates(final CfaState<S> state, final CfaAction action,
+        final CfaPrec<P> prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
 
-		final Loc source = action.getSource();
-		final Loc target = action.getTarget();
-		checkArgument(state.getLoc().equals(source), "Location mismatch");
+        final Loc source = action.getSource();
+        final Loc target = action.getTarget();
+        checkArgument(state.getLoc().equals(source), "Location mismatch");
 
-		final Collection<CfaState<S>> succStates = new ArrayList<>();
+        final Collection<CfaState<S>> succStates = new ArrayList<>();
 
-		final P subPrec = prec.getPrec(target);
-		final S subState = state.getState();
+        final P subPrec = prec.getPrec(target);
+        final S subState = state.getState();
 
-		final Collection<? extends S> subSuccStates = transFunc.getSuccStates(subState, action, subPrec);
-		for (final S subSuccState : subSuccStates) {
-			final CfaState<S> succState = CfaState.of(target, subSuccState);
-			succStates.add(succState);
-		}
-		return succStates;
-	}
+        final Collection<? extends S> subSuccStates = transFunc.getSuccStates(subState, action,
+            subPrec);
+        for (final S subSuccState : subSuccStates) {
+            final CfaState<S> succState = CfaState.of(target, subSuccState);
+            succStates.add(succState);
+        }
+        return succStates;
+    }
 
 }

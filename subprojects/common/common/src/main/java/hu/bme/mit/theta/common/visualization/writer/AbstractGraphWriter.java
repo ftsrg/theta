@@ -26,24 +26,25 @@ import hu.bme.mit.theta.common.visualization.Graph;
  */
 public abstract class AbstractGraphWriter implements GraphWriter {
 
-	@Override
-	public abstract String writeString(Graph graph);
+    @Override
+    public abstract String writeString(Graph graph);
 
-	@Override
-	public final void writeFile(final Graph graph, final String fileName) throws FileNotFoundException {
-		final File file = new File(fileName);
-		PrintWriter printWriter = null;
-		try {
-			printWriter = new PrintWriter(file);
-			final String graphAsString = writeString(graph);
-			printWriter.write(graphAsString);
-		} catch (final FileNotFoundException e) {
-			throw e;
-		} finally {
-			if (printWriter != null) {
-				printWriter.close();
-			}
-		}
-	}
+    @Override
+    public final void writeFile(final Graph graph, final String fileName)
+        throws FileNotFoundException {
+        final File file = new File(fileName);
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file);
+            final String graphAsString = writeString(graph);
+            printWriter.write(graphAsString);
+        } catch (final FileNotFoundException e) {
+            throw e;
+        } finally {
+            if (printWriter != null) {
+                printWriter.close();
+            }
+        }
+    }
 
 }

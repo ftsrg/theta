@@ -64,197 +64,207 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Search;
  * A command line interface for running a CEGAR configuration on an STS.
  */
 public class StsCli {
-	private static final String JAR_NAME = "theta-sts-cli.jar";
-	private final String[] args;
-	private final TableWriter writer;
 
-	@Parameter(names = {"--domain"}, description = "Abstract domain")
-	Domain domain = Domain.PRED_CART;
+    private static final String JAR_NAME = "theta-sts-cli.jar";
+    private final String[] args;
+    private final TableWriter writer;
 
-	@Parameter(names = {"--refinement"}, description = "Refinement strategy")
-	Refinement refinement = Refinement.SEQ_ITP;
+    @Parameter(names = {"--domain"}, description = "Abstract domain")
+    Domain domain = Domain.PRED_CART;
 
-	@Parameter(names = {"--search"}, description = "Search strategy")
-	Search search = Search.BFS;
+    @Parameter(names = {"--refinement"}, description = "Refinement strategy")
+    Refinement refinement = Refinement.SEQ_ITP;
 
-	@Parameter(names = {"--predsplit"}, description = "Predicate splitting")
-	PredSplit predSplit = PredSplit.WHOLE;
+    @Parameter(names = {"--search"}, description = "Search strategy")
+    Search search = Search.BFS;
 
-	@Parameter(names = {"--model"}, description = "Path of the input STS model", required = true)
-	String model;
+    @Parameter(names = {"--predsplit"}, description = "Predicate splitting")
+    PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = {"--initprec"}, description = "Initial precision")
-	InitPrec initPrec = InitPrec.EMPTY;
+    @Parameter(names = {"--model"}, description = "Path of the input STS model", required = true)
+    String model;
 
-	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
-	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+    @Parameter(names = {"--initprec"}, description = "Initial precision")
+    InitPrec initPrec = InitPrec.EMPTY;
 
-	@Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
-	Logger.Level logLevel = Level.SUBSTEP;
+    @Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
+    PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
-	@Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
-	Boolean benchmarkMode = false;
+    @Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
+    Logger.Level logLevel = Level.SUBSTEP;
 
-	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
-	String cexfile = null;
+    @Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
+    Boolean benchmarkMode = false;
 
-	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
-	boolean headerOnly = false;
+    @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
+    String cexfile = null;
 
-	@Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
-	boolean stacktrace = false;
+    @Parameter(names = {
+        "--header"}, description = "Print only a header (for benchmarks)", help = true)
+    boolean headerOnly = false;
 
-	@Parameter(names = "--version", description = "Display version", help = true)
-	boolean versionInfo = false;
+    @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
+    boolean stacktrace = false;
 
-	private Logger logger;
+    @Parameter(names = "--version", description = "Display version", help = true)
+    boolean versionInfo = false;
 
-	public StsCli(final String[] args) {
-		this.args = args;
-		writer = new BasicTableWriter(System.out, ",", "\"", "\"");
-	}
+    private Logger logger;
 
-	public static void main(final String[] args) {
-		final StsCli mainApp = new StsCli(args);
-		mainApp.run();
-	}
+    public StsCli(final String[] args) {
+        this.args = args;
+        writer = new BasicTableWriter(System.out, ",", "\"", "\"");
+    }
 
-	private void run() {
-		try {
-			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
-			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
-		} catch (final ParameterException ex) {
-			System.out.println("Invalid parameters, details:");
-			System.out.println(ex.getMessage());
-			ex.usage();
-			return;
-		}
+    public static void main(final String[] args) {
+        final StsCli mainApp = new StsCli(args);
+        mainApp.run();
+    }
 
-		if (headerOnly) {
-			printHeader();
-			return;
-		}
+    private void run() {
+        try {
+            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+            logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+        } catch (final ParameterException ex) {
+            System.out.println("Invalid parameters, details:");
+            System.out.println(ex.getMessage());
+            ex.usage();
+            return;
+        }
 
-		if (versionInfo) {
-			CliUtils.printVersion(System.out);
-			return;
-		}
+        if (headerOnly) {
+            printHeader();
+            return;
+        }
 
-		try {
-			final Stopwatch sw = Stopwatch.createStarted();
-			final STS sts = loadModel();
-			final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-			final SafetyResult<?, ?> status = check(configuration);
-			sw.stop();
-			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
-				writeCex(sts, status.asUnsafe());
-			}
-		} catch (final Throwable ex) {
-			printError(ex);
-			System.exit(1);
-		}
-	}
+        if (versionInfo) {
+            CliUtils.printVersion(System.out);
+            return;
+        }
 
-	private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
-		try {
-			return configuration.check();
-		} catch (final Exception ex) {
-			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
-			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
-		}
-	}
+        try {
+            final Stopwatch sw = Stopwatch.createStarted();
+            final STS sts = loadModel();
+            final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
+            final SafetyResult<?, ?> status = check(configuration);
+            sw.stop();
+            printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
+            if (status.isUnsafe() && cexfile != null) {
+                writeCex(sts, status.asUnsafe());
+            }
+        } catch (final Throwable ex) {
+            printError(ex);
+            System.exit(1);
+        }
+    }
 
-	private void printHeader() {
-		Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size").forEach(writer::cell);
-		writer.newRow();
-	}
+    private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
+        try {
+            return configuration.check();
+        } catch (final Exception ex) {
+            String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+            throw new Exception(
+                "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                ex);
+        }
+    }
 
-	private STS loadModel() throws Exception {
-		try {
-			if (model.endsWith(".aag")) {
-				final AigerSystem aigerSystem = AigerParser.parse(model);
-				AigerCoi.apply(aigerSystem);
-				return AigerToSts.createSts(aigerSystem);
-			} else {
-				try (InputStream inputStream = new FileInputStream(model)) {
-					final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-					if (spec.getAllSts().size() != 1) {
-						throw new UnsupportedOperationException("STS contains multiple properties.");
-					}
-					return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
-				}
-			}
-		} catch (Exception ex) {
-			throw new Exception("Could not parse STS: " + ex.getMessage(), ex);
-		}
-	}
+    private void printHeader() {
+        Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size")
+            .forEach(writer::cell);
+        writer.newRow();
+    }
 
-	private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
-		try {
-			return new StsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.initPrec(initPrec).search(search)
-					.predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
-		} catch (final Exception ex) {
-			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
-		}
-	}
+    private STS loadModel() throws Exception {
+        try {
+            if (model.endsWith(".aag")) {
+                final AigerSystem aigerSystem = AigerParser.parse(model);
+                AigerCoi.apply(aigerSystem);
+                return AigerToSts.createSts(aigerSystem);
+            } else {
+                try (InputStream inputStream = new FileInputStream(model)) {
+                    final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+                    if (spec.getAllSts().size() != 1) {
+                        throw new UnsupportedOperationException(
+                            "STS contains multiple properties.");
+                    }
+                    return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
+                }
+            }
+        } catch (Exception ex) {
+            throw new Exception("Could not parse STS: " + ex.getMessage(), ex);
+        }
+    }
 
-	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
-		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-		if (benchmarkMode) {
-			writer.cell(status.isSafe());
-			writer.cell(totalTimeMs);
-			writer.cell(stats.getAlgorithmTimeMs());
-			writer.cell(stats.getAbstractorTimeMs());
-			writer.cell(stats.getRefinerTimeMs());
-			writer.cell(stats.getIterations());
-			writer.cell(status.getArg().size());
-			writer.cell(status.getArg().getDepth());
-			writer.cell(status.getArg().getMeanBranchingFactor());
-			if (status.isUnsafe()) {
-				writer.cell(status.asUnsafe().getTrace().length() + "");
-			} else {
-				writer.cell("");
-			}
-			writer.cell(sts.getVars().size());
-			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
-			writer.newRow();
-		}
-	}
+    private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
+        try {
+            return new StsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+                .initPrec(initPrec).search(search)
+                .predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+        } catch (final Exception ex) {
+            throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+        }
+    }
 
-	private void printError(final Throwable ex) {
-		final String message = ex.getMessage() == null ? "" : ex.getMessage();
-		if (benchmarkMode) {
-			writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
-			writer.newRow();
-		} else {
-			logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(), message);
-			if (stacktrace) {
-				final StringWriter errors = new StringWriter();
-				ex.printStackTrace(new PrintWriter(errors));
-				logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
-			} else {
-				logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
-			}
-		}
-	}
+    private void printResult(final SafetyResult<?, ?> status, final STS sts,
+        final long totalTimeMs) {
+        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        if (benchmarkMode) {
+            writer.cell(status.isSafe());
+            writer.cell(totalTimeMs);
+            writer.cell(stats.getAlgorithmTimeMs());
+            writer.cell(stats.getAbstractorTimeMs());
+            writer.cell(stats.getRefinerTimeMs());
+            writer.cell(stats.getIterations());
+            writer.cell(status.getArg().size());
+            writer.cell(status.getArg().getDepth());
+            writer.cell(status.getArg().getMeanBranchingFactor());
+            if (status.isUnsafe()) {
+                writer.cell(status.asUnsafe().getTrace().length() + "");
+            } else {
+                writer.cell("");
+            }
+            writer.cell(sts.getVars().size());
+            writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+            writer.newRow();
+        }
+    }
 
-	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
-		@SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
-		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, Z3SolverFactory.getInstance());
-		final File file = new File(cexfile);
-		PrintWriter printWriter = null;
-		try {
-			printWriter = new PrintWriter(file);
-			for (Valuation state : concrTrace.getStates()) {
-				printWriter.println(state.toString());
-			}
-		} finally {
-			if (printWriter != null) {
-				printWriter.close();
-			}
-		}
-	}
+    private void printError(final Throwable ex) {
+        final String message = ex.getMessage() == null ? "" : ex.getMessage();
+        if (benchmarkMode) {
+            writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+            writer.newRow();
+        } else {
+            logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(),
+                message);
+            if (stacktrace) {
+                final StringWriter errors = new StringWriter();
+                ex.printStackTrace(new PrintWriter(errors));
+                logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+            } else {
+                logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+            }
+        }
+    }
+
+    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status)
+        throws FileNotFoundException {
+        @SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
+        final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace,
+            Z3SolverFactory.getInstance());
+        final File file = new File(cexfile);
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file);
+            for (Valuation state : concrTrace.getStates()) {
+                printWriter.println(state.toString());
+            }
+        } finally {
+            if (printWriter != null) {
+                printWriter.close();
+            }
+        }
+    }
 }

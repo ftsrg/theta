@@ -21,12 +21,14 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 
 public class MathSATSmtLibTransformationManager extends GenericSmtLibTransformationManager {
-	public MathSATSmtLibTransformationManager(final SmtLibSymbolTable symbolTable) {
-		super(symbolTable);
-	}
 
-	@Override
-	protected SmtLibExprTransformer instantiateExprTransformer(final SmtLibTransformationManager transformer) {
-		return new MathSATSmtLibExprTransformer(transformer);
-	}
+    public MathSATSmtLibTransformationManager(final SmtLibSymbolTable symbolTable) {
+        super(symbolTable);
+    }
+
+    @Override
+    protected SmtLibExprTransformer instantiateExprTransformer(
+        final SmtLibTransformationManager transformer) {
+        return new MathSATSmtLibExprTransformer(transformer);
+    }
 }

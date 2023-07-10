@@ -78,13 +78,15 @@ final class XtaExpression {
     }
 
     public Expr<?> instantiate(final Env env) {
-        final ExpressionInstantiationVisitor visitor = new ExpressionInstantiationVisitor(scope, env);
+        final ExpressionInstantiationVisitor visitor = new ExpressionInstantiationVisitor(scope,
+            env);
         final Expr<?> expr = context.accept(visitor);
         final Expr<?> simplifiedExpr = ExprUtils.simplify(expr);
         return simplifiedExpr;
     }
 
     static final class ExpressionInstantiationVisitor extends XtaDslBaseVisitor<Expr<?>> {
+
         private final Scope scope;
         private final Env env;
 
@@ -118,7 +120,9 @@ final class XtaExpression {
         public Expr<?> visitIdExpression(final IdExpressionContext ctx) {
             final String name = ctx.fId.getText();
             Optional<? extends Symbol> optSymbol = scope.resolve(name);
-            if (optSymbol.isEmpty()) throw new NoSuchElementException("Identifier '" + name + "' not found");
+            if (optSymbol.isEmpty()) {
+                throw new NoSuchElementException("Identifier '" + name + "' not found");
+            }
             final Symbol symbol = optSymbol.get();
 
             if (env.isDefined(symbol)) {
@@ -140,10 +144,11 @@ final class XtaExpression {
             } else {
                 // A constant, whose value is not yet defined, as this is its first occurrence
                 final XtaVariableSymbol variableSymbol = (XtaVariableSymbol) symbol;
-				assert variableSymbol.isConstant();
-				final Object value = env.compute(variableSymbol, v -> v.instantiate("", env).asConstant().getExpr());
-				final LitExpr<?> expr = (LitExpr<?>) value;
-				return expr;
+                assert variableSymbol.isConstant();
+                final Object value = env.compute(variableSymbol,
+                    v -> v.instantiate("", env).asConstant().getExpr());
+                final LitExpr<?> expr = (LitExpr<?>) value;
+                return expr;
             }
         }
 
@@ -162,8 +167,9 @@ final class XtaExpression {
             }
         }
 
-        private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-                                           final List<AdditiveOpContext> opers) {
+        private Expr<?> createAdditiveExpr(final Expr<?> opsHead,
+            final List<? extends Expr<?>> opsTail,
+            final List<AdditiveOpContext> opers) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -182,7 +188,7 @@ final class XtaExpression {
         }
 
         private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                              final AdditiveOpContext oper) {
+            final AdditiveOpContext oper) {
             if (oper.fAddOp != null) {
                 return createAddExpr(leftOp, rightOp);
             } else if (oper.fSubOp != null) {
@@ -195,8 +201,9 @@ final class XtaExpression {
         private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof AddExpr) {
                 final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
+                    .addAll(addLeftOp.getOps()).add(rightOp)
+                    .build();
                 return Add(ops);
             } else {
                 return Add(leftOp, rightOp);
@@ -224,8 +231,9 @@ final class XtaExpression {
             }
         }
 
-        private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-                                                 final List<MultiplicativeOpContext> opers) {
+        private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead,
+            final List<? extends Expr<?>> opsTail,
+            final List<MultiplicativeOpContext> opers) {
             checkArgument(opsTail.size() == opers.size());
 
             if (opsTail.isEmpty()) {
@@ -244,7 +252,7 @@ final class XtaExpression {
         }
 
         private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-                                                    final MultiplicativeOpContext oper) {
+            final MultiplicativeOpContext oper) {
             if (oper.fMulOp != null) {
                 return createMulExpr(leftOp, rightOp);
             } else if (oper.fDivOp != null) {
@@ -259,8 +267,9 @@ final class XtaExpression {
         private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
             if (leftOp instanceof MulExpr) {
                 final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
-                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps()).add(rightOp)
-                        .build();
+                final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder()
+                    .addAll(addLeftOp.getOps()).add(rightOp)
+                    .build();
                 return Mul(ops);
             } else {
                 return Mul(leftOp, rightOp);
@@ -377,7 +386,7 @@ final class XtaExpression {
                 return checkNotNull(visitChildren(ctx));
             } else {
                 final Stream<Expr<BoolType>> opStream = ctx.fOps.stream()
-                        .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return And(ops);
             }
@@ -389,7 +398,7 @@ final class XtaExpression {
                 return checkNotNull(visitChildren(ctx));
             } else {
                 final Stream<Expr<BoolType>> opStream = ctx.fOps.stream()
-                        .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
                 final Collection<Expr<BoolType>> ops = opStream.collect(toList());
                 return Or(ops);
             }

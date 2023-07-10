@@ -24,62 +24,62 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class RatPosExpr extends PosExpr<RatType> {
 
-	private static final int HASH_SEED = 4827;
-	private static final String OPERATOR_LABEL = "+";
+    private static final int HASH_SEED = 4827;
+    private static final String OPERATOR_LABEL = "+";
 
-	private RatPosExpr(final Expr<RatType> op) {
-		super(op);
-	}
+    private RatPosExpr(final Expr<RatType> op) {
+        super(op);
+    }
 
-	public static RatPosExpr of(final Expr<RatType> op) {
-		return new RatPosExpr(op);
-	}
+    public static RatPosExpr of(final Expr<RatType> op) {
+        return new RatPosExpr(op);
+    }
 
-	public static RatPosExpr create(final Expr<?> op) {
-		final Expr<RatType> newOp = cast(op, Rat());
-		return RatPosExpr.of(newOp);
-	}
+    public static RatPosExpr create(final Expr<?> op) {
+        final Expr<RatType> newOp = cast(op, Rat());
+        return RatPosExpr.of(newOp);
+    }
 
-	@Override
-	public RatType getType() {
-		return Rat();
-	}
+    @Override
+    public RatType getType() {
+        return Rat();
+    }
 
-	@Override
-	public RatLitExpr eval(final Valuation val) {
-		final RatLitExpr opVal = (RatLitExpr) getOp().eval(val);
-		return opVal.pos();
-	}
+    @Override
+    public RatLitExpr eval(final Valuation val) {
+        final RatLitExpr opVal = (RatLitExpr) getOp().eval(val);
+        return opVal.pos();
+    }
 
-	@Override
-	public RatPosExpr with(final Expr<RatType> op) {
-		if (op == getOp()) {
-			return this;
-		} else {
-			return RatPosExpr.of(op);
-		}
-	}
+    @Override
+    public RatPosExpr with(final Expr<RatType> op) {
+        if (op == getOp()) {
+            return this;
+        } else {
+            return RatPosExpr.of(op);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RatPosExpr) {
-			final RatPosExpr that = (RatPosExpr) obj;
-			return this.getOp().equals(that.getOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof RatPosExpr) {
+            final RatPosExpr that = (RatPosExpr) obj;
+            return this.getOp().equals(that.getOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

@@ -29,12 +29,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 public final class Z3SolverManager extends SolverManager {
+
     private static final String NAME = "Z3";
 
     private boolean closed = false;
     private final Set<SolverBase> instantiatedSolvers = new HashSet<>();
 
-    private Z3SolverManager() {}
+    private Z3SolverManager() {
+    }
 
     public static Z3SolverManager create() {
         return new Z3SolverManager();
@@ -53,13 +55,14 @@ public final class Z3SolverManager extends SolverManager {
 
     @Override
     public synchronized void close() throws Exception {
-        for(final var solver : instantiatedSolvers) {
+        for (final var solver : instantiatedSolvers) {
             solver.close();
         }
         closed = true;
     }
 
     private final class ManagedFactory implements SolverFactory {
+
         private final SolverFactory solverFactory;
 
         private ManagedFactory(final SolverFactory solverFactory) {

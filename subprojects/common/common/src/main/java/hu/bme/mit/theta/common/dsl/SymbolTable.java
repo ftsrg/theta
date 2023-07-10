@@ -24,39 +24,40 @@ import java.util.StringJoiner;
 
 public final class SymbolTable {
 
-	private final LinkedHashMap<String, Symbol> stringToSymbol;
+    private final LinkedHashMap<String, Symbol> stringToSymbol;
 
-	public SymbolTable() {
-		stringToSymbol = new LinkedHashMap<>();
-	}
+    public SymbolTable() {
+        stringToSymbol = new LinkedHashMap<>();
+    }
 
-	////
+    ////
 
-	public void add(final Symbol symbol) {
-		checkNotNull(symbol);
-		checkArgument(!stringToSymbol.containsKey(symbol.getName()), String.format("Symbol %s is already declared in this scope",symbol.getName()));
-		stringToSymbol.put(symbol.getName(), symbol);
-	}
+    public void add(final Symbol symbol) {
+        checkNotNull(symbol);
+        checkArgument(!stringToSymbol.containsKey(symbol.getName()),
+            String.format("Symbol %s is already declared in this scope", symbol.getName()));
+        stringToSymbol.put(symbol.getName(), symbol);
+    }
 
-	public void addAll(final Iterable<? extends Symbol> symbols) {
-		checkNotNull(symbols);
-		for (final Symbol symbol : symbols) {
-			add(symbol);
-		}
-	}
+    public void addAll(final Iterable<? extends Symbol> symbols) {
+        checkNotNull(symbols);
+        for (final Symbol symbol : symbols) {
+            add(symbol);
+        }
+    }
 
-	public Optional<Symbol> get(final String name) {
-		final Symbol symbol = stringToSymbol.get(name);
-		return Optional.ofNullable(symbol);
-	}
+    public Optional<Symbol> get(final String name) {
+        final Symbol symbol = stringToSymbol.get(name);
+        return Optional.ofNullable(symbol);
+    }
 
-	@Override
-	public String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "SymbolTable(", ")");
-		for (final Symbol symbol : stringToSymbol.values()) {
-			sj.add(symbol.toString());
-		}
-		return sj.toString();
-	}
+    @Override
+    public String toString() {
+        final StringJoiner sj = new StringJoiner(", ", "SymbolTable(", ")");
+        for (final Symbol symbol : stringToSymbol.values()) {
+            sj.add(symbol.toString());
+        }
+        return sj.toString();
+    }
 
 }

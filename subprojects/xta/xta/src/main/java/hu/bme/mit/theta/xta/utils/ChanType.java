@@ -19,18 +19,18 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class ChanType implements Type {
 
-	private static final ChanType INSTANCE = new ChanType();
+    private static final ChanType INSTANCE = new ChanType();
 
-	private ChanType() {
-	}
+    private ChanType() {
+    }
 
-	public static ChanType getInstance() {
-		return INSTANCE;
-	}
+    public static ChanType getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public String toString() {
-		return "Chan";
-	}
+    @Override
+    public String toString() {
+        return "Chan";
+    }
 
 }

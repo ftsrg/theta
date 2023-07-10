@@ -25,62 +25,62 @@ import static com.google.common.base.Preconditions.checkPositionIndex;
 
 public abstract class Tuple implements Iterable<Object> {
 
-	private volatile int hashCode = 0;
+    private volatile int hashCode = 0;
 
-	private final List<Object> elems;
+    private final List<Object> elems;
 
-	Tuple(final List<? extends Object> elems) {
-		this.elems = ImmutableList.copyOf(checkNotNull(elems));
-	}
+    Tuple(final List<? extends Object> elems) {
+        this.elems = ImmutableList.copyOf(checkNotNull(elems));
+    }
 
-	public final int arity() {
-		return elems.size();
-	}
+    public final int arity() {
+        return elems.size();
+    }
 
-	public final Object elem(final int n) {
-		checkPositionIndex(n, arity());
-		return elems.get(n);
-	}
+    public final Object elem(final int n) {
+        checkPositionIndex(n, arity());
+        return elems.get(n);
+    }
 
-	public final List<?> toList() {
-		return elems;
-	}
+    public final List<?> toList() {
+        return elems;
+    }
 
-	@Override
-	public final Iterator<Object> iterator() {
-		return elems.iterator();
-	}
+    @Override
+    public final Iterator<Object> iterator() {
+        return elems.iterator();
+    }
 
-	////
+    ////
 
-	@Override
-	public final int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = arity();
-			result = 31 * result + elems.hashCode();
-			hashCode = result;
-		}
-		return hashCode;
-	}
+    @Override
+    public final int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = arity();
+            result = 31 * result + elems.hashCode();
+            hashCode = result;
+        }
+        return hashCode;
+    }
 
-	@Override
-	public final boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final Tuple that = (Tuple) obj;
-			return this.elems.equals(that.elems);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public final boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj == null) {
+            return false;
+        } else if (this.getClass() == obj.getClass()) {
+            final Tuple that = (Tuple) obj;
+            return this.elems.equals(that.elems);
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public final String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
-	}
+    @Override
+    public final String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
+    }
 
 }

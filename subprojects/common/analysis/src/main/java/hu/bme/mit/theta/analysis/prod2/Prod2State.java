@@ -30,317 +30,328 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class Prod2State<S1 extends State, S2 extends State> implements ExprState {
 
-	private Prod2State() {
-	}
+    private Prod2State() {
+    }
 
-	public static <S1 extends State, S2 extends State> Prod2State<S1, S2> of(final S1 state1, final S2 state2) {
-		checkNotNull(state1);
-		checkNotNull(state2);
-		if (state1.isBottom()) {
-			return bottom1(state1);
-		} else if (state2.isBottom()) {
-			return bottom2(state2);
-		} else {
-			return product(state1, state2);
-		}
-	}
+    public static <S1 extends State, S2 extends State> Prod2State<S1, S2> of(final S1 state1,
+        final S2 state2) {
+        checkNotNull(state1);
+        checkNotNull(state2);
+        if (state1.isBottom()) {
+            return bottom1(state1);
+        } else if (state2.isBottom()) {
+            return bottom2(state2);
+        } else {
+            return product(state1, state2);
+        }
+    }
 
-	public static <S1 extends State, S2 extends State> Prod2State<S1, S2> bottom1(final S1 state) {
-		return new Bottom1<>(state);
-	}
+    public static <S1 extends State, S2 extends State> Prod2State<S1, S2> bottom1(final S1 state) {
+        return new Bottom1<>(state);
+    }
 
-	public static <S1 extends State, S2 extends State> Prod2State<S1, S2> bottom2(final S2 state) {
-		return new Bottom2<>(state);
-	}
+    public static <S1 extends State, S2 extends State> Prod2State<S1, S2> bottom2(final S2 state) {
+        return new Bottom2<>(state);
+    }
 
-	private static <S1 extends State, S2 extends State> Prod2State<S1, S2> product(final S1 state1, final S2 state2) {
-		return new Product<>(state1, state2);
-	}
+    private static <S1 extends State, S2 extends State> Prod2State<S1, S2> product(final S1 state1,
+        final S2 state2) {
+        return new Product<>(state1, state2);
+    }
 
-	public static <S1 extends State, S2 extends State> Collection<Prod2State<S1, S2>> cartesian(
-			final Iterable<? extends S1> states1, final Iterable<? extends S2> states2) {
-		final Collection<Prod2State<S1, S2>> result = new ArrayList<>();
-		for (final S1 state1 : states1) {
-			for (final S2 state2 : states2) {
-				result.add(product(state1, state2));
-			}
-		}
-		return result;
-	}
+    public static <S1 extends State, S2 extends State> Collection<Prod2State<S1, S2>> cartesian(
+        final Iterable<? extends S1> states1, final Iterable<? extends S2> states2) {
+        final Collection<Prod2State<S1, S2>> result = new ArrayList<>();
+        for (final S1 state1 : states1) {
+            for (final S2 state2 : states2) {
+                result.add(product(state1, state2));
+            }
+        }
+        return result;
+    }
 
-	public abstract S1 getState1();
+    public abstract S1 getState1();
 
-	public abstract S2 getState2();
+    public abstract S2 getState2();
 
-	public abstract boolean isBottom1();
+    public abstract boolean isBottom1();
 
-	public abstract boolean isBottom2();
+    public abstract boolean isBottom2();
 
-	public abstract <S extends State> Prod2State<S, S2> with1(final S state);
+    public abstract <S extends State> Prod2State<S, S2> with1(final S state);
 
-	public abstract <S extends State> Prod2State<S1, S> with2(final S state);
+    public abstract <S extends State> Prod2State<S1, S> with2(final S state);
 
-	private static final class Product<S1 extends State, S2 extends State> extends Prod2State<S1, S2> {
-		private static final int HASH_SEED = 7879;
-		private volatile int hashCode = 0;
+    private static final class Product<S1 extends State, S2 extends State> extends
+        Prod2State<S1, S2> {
 
-		private final S1 state1;
-		private final S2 state2;
+        private static final int HASH_SEED = 7879;
+        private volatile int hashCode = 0;
 
-		private Product(final S1 state1, final S2 state2) {
-			checkNotNull(state1);
-			checkNotNull(state2);
-			checkArgument(!state1.isBottom());
-			checkArgument(!state2.isBottom());
-			this.state1 = state1;
-			this.state2 = state2;
-		}
+        private final S1 state1;
+        private final S2 state2;
 
-		@Override
-		public S1 getState1() {
-			return state1;
-		}
+        private Product(final S1 state1, final S2 state2) {
+            checkNotNull(state1);
+            checkNotNull(state2);
+            checkArgument(!state1.isBottom());
+            checkArgument(!state2.isBottom());
+            this.state1 = state1;
+            this.state2 = state2;
+        }
 
-		@Override
-		public S2 getState2() {
-			return state2;
-		}
+        @Override
+        public S1 getState1() {
+            return state1;
+        }
 
-		@Override
-		public boolean isBottom1() {
-			return false;
-		}
+        @Override
+        public S2 getState2() {
+            return state2;
+        }
 
-		@Override
-		public boolean isBottom2() {
-			return false;
-		}
+        @Override
+        public boolean isBottom1() {
+            return false;
+        }
 
-		@Override
-		public <S extends State> Prod2State<S, S2> with1(final S state) {
-			if (state.isBottom()) {
-				return bottom1(state);
-			} else {
-				return product(state, state2);
-			}
-		}
+        @Override
+        public boolean isBottom2() {
+            return false;
+        }
 
-		@Override
-		public <S extends State> Prod2State<S1, S> with2(final S state) {
-			if (state.isBottom()) {
-				return bottom2(state);
-			} else {
-				return product(state1, state);
-			}
-		}
+        @Override
+        public <S extends State> Prod2State<S, S2> with1(final S state) {
+            if (state.isBottom()) {
+                return bottom1(state);
+            } else {
+                return product(state, state2);
+            }
+        }
 
-		@Override
-		public boolean isBottom() {
-			return false;
-		}
+        @Override
+        public <S extends State> Prod2State<S1, S> with2(final S state) {
+            if (state.isBottom()) {
+                return bottom2(state);
+            } else {
+                return product(state1, state);
+            }
+        }
 
-		@Override
-		public Expr<BoolType> toExpr() {
-			if (state1 instanceof ExprState && state2 instanceof ExprState) {
-				final ExprState exprState1 = (ExprState) state1;
-				final ExprState exprState2 = (ExprState) state2;
-				return And(exprState1.toExpr(), exprState2.toExpr());
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		}
+        @Override
+        public boolean isBottom() {
+            return false;
+        }
 
-		@Override
-		public int hashCode() {
-			int result = hashCode;
-			if (result == 0) {
-				result = HASH_SEED;
-				result = 37 * result + state1.hashCode();
-				result = 37 * result + state2.hashCode();
+        @Override
+        public Expr<BoolType> toExpr() {
+            if (state1 instanceof ExprState && state2 instanceof ExprState) {
+                final ExprState exprState1 = (ExprState) state1;
+                final ExprState exprState2 = (ExprState) state2;
+                return And(exprState1.toExpr(), exprState2.toExpr());
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 37 * result + state1.hashCode();
+                result = 37 * result + state2.hashCode();
                 hashCode = result;
-			}
-			return result;
-		}
+            }
+            return result;
+        }
 
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			} else if (obj instanceof Product) {
-				final Product<?, ?> that = (Product<?, ?>) obj;
-				return this.state1.equals(that.state1) && this.state2.equals(that.state2);
-			} else {
-				return false;
-			}
-		}
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof Product) {
+                final Product<?, ?> that = (Product<?, ?>) obj;
+                return this.state1.equals(that.state1) && this.state2.equals(that.state2);
+            } else {
+                return false;
+            }
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).body().add(state1).add(state2).toString();
-		}
-	}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).body().add(state1)
+                .add(state2).toString();
+        }
+    }
 
-	private static abstract class Bottom<S1 extends State, S2 extends State> extends Prod2State<S1, S2> {
-		private static final int HASH_SEED = 2879;
-		private volatile int hashCode = 0;
+    private static abstract class Bottom<S1 extends State, S2 extends State> extends
+        Prod2State<S1, S2> {
 
-		private Bottom() {
-		}
+        private static final int HASH_SEED = 2879;
+        private volatile int hashCode = 0;
 
-		public abstract int getIndex();
+        private Bottom() {
+        }
 
-		public abstract State getState();
+        public abstract int getIndex();
 
-		@Override
-		public final boolean isBottom() {
-			return true;
-		}
+        public abstract State getState();
 
-		@Override
-		public final Expr<BoolType> toExpr() {
-			final State state = getState();
-			if (state instanceof ExprState) {
-				final ExprState exprState = (ExprState) state;
-				return exprState.toExpr();
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		}
+        @Override
+        public final boolean isBottom() {
+            return true;
+        }
 
-		@Override
-		public final int hashCode() {
-			int result = hashCode;
-			if (result == 0) {
-				result = HASH_SEED;
-				result = 37 * result + getIndex();
-				result = 37 * result + getState().hashCode();
+        @Override
+        public final Expr<BoolType> toExpr() {
+            final State state = getState();
+            if (state instanceof ExprState) {
+                final ExprState exprState = (ExprState) state;
+                return exprState.toExpr();
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        @Override
+        public final int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 37 * result + getIndex();
+                result = 37 * result + getState().hashCode();
                 hashCode = result;
-			}
-			return result;
-		}
+            }
+            return result;
+        }
 
-		@Override
-		public final boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			} else if (obj instanceof Bottom) {
-				final Bottom<?, ?> that = (Bottom<?, ?>) obj;
-				return this.getIndex() == that.getIndex() && this.getState().equals(that.getState());
-			} else {
-				return false;
-			}
-		}
+        @Override
+        public final boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof Bottom) {
+                final Bottom<?, ?> that = (Bottom<?, ?>) obj;
+                return this.getIndex() == that.getIndex() && this.getState()
+                    .equals(that.getState());
+            } else {
+                return false;
+            }
+        }
 
-		@Override
-		public final String toString() {
-			return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).add(getIndex()).add(getState()).toString();
-		}
-	}
+        @Override
+        public final String toString() {
+            return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).add(getIndex())
+                .add(getState()).toString();
+        }
+    }
 
-	private static final class Bottom1<S1 extends State, S2 extends State> extends Bottom<S1, S2> {
-		private final S1 state;
+    private static final class Bottom1<S1 extends State, S2 extends State> extends Bottom<S1, S2> {
 
-		private Bottom1(final S1 state) {
-			checkNotNull(state);
-			checkArgument(state.isBottom());
-			this.state = state;
-		}
+        private final S1 state;
 
-		@Override
-		public int getIndex() {
-			return 1;
-		}
+        private Bottom1(final S1 state) {
+            checkNotNull(state);
+            checkArgument(state.isBottom());
+            this.state = state;
+        }
 
-		@Override
-		public S1 getState() {
-			return state;
-		}
+        @Override
+        public int getIndex() {
+            return 1;
+        }
 
-		@Override
-		public S1 getState1() {
-			return state;
-		}
+        @Override
+        public S1 getState() {
+            return state;
+        }
 
-		@Override
-		public S2 getState2() {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public S1 getState1() {
+            return state;
+        }
 
-		@Override
-		public boolean isBottom1() {
-			return true;
-		}
+        @Override
+        public S2 getState2() {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public boolean isBottom2() {
-			return false;
-		}
+        @Override
+        public boolean isBottom1() {
+            return true;
+        }
 
-		@Override
-		@SuppressWarnings("unchecked")
-		public <S extends State> Prod2State<S, S2> with1(final S state) {
-			checkArgument(state.isBottom());
-			return (Prod2State<S, S2>) this;
-		}
+        @Override
+        public boolean isBottom2() {
+            return false;
+        }
 
-		@Override
-		@SuppressWarnings("unchecked")
-		public <S extends State> Prod2State<S1, S> with2(final S state) {
-			return (Prod2State<S1, S>) this;
-		}
-	}
+        @Override
+        @SuppressWarnings("unchecked")
+        public <S extends State> Prod2State<S, S2> with1(final S state) {
+            checkArgument(state.isBottom());
+            return (Prod2State<S, S2>) this;
+        }
 
-	private static final class Bottom2<S1 extends State, S2 extends State> extends Bottom<S1, S2> {
-		private final S2 state;
+        @Override
+        @SuppressWarnings("unchecked")
+        public <S extends State> Prod2State<S1, S> with2(final S state) {
+            return (Prod2State<S1, S>) this;
+        }
+    }
 
-		public Bottom2(final S2 state) {
-			checkNotNull(state);
-			checkArgument(state.isBottom());
-			this.state = state;
-		}
+    private static final class Bottom2<S1 extends State, S2 extends State> extends Bottom<S1, S2> {
 
-		@Override
-		public int getIndex() {
-			return 2;
-		}
+        private final S2 state;
 
-		@Override
-		public S2 getState() {
-			return state;
-		}
+        public Bottom2(final S2 state) {
+            checkNotNull(state);
+            checkArgument(state.isBottom());
+            this.state = state;
+        }
 
-		@Override
-		public S1 getState1() {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public int getIndex() {
+            return 2;
+        }
 
-		@Override
-		public S2 getState2() {
-			return state;
-		}
+        @Override
+        public S2 getState() {
+            return state;
+        }
 
-		@Override
-		public boolean isBottom1() {
-			return false;
-		}
+        @Override
+        public S1 getState1() {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public boolean isBottom2() {
-			return true;
-		}
+        @Override
+        public S2 getState2() {
+            return state;
+        }
 
-		@Override
-		@SuppressWarnings("unchecked")
-		public <S extends State> Prod2State<S, S2> with1(final S state) {
-			return (Prod2State<S, S2>) this;
-		}
+        @Override
+        public boolean isBottom1() {
+            return false;
+        }
 
-		@Override
-		@SuppressWarnings("unchecked")
-		public <S extends State> Prod2State<S1, S> with2(final S state) {
-			checkArgument(state.isBottom());
-			return (Prod2State<S1, S>) this;
-		}
-	}
+        @Override
+        public boolean isBottom2() {
+            return true;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <S extends State> Prod2State<S, S2> with1(final S state) {
+            return (Prod2State<S, S2>) this;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <S extends State> Prod2State<S1, S> with2(final S state) {
+            checkArgument(state.isBottom());
+            return (Prod2State<S1, S>) this;
+        }
+    }
 
 }

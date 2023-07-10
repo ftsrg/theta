@@ -22,6 +22,7 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import java.nio.file.Path;
 
 public class BoolectorSmtLibSolverFactory extends GenericSmtLibSolverFactory {
+
     private BoolectorSmtLibSolverFactory(Path solverPath, String[] args) {
         super(solverPath, args);
     }

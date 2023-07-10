@@ -20,7 +20,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 public abstract class ProcessPass {
 
-	public abstract XcfaProcess.Builder run(XcfaProcess.Builder builder);
+    public abstract XcfaProcess.Builder run(XcfaProcess.Builder builder);
 
 
 }

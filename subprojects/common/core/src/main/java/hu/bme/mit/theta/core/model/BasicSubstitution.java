@@ -35,96 +35,100 @@ import hu.bme.mit.theta.core.type.Type;
  * Basic, immutable implementation of a substitution.
  */
 public final class BasicSubstitution implements Substitution {
-	private static final int HASH_SEED = 2521;
-	private volatile int hashCode = 0;
 
-	private final Collection<Decl<?>> decls;
-	private final Map<Decl<?>, Expr<?>> declToExpr;
+    private static final int HASH_SEED = 2521;
+    private volatile int hashCode = 0;
 
-	private BasicSubstitution(final Builder builder) {
-		this.declToExpr = builder.declToExpr;
-		this.decls = Collections.unmodifiableSet(this.declToExpr.keySet());
-	}
+    private final Collection<Decl<?>> decls;
+    private final Map<Decl<?>, Expr<?>> declToExpr;
 
-	@Override
-	public <DeclType extends Type> Optional<Expr<DeclType>> eval(final Decl<DeclType> decl) {
-		checkNotNull(decl);
-		if (declToExpr.containsKey(decl)) {
-			@SuppressWarnings("unchecked") final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(decl);
-			return Optional.of(val);
-		}
-		return Optional.empty();
-	}
+    private BasicSubstitution(final Builder builder) {
+        this.declToExpr = builder.declToExpr;
+        this.decls = Collections.unmodifiableSet(this.declToExpr.keySet());
+    }
 
-	@Override
-	public Collection<? extends Decl<?>> getDecls() {
-		return decls;
-	}
+    @Override
+    public <DeclType extends Type> Optional<Expr<DeclType>> eval(final Decl<DeclType> decl) {
+        checkNotNull(decl);
+        if (declToExpr.containsKey(decl)) {
+            @SuppressWarnings("unchecked") final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(
+                decl);
+            return Optional.of(val);
+        }
+        return Optional.empty();
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("Substitution")
-				.addAll(declToExpr.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue()))
-				.toString();
-	}
+    @Override
+    public Collection<? extends Decl<?>> getDecls() {
+        return decls;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof BasicSubstitution) {
-			final BasicSubstitution that = (BasicSubstitution) obj;
-			return this.declToExpr.equals(that.declToExpr);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("Substitution")
+            .addAll(declToExpr.entrySet().stream()
+                .map(e -> e.getKey().getName() + " <- " + e.getValue()))
+            .toString();
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + declToExpr.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof BasicSubstitution) {
+            final BasicSubstitution that = (BasicSubstitution) obj;
+            return this.declToExpr.equals(that.declToExpr);
+        } else {
+            return false;
+        }
+    }
 
-	public static Builder builder() {
-		return new Builder();
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + declToExpr.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	public static final class Builder {
-		private final Map<Decl<?>, Expr<?>> declToExpr;
-		private boolean built;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-		private Builder() {
-			this(Containers.createMap());
-		}
+    public static final class Builder {
 
-		private Builder(final Map<Decl<?>, Expr<?>> declToExpr) {
-			// LinkedHashMap is used for deterministic order
-			this.declToExpr = new LinkedHashMap<>(declToExpr);
-			this.built = false;
-		}
+        private final Map<Decl<?>, Expr<?>> declToExpr;
+        private boolean built;
 
-		public Builder put(final Decl<?> decl, final Expr<?> value) {
-			checkState(!built, "Builder was already built.");
-			checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
-			declToExpr.put(decl, value);
-			return this;
-		}
+        private Builder() {
+            this(Containers.createMap());
+        }
 
-		public Builder putAll(final Map<Decl<?>, Expr<?>> declToExpr) {
-			checkState(!built, "Builder was already built.");
-			declToExpr.entrySet().forEach(e -> put(e.getKey(), e.getValue()));
-			return this;
-		}
+        private Builder(final Map<Decl<?>, Expr<?>> declToExpr) {
+            // LinkedHashMap is used for deterministic order
+            this.declToExpr = new LinkedHashMap<>(declToExpr);
+            this.built = false;
+        }
 
-		public Substitution build() {
-			built = true;
-			return new BasicSubstitution(this);
-		}
-	}
+        public Builder put(final Decl<?> decl, final Expr<?> value) {
+            checkState(!built, "Builder was already built.");
+            checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
+            declToExpr.put(decl, value);
+            return this;
+        }
+
+        public Builder putAll(final Map<Decl<?>, Expr<?>> declToExpr) {
+            checkState(!built, "Builder was already built.");
+            declToExpr.entrySet().forEach(e -> put(e.getKey(), e.getValue()));
+            return this;
+        }
+
+        public Substitution build() {
+            built = true;
+            return new BasicSubstitution(this);
+        }
+    }
 }

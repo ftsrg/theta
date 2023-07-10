@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import static hu.bme.mit.theta.core.utils.TypeUtils.*;
 
 public final class BvArithShiftRightExpr extends BinaryExpr<BvType, BvType> {
+
     private static final int HASH_SEED = 965;
     private static final String OPERATOR_LABEL = "bvashr";
 
@@ -77,7 +78,8 @@ public final class BvArithShiftRightExpr extends BinaryExpr<BvType, BvType> {
             return true;
         } else if (obj instanceof BvArithShiftRightExpr) {
             final BvArithShiftRightExpr that = (BvArithShiftRightExpr) obj;
-            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                .equals(that.getRightOp());
         } else {
             return false;
         }

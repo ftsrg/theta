@@ -31,6 +31,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
 import java.util.concurrent.ExecutionException;
 
 public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
+
     private static final int CACHE_SIZE = 1000;
 
     @SuppressWarnings("unused")
@@ -45,13 +46,13 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
         typeToSmtLib = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
         table = DispatchTable.<String>builder()
-                .addCase(BoolType.class, this::boolType)
-                .addCase(IntType.class, this::intType)
-                .addCase(RatType.class, this::ratType)
-                .addCase(BvType.class, this::bvType)
-                .addCase(FpType.class, this::fpType)
-                .addCase(ArrayType.class, this::arrayType)
-                .build();
+            .addCase(BoolType.class, this::boolType)
+            .addCase(IntType.class, this::intType)
+            .addCase(RatType.class, this::ratType)
+            .addCase(BvType.class, this::bvType)
+            .addCase(FpType.class, this::fpType)
+            .addCase(ArrayType.class, this::arrayType)
+            .build();
     }
 
     @Override
@@ -84,6 +85,7 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
     }
 
     protected String arrayType(final ArrayType<?, ?> type) {
-        return String.format("(Array %s %s)", toSort(type.getIndexType()), toSort(type.getElemType()));
+        return String.format("(Array %s %s)", toSort(type.getIndexType()),
+            toSort(type.getElemType()));
     }
 }

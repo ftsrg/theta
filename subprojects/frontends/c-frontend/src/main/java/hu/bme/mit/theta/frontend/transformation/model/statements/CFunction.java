@@ -23,31 +23,33 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import java.util.List;
 
 public class CFunction extends CStatement {
-	private final CDeclaration funcDecl;
-	private final CStatement compound;
-	private final List<VarDecl<?>> flatVariables;
 
-	public CFunction(CDeclaration funcDecl, CStatement compound, List<VarDecl<?>> flatVariables) {
-		this.funcDecl = funcDecl;
-		this.compound = compound;
-		this.flatVariables = flatVariables;
-		FrontendMetadata.lookupMetadata(funcDecl).forEach((s, o) -> FrontendMetadata.create(this, s, o));
-	}
+    private final CDeclaration funcDecl;
+    private final CStatement compound;
+    private final List<VarDecl<?>> flatVariables;
 
-	public CStatement getCompound() {
-		return compound;
-	}
+    public CFunction(CDeclaration funcDecl, CStatement compound, List<VarDecl<?>> flatVariables) {
+        this.funcDecl = funcDecl;
+        this.compound = compound;
+        this.flatVariables = flatVariables;
+        FrontendMetadata.lookupMetadata(funcDecl)
+            .forEach((s, o) -> FrontendMetadata.create(this, s, o));
+    }
 
-	public CDeclaration getFuncDecl() {
-		return funcDecl;
-	}
+    public CStatement getCompound() {
+        return compound;
+    }
 
-	public List<VarDecl<?>> getFlatVariables() {
-		return flatVariables;
-	}
+    public CDeclaration getFuncDecl() {
+        return funcDecl;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public List<VarDecl<?>> getFlatVariables() {
+        return flatVariables;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

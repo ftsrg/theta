@@ -27,23 +27,23 @@ import java.util.Collections;
  */
 public final class CompositeNode extends Node {
 
-	private final Collection<Node> children;
+    private final Collection<Node> children;
 
-	CompositeNode(final String id, final NodeAttributes attributes) {
-		super(id, attributes);
-		this.children = new ArrayList<Node>();
-	}
+    CompositeNode(final String id, final NodeAttributes attributes) {
+        super(id, attributes);
+        this.children = new ArrayList<Node>();
+    }
 
-	void addChild(final Node child) {
-		checkNotNull(child);
-		checkArgument(child != this);
-		checkArgument(child.getParent() == null);
+    void addChild(final Node child) {
+        checkNotNull(child);
+        checkArgument(child != this);
+        checkArgument(child.getParent() == null);
 
-		children.add(child);
-		child.setParent(this);
-	}
+        children.add(child);
+        child.setParent(this);
+    }
 
-	public Collection<Node> getChildren() {
-		return Collections.unmodifiableCollection(children);
-	}
+    public Collection<Node> getChildren() {
+        return Collections.unmodifiableCollection(children);
+    }
 }

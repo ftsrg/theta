@@ -27,7 +27,8 @@ import hu.bme.mit.theta.xsts.XSTS;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class XstsNewAtomsAutoExpl implements XstsAutoExpl{
+public class XstsNewAtomsAutoExpl implements XstsAutoExpl {
+
     @Override
     public AutoExpl create(XSTS xsts) {
         final Set<Expr<BoolType>> atoms = Containers.createSet();
@@ -38,9 +39,9 @@ public class XstsNewAtomsAutoExpl implements XstsAutoExpl{
         atoms.addAll(ExprUtils.getAtoms(xsts.getInitFormula()));
 
         final Set<Expr<BoolType>> canonicalAtoms = atoms.stream()
-                .map(ExprUtils::canonize)
-                .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
-                .collect(Collectors.toSet());
-        return new NewAtomsAutoExpl(xsts.getCtrlVars(),canonicalAtoms,0);
+            .map(ExprUtils::canonize)
+            .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
+            .collect(Collectors.toSet());
+        return new NewAtomsAutoExpl(xsts.getCtrlVars(), canonicalAtoms, 0);
     }
 }

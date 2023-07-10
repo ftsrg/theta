@@ -29,74 +29,75 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class CopyOp implements ClockOp {
 
-	private static final int HASH_SEED = 1289;
+    private static final int HASH_SEED = 1289;
 
-	private final VarDecl<RatType> varDecl;
-	private final VarDecl<RatType> value;
+    private final VarDecl<RatType> varDecl;
+    private final VarDecl<RatType> value;
 
-	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType> stmt = null;
+    private volatile int hashCode = 0;
+    private volatile AssignStmt<RatType> stmt = null;
 
-	CopyOp(final VarDecl<RatType> varDecl, final VarDecl<RatType> value) {
-		this.varDecl = checkNotNull(varDecl);
-		this.value = checkNotNull(value);
-	}
+    CopyOp(final VarDecl<RatType> varDecl, final VarDecl<RatType> value) {
+        this.varDecl = checkNotNull(varDecl);
+        this.value = checkNotNull(value);
+    }
 
-	public VarDecl<RatType> getVar() {
-		return varDecl;
-	}
+    public VarDecl<RatType> getVar() {
+        return varDecl;
+    }
 
-	public VarDecl<RatType> getValue() {
-		return value;
-	}
+    public VarDecl<RatType> getValue() {
+        return value;
+    }
 
-	@Override
-	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(varDecl, value);
-	}
+    @Override
+    public Collection<VarDecl<RatType>> getVars() {
+        return ImmutableSet.of(varDecl, value);
+    }
 
-	@Override
-	public AssignStmt<RatType> toStmt() {
-		AssignStmt<RatType> result = stmt;
-		if (result == null) {
-			result = Assign(varDecl, value.getRef());
-			stmt = result;
-		}
-		return stmt;
-	}
+    @Override
+    public AssignStmt<RatType> toStmt() {
+        AssignStmt<RatType> result = stmt;
+        if (result == null) {
+            result = Assign(varDecl, value.getRef());
+            stmt = result;
+        }
+        return stmt;
+    }
 
-	@Override
-	public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
+    @Override
+    public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + varDecl.hashCode();
-			result = 31 * result + value.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + varDecl.hashCode();
+            result = 31 * result + value.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof CopyOp) {
-			final CopyOp that = (CopyOp) obj;
-			return this.getVar().equals(that.getVar()) && this.getValue().equals(that.getValue());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof CopyOp) {
+            final CopyOp that = (CopyOp) obj;
+            return this.getVar().equals(that.getVar()) && this.getValue().equals(that.getValue());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("copy").add(varDecl.getName()).add(value.getName()).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("copy").add(varDecl.getName()).add(value.getName())
+            .toString();
+    }
 
 }

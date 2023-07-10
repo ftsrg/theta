@@ -21,7 +21,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.Objects;
 
-public class XcfaSTStateSimple <S extends ExprState> extends XcfaSTState<S> {
+public class XcfaSTStateSimple<S extends ExprState> extends XcfaSTState<S> {
+
     private final XcfaLocation currentLocation;
 
     protected XcfaSTStateSimple(final XcfaLocation currentLoc, final S globalState) {

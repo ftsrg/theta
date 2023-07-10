@@ -24,26 +24,26 @@ import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 
 /**
- * A caching layer over CFA LTS implementations. It only computes actions for
- * each location once and stores the result for later queries.
+ * A caching layer over CFA LTS implementations. It only computes actions for each location once and
+ * stores the result for later queries.
  */
 public final class CfaCachedLts implements CfaLts {
 
-	private final CfaLts lts;
-	private final Map<Loc, Collection<CfaAction>> actionCache;
+    private final CfaLts lts;
+    private final Map<Loc, Collection<CfaAction>> actionCache;
 
-	public CfaCachedLts(final CfaLts lts) {
-		this.lts = lts;
-		this.actionCache = Containers.createMap();
-	}
+    public CfaCachedLts(final CfaLts lts) {
+        this.lts = lts;
+        this.actionCache = Containers.createMap();
+    }
 
-	@Override
-	public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
-		final Loc loc = state.getLoc();
-		if (!actionCache.containsKey(loc)) {
-			actionCache.put(loc, lts.getEnabledActionsFor(state));
-		}
-		return actionCache.get(loc);
-	}
+    @Override
+    public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
+        final Loc loc = state.getLoc();
+        if (!actionCache.containsKey(loc)) {
+            actionCache.put(loc, lts.getEnabledActionsFor(state));
+        }
+        return actionCache.get(loc);
+    }
 
 }

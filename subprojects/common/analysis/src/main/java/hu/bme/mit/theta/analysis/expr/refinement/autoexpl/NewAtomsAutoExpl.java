@@ -28,14 +28,15 @@ import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-public class NewAtomsAutoExpl implements AutoExpl{
+public class NewAtomsAutoExpl implements AutoExpl {
 
     private final Set<VarDecl<?>> explVars = Containers.createSet();
     private final Set<Expr<BoolType>> modelAtoms;
-    private final Map<VarDecl<?>,Set<Expr<BoolType>>> newAtoms;
+    private final Map<VarDecl<?>, Set<Expr<BoolType>>> newAtoms;
     private final int newAtomsLimit;
 
-    public NewAtomsAutoExpl(final Set<VarDecl<?>> explPreferredVars, final Set<Expr<BoolType>> modelAtoms, final int newAtomsLimit){
+    public NewAtomsAutoExpl(final Set<VarDecl<?>> explPreferredVars,
+        final Set<Expr<BoolType>> modelAtoms, final int newAtomsLimit) {
         explVars.addAll(explPreferredVars);
         this.modelAtoms = modelAtoms;
         this.newAtomsLimit = newAtomsLimit;
@@ -52,21 +53,23 @@ public class NewAtomsAutoExpl implements AutoExpl{
     public void update(final Expr<BoolType> itp) {
 
         final var canonicalAtoms = ExprUtils.getAtoms(itp).stream()
-                .map(ExprUtils::canonize)
-                .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
-                .collect(Collectors.toSet());
+            .map(ExprUtils::canonize)
+            .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
+            .collect(Collectors.toSet());
         canonicalAtoms.stream()
-                .filter(Predicate.not(modelAtoms::contains))
-                .forEach(
-                        atom -> ExprUtils.getVars(atom).forEach(
-                                decl -> newAtoms.computeIfAbsent(decl,(k) -> Containers.createSet()).add(atom)
-                        )
-                );
+            .filter(Predicate.not(modelAtoms::contains))
+            .forEach(
+                atom -> ExprUtils.getVars(atom).forEach(
+                    decl -> newAtoms.computeIfAbsent(decl, (k) -> Containers.createSet()).add(atom)
+                )
+            );
 
-         explVars.addAll(
-                ExprUtils.getVars(itp).stream()
-                        .filter(decl -> newAtoms.containsKey(decl) && newAtoms.get(decl).size() > newAtomsLimit || decl.getType() == Bool())
-                        .collect(Collectors.toSet()));
+        explVars.addAll(
+            ExprUtils.getVars(itp).stream()
+                .filter(
+                    decl -> newAtoms.containsKey(decl) && newAtoms.get(decl).size() > newAtomsLimit
+                        || decl.getType() == Bool())
+                .collect(Collectors.toSet()));
 
     }
 }
