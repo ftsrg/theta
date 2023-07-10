@@ -33,6 +33,12 @@ allprojects {
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
 
+sonarqube {
+    properties {
+        property ("sonar.host.url", "https://sonarcloud.io")
+    }
+}
+
 evaluationDependsOnChildren()
 
 tasks {
@@ -68,6 +74,8 @@ tasks {
     check {
         dependsOn(test)
     }
+
+    project.tasks["sonar"].dependsOn(jacocoRootReport)
 
     nexusStaging {
         serverUrl = "https://s01.oss.sonatype.org/service/local/"
