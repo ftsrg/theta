@@ -9,5 +9,5 @@ runs:
       uses: leventeBajczi/intellij-idea-format@v1.0
       with:
         settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
-        file-mask: "*.java,*.kts,*.kt"
+        file-mask: "*.java,*.kt"
         additional-options: "-dry"
