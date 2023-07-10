@@ -16,15 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: macOS library hack
-        run: |
-          cp lib/*dylib ./
-          cp lib/*jnilib ./
-          cp libmpfr.dylib libmpfr.4.dylib
-          cp libmpfr_java-1.4.jnilib libmpfr_java.jnilib
-          sudo ln -sf $PWD/libmpfr.4.dylib /usr/local/lib/
-          for i in subprojects/*/*; do cp *dylib $i/; done
-          for i in subprojects/*/*; do cp *jnilib $i/; done
       - name: Build
         uses: ./.github/actions/build-action
       - name: Positive outcome badge
