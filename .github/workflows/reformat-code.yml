@@ -6,7 +6,11 @@ on:
       file_mask:
         description: 'File mask to reformat'
         required: true
-        default: '*.java'
+        default: '*.java,*.kts,*.kt'
+    direct-commit:
+        type: boolean
+        default: false
+        description: Commit directly to source (instead of opening a PR)
 
 jobs:
   reformat:
@@ -21,9 +25,15 @@ jobs:
         file-mask: ${{ inputs.file_mask }}
 
     - name: Create Pull Request
+      if: ${{ !inputs.direct-commit }}
       uses: peter-evans/create-pull-request@v5
       with:
         commit-message: "Reformatted code"
         branch: "code-reformat"
         title: '[AutoPR] Reformatted code'
 
+    - name: Commit changes
+      if: ${{ inputs.direct-commit }}
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Reformatted code"
