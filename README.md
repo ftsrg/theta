@@ -9,6 +9,8 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
+[![Check copyright](https://github.com/leventeBajczi/theta/actions/workflows/check-copyright.yml/badge.svg)](https://github.com/leventeBajczi/theta/actions/workflows/check-copyright.yml)
+[![Check formatting](https://github.com/leventeBajczi/theta/actions/workflows/check-formatting.yml/badge.svg)](https://github.com/leventeBajczi/theta/actions/workflows/check-formatting.yml)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache--2-brightgreen.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ![Theta logo](doc/theta-logo.png)
