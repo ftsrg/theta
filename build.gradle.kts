@@ -34,12 +34,12 @@ allprojects {
 }
 
 sonar {
-    properties {
-      property("sonar.projectKey"), "leventeBajczi_theta"
-      property("sonar.organization"), "bajczi-levente"
-      property("sonar.host"), "https://sonarcloud.io"
-    }
+  properties {
+    property("sonar.projectKey", "leventeBajczi_theta")
+    property("sonar.organization", "bajczi-levente")
+    property("sonar.host", "https://sonarcloud.io")
   }
+}
 
 evaluationDependsOnChildren()
 
