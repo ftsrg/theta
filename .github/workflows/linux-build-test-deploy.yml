@@ -7,7 +7,7 @@ on:
     inputs:
       message:
         description: 'Summarize the contents since the last version'
-        required: false
+        required: true
         default: 'Auto-generated release'
 
 permissions: write-all
@@ -96,7 +96,7 @@ jobs:
 
   deploy-release:
     needs: build
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: "${{ github.event.inputs.message != '' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -108,7 +108,7 @@ jobs:
 
   deploy-maven:
     needs: build
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: "${{ github.event.inputs.message != '' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -124,7 +124,7 @@ jobs:
   
   deploy-docker:
     needs: build
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: "${{ github.event.inputs.message != '' }}"
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
