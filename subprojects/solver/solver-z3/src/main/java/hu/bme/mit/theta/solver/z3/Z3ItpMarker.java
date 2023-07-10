@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,26 +25,26 @@ import hu.bme.mit.theta.solver.impl.StackImpl;
 
 final class Z3ItpMarker implements ItpMarker {
 
-	private final Stack<com.microsoft.z3.BoolExpr> terms;
+    private final Stack<com.microsoft.z3.BoolExpr> terms;
 
-	public Z3ItpMarker() {
-		terms = new StackImpl<>();
-	}
+    public Z3ItpMarker() {
+        terms = new StackImpl<>();
+    }
 
-	public void add(final com.microsoft.z3.BoolExpr term) {
-		terms.add(checkNotNull(term));
-	}
+    public void add(final com.microsoft.z3.BoolExpr term) {
+        terms.add(checkNotNull(term));
+    }
 
-	public void push() {
-		terms.push();
-	}
+    public void push() {
+        terms.push();
+    }
 
-	public void pop(final int n) {
-		terms.pop(n);
-	}
+    public void pop(final int n) {
+        terms.pop(n);
+    }
 
-	public Collection<com.microsoft.z3.BoolExpr> getTerms() {
-		return terms.toCollection();
-	}
+    public Collection<com.microsoft.z3.BoolExpr> getTerms() {
+        return terms.toCollection();
+    }
 
 }

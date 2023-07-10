@@ -33,6 +33,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.frontend.chc.ChcUtils.*;
 
 public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements ChcXcfaBuilder {
+
     private XcfaProcedure.Builder builder;
     private final XcfaLocation initLocation = XcfaLocation.create("Init");
     private final XcfaLocation errorLocation = XcfaLocation.create("Err");
@@ -71,7 +72,9 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
     @Override
     public Object visitFun_decl(CHCParser.Fun_declContext ctx) {
         String name = ctx.symbol().getText();
-        if (ctx.symbol().quotedSymbol() != null) name = name.replaceAll("\\|", "");
+        if (ctx.symbol().quotedSymbol() != null) {
+            name = name.replaceAll("\\|", "");
+        }
         int i = 0;
         List<VarDecl<?>> vars = new ArrayList<>();
         for (CHCParser.SortContext sort : ctx.sort()) {
@@ -129,19 +132,27 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
         return super.visitChc_query(ctx);
     }
 
-    private List<XcfaLabel> getIncomingAssignments(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
+    private List<XcfaLabel> getIncomingAssignments(CHCParser.Chc_tailContext tail,
+                                                   Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
         UPred from = locations.get(getTailFrom(tail).getName());
         tail.u_pred_atom().forEach(u_pred -> {
-            List<? extends VarDecl<?>> params = u_pred.symbol().stream().map(symbol -> localVars.get(symbol.getText())).toList();
-            localVars.values().forEach(var -> { if (!params.contains(var)) labels.add(XcfaLabel.Stmt(HavocStmt.of(var))); });
+            List<? extends VarDecl<?>> params = u_pred.symbol().stream()
+                    .map(symbol -> localVars.get(symbol.getText())).toList();
+            localVars.values().forEach(var -> {
+                if (!params.contains(var)) {
+                    labels.add(XcfaLabel.Stmt(HavocStmt.of(var)));
+                }
+            });
             labels.addAll(getParamAssignments(params, from.vars));
         });
         return labels;
     }
 
-    private List<XcfaLabel> getTargetAssignments(CHCParser.Chc_headContext head, Map<String, VarDecl<?>> localVars) {
-        List<? extends VarDecl<?>> params = head.u_pred_atom().symbol().stream().map(symbol -> localVars.get(symbol.getText())).toList();
+    private List<XcfaLabel> getTargetAssignments(CHCParser.Chc_headContext head,
+                                                 Map<String, VarDecl<?>> localVars) {
+        List<? extends VarDecl<?>> params = head.u_pred_atom().symbol().stream()
+                .map(symbol -> localVars.get(symbol.getText())).toList();
         UPred to = locations.get(getHeadTo(head).getName());
         return getParamAssignments(to.vars, params);
     }
@@ -149,8 +160,10 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
     private XcfaLocation getTailFrom(CHCParser.Chc_tailContext tail) {
         XcfaLocation from;
         if (tail.u_pred_atom() != null && !tail.u_pred_atom().isEmpty()) {
-            if (tail.u_pred_atom().size() != 1)
-                throw new UnsupportedOperationException("Non-linear CHCs are not supported with forward transformation, try using the --chc-transformation BACKWARD flag.");
+            if (tail.u_pred_atom().size() != 1) {
+                throw new UnsupportedOperationException(
+                        "Non-linear CHCs are not supported with forward transformation, try using the --chc-transformation BACKWARD flag.");
+            }
             from = locations.get(tail.u_pred_atom().get(0).u_predicate().getText()).location;
         } else {
             from = initLocation;
@@ -162,7 +175,8 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
         return locations.get(head.u_pred_atom().u_predicate().getText()).location;
     }
 
-    private List<XcfaLabel> getParamAssignments(List<? extends VarDecl<?>> lhs, List<? extends VarDecl<?>> rhs) {
+    private List<XcfaLabel> getParamAssignments(List<? extends VarDecl<?>> lhs,
+                                                List<? extends VarDecl<?>> rhs) {
         List<XcfaLabel> labels = new ArrayList<>();
         for (int i = 0; i < lhs.size(); ++i) {
             labels.add(XcfaLabel.Stmt(AssignStmt.create(lhs.get(i), rhs.get(i).getRef())));
@@ -171,6 +185,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
     }
 
     static class UPred {
+
         final XcfaLocation location;
         final List<VarDecl<?>> vars;
 

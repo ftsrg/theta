@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,55 +29,58 @@ import java.util.Map;
  * TODO: should this really inherit from expr?
  */
 public class Reference<R extends Type, T extends Type> extends UnaryExpr<T, R> {
-	private static final int HASH_SEED = 6987;
-	private static final String label = "&";
-	private final int id;
-	private final R ptrType;
-	private static final Map<Expr<?>, Integer> counters = new HashMap<>();
 
-	private Reference(Expr<T> op, R ptrType, int id) {
-		super(op);
-		this.ptrType = ptrType;
-		this.id = id;
-	}
+    private static final int HASH_SEED = 6987;
+    private static final String label = "&";
+    private final int id;
+    private final R ptrType;
+    private static final Map<Expr<?>, Integer> counters = new HashMap<>();
 
-	public static <R extends Type, T extends Type> Reference<R, T> of(Expr<T> op, R ptrType) {
-		if (!counters.containsKey(op)) {
-			counters.put(op, counters.size());
-		}
-		return new Reference<>(op, ptrType, counters.get(op));
-	}
+    private Reference(Expr<T> op, R ptrType, int id) {
+        super(op);
+        this.ptrType = ptrType;
+        this.id = id;
+    }
 
-	public static <R extends Type, T extends Type> Reference<R, T> of(Expr<T> op, R ptrType, int id) {
-		return new Reference<>(op, ptrType, id);
-	}
+    public static <R extends Type, T extends Type> Reference<R, T> of(Expr<T> op, R ptrType) {
+        if (!counters.containsKey(op)) {
+            counters.put(op, counters.size());
+        }
+        return new Reference<>(op, ptrType, counters.get(op));
+    }
 
-	@Override
-	public R getType() {
-		return ptrType;
-	}
+    public static <R extends Type, T extends Type> Reference<R, T> of(Expr<T> op, R ptrType,
+                                                                      int id) {
+        return new Reference<>(op, ptrType, id);
+    }
 
-	@Override
-	public LitExpr<R> eval(Valuation val) {
-		throw new IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!");
-	}
+    @Override
+    public R getType() {
+        return ptrType;
+    }
 
-	@Override
-	public UnaryExpr<T, R> with(Expr<T> op) {
-		return of(op, ptrType, id);
-	}
+    @Override
+    public LitExpr<R> eval(Valuation val) {
+        throw new IllegalStateException(
+                "Reference/Dereference expressions are not meant to be evaluated!");
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    public UnaryExpr<T, R> with(Expr<T> op) {
+        return of(op, ptrType, id);
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return label;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	public int getId() {
-		return id;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return label;
+    }
+
+    public int getId() {
+        return id;
+    }
 }

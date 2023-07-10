@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,20 +19,21 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 
 public final class ExplOrd implements PartialOrd<ExplState> {
 
-	private static final class LazyHolder {
-		private static final ExplOrd INSTANCE = new ExplOrd();
-	}
+    private static final class LazyHolder {
 
-	private ExplOrd() {
-	}
+        private static final ExplOrd INSTANCE = new ExplOrd();
+    }
 
-	public static ExplOrd getInstance() {
-		return LazyHolder.INSTANCE;
-	}
+    private ExplOrd() {
+    }
 
-	@Override
-	public boolean isLeq(final ExplState state1, final ExplState state2) {
-		return state1.isLeq(state2);
-	}
+    public static ExplOrd getInstance() {
+        return LazyHolder.INSTANCE;
+    }
+
+    @Override
+    public boolean isLeq(final ExplState state1, final ExplState state2) {
+        return state1.isLeq(state2);
+    }
 
 }

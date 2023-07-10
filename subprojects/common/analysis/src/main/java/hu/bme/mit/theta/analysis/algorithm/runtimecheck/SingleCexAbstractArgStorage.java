@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,39 +28,41 @@ import java.util.Set;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * CexStorage to be used in configurations, where refinement starts after each counterexample discovered coutnerexample
- * e.g. not MULTI_SEQ refinement, but SEQ_ITP, UNSAT_CORE, etc.
+ * CexStorage to be used in configurations, where refinement starts after each counterexample
+ * discovered coutnerexample e.g. not MULTI_SEQ refinement, but SEQ_ITP, UNSAT_CORE, etc.
  */
-public class SingleCexAbstractArgStorage<S extends State, A extends Action> extends AbstractArgStorage<S, A> {
-	private final Set<Integer> counterexamples = new LinkedHashSet<>();
-	private final Set<Integer> argprecs = new LinkedHashSet<>();
-	private Integer currentArgHash = null;
+public class SingleCexAbstractArgStorage<S extends State, A extends Action> extends
+        AbstractArgStorage<S, A> {
 
-	<P extends Prec> void setCurrentArg(AbstractArg<S, A, P> arg) {
-		currentArgHash = arg.hashCode();
-	}
+    private final Set<Integer> counterexamples = new LinkedHashSet<>();
+    private final Set<Integer> argprecs = new LinkedHashSet<>();
+    private Integer currentArgHash = null;
 
-	void addCounterexample(ArgTrace<S, A> cex) {
-		checkState(currentArgHash != null);
-		int cexHashCode = cex.hashCode();
-		counterexamples.add(cexHashCode);
-		argprecs.add(currentArgHash);
-	}
+    <P extends Prec> void setCurrentArg(AbstractArg<S, A, P> arg) {
+        currentArgHash = arg.hashCode();
+    }
 
-	boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
-		checkState(currentArgHash != null);
-		int cexHashCode = cex.hashCode();
-		if (argprecs.contains(currentArgHash)) {
-			if (counterexamples.contains(cexHashCode)) {
-				return false;
-			}
-		}
+    void addCounterexample(ArgTrace<S, A> cex) {
+        checkState(currentArgHash != null);
+        int cexHashCode = cex.hashCode();
+        counterexamples.add(cexHashCode);
+        argprecs.add(currentArgHash);
+    }
 
-		return true;
-	}
+    boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
+        checkState(currentArgHash != null);
+        int cexHashCode = cex.hashCode();
+        if (argprecs.contains(currentArgHash)) {
+            if (counterexamples.contains(cexHashCode)) {
+                return false;
+            }
+        }
 
-	@Override
-	<P extends Prec> boolean check(ARG<S, A> arg, P prec) {
-		return arg.getCexs().noneMatch(this::checkIfCounterexampleNew);
-	}
+        return true;
+    }
+
+    @Override
+    <P extends Prec> boolean check(ARG<S, A> arg, P prec) {
+        return arg.getCexs().noneMatch(this::checkIfCounterexampleNew);
+    }
 }

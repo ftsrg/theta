@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,121 +36,130 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaLts;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
-final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
-	private final XtaLts lts;
-	private final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy;
-	private final SearchStrategy searchStrategy;
+final class LazyXtaChecker<S extends State> implements
+        SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
 
-	private LazyXtaChecker(final XtaSystem system, final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy,
-						   final SearchStrategy searchStrategy) {
-		checkNotNull(system);
-		lts = XtaLts.create(system);
-		this.algorithmStrategy = checkNotNull(algorithmStrategy);
-		this.searchStrategy = checkNotNull(searchStrategy);
-	}
+    private final XtaLts lts;
+    private final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy;
+    private final SearchStrategy searchStrategy;
 
-	public static <S extends State> LazyXtaChecker<S> create(final XtaSystem system,
-															 final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy, final SearchStrategy searchStrategy) {
-		return new LazyXtaChecker<>(system, algorithmStrategy, searchStrategy);
-	}
+    private LazyXtaChecker(final XtaSystem system,
+                           final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy,
+                           final SearchStrategy searchStrategy) {
+        checkNotNull(system);
+        lts = XtaLts.create(system);
+        this.algorithmStrategy = checkNotNull(algorithmStrategy);
+        this.searchStrategy = checkNotNull(searchStrategy);
+    }
 
-	@Override
-	public SafetyResult<XtaState<S>, XtaAction> check(final UnitPrec prec) {
-		return new CheckMethod().run();
-	}
+    public static <S extends State> LazyXtaChecker<S> create(final XtaSystem system,
+                                                             final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy,
+                                                             final SearchStrategy searchStrategy) {
+        return new LazyXtaChecker<>(system, algorithmStrategy, searchStrategy);
+    }
 
-	private final class CheckMethod {
-		final ARG<XtaState<S>, XtaAction> arg;
-		final LazyXtaStatistics.Builder stats;
-		final Partition<ArgNode<XtaState<S>, XtaAction>, ?> passed;
-		final Waitlist<ArgNode<XtaState<S>, XtaAction>> waiting;
+    @Override
+    public SafetyResult<XtaState<S>, XtaAction> check(final UnitPrec prec) {
+        return new CheckMethod().run();
+    }
 
-		public CheckMethod() {
-			arg = ARG.create(algorithmStrategy.getAnalysis().getPartialOrd());
-			stats = LazyXtaStatistics.builder(arg);
-			passed = Partition.of(n -> algorithmStrategy.getProjection().apply(n.getState()));
-			waiting = searchStrategy.createWaitlist();
-		}
+    private final class CheckMethod {
 
-		public SafetyResult<XtaState<S>, XtaAction> run() {
-			stats.startAlgorithm();
+        final ARG<XtaState<S>, XtaAction> arg;
+        final LazyXtaStatistics.Builder stats;
+        final Partition<ArgNode<XtaState<S>, XtaAction>, ?> passed;
+        final Waitlist<ArgNode<XtaState<S>, XtaAction>> waiting;
 
-			init();
-			waiting.addAll(arg.getInitNodes());
-			while (!waiting.isEmpty()) {
-				final ArgNode<XtaState<S>, XtaAction> v = waiting.remove();
-				assert v.isFeasible();
+        public CheckMethod() {
+            arg = ARG.create(algorithmStrategy.getAnalysis().getPartialOrd());
+            stats = LazyXtaStatistics.builder(arg);
+            passed = Partition.of(n -> algorithmStrategy.getProjection().apply(n.getState()));
+            waiting = searchStrategy.createWaitlist();
+        }
 
-				close(v);
-				if (!v.isCovered()) {
-					expand(v);
-				}
-			}
+        public SafetyResult<XtaState<S>, XtaAction> run() {
+            stats.startAlgorithm();
 
-			stats.stopAlgorithm();
-			final LazyXtaStatistics statistics = stats.build();
-			final SafetyResult<XtaState<S>, XtaAction> result = SafetyResult.safe(arg, statistics);
-			return result;
-		}
+            init();
+            waiting.addAll(arg.getInitNodes());
+            while (!waiting.isEmpty()) {
+                final ArgNode<XtaState<S>, XtaAction> v = waiting.remove();
+                assert v.isFeasible();
 
-		private void init() {
-			final Collection<? extends XtaState<S>> initStates = algorithmStrategy.getAnalysis().getInitFunc()
-					.getInitStates(UnitPrec.getInstance());
-			initStates.forEach(s -> arg.createInitNode(s, false));
-		}
+                close(v);
+                if (!v.isCovered()) {
+                    expand(v);
+                }
+            }
 
-		private void close(final ArgNode<XtaState<S>, XtaAction> coveree) {
-			stats.startClosing();
+            stats.stopAlgorithm();
+            final LazyXtaStatistics statistics = stats.build();
+            final SafetyResult<XtaState<S>, XtaAction> result = SafetyResult.safe(arg, statistics);
+            return result;
+        }
 
-			final Iterable<ArgNode<XtaState<S>, XtaAction>> candidates = Lists.reverse(passed.get(coveree));
-			for (final ArgNode<XtaState<S>, XtaAction> coverer : candidates) {
+        private void init() {
+            final Collection<? extends XtaState<S>> initStates = algorithmStrategy.getAnalysis()
+                    .getInitFunc()
+                    .getInitStates(UnitPrec.getInstance());
+            initStates.forEach(s -> arg.createInitNode(s, false));
+        }
 
-				stats.checkCoverage();
-				if (algorithmStrategy.mightCover(coveree, coverer)) {
+        private void close(final ArgNode<XtaState<S>, XtaAction> coveree) {
+            stats.startClosing();
 
-					stats.attemptCoverage();
+            final Iterable<ArgNode<XtaState<S>, XtaAction>> candidates = Lists.reverse(
+                    passed.get(coveree));
+            for (final ArgNode<XtaState<S>, XtaAction> coverer : candidates) {
 
-					coveree.setCoveringNode(coverer);
-					final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = new ArrayList<>();
-					algorithmStrategy.cover(coveree, coverer, uncoveredNodes, stats);
+                stats.checkCoverage();
+                if (algorithmStrategy.mightCover(coveree, coverer)) {
 
-					waiting.addAll(uncoveredNodes.stream().filter(n -> !n.equals(coveree)));
+                    stats.attemptCoverage();
 
-					if (coveree.isCovered()) {
-						stats.successfulCoverage();
-						stats.stopClosing();
-						return;
-					}
-				}
-			}
+                    coveree.setCoveringNode(coverer);
+                    final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = new ArrayList<>();
+                    algorithmStrategy.cover(coveree, coverer, uncoveredNodes, stats);
 
-			stats.stopClosing();
-		}
+                    waiting.addAll(uncoveredNodes.stream().filter(n -> !n.equals(coveree)));
 
-		private void expand(final ArgNode<XtaState<S>, XtaAction> node) {
-			stats.startExpanding();
-			final XtaState<S> state = node.getState();
+                    if (coveree.isCovered()) {
+                        stats.successfulCoverage();
+                        stats.stopClosing();
+                        return;
+                    }
+                }
+            }
 
-			for (final XtaAction action : lts.getEnabledActionsFor(state)) {
-				final Collection<? extends XtaState<S>> succStates = algorithmStrategy.getAnalysis().getTransFunc()
-						.getSuccStates(state, action, UnitPrec.getInstance());
+            stats.stopClosing();
+        }
 
-				for (final XtaState<S> succState : succStates) {
-					if (succState.isBottom()) {
-						final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = new ArrayList<>();
-						algorithmStrategy.block(node, action, succState, uncoveredNodes, stats);
-						waiting.addAll(uncoveredNodes);
-					} else {
-						final ArgNode<XtaState<S>, XtaAction> succNode = arg.createSuccNode(node, action, succState,
-								false);
-						waiting.add(succNode);
-					}
-				}
-			}
+        private void expand(final ArgNode<XtaState<S>, XtaAction> node) {
+            stats.startExpanding();
+            final XtaState<S> state = node.getState();
 
-			passed.add(node);
-			stats.stopExpanding();
-		}
-	}
+            for (final XtaAction action : lts.getEnabledActionsFor(state)) {
+                final Collection<? extends XtaState<S>> succStates = algorithmStrategy.getAnalysis()
+                        .getTransFunc()
+                        .getSuccStates(state, action, UnitPrec.getInstance());
+
+                for (final XtaState<S> succState : succStates) {
+                    if (succState.isBottom()) {
+                        final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = new ArrayList<>();
+                        algorithmStrategy.block(node, action, succState, uncoveredNodes, stats);
+                        waiting.addAll(uncoveredNodes);
+                    } else {
+                        final ArgNode<XtaState<S>, XtaAction> succNode = arg.createSuccNode(node,
+                                action, succState,
+                                false);
+                        waiting.add(succNode);
+                    }
+                }
+            }
+
+            passed.add(node);
+            stats.stopExpanding();
+        }
+    }
 
 }

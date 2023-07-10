@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,34 +28,34 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 public class ExprStatePredicate implements Predicate<ExprState> {
 
-	private final Expr<BoolType> expr;
-	private Expr<BoolType> expr0;
-	private final Solver solver;
+    private final Expr<BoolType> expr;
+    private Expr<BoolType> expr0;
+    private final Solver solver;
 
-	public ExprStatePredicate(final Expr<BoolType> expr, final Solver solver) {
-		this.expr = checkNotNull(expr);
-		this.solver = checkNotNull(solver);
-		this.expr0 = null;
-	}
+    public ExprStatePredicate(final Expr<BoolType> expr, final Solver solver) {
+        this.expr = checkNotNull(expr);
+        this.solver = checkNotNull(solver);
+        this.expr0 = null;
+    }
 
-	@Override
-	public boolean test(final ExprState state) {
-		if (expr0 == null) {
-			expr0 = PathUtils.unfold(expr, 0);
-		}
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			solver.add(PathUtils.unfold(state.toExpr(), 0));
-			solver.add(expr0);
-			return solver.check().isSat();
-		}
-	}
+    @Override
+    public boolean test(final ExprState state) {
+        if (expr0 == null) {
+            expr0 = PathUtils.unfold(expr, 0);
+        }
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            solver.add(PathUtils.unfold(state.toExpr(), 0));
+            solver.add(expr0);
+            return solver.check().isSat();
+        }
+    }
 
-	public Expr<BoolType> toExpr() {
-		return expr;
-	}
+    public Expr<BoolType> toExpr() {
+        return expr;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr).toString();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,19 +24,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XcfaSTOrd<S extends ExprState> implements PartialOrd<XcfaState<S>> {
 
-	private final PartialOrd<S> partialOrd;
+    private final PartialOrd<S> partialOrd;
 
-	private XcfaSTOrd(final PartialOrd<S> partialOrd) {
-		this.partialOrd = checkNotNull(partialOrd);
-	}
+    private XcfaSTOrd(final PartialOrd<S> partialOrd) {
+        this.partialOrd = checkNotNull(partialOrd);
+    }
 
-	public static <S extends ExprState> XcfaSTOrd<S> create(final PartialOrd<S> partialOrd) {
-		return new XcfaSTOrd<>(partialOrd);
-	}
+    public static <S extends ExprState> XcfaSTOrd<S> create(final PartialOrd<S> partialOrd) {
+        return new XcfaSTOrd<>(partialOrd);
+    }
 
-	@Override
-	public boolean isLeq(final XcfaState<S> state1, final XcfaState<S> state2) {
-		return ((XcfaSTState<S>) state1).equalLocations(((XcfaSTState<S>) state2))
-				&& partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState());
-	}
+    @Override
+    public boolean isLeq(final XcfaState<S> state1, final XcfaState<S> state2) {
+        return ((XcfaSTState<S>) state1).equalLocations(((XcfaSTState<S>) state2))
+                && partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState());
+    }
 }

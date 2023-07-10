@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,28 +23,28 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class UnitState implements ExprState {
 
-	private static final UnitState INSTANCE = new UnitState();
+    private static final UnitState INSTANCE = new UnitState();
 
-	private UnitState() {
-	}
+    private UnitState() {
+    }
 
-	public static UnitState getInstance() {
-		return INSTANCE;
-	}
+    public static UnitState getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public boolean isBottom() {
-		return false;
-	}
+    @Override
+    public boolean isBottom() {
+        return false;
+    }
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		return True();
-	}
+    @Override
+    public Expr<BoolType> toExpr() {
+        return True();
+    }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,28 +23,28 @@ import hu.bme.mit.theta.analysis.TransFunc;
 
 public final class UnitAnalysis implements Analysis<UnitState, Action, UnitPrec> {
 
-	private static final UnitAnalysis INSTANCE = new UnitAnalysis();
+    private static final UnitAnalysis INSTANCE = new UnitAnalysis();
 
-	private UnitAnalysis() {
-	}
+    private UnitAnalysis() {
+    }
 
-	public static UnitAnalysis getInstance() {
-		return INSTANCE;
-	}
+    public static UnitAnalysis getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public PartialOrd<UnitState> getPartialOrd() {
-		return UnitOrd.getInstance();
-	}
+    @Override
+    public PartialOrd<UnitState> getPartialOrd() {
+        return UnitOrd.getInstance();
+    }
 
-	@Override
-	public InitFunc<UnitState, UnitPrec> getInitFunc() {
-		return UnitInitFunc.getInstance();
-	}
+    @Override
+    public InitFunc<UnitState, UnitPrec> getInitFunc() {
+        return UnitInitFunc.getInstance();
+    }
 
-	@Override
-	public TransFunc<UnitState, Action, UnitPrec> getTransFunc() {
-		return UnitTransFunc.getInstance();
-	}
+    @Override
+    public TransFunc<UnitState, Action, UnitPrec> getTransFunc() {
+        return UnitTransFunc.getInstance();
+    }
 
 }

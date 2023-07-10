@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,54 +25,58 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class Label {
 
-	private static final int HASH_SEED = 8527;
-	private volatile int hashCode = 0;
+    private static final int HASH_SEED = 8527;
+    private volatile int hashCode = 0;
 
-	private final String name;
-	private final List<Type> paramTypes;
-	private final boolean broadcast;
+    private final String name;
+    private final List<Type> paramTypes;
+    private final boolean broadcast;
 
-	private Label(final String name, final List<? extends Type> paramTypes, final boolean broadcast) {
-		this.name = checkNotNull(name);
-		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
-		this.broadcast = broadcast;
-	}
+    private Label(final String name, final List<? extends Type> paramTypes,
+                  final boolean broadcast) {
+        this.name = checkNotNull(name);
+        this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
+        this.broadcast = broadcast;
+    }
 
-	public static Label of(final String name, final List<? extends Type> paramTypes, final boolean broadcast) {
-		return new Label(name, paramTypes, broadcast);
-	}
+    public static Label of(final String name, final List<? extends Type> paramTypes,
+                           final boolean broadcast) {
+        return new Label(name, paramTypes, broadcast);
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public List<Type> getParamTypes() {
-		return paramTypes;
-	}
+    public List<Type> getParamTypes() {
+        return paramTypes;
+    }
 
-	public boolean isBroadcast() { return broadcast; }
+    public boolean isBroadcast() {
+        return broadcast;
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + name.hashCode();
-			result = 31 * result + paramTypes.hashCode();
-			result = 31 * result + (broadcast ? 1 : 0);
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + name.hashCode();
+            result = 31 * result + paramTypes.hashCode();
+            result = 31 * result + (broadcast ? 1 : 0);
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		return super.equals(obj);
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        return super.equals(obj);
+    }
 
-	@Override
-	public String toString() {
-		return name;
-	}
+    @Override
+    public String toString() {
+        return name;
+    }
 
 }

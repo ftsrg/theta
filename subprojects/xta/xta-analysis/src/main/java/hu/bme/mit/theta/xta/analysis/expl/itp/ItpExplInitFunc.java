@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,33 +27,33 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 
 final class ItpExplInitFunc implements InitFunc<ItpExplState, UnitPrec> {
 
-	private final InitFunc<ExplState, UnitPrec> initFunc;
+    private final InitFunc<ExplState, UnitPrec> initFunc;
 
-	private ItpExplInitFunc(final InitFunc<ExplState, UnitPrec> initFunc) {
-		this.initFunc = checkNotNull(initFunc);
-	}
+    private ItpExplInitFunc(final InitFunc<ExplState, UnitPrec> initFunc) {
+        this.initFunc = checkNotNull(initFunc);
+    }
 
-	public static ItpExplInitFunc create(final InitFunc<ExplState, UnitPrec> initFunc) {
-		return new ItpExplInitFunc(initFunc);
-	}
+    public static ItpExplInitFunc create(final InitFunc<ExplState, UnitPrec> initFunc) {
+        return new ItpExplInitFunc(initFunc);
+    }
 
-	@Override
-	public Collection<ItpExplState> getInitStates(final UnitPrec prec) {
-		checkNotNull(prec);
+    @Override
+    public Collection<ItpExplState> getInitStates(final UnitPrec prec) {
+        checkNotNull(prec);
 
-		final Collection<? extends ExplState> subInitStates = initFunc.getInitStates(prec);
+        final Collection<? extends ExplState> subInitStates = initFunc.getInitStates(prec);
 
-		if (subInitStates.isEmpty()) {
-			final ItpExplState succState = ItpExplState.of(ExplState.bottom(), ExplState.top());
-			return Collections.singleton(succState);
-		} else {
-			final Collection<ItpExplState> result = new ArrayList<>();
-			for (final ExplState subInitState : subInitStates) {
-				final ItpExplState initState = ItpExplState.of(subInitState, ExplState.top());
-				result.add(initState);
-			}
-			return result;
-		}
-	}
+        if (subInitStates.isEmpty()) {
+            final ItpExplState succState = ItpExplState.of(ExplState.bottom(), ExplState.top());
+            return Collections.singleton(succState);
+        } else {
+            final Collection<ItpExplState> result = new ArrayList<>();
+            for (final ExplState subInitState : subInitStates) {
+                final ItpExplState initState = ItpExplState.of(subInitState, ExplState.top());
+                result.add(initState);
+            }
+            return result;
+        }
+    }
 
 }

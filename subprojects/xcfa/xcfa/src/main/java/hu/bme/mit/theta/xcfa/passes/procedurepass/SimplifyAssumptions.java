@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,37 +37,43 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 
 public class SimplifyAssumptions extends ProcedurePass {
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			XcfaEdge newEdge = edge.mapLabels(label -> {
-				if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssumeStmt) {
-					Expr<BoolType> cond = ((AssumeStmt) label.getStmt()).getCond();
-					if (cond instanceof EqExpr || cond instanceof NeqExpr) {
-						List<? extends Expr<?>> ops = cond.getOps();
-						Expr<?> leftOp = ops.get(0);
-						Expr<?> rightOp = ops.get(1);
-						if (leftOp instanceof IteExpr && ((IteExpr<?>) leftOp).getElse().equals(rightOp)) {
-							Expr<BoolType> expr;
-							if (cond instanceof NeqExpr) expr = ((IteExpr<?>) leftOp).getCond();
-							else expr = Not(((IteExpr<?>) leftOp).getCond());
-							FrontendMetadata.create(expr, "cType", CComplexType.getType(leftOp));
-							return Stmt(Assume(expr));
-						}
-					}
-				}
-				return label;
-			});
-			if (!edge.getLabels().equals(newEdge.getLabels())) {
-				builder.removeEdge(edge);
-				builder.addEdge(newEdge);
-			}
-		}
-		return builder;
-	}
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+            XcfaEdge newEdge = edge.mapLabels(label -> {
+                if (label instanceof XcfaLabel.StmtXcfaLabel
+                        && label.getStmt() instanceof AssumeStmt) {
+                    Expr<BoolType> cond = ((AssumeStmt) label.getStmt()).getCond();
+                    if (cond instanceof EqExpr || cond instanceof NeqExpr) {
+                        List<? extends Expr<?>> ops = cond.getOps();
+                        Expr<?> leftOp = ops.get(0);
+                        Expr<?> rightOp = ops.get(1);
+                        if (leftOp instanceof IteExpr && ((IteExpr<?>) leftOp).getElse()
+                                .equals(rightOp)) {
+                            Expr<BoolType> expr;
+                            if (cond instanceof NeqExpr) {
+                                expr = ((IteExpr<?>) leftOp).getCond();
+                            } else {
+                                expr = Not(((IteExpr<?>) leftOp).getCond());
+                            }
+                            FrontendMetadata.create(expr, "cType", CComplexType.getType(leftOp));
+                            return Stmt(Assume(expr));
+                        }
+                    }
+                }
+                return label;
+            });
+            if (!edge.getLabels().equals(newEdge.getLabels())) {
+                builder.removeEdge(edge);
+                builder.addEdge(newEdge);
+            }
+        }
+        return builder;
+    }
+
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

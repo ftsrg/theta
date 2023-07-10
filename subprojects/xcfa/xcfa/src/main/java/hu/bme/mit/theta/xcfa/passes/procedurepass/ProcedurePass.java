@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ package hu.bme.mit.theta.xcfa.passes.procedurepass;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 
 public abstract class ProcedurePass {
-	public static boolean postInlining = false;
 
-	public abstract XcfaProcedure.Builder run(XcfaProcedure.Builder builder);
+    public static boolean postInlining = false;
 
-	public boolean isPostInlining() {
-		return false;
-	}
+    public abstract XcfaProcedure.Builder run(XcfaProcedure.Builder builder);
+
+    public boolean isPostInlining() {
+        return false;
+    }
 
 }

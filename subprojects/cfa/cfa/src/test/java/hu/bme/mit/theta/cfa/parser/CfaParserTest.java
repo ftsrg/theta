@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,39 +36,39 @@ import hu.bme.mit.theta.cfa.CFA;
 @RunWith(Parameterized.class)
 public final class CfaParserTest {
 
-	@Parameter(0)
-	public String filepath;
+    @Parameter(0)
+    public String filepath;
 
-	private Reader reader;
-	private CfaParser parser;
+    private Reader reader;
+    private CfaParser parser;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"src/test/resources/counter5_true.lisp.cfa"},
+                {"src/test/resources/counter5_true.lisp.cfa"},
 
-		});
-	}
+        });
+    }
 
-	@Before
-	public void before() throws FileNotFoundException {
-		reader = new FileReader(filepath);
-		parser = new CfaParser(reader);
-	}
+    @Before
+    public void before() throws FileNotFoundException {
+        reader = new FileReader(filepath);
+        parser = new CfaParser(reader);
+    }
 
-	@After
-	public void after() throws IOException {
-		reader.close();
-	}
+    @After
+    public void after() throws IOException {
+        reader.close();
+    }
 
-	@Test
-	public void test() {
-		// Act
-		final CFA cfa = parser.cfa();
-		Assert.assertEquals(1, cfa.getVars().size());
-		Assert.assertEquals(6, cfa.getLocs().size());
-		Assert.assertEquals(6, cfa.getEdges().size());
-	}
+    @Test
+    public void test() {
+        // Act
+        final CFA cfa = parser.cfa();
+        Assert.assertEquals(1, cfa.getVars().size());
+        Assert.assertEquals(6, cfa.getLocs().size());
+        Assert.assertEquals(6, cfa.getEdges().size());
+    }
 
 }

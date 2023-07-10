@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,112 +26,117 @@ import java.util.Objects;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XcfaLocation {
-	private final String name;
-	private final List<XcfaEdge> incomingEdges;
-	private final List<XcfaEdge> outgoingEdges;
-	private XcfaProcedure parent;
-	private boolean isErrorLoc = false;
-	private boolean isEndLoc = false;
 
-	private XcfaLocation(final String name) {
-		this.name = checkNotNull(name);
-		outgoingEdges = new ArrayList<>();
-		incomingEdges = new ArrayList<>();
-	}
+    private final String name;
+    private final List<XcfaEdge> incomingEdges;
+    private final List<XcfaEdge> outgoingEdges;
+    private XcfaProcedure parent;
+    private boolean isErrorLoc = false;
+    private boolean isEndLoc = false;
 
-	public static XcfaLocation copyOf(final XcfaLocation from) {
-		XcfaLocation xcfaLocation = create(from.getName());
-		FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
-			FrontendMetadata.create(xcfaLocation, s, o);
-		});
-		return xcfaLocation;
-	}
+    private XcfaLocation(final String name) {
+        this.name = checkNotNull(name);
+        outgoingEdges = new ArrayList<>();
+        incomingEdges = new ArrayList<>();
+    }
 
-	public static XcfaLocation create(final String name) {
-		return new XcfaLocation(name);
-	}
+    public static XcfaLocation copyOf(final XcfaLocation from) {
+        XcfaLocation xcfaLocation = create(from.getName());
+        FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
+            FrontendMetadata.create(xcfaLocation, s, o);
+        });
+        return xcfaLocation;
+    }
 
-	private static int counter = 0;
+    public static XcfaLocation create(final String name) {
+        return new XcfaLocation(name);
+    }
 
-	public static int uniqeCounter() {
-		return counter++;
-	}
+    private static int counter = 0;
 
-	public static XcfaLocation uniqeCopyOf(final XcfaLocation from) {
-		XcfaLocation xcfaLocation = create(from.getName() + uniqeCounter());
-		FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
-			FrontendMetadata.create(xcfaLocation, s, o);
-		});
-		return xcfaLocation;
-	}
+    public static int uniqeCounter() {
+        return counter++;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public static XcfaLocation uniqeCopyOf(final XcfaLocation from) {
+        XcfaLocation xcfaLocation = create(from.getName() + uniqeCounter());
+        FrontendMetadata.lookupMetadata(from).forEach((s, o) -> {
+            FrontendMetadata.create(xcfaLocation, s, o);
+        });
+        return xcfaLocation;
+    }
 
-	public List<XcfaEdge> getIncomingEdges() {
-		return Collections.unmodifiableList(incomingEdges);
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void removeIncomingEdge(XcfaEdge xcfaEdge) {
-		incomingEdges.remove(xcfaEdge);
-	}
+    public List<XcfaEdge> getIncomingEdges() {
+        return Collections.unmodifiableList(incomingEdges);
+    }
 
-	void addIncomingEdge(XcfaEdge edge) {
-		incomingEdges.add(edge);
-	}
+    public void removeIncomingEdge(XcfaEdge xcfaEdge) {
+        incomingEdges.remove(xcfaEdge);
+    }
 
-	public List<XcfaEdge> getOutgoingEdges() {
-		return Collections.unmodifiableList(outgoingEdges);
-	}
+    void addIncomingEdge(XcfaEdge edge) {
+        incomingEdges.add(edge);
+    }
 
-	public void removeOutgoingEdge(XcfaEdge xcfaEdge) {
-		outgoingEdges.remove(xcfaEdge);
-	}
+    public List<XcfaEdge> getOutgoingEdges() {
+        return Collections.unmodifiableList(outgoingEdges);
+    }
 
-	void addOutgoingEdge(XcfaEdge edge) {
-		outgoingEdges.add(edge);
-	}
+    public void removeOutgoingEdge(XcfaEdge xcfaEdge) {
+        outgoingEdges.remove(xcfaEdge);
+    }
 
-	@Override
-	public String toString() {
-		return name;
-	}
+    void addOutgoingEdge(XcfaEdge edge) {
+        outgoingEdges.add(edge);
+    }
 
-	public boolean isErrorLoc() {
-		return isErrorLoc;
-	}
+    @Override
+    public String toString() {
+        return name;
+    }
 
-	public void setErrorLoc(boolean errorLoc) {
-		isErrorLoc = errorLoc;
-	}
+    public boolean isErrorLoc() {
+        return isErrorLoc;
+    }
 
-	public boolean isEndLoc() {
-		return isEndLoc;
-	}
+    public void setErrorLoc(boolean errorLoc) {
+        isErrorLoc = errorLoc;
+    }
 
-	public void setEndLoc(boolean endLoc) {
-		isEndLoc = endLoc;
-	}
+    public boolean isEndLoc() {
+        return isEndLoc;
+    }
 
-	public XcfaProcedure getParent() {
-		return parent;
-	}
+    public void setEndLoc(boolean endLoc) {
+        isEndLoc = endLoc;
+    }
 
-	void setParent(XcfaProcedure xcfaProcedure) {
-		this.parent = xcfaProcedure;
-	}
+    public XcfaProcedure getParent() {
+        return parent;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		XcfaLocation location = (XcfaLocation) o;
-		return name.equals(location.name);
-	}
+    void setParent(XcfaProcedure xcfaProcedure) {
+        this.parent = xcfaProcedure;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(name);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        XcfaLocation location = (XcfaLocation) o;
+        return name.equals(location.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
 }

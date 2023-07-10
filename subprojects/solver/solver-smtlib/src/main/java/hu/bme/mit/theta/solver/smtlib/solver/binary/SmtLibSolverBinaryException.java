@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package hu.bme.mit.theta.solver.smtlib.solver.binary;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 
 public class SmtLibSolverBinaryException extends SmtLibSolverException {
-	private static final long serialVersionUID = -7472824180590829943L;
 
-	public SmtLibSolverBinaryException(Exception e) {
-		super(e);
-	}
+    private static final long serialVersionUID = -7472824180590829943L;
 
-	public SmtLibSolverBinaryException(String e) {
-		super(e);
-	}
+    public SmtLibSolverBinaryException(Exception e) {
+        super(e);
+    }
+
+    public SmtLibSolverBinaryException(String e) {
+        super(e);
+    }
 }

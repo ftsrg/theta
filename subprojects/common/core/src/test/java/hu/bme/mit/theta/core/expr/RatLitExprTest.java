@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,89 +34,89 @@ import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 @RunWith(Parameterized.class)
 public final class RatLitExprTest {
 
-	@Parameter(value = 0)
-	public int num;
+    @Parameter(value = 0)
+    public int num;
 
-	@Parameter(value = 1)
-	public int denom;
+    @Parameter(value = 1)
+    public int denom;
 
-	@Parameter(value = 2)
-	public int expectedfloor;
+    @Parameter(value = 2)
+    public int expectedfloor;
 
-	@Parameter(value = 3)
-	public int expectedCeil;
+    @Parameter(value = 3)
+    public int expectedCeil;
 
-	@Parameter(value = 4)
-	public int expectedSign;
+    @Parameter(value = 4)
+    public int expectedSign;
 
-	@Parameter(value = 5)
-	public int expectedFracNum;
+    @Parameter(value = 5)
+    public int expectedFracNum;
 
-	@Parameter(value = 6)
-	public int expectedFracDenom;
+    @Parameter(value = 6)
+    public int expectedFracDenom;
 
-	public RatLitExpr number;
+    public RatLitExpr number;
 
-	public RatLitExpr expectedFrac;
+    public RatLitExpr expectedFrac;
 
-	@Before
-	public void initialize() {
-		// Arrange
-		number = Rat(num, denom);
-		expectedFrac = Rat(expectedFracNum, expectedFracDenom);
-	}
+    @Before
+    public void initialize() {
+        // Arrange
+        number = Rat(num, denom);
+        expectedFrac = Rat(expectedFracNum, expectedFracDenom);
+    }
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{0, 1, 0, 0, 0, 0, 1},
+                {0, 1, 0, 0, 0, 0, 1},
 
-				{1, 1, 1, 1, 1, 0, 1},
+                {1, 1, 1, 1, 1, 0, 1},
 
-				{1, 2, 0, 1, 1, 1, 2},
+                {1, 2, 0, 1, 1, 1, 2},
 
-				{-1, 2, -1, 0, -1, 1, 2},
+                {-1, 2, -1, 0, -1, 1, 2},
 
-				{-1, 1, -1, -1, -1, 0, 1},
+                {-1, 1, -1, -1, -1, 0, 1},
 
-				{3, 2, 1, 2, 1, 1, 2},
+                {3, 2, 1, 2, 1, 1, 2},
 
-				{-3, 2, -2, -1, -1, 1, 2}
+                {-3, 2, -2, -1, -1, 1, 2}
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void testFloor() {
-		// Act
-		final var actualFloor = number.floor();
-		// Assert
-		assertEquals(BigInteger.valueOf(expectedfloor), actualFloor);
-	}
+    @Test
+    public void testFloor() {
+        // Act
+        final var actualFloor = number.floor();
+        // Assert
+        assertEquals(BigInteger.valueOf(expectedfloor), actualFloor);
+    }
 
-	@Test
-	public void testCeil() {
-		// Act
-		final var actualCeil = number.ceil();
-		// Assert
-		assertEquals(BigInteger.valueOf(expectedCeil), actualCeil);
-	}
+    @Test
+    public void testCeil() {
+        // Act
+        final var actualCeil = number.ceil();
+        // Assert
+        assertEquals(BigInteger.valueOf(expectedCeil), actualCeil);
+    }
 
-	@Test
-	public void testSign() {
-		// Act
-		final long actualSign = number.sign();
-		// Assert
-		assertEquals(expectedSign, actualSign);
-	}
+    @Test
+    public void testSign() {
+        // Act
+        final long actualSign = number.sign();
+        // Assert
+        assertEquals(expectedSign, actualSign);
+    }
 
-	@Test
-	public void testFrac() {
-		// Act
-		final RatLitExpr actualFrac = number.frac();
-		// Assert
-		assertEquals(expectedFrac, actualFrac);
-	}
+    @Test
+    public void testFrac() {
+        // Act
+        final RatLitExpr actualFrac = number.frac();
+        // Assert
+        assertEquals(expectedFrac, actualFrac);
+    }
 
 }

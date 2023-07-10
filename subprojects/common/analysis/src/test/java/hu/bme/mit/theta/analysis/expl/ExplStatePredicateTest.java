@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,35 +43,37 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 @RunWith(Parameterized.class)
 public class ExplStatePredicateTest {
 
-	private static final VarDecl<IntType> x = Var("x", Int());
-	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    private static final VarDecl<IntType> x = Var("x", Int());
+    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
-	@Parameter(value = 0)
-	public Expr<BoolType> expr;
+    @Parameter(value = 0)
+    public Expr<BoolType> expr;
 
-	@Parameter(value = 1)
-	public ExplState state;
+    @Parameter(value = 1)
+    public ExplState state;
 
-	@Parameter(value = 2)
-	public boolean expected;
+    @Parameter(value = 2)
+    public boolean expected;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{True(), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
+                {True(), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
 
-				{Leq(x.getRef(), Int(5)), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
+                {Leq(x.getRef(), Int(5)),
+                        ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
 
-				{Leq(x.getRef(), Int(5)), ExplState.of(ImmutableValuation.builder().put(x, Int(7)).build()), false},
+                {Leq(x.getRef(), Int(5)),
+                        ExplState.of(ImmutableValuation.builder().put(x, Int(7)).build()), false},
 
-				{Geq(Mul(x.getRef(), x.getRef()), Int(0)), ExplState.top(), true},
+                {Geq(Mul(x.getRef(), x.getRef()), Int(0)), ExplState.top(), true},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		assertEquals(expected, new ExplStatePredicate(expr, solver).test(state));
-	}
+    @Test
+    public void test() {
+        assertEquals(expected, new ExplStatePredicate(expr, solver).test(state));
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,26 +20,28 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 
 public final class FileLogger extends BaseLogger {
-	private final PrintWriter pw;
-	private final boolean instantFlush;
 
-	public FileLogger(final Level minLevel, final String fileName, final boolean instantFlush, final boolean append)
-			throws FileNotFoundException {
-		super(minLevel);
-		pw = new PrintWriter(new FileOutputStream(fileName, append));
-		this.instantFlush = instantFlush;
-	}
+    private final PrintWriter pw;
+    private final boolean instantFlush;
 
-	public void close() {
-		pw.close();
-	}
+    public FileLogger(final Level minLevel, final String fileName, final boolean instantFlush,
+                      final boolean append)
+            throws FileNotFoundException {
+        super(minLevel);
+        pw = new PrintWriter(new FileOutputStream(fileName, append));
+        this.instantFlush = instantFlush;
+    }
 
-	@Override
-	protected void writeStr(final String str) {
-		pw.print(str);
-		if (instantFlush) {
-			pw.flush();
-		}
-	}
+    public void close() {
+        pw.close();
+    }
+
+    @Override
+    protected void writeStr(final String str) {
+        pw.print(str);
+        if (instantFlush) {
+            pw.flush();
+        }
+    }
 
 }

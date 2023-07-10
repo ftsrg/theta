@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,44 +22,45 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 
 public final class SolverValidatorWrapperFactory implements SolverFactory {
-	private final String solverName;
 
-	private SolverValidatorWrapperFactory(String solverName) {
-		this.solverName = solverName;
-	}
+    private final String solverName;
 
-	public static SolverValidatorWrapperFactory create(String solverName) {
-		return new SolverValidatorWrapperFactory(solverName);
-	}
+    private SolverValidatorWrapperFactory(String solverName) {
+        this.solverName = solverName;
+    }
 
-	@Override
-	public Solver createSolver() {
-		try {
-			return new SolverValidatorWrapper(solverName);
+    public static SolverValidatorWrapperFactory create(String solverName) {
+        return new SolverValidatorWrapperFactory(solverName);
+    }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new UnsupportedOperationException("Verifying solver could not be created");
-		}
-	}
+    @Override
+    public Solver createSolver() {
+        try {
+            return new SolverValidatorWrapper(solverName);
 
-	@Override
-	public UCSolver createUCSolver() {
-		try {
-			return new UCSolverValidatorWrapper(solverName);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new UnsupportedOperationException("Verifying UCSolver could not be created");
-		}
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new UnsupportedOperationException("Verifying solver could not be created");
+        }
+    }
 
-	@Override
-	public ItpSolver createItpSolver() {
-		try {
-			return new ItpSolverValidatorWrapper(solverName);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new UnsupportedOperationException("Verifying ITPSolver could not be created");
-		}
-	}
+    @Override
+    public UCSolver createUCSolver() {
+        try {
+            return new UCSolverValidatorWrapper(solverName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new UnsupportedOperationException("Verifying UCSolver could not be created");
+        }
+    }
+
+    @Override
+    public ItpSolver createItpSolver() {
+        try {
+            return new ItpSolverValidatorWrapper(solverName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new UnsupportedOperationException("Verifying ITPSolver could not be created");
+        }
+    }
 }

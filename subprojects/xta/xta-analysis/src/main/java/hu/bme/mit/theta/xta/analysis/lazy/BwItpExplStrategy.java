@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,39 +36,39 @@ import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 final class BwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
 
-	public BwItpExplStrategy(final XtaSystem system, final Lens<S, ItpExplState> lens) {
-		super(system, lens);
-	}
+    public BwItpExplStrategy(final XtaSystem system, final Lens<S, ItpExplState> lens) {
+        super(system, lens);
+    }
 
-	@Override
-	protected Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
-								  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
-		assert !node.getState().isBottom();
+    @Override
+    protected Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
+                                  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+        assert !node.getState().isBottom();
 
-		final ExplState abstractExpl = getLens().get(node.getState()).getAbstrState();
+        final ExplState abstractExpl = getLens().get(node.getState()).getAbstrState();
 
-		final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, abstractExpl);
-		if (simplifiedExpr instanceof BoolLitExpr) {
-			assert !((BoolLitExpr) simplifiedExpr).getValue();
-			return abstractExpl;
-		}
+        final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, abstractExpl);
+        if (simplifiedExpr instanceof BoolLitExpr) {
+            assert !((BoolLitExpr) simplifiedExpr).getValue();
+            return abstractExpl;
+        }
 
-		stats.refineExpl();
+        stats.refineExpl();
 
-		final ExplState concreteExpl = getLens().get(node.getState()).getConcrState();
-		final Valuation valI = XtaExplUtils.interpolate(concreteExpl, expr);
+        final ExplState concreteExpl = getLens().get(node.getState()).getConcrState();
+        final Valuation valI = XtaExplUtils.interpolate(concreteExpl, expr);
 
-		strengthen(node, valI);
-		maintainCoverage(node, valI, uncoveredNodes);
+        strengthen(node, valI);
+        maintainCoverage(node, valI, uncoveredNodes);
 
-		if (node.getParent().isPresent()) {
-			final ArgEdge<S, XtaAction> inEdge = node.getInEdge().get();
-			final XtaAction action = inEdge.getAction();
-			final Expr<BoolType> newB = XtaExplUtils.pre(Not(valI.toExpr()), action);
-			blockExpl(node.getParent().get(), newB, uncoveredNodes, stats);
-		}
+        if (node.getParent().isPresent()) {
+            final ArgEdge<S, XtaAction> inEdge = node.getInEdge().get();
+            final XtaAction action = inEdge.getAction();
+            final Expr<BoolType> newB = XtaExplUtils.pre(Not(valI.toExpr()), action);
+            blockExpl(node.getParent().get(), newB, uncoveredNodes, stats);
+        }
 
-		return valI;
-	}
+        return valI;
+    }
 
 }

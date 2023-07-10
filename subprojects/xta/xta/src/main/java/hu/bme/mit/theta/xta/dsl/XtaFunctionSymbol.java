@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.FunctionDeclContext;
 
 final class XtaFunctionSymbol implements Symbol {
 
-	public XtaFunctionSymbol(final FunctionDeclContext context) {
-		throw new UnsupportedOperationException();
-	}
+    public XtaFunctionSymbol(final FunctionDeclContext context) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
+    @Override
+    public String getName() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("TODO: auto-generated method stub");
+    }
 
 }

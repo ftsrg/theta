@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,21 +21,22 @@ import java.util.Collection;
  * Base class for nodes in an {@link AigerSystem}.
  */
 public abstract class AigerNode {
-	private final String name;
 
-	public AigerNode(final String name) {
-		this.name = name;
-	}
+    private final String name;
 
-	public String getName() {
-		return name;
-	}
+    public AigerNode(final String name) {
+        this.name = name;
+    }
 
-	public abstract Collection<AigerWire> getInWires();
+    public String getName() {
+        return name;
+    }
 
-	public abstract Collection<AigerWire> getOutWires();
+    public abstract Collection<AigerWire> getInWires();
 
-	public abstract void addOutWire(AigerWire outWire);
+    public abstract Collection<AigerWire> getOutWires();
 
-	// public abstract void removeOutWire(AigerWire outWire);
+    public abstract void addOutWire(AigerWire outWire);
+
+    // public abstract void removeOutWire(AigerWire outWire);
 }

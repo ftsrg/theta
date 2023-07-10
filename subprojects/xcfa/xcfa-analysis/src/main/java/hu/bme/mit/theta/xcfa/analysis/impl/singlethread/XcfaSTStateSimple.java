@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.Objects;
 
-public class XcfaSTStateSimple <S extends ExprState> extends XcfaSTState<S> {
+public class XcfaSTStateSimple<S extends ExprState> extends XcfaSTState<S> {
+
     private final XcfaLocation currentLocation;
 
     protected XcfaSTStateSimple(final XcfaLocation currentLoc, final S globalState) {

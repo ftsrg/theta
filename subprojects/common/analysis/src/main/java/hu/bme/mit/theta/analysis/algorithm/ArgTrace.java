@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,112 +30,116 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Represents a trace in the ARG, which is an alternating list of ArgNodes and
- * ArgEdges.
+ * Represents a trace in the ARG, which is an alternating list of ArgNodes and ArgEdges.
  */
 public final class ArgTrace<S extends State, A extends Action> implements Iterable<ArgNode<S, A>> {
-	private static final int HASH_SEED = 7653;
-	private volatile int hashCode = 0;
 
-	private final List<ArgNode<S, A>> nodes;
-	private final List<ArgEdge<S, A>> edges;
-	private final Collection<State> states;
+    private static final int HASH_SEED = 7653;
+    private volatile int hashCode = 0;
 
-	private ArgTrace(final ArgNode<S, A> node) {
-		// adding items to first index will lead to O(N^2) performance
-		final List<ArgNode<S, A>> nodeList = new ArrayList<>();
-		final List<ArgEdge<S, A>> edgeList = new ArrayList<>();
+    private final List<ArgNode<S, A>> nodes;
+    private final List<ArgEdge<S, A>> edges;
+    private final Collection<State> states;
 
-		ArgNode<S, A> running = node;
-		nodeList.add(running);
+    private ArgTrace(final ArgNode<S, A> node) {
+        // adding items to first index will lead to O(N^2) performance
+        final List<ArgNode<S, A>> nodeList = new ArrayList<>();
+        final List<ArgEdge<S, A>> edgeList = new ArrayList<>();
 
-		while (running.getInEdge().isPresent()) {
-			final ArgEdge<S, A> inEdge = running.getInEdge().get();
-			running = inEdge.getSource();
-			edgeList.add(inEdge);
-			nodeList.add(running);
-		}
+        ArgNode<S, A> running = node;
+        nodeList.add(running);
 
-		// create the correct order by reversing O(N)
-		Collections.reverse(nodeList);
-		Collections.reverse(edgeList);
+        while (running.getInEdge().isPresent()) {
+            final ArgEdge<S, A> inEdge = running.getInEdge().get();
+            running = inEdge.getSource();
+            edgeList.add(inEdge);
+            nodeList.add(running);
+        }
 
-		this.nodes = Collections.unmodifiableList(nodeList);
-		this.edges = Collections.unmodifiableList(edgeList);
-		states = nodes.stream().map(ArgNode::getState).collect(Collectors.toList());
-	}
+        // create the correct order by reversing O(N)
+        Collections.reverse(nodeList);
+        Collections.reverse(edgeList);
 
-	////
+        this.nodes = Collections.unmodifiableList(nodeList);
+        this.edges = Collections.unmodifiableList(edgeList);
+        states = nodes.stream().map(ArgNode::getState).collect(Collectors.toList());
+    }
 
-	public static <S extends State, A extends Action> ArgTrace<S, A> to(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		return new ArgTrace<>(node);
-	}
+    ////
 
-	////
+    public static <S extends State, A extends Action> ArgTrace<S, A> to(final ArgNode<S, A> node) {
+        checkNotNull(node);
+        return new ArgTrace<>(node);
+    }
 
-	/**
-	 * Gets the length of the trace, i.e., the number of edges.
-	 */
-	public int length() {
-		return edges.size();
-	}
+    ////
 
-	public ArgNode<S, A> node(final int index) {
-		return nodes.get(index);
-	}
+    /**
+     * Gets the length of the trace, i.e., the number of edges.
+     */
+    public int length() {
+        return edges.size();
+    }
 
-	public ArgEdge<S, A> edge(final int index) {
-		return edges.get(index);
-	}
+    public ArgNode<S, A> node(final int index) {
+        return nodes.get(index);
+    }
 
-	public List<ArgNode<S, A>> nodes() {
-		return nodes;
-	}
+    public ArgEdge<S, A> edge(final int index) {
+        return edges.get(index);
+    }
 
-	public List<ArgEdge<S, A>> edges() {
-		return edges;
-	}
+    public List<ArgNode<S, A>> nodes() {
+        return nodes;
+    }
 
-	////
+    public List<ArgEdge<S, A>> edges() {
+        return edges;
+    }
 
-	/**
-	 * Converts the ArgTrace to a Trace by extracting states and actions from
-	 * nodes and edges respectively.
-	 */
-	public Trace<S, A> toTrace() {
-		final List<S> states = nodes.stream().map(ArgNode::getState).collect(toList());
-		final List<A> actions = edges.stream().map(ArgEdge::getAction).collect(toList());
-		return Trace.of(states, actions);
-	}
+    ////
 
-	////
+    /**
+     * Converts the ArgTrace to a Trace by extracting states and actions from nodes and edges
+     * respectively.
+     */
+    public Trace<S, A> toTrace() {
+        final List<S> states = nodes.stream().map(ArgNode::getState).collect(toList());
+        final List<A> actions = edges.stream().map(ArgEdge::getAction).collect(toList());
+        return Trace.of(states, actions);
+    }
 
-	@Override
-	public Iterator<ArgNode<S, A>> iterator() {
-		return nodes.iterator();
-	}
+    ////
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		ArgTrace<?, ?> argTrace = (ArgTrace<?, ?>) o;
-		return states.equals(argTrace.states); // && edges.equals(argTrace.edges);
-	}
+    @Override
+    public Iterator<ArgNode<S, A>> iterator() {
+        return nodes.iterator();
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + states.hashCode();
-			result = 31 * result + edges.hashCode();
-			hashCode = result;
-		}
-		return result;
-		// return Objects.hash(states, edges);
-	}
-	////
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ArgTrace<?, ?> argTrace = (ArgTrace<?, ?>) o;
+        return states.equals(argTrace.states); // && edges.equals(argTrace.edges);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + states.hashCode();
+            result = 31 * result + edges.hashCode();
+            hashCode = result;
+        }
+        return result;
+        // return Objects.hash(states, edges);
+    }
+    ////
 
 }

@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.z3;
 
 import hu.bme.mit.theta.common.Tuple2;
@@ -30,11 +45,14 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public class Z3NewSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
+
     private final Map<Expr<BoolType>, String> assertionNames = new HashMap<>();
     private static final String assertionNamePattern = "_z3_assertion_%d";
     private static long assertionCount = 0;
 
-    public Z3NewSmtLibItpSolver(final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager, final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary) {
+    public Z3NewSmtLibItpSolver(final SmtLibSymbolTable symbolTable,
+                                final SmtLibTransformationManager transformationManager,
+                                final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
     }
 
@@ -52,7 +70,8 @@ public class Z3NewSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
     }
 
     @Override
-    protected void add(Z3SmtLibItpMarker marker, Expr<BoolType> assertion, Set<ConstDecl<?>> consts, String term) {
+    protected void add(Z3SmtLibItpMarker marker, Expr<BoolType> assertion, Set<ConstDecl<?>> consts,
+                       String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
 
         final var name = String.format(assertionNamePattern, assertionCount++);
@@ -62,10 +81,10 @@ public class Z3NewSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
 
     @Override
     public Interpolant getInterpolant(ItpPattern pattern) {
-        checkState(getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
+        checkState(getStatus() == SolverStatus.UNSAT,
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
-        @SuppressWarnings("unchecked")
-        final var z3ItpPattern = (SmtLibItpPattern<Z3SmtLibItpMarker>) pattern;
+        @SuppressWarnings("unchecked") final var z3ItpPattern = (SmtLibItpPattern<Z3SmtLibItpMarker>) pattern;
         final List<Z3SmtLibItpMarker> markers = z3ItpPattern.getSequence();
 
         final List<Z3SmtLibItpMarker> A = new ArrayList<>();
@@ -76,15 +95,20 @@ public class Z3NewSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
             B.remove(marker);
             A.add(marker);
 
-            if(B.size() != 0) {
-                final var aTerm = A.stream().flatMap(m -> m.getTerms().stream().map(Tuple2::get1)).map(assertionNames::get);
-                final var bTerm = B.stream().flatMap(m -> m.getTerms().stream().map(Tuple2::get1)).map(assertionNames::get);
+            if (B.size() != 0) {
+                final var aTerm = A.stream().flatMap(m -> m.getTerms().stream().map(Tuple2::get1))
+                        .map(assertionNames::get);
+                final var bTerm = B.stream().flatMap(m -> m.getTerms().stream().map(Tuple2::get1))
+                        .map(assertionNames::get);
 
-                solverBinary.issueCommand(String.format("(get-interpolant (and %s) (and %s))", aTerm.collect(Collectors.joining(" ")), bTerm.collect(Collectors.joining(" "))));
+                solverBinary.issueCommand(String.format("(get-interpolant (and %s) (and %s))",
+                        aTerm.collect(Collectors.joining(" ")),
+                        bTerm.collect(Collectors.joining(" "))));
 
-                itpMap.put(marker, termTransformer.toExpr(parseItpResponse(solverBinary.readResponse()), Bool(), new SmtLibModel(Collections.emptyMap())));
-            }
-            else {
+                itpMap.put(marker,
+                        termTransformer.toExpr(parseItpResponse(solverBinary.readResponse()), Bool(),
+                                new SmtLibModel(Collections.emptyMap())));
+            } else {
                 itpMap.put(marker, False());
             }
         }
@@ -101,19 +125,19 @@ public class Z3NewSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarker> {
             parser.removeErrorListeners();
             parser.addErrorListener(new ThrowExceptionErrorListener());
             return extractString(parser.term());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             try {
-                throw new SmtLibSolverException(parser.response().general_response_error().reason.getText());
-            }
-            catch(Exception ex) {
+                throw new SmtLibSolverException(
+                        parser.response().general_response_error().reason.getText());
+            } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
         }
     }
 
     private static String extractString(final ParserRuleContext ctx) {
-        return ctx.start.getInputStream().getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+        return ctx.start.getInputStream()
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 
     @Override

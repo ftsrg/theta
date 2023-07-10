@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,38 +29,38 @@ import java.util.stream.Stream;
 
 public final class Partition<T, K> {
 
-	private final Function<? super T, ? extends K> projection;
-	private final Map<K, List<T>> classes;
+    private final Function<? super T, ? extends K> projection;
+    private final Map<K, List<T>> classes;
 
-	private Partition(final Function<? super T, ? extends K> projection) {
-		this.projection = checkNotNull(projection);
-		classes = Containers.createMap();
-	}
+    private Partition(final Function<? super T, ? extends K> projection) {
+        this.projection = checkNotNull(projection);
+        classes = Containers.createMap();
+    }
 
-	public static <T, K> Partition<T, K> of(final Function<? super T, ? extends K> projection) {
-		return new Partition<>(projection);
-	}
+    public static <T, K> Partition<T, K> of(final Function<? super T, ? extends K> projection) {
+        return new Partition<>(projection);
+    }
 
-	public void add(final T elem) {
-		checkNotNull(elem);
-		final K key = projection.apply(elem);
-		final Collection<T> partition = classes.computeIfAbsent(key, k -> new ArrayList<>());
-		partition.add(elem);
-	}
+    public void add(final T elem) {
+        checkNotNull(elem);
+        final K key = projection.apply(elem);
+        final Collection<T> partition = classes.computeIfAbsent(key, k -> new ArrayList<>());
+        partition.add(elem);
+    }
 
-	public void addAll(final Iterable<? extends T> elems) {
-		elems.forEach(this::add);
-	}
+    public void addAll(final Iterable<? extends T> elems) {
+        elems.forEach(this::add);
+    }
 
-	public void addAll(final Stream<? extends T> elems) {
-		elems.forEach(this::add);
-	}
+    public void addAll(final Stream<? extends T> elems) {
+        elems.forEach(this::add);
+    }
 
-	public List<T> get(final T elem) {
-		checkNotNull(elem);
-		final K key = projection.apply(elem);
-		final List<T> partition = classes.getOrDefault(key, Collections.emptyList());
-		return partition;
-	}
+    public List<T> get(final T elem) {
+        checkNotNull(elem);
+        final K key = projection.apply(elem);
+        final List<T> partition = classes.getOrDefault(key, Collections.emptyList());
+        return partition;
+    }
 
 }

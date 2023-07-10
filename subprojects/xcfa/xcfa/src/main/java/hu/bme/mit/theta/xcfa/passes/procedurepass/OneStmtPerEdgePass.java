@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,43 +29,51 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class OneStmtPerEdgePass extends ProcedurePass {
-	private static int tmpcnt = 0;
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		boolean notFound = false;
-		while (!notFound) {
-			notFound = true;
-			Optional<XcfaEdge> edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).findFirst();
-			if (edge.isPresent()) {
-				notFound = false;
-				XcfaEdge xcfaEdge = XcfaEdge.of(edge.get().getSource(), edge.get().getTarget(), List.of(Stmt(Skip())));
-				builder.addEdge(xcfaEdge);
-				FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
-				builder.removeEdge(edge.get());
-			}
-			edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() > 1).findFirst();
-			if (edge.isPresent()) {
-				notFound = false;
-				XcfaLocation lastLoc = edge.get().getSource(), interLoc;
-				for (XcfaLabel stmt : edge.get().getLabels()) {
-					interLoc = edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1 ? edge.get().getTarget() : XcfaLocation.create("tmp_" + tmpcnt++);
-					builder.addLoc(interLoc);
-					FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
-					XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, interLoc, List.of(stmt));
-					lastLoc = interLoc;
-					builder.addEdge(xcfaEdge);
-					FrontendMetadata.lookupMetadata(edge.get()).forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
-				}
-				builder.removeEdge(edge.get());
-			}
-		}
+    private static int tmpcnt = 0;
 
-		return builder;
-	}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        boolean notFound = false;
+        while (!notFound) {
+            notFound = true;
+            Optional<XcfaEdge> edge = builder.getEdges().stream()
+                    .filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).findFirst();
+            if (edge.isPresent()) {
+                notFound = false;
+                XcfaEdge xcfaEdge = XcfaEdge.of(edge.get().getSource(), edge.get().getTarget(),
+                        List.of(Stmt(Skip())));
+                builder.addEdge(xcfaEdge);
+                FrontendMetadata.lookupMetadata(edge.get())
+                        .forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
+                builder.removeEdge(edge.get());
+            }
+            edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() > 1)
+                    .findFirst();
+            if (edge.isPresent()) {
+                notFound = false;
+                XcfaLocation lastLoc = edge.get().getSource(), interLoc;
+                for (XcfaLabel stmt : edge.get().getLabels()) {
+                    interLoc =
+                            edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1
+                                    ? edge.get().getTarget() : XcfaLocation.create("tmp_" + tmpcnt++);
+                    builder.addLoc(interLoc);
+                    FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
+                    XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, interLoc, List.of(stmt));
+                    lastLoc = interLoc;
+                    builder.addEdge(xcfaEdge);
+                    FrontendMetadata.lookupMetadata(edge.get())
+                            .forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
+                }
+                builder.removeEdge(edge.get());
+            }
+        }
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+        return builder;
+    }
+
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,63 +26,62 @@ import java.util.stream.Stream;
 import hu.bme.mit.theta.common.Utils;
 
 /**
- * LIFO (Last In First Out) waitlist. Items are removed in the reverse order as
- * they were added.
+ * LIFO (Last In First Out) waitlist. Items are removed in the reverse order as they were added.
  */
 public final class LifoWaitlist<T> implements Waitlist<T> {
 
-	private final Deque<T> items;
+    private final Deque<T> items;
 
-	private LifoWaitlist(final Collection<? extends T> items) {
-		this.items = new ArrayDeque<>(checkNotNull(items));
-	}
+    private LifoWaitlist(final Collection<? extends T> items) {
+        this.items = new ArrayDeque<>(checkNotNull(items));
+    }
 
-	public static <T> LifoWaitlist<T> create() {
-		return new LifoWaitlist<>(Collections.emptySet());
-	}
+    public static <T> LifoWaitlist<T> create() {
+        return new LifoWaitlist<>(Collections.emptySet());
+    }
 
-	public static <T> LifoWaitlist<T> create(final Collection<? extends T> items) {
-		return new LifoWaitlist<>(items);
-	}
+    public static <T> LifoWaitlist<T> create(final Collection<? extends T> items) {
+        return new LifoWaitlist<>(items);
+    }
 
-	@Override
-	public void add(final T item) {
-		items.push(item);
-	}
+    @Override
+    public void add(final T item) {
+        items.push(item);
+    }
 
-	@Override
-	public void addAll(final Collection<? extends T> items) {
-		this.items.addAll(checkNotNull(items));
-	}
+    @Override
+    public void addAll(final Collection<? extends T> items) {
+        this.items.addAll(checkNotNull(items));
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return items.isEmpty();
-	}
+    @Override
+    public boolean isEmpty() {
+        return items.isEmpty();
+    }
 
-	@Override
-	public T remove() {
-		return items.pop();
-	}
+    @Override
+    public T remove() {
+        return items.pop();
+    }
 
-	@Override
-	public void clear() {
-		items.clear();
-	}
+    @Override
+    public void clear() {
+        items.clear();
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(items).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(items).toString();
+    }
 
-	@Override
-	public int size() {
-		return items.size();
-	}
+    @Override
+    public int size() {
+        return items.size();
+    }
 
-	@Override
-	public void addAll(final Stream<? extends T> items) {
-		checkNotNull(items);
-		items.forEach(this::add);
-	}
+    @Override
+    public void addAll(final Stream<? extends T> items) {
+        checkNotNull(items);
+        items.forEach(this::add);
+    }
 }

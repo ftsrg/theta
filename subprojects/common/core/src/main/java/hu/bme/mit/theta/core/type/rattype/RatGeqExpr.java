@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,73 +27,74 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class RatGeqExpr extends GeqExpr<RatType> {
 
-	private static final int HASH_SEED = 6101;
-	private static final String OPERATOR_LABEL = ">=";
+    private static final int HASH_SEED = 6101;
+    private static final String OPERATOR_LABEL = ">=";
 
-	private RatGeqExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    private RatGeqExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static RatGeqExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatGeqExpr(leftOp, rightOp);
-	}
+    public static RatGeqExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        return new RatGeqExpr(leftOp, rightOp);
+    }
 
-	public static RatGeqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Expr<RatType> newLeftOp = cast(leftOp, Rat());
-		final Expr<RatType> newRightOp = cast(rightOp, Rat());
-		return RatGeqExpr.of(newLeftOp, newRightOp);
-	}
+    public static RatGeqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+        final Expr<RatType> newLeftOp = cast(leftOp, Rat());
+        final Expr<RatType> newRightOp = cast(rightOp, Rat());
+        return RatGeqExpr.of(newLeftOp, newRightOp);
+    }
 
-	@Override
-	public BoolType getType() {
-		return Bool();
-	}
+    @Override
+    public BoolType getType() {
+        return Bool();
+    }
 
-	@Override
-	public BoolLitExpr eval(final Valuation val) {
-		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
-		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
-		return leftOpVal.geq(rightOpVal);
-	}
+    @Override
+    public BoolLitExpr eval(final Valuation val) {
+        final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
+        final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
+        return leftOpVal.geq(rightOpVal);
+    }
 
-	@Override
-	public RatGeqExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return RatGeqExpr.of(leftOp, rightOp);
-		}
-	}
+    @Override
+    public RatGeqExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+            return this;
+        } else {
+            return RatGeqExpr.of(leftOp, rightOp);
+        }
+    }
 
-	@Override
-	public RatGeqExpr withLeftOp(final Expr<RatType> leftOp) {
-		return with(leftOp, getRightOp());
-	}
+    @Override
+    public RatGeqExpr withLeftOp(final Expr<RatType> leftOp) {
+        return with(leftOp, getRightOp());
+    }
 
-	@Override
-	public RatGeqExpr withRightOp(final Expr<RatType> rightOp) {
-		return with(getLeftOp(), rightOp);
-	}
+    @Override
+    public RatGeqExpr withRightOp(final Expr<RatType> rightOp) {
+        return with(getLeftOp(), rightOp);
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RatGeqExpr) {
-			final RatGeqExpr that = (RatGeqExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof RatGeqExpr) {
+            final RatGeqExpr that = (RatGeqExpr) obj;
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                    .equals(that.getRightOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 }

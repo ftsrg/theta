@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,44 +40,58 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.ProcedureCall;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class SimplifyExprs extends ProcedurePass {
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			XcfaEdge newEdge = edge.mapLabels(label -> {
-				if (label instanceof XcfaLabel.StmtXcfaLabel && label.getStmt() instanceof AssignStmt && !(((AssignStmt<?>) label.getStmt()).getVarDecl().getType() instanceof ArrayType)) {
-					VarDecl<?> varDecl = ((AssignStmt<?>) label.getStmt()).getVarDecl();
-					Expr<?> expr = ((AssignStmt<?>) label.getStmt()).getExpr();
-					Expr<?> simplified = ExprSimplifier.simplify(expr, ImmutableValuation.empty());
-					if (FrontendMetadata.getMetadataValue(expr, "cType").isPresent())
-						FrontendMetadata.create(simplified, "cType", CComplexType.getType(expr));
-					if (FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent()) {
-						simplified = ExprSimplifier.simplify(CComplexType.getType(varDecl.getRef()).castTo(simplified), ImmutableValuation.empty());
-						FrontendMetadata.create(simplified, "cType", CComplexType.getType(varDecl.getRef()));
-					}
-					Stmt newStmt = Assign(
-							cast(varDecl, varDecl.getType()),
-							cast(simplified, varDecl.getType()));
-					return Stmt(newStmt);
-				} else if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
-					List<Expr<?>> newExprs = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams().stream().map((Expr<?> expr) -> {
-						final Expr<?> simplified = ExprUtils.simplify(expr);
-						if (FrontendMetadata.getMetadataValue(expr, "cType").isPresent())
-							FrontendMetadata.create(simplified, "cType", CComplexType.getType(expr));
-						return simplified;
-					}).collect(Collectors.toList());
-					return ProcedureCall(newExprs, ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure());
-				} else return label;
-			});
-			if (!edge.getLabels().equals(newEdge.getLabels())) {
-				builder.removeEdge(edge);
-				builder.addEdge(newEdge);
-			}
-		}
-		return builder;
-	}
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+            XcfaEdge newEdge = edge.mapLabels(label -> {
+                if (label instanceof XcfaLabel.StmtXcfaLabel
+                        && label.getStmt() instanceof AssignStmt
+                        && !(((AssignStmt<?>) label.getStmt()).getVarDecl()
+                        .getType() instanceof ArrayType)) {
+                    VarDecl<?> varDecl = ((AssignStmt<?>) label.getStmt()).getVarDecl();
+                    Expr<?> expr = ((AssignStmt<?>) label.getStmt()).getExpr();
+                    Expr<?> simplified = ExprSimplifier.simplify(expr, ImmutableValuation.empty());
+                    if (FrontendMetadata.getMetadataValue(expr, "cType").isPresent()) {
+                        FrontendMetadata.create(simplified, "cType", CComplexType.getType(expr));
+                    }
+                    if (FrontendMetadata.getMetadataValue(varDecl.getRef(), "cType").isPresent()) {
+                        simplified = ExprSimplifier.simplify(
+                                CComplexType.getType(varDecl.getRef()).castTo(simplified),
+                                ImmutableValuation.empty());
+                        FrontendMetadata.create(simplified, "cType",
+                                CComplexType.getType(varDecl.getRef()));
+                    }
+                    Stmt newStmt = Assign(
+                            cast(varDecl, varDecl.getType()),
+                            cast(simplified, varDecl.getType()));
+                    return Stmt(newStmt);
+                } else if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
+                    List<Expr<?>> newExprs = ((XcfaLabel.ProcedureCallXcfaLabel) label).getParams()
+                            .stream().map((Expr<?> expr) -> {
+                                final Expr<?> simplified = ExprUtils.simplify(expr);
+                                if (FrontendMetadata.getMetadataValue(expr, "cType").isPresent()) {
+                                    FrontendMetadata.create(simplified, "cType",
+                                            CComplexType.getType(expr));
+                                }
+                                return simplified;
+                            }).collect(Collectors.toList());
+                    return ProcedureCall(newExprs,
+                            ((XcfaLabel.ProcedureCallXcfaLabel) label).getProcedure());
+                } else {
+                    return label;
+                }
+            });
+            if (!edge.getLabels().equals(newEdge.getLabels())) {
+                builder.removeEdge(edge);
+                builder.addEdge(newEdge);
+            }
+        }
+        return builder;
+    }
+
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

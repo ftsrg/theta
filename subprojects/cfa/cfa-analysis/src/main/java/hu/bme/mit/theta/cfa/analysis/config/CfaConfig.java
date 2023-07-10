@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,21 +22,22 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 
 public final class CfaConfig<S extends State, A extends Action, P extends Prec> {
-	private final SafetyChecker<S, A, P> checker;
-	private final P initPrec;
 
-	private CfaConfig(final SafetyChecker<S, A, P> checker, final P initPrec) {
-		this.checker = checker;
-		this.initPrec = initPrec;
-	}
+    private final SafetyChecker<S, A, P> checker;
+    private final P initPrec;
 
-	public static <S extends State, A extends Action, P extends Prec> CfaConfig<S, A, P> create(
-			final SafetyChecker<S, A, P> checker, final P initPrec) {
-		return new CfaConfig<>(checker, initPrec);
-	}
+    private CfaConfig(final SafetyChecker<S, A, P> checker, final P initPrec) {
+        this.checker = checker;
+        this.initPrec = initPrec;
+    }
 
-	public SafetyResult<S, A> check() {
-		return checker.check(initPrec);
-	}
+    public static <S extends State, A extends Action, P extends Prec> CfaConfig<S, A, P> create(
+            final SafetyChecker<S, A, P> checker, final P initPrec) {
+        return new CfaConfig<>(checker, initPrec);
+    }
+
+    public SafetyResult<S, A> check() {
+        return checker.check(initPrec);
+    }
 
 }

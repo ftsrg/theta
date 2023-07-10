@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,19 +21,18 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.sts.STS;
 
 /**
- * An implementation for initial precision that returns initial precisions based
- * on the property.
+ * An implementation for initial precision that returns initial precisions based on the property.
  */
 public class StsPropInitPrec implements StsInitPrec {
 
-	@Override
-	public ExplPrec createExpl(final STS sts) {
-		return ExplPrec.of(ExprUtils.getVars(sts.getProp()));
-	}
+    @Override
+    public ExplPrec createExpl(final STS sts) {
+        return ExplPrec.of(ExprUtils.getVars(sts.getProp()));
+    }
 
-	@Override
-	public PredPrec createPred(final STS sts) {
-		return PredPrec.of(ExprUtils.getAtoms(sts.getProp()));
-	}
+    @Override
+    public PredPrec createPred(final STS sts) {
+        return PredPrec.of(ExprUtils.getAtoms(sts.getProp()));
+    }
 
 }

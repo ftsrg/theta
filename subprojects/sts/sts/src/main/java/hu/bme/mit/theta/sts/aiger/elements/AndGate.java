@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,47 +27,47 @@ import com.google.common.collect.ImmutableList;
  */
 public class AndGate extends AigerNode {
 
-	private final Collection<AigerWire> outWires;
-	private AigerWire inWire1;
-	private AigerWire inWire2;
+    private final Collection<AigerWire> outWires;
+    private AigerWire inWire1;
+    private AigerWire inWire2;
 
-	public AndGate(final int nr, final int varId) {
-		super(String.format("AND%d_v%d", nr, varId));
-		this.outWires = new ArrayList<>();
-	}
+    public AndGate(final int nr, final int varId) {
+        super(String.format("AND%d_v%d", nr, varId));
+        this.outWires = new ArrayList<>();
+    }
 
-	@Override
-	public Collection<AigerWire> getInWires() {
-		return ImmutableList.of(inWire1, inWire2);
-	}
+    @Override
+    public Collection<AigerWire> getInWires() {
+        return ImmutableList.of(inWire1, inWire2);
+    }
 
-	public AigerWire getInWire1() {
-		return inWire1;
-	}
+    public AigerWire getInWire1() {
+        return inWire1;
+    }
 
-	public AigerWire getInWire2() {
-		return inWire2;
-	}
+    public AigerWire getInWire2() {
+        return inWire2;
+    }
 
-	public void setInWire1(final AigerWire wire) {
-		checkArgument(wire.getTarget().equals(this));
-		this.inWire1 = wire;
-	}
+    public void setInWire1(final AigerWire wire) {
+        checkArgument(wire.getTarget().equals(this));
+        this.inWire1 = wire;
+    }
 
-	public void setInWire2(final AigerWire wire) {
-		checkArgument(wire.getTarget().equals(this));
-		this.inWire2 = wire;
-	}
+    public void setInWire2(final AigerWire wire) {
+        checkArgument(wire.getTarget().equals(this));
+        this.inWire2 = wire;
+    }
 
-	@Override
-	public Collection<AigerWire> getOutWires() {
-		return outWires;
-	}
+    @Override
+    public Collection<AigerWire> getOutWires() {
+        return outWires;
+    }
 
-	@Override
-	public void addOutWire(final AigerWire outWire) {
-		checkArgument(outWire.getSource().equals(this));
-		outWires.add(outWire);
-	}
+    @Override
+    public void addOutWire(final AigerWire outWire) {
+        checkArgument(outWire.getSource().equals(this));
+        outWires.add(outWire);
+    }
 
 }

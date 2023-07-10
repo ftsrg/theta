@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,135 +29,136 @@ import com.google.common.base.Strings;
  * Utility class for printing Lisp style strings, e.g., (A (B 1 2) (C 3)).
  */
 public final class LispStringBuilder {
-	private static final String LPAREN = "(";
-	private static final String RPAREN = ")";
-	private static final String SPACE = " ";
-	private static final String EOL = System.getProperty("line.separator");
 
-	private final List<Object> headObjs;
-	private final List<Object> alignedObjs;
-	private final List<Object> bodyObjs;
+    private static final String LPAREN = "(";
+    private static final String RPAREN = ")";
+    private static final String SPACE = " ";
+    private static final String EOL = System.getProperty("line.separator");
 
-	private State state;
+    private final List<Object> headObjs;
+    private final List<Object> alignedObjs;
+    private final List<Object> bodyObjs;
 
-	private static enum State {
-		HEAD, ALIGNED, BODY, BUILT;
-	}
+    private State state;
 
-	LispStringBuilder(final String prefix) {
-		checkNotNull(prefix);
-		headObjs = new ArrayList<>();
-		alignedObjs = new ArrayList<>();
-		bodyObjs = new ArrayList<>();
+    private static enum State {
+        HEAD, ALIGNED, BODY, BUILT;
+    }
 
-		if (!"".equals(prefix)) {
-			headObjs.add(prefix);
-		}
+    LispStringBuilder(final String prefix) {
+        checkNotNull(prefix);
+        headObjs = new ArrayList<>();
+        alignedObjs = new ArrayList<>();
+        bodyObjs = new ArrayList<>();
 
-		state = State.HEAD;
-	}
+        if (!"".equals(prefix)) {
+            headObjs.add(prefix);
+        }
 
-	public LispStringBuilder add(final Object object) {
-		checkState(state != State.BUILT);
-		final List<Object> section = sectionFor(state);
-		section.add(object);
-		return this;
-	}
+        state = State.HEAD;
+    }
 
-	public LispStringBuilder addAll(final Iterable<?> iterable) {
-		checkState(state != State.BUILT);
-		iterable.forEach(this::add);
-		return this;
-	}
+    public LispStringBuilder add(final Object object) {
+        checkState(state != State.BUILT);
+        final List<Object> section = sectionFor(state);
+        section.add(object);
+        return this;
+    }
 
-	public LispStringBuilder addAll(final Stream<?> stream) {
-		checkState(state != State.BUILT);
-		stream.forEach(this::add);
-		return this;
-	}
+    public LispStringBuilder addAll(final Iterable<?> iterable) {
+        checkState(state != State.BUILT);
+        iterable.forEach(this::add);
+        return this;
+    }
 
-	public LispStringBuilder aligned() {
-		checkState(state == State.HEAD);
-		state = State.ALIGNED;
-		return this;
-	}
+    public LispStringBuilder addAll(final Stream<?> stream) {
+        checkState(state != State.BUILT);
+        stream.forEach(this::add);
+        return this;
+    }
 
-	public LispStringBuilder body() {
-		checkState(state == State.HEAD || state == State.ALIGNED);
-		state = State.BODY;
-		return this;
-	}
+    public LispStringBuilder aligned() {
+        checkState(state == State.HEAD);
+        state = State.ALIGNED;
+        return this;
+    }
 
-	@Override
-	public String toString() {
-		checkState(state != State.BUILT);
+    public LispStringBuilder body() {
+        checkState(state == State.HEAD || state == State.ALIGNED);
+        state = State.BODY;
+        return this;
+    }
 
-		final StringBuilder sb = new StringBuilder();
-		sb.append(LPAREN);
+    @Override
+    public String toString() {
+        checkState(state != State.BUILT);
 
-		final String head = createHead();
-		sb.append(head);
+        final StringBuilder sb = new StringBuilder();
+        sb.append(LPAREN);
 
-		final int indent = head.length() + 1;
-		final String aligned = createAligned(indent);
+        final String head = createHead();
+        sb.append(head);
 
-		sb.append(aligned);
+        final int indent = head.length() + 1;
+        final String aligned = createAligned(indent);
 
-		final String body = createBody();
-		sb.append(body);
+        sb.append(aligned);
 
-		sb.append(RPAREN);
-		return sb.toString();
-	}
+        final String body = createBody();
+        sb.append(body);
 
-	////
+        sb.append(RPAREN);
+        return sb.toString();
+    }
 
-	private List<Object> sectionFor(final State state) {
-		switch (state) {
-			case HEAD:
-				return headObjs;
-			case ALIGNED:
-				return alignedObjs;
-			case BODY:
-				return bodyObjs;
-			default:
-				throw new AssertionError("Unhandled state: " + state);
-		}
-	}
+    ////
 
-	private String createHead() {
-		final StringJoiner sj = new StringJoiner(SPACE);
-		for (final Object headObj : headObjs) {
-			for (final String line : lines(headObj.toString())) {
-				final String trimmedLine = line.trim().replaceAll("( )+", SPACE);
-				sj.add(trimmedLine);
-			}
-		}
-		return sj.toString();
-	}
+    private List<Object> sectionFor(final State state) {
+        switch (state) {
+            case HEAD:
+                return headObjs;
+            case ALIGNED:
+                return alignedObjs;
+            case BODY:
+                return bodyObjs;
+            default:
+                throw new AssertionError("Unhandled state: " + state);
+        }
+    }
 
-	private String createAligned(final int indent) {
-		final StringJoiner sj = new StringJoiner(EOL + Strings.repeat(SPACE, indent));
-		for (final Object alignedObj : alignedObjs) {
-			for (final String line : lines(alignedObj.toString())) {
-				sj.add(SPACE + line);
-			}
-		}
-		return sj.toString();
-	}
+    private String createHead() {
+        final StringJoiner sj = new StringJoiner(SPACE);
+        for (final Object headObj : headObjs) {
+            for (final String line : lines(headObj.toString())) {
+                final String trimmedLine = line.trim().replaceAll("( )+", SPACE);
+                sj.add(trimmedLine);
+            }
+        }
+        return sj.toString();
+    }
 
-	private String createBody() {
-		final StringBuilder sb = new StringBuilder();
-		for (final Object bodyObj : bodyObjs) {
-			for (final String line : lines(bodyObj.toString())) {
-				sb.append(EOL + SPACE + SPACE + line);
-			}
-		}
-		return sb.toString();
-	}
+    private String createAligned(final int indent) {
+        final StringJoiner sj = new StringJoiner(EOL + Strings.repeat(SPACE, indent));
+        for (final Object alignedObj : alignedObjs) {
+            for (final String line : lines(alignedObj.toString())) {
+                sj.add(SPACE + line);
+            }
+        }
+        return sj.toString();
+    }
 
-	private static String[] lines(final String string) {
-		return string.split("\\r\\n|\\n|\\r");
-	}
+    private String createBody() {
+        final StringBuilder sb = new StringBuilder();
+        for (final Object bodyObj : bodyObjs) {
+            for (final String line : lines(bodyObj.toString())) {
+                sb.append(EOL + SPACE + SPACE + line);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String[] lines(final String string) {
+        return string.split("\\r\\n|\\n|\\r");
+    }
 
 }

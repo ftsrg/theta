@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,25 +29,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class StsAction implements ExprAction {
 
-	private final Expr<BoolType> trans;
+    private final Expr<BoolType> trans;
 
-	StsAction(final STS sts) {
-		checkNotNull(sts);
-		this.trans = sts.getTrans();
-	}
+    StsAction(final STS sts) {
+        checkNotNull(sts);
+        this.trans = sts.getTrans();
+    }
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		return trans;
-	}
+    @Override
+    public Expr<BoolType> toExpr() {
+        return trans;
+    }
 
-	@Override
-	public VarIndexing nextIndexing() {
-		return VarIndexingFactory.indexing(1);
-	}
+    @Override
+    public VarIndexing nextIndexing() {
+        return VarIndexingFactory.indexing(1);
+    }
 
-	@Override
-	public String toString() {
-		return trans.toString();
-	}
+    @Override
+    public String toString() {
+        return trans.toString();
+    }
 }

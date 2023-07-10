@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,32 +35,33 @@ import hu.bme.mit.theta.xta.XtaVisualizer;
 @RunWith(Parameterized.class)
 public final class XtaDslManagerTest {
 
-	@Parameters(name = "{0}")
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"/critical-4-25-50.xta"},
+                {"/critical-4-25-50.xta"},
 
-				{"/csma-4.xta"},
+                {"/csma-4.xta"},
 
-				{"/fddi-4.xta"},
+                {"/fddi-4.xta"},
 
-				{"/fischer-4-32-64.xta"},
+                {"/fischer-4-32-64.xta"},
 
-				{"/lynch-4-16.xta"}
+                {"/lynch-4-16.xta"}
 
-		});
-	}
+        });
+    }
 
-	@Parameter(0)
-	public String filepath;
+    @Parameter(0)
+    public String filepath;
 
-	@Test
-	public void test() throws FileNotFoundException, IOException {
-		final InputStream inputStream = getClass().getResourceAsStream(filepath);
-		final XtaSystem system = XtaDslManager.createSystem(inputStream);
-		final XtaProcess process = system.getProcesses().get(0);
-		System.out.println(GraphvizWriter.getInstance().writeString(XtaVisualizer.visualize(process)));
-	}
+    @Test
+    public void test() throws FileNotFoundException, IOException {
+        final InputStream inputStream = getClass().getResourceAsStream(filepath);
+        final XtaSystem system = XtaDslManager.createSystem(inputStream);
+        final XtaProcess process = system.getProcesses().get(0);
+        System.out.println(
+                GraphvizWriter.getInstance().writeString(XtaVisualizer.visualize(process)));
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,21 +17,22 @@
 package hu.bme.mit.theta.cat.solver;
 
 public interface RuleDerivationVisitor<P, R> {
-	R visit(RuleDerivation.Element derivation, P param);
 
-	R visit(RuleDerivation.Union derivation, P param);
+    R visit(RuleDerivation.Element derivation, P param);
 
-	R visit(RuleDerivation.Intersection derivation, P param);
+    R visit(RuleDerivation.Union derivation, P param);
 
-	R visit(RuleDerivation.Difference derivation, P param);
+    R visit(RuleDerivation.Intersection derivation, P param);
 
-	R visit(RuleDerivation.Inverse derivation, P param);
+    R visit(RuleDerivation.Difference derivation, P param);
 
-	R visit(RuleDerivation.Transitive derivation, P param);
+    R visit(RuleDerivation.Inverse derivation, P param);
 
-	R visit(RuleDerivation.SelfOrTransitive derivation, P param);
+    R visit(RuleDerivation.Transitive derivation, P param);
 
-	R visit(RuleDerivation.Consecutive derivation, P param);
+    R visit(RuleDerivation.SelfOrTransitive derivation, P param);
 
-	R visit(RuleDerivation.CartesianProduct derivation, P param);
+    R visit(RuleDerivation.Consecutive derivation, P param);
+
+    R visit(RuleDerivation.CartesianProduct derivation, P param);
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,36 +20,37 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public abstract class CInteger extends CComplexType {
-	protected int rank;
-	protected boolean unsigned = false;
 
-	protected CInteger(CSimpleType origin) {
-		super(origin);
-	}
+    protected int rank;
+    protected boolean unsigned = false;
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    protected CInteger(CSimpleType origin) {
+        super(origin);
+    }
 
-	@Override
-	public CComplexType getSmallestCommonType(CComplexType type) {
-		if (type instanceof CInteger && ((CInteger) type).rank <= rank) {
-			if (((CInteger) type).unsigned) {
-				if (unsigned || type.width() < width()) {
-					return this;
-				} else {
-					return getUnsignedVersion();
-				}
-			} else {
-				return this;
-			}
-		} else {
-			return type.getSmallestCommonType(this);
-		}
-	}
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
+
+    @Override
+    public CComplexType getSmallestCommonType(CComplexType type) {
+        if (type instanceof CInteger && ((CInteger) type).rank <= rank) {
+            if (((CInteger) type).unsigned) {
+                if (unsigned || type.width() < width()) {
+                    return this;
+                } else {
+                    return getUnsignedVersion();
+                }
+            } else {
+                return this;
+            }
+        } else {
+            return type.getSmallestCommonType(this);
+        }
+    }
 
 
-	public abstract CInteger getSignedVersion();
+    public abstract CInteger getSignedVersion();
 
-	public abstract CInteger getUnsignedVersion();
+    public abstract CInteger getUnsignedVersion();
 }

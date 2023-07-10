@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,49 +40,50 @@ import static com.google.common.base.Preconditions.checkState;
 
 @RunWith(Parameterized.class)
 public class XcfaCliParseTest {
-	@Parameterized.Parameter(0)
-	public String filepath;
 
-	@Parameterized.Parameters()
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
-				{"/c/dekker.i"},
-				{"/c/litmustest/singlethread/00assignment.c"},
-				{"/c/litmustest/singlethread/01cast.c"},
-				{"/c/litmustest/singlethread/02types.c"},
-				{"/c/litmustest/singlethread/03bitwise.c"},
-				{"/c/litmustest/singlethread/04real.c"},
-				{"/c/litmustest/singlethread/05math.c"},
-				{"/c/litmustest/singlethread/06arrays.c"},
-				{"/c/litmustest/singlethread/07arrayinit.c"},
-				{"/c/litmustest/singlethread/08vararray.c"},
-				{"/c/litmustest/singlethread/09struct.c"},
-				{"/c/litmustest/singlethread/10ptr.c"},
-				{"/c/litmustest/singlethread/11ptrs.c"},
-				{"/c/litmustest/singlethread/12ptrtypes.c"},
-				{"/c/litmustest/singlethread/13typedef.c"},
-				{"/c/litmustest/singlethread/14ushort.c"},
-		});
-	}
+    @Parameterized.Parameter(0)
+    public String filepath;
 
-	@Test
-	public void test() throws IOException {
-		ArchitectureConfig.arithmetic = ArchitectureConfig.ArithmeticType.efficient;
-		ArchitectureConfig.multiThreading = false;
-		FrontendMetadata.clear();
-		final InputStream inputStream = getClass().getResourceAsStream(filepath);
-		assert inputStream != null;
-		final CharStream input = CharStreams.fromStream(inputStream);
+    @Parameterized.Parameters()
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {"/c/dekker.i"},
+                {"/c/litmustest/singlethread/00assignment.c"},
+                {"/c/litmustest/singlethread/01cast.c"},
+                {"/c/litmustest/singlethread/02types.c"},
+                {"/c/litmustest/singlethread/03bitwise.c"},
+                {"/c/litmustest/singlethread/04real.c"},
+                {"/c/litmustest/singlethread/05math.c"},
+                {"/c/litmustest/singlethread/06arrays.c"},
+                {"/c/litmustest/singlethread/07arrayinit.c"},
+                {"/c/litmustest/singlethread/08vararray.c"},
+                {"/c/litmustest/singlethread/09struct.c"},
+                {"/c/litmustest/singlethread/10ptr.c"},
+                {"/c/litmustest/singlethread/11ptrs.c"},
+                {"/c/litmustest/singlethread/12ptrtypes.c"},
+                {"/c/litmustest/singlethread/13typedef.c"},
+                {"/c/litmustest/singlethread/14ushort.c"},
+        });
+    }
 
-		final CLexer lexer = new CLexer(input);
-		final CommonTokenStream tokens = new CommonTokenStream(lexer);
-		final CParser parser = new CParser(tokens);
+    @Test
+    public void test() throws IOException {
+        ArchitectureConfig.arithmetic = ArchitectureConfig.ArithmeticType.efficient;
+        ArchitectureConfig.multiThreading = false;
+        FrontendMetadata.clear();
+        final InputStream inputStream = getClass().getResourceAsStream(filepath);
+        assert inputStream != null;
+        final CharStream input = CharStreams.fromStream(inputStream);
 
-		final CParser.CompilationUnitContext context = parser.compilationUnit();
+        final CLexer lexer = new CLexer(input);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final CParser parser = new CParser(tokens);
 
-		CStatement program = context.accept(FunctionVisitor.instance);
-		checkState(program instanceof CProgram, "Parsing did not return a program!");
-		FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
-		XCFA xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program).build();
-	}
+        final CParser.CompilationUnitContext context = parser.compilationUnit();
+
+        CStatement program = context.accept(FunctionVisitor.instance);
+        checkState(program instanceof CProgram, "Parsing did not return a program!");
+        FrontendXcfaBuilder frontendXcfaBuilder = new FrontendXcfaBuilder();
+        XCFA xcfa = frontendXcfaBuilder.buildXcfa((CProgram) program).build();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,80 +38,83 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 final class CfaType {
 
-	private final TypeContext context;
+    private final TypeContext context;
 
-	public CfaType(final TypeContext context) {
-		this.context = checkNotNull(context);
-	}
+    public CfaType(final TypeContext context) {
+        this.context = checkNotNull(context);
+    }
 
-	public Type instantiate() {
-		final Type result = TypeCreatorVisitor.INSTANCE.visit(context);
-		if (result == null) {
-			throw new AssertionError();
-		} else {
-			return result;
-		}
-	}
+    public Type instantiate() {
+        final Type result = TypeCreatorVisitor.INSTANCE.visit(context);
+        if (result == null) {
+            throw new AssertionError();
+        } else {
+            return result;
+        }
+    }
 
-	private static class TypeCreatorVisitor extends CfaDslBaseVisitor<Type> {
-		private static final TypeCreatorVisitor INSTANCE = new TypeCreatorVisitor();
+    private static class TypeCreatorVisitor extends CfaDslBaseVisitor<Type> {
 
-		private TypeCreatorVisitor() {
-		}
+        private static final TypeCreatorVisitor INSTANCE = new TypeCreatorVisitor();
 
-		@Override
-		public Type visitBoolType(final BoolTypeContext ctx) {
-			return Bool();
-		}
+        private TypeCreatorVisitor() {
+        }
 
-		@Override
-		public Type visitIntType(final IntTypeContext ctx) {
-			return Int();
-		}
+        @Override
+        public Type visitBoolType(final BoolTypeContext ctx) {
+            return Bool();
+        }
 
-		@Override
-		public Type visitRatType(final RatTypeContext ctx) {
-			return Rat();
-		}
+        @Override
+        public Type visitIntType(final IntTypeContext ctx) {
+            return Int();
+        }
 
-		@Override
-		public Type visitArrayType(final ArrayTypeContext ctx) {
-			final Type indexType = ctx.indexType.accept(this);
-			final Type elemType = ctx.elemType.accept(this);
-			return Array(indexType, elemType);
-		}
+        @Override
+        public Type visitRatType(final RatTypeContext ctx) {
+            return Rat();
+        }
 
-		@Override
-		public Type visitBvType(final BvTypeContext ctx) {
-			final int size = Integer.parseInt(ctx.size.getText());
-			return BvType(size);
-		}
+        @Override
+        public Type visitArrayType(final ArrayTypeContext ctx) {
+            final Type indexType = ctx.indexType.accept(this);
+            final Type elemType = ctx.elemType.accept(this);
+            return Array(indexType, elemType);
+        }
 
-		@Override
-		public Type visitFpType(FpTypeContext ctx) {
-			final int expSize = getExp(ctx.getText());
-			final int sigSize = getSignificand(ctx.getText());
-			return FpType.of(expSize, sigSize);
-		}
+        @Override
+        public Type visitBvType(final BvTypeContext ctx) {
+            final int size = Integer.parseInt(ctx.size.getText());
+            return BvType(size);
+        }
 
-		private int getExp(String text) {
-			Pattern pattern = Pattern.compile("\\[([0-9]*),([0-9]*)]");
-			Matcher matcher = pattern.matcher(text);
-			if (matcher.find())
-			{
-				return Integer.parseInt(matcher.group(1));
-			} else throw new RuntimeException("Exponent not well formed in fp type!");
-		}
+        @Override
+        public Type visitFpType(FpTypeContext ctx) {
+            final int expSize = getExp(ctx.getText());
+            final int sigSize = getSignificand(ctx.getText());
+            return FpType.of(expSize, sigSize);
+        }
 
-		private int getSignificand(String text) {
-			Pattern pattern = Pattern.compile("\\[([0-9]*),([0-9]*)]");
-			Matcher matcher = pattern.matcher(text);
-			if (matcher.find())
-			{
-				return Integer.parseInt(matcher.group(2));
-			} else throw new RuntimeException("Significand not well formed in fp type!");
-		}
-	}
+        private int getExp(String text) {
+            Pattern pattern = Pattern.compile("\\[([0-9]*),([0-9]*)]");
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
+            } else {
+                throw new RuntimeException("Exponent not well formed in fp type!");
+            }
+        }
+
+        private int getSignificand(String text) {
+            Pattern pattern = Pattern.compile("\\[([0-9]*),([0-9]*)]");
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(2));
+            } else {
+                throw new RuntimeException("Significand not well formed in fp type!");
+            }
+        }
+    }
 
 }
  

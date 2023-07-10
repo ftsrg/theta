@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,146 +38,150 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class XtaType {
 
-	private final Scope scope;
+    private final Scope scope;
 
-	private final TypeContext typeContext;
-	private final List<ArrayIndexContext> arrayIndexContexts;
+    private final TypeContext typeContext;
+    private final List<ArrayIndexContext> arrayIndexContexts;
 
-	public XtaType(final Scope scope, final TypeContext typeContext, final List<ArrayIndexContext> arrayIndexContexts) {
-		this.scope = checkNotNull(scope);
-		this.typeContext = checkNotNull(typeContext);
-		this.arrayIndexContexts = checkNotNull(arrayIndexContexts);
+    public XtaType(final Scope scope, final TypeContext typeContext,
+                   final List<ArrayIndexContext> arrayIndexContexts) {
+        this.scope = checkNotNull(scope);
+        this.typeContext = checkNotNull(typeContext);
+        this.arrayIndexContexts = checkNotNull(arrayIndexContexts);
 
-		checkArgument(typeContext.fTypePrefix.fUrgent == null);
-	}
+        checkArgument(typeContext.fTypePrefix.fUrgent == null);
+    }
 
-	public Type instantiate(final Env env) {
-		checkNotNull(env);
+    public Type instantiate(final Env env) {
+        checkNotNull(env);
 
-		final Type basicType = createBasicType(typeContext, env);
+        final Type basicType = createBasicType(typeContext, env);
 
-		Type result = basicType;
+        Type result = basicType;
 
-		for (final ArrayIndexContext arrayIndexContext : arrayIndexContexts) {
-			final Type indexType = createIndexType(arrayIndexContext, env);
-			result = Array(indexType, result);
-		}
+        for (final ArrayIndexContext arrayIndexContext : arrayIndexContexts) {
+            final Type indexType = createIndexType(arrayIndexContext, env);
+            result = Array(indexType, result);
+        }
 
-		return result;
-	}
+        return result;
+    }
 
-	////
+    ////
 
-	private Type createBasicType(final TypeContext typeContext, final Env env) {
-		final BasicTypeInstantiationVisitor visitor = new BasicTypeInstantiationVisitor(env);
-		final BasicTypeContext basicTypeContext = typeContext.fBasicType;
-		final Type basicType = basicTypeContext.accept(visitor);
-		return basicType;
-	}
+    private Type createBasicType(final TypeContext typeContext, final Env env) {
+        final BasicTypeInstantiationVisitor visitor = new BasicTypeInstantiationVisitor(env);
+        final BasicTypeContext basicTypeContext = typeContext.fBasicType;
+        final Type basicType = basicTypeContext.accept(visitor);
+        return basicType;
+    }
 
-	private Type createIndexType(final ArrayIndexContext arrayIndexContext, final Env env) {
-		final IndexTypeInstantiationVisitor visitor = new IndexTypeInstantiationVisitor(env);
-		final Type indexType = arrayIndexContext.accept(visitor);
-		return indexType;
-	}
+    private Type createIndexType(final ArrayIndexContext arrayIndexContext, final Env env) {
+        final IndexTypeInstantiationVisitor visitor = new IndexTypeInstantiationVisitor(env);
+        final Type indexType = arrayIndexContext.accept(visitor);
+        return indexType;
+    }
 
-	////
+    ////
 
-	private final class BasicTypeInstantiationVisitor extends XtaDslBaseVisitor<Type> {
-		private final Env env;
+    private final class BasicTypeInstantiationVisitor extends XtaDslBaseVisitor<Type> {
 
-		private BasicTypeInstantiationVisitor(final Env env) {
-			this.env = env;
-		}
+        private final Env env;
 
-		@Override
-		public Type visitIntType(final IntTypeContext ctx) {
-			return Int();
-		}
+        private BasicTypeInstantiationVisitor(final Env env) {
+            this.env = env;
+        }
 
-		@Override
-		public Type visitBoolType(final BoolTypeContext ctx) {
-			return Bool();
-		}
+        @Override
+        public Type visitIntType(final IntTypeContext ctx) {
+            return Int();
+        }
 
-		@Override
-		public Type visitClockType(final ClockTypeContext ctx) {
-			return ClockType.getInstance();
-		}
+        @Override
+        public Type visitBoolType(final BoolTypeContext ctx) {
+            return Bool();
+        }
 
-		@Override
-		public Type visitChanType(final ChanTypeContext ctx) {
-			return ChanType.getInstance();
-		}
+        @Override
+        public Type visitClockType(final ClockTypeContext ctx) {
+            return ClockType.getInstance();
+        }
 
-		@Override
-		public Type visitRangeType(final RangeTypeContext ctx) {
-			final XtaExpression lowerExpression = new XtaExpression(scope, ctx.fFromExpression);
-			final XtaExpression upperExpression = new XtaExpression(scope, ctx.fToExpression);
+        @Override
+        public Type visitChanType(final ChanTypeContext ctx) {
+            return ChanType.getInstance();
+        }
 
-			final Expr<?> lowerExpr = lowerExpression.instantiate(env);
-			final Expr<?> upperExpr = upperExpression.instantiate(env);
+        @Override
+        public Type visitRangeType(final RangeTypeContext ctx) {
+            final XtaExpression lowerExpression = new XtaExpression(scope, ctx.fFromExpression);
+            final XtaExpression upperExpression = new XtaExpression(scope, ctx.fToExpression);
 
-			final IntLitExpr lowerLitExpr = (IntLitExpr) ExprUtils.simplify(lowerExpr);
-			final IntLitExpr upperLitExpr = (IntLitExpr) ExprUtils.simplify(upperExpr);
+            final Expr<?> lowerExpr = lowerExpression.instantiate(env);
+            final Expr<?> upperExpr = upperExpression.instantiate(env);
 
-			final int lower = lowerLitExpr.getValue().intValue();
-			final int upper = upperLitExpr.getValue().intValue();
+            final IntLitExpr lowerLitExpr = (IntLitExpr) ExprUtils.simplify(lowerExpr);
+            final IntLitExpr upperLitExpr = (IntLitExpr) ExprUtils.simplify(upperExpr);
 
-			final Type result = RangeType.Range(lower, upper);
-			return result;
-		}
+            final int lower = lowerLitExpr.getValue().intValue();
+            final int upper = upperLitExpr.getValue().intValue();
 
-		@Override
-		public Type visitRefType(final RefTypeContext ctx) {
-			final String id = ctx.fId.getText();
-			final Symbol symbol = scope.resolve(id).get();
-			final XtaTypeSymbol typeSymbol = (XtaTypeSymbol) symbol;
-			final Object value = env.compute(typeSymbol, t -> t.instantiate(env));
-			final Type result = (Type) value;
-			return result;
-		}
+            final Type result = RangeType.Range(lower, upper);
+            return result;
+        }
 
-	}
+        @Override
+        public Type visitRefType(final RefTypeContext ctx) {
+            final String id = ctx.fId.getText();
+            final Symbol symbol = scope.resolve(id).get();
+            final XtaTypeSymbol typeSymbol = (XtaTypeSymbol) symbol;
+            final Object value = env.compute(typeSymbol, t -> t.instantiate(env));
+            final Type result = (Type) value;
+            return result;
+        }
 
-	private final class IndexTypeInstantiationVisitor extends XtaDslBaseVisitor<Type> {
-		private final Env env;
+    }
 
-		public IndexTypeInstantiationVisitor(final Env env) {
-			this.env = env;
-		}
+    private final class IndexTypeInstantiationVisitor extends XtaDslBaseVisitor<Type> {
 
-		@Override
-		public Type visitIdIndex(final IdIndexContext ctx) {
-			final Symbol symbol = scope.resolve(ctx.fId.getText()).get();
-			if (symbol instanceof XtaVariableSymbol) {
-				final XtaVariableSymbol variableSymbol = (XtaVariableSymbol) symbol;
-				assert variableSymbol.isConstant();
-				final Object value = env.compute(variableSymbol, v -> v.instantiate("", env).asConstant().getExpr());
+        private final Env env;
 
-				final IntLitExpr elemCount = (IntLitExpr) value;
-				final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
-				return result;
+        public IndexTypeInstantiationVisitor(final Env env) {
+            this.env = env;
+        }
 
-			} else if (symbol instanceof XtaTypeSymbol) {
-				final XtaTypeSymbol typeSymbol = (XtaTypeSymbol) symbol;
-				final Object value = env.compute(typeSymbol, t -> t.instantiate(env));
-				final Type result = (Type) value;
-				return result;
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		}
+        @Override
+        public Type visitIdIndex(final IdIndexContext ctx) {
+            final Symbol symbol = scope.resolve(ctx.fId.getText()).get();
+            if (symbol instanceof XtaVariableSymbol) {
+                final XtaVariableSymbol variableSymbol = (XtaVariableSymbol) symbol;
+                assert variableSymbol.isConstant();
+                final Object value = env.compute(variableSymbol,
+                        v -> v.instantiate("", env).asConstant().getExpr());
 
-		@Override
-		public Type visitExpressionIndex(final ExpressionIndexContext ctx) {
-			final XtaExpression expression = new XtaExpression(scope, ctx.fExpression);
-			final Expr<?> expr = expression.instantiate(env);
-			final IntLitExpr elemCount = (IntLitExpr) expr;
-			final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
-			return result;
-		}
+                final IntLitExpr elemCount = (IntLitExpr) value;
+                final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
+                return result;
 
-	}
+            } else if (symbol instanceof XtaTypeSymbol) {
+                final XtaTypeSymbol typeSymbol = (XtaTypeSymbol) symbol;
+                final Object value = env.compute(typeSymbol, t -> t.instantiate(env));
+                final Type result = (Type) value;
+                return result;
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        @Override
+        public Type visitExpressionIndex(final ExpressionIndexContext ctx) {
+            final XtaExpression expression = new XtaExpression(scope, ctx.fExpression);
+            final Expr<?> expr = expression.instantiate(env);
+            final IntLitExpr elemCount = (IntLitExpr) expr;
+            final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);
+            return result;
+        }
+
+    }
 
 }

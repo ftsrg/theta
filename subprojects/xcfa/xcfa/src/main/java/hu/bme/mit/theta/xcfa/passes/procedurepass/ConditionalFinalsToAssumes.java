@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,21 +25,23 @@ import java.util.Optional;
 
 public class ConditionalFinalsToAssumes extends ProcedurePass {
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		Optional<XcfaEdge> edgeOpt;
-		do {
-			edgeOpt = builder.getEdges().stream().filter(
-					xcfaEdge -> xcfaEdge.getTarget().isEndLoc() &&
-							xcfaEdge.getLabels().stream().anyMatch(stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel && stmt.getStmt() instanceof AssumeStmt) &&
-							xcfaEdge.getSource().getOutgoingEdges().size() == 2).findAny();
-			edgeOpt.ifPresent(builder::removeEdge);
-		} while (edgeOpt.isPresent());
-		return builder;
-	}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        Optional<XcfaEdge> edgeOpt;
+        do {
+            edgeOpt = builder.getEdges().stream().filter(
+                    xcfaEdge -> xcfaEdge.getTarget().isEndLoc() &&
+                            xcfaEdge.getLabels().stream().anyMatch(
+                                    stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel
+                                            && stmt.getStmt() instanceof AssumeStmt) &&
+                            xcfaEdge.getSource().getOutgoingEdges().size() == 2).findAny();
+            edgeOpt.ifPresent(builder::removeEdge);
+        } while (edgeOpt.isPresent());
+        return builder;
+    }
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public interface ClockOp {
 
-	Collection<VarDecl<RatType>> getVars();
+    Collection<VarDecl<RatType>> getVars();
 
-	Stmt toStmt();
+    Stmt toStmt();
 
-	<P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param);
+    <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param);
 
 }

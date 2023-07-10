@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsi
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CUnsignedInt extends CInt implements Unsigned {
-	public CUnsignedInt(CSimpleType origin) {
-		super(origin);
-		unsigned = true;
-	}
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    public CUnsignedInt(CSimpleType origin) {
+        super(origin);
+        unsigned = true;
+    }
+
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 }

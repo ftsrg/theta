@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,40 +22,43 @@ import hu.bme.mit.theta.core.type.Type;
  */
 public final class Decls {
 
-	private Decls() {
-	}
+    private Decls() {
+    }
 
-	/**
-	 * Create a constant declaration with a given name and type.
-	 * @param name
-	 * @param type
-	 * @param <T>
-	 * @return
-	 */
-	public static <T extends Type> ConstDecl<T> Const(final String name, final T type) {
-		return new BasicConstDecl<>(name, type);
-	}
+    /**
+     * Create a constant declaration with a given name and type.
+     *
+     * @param name
+     * @param type
+     * @param <T>
+     * @return
+     */
+    public static <T extends Type> ConstDecl<T> Const(final String name, final T type) {
+        return new BasicConstDecl<>(name, type);
+    }
 
-	/**
-	 * Create a parameter declaration with a given name and type.
-	 * @param name
-	 * @param type
-	 * @param <T>
-	 * @return
-	 */
-	public static <T extends Type> ParamDecl<T> Param(final String name, final T type) {
-		return new ParamDecl<>(name, type);
-	}
+    /**
+     * Create a parameter declaration with a given name and type.
+     *
+     * @param name
+     * @param type
+     * @param <T>
+     * @return
+     */
+    public static <T extends Type> ParamDecl<T> Param(final String name, final T type) {
+        return new ParamDecl<>(name, type);
+    }
 
-	/**
-	 * Create a variable declaration with a given type.
-	 * @param name
-	 * @param type
-	 * @param <T>
-	 * @return
-	 */
-	public static <T extends Type> VarDecl<T> Var(final String name, final T type) {
-		return new VarDecl<>(name, type);
-	}
+    /**
+     * Create a variable declaration with a given type.
+     *
+     * @param name
+     * @param type
+     * @param <T>
+     * @return
+     */
+    public static <T extends Type> VarDecl<T> Var(final String name, final T type) {
+        return new VarDecl<>(name, type);
+    }
 
 }

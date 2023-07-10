@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@ package hu.bme.mit.theta.common.parser;
 
 public final class LexerException extends RuntimeException {
 
-	private static final long serialVersionUID = 1646917145187066377L;
+    private static final long serialVersionUID = 1646917145187066377L;
 
-	public LexerException(final String message) {
-		super(message);
-	}
+    public LexerException(final String message) {
+        super(message);
+    }
 
-	public LexerException(final Throwable cause) {
-		super(cause);
-	}
+    public LexerException(final Throwable cause) {
+        super(cause);
+    }
 
 }

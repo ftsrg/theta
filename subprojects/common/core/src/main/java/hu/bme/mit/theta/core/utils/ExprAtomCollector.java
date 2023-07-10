@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,32 +31,35 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 
 final class ExprAtomCollector {
-	private static final Collection<Class<?>> CONNECTIVES = ImmutableSet.<Class<?>>builder()
 
-			.add(NotExpr.class)
+    private static final Collection<Class<?>> CONNECTIVES = ImmutableSet.<Class<?>>builder()
 
-			.add(ImplyExpr.class)
+            .add(NotExpr.class)
 
-			.add(IffExpr.class)
+            .add(ImplyExpr.class)
 
-			.add(AndExpr.class)
+            .add(IffExpr.class)
 
-			.add(OrExpr.class)
+            .add(AndExpr.class)
 
-			// .add(IteExpr.class)
+            .add(OrExpr.class)
 
-			.add(PrimeExpr.class)
+            // .add(IteExpr.class)
 
-			.build();
+            .add(PrimeExpr.class)
 
-	private ExprAtomCollector() {
-	}
+            .build();
 
-	static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
-		if (CONNECTIVES.contains(expr.getClass())) {
-			expr.getOps().stream().forEach(op -> collectAtoms(TypeUtils.cast(op, Bool()), collectTo));
-		} else {
-			collectTo.add(expr);
-		}
-	}
+    private ExprAtomCollector() {
+    }
+
+    static void collectAtoms(final Expr<BoolType> expr,
+                             final Collection<Expr<BoolType>> collectTo) {
+        if (CONNECTIVES.contains(expr.getClass())) {
+            expr.getOps().stream()
+                    .forEach(op -> collectAtoms(TypeUtils.cast(op, Bool()), collectTo));
+        } else {
+            collectTo.add(expr);
+        }
+    }
 }

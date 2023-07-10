@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,55 +22,63 @@ import java.util.List;
  */
 public interface ItpPattern {
 
-	/**
-	 * ItpPatter visitor function
-	 * @param visitor The visitor
-	 * @param <E> The return type of the visitor
-	 * @return Returns the result of the visitor
-	 */
-	<E> E visit(final ItpPatternVisitor<E> visitor);
+    /**
+     * ItpPatter visitor function
+     *
+     * @param visitor The visitor
+     * @param <E>     The return type of the visitor
+     * @return Returns the result of the visitor
+     */
+    <E> E visit(final ItpPatternVisitor<E> visitor);
 
-	/**
-	 * Interface for a binary interpolation pattern
-	 */
-	interface Binary<T extends ItpMarker>  extends ItpPattern {
-		T getA();
-		T getB();
+    /**
+     * Interface for a binary interpolation pattern
+     */
+    interface Binary<T extends ItpMarker> extends ItpPattern {
 
-		@Override
-		default <E> E visit(final ItpPatternVisitor<E> visitor) {
-			return visitor.visitBinaryPattern(this);
-		}
-	}
+        T getA();
 
-	/**
-	 * Interface for a sequence interpolation pattern
-	 */
-	interface Sequence<T extends ItpMarker>  extends ItpPattern {
-		List<T> getSequence();
+        T getB();
 
-		@Override
-		default <E> E visit(final ItpPatternVisitor<E> visitor) {
-			return visitor.visitSequencePattern(this);
-		}
-	}
+        @Override
+        default <E> E visit(final ItpPatternVisitor<E> visitor) {
+            return visitor.visitBinaryPattern(this);
+        }
+    }
 
-	/**
-	 * Interface for a tree interpolation pattern
-	 */
-	interface Tree<T extends ItpMarker>  extends ItpPattern {
-		ItpMarkerTree<T> getRoot();
+    /**
+     * Interface for a sequence interpolation pattern
+     */
+    interface Sequence<T extends ItpMarker> extends ItpPattern {
 
-		@Override
-		default <E> E visit(final ItpPatternVisitor<E> visitor) {
-			return visitor.visitTreePattern(this);
-		}
-	}
+        List<T> getSequence();
 
-	interface ItpPatternVisitor<E> {
-		E visitBinaryPattern(final Binary<?> binaryPattern);
-		E visitSequencePattern(final Sequence<?> sequencePattern);
-		E visitTreePattern(final Tree<?> treePattern);
-	}
+        @Override
+        default <E> E visit(final ItpPatternVisitor<E> visitor) {
+            return visitor.visitSequencePattern(this);
+        }
+    }
+
+    /**
+     * Interface for a tree interpolation pattern
+     */
+    interface Tree<T extends ItpMarker> extends ItpPattern {
+
+        ItpMarkerTree<T> getRoot();
+
+        @Override
+        default <E> E visit(final ItpPatternVisitor<E> visitor) {
+            return visitor.visitTreePattern(this);
+        }
+    }
+
+    interface ItpPatternVisitor<E> {
+
+        E visitBinaryPattern(final Binary<?> binaryPattern);
+
+        E visitSequencePattern(final Sequence<?> sequencePattern);
+
+        E visitTreePattern(final Tree<?> treePattern);
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface Ordered<OpType extends Ordered<OpType>> extends Type {
 
-	LtExpr<OpType> Lt(Expr<OpType> leftOp, Expr<OpType> rightOp);
+    LtExpr<OpType> Lt(Expr<OpType> leftOp, Expr<OpType> rightOp);
 
-	LeqExpr<OpType> Leq(Expr<OpType> leftOp, Expr<OpType> rightOp);
+    LeqExpr<OpType> Leq(Expr<OpType> leftOp, Expr<OpType> rightOp);
 
-	GtExpr<OpType> Gt(Expr<OpType> leftOp, Expr<OpType> rightOp);
+    GtExpr<OpType> Gt(Expr<OpType> leftOp, Expr<OpType> rightOp);
 
-	GeqExpr<OpType> Geq(Expr<OpType> leftOp, Expr<OpType> rightOp);
+    GeqExpr<OpType> Geq(Expr<OpType> leftOp, Expr<OpType> rightOp);
 
 }

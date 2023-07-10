@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,45 +21,46 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 
 public final class FalseExpr extends BoolLitExpr {
-	private static final FalseExpr INSTANCE = new FalseExpr();
-	private static final int HASH_SEED = 712514;
-	private static final String OPERATOR_LABEL = "false";
 
-	private FalseExpr() {
-	}
+    private static final FalseExpr INSTANCE = new FalseExpr();
+    private static final int HASH_SEED = 712514;
+    private static final String OPERATOR_LABEL = "false";
 
-	public static FalseExpr getInstance() {
-		return INSTANCE;
-	}
+    private FalseExpr() {
+    }
 
-	@Override
-	public boolean getValue() {
-		return false;
-	}
+    public static FalseExpr getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public BoolType getType() {
-		return Bool();
-	}
+    @Override
+    public boolean getValue() {
+        return false;
+    }
 
-	@Override
-	public LitExpr<BoolType> eval(final Valuation val) {
-		return this;
-	}
+    @Override
+    public BoolType getType() {
+        return Bool();
+    }
 
-	@Override
-	public int hashCode() {
-		return HASH_SEED;
-	}
+    @Override
+    public LitExpr<BoolType> eval(final Valuation val) {
+        return this;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		return (obj instanceof FalseExpr);
-	}
+    @Override
+    public int hashCode() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String toString() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        return (obj instanceof FalseExpr);
+    }
+
+    @Override
+    public String toString() {
+        return OPERATOR_LABEL;
+    }
 
 }

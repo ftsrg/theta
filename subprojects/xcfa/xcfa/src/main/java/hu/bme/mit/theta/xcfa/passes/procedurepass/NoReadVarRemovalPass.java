@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,37 +30,40 @@ import java.util.List;
 import java.util.Set;
 
 public class NoReadVarRemovalPass extends ProcedurePass {
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		if (ArchitectureConfig.multiThreading) return builder;
 
-		Set<VarDecl<?>> assignedToVars = new LinkedHashSet<>();
-		Set<VarDecl<?>> usedUpVars = new LinkedHashSet<>();
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        if (ArchitectureConfig.multiThreading) {
+            return builder;
+        }
 
-		for (XcfaEdge edge : builder.getEdges()) {
-			for (XcfaLabel label : edge.getLabels()) {
-				LabelUtils.getAssortedVars(label, assignedToVars, usedUpVars);
-			}
-		}
-		final Set<VarDecl<?>> toRemove = Sets.difference(assignedToVars, usedUpVars);
-		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			List<XcfaLabel> newLabels = new ArrayList<>();
-			for (XcfaLabel label : edge.getLabels()) {
-				if (LabelUtils.getVars(label).stream().noneMatch(toRemove::contains)) {
-					newLabels.add(label);
-				}
-			}
-			if (newLabels.size() != edge.getLabels().size()) {
-				final XcfaEdge newEdge = edge.withLabels(newLabels);
-				builder.removeEdge(edge);
-				builder.addEdge(newEdge);
-			}
-		}
-		return builder;
-	}
+        Set<VarDecl<?>> assignedToVars = new LinkedHashSet<>();
+        Set<VarDecl<?>> usedUpVars = new LinkedHashSet<>();
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+        for (XcfaEdge edge : builder.getEdges()) {
+            for (XcfaLabel label : edge.getLabels()) {
+                LabelUtils.getAssortedVars(label, assignedToVars, usedUpVars);
+            }
+        }
+        final Set<VarDecl<?>> toRemove = Sets.difference(assignedToVars, usedUpVars);
+        for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+            List<XcfaLabel> newLabels = new ArrayList<>();
+            for (XcfaLabel label : edge.getLabels()) {
+                if (LabelUtils.getVars(label).stream().noneMatch(toRemove::contains)) {
+                    newLabels.add(label);
+                }
+            }
+            if (newLabels.size() != edge.getLabels().size()) {
+                final XcfaEdge newEdge = edge.withLabels(newLabels);
+                builder.removeEdge(edge);
+                builder.addEdge(newEdge);
+            }
+        }
+        return builder;
+    }
+
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,64 +35,64 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class BoolSmtTest {
 
-	@Parameterized.Parameter(value = 0)
-	public MemoryModel memoryModel;
+    @Parameterized.Parameter(value = 0)
+    public MemoryModel memoryModel;
 
-	@Parameterized.Parameter(value = 1)
-	public Program program;
+    @Parameterized.Parameter(value = 1)
+    public Program program;
 
-	@Parameterized.Parameter(value = 2)
-	public boolean forbidden;
+    @Parameterized.Parameter(value = 2)
+    public boolean forbidden;
 
-	@Parameterized.Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 //				{new NoassertMemory(), new W2R2(), false},
 //				{new CoherenceMemory(), new W2R2(), true},
 //				{new NoassertMemory(), new W2R2WR(), false},
 //				{new CoherenceMemory(), new W2R2WR(), true},
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		final MemoryModelBuilder builder = BoolSmtMemoryModelBuilder.create(memoryModel);
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    @Test
+    public void test() {
+        final MemoryModelBuilder builder = BoolSmtMemoryModelBuilder.create(memoryModel);
+        final Solver solver = Z3SolverFactory.getInstance().createSolver();
 
-		program.generateProgram(builder, solver);
+        program.generateProgram(builder, solver);
 
-		solver.check();
-		if (solver.getStatus().isSat()) {
-			final Valuation model = solver.getModel();
-			System.err.println("po: ");
-			printBinaryRelation(builder.get("po", model));
-			System.err.println("===================");
-			System.err.println("rf: ");
-			printBinaryRelation(builder.get("rf", model));
-			System.err.println("===================");
-			System.err.println("co: ");
-			printBinaryRelation(builder.get("co", model));
-			System.err.println("===================");
-			System.err.println("id: ");
-			printBinaryRelation(builder.get("id", model));
-			System.err.println("===================");
-			System.err.println("loc: ");
-			printBinaryRelation(builder.get("loc", model));
-			System.err.println("===================");
-			System.err.println("int: ");
-			printBinaryRelation(builder.get("int", model));
-			System.err.println("===================");
-			System.err.println("ext: ");
-			printBinaryRelation(builder.get("ext", model));
-		}
-		Assert.assertEquals(forbidden, solver.getStatus().isUnsat());
-	}
+        solver.check();
+        if (solver.getStatus().isSat()) {
+            final Valuation model = solver.getModel();
+            System.err.println("po: ");
+            printBinaryRelation(builder.get("po", model));
+            System.err.println("===================");
+            System.err.println("rf: ");
+            printBinaryRelation(builder.get("rf", model));
+            System.err.println("===================");
+            System.err.println("co: ");
+            printBinaryRelation(builder.get("co", model));
+            System.err.println("===================");
+            System.err.println("id: ");
+            printBinaryRelation(builder.get("id", model));
+            System.err.println("===================");
+            System.err.println("loc: ");
+            printBinaryRelation(builder.get("loc", model));
+            System.err.println("===================");
+            System.err.println("int: ");
+            printBinaryRelation(builder.get("int", model));
+            System.err.println("===================");
+            System.err.println("ext: ");
+            printBinaryRelation(builder.get("ext", model));
+        }
+        Assert.assertEquals(forbidden, solver.getStatus().isUnsat());
+    }
 
-	private void printBinaryRelation(final List<TupleN<?>> data) {
-		for (TupleN<?> element : data) {
-			System.err.println(element.get(0) + " -> " + element.get(1));
-		}
+    private void printBinaryRelation(final List<TupleN<?>> data) {
+        for (TupleN<?> element : data) {
+            System.err.println(element.get(0) + " -> " + element.get(1));
+        }
 
-	}
+    }
 
 }

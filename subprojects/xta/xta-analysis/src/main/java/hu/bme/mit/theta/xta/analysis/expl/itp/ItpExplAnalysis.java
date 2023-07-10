@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,35 +25,36 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 
-public final class ItpExplAnalysis<A extends Action> implements Analysis<ItpExplState, A, UnitPrec> {
+public final class ItpExplAnalysis<A extends Action> implements
+        Analysis<ItpExplState, A, UnitPrec> {
 
-	private final InitFunc<ItpExplState, UnitPrec> initFunc;
-	private final TransFunc<ItpExplState, A, UnitPrec> transFunc;
+    private final InitFunc<ItpExplState, UnitPrec> initFunc;
+    private final TransFunc<ItpExplState, A, UnitPrec> transFunc;
 
-	private ItpExplAnalysis(final Analysis<ExplState, ? super A, UnitPrec> analysis) {
-		checkNotNull(analysis);
-		initFunc = ItpExplInitFunc.create(analysis.getInitFunc());
-		transFunc = ItpExplTransFunc.create(analysis.getTransFunc());
-	}
+    private ItpExplAnalysis(final Analysis<ExplState, ? super A, UnitPrec> analysis) {
+        checkNotNull(analysis);
+        initFunc = ItpExplInitFunc.create(analysis.getInitFunc());
+        transFunc = ItpExplTransFunc.create(analysis.getTransFunc());
+    }
 
-	public static <A extends Action> ItpExplAnalysis<A> create(
-			final Analysis<ExplState, ? super A, UnitPrec> analysis) {
-		return new ItpExplAnalysis<>(analysis);
-	}
+    public static <A extends Action> ItpExplAnalysis<A> create(
+            final Analysis<ExplState, ? super A, UnitPrec> analysis) {
+        return new ItpExplAnalysis<>(analysis);
+    }
 
-	@Override
-	public PartialOrd<ItpExplState> getPartialOrd() {
-		return ItpExplOrd.getInstance();
-	}
+    @Override
+    public PartialOrd<ItpExplState> getPartialOrd() {
+        return ItpExplOrd.getInstance();
+    }
 
-	@Override
-	public InitFunc<ItpExplState, UnitPrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<ItpExplState, UnitPrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<ItpExplState, A, UnitPrec> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<ItpExplState, A, UnitPrec> getTransFunc() {
+        return transFunc;
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,105 +64,105 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 @RunWith(Parameterized.class)
 public final class CoreParserTest {
 
-	private static final Decl<BoolType> DX = Const("x", Bool());
-	private static final Decl<BoolType> DY = Const("y", Bool());
-	private static final Decl<BoolType> DZ = Const("z", Bool());
-	private static final Decl<IntType> DA = Const("a", Int());
-	private static final Decl<IntType> DB = Const("b", Int());
-	private static final Decl<IntType> DC = Const("c", Int());
-	private static final Decl<FuncType<IntType, BoolType>> DF = Const("f", Func(Int(), Bool()));
+    private static final Decl<BoolType> DX = Const("x", Bool());
+    private static final Decl<BoolType> DY = Const("y", Bool());
+    private static final Decl<BoolType> DZ = Const("z", Bool());
+    private static final Decl<IntType> DA = Const("a", Int());
+    private static final Decl<IntType> DB = Const("b", Int());
+    private static final Decl<IntType> DC = Const("c", Int());
+    private static final Decl<FuncType<IntType, BoolType>> DF = Const("f", Func(Int(), Bool()));
 
-	private static final Expr<BoolType> X = DX.getRef();
-	private static final Expr<BoolType> Y = DY.getRef();
-	private static final Expr<BoolType> Z = DZ.getRef();
-	private static final Expr<IntType> A = DA.getRef();
-	private static final Expr<IntType> B = DB.getRef();
-	private static final Expr<IntType> C = DC.getRef();
-	private static final Expr<FuncType<IntType, BoolType>> F = DF.getRef();
+    private static final Expr<BoolType> X = DX.getRef();
+    private static final Expr<BoolType> Y = DY.getRef();
+    private static final Expr<BoolType> Z = DZ.getRef();
+    private static final Expr<IntType> A = DA.getRef();
+    private static final Expr<IntType> B = DB.getRef();
+    private static final Expr<IntType> C = DC.getRef();
+    private static final Expr<FuncType<IntType, BoolType>> F = DF.getRef();
 
-	@Parameter(0)
-	public String string;
+    @Parameter(0)
+    public String string;
 
-	@Parameter(1)
-	public Expr<?> expectedExpr;
+    @Parameter(1)
+    public Expr<?> expectedExpr;
 
-	private CoreParser parser;
+    private CoreParser parser;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"true", True()},
+                {"true", True()},
 
-				{"false", False()},
+                {"false", False()},
 
-				{"(not x)", Not(X)},
+                {"(not x)", Not(X)},
 
-				{"(and x y z)", And(X, Y, Z)},
+                {"(and x y z)", And(X, Y, Z)},
 
-				{"(or x y z)", Or(X, Y, Z)},
+                {"(or x y z)", Or(X, Y, Z)},
 
-				{"(=> x y)", Imply(X, Y)},
+                {"(=> x y)", Imply(X, Y)},
 
-				{"(iff x y)", Iff(X, Y)},
+                {"(iff x y)", Iff(X, Y)},
 
-				{"(xor x y)", Xor(X, Y)},
+                {"(xor x y)", Xor(X, Y)},
 
-				{"1", Int(1)},
+                {"1", Int(1)},
 
-				{"(+ a b c)", Add(A, B, C)},
+                {"(+ a b c)", Add(A, B, C)},
 
-				{"(* a b c)", Mul(A, B, C)},
+                {"(* a b c)", Mul(A, B, C)},
 
-				{"(- a b)", Sub(A, B)},
+                {"(- a b)", Sub(A, B)},
 
-				{"(/ a b)", Div(A, B)},
+                {"(/ a b)", Div(A, B)},
 
-				{"(mod a b)", Mod(A, B)},
+                {"(mod a b)", Mod(A, B)},
 
-				{"(rem a b)", Rem(A, B)},
+                {"(rem a b)", Rem(A, B)},
 
-				{"(< a b)", Lt(A, B)},
+                {"(< a b)", Lt(A, B)},
 
-				{"(<= a b)", Leq(A, B)},
+                {"(<= a b)", Leq(A, B)},
 
-				{"(> a b)", Gt(A, B)},
+                {"(> a b)", Gt(A, B)},
 
-				{"(>= a b)", Geq(A, B)},
+                {"(>= a b)", Geq(A, B)},
 
-				{"(= a b)", Eq(A, B)},
+                {"(= a b)", Eq(A, B)},
 
-				{"(/= a b)", Neq(A, B)},
+                {"(/= a b)", Neq(A, B)},
 
-				{"a", A},
+                {"a", A},
 
-				{"(ite x a b)", Ite(X, A, B)},
+                {"(ite x a b)", Ite(X, A, B)},
 
-				{"(f a)", App(F, A)}
+                {"(f a)", App(F, A)}
 
-		});
-	}
+        });
+    }
 
-	@Before
-	public void before() {
-		final Reader reader = new StringReader(string);
-		parser = new CoreParser(reader);
-		parser.declare(DX);
-		parser.declare(DY);
-		parser.declare(DZ);
-		parser.declare(DA);
-		parser.declare(DB);
-		parser.declare(DC);
-		parser.declare(DF);
-	}
+    @Before
+    public void before() {
+        final Reader reader = new StringReader(string);
+        parser = new CoreParser(reader);
+        parser.declare(DX);
+        parser.declare(DY);
+        parser.declare(DZ);
+        parser.declare(DA);
+        parser.declare(DB);
+        parser.declare(DC);
+        parser.declare(DF);
+    }
 
-	@Test
-	public void test() {
-		// Act
-		final Expr<?> actualExpr = parser.expr();
+    @Test
+    public void test() {
+        // Act
+        final Expr<?> actualExpr = parser.expr();
 
-		// Assert
-		assertEquals(expectedExpr, actualExpr);
-	}
+        // Assert
+        assertEquals(expectedExpr, actualExpr);
+    }
 
 }

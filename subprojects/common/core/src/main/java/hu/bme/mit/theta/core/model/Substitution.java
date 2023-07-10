@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,33 +28,35 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
  */
 public interface Substitution {
 
-	/**
-	 * Get all the declarations for which an expression is assigned.
-	 * @return
-	 */
-	Collection<? extends Decl<?>> getDecls();
+    /**
+     * Get all the declarations for which an expression is assigned.
+     *
+     * @return
+     */
+    Collection<? extends Decl<?>> getDecls();
 
-	/**
-	 * Evaluate a declaration, i.e., get the corresponding expression.
-	 * @param decl
-	 * @param <DeclType>
-	 * @return
-	 */
-	<DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl);
+    /**
+     * Evaluate a declaration, i.e., get the corresponding expression.
+     *
+     * @param decl
+     * @param <DeclType>
+     * @return
+     */
+    <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl);
 
-	default <T extends Type> Expr<T> apply(final Expr<T> expr) {
-		if (expr instanceof RefExpr) {
-			final RefExpr<T> ref = (RefExpr<T>) expr;
-			final Decl<T> decl = ref.getDecl();
-			final Optional<? extends Expr<T>> optSub = eval(decl);
-			if (optSub.isPresent()) {
-				final Expr<T> sub = optSub.get();
-				return sub;
-			} else {
-				return expr;
-			}
-		} else {
-			return expr.map(this::apply);
-		}
-	}
+    default <T extends Type> Expr<T> apply(final Expr<T> expr) {
+        if (expr instanceof RefExpr) {
+            final RefExpr<T> ref = (RefExpr<T>) expr;
+            final Decl<T> decl = ref.getDecl();
+            final Optional<? extends Expr<T>> optSub = eval(decl);
+            if (optSub.isPresent()) {
+                final Expr<T> sub = optSub.get();
+                return sub;
+            } else {
+                return expr;
+            }
+        } else {
+            return expr.map(this::apply);
+        }
+    }
 }

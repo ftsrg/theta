@@ -2,6 +2,15 @@ name: Reapply Copyright
 
 on:
   workflow_dispatch:
+    inputs:
+      file_mask:
+        description: 'File mask to reapply license header (argument to find)'
+        required: true
+        default: '-name "*.java" -o -name "*.kt" -o -name "*.kts"'
+      direct-commit:
+        type: boolean
+        default: false
+        description: Commit directly to source (instead of opening a PR)
 
 jobs:
   copyright_checker:
@@ -16,7 +25,7 @@ jobs:
       run: |
         set +x
 
-        for file in $(find . -type f \( -name "*.java" -o -name "*.kt" -o -name "*.kts" \)); do
+        for file in $(find . -type f \( ${{ inputs.file_mask }} \)); do
             last_modified_year=$(git log -1 --format=%ad --date=format:%Y "$file")
             echo "Checking file $file, last modified $last_modified_year"
             
@@ -41,8 +50,15 @@ jobs:
         done
 
     - name: Create Pull Request
+      if: ${{ !inputs.direct-commit }}
       uses: peter-evans/create-pull-request@v5
       with:
         commit-message: "Reapplied copyright"
         branch: "copyright-reapply"
         title: '[AutoPR] Reaplied copyright'
+
+    - name: Commit changes
+      if: ${{ inputs.direct-commit }}
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Reapplied copyright"

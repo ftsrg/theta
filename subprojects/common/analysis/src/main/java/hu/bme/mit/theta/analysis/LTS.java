@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@ package hu.bme.mit.theta.analysis;
 import java.util.Collection;
 
 /**
- * Common interface for Labeled Transition Systems (LTS). An LTS can provide
- * enabled actions for a given state.
+ * Common interface for Labeled Transition Systems (LTS). An LTS can provide enabled actions for a
+ * given state.
  */
 @FunctionalInterface
 public interface LTS<S extends State, A extends Action> {
 
-	/**
-	 * Gets the enabled actions for a given state.
-	 *
-	 * @param state
-	 * @return
-	 */
-	Collection<A> getEnabledActionsFor(S state);
+    /**
+     * Gets the enabled actions for a given state.
+     *
+     * @param state
+     * @return
+     */
+    Collection<A> getEnabledActionsFor(S state);
 
 }

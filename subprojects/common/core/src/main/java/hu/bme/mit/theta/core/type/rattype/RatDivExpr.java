@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,91 +26,92 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class RatDivExpr extends DivExpr<RatType> {
 
-	private static final int HASH_SEED = 139;
+    private static final int HASH_SEED = 139;
 
-	private static final String OPERATOR_LABEL = "/";
+    private static final String OPERATOR_LABEL = "/";
 
-	private RatDivExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    private RatDivExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static RatDivExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatDivExpr(leftOp, rightOp);
-	}
+    public static RatDivExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        return new RatDivExpr(leftOp, rightOp);
+    }
 
-	public static RatDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Expr<RatType> newLeftOp;
-		if (leftOp.getType() instanceof RatType) {
-			newLeftOp = cast(leftOp, Rat());
-		} else if (leftOp.getType() instanceof IntType) {
-			newLeftOp = IntToRatExpr.create(leftOp);
-		} else {
-			throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
-		}
+    public static RatDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+        final Expr<RatType> newLeftOp;
+        if (leftOp.getType() instanceof RatType) {
+            newLeftOp = cast(leftOp, Rat());
+        } else if (leftOp.getType() instanceof IntType) {
+            newLeftOp = IntToRatExpr.create(leftOp);
+        } else {
+            throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
+        }
 
-		final Expr<RatType> newRightOp;
-		if (rightOp.getType() instanceof RatType) {
-			newRightOp = cast(rightOp, Rat());
-		} else if (rightOp.getType() instanceof IntType) {
-			newRightOp = IntToRatExpr.create(rightOp);
-		} else {
-			throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
-		}
+        final Expr<RatType> newRightOp;
+        if (rightOp.getType() instanceof RatType) {
+            newRightOp = cast(rightOp, Rat());
+        } else if (rightOp.getType() instanceof IntType) {
+            newRightOp = IntToRatExpr.create(rightOp);
+        } else {
+            throw new IllegalArgumentException("Unsupported type for RatDiv: " + leftOp.getType());
+        }
 
-		return RatDivExpr.of(newLeftOp, newRightOp);
-	}
+        return RatDivExpr.of(newLeftOp, newRightOp);
+    }
 
-	@Override
-	public RatType getType() {
-		return Rat();
-	}
+    @Override
+    public RatType getType() {
+        return Rat();
+    }
 
-	@Override
-	public RatLitExpr eval(final Valuation val) {
-		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
-		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
-		return leftOpVal.div(rightOpVal);
-	}
+    @Override
+    public RatLitExpr eval(final Valuation val) {
+        final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
+        final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
+        return leftOpVal.div(rightOpVal);
+    }
 
-	@Override
-	public RatDivExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return RatDivExpr.of(leftOp, rightOp);
-		}
-	}
+    @Override
+    public RatDivExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+        if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+            return this;
+        } else {
+            return RatDivExpr.of(leftOp, rightOp);
+        }
+    }
 
-	@Override
-	public RatDivExpr withLeftOp(final Expr<RatType> leftOp) {
-		return with(leftOp, getRightOp());
-	}
+    @Override
+    public RatDivExpr withLeftOp(final Expr<RatType> leftOp) {
+        return with(leftOp, getRightOp());
+    }
 
-	@Override
-	public RatDivExpr withRightOp(final Expr<RatType> rightOp) {
-		return with(getLeftOp(), rightOp);
-	}
+    @Override
+    public RatDivExpr withRightOp(final Expr<RatType> rightOp) {
+        return with(getLeftOp(), rightOp);
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RatDivExpr) {
-			final RatDivExpr that = (RatDivExpr) obj;
-			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof RatDivExpr) {
+            final RatDivExpr that = (RatDivExpr) obj;
+            return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
+                    .equals(that.getRightOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

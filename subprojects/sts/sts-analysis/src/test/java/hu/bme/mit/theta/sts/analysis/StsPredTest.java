@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,58 +66,66 @@ import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 
 public class StsPredTest {
-	final Logger logger = new ConsoleLogger(Level.VERBOSE);
-	final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
-	final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
-	STS sts = null;
 
-	@Before
-	public void setUp() {
-		final VarDecl<IntType> vx = Var("x", Int());
-		final Expr<IntType> x = vx.getRef();
-		final int mod = 3;
-		final Builder builder = STS.builder();
+    final Logger logger = new ConsoleLogger(Level.VERBOSE);
+    final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
+    final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
+    STS sts = null;
 
-		builder.addInit(Eq(x, Int(0)));
-		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
-				Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
-		builder.setProp(Not(Eq(x, Int(mod))));
+    @Before
+    public void setUp() {
+        final VarDecl<IntType> vx = Var("x", Int());
+        final Expr<IntType> x = vx.getRef();
+        final int mod = 3;
+        final Builder builder = STS.builder();
 
-		sts = builder.build();
-	}
+        builder.addInit(Eq(x, Int(0)));
+        builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
+                Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+        builder.setProp(Not(Eq(x, Int(mod))));
 
-	@Test
-	public void testPredPrec() {
+        sts = builder.build();
+    }
 
-		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(abstractionSolver,
-				PredAbstractors.booleanSplitAbstractor(abstractionSolver), sts.getInit());
-		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), abstractionSolver);
+    @Test
+    public void testPredPrec() {
 
-		final PredPrec prec = PredPrec.of();
+        final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(
+                abstractionSolver,
+                PredAbstractors.booleanSplitAbstractor(abstractionSolver), sts.getInit());
+        final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()),
+                abstractionSolver);
 
-		final LTS<State, StsAction> lts = StsLts.create(sts);
+        final PredPrec prec = PredPrec.of();
 
-		final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
+        final LTS<State, StsAction> lts = StsLts.create(sts);
 
-		final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder).logger(logger)
-				.build();
+        final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts,
+                analysis, target);
 
-		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
-				Not(sts.getProp()), refinementSolver);
+        final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(
+                        argBuilder).logger(logger)
+                .build();
 
-		final SingleExprTraceRefiner<PredState, StsAction, PredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
-				.create(exprTraceChecker, JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
-						PruneStrategy.LAZY, logger);
+        final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(
+                sts.getInit(),
+                Not(sts.getProp()), refinementSolver);
 
-		final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner, logger);
+        final SingleExprTraceRefiner<PredState, StsAction, PredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
+                .create(exprTraceChecker,
+                        JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
+                        PruneStrategy.LAZY, logger);
 
-		final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
-		System.out.println(safetyStatus);
+        final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(
+                abstractor, refiner, logger);
 
-		final ARG<PredState, StsAction> arg = safetyStatus.getArg();
-		assertTrue(isWellLabeled(arg, abstractionSolver));
+        final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
+        System.out.println(safetyStatus);
 
-		// System.out.println(new
-		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
-	}
+        final ARG<PredState, StsAction> arg = safetyStatus.getArg();
+        assertTrue(isWellLabeled(arg, abstractionSolver));
+
+        // System.out.println(new
+        // GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
+    }
 }

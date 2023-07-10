@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,25 +31,26 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.XtaContext;
 
 public final class XtaDslManager {
 
-	private XtaDslManager() {
-	}
+    private XtaDslManager() {
+    }
 
-	public static XtaSystem createSystem(final String inputString) throws IOException {
-		final InputStream stream = new ByteArrayInputStream(inputString.getBytes(StandardCharsets.UTF_8.name()));
-		return createSystem(stream);
-	}
+    public static XtaSystem createSystem(final String inputString) throws IOException {
+        final InputStream stream = new ByteArrayInputStream(
+                inputString.getBytes(StandardCharsets.UTF_8.name()));
+        return createSystem(stream);
+    }
 
-	public static XtaSystem createSystem(final InputStream inputStream) throws IOException {
-		final CharStream input = CharStreams.fromStream(inputStream);
+    public static XtaSystem createSystem(final InputStream inputStream) throws IOException {
+        final CharStream input = CharStreams.fromStream(inputStream);
 
-		final XtaDslLexer lexer = new XtaDslLexer(input);
-		final CommonTokenStream tokens = new CommonTokenStream(lexer);
-		final XtaDslParser parser = new XtaDslParser(tokens);
+        final XtaDslLexer lexer = new XtaDslLexer(input);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final XtaDslParser parser = new XtaDslParser(tokens);
 
-		final XtaContext context = parser.xta();
-		final XtaSpecification scope = XtaSpecification.fromContext(context);
-		final XtaSystem system = scope.getSystem();
+        final XtaContext context = parser.xta();
+        final XtaSpecification scope = XtaSpecification.fromContext(context);
+        final XtaSystem system = scope.getSystem();
 
-		return system;
-	}
+        return system;
+    }
 }

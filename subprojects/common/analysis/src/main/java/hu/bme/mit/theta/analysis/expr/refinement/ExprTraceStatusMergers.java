@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,48 +21,52 @@ import java.util.Collection;
 
 public final class ExprTraceStatusMergers {
 
-	private ExprTraceStatusMergers() {
-	}
+    private ExprTraceStatusMergers() {
+    }
 
-	public static <R extends Refutation> ExprTraceStatusMerger<R> minPruneIndex() {
-		return new MinPruneIndex<>();
-	}
+    public static <R extends Refutation> ExprTraceStatusMerger<R> minPruneIndex() {
+        return new MinPruneIndex<>();
+    }
 
-	public static <R extends Refutation> ExprTraceStatusMerger<R> maxPruneIndex() {
-		return new MaxPruneIndex<>();
-	}
+    public static <R extends Refutation> ExprTraceStatusMerger<R> maxPruneIndex() {
+        return new MaxPruneIndex<>();
+    }
 
-	private static class MinPruneIndex<R extends Refutation> implements ExprTraceStatusMerger<R> {
-		@Override
-		public ExprTraceStatus<R> merge(final Collection<ExprTraceStatus<R>> statuses) {
-			checkArgument(!statuses.isEmpty(), "No statuses to merge.");
+    private static class MinPruneIndex<R extends Refutation> implements ExprTraceStatusMerger<R> {
 
-			final ExprTraceStatus<R> firstStatus = statuses.iterator().next();
-			if (firstStatus.isFeasible()) {
-				assert statuses.stream().allMatch(ExprTraceStatus::isFeasible);
-				return firstStatus;
-			} else {
-				assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
-				return statuses.stream().map(ExprTraceStatus::asInfeasible).min((s1, s2) -> Integer
-						.compare(s1.getRefutation().getPruneIndex(), s2.getRefutation().getPruneIndex())).get();
-			}
-		}
-	}
+        @Override
+        public ExprTraceStatus<R> merge(final Collection<ExprTraceStatus<R>> statuses) {
+            checkArgument(!statuses.isEmpty(), "No statuses to merge.");
 
-	private static class MaxPruneIndex<R extends Refutation> implements ExprTraceStatusMerger<R> {
-		@Override
-		public ExprTraceStatus<R> merge(final Collection<ExprTraceStatus<R>> statuses) {
-			checkArgument(!statuses.isEmpty(), "No statuses to merge.");
+            final ExprTraceStatus<R> firstStatus = statuses.iterator().next();
+            if (firstStatus.isFeasible()) {
+                assert statuses.stream().allMatch(ExprTraceStatus::isFeasible);
+                return firstStatus;
+            } else {
+                assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
+                return statuses.stream().map(ExprTraceStatus::asInfeasible).min((s1, s2) -> Integer
+                        .compare(s1.getRefutation().getPruneIndex(),
+                                s2.getRefutation().getPruneIndex())).get();
+            }
+        }
+    }
 
-			final ExprTraceStatus<R> firstStatus = statuses.iterator().next();
-			if (firstStatus.isFeasible()) {
-				assert statuses.stream().allMatch(ExprTraceStatus::isFeasible);
-				return firstStatus;
-			} else {
-				assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
-				return statuses.stream().map(ExprTraceStatus::asInfeasible).max((s1, s2) -> Integer
-						.compare(s1.getRefutation().getPruneIndex(), s2.getRefutation().getPruneIndex())).get();
-			}
-		}
-	}
+    private static class MaxPruneIndex<R extends Refutation> implements ExprTraceStatusMerger<R> {
+
+        @Override
+        public ExprTraceStatus<R> merge(final Collection<ExprTraceStatus<R>> statuses) {
+            checkArgument(!statuses.isEmpty(), "No statuses to merge.");
+
+            final ExprTraceStatus<R> firstStatus = statuses.iterator().next();
+            if (firstStatus.isFeasible()) {
+                assert statuses.stream().allMatch(ExprTraceStatus::isFeasible);
+                return firstStatus;
+            } else {
+                assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
+                return statuses.stream().map(ExprTraceStatus::asInfeasible).max((s1, s2) -> Integer
+                        .compare(s1.getRefutation().getPruneIndex(),
+                                s2.getRefutation().getPruneIndex())).get();
+            }
+        }
+    }
 }

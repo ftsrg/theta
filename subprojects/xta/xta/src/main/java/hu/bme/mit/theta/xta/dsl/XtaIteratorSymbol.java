@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,19 +25,19 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.IteratorDeclContext;
 
 final class XtaIteratorSymbol implements Symbol {
 
-	private final String name;
-	@SuppressWarnings("unused")
-	private final XtaType type;
+    private final String name;
+    @SuppressWarnings("unused")
+    private final XtaType type;
 
-	public XtaIteratorSymbol(final Scope scope, final IteratorDeclContext context) {
-		checkNotNull(context);
-		name = context.fId.getText();
-		type = new XtaType(scope, context.fType, Collections.emptyList());
-	}
+    public XtaIteratorSymbol(final Scope scope, final IteratorDeclContext context) {
+        checkNotNull(context);
+        name = context.fId.getText();
+        type = new XtaType(scope, context.fType, Collections.emptyList());
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
 }

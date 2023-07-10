@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,44 +35,51 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class AddHavocRange extends ProcedurePass {
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		Set<HavocStmt<?>> alreadyAssumed = new LinkedHashSet<>();
-		boolean found = true;
-		while (found) {
-			found = false;
-			for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-				Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel && stmt.getStmt() instanceof HavocStmt && !alreadyAssumed.contains((HavocStmt<?>) stmt.getStmt())).findAny();
-				if (e.isPresent()) {
-					List<XcfaLabel> collect = new ArrayList<>();
-					for (XcfaLabel stmt : edge.getLabels()) {
-						if (stmt == e.get()) {
-							VarDecl<?> var = ((HavocStmt<?>) e.get().getStmt()).getVarDecl();
-							collect.add(stmt);
-							if (FrontendMetadata.getMetadataValue(var.getRef(), "cType").isPresent()) {
-								Stmt wraparoundAssumption = CComplexType.getType(var.getRef()).limit(var.getRef());
-								collect.add(Stmt(wraparoundAssumption));
-							}
-						} else collect.add(stmt);
-					}
-					alreadyAssumed.add((HavocStmt<?>) e.get().getStmt());
-					XcfaEdge xcfaEdge;
-					xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
-					builder.removeEdge(edge);
-					builder.addEdge(xcfaEdge);
-					found = true;
-					FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-						FrontendMetadata.create(xcfaEdge, s, o);
-					});
-				}
-			}
-		}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        Set<HavocStmt<?>> alreadyAssumed = new LinkedHashSet<>();
+        boolean found = true;
+        while (found) {
+            found = false;
+            for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+                Optional<XcfaLabel> e = edge.getLabels().stream().filter(
+                        stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel
+                                && stmt.getStmt() instanceof HavocStmt && !alreadyAssumed.contains(
+                                (HavocStmt<?>) stmt.getStmt())).findAny();
+                if (e.isPresent()) {
+                    List<XcfaLabel> collect = new ArrayList<>();
+                    for (XcfaLabel stmt : edge.getLabels()) {
+                        if (stmt == e.get()) {
+                            VarDecl<?> var = ((HavocStmt<?>) e.get().getStmt()).getVarDecl();
+                            collect.add(stmt);
+                            if (FrontendMetadata.getMetadataValue(var.getRef(), "cType")
+                                    .isPresent()) {
+                                Stmt wraparoundAssumption = CComplexType.getType(var.getRef())
+                                        .limit(var.getRef());
+                                collect.add(Stmt(wraparoundAssumption));
+                            }
+                        } else {
+                            collect.add(stmt);
+                        }
+                    }
+                    alreadyAssumed.add((HavocStmt<?>) e.get().getStmt());
+                    XcfaEdge xcfaEdge;
+                    xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
+                    builder.removeEdge(edge);
+                    builder.addEdge(xcfaEdge);
+                    found = true;
+                    FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+                        FrontendMetadata.create(xcfaEdge, s, o);
+                    });
+                }
+            }
+        }
 
-		return builder;
-	}
+        return builder;
+    }
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

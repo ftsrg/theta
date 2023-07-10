@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,29 +17,29 @@ package hu.bme.mit.theta.core.clock.op;
 
 public class FailClockOpVisitor<P, R> implements ClockOpVisitor<P, R> {
 
-	@Override
-	public R visit(final CopyOp op, final P param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public R visit(final CopyOp op, final P param) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public R visit(final FreeOp op, final P param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public R visit(final FreeOp op, final P param) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public R visit(final GuardOp op, final P param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public R visit(final GuardOp op, final P param) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public R visit(final ResetOp op, final P param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public R visit(final ResetOp op, final P param) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public R visit(final ShiftOp op, final P param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public R visit(final ShiftOp op, final P param) {
+        throw new UnsupportedOperationException();
+    }
 
 }

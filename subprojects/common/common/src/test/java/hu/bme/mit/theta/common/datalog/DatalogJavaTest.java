@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,77 +32,84 @@ import static org.junit.Assert.assertEquals;
  *   We then formulate two queries: which nodes are accessible from a given node, and is the graph irreflexive?
  */
 public final class DatalogJavaTest {
-	private final Datalog datalog;
-	private final Datalog.Relation edge;
-	private final Datalog.Relation successor;
-	private final Datalog.Relation reflexive;
-	private Node firstSubgraph1;
-	private Node secondSubgraph1;
 
-	public DatalogJavaTest() {
-		datalog = Datalog.createProgram();
-		//datalog.setDebug(true);
-		edge = datalog.createRelation("edge", 2);
-		successor = datalog.createRelation("successor", 2);
-		reflexive = datalog.createRelation("reflexive", 1);
+    private final Datalog datalog;
+    private final Datalog.Relation edge;
+    private final Datalog.Relation successor;
+    private final Datalog.Relation reflexive;
+    private Node firstSubgraph1;
+    private Node secondSubgraph1;
 
-		Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables = Tuple2.of(datalog.getVariable(), datalog.getVariable());
-		Datalog.Variable next = datalog.getVariable();
-		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), accessibleVariables.get2()))));
-		successor.addRule(TupleN.of(accessibleVariables), Set.of(Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), next)), Tuple2.of(successor, TupleN.of(next, accessibleVariables.get2()))));
+    public DatalogJavaTest() {
+        datalog = Datalog.createProgram();
+        //datalog.setDebug(true);
+        edge = datalog.createRelation("edge", 2);
+        successor = datalog.createRelation("successor", 2);
+        reflexive = datalog.createRelation("reflexive", 1);
 
-		Datalog.Variable reflexivity = datalog.getVariable();
-		reflexive.addRule(TupleN.of(List.of(reflexivity)), Set.of(Tuple2.of(edge, TupleN.of(reflexivity, reflexivity))));
-	}
+        Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables = Tuple2.of(
+                datalog.getVariable(), datalog.getVariable());
+        Datalog.Variable next = datalog.getVariable();
+        successor.addRule(TupleN.of(accessibleVariables), Set.of(
+                Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), accessibleVariables.get2()))));
+        successor.addRule(TupleN.of(accessibleVariables),
+                Set.of(Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), next)),
+                        Tuple2.of(successor, TupleN.of(next, accessibleVariables.get2()))));
 
-	@Test
-	public void testInitial() {
-		List<Node> firstSubgraph = new ArrayList<>();
-		for (int i = 0; i < 10; ++i) {
-			firstSubgraph.add(new Node('A', i));
-			if (i > 0) {
-				edge.addFact(TupleN.of(firstSubgraph.get(i - 1), firstSubgraph.get(i)));
-			}
-		}
-		List<Node> secondSubgraph = new ArrayList<>();
-		for (int i = 0; i < 15; ++i) {
-			secondSubgraph.add(new Node('B', i));
-			if (i > 0) {
-				edge.addFact(TupleN.of(secondSubgraph.get(i - 1), secondSubgraph.get(i)));
-			}
-		}
-		assertEquals(0, reflexive.getElements().size());
-		assertEquals(45 + 105, successor.getElements().size());
-		firstSubgraph1 = firstSubgraph.get(0);
-		secondSubgraph1 = secondSubgraph.get(0);
-	}
+        Datalog.Variable reflexivity = datalog.getVariable();
+        reflexive.addRule(TupleN.of(List.of(reflexivity)),
+                Set.of(Tuple2.of(edge, TupleN.of(reflexivity, reflexivity))));
+    }
 
-	@Test
-	public void testIncremental() {
-		testInitial();
-		edge.addFact(TupleN.of(firstSubgraph1, secondSubgraph1));
-		assertEquals(0, reflexive.getElements().size());
-		assertEquals(45 + 105 + 15, successor.getElements().size());
-		edge.addFact(TupleN.of(firstSubgraph1, firstSubgraph1));
-		assertEquals(1, reflexive.getElements().size());
-		assertEquals(45 + 105 + 15 + 1, successor.getElements().size());
-	}
+    @Test
+    public void testInitial() {
+        List<Node> firstSubgraph = new ArrayList<>();
+        for (int i = 0; i < 10; ++i) {
+            firstSubgraph.add(new Node('A', i));
+            if (i > 0) {
+                edge.addFact(TupleN.of(firstSubgraph.get(i - 1), firstSubgraph.get(i)));
+            }
+        }
+        List<Node> secondSubgraph = new ArrayList<>();
+        for (int i = 0; i < 15; ++i) {
+            secondSubgraph.add(new Node('B', i));
+            if (i > 0) {
+                edge.addFact(TupleN.of(secondSubgraph.get(i - 1), secondSubgraph.get(i)));
+            }
+        }
+        assertEquals(0, reflexive.getElements().size());
+        assertEquals(45 + 105, successor.getElements().size());
+        firstSubgraph1 = firstSubgraph.get(0);
+        secondSubgraph1 = secondSubgraph.get(0);
+    }
 
-	private static class Node implements DatalogArgument {
-		private final int i;
-		private final char c;
+    @Test
+    public void testIncremental() {
+        testInitial();
+        edge.addFact(TupleN.of(firstSubgraph1, secondSubgraph1));
+        assertEquals(0, reflexive.getElements().size());
+        assertEquals(45 + 105 + 15, successor.getElements().size());
+        edge.addFact(TupleN.of(firstSubgraph1, firstSubgraph1));
+        assertEquals(1, reflexive.getElements().size());
+        assertEquals(45 + 105 + 15 + 1, successor.getElements().size());
+    }
 
-		private Node(char a, int i) {
-			this.c = a;
-			this.i = i;
-		}
+    private static class Node implements DatalogArgument {
 
-		@Override
-		public String toString() {
-			return "Node" + c + "{" +
-					"i=" + i +
-					'}';
-		}
-	}
+        private final int i;
+        private final char c;
+
+        private Node(char a, int i) {
+            this.c = a;
+            this.i = i;
+        }
+
+        @Override
+        public String toString() {
+            return "Node" + c + "{" +
+                    "i=" + i +
+                    '}';
+        }
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,66 +51,67 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public final class ExprTraceCheckersTest {
-	private Collection<ExprTraceChecker<?>> traceCheckers;
 
-	@Before
-	public void before() {
-		final ItpSolver itpSolver = Z3SolverFactory.getInstance().createItpSolver();
-		final UCSolver ucSolver = Z3SolverFactory.getInstance().createUCSolver();
-		traceCheckers = new ArrayList<>();
-		traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), itpSolver));
-		traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), itpSolver));
-		traceCheckers.add(ExprTraceBwBinItpChecker.create(True(), True(), itpSolver));
-		traceCheckers.add(ExprTraceUnsatCoreChecker.create(True(), True(), ucSolver));
-	}
+    private Collection<ExprTraceChecker<?>> traceCheckers;
 
-	@Test
-	public void testFeasable() {
-		// Arrange
-		final Expr<IntType> x = Var("x", Int()).getRef();
-		final Expr<BoolType> trans = Eq(Prime(x), Add(x, Int(1)));
+    @Before
+    public void before() {
+        final ItpSolver itpSolver = Z3SolverFactory.getInstance().createItpSolver();
+        final UCSolver ucSolver = Z3SolverFactory.getInstance().createUCSolver();
+        traceCheckers = new ArrayList<>();
+        traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), itpSolver));
+        traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), itpSolver));
+        traceCheckers.add(ExprTraceBwBinItpChecker.create(True(), True(), itpSolver));
+        traceCheckers.add(ExprTraceUnsatCoreChecker.create(True(), True(), ucSolver));
+    }
 
-		final ExprAction actionMock = mock(ExprAction.class);
-		doReturn(trans).when(actionMock).toExpr();
-		when(actionMock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
+    @Test
+    public void testFeasable() {
+        // Arrange
+        final Expr<IntType> x = Var("x", Int()).getRef();
+        final Expr<BoolType> trans = Eq(Prime(x), Add(x, Int(1)));
 
-		final List<ExprAction> actions = Arrays.asList(actionMock, actionMock, actionMock);
-		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
+        final ExprAction actionMock = mock(ExprAction.class);
+        doReturn(trans).when(actionMock).toExpr();
+        when(actionMock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
-		for (final ExprTraceChecker<?> checker : traceCheckers) {
-			// Act
-			final ExprTraceStatus<?> status = checker.check(trace);
-			// Assert
-			assertTrue(status.isFeasible());
-			assertFalse(status.isInfeasible());
-		}
-	}
+        final List<ExprAction> actions = Arrays.asList(actionMock, actionMock, actionMock);
+        final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
 
-	@Test
-	public void testInfeasable() {
-		// Arrange
-		final Expr<IntType> x = Var("x", Int()).getRef();
-		final Expr<BoolType> trans1 = Eq(Prime(x), Int(0));
-		final Expr<BoolType> trans2 = Geq(x, Int(1));
+        for (final ExprTraceChecker<?> checker : traceCheckers) {
+            // Act
+            final ExprTraceStatus<?> status = checker.check(trace);
+            // Assert
+            assertTrue(status.isFeasible());
+            assertFalse(status.isInfeasible());
+        }
+    }
 
-		final ExprAction action1Mock = mock(ExprAction.class);
-		doReturn(trans1).when(action1Mock).toExpr();
-		when(action1Mock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
+    @Test
+    public void testInfeasable() {
+        // Arrange
+        final Expr<IntType> x = Var("x", Int()).getRef();
+        final Expr<BoolType> trans1 = Eq(Prime(x), Int(0));
+        final Expr<BoolType> trans2 = Geq(x, Int(1));
 
-		final ExprAction action2Mock = mock(ExprAction.class);
-		doReturn(trans2).when(action2Mock).toExpr();
-		when(action2Mock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(0));
+        final ExprAction action1Mock = mock(ExprAction.class);
+        doReturn(trans1).when(action1Mock).toExpr();
+        when(action1Mock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
-		final List<ExprAction> actions = Arrays.asList(action1Mock, action2Mock);
-		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
+        final ExprAction action2Mock = mock(ExprAction.class);
+        doReturn(trans2).when(action2Mock).toExpr();
+        when(action2Mock.nextIndexing()).thenReturn(VarIndexingFactory.indexing(0));
 
-		for (final ExprTraceChecker<?> checker : traceCheckers) {
-			// Act
-			final ExprTraceStatus<?> status = checker.check(trace);
-			// Assert
-			assertTrue(status.isInfeasible());
-			assertFalse(status.isFeasible());
-		}
-	}
+        final List<ExprAction> actions = Arrays.asList(action1Mock, action2Mock);
+        final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
+
+        for (final ExprTraceChecker<?> checker : traceCheckers) {
+            // Act
+            final ExprTraceStatus<?> status = checker.check(trace);
+            // Assert
+            assertTrue(status.isInfeasible());
+            assertFalse(status.isFeasible());
+        }
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,277 +81,282 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public class CoreInterpreter {
 
-	private final Env env;
+    private final Env env;
 
-	public CoreInterpreter(final Env env) {
-		this.env = checkNotNull(env);
-	}
+    public CoreInterpreter(final Env env) {
+        this.env = checkNotNull(env);
+    }
 
-	public void defineCommonTypes() {
-		defineType("Bool", BoolType.getInstance());
-		defineType("Int", IntType.getInstance());
-		defineType("Rat", RatType.getInstance());
-		defineType("Func", typeBinaryOperator(FuncType::of));
-		defineType("Array", typeBinaryOperator(ArrayType::of));
-	}
+    public void defineCommonTypes() {
+        defineType("Bool", BoolType.getInstance());
+        defineType("Int", IntType.getInstance());
+        defineType("Rat", RatType.getInstance());
+        defineType("Func", typeBinaryOperator(FuncType::of));
+        defineType("Array", typeBinaryOperator(ArrayType::of));
+    }
 
-	public void defineCommonExprs() {
-		defineExpr("true", TrueExpr.getInstance());
-		defineExpr("false", FalseExpr.getInstance());
-		defineExpr("not", exprUnaryOperator(NotExpr::create));
-		defineExpr("and", exprMultiaryOperator(AndExpr::create));
-		defineExpr("or", exprMultiaryOperator(OrExpr::create));
-		defineExpr("=>", exprBinaryOperator(ImplyExpr::create));
-		defineExpr("iff", exprBinaryOperator(IffExpr::create));
-		defineExpr("xor", exprBinaryOperator(XorExpr::create));
-		defineExpr("forall", exprQuantifier(ForallExpr::create));
-		defineExpr("exists", exprQuantifier(ExistsExpr::create));
-		defineExpr("ite", exprTernaryOperator(IteExpr::create));
-		defineExpr("read", exprBinaryOperator(ArrayReadExpr::create));
-		defineExpr("write", exprTernaryOperator(ArrayWriteExpr::create));
-		defineExpr("mod", exprBinaryOperator(IntModExpr::create));
-		defineExpr("rem", exprBinaryOperator(IntRemExpr::create));
-		defineExpr("+", exprMultiaryOperator(AddExpr::create2));
-		defineExpr("-", exprBinaryOperator(SubExpr::create2));
-		defineExpr("*", exprMultiaryOperator(MulExpr::create2));
-		defineExpr("/", exprBinaryOperator(DivExpr::create2));
-		defineExpr("<", exprBinaryOperator(LtExpr::create2));
-		defineExpr("<=", exprBinaryOperator(LeqExpr::create2));
-		defineExpr(">", exprBinaryOperator(GtExpr::create2));
-		defineExpr(">=", exprBinaryOperator(GeqExpr::create2));
-		defineExpr("=", exprBinaryOperator(EqExpr::create2));
-		defineExpr("/=", exprBinaryOperator(NeqExpr::create2));
-	}
+    public void defineCommonExprs() {
+        defineExpr("true", TrueExpr.getInstance());
+        defineExpr("false", FalseExpr.getInstance());
+        defineExpr("not", exprUnaryOperator(NotExpr::create));
+        defineExpr("and", exprMultiaryOperator(AndExpr::create));
+        defineExpr("or", exprMultiaryOperator(OrExpr::create));
+        defineExpr("=>", exprBinaryOperator(ImplyExpr::create));
+        defineExpr("iff", exprBinaryOperator(IffExpr::create));
+        defineExpr("xor", exprBinaryOperator(XorExpr::create));
+        defineExpr("forall", exprQuantifier(ForallExpr::create));
+        defineExpr("exists", exprQuantifier(ExistsExpr::create));
+        defineExpr("ite", exprTernaryOperator(IteExpr::create));
+        defineExpr("read", exprBinaryOperator(ArrayReadExpr::create));
+        defineExpr("write", exprTernaryOperator(ArrayWriteExpr::create));
+        defineExpr("mod", exprBinaryOperator(IntModExpr::create));
+        defineExpr("rem", exprBinaryOperator(IntRemExpr::create));
+        defineExpr("+", exprMultiaryOperator(AddExpr::create2));
+        defineExpr("-", exprBinaryOperator(SubExpr::create2));
+        defineExpr("*", exprMultiaryOperator(MulExpr::create2));
+        defineExpr("/", exprBinaryOperator(DivExpr::create2));
+        defineExpr("<", exprBinaryOperator(LtExpr::create2));
+        defineExpr("<=", exprBinaryOperator(LeqExpr::create2));
+        defineExpr(">", exprBinaryOperator(GtExpr::create2));
+        defineExpr(">=", exprBinaryOperator(GeqExpr::create2));
+        defineExpr("=", exprBinaryOperator(EqExpr::create2));
+        defineExpr("/=", exprBinaryOperator(NeqExpr::create2));
+    }
 
-	public void defineCommonStmts() {
-		defineStmt("skip", SkipStmt.getInstance());
-		defineStmt("assign", createAssign());
-		defineStmt("assume", createAssume());
-		defineStmt("havoc", createHavoc());
-	}
+    public void defineCommonStmts() {
+        defineStmt("skip", SkipStmt.getInstance());
+        defineStmt("assign", createAssign());
+        defineStmt("assume", createAssume());
+        defineStmt("havoc", createHavoc());
+    }
 
-	////
+    ////
 
-	public void declare(final Decl<?> decl) {
-		final String name = decl.getName();
-		final Type type = decl.getType();
-		if (type instanceof FuncType) {
-			defineExpr(name, exprApplication(decl));
-		} else {
-			env.define(name, decl);
-		}
-	}
+    public void declare(final Decl<?> decl) {
+        final String name = decl.getName();
+        final Type type = decl.getType();
+        if (type instanceof FuncType) {
+            defineExpr(name, exprApplication(decl));
+        } else {
+            env.define(name, decl);
+        }
+    }
 
-	public void defineType(final String symbol, final Type type) {
-		env.define(symbol, type);
-	}
+    public void defineType(final String symbol, final Type type) {
+        env.define(symbol, type);
+    }
 
-	public void defineType(final String symbol, final BiFunction<Env, List<SExpr>, Type> function) {
-		final Function<List<SExpr>, Type> interpretation = sexprs -> function.apply(env, sexprs);
-		env.define(symbol, interpretation);
-	}
+    public void defineType(final String symbol, final BiFunction<Env, List<SExpr>, Type> function) {
+        final Function<List<SExpr>, Type> interpretation = sexprs -> function.apply(env, sexprs);
+        env.define(symbol, interpretation);
+    }
 
-	public void defineExpr(final String symbol, final Expr<?> expr) {
-		env.define(symbol, expr);
-	}
+    public void defineExpr(final String symbol, final Expr<?> expr) {
+        env.define(symbol, expr);
+    }
 
-	public void defineExpr(final String symbol, final BiFunction<Env, List<SExpr>, Expr<?>> function) {
-		final Function<List<SExpr>, Expr<?>> interpretation = sexprs -> function.apply(env, sexprs);
-		env.define(symbol, interpretation);
-	}
+    public void defineExpr(final String symbol,
+                           final BiFunction<Env, List<SExpr>, Expr<?>> function) {
+        final Function<List<SExpr>, Expr<?>> interpretation = sexprs -> function.apply(env, sexprs);
+        env.define(symbol, interpretation);
+    }
 
-	public void defineStmt(final String symbol, final Stmt stmt) {
-		env.define(symbol, stmt);
-	}
+    public void defineStmt(final String symbol, final Stmt stmt) {
+        env.define(symbol, stmt);
+    }
 
-	public void defineStmt(final String symbol, final BiFunction<Env, List<SExpr>, Stmt> function) {
-		final Function<List<SExpr>, Stmt> interpretation = sexprs -> function.apply(env, sexprs);
-		env.define(symbol, interpretation);
-	}
+    public void defineStmt(final String symbol, final BiFunction<Env, List<SExpr>, Stmt> function) {
+        final Function<List<SExpr>, Stmt> interpretation = sexprs -> function.apply(env, sexprs);
+        env.define(symbol, interpretation);
+    }
 
-	////
+    ////
 
-	public Type type(final SExpr sexpr) {
-		return (Type) eval(sexpr);
-	}
+    public Type type(final SExpr sexpr) {
+        return (Type) eval(sexpr);
+    }
 
-	public Expr<?> expr(final SExpr sexpr) {
-		final Object object = eval(sexpr);
-		if (object instanceof Expr) {
-			return (Expr<?>) object;
-		} else if (object instanceof Decl) {
-			return Ref((Decl<?>) object);
-		} else if (object instanceof Integer) {
-			return Int(BigInteger.valueOf((Integer) object));
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}
+    public Expr<?> expr(final SExpr sexpr) {
+        final Object object = eval(sexpr);
+        if (object instanceof Expr) {
+            return (Expr<?>) object;
+        } else if (object instanceof Decl) {
+            return Ref((Decl<?>) object);
+        } else if (object instanceof Integer) {
+            return Int(BigInteger.valueOf((Integer) object));
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
 
-	public Stmt stmt(final SExpr sexpr) {
-		return (Stmt) eval(sexpr);
-	}
+    public Stmt stmt(final SExpr sexpr) {
+        return (Stmt) eval(sexpr);
+    }
 
-	private VarDecl<?> var(final SExpr sexpr) {
-		return (VarDecl<?>) eval(sexpr);
-	}
+    private VarDecl<?> var(final SExpr sexpr) {
+        return (VarDecl<?>) eval(sexpr);
+    }
 
-	public void push() {
-		env.push();
-	}
+    public void push() {
+        env.push();
+    }
 
-	public void pop() {
-		env.pop();
-	}
+    public void pop() {
+        env.pop();
+    }
 
-	////
+    ////
 
-	private Object eval(final SExpr sexpr) {
-		if (sexpr.isAtom()) {
-			return evalAtom(sexpr.asAtom());
-		} else if (sexpr.isList()) {
-			return evalList(sexpr.asList());
-		} else {
-			throw new AssertionError();
-		}
-	}
+    private Object eval(final SExpr sexpr) {
+        if (sexpr.isAtom()) {
+            return evalAtom(sexpr.asAtom());
+        } else if (sexpr.isList()) {
+            return evalList(sexpr.asList());
+        } else {
+            throw new AssertionError();
+        }
+    }
 
-	private Object evalAtom(final SAtom satom) {
-		final String symbol = satom.getAtom();
-		final Integer integer = Ints.tryParse(symbol);
-		if (integer != null) {
-			return integer;
-		} else {
-			final Object value = env.eval(symbol);
-			return value;
-		}
-	}
+    private Object evalAtom(final SAtom satom) {
+        final String symbol = satom.getAtom();
+        final Integer integer = Ints.tryParse(symbol);
+        if (integer != null) {
+            return integer;
+        } else {
+            final Object value = env.eval(symbol);
+            return value;
+        }
+    }
 
-	private Object evalList(final SList slist) {
-		final List<SExpr> list = slist.getList();
-		final SExpr head = head(list);
-		final List<SExpr> tail = tail(list);
-		if (head.isAtom()) {
-			final String symbol = head.asAtom().getAtom();
-			final Object object = env.eval(symbol);
-			@SuppressWarnings("unchecked") final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
-			final Object value = interpretation.apply(tail);
-			return value;
-		} else if (head.isList()) {
-			throw new UnsupportedOperationException();
-		} else {
-			throw new AssertionError();
-		}
-	}
+    private Object evalList(final SList slist) {
+        final List<SExpr> list = slist.getList();
+        final SExpr head = head(list);
+        final List<SExpr> tail = tail(list);
+        if (head.isAtom()) {
+            final String symbol = head.asAtom().getAtom();
+            final Object object = env.eval(symbol);
+            @SuppressWarnings("unchecked") final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
+            final Object value = interpretation.apply(tail);
+            return value;
+        } else if (head.isList()) {
+            throw new UnsupportedOperationException();
+        } else {
+            throw new AssertionError();
+        }
+    }
 
-	////
+    ////
 
-	public final BiFunction<Env, List<SExpr>, Type> typeBinaryOperator(final BinaryOperator<Type> function) {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 2);
-			final Type type1 = type(sexprs.get(0));
-			final Type type2 = type(sexprs.get(1));
-			return function.apply(type1, type2);
-		};
-	}
+    public final BiFunction<Env, List<SExpr>, Type> typeBinaryOperator(
+            final BinaryOperator<Type> function) {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 2);
+            final Type type1 = type(sexprs.get(0));
+            final Type type2 = type(sexprs.get(1));
+            return function.apply(type1, type2);
+        };
+    }
 
-	public final BiFunction<Env, List<SExpr>, Expr<?>> exprUnaryOperator(final UnaryOperator<Expr<?>> function) {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 1);
-			final Expr<?> op = expr(sexprs.get(0));
-			return function.apply(op);
-		};
-	}
+    public final BiFunction<Env, List<SExpr>, Expr<?>> exprUnaryOperator(
+            final UnaryOperator<Expr<?>> function) {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 1);
+            final Expr<?> op = expr(sexprs.get(0));
+            return function.apply(op);
+        };
+    }
 
-	public final BiFunction<Env, List<SExpr>, Expr<?>> exprBinaryOperator(final BinaryOperator<Expr<?>> function) {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 2);
-			final Expr<?> op1 = expr(sexprs.get(0));
-			final Expr<?> op2 = expr(sexprs.get(1));
-			return function.apply(op1, op2);
-		};
-	}
+    public final BiFunction<Env, List<SExpr>, Expr<?>> exprBinaryOperator(
+            final BinaryOperator<Expr<?>> function) {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 2);
+            final Expr<?> op1 = expr(sexprs.get(0));
+            final Expr<?> op2 = expr(sexprs.get(1));
+            return function.apply(op1, op2);
+        };
+    }
 
-	public final BiFunction<Env, List<SExpr>, Expr<?>> exprTernaryOperator(final TernaryOperator<Expr<?>> function) {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 3);
-			final Expr<?> op1 = expr(sexprs.get(0));
-			final Expr<?> op2 = expr(sexprs.get(1));
-			final Expr<?> op3 = expr(sexprs.get(2));
-			return function.apply(op1, op2, op3);
-		};
-	}
+    public final BiFunction<Env, List<SExpr>, Expr<?>> exprTernaryOperator(
+            final TernaryOperator<Expr<?>> function) {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 3);
+            final Expr<?> op1 = expr(sexprs.get(0));
+            final Expr<?> op2 = expr(sexprs.get(1));
+            final Expr<?> op3 = expr(sexprs.get(2));
+            return function.apply(op1, op2, op3);
+        };
+    }
 
-	public final BiFunction<Env, List<SExpr>, Expr<?>> exprMultiaryOperator(
-			final Function<List<Expr<?>>, Expr<?>> function) {
-		return (env, sexprs) -> {
-			return function.apply(sexprs.stream().map(this::expr).collect(toImmutableList()));
-		};
-	}
+    public final BiFunction<Env, List<SExpr>, Expr<?>> exprMultiaryOperator(
+            final Function<List<Expr<?>>, Expr<?>> function) {
+        return (env, sexprs) -> {
+            return function.apply(sexprs.stream().map(this::expr).collect(toImmutableList()));
+        };
+    }
 
-	public final BiFunction<Env, List<SExpr>, Expr<?>> exprQuantifier(
-			final BiFunction<List<ParamDecl<?>>, Expr<?>, Expr<?>> function) {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 2);
-			env.push();
-			final List<ParamDecl<?>> paramDecls = createParams(sexprs.get(0));
-			paramDecls.forEach(this::declare);
-			final Expr<?> op = expr(sexprs.get(1));
-			env.pop();
-			return function.apply(paramDecls, op);
-		};
-	}
+    public final BiFunction<Env, List<SExpr>, Expr<?>> exprQuantifier(
+            final BiFunction<List<ParamDecl<?>>, Expr<?>, Expr<?>> function) {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 2);
+            env.push();
+            final List<ParamDecl<?>> paramDecls = createParams(sexprs.get(0));
+            paramDecls.forEach(this::declare);
+            final Expr<?> op = expr(sexprs.get(1));
+            env.pop();
+            return function.apply(paramDecls, op);
+        };
+    }
 
-	public final BiFunction<Env, List<SExpr>, Expr<?>> exprApplication(final Decl<?> decl) {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 1);
-			final Expr<?> func = decl.getRef();
-			final Expr<?> param = expr(sexprs.get(0));
-			return FuncAppExpr.create(func, param);
-		};
-	}
+    public final BiFunction<Env, List<SExpr>, Expr<?>> exprApplication(final Decl<?> decl) {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 1);
+            final Expr<?> func = decl.getRef();
+            final Expr<?> param = expr(sexprs.get(0));
+            return FuncAppExpr.create(func, param);
+        };
+    }
 
-	private List<ParamDecl<?>> createParams(final SExpr sexpr) {
-		checkArgument(sexpr.isList());
-		final List<SExpr> sexprs = sexpr.asList().getList();
-		return sexprs.stream().map(this::createParam).collect(toImmutableList());
-	}
+    private List<ParamDecl<?>> createParams(final SExpr sexpr) {
+        checkArgument(sexpr.isList());
+        final List<SExpr> sexprs = sexpr.asList().getList();
+        return sexprs.stream().map(this::createParam).collect(toImmutableList());
+    }
 
-	private ParamDecl<?> createParam(final SExpr sexpr) {
-		checkArgument(sexpr.isList());
-		final List<SExpr> sexprs = sexpr.asList().getList();
-		checkArgument(sexprs.size() == 2);
-		final SExpr sexpr1 = sexprs.get(0);
-		final SExpr sexpr2 = sexprs.get(1);
-		checkArgument(sexpr1.isAtom());
-		final String name = sexpr1.asAtom().getAtom();
-		final Type type = type(sexpr2);
-		return Param(name, type);
-	}
+    private ParamDecl<?> createParam(final SExpr sexpr) {
+        checkArgument(sexpr.isList());
+        final List<SExpr> sexprs = sexpr.asList().getList();
+        checkArgument(sexprs.size() == 2);
+        final SExpr sexpr1 = sexprs.get(0);
+        final SExpr sexpr2 = sexprs.get(1);
+        checkArgument(sexpr1.isAtom());
+        final String name = sexpr1.asAtom().getAtom();
+        final Type type = type(sexpr2);
+        return Param(name, type);
+    }
 
-	private BiFunction<Env, List<SExpr>, Stmt> createAssign() {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 2);
-			final VarDecl<?> varDecl = var(sexprs.get(0));
-			final Expr<?> expr = expr(sexprs.get(1));
-			return AssignStmt.create(varDecl, expr);
-		};
-	}
+    private BiFunction<Env, List<SExpr>, Stmt> createAssign() {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 2);
+            final VarDecl<?> varDecl = var(sexprs.get(0));
+            final Expr<?> expr = expr(sexprs.get(1));
+            return AssignStmt.create(varDecl, expr);
+        };
+    }
 
-	private BiFunction<Env, List<SExpr>, Stmt> createAssume() {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 1);
-			final Expr<?> expr = expr(sexprs.get(0));
-			return AssumeStmt.create(expr);
-		};
-	}
+    private BiFunction<Env, List<SExpr>, Stmt> createAssume() {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 1);
+            final Expr<?> expr = expr(sexprs.get(0));
+            return AssumeStmt.create(expr);
+        };
+    }
 
-	private BiFunction<Env, List<SExpr>, Stmt> createHavoc() {
-		return (env, sexprs) -> {
-			checkArgument(sexprs.size() == 1);
-			final VarDecl<?> varDecl = var(sexprs.get(0));
-			return HavocStmt.of(varDecl);
-		};
-	}
+    private BiFunction<Env, List<SExpr>, Stmt> createHavoc() {
+        return (env, sexprs) -> {
+            checkArgument(sexprs.size() == 1);
+            final VarDecl<?> varDecl = var(sexprs.get(0));
+            return HavocStmt.of(varDecl);
+        };
+    }
 
 }

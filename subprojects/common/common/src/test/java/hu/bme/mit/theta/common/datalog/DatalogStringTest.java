@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,32 +30,38 @@ import java.util.stream.Collectors;
 
 @RunWith(value = Parameterized.class)
 public final class DatalogStringTest {
-	@Parameterized.Parameter
-	public String name;
 
-	@Parameterized.Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
-				{"succ"},
-				{"trains"}    //this benchmark is from the exercise in http://ysangkok.github.io/mitre-datalog.js/wrapper.html
-		});
-	}
+    @Parameterized.Parameter
+    public String name;
 
-	@Test
-	public void test() {
-		final InputStream inStream = getClass().getResourceAsStream("/datalog/in/" + name + ".datalog");
-		final InputStream outStream = getClass().getResourceAsStream("/datalog/out/" + name + ".output");
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {"succ"},
+                {"trains"}
+                //this benchmark is from the exercise in http://ysangkok.github.io/mitre-datalog.js/wrapper.html
+        });
+    }
 
-		String input = new BufferedReader(new InputStreamReader(inStream)).lines().collect(Collectors.joining());
-		Set<String> output = new BufferedReader(new InputStreamReader(outStream)).lines().collect(Collectors.toSet());
+    @Test
+    public void test() {
+        final InputStream inStream = getClass().getResourceAsStream(
+                "/datalog/in/" + name + ".datalog");
+        final InputStream outStream = getClass().getResourceAsStream(
+                "/datalog/out/" + name + ".output");
 
-		String[] s = Datalog.runProgram(input).split("\r\n");
-		for (String s1 : s) {
-			Assert.assertTrue(output.contains(s1));
-			output.remove(s1);
-		}
-		Assert.assertTrue(output.isEmpty());
+        String input = new BufferedReader(new InputStreamReader(inStream)).lines()
+                .collect(Collectors.joining());
+        Set<String> output = new BufferedReader(new InputStreamReader(outStream)).lines()
+                .collect(Collectors.toSet());
 
-	}
+        String[] s = Datalog.runProgram(input).split("\r\n");
+        for (String s1 : s) {
+            Assert.assertTrue(output.contains(s1));
+            output.remove(s1);
+        }
+        Assert.assertTrue(output.isEmpty());
+
+    }
 
 }

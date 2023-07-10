@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 final class XtaZoneInitFunc implements InitFunc<ZoneState, ZonePrec> {
 
-	private static final XtaZoneInitFunc INSTANCE = new XtaZoneInitFunc();
+    private static final XtaZoneInitFunc INSTANCE = new XtaZoneInitFunc();
 
-	private XtaZoneInitFunc() {
-	}
+    private XtaZoneInitFunc() {
+    }
 
-	static XtaZoneInitFunc getInstance() {
-		return INSTANCE;
-	}
+    static XtaZoneInitFunc getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public Collection<ZoneState> getInitStates(final ZonePrec prec) {
-		checkNotNull(prec);
-		return Collections.singleton(ZoneState.zero(prec.getVars()).transform().up().build());
-	}
+    @Override
+    public Collection<ZoneState> getInitStates(final ZonePrec prec) {
+        checkNotNull(prec);
+        return Collections.singleton(ZoneState.zero(prec.getVars()).transform().up().build());
+    }
 
 }

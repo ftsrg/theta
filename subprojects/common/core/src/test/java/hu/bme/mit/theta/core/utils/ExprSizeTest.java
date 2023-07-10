@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,40 +43,40 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 @RunWith(Parameterized.class)
 public class ExprSizeTest {
 
-	private static final VarDecl<BoolType> VA = Var("a", Bool());
-	private static final VarDecl<IntType> VB = Var("b", Int());
+    private static final VarDecl<BoolType> VA = Var("a", Bool());
+    private static final VarDecl<IntType> VB = Var("b", Int());
 
-	private static final Expr<BoolType> A = VA.getRef();
-	private static final Expr<IntType> B = VB.getRef();
+    private static final Expr<BoolType> A = VA.getRef();
+    private static final Expr<IntType> B = VB.getRef();
 
-	@Parameter(value = 0)
-	public Expr<Type> expr;
+    @Parameter(value = 0)
+    public Expr<Type> expr;
 
-	@Parameter(value = 1)
-	public int expectedSize;
+    @Parameter(value = 1)
+    public int expectedSize;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{True(), 1},
+                {True(), 1},
 
-				{A, 1},
+                {A, 1},
 
-				{And(A, True()), 3},
+                {And(A, True()), 3},
 
-				{And(A, True(), False()), 4},
+                {And(A, True(), False()), 4},
 
-				{And(A, And(True(), False())), 5},
+                {And(A, And(True(), False())), 5},
 
-				{Add(B, Sub(Int(1), Int(2)), Int(3)), 6},
+                {Add(B, Sub(Int(1), Int(2)), Int(3)), 6},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		final int actualSize = ExprUtils.nodeCountSize(expr);
-		assertEquals(expectedSize, actualSize);
-	}
+    @Test
+    public void test() {
+        final int actualSize = ExprUtils.nodeCountSize(expr);
+        assertEquals(expectedSize, actualSize);
+    }
 }

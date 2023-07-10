@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,68 +33,80 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction {
-	private final List<XcfaLabel> labels;
-	private final XcfaLocation source;
-	private final XcfaLocation target;
 
-	protected XcfaSTAction(final XcfaLocation source, final XcfaLocation target, final List<XcfaLabel> labels) {
-		this.source = checkNotNull(source);
-		this.target = checkNotNull(target);
-		this.labels = checkNotNull(labels);
-		checkState(labels.stream().noneMatch(label -> label instanceof XcfaLabel.StartThreadXcfaLabel), "Cannot use single-threaded analysis for multi-threaded programs!");
-	}
+    private final List<XcfaLabel> labels;
+    private final XcfaLocation source;
+    private final XcfaLocation target;
 
-	public static XcfaSTAction create(final XcfaEdge edge) {
-		return new XcfaSTAction(edge.getSource(), edge.getTarget(), edge.getLabels());
-	}
+    protected XcfaSTAction(final XcfaLocation source, final XcfaLocation target,
+                           final List<XcfaLabel> labels) {
+        this.source = checkNotNull(source);
+        this.target = checkNotNull(target);
+        this.labels = checkNotNull(labels);
+        checkState(
+                labels.stream().noneMatch(label -> label instanceof XcfaLabel.StartThreadXcfaLabel),
+                "Cannot use single-threaded analysis for multi-threaded programs!");
+    }
 
-	public static XcfaSTAction createWithVars(final XcfaEdge edge, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
-		return new XcfaSTAction(edge.getSource(), edge.getTarget(), XcfaLabelVarReplacer.replaceVars(edge.getLabels(), newVarLut));
-	}
+    public static XcfaSTAction create(final XcfaEdge edge) {
+        return new XcfaSTAction(edge.getSource(), edge.getTarget(), edge.getLabels());
+    }
 
-	public XcfaLocation getSource() {
-		return source;
-	}
+    public static XcfaSTAction createWithVars(final XcfaEdge edge,
+                                              Map<VarDecl<?>, VarDecl<?>> newVarLut) {
+        return new XcfaSTAction(edge.getSource(), edge.getTarget(),
+                XcfaLabelVarReplacer.replaceVars(edge.getLabels(), newVarLut));
+    }
 
-	public XcfaLocation getTarget() {
-		return target;
-	}
+    public XcfaLocation getSource() {
+        return source;
+    }
 
-	@Override
-	public List<Stmt> getStmts() {
-		return labels.stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
-	}
+    public XcfaLocation getTarget() {
+        return target;
+    }
 
-	public List<XcfaLabel> getLabels() {
-		return labels;
-	}
+    @Override
+    public List<Stmt> getStmts() {
+        return labels.stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(labels).toString();
-	}
+    public List<XcfaLabel> getLabels() {
+        return labels;
+    }
 
-	public XcfaSTAction withLabels(final List<XcfaLabel> stmts) {
-		return new XcfaSTAction(source, target, stmts);
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(labels).toString();
+    }
 
-	public static XcfaSTAction copyOf(XcfaSTAction action, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
-		List<XcfaLabel> newStmts = XcfaLabelVarReplacer.replaceVars(action.getLabels(), newVarLut);
-		XcfaSTAction xcfaSTAction = new XcfaSTAction(action.source, action.target, newStmts);
-		FrontendMetadata.lookupMetadata(action).forEach((s, o) -> FrontendMetadata.create(xcfaSTAction, s, o));
-		return xcfaSTAction;
-	}
+    public XcfaSTAction withLabels(final List<XcfaLabel> stmts) {
+        return new XcfaSTAction(source, target, stmts);
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		XcfaSTAction that = (XcfaSTAction) o;
-		return labels.equals(that.labels) && source.equals(that.source) && target.equals(that.target);
-	}
+    public static XcfaSTAction copyOf(XcfaSTAction action, Map<VarDecl<?>, VarDecl<?>> newVarLut) {
+        List<XcfaLabel> newStmts = XcfaLabelVarReplacer.replaceVars(action.getLabels(), newVarLut);
+        XcfaSTAction xcfaSTAction = new XcfaSTAction(action.source, action.target, newStmts);
+        FrontendMetadata.lookupMetadata(action)
+                .forEach((s, o) -> FrontendMetadata.create(xcfaSTAction, s, o));
+        return xcfaSTAction;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(labels, source, target);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        XcfaSTAction that = (XcfaSTAction) o;
+        return labels.equals(that.labels) && source.equals(that.source) && target.equals(
+                that.target);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(labels, source, target);
+    }
 }

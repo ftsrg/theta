@@ -6,7 +6,11 @@ on:
       file_mask:
         description: 'File mask to reformat'
         required: true
-        default: '*.java'
+        default: '*.java,*.kts,*.kt'
+      direct-commit:
+        type: boolean
+        default: false
+        description: Commit directly to source (instead of opening a PR)
 
 jobs:
   reformat:
@@ -15,15 +19,21 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Do reformat
-      uses: leventeBajczi/intellij-idea-format@v0.4
+      uses: leventeBajczi/intellij-idea-format@v1.0
       with:
         settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
         file-mask: ${{ inputs.file_mask }}
 
     - name: Create Pull Request
+      if: ${{ !inputs.direct-commit }}
       uses: peter-evans/create-pull-request@v5
       with:
         commit-message: "Reformatted code"
         branch: "code-reformat"
         title: '[AutoPR] Reformatted code'
 
+    - name: Commit changes
+      if: ${{ inputs.direct-commit }}
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Reformatted code"

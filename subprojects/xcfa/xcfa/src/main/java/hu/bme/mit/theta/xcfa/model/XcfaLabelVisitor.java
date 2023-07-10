@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,26 +20,27 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
 
 public interface XcfaLabelVisitor<P, R> extends StmtVisitor<P, R> {
-	R visit(XcfaLabel.AtomicBeginXcfaLabel label, P param);
 
-	R visit(XcfaLabel.AtomicEndXcfaLabel label, P param);
+    R visit(XcfaLabel.AtomicBeginXcfaLabel label, P param);
 
-	R visit(XcfaLabel.ProcedureCallXcfaLabel label, P param);
+    R visit(XcfaLabel.AtomicEndXcfaLabel label, P param);
 
-	R visit(XcfaLabel.StartThreadXcfaLabel label, P param);
+    R visit(XcfaLabel.ProcedureCallXcfaLabel label, P param);
 
-	R visit(XcfaLabel.JoinThreadXcfaLabel label, P param);
+    R visit(XcfaLabel.StartThreadXcfaLabel label, P param);
 
-	<T extends Type> R visit(XcfaLabel.LoadXcfaLabel<T> label, P param);
+    R visit(XcfaLabel.JoinThreadXcfaLabel label, P param);
 
-	<T extends Type> R visit(XcfaLabel.StoreXcfaLabel<T> label, P param);
+    <T extends Type> R visit(XcfaLabel.LoadXcfaLabel<T> label, P param);
 
-	R visit(XcfaLabel.FenceXcfaLabel label, P param);
+    <T extends Type> R visit(XcfaLabel.StoreXcfaLabel<T> label, P param);
 
-	R visit(XcfaLabel.StmtXcfaLabel label, P param);
+    R visit(XcfaLabel.FenceXcfaLabel label, P param);
 
-	R visit(XcfaLabel.SequenceLabel sequenceLabel, P param);
+    R visit(XcfaLabel.StmtXcfaLabel label, P param);
 
-	R visit(XcfaLabel.NondetLabel nondetLabel, P param);
+    R visit(XcfaLabel.SequenceLabel sequenceLabel, P param);
+
+    R visit(XcfaLabel.NondetLabel nondetLabel, P param);
 
 }

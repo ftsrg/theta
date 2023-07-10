@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,68 +27,68 @@ import java.util.Collections;
  */
 public class Node {
 
-	private final String id;
-	private final NodeAttributes attributes;
+    private final String id;
+    private final NodeAttributes attributes;
 
-	private final Collection<Edge> inEdges;
-	private final Collection<Edge> outEdges;
+    private final Collection<Edge> inEdges;
+    private final Collection<Edge> outEdges;
 
-	private Node parent;
+    private Node parent;
 
-	Node(final String id, final NodeAttributes attributes) {
-		this.id = checkNotNull(id);
-		this.attributes = checkNotNull(attributes);
-		this.inEdges = new ArrayList<>();
-		this.outEdges = new ArrayList<>();
-		this.parent = null;
-	}
+    Node(final String id, final NodeAttributes attributes) {
+        this.id = checkNotNull(id);
+        this.attributes = checkNotNull(attributes);
+        this.inEdges = new ArrayList<>();
+        this.outEdges = new ArrayList<>();
+        this.parent = null;
+    }
 
-	public String getId() {
-		return id;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public NodeAttributes getAttributes() {
-		return attributes;
-	}
+    public NodeAttributes getAttributes() {
+        return attributes;
+    }
 
-	public Collection<Edge> getInEdges() {
-		return Collections.unmodifiableCollection(inEdges);
-	}
+    public Collection<Edge> getInEdges() {
+        return Collections.unmodifiableCollection(inEdges);
+    }
 
-	public Collection<Edge> getOutEdges() {
-		return Collections.unmodifiableCollection(outEdges);
-	}
+    public Collection<Edge> getOutEdges() {
+        return Collections.unmodifiableCollection(outEdges);
+    }
 
-	/**
-	 * Add an outgoing edge. The source of the edge must be set to this node.
-	 *
-	 * @param edge
-	 */
-	void addOutEdge(final Edge edge) {
-		checkArgument(edge.getSource() == this, "The source of the edge must be set to this node.");
-		outEdges.add(edge);
-	}
+    /**
+     * Add an outgoing edge. The source of the edge must be set to this node.
+     *
+     * @param edge
+     */
+    void addOutEdge(final Edge edge) {
+        checkArgument(edge.getSource() == this, "The source of the edge must be set to this node.");
+        outEdges.add(edge);
+    }
 
-	/**
-	 * Add an incoming edge. The target of the edge must be set to this node.
-	 *
-	 * @param edge
-	 */
-	void addInEdge(final Edge edge) {
-		checkArgument(edge.getTarget() == this, "The target of the edge must be set to this node.");
-		inEdges.add(edge);
-	}
+    /**
+     * Add an incoming edge. The target of the edge must be set to this node.
+     *
+     * @param edge
+     */
+    void addInEdge(final Edge edge) {
+        checkArgument(edge.getTarget() == this, "The target of the edge must be set to this node.");
+        inEdges.add(edge);
+    }
 
-	public Node getParent() {
-		return parent;
-	}
+    public Node getParent() {
+        return parent;
+    }
 
-	void setParent(final Node parent) {
-		this.parent = parent;
-	}
+    void setParent(final Node parent) {
+        this.parent = parent;
+    }
 
-	public boolean isRoot() {
-		return getParent() == null;
-	}
+    public boolean isRoot() {
+        return getParent() == null;
+    }
 
 }

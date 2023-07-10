@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,75 +31,75 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class ResetOp implements ClockOp {
 
-	private static final int HASH_SEED = 4507;
+    private static final int HASH_SEED = 4507;
 
-	private final VarDecl<RatType> varDecl;
-	private final int value;
+    private final VarDecl<RatType> varDecl;
+    private final int value;
 
-	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType> stmt = null;
+    private volatile int hashCode = 0;
+    private volatile AssignStmt<RatType> stmt = null;
 
-	ResetOp(final VarDecl<RatType> varDecl, final int value) {
-		checkArgument(value >= 0);
-		this.varDecl = checkNotNull(varDecl);
-		this.value = value;
-	}
+    ResetOp(final VarDecl<RatType> varDecl, final int value) {
+        checkArgument(value >= 0);
+        this.varDecl = checkNotNull(varDecl);
+        this.value = value;
+    }
 
-	public VarDecl<RatType> getVar() {
-		return varDecl;
-	}
+    public VarDecl<RatType> getVar() {
+        return varDecl;
+    }
 
-	public int getValue() {
-		return value;
-	}
+    public int getValue() {
+        return value;
+    }
 
-	@Override
-	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(varDecl);
-	}
+    @Override
+    public Collection<VarDecl<RatType>> getVars() {
+        return ImmutableSet.of(varDecl);
+    }
 
-	@Override
-	public AssignStmt<RatType> toStmt() {
-		AssignStmt<RatType> result = stmt;
-		if (result == null) {
-			result = Assign(varDecl, Rat(value, 1));
-			stmt = result;
-		}
-		return result;
-	}
+    @Override
+    public AssignStmt<RatType> toStmt() {
+        AssignStmt<RatType> result = stmt;
+        if (result == null) {
+            result = Assign(varDecl, Rat(value, 1));
+            stmt = result;
+        }
+        return result;
+    }
 
-	@Override
-	public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
+    @Override
+    public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + varDecl.hashCode();
-			result = 31 * result + value;
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + varDecl.hashCode();
+            result = 31 * result + value;
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof ResetOp) {
-			final ResetOp that = (ResetOp) obj;
-			return this.getVar().equals(that.getVar()) && this.getValue() == that.getValue();
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof ResetOp) {
+            final ResetOp that = (ResetOp) obj;
+            return this.getVar().equals(that.getVar()) && this.getValue() == that.getValue();
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("reset").add(varDecl.getName()).add(value).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("reset").add(varDecl.getName()).add(value).toString();
+    }
 
 }

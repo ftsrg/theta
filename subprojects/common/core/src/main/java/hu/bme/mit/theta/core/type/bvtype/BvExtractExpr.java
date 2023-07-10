@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,115 +33,121 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 
 public final class BvExtractExpr implements Expr<BvType> {
-	private static final int HASH_SEED = 6586;
-	private static final String OPERATOR_LABEL = "extract";
 
-	private final Expr<BvType> bitvec;
-	private final IntLitExpr from;
-	private final IntLitExpr until;
+    private static final int HASH_SEED = 6586;
+    private static final String OPERATOR_LABEL = "extract";
 
-	private volatile int hashCode = 0;
+    private final Expr<BvType> bitvec;
+    private final IntLitExpr from;
+    private final IntLitExpr until;
 
-	private BvExtractExpr(final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
-		checkNotNull(bitvec);
-		checkNotNull(from);
-		checkNotNull(until);
-		checkArgument(from.getValue().compareTo(BigInteger.ZERO) >= 0);
-		checkArgument(until.getValue().compareTo(BigInteger.ZERO) >= 0);
-		checkArgument(until.getValue().compareTo(from.getValue()) > 0);
+    private volatile int hashCode = 0;
 
-		this.bitvec = bitvec;
-		this.from = from;
-		this.until = until;
-	}
+    private BvExtractExpr(final Expr<BvType> bitvec, final IntLitExpr from,
+                          final IntLitExpr until) {
+        checkNotNull(bitvec);
+        checkNotNull(from);
+        checkNotNull(until);
+        checkArgument(from.getValue().compareTo(BigInteger.ZERO) >= 0);
+        checkArgument(until.getValue().compareTo(BigInteger.ZERO) >= 0);
+        checkArgument(until.getValue().compareTo(from.getValue()) > 0);
 
-	public static BvExtractExpr of(final Expr<BvType> bitvec, final IntLitExpr from, final IntLitExpr until) {
-		return new BvExtractExpr(bitvec, from, until);
-	}
+        this.bitvec = bitvec;
+        this.from = from;
+        this.until = until;
+    }
 
-	public static BvExtractExpr create(final Expr<?> bitvec, final Expr<?> from, final Expr<?> until) {
-		final Expr<BvType> newBitvec = castBv(bitvec);
-		final IntLitExpr newFrom = (IntLitExpr) cast(from, Int());
-		final IntLitExpr newUntil = (IntLitExpr) cast(until, Int());
-		return BvExtractExpr.of(newBitvec, newFrom, newUntil);
-	}
+    public static BvExtractExpr of(final Expr<BvType> bitvec, final IntLitExpr from,
+                                   final IntLitExpr until) {
+        return new BvExtractExpr(bitvec, from, until);
+    }
 
-	public Expr<BvType> getBitvec() {
-		return bitvec;
-	}
+    public static BvExtractExpr create(final Expr<?> bitvec, final Expr<?> from,
+                                       final Expr<?> until) {
+        final Expr<BvType> newBitvec = castBv(bitvec);
+        final IntLitExpr newFrom = (IntLitExpr) cast(from, Int());
+        final IntLitExpr newUntil = (IntLitExpr) cast(until, Int());
+        return BvExtractExpr.of(newBitvec, newFrom, newUntil);
+    }
 
-	public IntLitExpr getFrom() {
-		return from;
-	}
+    public Expr<BvType> getBitvec() {
+        return bitvec;
+    }
 
-	public IntLitExpr getUntil() {
-		return until;
-	}
+    public IntLitExpr getFrom() {
+        return from;
+    }
 
-	@Override
-	public List<? extends Expr<?>> getOps() {
-		return ImmutableList.of(bitvec, from, until);
-	}
+    public IntLitExpr getUntil() {
+        return until;
+    }
 
-	@Override
-	public int getArity() {
-		return 3;
-	}
+    @Override
+    public List<? extends Expr<?>> getOps() {
+        return ImmutableList.of(bitvec, from, until);
+    }
 
-	@Override
-	public BvType getType() {
-		return bitvec.getType().withSize(until.getValue().subtract(from.getValue()).intValue());
-	}
+    @Override
+    public int getArity() {
+        return 3;
+    }
 
-	@Override
-	public LitExpr<BvType> eval(Valuation val) {
-		final BvLitExpr bvLitExpr = (BvLitExpr) bitvec.eval(val);
-		return bvLitExpr.extract(from, until);
-	}
+    @Override
+    public BvType getType() {
+        return bitvec.getType().withSize(until.getValue().subtract(from.getValue()).intValue());
+    }
 
-	@Override
-	public Expr<BvType> withOps(List<? extends Expr<?>> ops) {
-		checkNotNull(ops);
-		checkArgument(ops.size() == 3);
-		final Expr<BvType> newBitvec = castBv(ops.get(0));
-		final IntLitExpr newFrom = (IntLitExpr) cast(ops.get(1), Int());
-		final IntLitExpr newUntil = (IntLitExpr) cast(ops.get(2), Int());
+    @Override
+    public LitExpr<BvType> eval(Valuation val) {
+        final BvLitExpr bvLitExpr = (BvLitExpr) bitvec.eval(val);
+        return bvLitExpr.extract(from, until);
+    }
 
-		if (bitvec.equals(newBitvec) && from.equals(newFrom) && until.equals(newUntil)) {
-			return this;
-		} else {
-			return of(newBitvec, newFrom, newUntil);
-		}
-	}
+    @Override
+    public Expr<BvType> withOps(List<? extends Expr<?>> ops) {
+        checkNotNull(ops);
+        checkArgument(ops.size() == 3);
+        final Expr<BvType> newBitvec = castBv(ops.get(0));
+        final IntLitExpr newFrom = (IntLitExpr) cast(ops.get(1), Int());
+        final IntLitExpr newUntil = (IntLitExpr) cast(ops.get(2), Int());
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + bitvec.hashCode();
-			result = 31 * result + from.hashCode();
-			result = 31 * result + until.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+        if (bitvec.equals(newBitvec) && from.equals(newFrom) && until.equals(newUntil)) {
+            return this;
+        } else {
+            return of(newBitvec, newFrom, newUntil);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof BvExtractExpr) {
-			final BvExtractExpr that = (BvExtractExpr) obj;
-			return this.getBitvec().equals(that.getBitvec()) && this.getFrom().equals(that.getFrom())
-					&& this.getUntil().equals(that.getUntil());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + bitvec.hashCode();
+            result = 31 * result + from.hashCode();
+            result = 31 * result + until.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(OPERATOR_LABEL).add(getBitvec()).add(getFrom()).add(getUntil()).toString();
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof BvExtractExpr) {
+            final BvExtractExpr that = (BvExtractExpr) obj;
+            return this.getBitvec().equals(that.getBitvec()) && this.getFrom()
+                    .equals(that.getFrom())
+                    && this.getUntil().equals(that.getUntil());
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getBitvec()).add(getFrom())
+                .add(getUntil()).toString();
+    }
 }

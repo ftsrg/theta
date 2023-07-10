@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,78 +66,81 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class Z3SolverTest {
-	private Solver solver;
 
-	@Before
-	public void setup() {
-		solver = Z3SolverFactory.getInstance().createSolver();
-	}
+    private Solver solver;
 
-	@Test
-	public void testSimple() {
-		// Create two integer constants x and y
-		final ConstDecl<IntType> cx = Const("x", Int());
-		final ConstDecl<IntType> cy = Const("y", Int());
+    @Before
+    public void setup() {
+        solver = Z3SolverFactory.getInstance().createSolver();
+    }
 
-		// Add x == y + 1 to the solver
-		solver.add(Eq(cx.getRef(), Add(cy.getRef(), Int(1))));
+    @Test
+    public void testSimple() {
+        // Create two integer constants x and y
+        final ConstDecl<IntType> cx = Const("x", Int());
+        final ConstDecl<IntType> cy = Const("y", Int());
 
-		// Check, the expression should be satisfiable
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+        // Add x == y + 1 to the solver
+        solver.add(Eq(cx.getRef(), Add(cy.getRef(), Int(1))));
 
-		// Add x < y to the solver
-		solver.add(IntExprs.Lt(cx.getRef(), cy.getRef()));
+        // Check, the expression should be satisfiable
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		// Check, the expression should be unsatisfiable
-		status = solver.check();
-		assertTrue(status.isUnsat());
-	}
+        // Add x < y to the solver
+        solver.add(IntExprs.Lt(cx.getRef(), cy.getRef()));
 
-	@Test
-	public void testTrack() {
-		final UCSolver solver = Z3SolverFactory.getInstance().createUCSolver();
-		final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
-		final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());
+        // Check, the expression should be unsatisfiable
+        status = solver.check();
+        assertTrue(status.isUnsat());
+    }
 
-		solver.push();
-		solver.track(expr);
+    @Test
+    public void testTrack() {
+        final UCSolver solver = Z3SolverFactory.getInstance().createUCSolver();
+        final ConstDecl<BoolType> ca = Const("a", BoolExprs.Bool());
+        final Expr<BoolType> expr = BoolExprs.And(ca.getRef(), True());
 
-		final SolverStatus status = solver.check();
+        solver.push();
+        solver.track(expr);
 
-		assertTrue(status.isSat());
+        final SolverStatus status = solver.check();
 
-		final Valuation model = solver.getModel();
+        assertTrue(status.isSat());
 
-		assertNotNull(model);
+        final Valuation model = solver.getModel();
 
-		solver.pop();
-	}
+        assertNotNull(model);
 
-	@Test
-	public void testFunc() {
-		// Arrange
-		final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(Int(), Int()));
-		final Expr<FuncType<IntType, IntType>> a = ca.getRef();
-		final ParamDecl<IntType> px = Param("x", Int());
-		final Expr<IntType> x = px.getRef();
+        solver.pop();
+    }
 
-		solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
-		solver.add(BoolExprs.Forall(of(px), BoolExprs.Imply(IntExprs.Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
+    @Test
+    public void testFunc() {
+        // Arrange
+        final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(Int(), Int()));
+        final Expr<FuncType<IntType, IntType>> a = ca.getRef();
+        final ParamDecl<IntType> px = Param("x", Int());
+        final Expr<IntType> x = px.getRef();
 
-		// Act
-		final SolverStatus status = solver.check();
-		assertTrue(status.isSat());
-		final Valuation model = solver.getModel();
-		final Optional<LitExpr<FuncType<IntType, IntType>>> optVal = model.eval(ca);
-		final Expr<FuncType<IntType, IntType>> val = optVal.get();
+        solver.add(BoolExprs.Forall(of(px),
+                BoolExprs.Imply(IntExprs.Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
+        solver.add(BoolExprs.Forall(of(px),
+                BoolExprs.Imply(IntExprs.Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
 
-		// Assert
-		assertEquals(ca.getType(), val.getType());
-	}
+        // Act
+        final SolverStatus status = solver.check();
+        assertTrue(status.isSat());
+        final Valuation model = solver.getModel();
+        final Optional<LitExpr<FuncType<IntType, IntType>>> optVal = model.eval(ca);
+        final Expr<FuncType<IntType, IntType>> val = optVal.get();
 
-	@Test
-	public void testArray() {
+        // Assert
+        assertEquals(ca.getType(), val.getType());
+    }
+
+    @Test
+    public void testArray() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 
         solver.add(ArrayExprs.Eq(Write(arr.getRef(), Int(0), Int(1)), arr.getRef()));
@@ -149,310 +152,319 @@ public final class Z3SolverTest {
 
         Valuation valuation = solver.getModel();
         final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
-		final Expr<ArrayType<IntType, IntType>> val = optVal.get();
-		assertTrue(val instanceof ArrayLitExpr);
-		var valLit = (ArrayLitExpr<IntType, IntType>)val;
-		assertEquals(2, valLit.getElements().size());
-		assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
-		assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
-	}
-
-	@Test
-	public void testArrayInit() {
-		final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
-		var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
-		ConstDecl<IntType> noname = Const("noname", Int());
-		elems.add(Tuple2.of(Int(0), Int(1)));
-		elems.add(Tuple2.of(Int(1), Int(2)));
-		elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(3))));
-		var initarr = ArrayInit(elems, Int(100), Array(Int(), Int()));
-
-		solver.add(ArrayExprs.Eq(arr.getRef(), initarr));
-
-		// Check, the expression should be satisfiable
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
-
-		solver.add(Eq(noname.getRef(), Int(1)));
-		status = solver.check();
-		assertTrue(status.isSat());
-
-		Valuation valuation = solver.getModel();
-		final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
-		assertTrue(optVal.isPresent());
-		final Expr<ArrayType<IntType, IntType>> val = optVal.get();
-		assertTrue(val instanceof ArrayLitExpr);
-		var valLit = (ArrayLitExpr<IntType, IntType>)val;
-		assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
-		assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
-		assertEquals(Int(4), Read(valLit, Int(2)).eval(ImmutableValuation.empty()));
-	}
-
-	@Test
-	public void testReset() {
-		final ConstDecl<IntType> cx = Const("x", Int());
-		final ConstDecl<IntType> cy = Const("y", Int());
-
-		IntEqExpr eqExpr = Eq(cx.getRef(), Add(cy.getRef(), Int(1)));
-		solver.add(eqExpr);
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
-
-		solver.add(IntExprs.Lt(cx.getRef(), cy.getRef()));
-		status = solver.check();
-		assertTrue(status.isUnsat());
-
-		solver.reset();
-		assertEquals(0, solver.getAssertions().size());
-
-		solver.add(eqExpr);
-		status = solver.check();
-		assertTrue(status.isSat());
-	}
-
-	@Test(expected = IllegalArgumentException.class)
-	public void testResetStack() {
-		solver.push();
-		solver.push();
-		solver.pop();
-		solver.reset();
-		solver.pop();
-	}
-
-	@Test
-	public void testBV1() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
-
-		solver.push();
-
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, false, true, false})));
-		solver.add(BvExprs.Eq(cx.getRef(), cy.getRef()));
+        final Expr<ArrayType<IntType, IntType>> val = optVal.get();
+        assertTrue(val instanceof ArrayLitExpr);
+        var valLit = (ArrayLitExpr<IntType, IntType>) val;
+        assertEquals(2, valLit.getElements().size());
+        assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
+        assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
+    }
+
+    @Test
+    public void testArrayInit() {
+        final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
+        var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
+        ConstDecl<IntType> noname = Const("noname", Int());
+        elems.add(Tuple2.of(Int(0), Int(1)));
+        elems.add(Tuple2.of(Int(1), Int(2)));
+        elems.add(Tuple2.of(Int(2), Add(noname.getRef(), Int(3))));
+        var initarr = ArrayInit(elems, Int(100), Array(Int(), Int()));
+
+        solver.add(ArrayExprs.Eq(arr.getRef(), initarr));
+
+        // Check, the expression should be satisfiable
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
+
+        solver.add(Eq(noname.getRef(), Int(1)));
+        status = solver.check();
+        assertTrue(status.isSat());
+
+        Valuation valuation = solver.getModel();
+        final Optional<LitExpr<ArrayType<IntType, IntType>>> optVal = valuation.eval(arr);
+        assertTrue(optVal.isPresent());
+        final Expr<ArrayType<IntType, IntType>> val = optVal.get();
+        assertTrue(val instanceof ArrayLitExpr);
+        var valLit = (ArrayLitExpr<IntType, IntType>) val;
+        assertEquals(Int(1), Read(valLit, Int(0)).eval(ImmutableValuation.empty()));
+        assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
+        assertEquals(Int(4), Read(valLit, Int(2)).eval(ImmutableValuation.empty()));
+    }
+
+    @Test
+    public void testReset() {
+        final ConstDecl<IntType> cx = Const("x", Int());
+        final ConstDecl<IntType> cy = Const("y", Int());
+
+        IntEqExpr eqExpr = Eq(cx.getRef(), Add(cy.getRef(), Int(1)));
+        solver.add(eqExpr);
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
+
+        solver.add(IntExprs.Lt(cx.getRef(), cy.getRef()));
+        status = solver.check();
+        assertTrue(status.isUnsat());
+
+        solver.reset();
+        assertEquals(0, solver.getAssertions().size());
+
+        solver.add(eqExpr);
+        status = solver.check();
+        assertTrue(status.isSat());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testResetStack() {
+        solver.push();
+        solver.push();
+        solver.pop();
+        solver.reset();
+        solver.pop();
+    }
+
+    @Test
+    public void testBV1() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
+
+        solver.push();
+
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cx.getRef(), cy.getRef()));
+
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
+
+        solver.pop();
+    }
+
+    @Test
+    public void testBV2() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cz = Const("z", BvType(4));
+
+        solver.push();
+
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
+        solver.add(BvExprs.Neq(cx.getRef(), cz.getRef()));
+
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
+
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
-
-		solver.pop();
-	}
-
-	@Test
-	public void testBV2() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cz = Const("z", BvType(4));
-
-		solver.push();
-
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
-		solver.add(BvExprs.Neq(cx.getRef(), cz.getRef()));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV3() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+                BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[]{false, false, false, true})))));
 
-	@Test
-	public void testBV3() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, false, false})));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[] {false, false, false, true})))));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV4() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+                BvExprs.Sub(cx.getRef(), Bv(new boolean[]{false, false, false, true}))));
 
-	@Test
-	public void testBV4() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Sub(cx.getRef(), Bv(new boolean[] {false, false, false, true}))));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV5() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Neg(cx.getRef())));
 
-	@Test
-	public void testBV5() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Neg(cx.getRef())));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV6() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+                BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[]{false, false, true, false})))));
 
-	@Test
-	public void testBV6() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {false, false, true, false})));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[] {false, false, true, false})))));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV7() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.ULt(cx.getRef(), Bv(new boolean[]{true, true, true, true})));
+        solver.add(BvExprs.ULt(cy.getRef(), Bv(new boolean[]{true, true, true, true})));
 
-	@Test
-	public void testBV7() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.ULt(cx.getRef(), Bv(new boolean[] {true, true, true, true})));
-		solver.add(BvExprs.ULt(cy.getRef(), Bv(new boolean[] {true, true, true, true})));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV8() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{true, false, true, false})));
+        solver.add(BvExprs.Eq(cy.getRef(),
+                BvExprs.SMod(cx.getRef(), Bv(new boolean[]{false, true, false, false}))));
 
-	@Test
-	public void testBV8() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[] {true, false, true, false})));
-		solver.add(BvExprs.Eq(cy.getRef(), BvExprs.SMod(cx.getRef(), Bv(new boolean[] {false, true, false, false}))));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV9() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())),
+                Bv(new boolean[]{true, true, false, false})));
 
-	@Test
-	public void testBV9() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-		solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {true, true, false, false})));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV10() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())),
+                Bv(new boolean[]{false, true, false, false})));
 
-	@Test
-	public void testBV10() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-		solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false})));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV11() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())),
+                Bv(new boolean[]{false, true, false, false})));
 
-	@Test
-	public void testBV11() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-		solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())), Bv(new boolean[] {false, true, false, false})));
+        solver.pop();
+    }
 
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
+    @Test
+    public void testBV12() {
+        final ConstDecl<BvType> cx = Const("x", BvType(4));
+        final ConstDecl<BvType> cy = Const("y", BvType(4));
 
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
+        solver.push();
 
-		solver.pop();
-	}
+        solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
+        solver.add(BvExprs.Eq(
+                BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[]{false, false, false, true})),
+                cx.getRef()));
 
-	@Test
-	public void testBV12() {
-		final ConstDecl<BvType> cx = Const("x", BvType(4));
-		final ConstDecl<BvType> cy = Const("y", BvType(4));
+        SolverStatus status = solver.check();
+        assertTrue(status.isSat());
 
-		solver.push();
+        Valuation model = solver.getModel();
+        assertNotNull(model);
+        assertNotNull(model.toMap());
 
-		solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[] {false, true, false, false})));
-		solver.add(BvExprs.Eq(BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[] {false, false, false, true})), cx.getRef()));
-
-		SolverStatus status = solver.check();
-		assertTrue(status.isSat());
-
-		Valuation model = solver.getModel();
-		assertNotNull(model);
-		assertNotNull(model.toMap());
-
-		solver.pop();
-	}
+        solver.pop();
+    }
 }

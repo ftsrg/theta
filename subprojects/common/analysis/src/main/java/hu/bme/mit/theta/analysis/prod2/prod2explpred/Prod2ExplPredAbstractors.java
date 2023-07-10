@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,97 +53,107 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class Prod2ExplPredAbstractors {
 
-	private Prod2ExplPredAbstractors() {
-	}
+    private Prod2ExplPredAbstractors() {
+    }
 
-	public interface Prod2ExplPredAbstractor {
+    public interface Prod2ExplPredAbstractor {
 
-		Collection<Prod2State<ExplState, PredState>> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-																		 final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing precIndexing,
-																		 final Function<? super Valuation, ? extends ExplState> valuationToState, final int limit);
+        Collection<Prod2State<ExplState, PredState>> createStatesForExpr(final Expr<BoolType> expr,
+                                                                         final VarIndexing exprIndexing,
+                                                                         final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing precIndexing,
+                                                                         final Function<? super Valuation, ? extends ExplState> valuationToState,
+                                                                         final int limit);
 
-	}
+    }
 
-	public static BooleanAbstractor booleanAbstractor(final Solver solver) {
-		return new BooleanAbstractor(solver, false);
-	}
+    public static BooleanAbstractor booleanAbstractor(final Solver solver) {
+        return new BooleanAbstractor(solver, false);
+    }
 
-	private static final class BooleanAbstractor implements Prod2ExplPredAbstractor {
+    private static final class BooleanAbstractor implements Prod2ExplPredAbstractor {
 
-		private final Solver solver;
-		private final List<ConstDecl<BoolType>> actLits;
-		private final String litPrefix;
-		private static int instanceCounter = 0;
-		private final boolean split;
+        private final Solver solver;
+        private final List<ConstDecl<BoolType>> actLits;
+        private final String litPrefix;
+        private static int instanceCounter = 0;
+        private final boolean split;
 
-		public BooleanAbstractor(final Solver solver, final boolean split) {
-			this.solver = checkNotNull(solver);
-			this.actLits = new ArrayList<>();
-			this.litPrefix = "__Prod2ExplPred" + getClass().getSimpleName() + "_" + instanceCounter + "_";
-			instanceCounter++;
-			this.split = split;
-		}
+        public BooleanAbstractor(final Solver solver, final boolean split) {
+            this.solver = checkNotNull(solver);
+            this.actLits = new ArrayList<>();
+            this.litPrefix =
+                    "__Prod2ExplPred" + getClass().getSimpleName() + "_" + instanceCounter + "_";
+            instanceCounter++;
+            this.split = split;
+        }
 
-		@Override
-		public Collection<Prod2State<ExplState, PredState>> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-																				final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing stateIndexing,
-																				final Function<? super Valuation, ? extends ExplState> valuationToState, final int limit) {
-			checkNotNull(expr);
-			checkNotNull(exprIndexing);
-			checkNotNull(prec);
-			checkNotNull(stateIndexing);
+        @Override
+        public Collection<Prod2State<ExplState, PredState>> createStatesForExpr(
+                final Expr<BoolType> expr, final VarIndexing exprIndexing,
+                final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing stateIndexing,
+                final Function<? super Valuation, ? extends ExplState> valuationToState,
+                final int limit) {
+            checkNotNull(expr);
+            checkNotNull(exprIndexing);
+            checkNotNull(prec);
+            checkNotNull(stateIndexing);
 
-			final List<Expr<BoolType>> preds = new ArrayList<>(prec.getPrec2().getPreds());
-			generateActivationLiterals(preds.size());
+            final List<Expr<BoolType>> preds = new ArrayList<>(prec.getPrec2().getPreds());
+            generateActivationLiterals(preds.size());
 
-			assert actLits.size() >= preds.size();
+            assert actLits.size() >= preds.size();
 
-			final List<Prod2State<ExplState, PredState>> states = new LinkedList<>();
-			try (WithPushPop wp = new WithPushPop(solver)) {
-				solver.add(PathUtils.unfold(expr, exprIndexing));
-				for (int i = 0; i < preds.size(); ++i) {
-					solver.add(Iff(actLits.get(i).getRef(), PathUtils.unfold(preds.get(i), stateIndexing)));
-				}
-				while (solver.check().isSat() && (limit == 0 || states.size() < limit)) {
-					final Valuation model = solver.getModel();
+            final List<Prod2State<ExplState, PredState>> states = new LinkedList<>();
+            try (WithPushPop wp = new WithPushPop(solver)) {
+                solver.add(PathUtils.unfold(expr, exprIndexing));
+                for (int i = 0; i < preds.size(); ++i) {
+                    solver.add(Iff(actLits.get(i).getRef(),
+                            PathUtils.unfold(preds.get(i), stateIndexing)));
+                }
+                while (solver.check().isSat() && (limit == 0 || states.size() < limit)) {
+                    final Valuation model = solver.getModel();
 
-					final Valuation valuation = PathUtils.extractValuation(model, stateIndexing);
-					final ExplState explState = valuationToState.apply(valuation);
+                    final Valuation valuation = PathUtils.extractValuation(model, stateIndexing);
+                    final ExplState explState = valuationToState.apply(valuation);
 
-					final Set<Expr<BoolType>> newStatePreds = Containers.createSet();
-					final List<Expr<BoolType>> feedback = new LinkedList<>();
-					feedback.add(True());
-					for (int i = 0; i < preds.size(); ++i) {
-						final ConstDecl<BoolType> lit = actLits.get(i);
-						final Expr<BoolType> pred = preds.get(i);
-						final Optional<LitExpr<BoolType>> eval = model.eval(lit);
-						if (eval.isPresent()) {
-							if (eval.get().equals(True())) {
-								newStatePreds.add(pred);
-								feedback.add(lit.getRef());
-							} else {
-								newStatePreds.add(prec.getPrec2().negate(pred));
-								feedback.add(Not(lit.getRef()));
-							}
-						}
-					}
-					final Set<Expr<BoolType>> simplfiedNewStatePreds = newStatePreds.stream().map(pred -> ExprUtils.simplify(pred, explState)).collect(Collectors.toSet());
-					final PredState predState = PredState.of(simplfiedNewStatePreds);
+                    final Set<Expr<BoolType>> newStatePreds = Containers.createSet();
+                    final List<Expr<BoolType>> feedback = new LinkedList<>();
+                    feedback.add(True());
+                    for (int i = 0; i < preds.size(); ++i) {
+                        final ConstDecl<BoolType> lit = actLits.get(i);
+                        final Expr<BoolType> pred = preds.get(i);
+                        final Optional<LitExpr<BoolType>> eval = model.eval(lit);
+                        if (eval.isPresent()) {
+                            if (eval.get().equals(True())) {
+                                newStatePreds.add(pred);
+                                feedback.add(lit.getRef());
+                            } else {
+                                newStatePreds.add(prec.getPrec2().negate(pred));
+                                feedback.add(Not(lit.getRef()));
+                            }
+                        }
+                    }
+                    final Set<Expr<BoolType>> simplfiedNewStatePreds = newStatePreds.stream()
+                            .map(pred -> ExprUtils.simplify(pred, explState))
+                            .collect(Collectors.toSet());
+                    final PredState predState = PredState.of(simplfiedNewStatePreds);
 
-					final Prod2State<ExplState, PredState> prod2ExplPredState = Prod2State.of(explState, predState);
-					states.add(prod2ExplPredState);
-					solver.add(Not(And(PathUtils.unfold(explState.toExpr(), stateIndexing), And(feedback))));
-				}
+                    final Prod2State<ExplState, PredState> prod2ExplPredState = Prod2State.of(
+                            explState, predState);
+                    states.add(prod2ExplPredState);
+                    solver.add(Not(And(PathUtils.unfold(explState.toExpr(), stateIndexing),
+                            And(feedback))));
+                }
 
-			}
-			return states;
-		}
+            }
+            return states;
+        }
 
-		private void generateActivationLiterals(final int n) {
-			while (actLits.size() < n) {
-				actLits.add(Decls.Const(litPrefix + actLits.size(), BoolExprs.Bool()));
-			}
-		}
-	}
+        private void generateActivationLiterals(final int n) {
+            while (actLits.size() < n) {
+                actLits.add(Decls.Const(litPrefix + actLits.size(), BoolExprs.Bool()));
+            }
+        }
+    }
 
 }

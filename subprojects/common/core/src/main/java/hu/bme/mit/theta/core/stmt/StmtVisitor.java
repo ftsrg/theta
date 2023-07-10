@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,22 +19,22 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface StmtVisitor<P, R> {
 
-	R visit(SkipStmt stmt, P param);
+    R visit(SkipStmt stmt, P param);
 
-	R visit(AssumeStmt stmt, P param);
+    R visit(AssumeStmt stmt, P param);
 
-	<DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
+    <DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
 
-	<DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
+    <DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 
-	R visit(SequenceStmt stmt, P param);
+    R visit(SequenceStmt stmt, P param);
 
-	R visit(NonDetStmt stmt, P param);
+    R visit(NonDetStmt stmt, P param);
 
-	R visit(OrtStmt stmt, P param);
+    R visit(OrtStmt stmt, P param);
 
-	R visit(LoopStmt stmt, P param);
+    R visit(LoopStmt stmt, P param);
 
-	R visit(IfStmt stmt, P param);
+    R visit(IfStmt stmt, P param);
 
 }

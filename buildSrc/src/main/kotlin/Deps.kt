@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,9 +14,11 @@
  *  limitations under the License.
  */
 object Deps {
+
     val guava = "com.google.guava:guava:${Versions.guava}"
 
     object Antlr {
+
         val antlr = "org.antlr:antlr4:${Versions.antlr}"
         val runtime = "org.antlr:antlr4-runtime:${Versions.antlr}"
     }
@@ -28,6 +30,7 @@ object Deps {
     val junit4 = "junit:junit:${Versions.junit}"
 
     object Mockito {
+
         val core = "org.mockito:mockito-core:${Versions.mockito}"
     }
 }

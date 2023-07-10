@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,26 +25,26 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 public final class ExprOrd implements PartialOrd<ExprState> {
 
-	private final Solver solver;
+    private final Solver solver;
 
-	private ExprOrd(final Solver solver) {
-		this.solver = checkNotNull(solver);
-	}
+    private ExprOrd(final Solver solver) {
+        this.solver = checkNotNull(solver);
+    }
 
-	public static ExprOrd create(final Solver solver) {
-		return new ExprOrd(solver);
-	}
+    public static ExprOrd create(final Solver solver) {
+        return new ExprOrd(solver);
+    }
 
-	@Override
-	public boolean isLeq(final ExprState state1, final ExprState state2) {
-		checkNotNull(state1);
-		checkNotNull(state2);
+    @Override
+    public boolean isLeq(final ExprState state1, final ExprState state2) {
+        checkNotNull(state1);
+        checkNotNull(state2);
 
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			solver.add(unfold(state1.toExpr(), 0));
-			solver.add(Not(unfold(state2.toExpr(), 0)));
-			return solver.check().isUnsat();
-		}
-	}
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            solver.add(unfold(state1.toExpr(), 0));
+            solver.add(Not(unfold(state2.toExpr(), 0)));
+            return solver.check().isUnsat();
+        }
+    }
 
 }

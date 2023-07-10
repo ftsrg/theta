@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,78 +33,81 @@ import java.util.Collection;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 
-	private static final class LazyHolder {
-		private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
-	}
+    private static final class LazyHolder {
 
-	private VarCollectorStmtVisitor() {
-	}
+        private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
+    }
 
-	static VarCollectorStmtVisitor getInstance() {
-		return LazyHolder.INSTANCE;
-	}
+    private VarCollectorStmtVisitor() {
+    }
 
-	@Override
-	public Void visit(final SkipStmt stmt, final Collection<VarDecl<?>> vars) {
-		return null;
-	}
+    static VarCollectorStmtVisitor getInstance() {
+        return LazyHolder.INSTANCE;
+    }
 
-	@Override
-	public Void visit(final AssumeStmt stmt, final Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getCond(), vars);
-		return null;
-	}
+    @Override
+    public Void visit(final SkipStmt stmt, final Collection<VarDecl<?>> vars) {
+        return null;
+    }
 
-	@Override
-	public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
-		vars.add(stmt.getVarDecl());
-		ExprUtils.collectVars(stmt.getExpr(), vars);
-		return null;
-	}
+    @Override
+    public Void visit(final AssumeStmt stmt, final Collection<VarDecl<?>> vars) {
+        ExprUtils.collectVars(stmt.getCond(), vars);
+        return null;
+    }
 
-	@Override
-	public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
-		vars.add(stmt.getVarDecl());
-		return null;
-	}
+    @Override
+    public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
+                                              final Collection<VarDecl<?>> vars) {
+        vars.add(stmt.getVarDecl());
+        ExprUtils.collectVars(stmt.getExpr(), vars);
+        return null;
+    }
 
-	@Override
-	public Void visit(SequenceStmt stmt, Collection<VarDecl<?>> vars) {
-		for (Stmt subStmt : stmt.getStmts()) {
-			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
-		}
-		return null;
-	}
+    @Override
+    public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
+                                              final Collection<VarDecl<?>> vars) {
+        vars.add(stmt.getVarDecl());
+        return null;
+    }
 
-	@Override
-	public Void visit(NonDetStmt stmt, Collection<VarDecl<?>> vars) {
-		for (Stmt subStmt : stmt.getStmts()) {
-			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
-		}
-		return null;
-	}
+    @Override
+    public Void visit(SequenceStmt stmt, Collection<VarDecl<?>> vars) {
+        for (Stmt subStmt : stmt.getStmts()) {
+            subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
+        }
+        return null;
+    }
 
-	@Override
-	public Void visit(OrtStmt stmt, Collection<VarDecl<?>> vars) {
-		for (Stmt subStmt : stmt.getStmts()) {
-			subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
-		}
-		return null;
-	}
+    @Override
+    public Void visit(NonDetStmt stmt, Collection<VarDecl<?>> vars) {
+        for (Stmt subStmt : stmt.getStmts()) {
+            subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
+        }
+        return null;
+    }
 
-	@Override
-	public Void visit(LoopStmt stmt, Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getFrom(), vars);
-		ExprUtils.collectVars(stmt.getTo(), vars);
-		vars.add(stmt.getLoopVariable());
-		return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(), vars);
-	}
+    @Override
+    public Void visit(OrtStmt stmt, Collection<VarDecl<?>> vars) {
+        for (Stmt subStmt : stmt.getStmts()) {
+            subStmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
+        }
+        return null;
+    }
 
-	public Void visit(IfStmt stmt, Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getCond(), vars);
-		stmt.getThen().accept(VarCollectorStmtVisitor.getInstance(), vars);
-		stmt.getElze().accept(VarCollectorStmtVisitor.getInstance(), vars);
-		return null;
-	}
+    @Override
+    public Void visit(LoopStmt stmt, Collection<VarDecl<?>> vars) {
+        ExprUtils.collectVars(stmt.getFrom(), vars);
+        ExprUtils.collectVars(stmt.getTo(), vars);
+        vars.add(stmt.getLoopVariable());
+        return stmt.getStmt().accept(VarCollectorStmtVisitor.getInstance(), vars);
+    }
+
+    public Void visit(IfStmt stmt, Collection<VarDecl<?>> vars) {
+        ExprUtils.collectVars(stmt.getCond(), vars);
+        stmt.getThen().accept(VarCollectorStmtVisitor.getInstance(), vars);
+        stmt.getElze().accept(VarCollectorStmtVisitor.getInstance(), vars);
+        return null;
+    }
 
 }

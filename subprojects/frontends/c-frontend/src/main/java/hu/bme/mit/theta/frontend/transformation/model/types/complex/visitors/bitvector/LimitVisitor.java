@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,10 +24,11 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 
 public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> {
-	public static final LimitVisitor instance = new LimitVisitor();
 
-	@Override
-	public AssumeStmt visit(CComplexType type, Expr<?> param) {
-		return Assume(BoolLitExpr.of(true));
-	}
+    public static final LimitVisitor instance = new LimitVisitor();
+
+    @Override
+    public AssumeStmt visit(CComplexType type, Expr<?> param) {
+        return Assume(BoolLitExpr.of(true));
+    }
 }

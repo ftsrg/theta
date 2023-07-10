@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,36 +27,38 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class PredAnalysis<A extends ExprAction> implements Analysis<PredState, A, PredPrec> {
 
-	private final PartialOrd<PredState> partialOrd;
-	private final InitFunc<PredState, PredPrec> initFunc;
-	private final TransFunc<PredState, A, PredPrec> transFunc;
+    private final PartialOrd<PredState> partialOrd;
+    private final InitFunc<PredState, PredPrec> initFunc;
+    private final TransFunc<PredState, A, PredPrec> transFunc;
 
-	private PredAnalysis(final Solver solver, final PredAbstractor predAbstractor, final Expr<BoolType> initExpr) {
-		partialOrd = PredOrd.create(solver);
-		initFunc = PredInitFunc.create(predAbstractor, initExpr);
-		transFunc = PredTransFunc.create(predAbstractor);
-	}
+    private PredAnalysis(final Solver solver, final PredAbstractor predAbstractor,
+                         final Expr<BoolType> initExpr) {
+        partialOrd = PredOrd.create(solver);
+        initFunc = PredInitFunc.create(predAbstractor, initExpr);
+        transFunc = PredTransFunc.create(predAbstractor);
+    }
 
-	public static <A extends ExprAction> PredAnalysis<A> create(final Solver solver, final PredAbstractor predAbstractor,
-																final Expr<BoolType> initExpr) {
-		return new PredAnalysis<A>(solver, predAbstractor, initExpr);
-	}
+    public static <A extends ExprAction> PredAnalysis<A> create(final Solver solver,
+                                                                final PredAbstractor predAbstractor,
+                                                                final Expr<BoolType> initExpr) {
+        return new PredAnalysis<A>(solver, predAbstractor, initExpr);
+    }
 
-	////
+    ////
 
-	@Override
-	public PartialOrd<PredState> getPartialOrd() {
-		return partialOrd;
-	}
+    @Override
+    public PartialOrd<PredState> getPartialOrd() {
+        return partialOrd;
+    }
 
-	@Override
-	public InitFunc<PredState, PredPrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<PredState, PredPrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<PredState, A, PredPrec> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<PredState, A, PredPrec> getTransFunc() {
+        return transFunc;
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,23 +26,24 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
 
 final class XtaTypeSymbol implements Symbol {
 
-	private final String name;
-	private final XtaType type;
+    private final String name;
+    private final XtaType type;
 
-	public XtaTypeSymbol(final Scope scope, final TypeContext typeContext, final ArrayIdContext arrayIdContext) {
-		checkNotNull(typeContext);
-		checkNotNull(arrayIdContext);
-		name = arrayIdContext.fId.getText();
-		type = new XtaType(scope, typeContext, arrayIdContext.fArrayIndexes);
-	}
+    public XtaTypeSymbol(final Scope scope, final TypeContext typeContext,
+                         final ArrayIdContext arrayIdContext) {
+        checkNotNull(typeContext);
+        checkNotNull(arrayIdContext);
+        name = arrayIdContext.fId.getText();
+        type = new XtaType(scope, typeContext, arrayIdContext.fArrayIndexes);
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	public Type instantiate(final Env env) {
-		return type.instantiate(env);
-	}
+    public Type instantiate(final Env env) {
+        return type.instantiate(env);
+    }
 
 }

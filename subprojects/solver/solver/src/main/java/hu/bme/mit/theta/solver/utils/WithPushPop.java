@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,21 +20,20 @@ import hu.bme.mit.theta.solver.SolverBase;
 import java.io.Closeable;
 
 /**
- * A helper class for automatic push and pop for solvers using the
- * try-with-resources statement.
+ * A helper class for automatic push and pop for solvers using the try-with-resources statement.
  */
 public class WithPushPop implements Closeable {
 
-	private final SolverBase solver;
+    private final SolverBase solver;
 
-	public WithPushPop(final SolverBase solver) {
-		this.solver = solver;
-		solver.push();
-	}
+    public WithPushPop(final SolverBase solver) {
+        this.solver = solver;
+        solver.push();
+    }
 
-	@Override
-	public void close() {
-		solver.pop();
-	}
+    @Override
+    public void close() {
+        solver.pop();
+    }
 
 }

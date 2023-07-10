@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,19 +22,20 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 
 public final class CfaOrd<S extends ExprState> implements PartialOrd<CfaState<S>> {
 
-	private final PartialOrd<S> partialOrd;
+    private final PartialOrd<S> partialOrd;
 
-	private CfaOrd(final PartialOrd<S> partialOrd) {
-		this.partialOrd = checkNotNull(partialOrd);
-	}
+    private CfaOrd(final PartialOrd<S> partialOrd) {
+        this.partialOrd = checkNotNull(partialOrd);
+    }
 
-	public static <S extends ExprState> CfaOrd<S> create(final PartialOrd<S> partialOrd) {
-		return new CfaOrd<>(partialOrd);
-	}
+    public static <S extends ExprState> CfaOrd<S> create(final PartialOrd<S> partialOrd) {
+        return new CfaOrd<>(partialOrd);
+    }
 
-	@Override
-	public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
-		return state1.getLoc().equals(state2.getLoc()) && partialOrd.isLeq(state1.getState(), state2.getState());
-	}
+    @Override
+    public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
+        return state1.getLoc().equals(state2.getLoc()) && partialOrd.isLeq(state1.getState(),
+                state2.getState());
+    }
 
 }

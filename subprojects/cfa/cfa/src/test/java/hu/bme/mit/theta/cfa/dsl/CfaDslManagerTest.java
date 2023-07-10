@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,51 +32,51 @@ import hu.bme.mit.theta.cfa.CFA;
 @RunWith(Parameterized.class)
 public final class CfaDslManagerTest {
 
-	@Parameter(0)
-	public String filepath;
+    @Parameter(0)
+    public String filepath;
 
-	@Parameter(1)
-	public int varCount;
+    @Parameter(1)
+    public int varCount;
 
-	@Parameter(2)
-	public int locCount;
+    @Parameter(2)
+    public int locCount;
 
-	@Parameter(3)
-	public int edgeCount;
+    @Parameter(3)
+    public int edgeCount;
 
-	@Parameter(4)
-	public int stmtCount;
+    @Parameter(4)
+    public int stmtCount;
 
-	@Parameters()
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters()
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"/locking.cfa", 3, 9, 10, 10},
+                {"/locking.cfa", 3, 9, 10, 10},
 
-				{"/counter5_true.cfa", 1, 6, 6, 6},
+                {"/counter5_true.cfa", 1, 6, 6, 6},
 
-				{"/bv.cfa", 1, 6, 6, 6},
+                {"/bv.cfa", 1, 6, 6, 6},
 
-				{"/bv2.cfa", 1, 6, 6, 6},
+                {"/bv2.cfa", 1, 6, 6, 6},
 
-				{"/bv3.cfa", 1, 6, 6, 6},
+                {"/bv3.cfa", 1, 6, 6, 6},
 
-				{"/bv4.cfa", 2, 7, 8, 8},
+                {"/bv4.cfa", 2, 7, 8, 8},
 
-				{"/fp1.cfa", 4, 7, 6, 6},
+                {"/fp1.cfa", 4, 7, 6, 6},
 
-				{"/fp2.cfa", 4, 7, 6, 6}
-		});
-	}
+                {"/fp2.cfa", 4, 7, 6, 6}
+        });
+    }
 
-	@Test
-	public void test() throws IOException {
-		final InputStream inputStream = getClass().getResourceAsStream(filepath);
-		final CFA cfa = CfaDslManager.createCfa(inputStream);
-		Assert.assertEquals(varCount, cfa.getVars().size());
-		Assert.assertEquals(locCount, cfa.getLocs().size());
-		Assert.assertEquals(edgeCount, cfa.getEdges().size());
-		Assert.assertEquals(stmtCount, cfa.getEdges().stream().map(e -> e.getStmt()).count());
-	}
+    @Test
+    public void test() throws IOException {
+        final InputStream inputStream = getClass().getResourceAsStream(filepath);
+        final CFA cfa = CfaDslManager.createCfa(inputStream);
+        Assert.assertEquals(varCount, cfa.getVars().size());
+        Assert.assertEquals(locCount, cfa.getLocs().size());
+        Assert.assertEquals(edgeCount, cfa.getEdges().size());
+        Assert.assertEquals(stmtCount, cfa.getEdges().stream().map(e -> e.getStmt()).count());
+    }
 
 }
