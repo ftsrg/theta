@@ -37,7 +37,7 @@ sonar {
   properties {
     property("sonar.projectKey", "leventeBajczi_theta")
     property("sonar.organization", "bajczi-levente")
-    property("sonar.host", "https://sonarcloud.io")
+    property("sonar.host.url", "https://sonarcloud.io")
   }
 }
 
