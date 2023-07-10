@@ -21,6 +21,26 @@ jobs:
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Build
         uses: ./.github/actions/build-action
+      - name: Upload JARs
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: ThetaJars
+          path: subprojects/**/*-all.jar
+      - name: Positive outcome badge
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Success"
+          color: 'Green'
+          path: "badges/build-${{ runner.os }}"
+      - name: Negative outcome badge
+        if: ${{ failure() }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Failure"
+          color: 'red'
+          path: "badges/build-${{ runner.os }}"
   
   javadoc:
     needs: build
@@ -43,6 +63,22 @@ jobs:
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Run tests
         uses: ./.github/actions/test-action
+      - name: Positive outcome badge
+        if: ${{ matrix.os == "ubuntu-latest" }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} test"
+          status: "Success"
+          color: 'Green'
+          path: "badges/test-${{ runner.os }}"
+      - name: Negative outcome badge
+        if: ${{ failure() && matrix.os == "ubuntu-latest" }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} test"
+          status: "Failure"
+          color: 'red'
+          path: "badges/test-${{ runner.os }}"
       # - name: Send test coverage to Codacy
       #   if: matrix.os == 'ubuntu-latest'
       #   shell: bash

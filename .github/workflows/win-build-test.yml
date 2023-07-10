@@ -26,3 +26,19 @@ jobs:
         uses: ./.github/actions/build-action
       - name: Run tests
         uses: ./.github/actions/test-action
+      - name: Positive outcome badge
+        if: ${{ matrix.os == "windows-latest" }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} test"
+          status: "Success"
+          color: 'Green'
+          path: "badges/test-${{ runner.os }}"
+      - name: Negative outcome badge
+        if: ${{ failure() && matrix.os == "windows-latest" }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} test"
+          status: "Failure"
+          color: 'red'
+          path: "badges/test-${{ runner.os }}"
