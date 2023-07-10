@@ -7,7 +7,7 @@ on:
         description: 'File mask to reapply license header (argument to find)'
         required: true
         default: '-name "*.java" -o -name "*.kt" -o -name "*.kts"'
-    direct-commit:
+      direct-commit:
         type: boolean
         default: false
         description: Commit directly to source (instead of opening a PR)

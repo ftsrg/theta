@@ -7,7 +7,7 @@ on:
         description: 'File mask to reformat'
         required: true
         default: '*.java,*.kts,*.kt'
-    direct-commit:
+      direct-commit:
         type: boolean
         default: false
         description: Commit directly to source (instead of opening a PR)
