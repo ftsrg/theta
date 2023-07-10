@@ -30,7 +30,7 @@ jobs:
         with:
           label: "${{ runner.os }} build"
           status: "Success"
-          color: 'Green'
+          color: "green"
           path: "badges/build-${{ runner.os }}"
       - name: Negative outcome badge
         if: ${{ failure() && matrix.os ==  'windows-latest'  }}
@@ -38,7 +38,7 @@ jobs:
         with:
           label: "${{ runner.os }} build"
           status: "Failure"
-          color: 'red'
+          color: "red"
           path: "badges/build-${{ runner.os }}"
       - name: Run tests
         uses: ./.github/actions/test-action
@@ -48,7 +48,7 @@ jobs:
         with:
           label: "${{ runner.os }} test"
           status: "Success"
-          color: 'Green'
+          color: "green"
           path: "badges/test-${{ runner.os }}"
       - name: Negative outcome badge
         if: ${{ failure() && matrix.os ==  'windows-latest'  }}
@@ -56,5 +56,5 @@ jobs:
         with:
           label: "${{ runner.os }} test"
           status: "Failure"
-          color: 'red'
+          color: "red"
           path: "badges/test-${{ runner.os }}"
