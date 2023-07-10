@@ -33,8 +33,8 @@ public class XstsVariableSymbol implements Symbol {
     final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType;
 
     public XstsVariableSymbol(final SymbolTable typeTable,
-        final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType,
-        final VariableDeclarationContext context) {
+                              final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType,
+                              final VariableDeclarationContext context) {
         checkNotNull(context);
         name = context.name.getText();
         this.varToType = varToType;

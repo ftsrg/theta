@@ -100,7 +100,7 @@ public class StsCli {
     String cexfile = null;
 
     @Parameter(names = {
-        "--header"}, description = "Print only a header (for benchmarks)", help = true)
+            "--header"}, description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
 
     @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
@@ -164,15 +164,15 @@ public class StsCli {
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(
-                "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
-                ex);
+                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    ex);
         }
     }
 
     private void printHeader() {
         Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size")
-            .forEach(writer::cell);
+                        "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size")
+                .forEach(writer::cell);
         writer.newRow();
     }
 
@@ -187,7 +187,7 @@ public class StsCli {
                     final StsSpec spec = StsDslManager.createStsSpec(inputStream);
                     if (spec.getAllSts().size() != 1) {
                         throw new UnsupportedOperationException(
-                            "STS contains multiple properties.");
+                                "STS contains multiple properties.");
                     }
                     return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
                 }
@@ -200,15 +200,15 @@ public class StsCli {
     private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
         try {
             return new StsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-                .initPrec(initPrec).search(search)
-                .predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+                    .initPrec(initPrec).search(search)
+                    .predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
         }
     }
 
     private void printResult(final SafetyResult<?, ?> status, final STS sts,
-        final long totalTimeMs) {
+                             final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics) status.getStats().get();
         if (benchmarkMode) {
             writer.cell(status.isSafe());
@@ -238,7 +238,7 @@ public class StsCli {
             writer.newRow();
         } else {
             logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(),
-                message);
+                    message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));
@@ -250,10 +250,10 @@ public class StsCli {
     }
 
     private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status)
-        throws FileNotFoundException {
+            throws FileNotFoundException {
         @SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
         final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace,
-            Z3SolverFactory.getInstance());
+                Z3SolverFactory.getInstance());
         final File file = new File(cexfile);
         PrintWriter printWriter = null;
         try {

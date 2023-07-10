@@ -83,9 +83,9 @@ public class XstsSpecification implements DynamicScope {
                 }
             }
             final List<XstsCustomType.XstsCustomLiteral> literals = literalSymbols.stream()
-                .map(XstsCustomLiteralSymbol::getLiteral).collect(Collectors.toList());
+                    .map(XstsCustomLiteralSymbol::getLiteral).collect(Collectors.toList());
             final XstsCustomType xstsCustomType = XstsCustomType.of(typeDeclContext.name.getText(),
-                literals);
+                    literals);
 
             final XstsCustomTypeSymbol typeDeclSymbol = XstsCustomTypeSymbol.of(xstsCustomType);
             typeTable.add(typeDeclSymbol);
@@ -95,11 +95,11 @@ public class XstsSpecification implements DynamicScope {
         for (var varDeclContext : context.variableDeclarations) {
             if (tempVarPattern.matcher(varDeclContext.name.getText()).matches()) {
                 throw new ParseException(varDeclContext,
-                    "Variable name '" + varDeclContext.name.getText() + "' is reserved!");
+                        "Variable name '" + varDeclContext.name.getText() + "' is reserved!");
             }
 
             final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable, varToType,
-                varDeclContext);
+                    varDeclContext);
             declare(symbol);
 
             final VarDecl var = symbol.instantiate(env);
@@ -108,18 +108,18 @@ public class XstsSpecification implements DynamicScope {
             }
             if (varDeclContext.initValue != null) {
                 initExprs.add(Eq(var.getRef(),
-                    new XstsExpression(this, typeTable, varDeclContext.initValue).instantiate(
-                        env)));
+                        new XstsExpression(this, typeTable, varDeclContext.initValue).instantiate(
+                                env)));
             }
             env.define(symbol, var);
         }
 
         final NonDetStmt tranSet = new XstsTransitionSet(this, typeTable,
-            context.tran.transitionSet(), varToType).instantiate(env);
+                context.tran.transitionSet(), varToType).instantiate(env);
         final NonDetStmt initSet = new XstsTransitionSet(this, typeTable,
-            context.init.transitionSet(), varToType).instantiate(env);
+                context.init.transitionSet(), varToType).instantiate(env);
         final NonDetStmt envSet = new XstsTransitionSet(this, typeTable,
-            context.env.transitionSet(), varToType).instantiate(env);
+                context.env.transitionSet(), varToType).instantiate(env);
 
         for (VarDecl varDecl : varToType.keySet()) {
             initExprs.add(varToType.get(varDecl).createBoundExpr(varDecl));
@@ -127,7 +127,7 @@ public class XstsSpecification implements DynamicScope {
         final Expr<BoolType> initFormula = ExprUtils.simplify(And(initExprs));
 
         final Expr<BoolType> prop = cast(
-            new XstsExpression(this, typeTable, context.prop).instantiate(env), Bool());
+                new XstsExpression(this, typeTable, context.prop).instantiate(env), Bool());
 
         return new XSTS(varToType, ctrlVars, initSet, tranSet, envSet, initFormula, prop);
     }

@@ -26,7 +26,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements
-    Expr<ExprType> {
+        Expr<ExprType> {
 
     private final Expr<OpType> op;
 

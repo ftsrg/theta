@@ -59,10 +59,10 @@ public class Prod2ExplPredAbstractors {
     public interface Prod2ExplPredAbstractor {
 
         Collection<Prod2State<ExplState, PredState>> createStatesForExpr(final Expr<BoolType> expr,
-            final VarIndexing exprIndexing,
-            final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing precIndexing,
-            final Function<? super Valuation, ? extends ExplState> valuationToState,
-            final int limit);
+                                                                         final VarIndexing exprIndexing,
+                                                                         final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing precIndexing,
+                                                                         final Function<? super Valuation, ? extends ExplState> valuationToState,
+                                                                         final int limit);
 
     }
 
@@ -82,17 +82,17 @@ public class Prod2ExplPredAbstractors {
             this.solver = checkNotNull(solver);
             this.actLits = new ArrayList<>();
             this.litPrefix =
-                "__Prod2ExplPred" + getClass().getSimpleName() + "_" + instanceCounter + "_";
+                    "__Prod2ExplPred" + getClass().getSimpleName() + "_" + instanceCounter + "_";
             instanceCounter++;
             this.split = split;
         }
 
         @Override
         public Collection<Prod2State<ExplState, PredState>> createStatesForExpr(
-            final Expr<BoolType> expr, final VarIndexing exprIndexing,
-            final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing stateIndexing,
-            final Function<? super Valuation, ? extends ExplState> valuationToState,
-            final int limit) {
+                final Expr<BoolType> expr, final VarIndexing exprIndexing,
+                final Prod2Prec<ExplPrec, PredPrec> prec, final VarIndexing stateIndexing,
+                final Function<? super Valuation, ? extends ExplState> valuationToState,
+                final int limit) {
             checkNotNull(expr);
             checkNotNull(exprIndexing);
             checkNotNull(prec);
@@ -108,7 +108,7 @@ public class Prod2ExplPredAbstractors {
                 solver.add(PathUtils.unfold(expr, exprIndexing));
                 for (int i = 0; i < preds.size(); ++i) {
                     solver.add(Iff(actLits.get(i).getRef(),
-                        PathUtils.unfold(preds.get(i), stateIndexing)));
+                            PathUtils.unfold(preds.get(i), stateIndexing)));
                 }
                 while (solver.check().isSat() && (limit == 0 || states.size() < limit)) {
                     final Valuation model = solver.getModel();
@@ -134,15 +134,15 @@ public class Prod2ExplPredAbstractors {
                         }
                     }
                     final Set<Expr<BoolType>> simplfiedNewStatePreds = newStatePreds.stream()
-                        .map(pred -> ExprUtils.simplify(pred, explState))
-                        .collect(Collectors.toSet());
+                            .map(pred -> ExprUtils.simplify(pred, explState))
+                            .collect(Collectors.toSet());
                     final PredState predState = PredState.of(simplfiedNewStatePreds);
 
                     final Prod2State<ExplState, PredState> prod2ExplPredState = Prod2State.of(
-                        explState, predState);
+                            explState, predState);
                     states.add(prod2ExplPredState);
                     solver.add(Not(And(PathUtils.unfold(explState.toExpr(), stateIndexing),
-                        And(feedback))));
+                            And(feedback))));
                 }
 
             }

@@ -37,6 +37,6 @@ public class XcfaSTOrd<S extends ExprState> implements PartialOrd<XcfaState<S>> 
     @Override
     public boolean isLeq(final XcfaState<S> state1, final XcfaState<S> state2) {
         return ((XcfaSTState<S>) state1).equalLocations(((XcfaSTState<S>) state2))
-            && partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState());
+                && partialOrd.isLeq(state1.getGlobalState(), state2.getGlobalState());
     }
 }

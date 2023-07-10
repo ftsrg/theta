@@ -39,7 +39,7 @@ public final class OsHelper {
             return OperatingSystem.MAC;
         } else {
             throw new UnsupportedOperationException(
-                "Operating system \"" + os + "\" not supported.");
+                    "Operating system \"" + os + "\" not supported.");
         }
     }
 

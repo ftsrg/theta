@@ -56,7 +56,7 @@ public abstract class CStatement {
 
     public void setPostStatements(CStatement postStatements) {
         throw new UnsupportedOperationException(
-            "Only CCompounds shall currently have pre- and post statements!");
+                "Only CCompounds shall currently have pre- and post statements!");
     }
 
     public CStatement getPreStatements() {
@@ -65,7 +65,7 @@ public abstract class CStatement {
 
     public void setPreStatements(CStatement preStatements) {
         throw new UnsupportedOperationException(
-            "Only CCompounds shall currently have pre- and post statements!");
+                "Only CCompounds shall currently have pre- and post statements!");
     }
 
     public abstract <P, R> R accept(CStatementVisitor<P, R> visitor, P param);

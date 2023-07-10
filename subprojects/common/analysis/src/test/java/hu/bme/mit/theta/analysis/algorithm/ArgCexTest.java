@@ -54,7 +54,7 @@ public class ArgCexTest {
         final ArgNode<State, Action> n5 = arg.createSuccNode(n2, act, s5, false);
         final ArgNode<State, Action> n6 = arg.createSuccNode(n3, act, s6, false);
         @SuppressWarnings("unused") final ArgNode<State, Action> n7 = arg.createSuccNode(n3, act,
-            s7, true);
+                s7, true);
         final ArgNode<State, Action> n8 = arg.createSuccNode(n5, act, s8, true);
 
         n6.setCoveringNode(n2);
@@ -64,13 +64,13 @@ public class ArgCexTest {
         Assert.assertEquals(2, arg.getUnsafeNodes().count());
 
         final List<Trace<State, Action>> cexs = arg.getCexs().map(e -> e.toTrace())
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
 
         Assert.assertEquals(2, cexs.size());
         Assert.assertTrue(
-            cexs.contains(Trace.of(ImmutableList.of(s1, s2, s4), ImmutableList.of(act, act))));
+                cexs.contains(Trace.of(ImmutableList.of(s1, s2, s4), ImmutableList.of(act, act))));
         Assert.assertTrue(
-            cexs.contains(Trace.of(ImmutableList.of(s1, s3, s7), ImmutableList.of(act, act))));
+                cexs.contains(Trace.of(ImmutableList.of(s1, s3, s7), ImmutableList.of(act, act))));
 
     }
 }

@@ -89,15 +89,15 @@ public final class XtaProcess {
     }
 
     public Loc createLoc(final String name, final LocKind kind,
-        final Collection<Expr<BoolType>> invars) {
+                         final Collection<Expr<BoolType>> invars) {
         final Loc loc = new Loc(name, kind, invars);
         locs.add(loc);
         return loc;
     }
 
     public Edge createEdge(final Loc source, final Loc target,
-        final Collection<Expr<BoolType>> guards,
-        final Optional<Sync> sync, final List<Stmt> updates) {
+                           final Collection<Expr<BoolType>> guards,
+                           final Optional<Sync> sync, final List<Stmt> updates) {
         checkArgument(locs.contains(source));
         checkArgument(locs.contains(target));
         final Edge edge = new Edge(source, target, guards, sync, updates);
@@ -189,7 +189,7 @@ public final class XtaProcess {
         private final Collection<Edge> unmodOutEdges;
 
         private Loc(final String name, final LocKind kind,
-            final Collection<Expr<BoolType>> invars) {
+                    final Collection<Expr<BoolType>> invars) {
             inEdges = new ArrayList<>();
             outEdges = new ArrayList<>();
             this.name = checkNotNull(name);
@@ -237,7 +237,7 @@ public final class XtaProcess {
         private final List<Update> updates;
 
         private Edge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-            final Optional<Sync> sync, final List<Stmt> updates) {
+                     final Optional<Sync> sync, final List<Stmt> updates) {
             this.source = checkNotNull(source);
             this.target = checkNotNull(target);
             this.guards = createGuards(guards);

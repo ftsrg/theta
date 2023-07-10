@@ -54,12 +54,12 @@ public final class LazyXtaCheckerTest {
     private static final String MODEL_BROADCAST = "/broadcast.xta";
 
     private static final Collection<String> MODELS = ImmutableList.of(MODEL_CSMA, MODEL_FDDI,
-        MODEL_FISCHER,
-        MODEL_LYNCH, MODEL_ENGINE, MODEL_BROADCAST);
+            MODEL_FISCHER,
+            MODEL_LYNCH, MODEL_ENGINE, MODEL_BROADCAST);
 
     private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS = ImmutableSet.of(
-        MODEL_FDDI,
-        MODEL_ENGINE, MODEL_BROADCAST);
+            MODEL_FDDI,
+            MODEL_ENGINE, MODEL_BROADCAST);
 
     @Parameter(0)
     public String filepath;
@@ -79,7 +79,7 @@ public final class LazyXtaCheckerTest {
             for (final DataStrategy dataStrategy : DataStrategy.values()) {
                 for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
                     if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy
-                        != LU)) {
+                            != LU)) {
                         result.add(new Object[]{model, dataStrategy, clockStrategy});
                     }
                 }
@@ -99,11 +99,11 @@ public final class LazyXtaCheckerTest {
     public void test() {
         // Act
         final SafetyResult<? extends XtaState<?>, XtaAction> status = checker.check(
-            UnitPrec.getInstance());
+                UnitPrec.getInstance());
 
         // Assert
         final ArgChecker argChecker = ArgChecker.create(
-            Z3SolverFactory.getInstance().createSolver());
+                Z3SolverFactory.getInstance().createSolver());
         final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
         assertTrue(argCheckResult);
     }

@@ -84,7 +84,7 @@ public final class BvUGeqExpr extends GeqExpr<BvType> {
         } else if (obj instanceof BvUGeqExpr) {
             final BvUGeqExpr that = (BvUGeqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

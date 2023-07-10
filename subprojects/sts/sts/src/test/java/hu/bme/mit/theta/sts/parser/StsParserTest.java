@@ -49,9 +49,9 @@ public final class StsParserTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {"src/test/resources/simple1.lisp.sts", 2},
+                {"src/test/resources/simple1.lisp.sts", 2},
 
-            {"src/test/resources/readerswriters.lisp.sts", 3},
+                {"src/test/resources/readerswriters.lisp.sts", 3},
 
         });
     }

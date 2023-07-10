@@ -81,7 +81,7 @@ public final class BvSModExpr extends ModExpr<BvType> {
         } else if (obj instanceof BvSModExpr) {
             final BvSModExpr that = (BvSModExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

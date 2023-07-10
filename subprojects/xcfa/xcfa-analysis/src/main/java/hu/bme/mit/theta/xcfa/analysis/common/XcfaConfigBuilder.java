@@ -104,36 +104,36 @@ public class XcfaConfigBuilder {
 
             @Override
             public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(
-                final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc) {
+                    final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc) {
                 checkArgument(initLocs.size() == 1,
-                    "Single threaded algorithm can only handle single-init-location programs!");
+                        "Single threaded algorithm can only handle single-init-location programs!");
                 return XcfaSTInitFunc.create(initLocs.get(0), initFunc);
             }
 
             @Override
             public <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(
-                final TransFunc<S, A, P> transFunc) {
+                    final TransFunc<S, A, P> transFunc) {
                 return XcfaSTTransFunc.create(transFunc);
             }
 
             @Override
             public <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(
-                final RefutationToPrec<P, R> refToPrec) {
+                    final RefutationToPrec<P, R> refToPrec) {
                 return XcfaSTPrecRefiner.create(refToPrec);
             }
 
             @Override
             public <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(
-                final PartialOrd<S> partialOrd) {
+                    final PartialOrd<S> partialOrd) {
                 return XcfaSTOrd.create(partialOrd);
             }
 
             @Override
             public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<XcfaState<S>, A, XcfaPrec<P>> getAnalysis(
-                final List<XcfaLocation> initLocs, final Analysis<S, A, P> analysis) {
+                    final List<XcfaLocation> initLocs, final Analysis<S, A, P> analysis) {
                 return XcfaAnalysis.create(initLocs, getPartialOrder(analysis.getPartialOrd()),
-                    getInitFunc(initLocs, analysis.getInitFunc()),
-                    getTransFunc(analysis.getTransFunc()));
+                        getInitFunc(initLocs, analysis.getInitFunc()),
+                        getTransFunc(analysis.getTransFunc()));
             }
         },
 
@@ -145,34 +145,34 @@ public class XcfaConfigBuilder {
 
             @Override
             public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(
-                final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc) {
+                    final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc) {
                 return XcfaInitFunc.create(initLocs, initFunc);
             }
 
             @Override
             public <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(
-                final TransFunc<S, A, P> transFunc) {
+                    final TransFunc<S, A, P> transFunc) {
                 return XcfaTransFunc.create(transFunc);
             }
 
             @Override
             public <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(
-                final RefutationToPrec<P, R> refToPrec) {
+                    final RefutationToPrec<P, R> refToPrec) {
                 return XcfaPrecRefiner.create(refToPrec);
             }
 
             @Override
             public <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(
-                final PartialOrd<S> partialOrd) {
+                    final PartialOrd<S> partialOrd) {
                 return XcfaOrd.create(partialOrd);
             }
 
             @Override
             public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<XcfaState<S>, A, XcfaPrec<P>> getAnalysis(
-                final List<XcfaLocation> initLocs, final Analysis<S, A, P> analysis) {
+                    final List<XcfaLocation> initLocs, final Analysis<S, A, P> analysis) {
                 return XcfaAnalysis.create(initLocs, getPartialOrder(analysis.getPartialOrd()),
-                    getInitFunc(initLocs, analysis.getInitFunc()),
-                    getTransFunc(analysis.getTransFunc()));
+                        getInitFunc(initLocs, analysis.getInitFunc()),
+                        getTransFunc(analysis.getTransFunc()));
             }
         },
 
@@ -184,31 +184,31 @@ public class XcfaConfigBuilder {
 
             @Override
             public <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(
-                List<XcfaLocation> initLocs, InitFunc<S, P> initFunc) {
+                    List<XcfaLocation> initLocs, InitFunc<S, P> initFunc) {
                 return INTERLEAVINGS.getInitFunc(initLocs, initFunc);
             }
 
             @Override
             public <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(
-                TransFunc<S, A, P> transFunc) {
+                    TransFunc<S, A, P> transFunc) {
                 return INTERLEAVINGS.getTransFunc(transFunc);
             }
 
             @Override
             public <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(
-                RefutationToPrec<P, R> refToPrec) {
+                    RefutationToPrec<P, R> refToPrec) {
                 return INTERLEAVINGS.getPrecRefiner(refToPrec);
             }
 
             @Override
             public <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(
-                PartialOrd<S> partialOrd) {
+                    PartialOrd<S> partialOrd) {
                 return INTERLEAVINGS.getPartialOrder(partialOrd);
             }
 
             @Override
             public <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<? extends XcfaState<? extends S>, ? extends A, ? extends XcfaPrec<P>> getAnalysis(
-                List<XcfaLocation> initLoc, Analysis<S, A, P> analysis) {
+                    List<XcfaLocation> initLoc, Analysis<S, A, P> analysis) {
                 return INTERLEAVINGS.getAnalysis(initLoc, analysis);
             }
         };
@@ -216,19 +216,19 @@ public class XcfaConfigBuilder {
         public abstract LTS<? extends XcfaState<?>, ? extends XcfaAction> getLts(XCFA xcfa);
 
         public abstract <S extends ExprState, P extends Prec> InitFunc<XcfaState<S>, XcfaPrec<P>> getInitFunc(
-            final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc);
+                final List<XcfaLocation> initLocs, final InitFunc<S, P> initFunc);
 
         public abstract <S extends ExprState, A extends StmtAction, P extends Prec> TransFunc<XcfaState<S>, A, XcfaPrec<P>> getTransFunc(
-            final TransFunc<S, A, P> transFunc);
+                final TransFunc<S, A, P> transFunc);
 
         public abstract <P extends Prec, R extends Refutation> PrecRefiner<XcfaState<ExprState>, ? extends StmtAction, XcfaPrec<P>, R> getPrecRefiner(
-            final RefutationToPrec<P, R> refToPrec);
+                final RefutationToPrec<P, R> refToPrec);
 
         public abstract <S extends ExprState> PartialOrd<XcfaState<S>> getPartialOrder(
-            final PartialOrd<S> partialOrd);
+                final PartialOrd<S> partialOrd);
 
         public abstract <S extends ExprState, P extends Prec, A extends StmtAction> Analysis<? extends XcfaState<? extends S>, ? extends A, ? extends XcfaPrec<P>> getAnalysis(
-            final List<XcfaLocation> initLoc, final Analysis<S, A, P> analysis);
+                final List<XcfaLocation> initLoc, final Analysis<S, A, P> analysis);
     }
 
     public enum Search {
@@ -236,7 +236,7 @@ public class XcfaConfigBuilder {
             @Override
             public ArgNodeComparator getComp(final XCFA cfa, final XcfaLocation errLoc) {
                 return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
-                    ArgNodeComparators.bfs());
+                        ArgNodeComparators.bfs());
             }
         },
 
@@ -244,7 +244,7 @@ public class XcfaConfigBuilder {
             @Override
             public ArgNodeComparator getComp(final XCFA cfa, final XcfaLocation errLoc) {
                 return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
-                    ArgNodeComparators.dfs());
+                        ArgNodeComparators.dfs());
             }
         },
 
@@ -306,8 +306,8 @@ public class XcfaConfigBuilder {
     private AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
 
     public XcfaConfigBuilder(final Domain domain, final Refinement refinement,
-        final SolverFactory refinementSolverFactory, final SolverFactory abstractionSolverFactory,
-        final Algorithm algorithm) {
+                             final SolverFactory refinementSolverFactory, final SolverFactory abstractionSolverFactory,
+                             final Algorithm algorithm) {
         this.domain = domain;
         this.refinement = refinement;
         this.refinementSolverFactory = refinementSolverFactory;
@@ -332,7 +332,7 @@ public class XcfaConfigBuilder {
 
     public XcfaConfigBuilder search(final Search search) {
         checkArgument(!(search == Search.ERR) || algorithm == Algorithm.SINGLETHREAD,
-            "ERR search only compatible with SINGLETHREAD algorithm!");
+                "ERR search only compatible with SINGLETHREAD algorithm!");
         this.search = search;
         return this;
     }
@@ -370,34 +370,34 @@ public class XcfaConfigBuilder {
         switch (domain) {
             case EXPL:
                 final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(
-                    abstractionSolverFactory.createSolver(), True(), maxEnum);
+                        abstractionSolverFactory.createSolver(), True(), maxEnum);
                 abstractor = getAbstractor(lts, domainAnalysis, xcfa);
                 prec = getExplPrec(initPrec, xcfa);
                 precRefiner = algorithm.getPrecRefiner(explRefToPrec);
                 break;
             case PRED_BOOL:
                 PredAbstractor predAbstractor = PredAbstractors.booleanAbstractor(
-                    abstractionSolverFactory.createSolver());
+                        abstractionSolverFactory.createSolver());
                 PredAnalysis<?> predAnalysis = PredAnalysis.create(
-                    abstractionSolverFactory.createSolver(), predAbstractor, True());
+                        abstractionSolverFactory.createSolver(), predAbstractor, True());
                 abstractor = getAbstractor(lts, predAnalysis, xcfa);
                 prec = getPredPrec(initPrec, xcfa);
                 precRefiner = algorithm.getPrecRefiner(predRefToPrec);
                 break;
             case PRED_CART:
                 predAbstractor = PredAbstractors.booleanSplitAbstractor(
-                    abstractionSolverFactory.createSolver());
+                        abstractionSolverFactory.createSolver());
                 predAnalysis = PredAnalysis.create(abstractionSolverFactory.createSolver(),
-                    predAbstractor, True());
+                        predAbstractor, True());
                 abstractor = getAbstractor(lts, predAnalysis, xcfa);
                 prec = getPredPrec(initPrec, xcfa);
                 precRefiner = algorithm.getPrecRefiner(predRefToPrec);
                 break;
             case PRED_SPLIT:
                 predAbstractor = PredAbstractors.cartesianAbstractor(
-                    abstractionSolverFactory.createSolver());
+                        abstractionSolverFactory.createSolver());
                 predAnalysis = PredAnalysis.create(abstractionSolverFactory.createSolver(),
-                    predAbstractor, True());
+                        predAbstractor, True());
                 abstractor = getAbstractor(lts, predAnalysis, xcfa);
                 prec = getPredPrec(initPrec, xcfa);
                 precRefiner = algorithm.getPrecRefiner(predRefToPrec);
@@ -411,71 +411,71 @@ public class XcfaConfigBuilder {
         switch (refinement) {
             case FW_BIN_ITP:
                 exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(),
-                    refinementSolverFactory.createItpSolver());
+                        refinementSolverFactory.createItpSolver());
                 break;
             case BW_BIN_ITP:
                 exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(),
-                    refinementSolverFactory.createItpSolver());
+                        refinementSolverFactory.createItpSolver());
                 break;
             case SEQ_ITP:
                 exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(),
-                    refinementSolverFactory.createItpSolver());
+                        refinementSolverFactory.createItpSolver());
                 break;
             case MULTI_SEQ:
                 exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(),
-                    refinementSolverFactory.createItpSolver());
+                        refinementSolverFactory.createItpSolver());
                 break;
             case UCB:
                 exprTraceChecker = ExprTraceUCBChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver());
+                        refinementSolverFactory.createUCSolver());
                 break;
             case UNSAT_CORE:
                 exprTraceChecker = ExprTraceUnsatCoreChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver());
+                        refinementSolverFactory.createUCSolver());
                 break;
             case NWT_SP:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withoutIT().withSP().withoutLV();
+                        refinementSolverFactory.createUCSolver()).withoutIT().withSP().withoutLV();
                 break;
             case NWT_WP:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withoutIT().withWP().withoutLV();
+                        refinementSolverFactory.createUCSolver()).withoutIT().withWP().withoutLV();
                 break;
             case NWT_SP_LV:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withoutIT().withSP().withLV();
+                        refinementSolverFactory.createUCSolver()).withoutIT().withSP().withLV();
                 break;
             case NWT_WP_LV:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withoutIT().withWP().withLV();
+                        refinementSolverFactory.createUCSolver()).withoutIT().withWP().withLV();
                 break;
             case NWT_IT_SP:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withIT().withSP().withoutLV();
+                        refinementSolverFactory.createUCSolver()).withIT().withSP().withoutLV();
                 break;
             case NWT_IT_WP:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withIT().withWP().withoutLV();
+                        refinementSolverFactory.createUCSolver()).withIT().withWP().withoutLV();
                 break;
             case NWT_IT_SP_LV:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withIT().withSP().withLV();
+                        refinementSolverFactory.createUCSolver()).withIT().withSP().withLV();
                 break;
             case NWT_IT_WP_LV:
                 exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                    refinementSolverFactory.createUCSolver()).withIT().withWP().withLV();
+                        refinementSolverFactory.createUCSolver()).withIT().withWP().withLV();
                 break;
             default:
                 throw new UnsupportedOperationException(
-                    domain + " domain does not support " + refinement + " refinement.");
+                        domain + " domain does not support " + refinement + " refinement.");
         }
 
         if (refinement == Refinement.MULTI_SEQ) {
             refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-                precRefiner, pruneStrategy, logger);
+                    precRefiner, pruneStrategy, logger);
         } else {
             refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-                precRefiner, pruneStrategy, logger);
+                    precRefiner, pruneStrategy, logger);
         }
         final SafetyChecker checker = CegarChecker.create(abstractor, refiner, logger);
         return XcfaConfig.create(checker, prec);
@@ -503,8 +503,8 @@ public class XcfaConfigBuilder {
                 break;
             default:
                 throw new UnsupportedOperationException(
-                    initPrec + " initial precision is not supported with " +
-                        domain + " domain");
+                        initPrec + " initial precision is not supported with " +
+                                domain + " domain");
         }
         return XcfaPrec.create(Prod2Prec.of(explPrec, predPrec));
     }
@@ -519,8 +519,8 @@ public class XcfaConfigBuilder {
                 return XcfaPrec.create(ExplPrec.of(xcfa.getGlobalVars()));
             default:
                 throw new UnsupportedOperationException(
-                    initPrec + " initial precision is not supported with " +
-                        domain + " domain");
+                        initPrec + " initial precision is not supported with " +
+                                domain + " domain");
         }
     }
 
@@ -532,23 +532,23 @@ public class XcfaConfigBuilder {
                 return XcfaPrec.collectAssumes(xcfa);
             default:
                 throw new UnsupportedOperationException(
-                    initPrec + " initial precision is not supported with " +
-                        domain + " domain");
+                        initPrec + " initial precision is not supported with " +
+                                domain + " domain");
         }
     }
 
     private Abstractor getAbstractor(LTS lts, Analysis domainAnalysis, XCFA xcfa) {
         final Analysis analysis = algorithm.getAnalysis(
-            xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc())
-                .collect(Collectors.toList()), domainAnalysis);
+                xcfa.getProcesses().stream().map(proc -> proc.getMainProcedure().getInitLoc())
+                        .collect(Collectors.toList()), domainAnalysis);
 
         final ArgBuilder argBuilder = ArgBuilder.create(lts, analysis,
-            state -> ((XcfaState) state).isError(), true);
+                state -> ((XcfaState) state).isError(), true);
         return BasicAbstractor
-            .builder(argBuilder).projection(state -> ((XcfaState) state).getCurrentLoc())
-            .waitlist(PriorityWaitlist.create(
-                search.getComp(xcfa, xcfa.getMainProcess().getMainProcedure().getErrorLoc())))
-            .stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
-                : StopCriterions.firstCex()).logger(logger).build();
+                .builder(argBuilder).projection(state -> ((XcfaState) state).getCurrentLoc())
+                .waitlist(PriorityWaitlist.create(
+                        search.getComp(xcfa, xcfa.getMainProcess().getMainProcedure().getErrorLoc())))
+                .stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+                        : StopCriterions.firstCex()).logger(logger).build();
     }
 }

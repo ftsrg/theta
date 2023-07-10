@@ -34,9 +34,9 @@ public class XcfaNewAtomsAutoExpl implements XcfaAutoExpl {
         final Set<Expr<BoolType>> atoms = XcfaUtils.getAtoms(xcfa);
 
         final Set<Expr<BoolType>> canonicalAtoms = atoms.stream()
-            .map(ExprUtils::canonize)
-            .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
-            .collect(Collectors.toSet());
+                .map(ExprUtils::canonize)
+                .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
+                .collect(Collectors.toSet());
         return new NewAtomsAutoExpl(Set.of(), canonicalAtoms, 0);
     }
 }

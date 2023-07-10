@@ -25,7 +25,7 @@ public class ThrowExceptionErrorListener extends BaseErrorListener implements AN
 
     @Override
     public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
-        int charPositionInLine, String msg, RecognitionException e) {
+                            int charPositionInLine, String msg, RecognitionException e) {
         throw new SmtLibSolverException(String.format("Invalid Expression: %s", msg), e);
     }
 }

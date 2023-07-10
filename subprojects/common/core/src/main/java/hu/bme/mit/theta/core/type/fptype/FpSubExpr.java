@@ -30,19 +30,19 @@ public final class FpSubExpr extends SubExpr<FpType> {
     private final FpRoundingMode roundingMode;
 
     private FpSubExpr(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-        final Expr<FpType> rightOp) {
+                      final Expr<FpType> rightOp) {
         super(leftOp, rightOp);
         checkAllTypesEqual(leftOp, rightOp);
         this.roundingMode = roundingMode;
     }
 
     public static FpSubExpr of(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-        final Expr<FpType> rightOp) {
+                               final Expr<FpType> rightOp) {
         return new FpSubExpr(roundingMode, leftOp, rightOp);
     }
 
     public static FpSubExpr create(final FpRoundingMode roundingMode, final Expr<?> leftOp,
-        final Expr<?> rightOp) {
+                                   final Expr<?> rightOp) {
         final Expr<FpType> newLeftOp = castFp(leftOp);
         final Expr<FpType> newRightOp = castFp(rightOp);
         return FpSubExpr.of(roundingMode, newLeftOp, newRightOp);
@@ -91,7 +91,7 @@ public final class FpSubExpr extends SubExpr<FpType> {
         } else if (obj instanceof FpSubExpr) {
             final FpSubExpr that = (FpSubExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp()) && roundingMode == that.roundingMode;
+                    .equals(that.getRightOp()) && roundingMode == that.roundingMode;
         } else {
             return false;
         }

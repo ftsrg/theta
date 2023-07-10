@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * ExprTraceChecker and a PrecRefiner.
  */
 public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
-    implements Refiner<S, A, P> {
+        implements Refiner<S, A, P> {
 
     private final ExprTraceChecker<R> exprTraceChecker;
     private final PrecRefiner<S, A, P, R> precRefiner;
@@ -46,8 +46,8 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
     private final Logger logger;
 
     private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-        final PrecRefiner<S, A, P, R> precRefiner,
-        final PruneStrategy pruneStrategy, final Logger logger) {
+                                   final PrecRefiner<S, A, P, R> precRefiner,
+                                   final PruneStrategy pruneStrategy, final Logger logger) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
@@ -55,8 +55,8 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
     }
 
     public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> SingleExprTraceRefiner<S, A, P, R> create(
-        final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
-        final PruneStrategy pruneStrategy, final Logger logger) {
+            final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
+            final PruneStrategy pruneStrategy, final Logger logger) {
         return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
     }
 
@@ -67,7 +67,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
         assert !arg.isSafe() : "ARG must be unsafe";
 
         Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs()
-            .filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
+                .filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
         final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
         final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
@@ -115,7 +115,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(exprTraceChecker)
-            .add(precRefiner).toString();
+                .add(precRefiner).toString();
     }
 
 }

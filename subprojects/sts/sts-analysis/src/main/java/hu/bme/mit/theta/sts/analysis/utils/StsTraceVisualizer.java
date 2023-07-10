@@ -31,7 +31,7 @@ public final class StsTraceVisualizer {
     }
 
     public static void printTraceTable(final Trace<Valuation, StsAction> trace,
-        final TableWriter writer) {
+                                       final TableWriter writer) {
         final Set<Decl<?>> allVars = new LinkedHashSet<>();
         for (final Valuation val : trace.getStates()) {
             allVars.addAll(val.getDecls());

@@ -37,7 +37,7 @@ final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec
 
     @Override
     public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action,
-        final ZonePrec prec) {
+                                               final ZonePrec prec) {
         final ZoneState succState = XtaZoneUtils.post(state, action, prec);
         return ImmutableList.of(succState);
     }

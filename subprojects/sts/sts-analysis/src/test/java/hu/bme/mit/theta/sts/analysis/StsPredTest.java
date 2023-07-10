@@ -81,7 +81,7 @@ public class StsPredTest {
 
         builder.addInit(Eq(x, Int(0)));
         builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
-            Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+                Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
         builder.setProp(Not(Eq(x, Int(mod))));
 
         sts = builder.build();
@@ -91,33 +91,33 @@ public class StsPredTest {
     public void testPredPrec() {
 
         final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(
-            abstractionSolver,
-            PredAbstractors.booleanSplitAbstractor(abstractionSolver), sts.getInit());
+                abstractionSolver,
+                PredAbstractors.booleanSplitAbstractor(abstractionSolver), sts.getInit());
         final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()),
-            abstractionSolver);
+                abstractionSolver);
 
         final PredPrec prec = PredPrec.of();
 
         final LTS<State, StsAction> lts = StsLts.create(sts);
 
         final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts,
-            analysis, target);
+                analysis, target);
 
         final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(
-                argBuilder).logger(logger)
-            .build();
+                        argBuilder).logger(logger)
+                .build();
 
         final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(
-            sts.getInit(),
-            Not(sts.getProp()), refinementSolver);
+                sts.getInit(),
+                Not(sts.getProp()), refinementSolver);
 
         final SingleExprTraceRefiner<PredState, StsAction, PredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
-            .create(exprTraceChecker,
-                JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
-                PruneStrategy.LAZY, logger);
+                .create(exprTraceChecker,
+                        JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
+                        PruneStrategy.LAZY, logger);
 
         final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(
-            abstractor, refiner, logger);
+                abstractor, refiner, logger);
 
         final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
         System.out.println(safetyStatus);

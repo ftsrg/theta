@@ -135,7 +135,7 @@ public final class Z3ItpSolverTest {
         final ItpMarker I4 = solver.createMarker();
         final ItpMarker I5 = solver.createMarker();
         final ItpPattern pattern = solver.createTreePattern(
-            Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
+                Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
 
         solver.add(I1, Eq(a, Int(0)));
         solver.add(I2, Eq(a, b));

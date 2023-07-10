@@ -50,17 +50,17 @@ public final class WitnessWriter extends AbstractGraphWriter {
     private final String programFile;
 
     public static WitnessWriter createViolationWitnessWriter(String programFile,
-        String specification, boolean is64bit) {
+                                                             String specification, boolean is64bit) {
         return new WitnessWriter(programFile, specification, true, is64bit);
     }
 
     public static WitnessWriter createCorrectnessWitnessWriter(String programFile,
-        String specification, boolean is64bit) {
+                                                               String specification, boolean is64bit) {
         return new WitnessWriter(programFile, specification, false, is64bit);
     }
 
     private WitnessWriter(String programFile, String specification, boolean isViolationWitness,
-        boolean is64bit) {
+                          boolean is64bit) {
         programHash = createTaskHash(programFile);
         this.isViolationWitness = isViolationWitness;
         this.specification = specification;
@@ -96,8 +96,8 @@ public final class WitnessWriter extends AbstractGraphWriter {
     private void printKeys(StringBuilder sb) {
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>").append(System.lineSeparator());
         sb.append(
-                "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
-            .append(System.lineSeparator());
+                        "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
+                .append(System.lineSeparator());
 
         appendKeyLine(sb, "sourcecodelang", "string", "graph", "sourcecodelang");
         appendKeyLine(sb, "creationtime", "string", "graph", "creationtime");
@@ -140,7 +140,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
 
         TimeZone tz = TimeZone.getTimeZone("UTC");
         DateFormat df = new SimpleDateFormat(
-            "yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+                "yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
         df.setTimeZone(tz);
         String ISOdate = df.format(new Date());
         appendDataNode(sb, "creationtime", ISOdate);
@@ -148,11 +148,11 @@ public final class WitnessWriter extends AbstractGraphWriter {
 
     private void appendDataNode(StringBuilder sb, String key, String value) {
         sb.append("<data key=\"").append(key).append("\">").append(value).append("</data>")
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
     }
 
     private void appendKeyLine(StringBuilder sb, String attrName, String attrType,
-        String forElement, String id) {
+                               String forElement, String id) {
         sb.append("<key attr.name=\"");
         sb.append(attrName);
         sb.append("\" attr.type=\"");
@@ -166,7 +166,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
     }
 
     private void appendKeyWithDefaultValue(StringBuilder sb, String attrName, String attrType,
-        String forElement, String id, String defaultValue) {
+                                           String forElement, String id, String defaultValue) {
         sb.append("<key attr.name=\"");
         sb.append(attrName);
         sb.append("\" attr.type=\"");
@@ -188,10 +188,10 @@ public final class WitnessWriter extends AbstractGraphWriter {
     private void printNode(final Node node, final StringBuilder sb) {
         if (node.getAttributes().getLabel().equals("")) {
             sb.append("<node id=\"").append(node.getId()).append("\"/>")
-                .append(System.lineSeparator());
+                    .append(System.lineSeparator());
         } else {
             sb.append("<node id=\"").append(node.getId()).append("\">")
-                .append(System.lineSeparator());
+                    .append(System.lineSeparator());
             sb.append(node.getAttributes().getLabel()).append(System.lineSeparator()); // TODO tabs?
             sb.append("</node>").append(System.lineSeparator());
         }
@@ -201,7 +201,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
         for (final Edge edge : node.getOutEdges()) {
             sb.append("<edge source=\"").append(edge.getSource().getId());
             sb.append("\" target=\"").append(edge.getTarget().getId()).append("\">")
-                .append(System.lineSeparator());
+                    .append(System.lineSeparator());
             sb.append(edge.getAttributes().getLabel()).append(System.lineSeparator()); // TODO tabs?
             sb.append("</edge>").append(System.lineSeparator());
         }
@@ -215,7 +215,7 @@ public final class WitnessWriter extends AbstractGraphWriter {
             e.printStackTrace();
         }
         try (InputStream is = Files.newInputStream(Paths.get(programFile));
-            DigestInputStream dis = new DigestInputStream(is, md)) {
+             DigestInputStream dis = new DigestInputStream(is, md)) {
             while (dis.read() != -1) {
             }
         } catch (IOException e) {

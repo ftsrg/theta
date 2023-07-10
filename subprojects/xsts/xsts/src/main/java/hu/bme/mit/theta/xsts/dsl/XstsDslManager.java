@@ -33,7 +33,7 @@ public final class XstsDslManager {
 
     public static XSTS createXsts(final String inputString) throws IOException {
         final InputStream stream = new ByteArrayInputStream(
-            inputString.getBytes(StandardCharsets.UTF_8.name()));
+                inputString.getBytes(StandardCharsets.UTF_8.name()));
         return createXsts(stream);
     }
 

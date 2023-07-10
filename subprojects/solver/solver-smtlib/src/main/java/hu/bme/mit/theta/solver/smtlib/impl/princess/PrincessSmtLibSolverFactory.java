@@ -43,9 +43,9 @@ public class PrincessSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args,
-            EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS));
+                EnumSet.of(GenericSmtLibSolverBinary.Solver.PRINCESS));
 
         return new PrincessSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-            solverBinary);
+                solverBinary);
     }
 }

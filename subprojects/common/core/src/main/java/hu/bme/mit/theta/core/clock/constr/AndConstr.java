@@ -67,7 +67,7 @@ public final class AndConstr implements ClockConstr {
 
     @Override
     public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-        final P param) {
+                           final P param) {
         return visitor.visit(this, param);
     }
 
@@ -104,7 +104,7 @@ public final class AndConstr implements ClockConstr {
     ////////
 
     private static Collection<AtomicConstr> toAtomicConstrs(
-        final Collection<? extends ClockConstr> constrs) {
+            final Collection<? extends ClockConstr> constrs) {
         final ImmutableSet.Builder<AtomicConstr> builder = ImmutableSet.builder();
         for (final ClockConstr constr : constrs) {
             if (constr instanceof AtomicConstr) {

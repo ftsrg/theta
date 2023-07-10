@@ -38,7 +38,7 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
     }
 
     private XcfaSTStateStack(final Stack<XcfaSTStateStack.ProcedureLocation> locationStack,
-        final S globalState) {
+                             final S globalState) {
         super(globalState);
         this.locationStack = new Stack<>();
         this.locationStack.addAll(locationStack);
@@ -74,7 +74,7 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
 
     public Map<VarDecl<?>, VarDecl<?>> getReverseVars() {
         return this.getCurrentVars().entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
     }
 
     XcfaLocation pop() {
@@ -91,9 +91,9 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
 
     private void updateParams() {
         Map<VarDecl<?>, VarDecl<?>> callingProcedureAltVars = locationStack.get(
-            locationStack.size() - 2).location.getParent().getAltVars();
+                locationStack.size() - 2).location.getParent().getAltVars();
         Map<VarDecl<?>, VarDecl<?>> callingProcedureVars = locationStack.get(
-            locationStack.size() - 2).varLut;
+                locationStack.size() - 2).varLut;
         callingProcedureAltVars.forEach((var, altVar) -> {
             if (callingProcedureVars.get(var) != null) // calling proc has the same var instantiated
             {
@@ -164,7 +164,7 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
             }
             XcfaSTStateStack.ProcedureLocation that = (XcfaSTStateStack.ProcedureLocation) o;
             return location == that.location && varLut.entrySet().stream()
-                .noneMatch(entry -> that.varLut.get(entry.getKey()) != entry.getValue());
+                    .noneMatch(entry -> that.varLut.get(entry.getKey()) != entry.getValue());
         }
 
         @Override

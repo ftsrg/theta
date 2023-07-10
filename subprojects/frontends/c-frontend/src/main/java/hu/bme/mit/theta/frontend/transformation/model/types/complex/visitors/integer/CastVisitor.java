@@ -201,7 +201,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     @Override
     public Expr<?> visit(CArray type, Expr<?> param) {
         checkState(CComplexType.getType(param) instanceof CArray,
-            "Only arrays can be used in place of arrays!");
+                "Only arrays can be used in place of arrays!");
         return param.withOps(param.getOps());
     }
 

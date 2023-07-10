@@ -232,7 +232,7 @@ public class CfaCli {
             }
 
             final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc,
-                abstractionSolverFactory, refinementSolverFactory);
+                    abstractionSolverFactory, refinementSolverFactory);
             final SafetyResult<?, ?> status = check(configuration);
             sw.stop();
             printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
@@ -247,7 +247,7 @@ public class CfaCli {
 
     private void printHeader() {
         Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-            "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen").forEach(writer::cell);
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen").forEach(writer::cell);
         writer.newRow();
     }
 
@@ -262,14 +262,14 @@ public class CfaCli {
     }
 
     private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc,
-        final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory)
-        throws Exception {
+                                                  final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory)
+            throws Exception {
         try {
             return new CfaConfigBuilder(domain, refinement, abstractionSolverFactory,
-                refinementSolverFactory)
-                .precGranularity(precGranularity).search(search)
-                .predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-                .pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);
+                    refinementSolverFactory)
+                    .precGranularity(precGranularity).search(search)
+                    .predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
+                    .pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
         }
@@ -281,8 +281,8 @@ public class CfaCli {
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(
-                "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
-                ex);
+                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    ex);
         }
     }
 
@@ -314,7 +314,7 @@ public class CfaCli {
             writer.newRow();
         } else {
             logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(),
-                message);
+                    message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));
@@ -328,7 +328,7 @@ public class CfaCli {
     private void writeCex(final Unsafe<?, ?> status) throws FileNotFoundException {
         @SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
         final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(
-            trace, Z3SolverFactory.getInstance());
+                trace, Z3SolverFactory.getInstance());
         final File file = new File(cexfile);
         PrintWriter printWriter = null;
         try {

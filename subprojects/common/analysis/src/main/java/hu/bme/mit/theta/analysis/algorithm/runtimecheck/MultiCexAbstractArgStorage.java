@@ -31,7 +31,7 @@ import java.util.Set;
  * stores ARG hashes, it does not store counterexample hashes
  */
 public class MultiCexAbstractArgStorage<S extends State, A extends Action> extends
-    AbstractArgStorage<S, A> {
+        AbstractArgStorage<S, A> {
 
     private final Set<Integer> argHashes = new LinkedHashSet<>();
 

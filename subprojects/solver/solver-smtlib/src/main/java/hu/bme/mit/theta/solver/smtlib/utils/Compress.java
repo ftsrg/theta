@@ -37,15 +37,15 @@ public class Compress {
     }
 
     public static void extract(final InputStream inputStream, final Path extractDir,
-        final CompressionType compressionType) throws IOException {
+                               final CompressionType compressionType) throws IOException {
         switch (compressionType) {
             case ZIP:
                 extract(new ZipArchiveInputStream(inputStream), extractDir);
                 break;
             case TARGZ:
                 extract(new TarArchiveInputStream(
-                        new GzipCompressorInputStream(new BufferedInputStream(inputStream))),
-                    extractDir);
+                                new GzipCompressorInputStream(new BufferedInputStream(inputStream))),
+                        extractDir);
                 break;
             default:
                 throw new AssertionError();
@@ -53,19 +53,19 @@ public class Compress {
     }
 
     private static void extract(final ArchiveInputStream archiveInputStream, final Path extractDir)
-        throws IOException {
+            throws IOException {
         for (ArchiveEntry entry = archiveInputStream.getNextEntry(); entry != null;
-            entry = archiveInputStream.getNextEntry()) {
+             entry = archiveInputStream.getNextEntry()) {
             final var entryPath = Path.of(entry.getName());
             if (entry.isDirectory()) {
                 if (entryPath.getNameCount() > 1) {
                     final var entryResolvedPath = extractDir.resolve(
-                        entryPath.subpath(1, entryPath.getNameCount()));
+                            entryPath.subpath(1, entryPath.getNameCount()));
                     Files.createDirectories(entryResolvedPath);
                 }
             } else {
                 final var entryResolvedPath = extractDir.resolve(
-                    entryPath.subpath(1, entryPath.getNameCount()));
+                        entryPath.subpath(1, entryPath.getNameCount()));
                 Files.createDirectories(entryResolvedPath.getParent());
                 Files.copy(archiveInputStream, entryResolvedPath);
             }

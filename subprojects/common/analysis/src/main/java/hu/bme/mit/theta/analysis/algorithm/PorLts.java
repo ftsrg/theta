@@ -71,7 +71,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
         for (A firstAction : persistentSetFirstActions) {
             Collection<A> persistentSet = calculatePersistentSet(allEnabledActions, firstAction);
             if (minimalPersistentSet.size() == 0
-                || persistentSet.size() < minimalPersistentSet.size()) {
+                    || persistentSet.size() < minimalPersistentSet.size()) {
                 minimalPersistentSet = persistentSet;
             }
         }
@@ -104,10 +104,10 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
                 // for every action that is not in the persistent set it is checked whether it should be added to the persistent set
                 // (because it is dependent with an action already in the persistent set)
                 if (persistentSet.stream()
-                    .anyMatch(persistentSetAction -> areDependents(persistentSetAction, action))) {
+                        .anyMatch(persistentSetAction -> areDependents(persistentSetAction, action))) {
                     if (isBackwardAction(action)) {
                         return new HashSet<>(
-                            enabledActions); // see POR algorithm for the reason of removing backward transitions
+                                enabledActions); // see POR algorithm for the reason of removing backward transitions
                     }
 
                     persistentSet.add(action);
@@ -150,8 +150,8 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
      */
     protected boolean areDependents(A persistentSetAction, A action) {
         return canEnOrDisableEachOther(persistentSetAction, action) ||
-            getInfluencedSharedObjects(getTransitionOf(action)).stream().anyMatch(varDecl ->
-                getCachedUsedSharedObjects(getTransitionOf(persistentSetAction)).contains(varDecl));
+                getInfluencedSharedObjects(getTransitionOf(action)).stream().anyMatch(varDecl ->
+                        getCachedUsedSharedObjects(getTransitionOf(persistentSetAction)).contains(varDecl));
     }
 
     /**
@@ -200,7 +200,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
      * @return the set of used shared objects
      */
     protected abstract Set<? extends Decl<? extends Type>> getDirectlyUsedSharedObjects(
-        T transition);
+            T transition);
 
     /**
      * Returns the shared objects (~global variables) that an action uses.
@@ -249,7 +249,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
      * @return the set of encountered shared objects
      */
     protected Set<? extends Decl<? extends Type>> getSharedObjectsWithBFS(T startTransition,
-        Predicate<T> visitTransition) {
+                                                                          Predicate<T> visitTransition) {
         Set<Decl<? extends Type>> vars = new HashSet<>();
         List<T> exploredTransitions = new ArrayList<>();
         List<T> transitionsToExplore = new ArrayList<>();
@@ -262,7 +262,7 @@ public abstract class PorLts<S extends State, A extends Action, T> implements LT
 
             for (var newTransition : successiveTransitions) {
                 if (!exploredTransitions.contains(newTransition) && visitTransition.test(
-                    newTransition)) {
+                        newTransition)) {
                     transitionsToExplore.add(newTransition);
                 }
             }

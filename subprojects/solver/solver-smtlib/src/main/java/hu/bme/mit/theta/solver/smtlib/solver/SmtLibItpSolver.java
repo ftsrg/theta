@@ -68,9 +68,9 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
 
 
     public SmtLibItpSolver(
-        final SmtLibSymbolTable symbolTable,
-        final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
@@ -119,7 +119,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
     }
 
     protected abstract void add(final T marker, final Expr<BoolType> assertion,
-        final Set<ConstDecl<?>> consts, final String term);
+                                final Set<ConstDecl<?>> consts, final String term);
 
     @Override
     public SolverStatus check() {
@@ -201,7 +201,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         } else if (res.isSpecific()) {
             final GetModelResponse getModelResponse = res.asSpecific().asGetModelResponse();
             return new SmtLibValuation(symbolTable, transformationManager, termTransformer,
-                getModelResponse.getModel());
+                    getModelResponse.getModel());
         } else {
             throw new AssertionError();
         }

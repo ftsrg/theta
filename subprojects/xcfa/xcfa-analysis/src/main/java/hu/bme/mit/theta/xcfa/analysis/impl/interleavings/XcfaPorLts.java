@@ -49,9 +49,9 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
 
     @Override
     protected Collection<XcfaAction> getPersistentSetFirstActions(
-        Collection<XcfaAction> allEnabledActions) {
+            Collection<XcfaAction> allEnabledActions) {
         var enabledActionsByProcess = allEnabledActions.stream()
-            .collect(Collectors.groupingBy(XcfaAction::getProcess));
+                .collect(Collectors.groupingBy(XcfaAction::getProcess));
         List<Integer> enabledProcesses = new ArrayList<>(enabledActionsByProcess.keySet());
         Collections.shuffle(enabledProcesses);
         Collection<XcfaAction> firstActions = new HashSet<>();
@@ -77,13 +77,13 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
     protected Set<XcfaEdge> getSuccessiveTransitions(XcfaEdge edge) {
         var outgoingEdges = new HashSet<>(edge.getTarget().getOutgoingEdges());
         List<XcfaLabel.StartThreadXcfaLabel> startThreads = edge.getLabels().stream()
-            .filter(label -> label instanceof XcfaLabel.StartThreadXcfaLabel)
-            .map(label -> (XcfaLabel.StartThreadXcfaLabel) label).collect(Collectors.toList());
+                .filter(label -> label instanceof XcfaLabel.StartThreadXcfaLabel)
+                .map(label -> (XcfaLabel.StartThreadXcfaLabel) label).collect(Collectors.toList());
         if (startThreads.size()
-            > 0) { // for start thread labels, the thread procedure must be explored, too!
+                > 0) { // for start thread labels, the thread procedure must be explored, too!
             startThreads.forEach(startThread ->
-                outgoingEdges.addAll(
-                    startThread.getProcess().getMainProcedure().getInitLoc().getOutgoingEdges()));
+                    outgoingEdges.addAll(
+                            startThread.getProcess().getMainProcedure().getInitLoc().getOutgoingEdges()));
         }
         return outgoingEdges;
     }
@@ -118,7 +118,7 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
         var labels = edge.getLabels();
         if (labels.stream().anyMatch(label -> label instanceof XcfaLabel.AtomicBeginXcfaLabel)) {
             vars = getSharedObjectsWithBFS(edge, xcfaEdge -> xcfaEdge.getLabels().stream()
-                .noneMatch(label -> label instanceof XcfaLabel.AtomicEndXcfaLabel));
+                    .noneMatch(label -> label instanceof XcfaLabel.AtomicEndXcfaLabel));
         } else {
             vars = getDirectlyUsedSharedObjects(edge);
         }
@@ -137,7 +137,7 @@ public class XcfaPorLts extends PorLts<XcfaState<?>, XcfaAction, XcfaEdge> {
                 Stack<XcfaLocation> stack = new Stack<>();
 
                 stack.push(
-                    procedure.getInitLoc()); // start from the initial location of the procedure
+                        procedure.getInitLoc()); // start from the initial location of the procedure
                 while (!stack.isEmpty()) {
                     XcfaLocation visiting = stack.pop();
                     visitedLocations.add(visiting);

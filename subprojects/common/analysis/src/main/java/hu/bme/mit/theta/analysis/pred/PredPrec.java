@@ -87,7 +87,7 @@ public final class PredPrec implements Prec {
     public PredPrec join(final PredPrec other) {
         checkNotNull(other);
         final Collection<Expr<BoolType>> joinedPreds = ImmutableSet.<Expr<BoolType>>builder()
-            .addAll(this.predToNegMap.keySet()).addAll(other.predToNegMap.keySet()).build();
+                .addAll(this.predToNegMap.keySet()).addAll(other.predToNegMap.keySet()).build();
         // If no new predicate was added, return same instance (immutable)
         if (joinedPreds.size() == this.predToNegMap.size()) {
             return this;
@@ -101,7 +101,7 @@ public final class PredPrec implements Prec {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(predToNegMap.keySet())
-            .toString();
+                .toString();
     }
 
     @Override
@@ -124,7 +124,7 @@ public final class PredPrec implements Prec {
     @Override
     public Collection<VarDecl<?>> getUsedVars() {
         return predToNegMap.keySet().stream().map(ExprUtils::getVars).reduce(
-            (vars1, vars2) -> Streams.concat(vars1.stream(), vars2.stream())
-                .collect(Collectors.toSet())).orElse(Set.of());
+                (vars1, vars2) -> Streams.concat(vars1.stream(), vars2.stream())
+                        .collect(Collectors.toSet())).orElse(Set.of());
     }
 }

@@ -57,7 +57,7 @@ public final class ExprUtils {
      * @param collectTo Collection where the atoms should be put
      */
     public static void collectAtoms(final Expr<BoolType> expr,
-        final Collection<Expr<BoolType>> collectTo) {
+                                    final Collection<Expr<BoolType>> collectTo) {
         ExprAtomCollector.collectAtoms(expr, collectTo);
     }
 
@@ -105,8 +105,8 @@ public final class ExprUtils {
         if (expr instanceof AndExpr) {
             final AndExpr andExpr = (AndExpr) expr;
             return andExpr.getOps().stream().map(ExprUtils::getConjuncts)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toSet());
         } else {
             return Collections.singleton(expr);
         }
@@ -138,7 +138,7 @@ public final class ExprUtils {
      * @param collectTo Collection where the variables should be put
      */
     public static void collectVars(final Iterable<? extends Expr<?>> exprs,
-        final Collection<VarDecl<?>> collectTo) {
+                                   final Collection<VarDecl<?>> collectTo) {
         exprs.forEach(e -> collectVars(e, collectTo));
     }
 
@@ -173,7 +173,7 @@ public final class ExprUtils {
      * @param collectTo Collection where the constants should be put
      */
     public static void collectConstants(final Expr<?> expr,
-        final Collection<ConstDecl<?>> collectTo) {
+                                        final Collection<ConstDecl<?>> collectTo) {
         if (expr instanceof RefExpr) {
             final RefExpr<?> refExpr = (RefExpr<?>) expr;
             final Decl<?> decl = refExpr.getDecl();
@@ -193,7 +193,7 @@ public final class ExprUtils {
      * @param collectTo Collection where the constants should be put
      */
     public static void collectConstants(final Iterable<? extends Expr<?>> exprs,
-        final Collection<ConstDecl<?>> collectTo) {
+                                        final Collection<ConstDecl<?>> collectTo) {
         exprs.forEach(e -> collectConstants(e, collectTo));
     }
 
@@ -263,7 +263,7 @@ public final class ExprUtils {
      * @return Simplified expression
      */
     public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr,
-        final Valuation val) {
+                                                                  final Valuation val) {
         return ExprSimplifier.simplify(expr, val);
     }
 
@@ -340,7 +340,7 @@ public final class ExprUtils {
      * @return Transformed expression
      */
     public static <T extends Type> Expr<T> close(final Expr<T> expr,
-        final Map<VarDecl<?>, ParamDecl<?>> mapping) {
+                                                 final Map<VarDecl<?>, ParamDecl<?>> mapping) {
         return ExprCloser.close(expr, mapping);
     }
 
@@ -352,7 +352,7 @@ public final class ExprUtils {
      * @return Transformed expression
      */
     public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr,
-        final VarIndexing indexing) {
+                                                       final VarIndexing indexing) {
         return ExprPrimeApplier.applyPrimes(expr, indexing);
     }
 

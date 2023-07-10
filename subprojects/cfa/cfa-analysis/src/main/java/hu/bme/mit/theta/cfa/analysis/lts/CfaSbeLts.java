@@ -42,6 +42,6 @@ public final class CfaSbeLts implements CfaLts {
     @Override
     public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
         return state.getLoc().getOutEdges().stream().map(CfaAction::create)
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 }

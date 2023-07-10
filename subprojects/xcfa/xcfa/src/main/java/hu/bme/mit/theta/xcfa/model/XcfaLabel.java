@@ -100,7 +100,7 @@ public abstract class XcfaLabel {
         }
 
         public static ProcedureCallXcfaLabel of(final List<Expr<?>> params,
-            final String procedure) {
+                                                final String procedure) {
             return new ProcedureCallXcfaLabel(params, procedure);
         }
 
@@ -153,7 +153,7 @@ public abstract class XcfaLabel {
         private final Expr<?> param;
 
         private StartThreadXcfaLabel(final VarDecl<?> key, final String threadName,
-            final Expr<?> param) {
+                                     final Expr<?> param) {
             this.key = key;
             this.threadName = threadName;
             this.param = param;
@@ -161,7 +161,7 @@ public abstract class XcfaLabel {
         }
 
         public static StartThreadXcfaLabel of(final VarDecl<?> key, final String threadName,
-            final Expr<?> params) {
+                                              final Expr<?> params) {
             return new StartThreadXcfaLabel(key, threadName, params);
         }
 
@@ -212,7 +212,7 @@ public abstract class XcfaLabel {
             }
             StartThreadXcfaLabel that = (StartThreadXcfaLabel) o;
             return key.equals(that.key) && threadName.equals(that.threadName) && param.equals(
-                that.param);
+                    that.param);
         }
 
         @Override
@@ -278,7 +278,7 @@ public abstract class XcfaLabel {
         private final String ordering;
 
         private LoadXcfaLabel(final VarDecl<T> global, final VarDecl<T> local, final boolean atomic,
-            final String ordering) {
+                              final String ordering) {
             this.global = global;
             this.local = local;
             this.atomic = atomic;
@@ -286,7 +286,7 @@ public abstract class XcfaLabel {
         }
 
         public static <T extends Type> LoadXcfaLabel<T> of(final VarDecl<T> global,
-            final VarDecl<T> local, final boolean atomic, final String ordering) {
+                                                           final VarDecl<T> local, final boolean atomic, final String ordering) {
             return new LoadXcfaLabel<T>(global, local, atomic, ordering);
         }
 
@@ -331,7 +331,7 @@ public abstract class XcfaLabel {
             }
             LoadXcfaLabel<?> that = (LoadXcfaLabel<?>) o;
             return atomic == that.atomic && global.equals(that.global) && local.equals(that.local)
-                && Objects.equals(ordering, that.ordering);
+                    && Objects.equals(ordering, that.ordering);
         }
 
         @Override
@@ -348,7 +348,7 @@ public abstract class XcfaLabel {
         private final String ordering;
 
         private StoreXcfaLabel(final VarDecl<T> local, final VarDecl<T> global,
-            final boolean atomic, final String ordering) {
+                               final boolean atomic, final String ordering) {
             this.local = local;
             this.global = global;
             this.atomic = atomic;
@@ -356,7 +356,7 @@ public abstract class XcfaLabel {
         }
 
         public static <T extends Type> StoreXcfaLabel<T> of(final VarDecl<T> local,
-            final VarDecl<T> global, final boolean atomic, final String ordering) {
+                                                            final VarDecl<T> global, final boolean atomic, final String ordering) {
             return new StoreXcfaLabel<T>(local, global, atomic, ordering);
         }
 
@@ -401,7 +401,7 @@ public abstract class XcfaLabel {
             }
             StoreXcfaLabel<?> that = (StoreXcfaLabel<?>) o;
             return atomic == that.atomic && local.equals(that.local) && global.equals(that.global)
-                && Objects.equals(ordering, that.ordering);
+                    && Objects.equals(ordering, that.ordering);
         }
 
         @Override
@@ -475,7 +475,7 @@ public abstract class XcfaLabel {
         @Override
         public Stmt getStmt() {
             return SequenceStmt.of(
-                labels.stream().map(label -> label.getStmt()).collect(Collectors.toList()));
+                    labels.stream().map(label -> label.getStmt()).collect(Collectors.toList()));
         }
 
         public List<XcfaLabel> getLabels() {
@@ -524,7 +524,7 @@ public abstract class XcfaLabel {
         @Override
         public Stmt getStmt() {
             return NonDetStmt.of(
-                labels.stream().map(label -> label.getStmt()).collect(Collectors.toList()));
+                    labels.stream().map(label -> label.getStmt()).collect(Collectors.toList()));
         }
 
         @Override
@@ -612,12 +612,12 @@ public abstract class XcfaLabel {
     }
 
     public static ProcedureCallXcfaLabel ProcedureCall(final List<Expr<?>> params,
-        final String key) {
+                                                       final String key) {
         return ProcedureCallXcfaLabel.of(params, key);
     }
 
     public static StartThreadXcfaLabel StartThread(final VarDecl<?> handle, final String key,
-        final Expr<?> param) {
+                                                   final Expr<?> param) {
         return StartThreadXcfaLabel.of(handle, key, param);
     }
 
@@ -626,14 +626,14 @@ public abstract class XcfaLabel {
     }
 
     public static <T extends Type, R extends Type> LoadXcfaLabel<T> Load(final VarDecl<T> global,
-        final VarDecl<R> local, final boolean atomic, final String ordering) {
+                                                                         final VarDecl<R> local, final boolean atomic, final String ordering) {
         TypeUtils.checkAllTypesEqual(global.getRef(), local.getRef());
         final VarDecl<T> localT = cast(local, global.getType());
         return LoadXcfaLabel.of(global, localT, atomic, ordering);
     }
 
     public static <T extends Type, R extends Type> StoreXcfaLabel<T> Store(final VarDecl<T> global,
-        final VarDecl<R> local, final boolean atomic, final String ordering) {
+                                                                           final VarDecl<R> local, final boolean atomic, final String ordering) {
         TypeUtils.checkAllTypesEqual(global.getRef(), local.getRef());
         final VarDecl<T> localT = cast(local, global.getType());
         return StoreXcfaLabel.of(global, localT, atomic, ordering);

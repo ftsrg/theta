@@ -33,7 +33,7 @@ public final class LoopStmt implements Stmt {
     private volatile int hashCode = 0;
 
     private LoopStmt(final Stmt stmt, final VarDecl<IntType> loopVariable, final Expr<IntType> from,
-        final Expr<IntType> to) {
+                     final Expr<IntType> to) {
         this.stmt = stmt;
         this.loopVariable = loopVariable;
         this.from = from;
@@ -41,7 +41,7 @@ public final class LoopStmt implements Stmt {
     }
 
     public static LoopStmt of(final Stmt stmt, final VarDecl<IntType> loopVariable,
-        final Expr<IntType> from, final Expr<IntType> to) {
+                              final Expr<IntType> from, final Expr<IntType> to) {
         return new LoopStmt(stmt, loopVariable, from, to);
     }
 
@@ -72,7 +72,7 @@ public final class LoopStmt implements Stmt {
         if (result == 0) {
             result = HASH_SEED;
             result = 37 * result + stmt.hashCode() + loopVariable.hashCode() + from.hashCode()
-                + to.hashCode();
+                    + to.hashCode();
             hashCode = result;
         }
         return result;
@@ -85,9 +85,9 @@ public final class LoopStmt implements Stmt {
         } else if (obj instanceof LoopStmt) {
             final LoopStmt that = (LoopStmt) obj;
             return this.getStmt().equals(that.getStmt())
-                && this.loopVariable.equals(that.loopVariable)
-                && this.from.equals(that.from)
-                && this.to.equals(that.to);
+                    && this.loopVariable.equals(that.loopVariable)
+                    && this.from.equals(that.from)
+                    && this.to.equals(that.to);
         } else {
             return false;
         }
@@ -96,7 +96,7 @@ public final class LoopStmt implements Stmt {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(STMT_LABEL)
-            .add(loopVariable + " from " + from + " to " + to + " " + stmt).toString();
+                .add(loopVariable + " from " + from + " to " + to + " " + stmt).toString();
     }
 
 }

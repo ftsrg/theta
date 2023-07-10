@@ -28,6 +28,6 @@ public class MathSATSmtLibExprTransformer extends GenericSmtLibExprTransformer {
     @Override
     protected String transformIntRem(final IntRemExpr expr) {
         return String.format("(ite (< %2$s 0) (- (mod %1$s %2$s)) (mod %1$s %2$s))",
-            toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+                toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
     }
 }

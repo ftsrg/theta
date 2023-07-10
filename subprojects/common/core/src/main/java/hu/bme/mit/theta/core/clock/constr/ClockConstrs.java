@@ -100,40 +100,40 @@ public final class ClockConstrs {
     }
 
     public static DiffLtConstr Lt(final VarDecl<RatType> leftClock,
-        final VarDecl<RatType> rightClock,
-        final int bound) {
+                                  final VarDecl<RatType> rightClock,
+                                  final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffLtConstr(leftClock, rightClock, bound);
     }
 
     public static DiffLeqConstr Leq(final VarDecl<RatType> leftClock,
-        final VarDecl<RatType> rightClock,
-        final int bound) {
+                                    final VarDecl<RatType> rightClock,
+                                    final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffLeqConstr(leftClock, rightClock, bound);
     }
 
     public static DiffGtConstr Gt(final VarDecl<RatType> leftClock,
-        final VarDecl<RatType> rightClock,
-        final int bound) {
+                                  final VarDecl<RatType> rightClock,
+                                  final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffGtConstr(leftClock, rightClock, bound);
     }
 
     public static DiffGeqConstr Geq(final VarDecl<RatType> leftClock,
-        final VarDecl<RatType> rightClock,
-        final int bound) {
+                                    final VarDecl<RatType> rightClock,
+                                    final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffGeqConstr(leftClock, rightClock, bound);
     }
 
     public static DiffEqConstr Eq(final VarDecl<RatType> leftClock,
-        final VarDecl<RatType> rightClock,
-        final int bound) {
+                                  final VarDecl<RatType> rightClock,
+                                  final int bound) {
         checkNotNull(leftClock);
         checkNotNull(rightClock);
         return new DiffEqConstr(leftClock, rightClock, bound);
@@ -162,27 +162,27 @@ public final class ClockConstrs {
         private FromExprHelper() {
             table = DispatchTable.<ClockConstr>builder()
 
-                .addCase(TrueExpr.class, this::transformTrue)
+                    .addCase(TrueExpr.class, this::transformTrue)
 
-                .addCase(FalseExpr.class, this::transformFalse)
+                    .addCase(FalseExpr.class, this::transformFalse)
 
-                .addCase(RatLtExpr.class, this::transformLt)
+                    .addCase(RatLtExpr.class, this::transformLt)
 
-                .addCase(RatLeqExpr.class, this::transformLeq)
+                    .addCase(RatLeqExpr.class, this::transformLeq)
 
-                .addCase(RatGtExpr.class, this::transformGt)
+                    .addCase(RatGtExpr.class, this::transformGt)
 
-                .addCase(RatGeqExpr.class, this::transformGeq)
+                    .addCase(RatGeqExpr.class, this::transformGeq)
 
-                .addCase(RatEqExpr.class, this::transformEq)
+                    .addCase(RatEqExpr.class, this::transformEq)
 
-                .addCase(AndExpr.class, this::transformAnd)
+                    .addCase(AndExpr.class, this::transformAnd)
 
-                .addDefault(o -> {
-                    throw new IllegalArgumentException();
-                })
+                    .addDefault(o -> {
+                        throw new IllegalArgumentException();
+                    })
 
-                .build();
+                    .build();
         }
 
         public ClockConstr transform(final Expr<BoolType> expr) {
@@ -256,7 +256,7 @@ public final class ClockConstrs {
         }
 
         private static List<VarDecl<RatType>> extractConstrLhs(
-            final BinaryExpr<RatType, BoolType> expr) {
+                final BinaryExpr<RatType, BoolType> expr) {
             final Expr<?> leftOp = expr.getLeftOp();
 
             if (leftOp instanceof RefExpr) {

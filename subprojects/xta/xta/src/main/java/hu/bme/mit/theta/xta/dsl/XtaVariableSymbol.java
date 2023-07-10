@@ -54,7 +54,7 @@ final class XtaVariableSymbol implements Symbol {
     private final XtaInitialiser initialiser;
 
     public XtaVariableSymbol(final Scope scope, final TypeContext typeContext,
-        final VariableIdContext variableIdcontext) {
+                             final VariableIdContext variableIdcontext) {
         checkNotNull(typeContext);
         checkNotNull(variableIdcontext);
         name = variableIdcontext.fArrayId.fId.getText();
@@ -62,8 +62,8 @@ final class XtaVariableSymbol implements Symbol {
         broadcast = (typeContext.fTypePrefix.fBroadcast != null);
         type = new XtaType(scope, typeContext, variableIdcontext.fArrayId.fArrayIndexes);
         initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope,
-            variableIdcontext.fInitialiser)
-            : null;
+                variableIdcontext.fInitialiser)
+                : null;
     }
 
     @Override
@@ -84,7 +84,7 @@ final class XtaVariableSymbol implements Symbol {
 
         if (varType == ChanType.getInstance() && initialiser != null) {
             throw new UnsupportedOperationException(
-                "Initialisers are not supported for type \"chan\"");
+                    "Initialisers are not supported for type \"chan\"");
         }
 
         if (constant) {
@@ -92,7 +92,7 @@ final class XtaVariableSymbol implements Symbol {
                 throw new UnsupportedOperationException("Unsupported type for const " + name + ".");
             } else if (initialiser == null) {
                 throw new UnsupportedOperationException(
-                    "The value of const " + name + " is undefined.");
+                        "The value of const " + name + " is undefined.");
             } else {
                 final LitExpr<?> expr = (LitExpr<?>) initialiser.instantiate(varType, env);
                 return InstantiateResult.constant(expr);
@@ -100,7 +100,7 @@ final class XtaVariableSymbol implements Symbol {
         } else if (isSupportedDataType(varType)) {
             if (broadcast) {
                 throw new UnsupportedOperationException(
-                    "Unsupported keyword \"broadcast\" for variable" + name + ".");
+                        "Unsupported keyword \"broadcast\" for variable" + name + ".");
             } else {
                 final VarDecl<?> varDecl = Decls.Var(prefix + name, varType);
                 final LitExpr<?> initValue;
@@ -119,10 +119,10 @@ final class XtaVariableSymbol implements Symbol {
         } else if (varType instanceof ClockType) {
             if (broadcast) {
                 throw new UnsupportedOperationException(
-                    "Unsupported keyword \"broadcast\" for variable" + name + ".");
+                        "Unsupported keyword \"broadcast\" for variable" + name + ".");
             } else if (initialiser != null) {
                 throw new UnsupportedOperationException(
-                    "Clock " + name + " should not be initialized.");
+                        "Clock " + name + " should not be initialized.");
             } else {
                 final VarDecl<RatType> varDecl = Decls.Var(prefix + name, Rat());
                 return InstantiateResult.clockVariable(varDecl);
@@ -133,7 +133,7 @@ final class XtaVariableSymbol implements Symbol {
             return InstantiateResult.channel(label);
         } else {
             throw new UnsupportedOperationException(
-                "Type of variable " + name + " is unsupported.");
+                    "Type of variable " + name + " is unsupported.");
         }
     }
 
@@ -185,8 +185,8 @@ final class XtaVariableSymbol implements Symbol {
             final Type newIndexType = (indexType instanceof RangeType) ? Int() : indexType;
 
             final List<Type> result = ImmutableList.<Type>builder().add(newIndexType)
-                .addAll(extractArgs(elemType))
-                .build();
+                    .addAll(extractArgs(elemType))
+                    .build();
             return result;
         } else {
             throw new AssertionError();
@@ -207,7 +207,7 @@ final class XtaVariableSymbol implements Symbol {
         }
 
         public static InstantiateResult dataVariable(final VarDecl<?> varDecl,
-            final LitExpr<?> initValue) {
+                                                     final LitExpr<?> initValue) {
             return new DataVariable(varDecl, initValue);
         }
 

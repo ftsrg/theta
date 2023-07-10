@@ -28,13 +28,13 @@ public final class StmtUnfoldResult {
     final VarIndexing indexing;
 
     private StmtUnfoldResult(final Iterable<? extends Expr<BoolType>> exprs,
-        final VarIndexing indexing) {
+                             final VarIndexing indexing) {
         this.exprs = ImmutableList.copyOf(exprs);
         this.indexing = indexing;
     }
 
     public static StmtUnfoldResult of(final Iterable<? extends Expr<BoolType>> exprs,
-        final VarIndexing indexing) {
+                                      final VarIndexing indexing) {
         return new StmtUnfoldResult(exprs, indexing);
     }
 

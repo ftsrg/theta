@@ -79,7 +79,7 @@ public final class IntSubExpr extends SubExpr<IntType> {
         } else if (obj instanceof IntSubExpr) {
             final IntSubExpr that = (IntSubExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

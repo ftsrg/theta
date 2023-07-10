@@ -40,7 +40,7 @@ public class PnmlParser {
     }
 
     public static PnmlNet parse(final String fileName, final String initialMarkingString)
-        throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+            throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder builder = factory.newDocumentBuilder();
@@ -71,7 +71,7 @@ public class PnmlParser {
         // Find all places
         final XPathExpression childPlacesExpr = xPath.compile("./place");
         final NodeList placeList = (NodeList) childPlacesExpr.evaluate(netElement,
-            XPathConstants.NODESET);
+                XPathConstants.NODESET);
         for (int i = 0; i < placeList.getLength(); i++) {
             final Element placeElement = (Element) placeList.item(i);
             final String id = placeElement.getAttribute("id");
@@ -80,7 +80,7 @@ public class PnmlParser {
             final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
             final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
             final String nameText = (String) nameTextExpr.evaluate(placeElement,
-                XPathConstants.STRING);
+                    XPathConstants.STRING);
             if (nameText.equals("")) {
                 name = (String) nameValueExpr.evaluate(placeElement, XPathConstants.STRING);
             } else {
@@ -92,9 +92,9 @@ public class PnmlParser {
                 initialMarking = values[i];
             } else {
                 final XPathExpression initialMarkingTextExpr = xPath.compile(
-                    "./initialMarking/text/text()");
+                        "./initialMarking/text/text()");
                 initialMarking = ((Double) initialMarkingTextExpr.evaluate(placeElement,
-                    XPathConstants.NUMBER)).intValue();
+                        XPathConstants.NUMBER)).intValue();
             }
 
             final PnmlPlace place = new PnmlPlace(name, id, initialMarking);
@@ -105,7 +105,7 @@ public class PnmlParser {
         // Find all transitions
         final XPathExpression childTransitionsExpr = xPath.compile("./transition");
         final NodeList transitionList = (NodeList) childTransitionsExpr.evaluate(netElement,
-            XPathConstants.NODESET);
+                XPathConstants.NODESET);
         for (int i = 0; i < transitionList.getLength(); i++) {
             final Element transitionElement = (Element) transitionList.item(i);
             final String id = transitionElement.getAttribute("id");
@@ -114,7 +114,7 @@ public class PnmlParser {
             final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
             final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
             final String nameText = (String) nameTextExpr.evaluate(transitionElement,
-                XPathConstants.STRING);
+                    XPathConstants.STRING);
             if (nameText.equals("")) {
                 name = (String) nameValueExpr.evaluate(transitionElement, XPathConstants.STRING);
             } else {
@@ -129,7 +129,7 @@ public class PnmlParser {
         // Find all arcs
         final XPathExpression childArcsExpr = xPath.compile("./arc");
         final NodeList arcList = (NodeList) childArcsExpr.evaluate(netElement,
-            XPathConstants.NODESET);
+                XPathConstants.NODESET);
         for (int i = 0; i < arcList.getLength(); i++) {
             final Element arcElement = (Element) arcList.item(i);
             final String id = arcElement.getAttribute("id");
@@ -143,9 +143,9 @@ public class PnmlParser {
             checkNotNull(source, "Target node not found of arc " + id);
 
             final XPathExpression toolspecificWeightExpr = xPath.compile(
-                "./toolspecific/weight/text()");
+                    "./toolspecific/weight/text()");
             final int toolspecificWeight = ((Double) toolspecificWeightExpr.evaluate(arcElement,
-                XPathConstants.NUMBER)).intValue();
+                    XPathConstants.NUMBER)).intValue();
             final int weight = toolspecificWeight == 0 ? 1 : toolspecificWeight;
 
             final PnmlArc arc = new PnmlArc(id, weight, source, target);

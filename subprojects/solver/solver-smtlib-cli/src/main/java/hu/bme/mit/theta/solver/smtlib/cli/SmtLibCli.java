@@ -61,7 +61,7 @@ public class SmtLibCli {
         String getCommand();
 
         void handle(SmtLibSolverManager smtLibSolverManager, Logger logger)
-            throws SmtLibSolverInstallerException;
+                throws SmtLibSolverInstallerException;
     }
 
     @Parameters(commandDescription = "Installs the solver")
@@ -88,22 +88,22 @@ public class SmtLibCli {
 
         @Override
         public void handle(final SmtLibSolverManager smtLibSolverManager, final Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             final var solver = decodeVersionString(this.solver);
 
             if (solver.get1().equals(smtLibSolverManager.getGenericInstallerName())) {
                 logger.write(Logger.Level.RESULT,
-                    "To install a generic solver, use the \"%s\" command",
-                    InstallGenericCommand.COMMAND);
+                        "To install a generic solver, use the \"%s\" command",
+                        InstallGenericCommand.COMMAND);
                 return;
             }
 
             if (name != null) {
                 smtLibSolverManager.install(solver.get1(), solver.get2(), name,
-                    solverPath != null ? Path.of(solverPath) : null, temptMurphy);
+                        solverPath != null ? Path.of(solverPath) : null, temptMurphy);
             } else {
                 smtLibSolverManager.install(solver.get1(), solver.get2(), solver.get2(),
-                    solverPath != null ? Path.of(solverPath) : null, temptMurphy);
+                        solverPath != null ? Path.of(solverPath) : null, temptMurphy);
             }
         }
     }
@@ -129,11 +129,11 @@ public class SmtLibCli {
 
         @Override
         public void handle(final SmtLibSolverManager smtLibSolverManager, final Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             smtLibSolverManager.installGeneric(
-                name,
-                Path.of(solverPath),
-                (solverArgs == null ? "" : solverArgs).split(" ")
+                    name,
+                    Path.of(solverPath),
+                    (solverArgs == null ? "" : solverArgs).split(" ")
             );
         }
     }
@@ -153,7 +153,7 @@ public class SmtLibCli {
 
         @Override
         public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             final var solver = decodeVersionString(this.solver);
             smtLibSolverManager.uninstall(solver.get1(), solver.get2());
         }
@@ -177,7 +177,7 @@ public class SmtLibCli {
 
         @Override
         public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             final var solver = decodeVersionString(this.solver);
             smtLibSolverManager.rename(solver.get1(), solver.get2(), name);
         }
@@ -198,7 +198,7 @@ public class SmtLibCli {
 
         @Override
         public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             final var solver = decodeVersionString(this.solver);
             final var info = smtLibSolverManager.getInfo(solver.get1(), solver.get2());
             logger.write(Logger.Level.RESULT, "%s\n", info);
@@ -223,15 +223,15 @@ public class SmtLibCli {
 
         @Override
         public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             final var solver = decodeVersionString(this.solver);
             final var argsFilePath = smtLibSolverManager.getArgsFile(solver.get1(), solver.get2());
 
             if (print) {
                 logger.write(Logger.Level.RESULT,
-                    String.format("%s\n", argsFilePath.toAbsolutePath()));
+                        String.format("%s\n", argsFilePath.toAbsolutePath()));
             } else if (Desktop.isDesktopSupported() && Desktop.getDesktop()
-                .isSupported(Desktop.Action.EDIT)) {
+                    .isSupported(Desktop.Action.EDIT)) {
                 try {
                     Desktop.getDesktop().edit(argsFilePath.toFile());
                 } catch (IOException e) {
@@ -239,9 +239,9 @@ public class SmtLibCli {
                 }
             } else {
                 logger.write(Logger.Level.MAINSTEP,
-                    "Open the following text file in your favourite editor, and edit the content:\n");
+                        "Open the following text file in your favourite editor, and edit the content:\n");
                 logger.write(Logger.Level.RESULT,
-                    String.format("%s\n", argsFilePath.toAbsolutePath()));
+                        String.format("%s\n", argsFilePath.toAbsolutePath()));
             }
         }
     }
@@ -261,10 +261,10 @@ public class SmtLibCli {
 
         @Override
         public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             if (solver != null) {
                 logger.write(Logger.Level.MAINSTEP,
-                    "The currently installed versions of solver %s are: \n", solver);
+                        "The currently installed versions of solver %s are: \n", solver);
                 smtLibSolverManager.getInstalledVersions(solver).forEach(version -> {
                     logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver, version);
                 });
@@ -294,10 +294,10 @@ public class SmtLibCli {
 
         @Override
         public void handle(SmtLibSolverManager smtLibSolverManager, Logger logger)
-            throws SmtLibSolverInstallerException {
+                throws SmtLibSolverInstallerException {
             if (solver != null) {
                 logger.write(Logger.Level.MAINSTEP,
-                    "The currently supported versions of solver %s are: \n", solver);
+                        "The currently supported versions of solver %s are: \n", solver);
                 smtLibSolverManager.getSupportedVersions(solver).forEach(version -> {
                     logger.write(Logger.Level.RESULT, "\t%s:%s\n", solver, version);
                 });
@@ -324,14 +324,14 @@ public class SmtLibCli {
     private void run() {
         final var mainParams = new MainParams();
         List<Command> commands = List.of(
-            new InstallCommand(),
-            new InstallGenericCommand(),
-            new UninstallCommand(),
-            new RenameCommand(),
-            new GetInfoCommand(),
-            new EditArgsCommand(),
-            new ListInstalledCommand(),
-            new ListSupportedCommand()
+                new InstallCommand(),
+                new InstallGenericCommand(),
+                new UninstallCommand(),
+                new RenameCommand(),
+                new GetInfoCommand(),
+                new EditArgsCommand(),
+                new ListInstalledCommand(),
+                new ListSupportedCommand()
         );
 
         final var jcBuilder = JCommander.newBuilder().addObject(mainParams);
@@ -384,7 +384,7 @@ public class SmtLibCli {
 
     private static Tuple2<String, String> decodeVersionString(final String version) {
         return Tuple2.of(SmtLibSolverManager.getSolverName(version),
-            SmtLibSolverManager.getSolverVersion(version));
+                SmtLibSolverManager.getSolverVersion(version));
     }
 
     private Path createIfNotExists(final Path path) throws IOException {
@@ -397,7 +397,7 @@ public class SmtLibCli {
     private void printError(final Throwable ex, final boolean printStackTrace) {
         final String message = ex.getMessage() == null ? "" : ex.getMessage();
         logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n",
-            ex.getClass().getSimpleName(), message);
+                ex.getClass().getSimpleName(), message);
         if (printStackTrace) {
             final StringWriter errors = new StringWriter();
             ex.printStackTrace(new PrintWriter(errors));
@@ -413,7 +413,7 @@ public class SmtLibCli {
         public void validate(String name, String value) throws ParameterException {
             if (!value.matches("[a-zA-Z0-9]+")) {
                 throw new ParameterException(
-                    String.format("Invalid solver name in parameter %s", name)
+                        String.format("Invalid solver name in parameter %s", name)
                 );
             }
         }
@@ -427,13 +427,13 @@ public class SmtLibCli {
 
             if (versionArr.length != 2) {
                 throw new ParameterException(
-                    String.format("Invalid version string %s in parameter %s", value, name));
+                        String.format("Invalid version string %s in parameter %s", value, name));
             }
 
             if (!versionArr[0].matches("[a-zA-Z0-9]+") || !versionArr[1].matches(
-                "[a-zA-Z0-9-._]+")) {
+                    "[a-zA-Z0-9-._]+")) {
                 throw new ParameterException(
-                    String.format("Invalid version string %s in parameter %s", value, name)
+                        String.format("Invalid version string %s in parameter %s", value, name)
                 );
             }
         }

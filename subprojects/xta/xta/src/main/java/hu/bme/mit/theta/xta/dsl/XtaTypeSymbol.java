@@ -30,7 +30,7 @@ final class XtaTypeSymbol implements Symbol {
     private final XtaType type;
 
     public XtaTypeSymbol(final Scope scope, final TypeContext typeContext,
-        final ArrayIdContext arrayIdContext) {
+                         final ArrayIdContext arrayIdContext) {
         checkNotNull(typeContext);
         checkNotNull(arrayIdContext);
         name = arrayIdContext.fId.getText();

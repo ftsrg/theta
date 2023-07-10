@@ -55,9 +55,9 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     }
 
     private static final List<String> standardTypes =
-        List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
+            List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
     private static final List<String> shorthandTypes =
-        List.of("long", "short", "unsigned", "_Bool");
+            List.of("long", "short", "unsigned", "_Bool");
 
 
     @Override
@@ -73,14 +73,14 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
     private CSimpleType mergeCTypes(List<CSimpleType> cSimpleTypes) {
         List<CSimpleType> enums = cSimpleTypes.stream().filter(cType -> cType instanceof Enum)
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
         if (enums.size() > 0) {
             System.err.println("WARNING: enums are not yet supported! Using int instead.");
             cSimpleTypes.add(NamedType("int"));
             cSimpleTypes.removeAll(enums);
         }
         List<CSimpleType> namedElements = cSimpleTypes.stream()
-            .filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
+                .filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
         if (namedElements.size() == 0) {
             namedElements.add(NamedType("int"));
         }
@@ -96,7 +96,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
         if (type.isSigned() == null) {
             if (type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
                 System.err.println(
-                    "WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.");
+                        "WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.");
             }
             type.setSigned(true);
         }
@@ -109,17 +109,17 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     }
 
     private CSimpleType createCType(
-        CParser.SpecifierQualifierListContext specifierQualifierListContext) {
+            CParser.SpecifierQualifierListContext specifierQualifierListContext) {
         List<CSimpleType> cSimpleTypes = new ArrayList<>();
         if (specifierQualifierListContext != null) {
             for (CParser.TypeSpecifierOrQualifierContext typeSpecifierOrQualifierContext : specifierQualifierListContext.typeSpecifierOrQualifier()) {
                 CSimpleType qualifierSpecifier = null;
                 if (typeSpecifierOrQualifierContext.typeSpecifier() != null) {
                     qualifierSpecifier = typeSpecifierOrQualifierContext.typeSpecifier()
-                        .accept(this);
+                            .accept(this);
                 } else if (typeSpecifierOrQualifierContext.typeQualifier() != null) {
                     qualifierSpecifier = typeSpecifierOrQualifierContext.typeQualifier()
-                        .accept(this);
+                            .accept(this);
                 }
                 if (qualifierSpecifier != null) {
                     cSimpleTypes.add(qualifierSpecifier);
@@ -127,7 +127,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             }
             if (specifierQualifierListContext.typeSpecifierPointer() != null) {
                 CSimpleType qualifierSpecifier = specifierQualifierListContext.typeSpecifierPointer()
-                    .accept(this);
+                        .accept(this);
                 if (qualifierSpecifier != null) {
                     cSimpleTypes.add(qualifierSpecifier);
                 }
@@ -138,7 +138,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     }
 
     private CSimpleType createCType(
-        List<CParser.DeclarationSpecifierContext> declarationSpecifierContexts) {
+            List<CParser.DeclarationSpecifierContext> declarationSpecifierContexts) {
         List<CSimpleType> cSimpleTypes = new ArrayList<>();
         for (CParser.DeclarationSpecifierContext declarationSpecifierContext : declarationSpecifierContexts) {
             CSimpleType ctype = declarationSpecifierContext.accept(this);
@@ -165,7 +165,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
                 throw new UnsupportedOperationException("Not yet implemented");
         }
         throw new UnsupportedOperationException(
-            "Storage class specifier not expected: " + ctx.getText());
+                "Storage class specifier not expected: " + ctx.getText());
     }
 
     @Override
@@ -187,16 +187,16 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             }
             Struct struct = CSimpleTypeFactory.Struct(name);
             for (CParser.StructDeclarationContext structDeclarationContext : ctx.structDeclarationList()
-                .structDeclaration()) {
+                    .structDeclaration()) {
                 CParser.SpecifierQualifierListContext specifierQualifierListContext = structDeclarationContext.specifierQualifierList();
                 CSimpleType cSimpleType = specifierQualifierListContext.accept(this);
                 if (structDeclarationContext.structDeclaratorList() == null) {
                     struct.addField(cSimpleType.getAssociatedName(), cSimpleType);
                 } else {
                     for (CParser.StructDeclaratorContext structDeclaratorContext : structDeclarationContext.structDeclaratorList()
-                        .structDeclarator()) {
+                            .structDeclarator()) {
                         CDeclaration declaration = structDeclaratorContext.accept(
-                            DeclarationVisitor.instance);
+                                DeclarationVisitor.instance);
                         struct.addField(declaration.getName(), cSimpleType);
                     }
                 }
@@ -231,7 +231,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             String value = enumeratorContext.enumerationConstant().getText();
             CParser.ConstantExpressionContext expressionContext = enumeratorContext.constantExpression();
             Expr<?> expr =
-                expressionContext == null ? null : null;//expressionContext.accept(null ); // TODO
+                    expressionContext == null ? null : null;//expressionContext.accept(null ); // TODO
             fields.put(value, Optional.ofNullable(expr));
         }
         return Enum(id, fields);
@@ -322,7 +322,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
                 return Atomic();
         }
         throw new UnsupportedOperationException(
-            "Type qualifier " + ctx.getText() + " not expected!");
+                "Type qualifier " + ctx.getText() + " not expected!");
     }
 
     @Override

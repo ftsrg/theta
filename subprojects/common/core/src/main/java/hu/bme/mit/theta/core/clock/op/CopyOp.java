@@ -97,7 +97,7 @@ public final class CopyOp implements ClockOp {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("copy").add(varDecl.getName()).add(value.getName())
-            .toString();
+                .toString();
     }
 
 }

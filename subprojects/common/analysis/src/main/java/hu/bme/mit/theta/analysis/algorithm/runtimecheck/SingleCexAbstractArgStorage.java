@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkState;
  * discovered coutnerexample e.g. not MULTI_SEQ refinement, but SEQ_ITP, UNSAT_CORE, etc.
  */
 public class SingleCexAbstractArgStorage<S extends State, A extends Action> extends
-    AbstractArgStorage<S, A> {
+        AbstractArgStorage<S, A> {
 
     private final Set<Integer> counterexamples = new LinkedHashSet<>();
     private final Set<Integer> argprecs = new LinkedHashSet<>();

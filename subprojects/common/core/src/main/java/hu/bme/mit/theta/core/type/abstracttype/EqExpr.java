@@ -22,14 +22,14 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class EqExpr<OpType extends Equational<OpType>> extends
-    BinaryExpr<OpType, BoolType> {
+        BinaryExpr<OpType, BoolType> {
 
     protected EqExpr(final Expr<OpType> leftOp, final Expr<OpType> rightOp) {
         super(leftOp, rightOp);
     }
 
     public static <OpType extends Equational<OpType>> EqExpr<?> create2(final Expr<?> leftOp,
-        final Expr<?> rightOp) {
+                                                                        final Expr<?> rightOp) {
         @SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
         final Expr<OpType> newLeftOp = cast(leftOp, type);
         final Expr<OpType> newRightOp = cast(rightOp, type);

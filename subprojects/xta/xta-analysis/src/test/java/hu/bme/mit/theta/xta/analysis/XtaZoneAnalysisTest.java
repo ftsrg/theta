@@ -54,15 +54,15 @@ public final class XtaZoneAnalysisTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {"/csma-2.xta"},
+                {"/csma-2.xta"},
 
-            {"/fddi-2.xta"},
+                {"/fddi-2.xta"},
 
-            {"/fischer-2-32-64.xta"},
+                {"/fischer-2-32-64.xta"},
 
-            {"/lynch-2-16.xta"},
+                {"/lynch-2-16.xta"},
 
-            {"/broadcast.xta"},
+                {"/broadcast.xta"},
 
         });
     }
@@ -77,22 +77,22 @@ public final class XtaZoneAnalysisTest {
 
         final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
         final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis = XtaExplAnalysis.create(
-            system);
+                system);
         final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.getInstance();
         final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>> prodAnalysis = Prod2Analysis
-            .create(explAnalysis, zoneAnalysis);
+                .create(explAnalysis, zoneAnalysis);
         final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis
-            .create(prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
+                .create(prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
         final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis = XtaAnalysis
-            .create(system, mappedAnalysis);
+                .create(system, mappedAnalysis);
 
         final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
         final ArgBuilder<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> argBuilder = ArgBuilder
-            .create(lts, analysis, s -> false);
+                .create(lts, analysis, s -> false);
 
         final Abstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> abstractor = BasicAbstractor
-            .builder(argBuilder).projection(s -> s.getLocs()).build();
+                .builder(argBuilder).projection(s -> s.getLocs()).build();
 
         final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg = abstractor.createArg();
         abstractor.check(arg, prec);

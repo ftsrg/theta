@@ -48,17 +48,17 @@ public final class DatalogJavaTest {
         reflexive = datalog.createRelation("reflexive", 1);
 
         Tuple2<Datalog.Variable, Datalog.Variable> accessibleVariables = Tuple2.of(
-            datalog.getVariable(), datalog.getVariable());
+                datalog.getVariable(), datalog.getVariable());
         Datalog.Variable next = datalog.getVariable();
         successor.addRule(TupleN.of(accessibleVariables), Set.of(
-            Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), accessibleVariables.get2()))));
+                Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), accessibleVariables.get2()))));
         successor.addRule(TupleN.of(accessibleVariables),
-            Set.of(Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), next)),
-                Tuple2.of(successor, TupleN.of(next, accessibleVariables.get2()))));
+                Set.of(Tuple2.of(edge, TupleN.of(accessibleVariables.get1(), next)),
+                        Tuple2.of(successor, TupleN.of(next, accessibleVariables.get2()))));
 
         Datalog.Variable reflexivity = datalog.getVariable();
         reflexive.addRule(TupleN.of(List.of(reflexivity)),
-            Set.of(Tuple2.of(edge, TupleN.of(reflexivity, reflexivity))));
+                Set.of(Tuple2.of(edge, TupleN.of(reflexivity, reflexivity))));
     }
 
     @Test
@@ -107,8 +107,8 @@ public final class DatalogJavaTest {
         @Override
         public String toString() {
             return "Node" + c + "{" +
-                "i=" + i +
-                '}';
+                    "i=" + i +
+                    '}';
         }
     }
 

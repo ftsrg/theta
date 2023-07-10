@@ -36,14 +36,14 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class AutomaticItpRefToProd2ExplPredPrec implements
-    RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
+        RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
 
     private final Map<VarDecl<?>, Set<Expr<BoolType>>> atomCount;
     private final ExprSplitter exprSplitter;
     private final AutoExpl autoExpl;
 
     private AutomaticItpRefToProd2ExplPredPrec(final AutoExpl autoExpl,
-        final ExprSplitter exprSplitter) {
+                                               final ExprSplitter exprSplitter) {
         this.exprSplitter = checkNotNull(exprSplitter);
         this.autoExpl = autoExpl;
 
@@ -51,7 +51,7 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements
     }
 
     public static AutomaticItpRefToProd2ExplPredPrec create(final AutoExpl autoExpl,
-        final ExprSplitter exprSplitter) {
+                                                            final ExprSplitter exprSplitter) {
         checkNotNull(autoExpl);
         return new AutomaticItpRefToProd2ExplPredPrec(autoExpl, exprSplitter);
     }
@@ -62,23 +62,23 @@ public final class AutomaticItpRefToProd2ExplPredPrec implements
         autoExpl.update(refExpr);
 
         final var explSelectedVars = ExprUtils.getVars(refExpr).stream()
-            .filter(autoExpl::isExpl)
-            .collect(Collectors.toSet());
+                .filter(autoExpl::isExpl)
+                .collect(Collectors.toSet());
         final var predSelectedExprs = exprSplitter.apply(refExpr).stream()
-            .filter(expr -> !ExprUtils.getVars(expr).stream().allMatch(autoExpl::isExpl))
-            .collect(Collectors.toSet());
+                .filter(expr -> !ExprUtils.getVars(expr).stream().allMatch(autoExpl::isExpl))
+                .collect(Collectors.toSet());
 
         return Prod2Prec.of(ExplPrec.of(explSelectedVars), PredPrec.of(predSelectedExprs));
     }
 
     @Override
     public Prod2Prec<ExplPrec, PredPrec> join(Prod2Prec<ExplPrec, PredPrec> prec1,
-        Prod2Prec<ExplPrec, PredPrec> prec2) {
+                                              Prod2Prec<ExplPrec, PredPrec> prec2) {
         final ExplPrec joinedExpl = prec1.getPrec1().join(prec2.getPrec1());
         final PredPrec joinedPred = prec1.getPrec2().join(prec2.getPrec2());
         final var filteredPreds = joinedPred.getPreds().stream()
-            .filter(pred -> !joinedExpl.getVars().containsAll(ExprUtils.getVars(pred)))
-            .collect(Collectors.toList());
+                .filter(pred -> !joinedExpl.getVars().containsAll(ExprUtils.getVars(pred)))
+                .collect(Collectors.toList());
         final PredPrec filteredPred = PredPrec.of(filteredPreds);
         return Prod2Prec.of(joinedExpl, filteredPred);
     }

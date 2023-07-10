@@ -35,7 +35,7 @@ final class StsCreator {
     }
 
     public static StsDefScope createSts(final Scope scope, final Substitution assignment,
-        final StsContext stsContext) {
+                                        final StsContext stsContext) {
         return stsContext.accept(new StsCreatorVisitor(scope, assignment));
     }
 

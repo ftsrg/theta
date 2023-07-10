@@ -37,15 +37,15 @@ public final class StsDslManager {
     }
 
     public static StsSpec createStsSpec(final String inputString, final Expr<?>... params)
-        throws IOException {
+            throws IOException {
         final InputStream stream = new ByteArrayInputStream(
-            inputString.getBytes(StandardCharsets.UTF_8.name()));
+                inputString.getBytes(StandardCharsets.UTF_8.name()));
         return createStsSpec(stream, params);
     }
 
     public static StsSpec createStsSpec(final InputStream inputStream,
-        final List<? extends Expr<?>> args)
-        throws IOException {
+                                        final List<? extends Expr<?>> args)
+            throws IOException {
         final CharStream input = CharStreams.fromStream(inputStream);
 
         final StsDslLexer lexer = new StsDslLexer(input);
@@ -60,7 +60,7 @@ public final class StsDslManager {
     }
 
     public static StsSpec createStsSpec(final InputStream inputStream, final Expr<?>... params)
-        throws IOException {
+            throws IOException {
         return createStsSpec(inputStream, Arrays.asList(params));
     }
 

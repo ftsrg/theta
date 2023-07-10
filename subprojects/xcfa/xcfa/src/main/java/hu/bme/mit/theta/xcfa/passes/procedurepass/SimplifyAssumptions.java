@@ -43,14 +43,14 @@ public class SimplifyAssumptions extends ProcedurePass {
         for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
             XcfaEdge newEdge = edge.mapLabels(label -> {
                 if (label instanceof XcfaLabel.StmtXcfaLabel
-                    && label.getStmt() instanceof AssumeStmt) {
+                        && label.getStmt() instanceof AssumeStmt) {
                     Expr<BoolType> cond = ((AssumeStmt) label.getStmt()).getCond();
                     if (cond instanceof EqExpr || cond instanceof NeqExpr) {
                         List<? extends Expr<?>> ops = cond.getOps();
                         Expr<?> leftOp = ops.get(0);
                         Expr<?> rightOp = ops.get(1);
                         if (leftOp instanceof IteExpr && ((IteExpr<?>) leftOp).getElse()
-                            .equals(rightOp)) {
+                                .equals(rightOp)) {
                             Expr<BoolType> expr;
                             if (cond instanceof NeqExpr) {
                                 expr = ((IteExpr<?>) leftOp).getCond();

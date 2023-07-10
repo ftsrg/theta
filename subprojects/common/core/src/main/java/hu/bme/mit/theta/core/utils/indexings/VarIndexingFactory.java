@@ -31,12 +31,12 @@ public class VarIndexingFactory {
     }
 
     public static PushPopVarIndexing.PushPopVarIndexingBuilder pushPopIndexingBuilder(
-        final int defaultOffset) {
+            final int defaultOffset) {
         return PushPopVarIndexing.builder(defaultOffset);
     }
 
     public static BasicVarIndexing.BasicVarIndexingBuilder basicIndexingBuilder(
-        final int defaultOffset) {
+            final int defaultOffset) {
         return BasicVarIndexing.builder(defaultOffset);
     }
 

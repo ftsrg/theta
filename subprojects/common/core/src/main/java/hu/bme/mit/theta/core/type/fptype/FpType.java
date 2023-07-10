@@ -37,7 +37,7 @@ import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType>,
-    Ordered<FpType> {
+        Ordered<FpType> {
 
     private final static int HASH_SEED = 5424;
     private final static String TYPE_LABEL = "Fp";
@@ -95,7 +95,7 @@ public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicat
         } else if (obj instanceof FpType) {
             final FpType that = (FpType) obj;
             return this.getExponent() == that.getExponent()
-                && this.getSignificand() == that.getSignificand();
+                    && this.getSignificand() == that.getSignificand();
         } else {
             return false;
         }

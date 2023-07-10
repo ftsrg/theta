@@ -40,7 +40,7 @@ import java.util.Set;
 
 // LhsVars, RhsVars
 public class XcfaLabelVarCollector implements
-    XcfaLabelVisitor<Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>>, Void> {
+        XcfaLabelVisitor<Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>>, Void> {
 
     @Override
     public Void visit(SkipStmt stmt, Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
@@ -55,7 +55,7 @@ public class XcfaLabelVarCollector implements
 
     @Override
     public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                                              Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         param.get2().addAll(ExprUtils.getVars(stmt.getExpr()));
         param.get1().add(stmt.getVarDecl());
         return null;
@@ -63,7 +63,7 @@ public class XcfaLabelVarCollector implements
 
     @Override
     public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                                              Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         param.get1().add(stmt.getVarDecl());
         return null;
     }
@@ -104,19 +104,19 @@ public class XcfaLabelVarCollector implements
 
     @Override
     public Void visit(XcfaLabel.AtomicBeginXcfaLabel label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         return null;
     }
 
     @Override
     public Void visit(XcfaLabel.AtomicEndXcfaLabel label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         return null;
     }
 
     @Override
     public Void visit(XcfaLabel.ProcedureCallXcfaLabel label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         for (Expr<?> labelParam : label.getParams()) {
             if (labelParam instanceof RefExpr) {
                 param.get1().add((VarDecl<?>) ((RefExpr<?>) labelParam).getDecl());
@@ -128,19 +128,19 @@ public class XcfaLabelVarCollector implements
 
     @Override
     public Void visit(XcfaLabel.StartThreadXcfaLabel label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         return null;
     }
 
     @Override
     public Void visit(XcfaLabel.JoinThreadXcfaLabel label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         return null;
     }
 
     @Override
     public <T extends Type> Void visit(XcfaLabel.LoadXcfaLabel<T> label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                                       Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         param.get1().add(label.getLocal());
         param.get2().add(label.getGlobal());
         return null;
@@ -148,7 +148,7 @@ public class XcfaLabelVarCollector implements
 
     @Override
     public <T extends Type> Void visit(XcfaLabel.StoreXcfaLabel<T> label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                                       Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         param.get2().add(label.getLocal());
         param.get1().add(label.getGlobal());
         return null;
@@ -156,19 +156,19 @@ public class XcfaLabelVarCollector implements
 
     @Override
     public Void visit(XcfaLabel.FenceXcfaLabel label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         return null;
     }
 
     @Override
     public Void visit(XcfaLabel.StmtXcfaLabel label,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         return label.getStmt().accept(this, param);
     }
 
     @Override
     public Void visit(XcfaLabel.SequenceLabel sequenceLabel,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         for (XcfaLabel label : sequenceLabel.getLabels()) {
             label.accept(this, param);
         }
@@ -177,7 +177,7 @@ public class XcfaLabelVarCollector implements
 
     @Override
     public Void visit(XcfaLabel.NondetLabel nondetLabel,
-        Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
+                      Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> param) {
         for (XcfaLabel label : nondetLabel.getLabels()) {
             label.accept(this, param);
         }

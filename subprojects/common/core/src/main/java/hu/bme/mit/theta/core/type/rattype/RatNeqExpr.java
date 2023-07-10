@@ -82,7 +82,7 @@ public final class RatNeqExpr extends NeqExpr<RatType> {
         } else if (obj instanceof RatNeqExpr) {
             final RatNeqExpr that = (RatNeqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

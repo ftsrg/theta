@@ -73,13 +73,13 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             if (that.width() < type.width()) {
                 if (that instanceof Unsigned) {
                     return BvExprs.ZExt(cast(param, BvType.of(that.width())),
-                        BvType.of(type.width(), true));
+                            BvType.of(type.width(), true));
                 }
                 return BvExprs.SExt(cast(param, BvType.of(that.width())),
-                    BvType.of(type.width(), true));
+                        BvType.of(type.width(), true));
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
-                    Int(type.width()));
+                        Int(type.width()));
             } else {
                 return param.withOps(param.getOps());
             }
@@ -100,13 +100,13 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             if (that.width() < type.width()) {
                 if (that instanceof Signed) {
                     param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))),
-                        BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
+                            BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
                 }
                 return BvExprs.ZExt(cast(param, BvType.of(that.width())),
-                    BvType.of(type.width(), false));
+                        BvType.of(type.width(), false));
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
-                    Int(type.width()));
+                        Int(type.width()));
             } else {
                 return param.withOps(param.getOps());
             }
@@ -121,12 +121,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             FpType fpType = (FpType) type.getSmtType();
             //noinspection unchecked
             return ToFp(FpRoundingMode.RTZ, (Expr<FpType>) param, fpType.getExponent(),
-                fpType.getSignificand());
+                    fpType.getSignificand());
         } else if (that instanceof CInteger) {
             boolean signed = that instanceof Signed;
             //noinspection unchecked
             return FromBv(FpRoundingMode.RTZ, (Expr<BvType>) param, (FpType) type.getSmtType(),
-                signed);
+                    signed);
         } else {
             throw new UnsupportedOperationException("Bad type!");
         }
@@ -231,7 +231,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     @Override
     public Expr<?> visit(CArray type, Expr<?> param) {
         checkState(CComplexType.getType(param) instanceof CArray,
-            "Only arrays can be used in place of arrays!");
+                "Only arrays can be used in place of arrays!");
         return param.withOps(param.getOps());
     }
 

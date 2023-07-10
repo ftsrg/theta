@@ -47,7 +47,7 @@ public final class StsSpec {
 
     public Collection<STS> getAllSts() {
         return stsSpecSymbol.getPropDeclSymbols().stream().map(s -> s.instantiate(assignment))
-            .collect(toList());
+                .collect(toList());
     }
 
     ////

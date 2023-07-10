@@ -40,8 +40,8 @@ public class AnalyzeCallGraph extends ProcessPass {
                     if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
                         XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) label;
                         Optional<XcfaProcedure.Builder> procedureOpt = builder.getProcedures()
-                            .stream().filter(xcfaProcedure -> xcfaProcedure.getName()
-                                .equals(callLabel.getProcedure())).findAny();
+                                .stream().filter(xcfaProcedure -> xcfaProcedure.getName()
+                                        .equals(callLabel.getProcedure())).findAny();
                         if (procedureOpt.isPresent()) {
                             calledBy.get(procedureOpt.get()).add(procedure);
                         } else {
@@ -68,11 +68,11 @@ public class AnalyzeCallGraph extends ProcessPass {
         }
 
         FrontendMetadata.lookupMetadata("shouldInline", false).stream()
-            .filter(o -> o instanceof String).collect(Collectors.toList()).forEach(o -> {
-                final Optional<XcfaProcedure.Builder> any = builder.getProcedures().stream()
-                    .filter(builder1 -> builder1.getName().equals(o)).findAny();
-                FrontendMetadata.create(any.get(), "shouldKeep", true);
-            });
+                .filter(o -> o instanceof String).collect(Collectors.toList()).forEach(o -> {
+                    final Optional<XcfaProcedure.Builder> any = builder.getProcedures().stream()
+                            .filter(builder1 -> builder1.getName().equals(o)).findAny();
+                    FrontendMetadata.create(any.get(), "shouldKeep", true);
+                });
 
         calledBy.forEach((procedure, xcfaProcedures) -> {
             if (xcfaProcedures.contains(procedure)) {

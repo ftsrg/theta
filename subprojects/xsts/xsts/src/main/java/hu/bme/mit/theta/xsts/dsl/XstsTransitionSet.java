@@ -40,7 +40,7 @@ public class XstsTransitionSet {
     private final Map<VarDecl<?>, XstsType<?>> varToType;
 
     public XstsTransitionSet(final DynamicScope scope, final SymbolTable typeTable,
-        final TransitionSetContext context, final Map<VarDecl<?>, XstsType<?>> varToType) {
+                             final TransitionSetContext context, final Map<VarDecl<?>, XstsType<?>> varToType) {
         this.scope = checkNotNull(scope);
         this.typeTable = checkNotNull(typeTable);
         this.context = checkNotNull(context);
@@ -68,8 +68,8 @@ public class XstsTransitionSet {
         @Override
         public NonDetStmt visitTransitionSet(TransitionSetContext ctx) {
             final List<Stmt> stmts = ctx.stmts.stream()
-                .map((stmtContext -> new XstsStatement(scope, typeTable, stmtContext,
-                    varToType).instantiate(env))).collect(Collectors.toList());
+                    .map((stmtContext -> new XstsStatement(scope, typeTable, stmtContext,
+                            varToType).instantiate(env))).collect(Collectors.toList());
             return NonDetStmt.of(stmts);
         }
     }

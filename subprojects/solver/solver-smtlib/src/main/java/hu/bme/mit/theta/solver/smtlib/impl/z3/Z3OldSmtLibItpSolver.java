@@ -60,9 +60,9 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
     private boolean topMostContainsAssertions = false;
 
     public Z3OldSmtLibItpSolver(
-        final SmtLibSymbolTable symbolTable,
-        final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
     }
@@ -92,7 +92,7 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
 
     @Override
     protected void add(final Z3SmtLibItpMarker marker, final Expr<BoolType> assertion,
-        final Set<ConstDecl<?>> consts, final String term) {
+                       final Set<ConstDecl<?>> consts, final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
     }
 
@@ -110,14 +110,14 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
             final var terms = marker.getTerms();
             if (terms.size() == 0) {
                 issueGeneralCommand(
-                    String.format("(assert (! true :named %s))", marker.getMarkerName()));
+                        String.format("(assert (! true :named %s))", marker.getMarkerName()));
             } else {
                 final var term = String.format("(and %s)", String.join(" ",
-                    marker.getTerms().stream().map(Tuple2::get2)
-                        .collect(Collectors.toUnmodifiableList())));
+                        marker.getTerms().stream().map(Tuple2::get2)
+                                .collect(Collectors.toUnmodifiableList())));
 
                 issueGeneralCommand(
-                    String.format("(assert (! %s :named %s))", term, marker.getMarkerName()));
+                        String.format("(assert (! %s :named %s))", term, marker.getMarkerName()));
             }
         }
 
@@ -145,7 +145,7 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
         checkState(getStatus() == SolverStatus.UNSAT,
-            "Cannot get interpolant if status is not UNSAT.");
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
         @SuppressWarnings("unchecked") final var z3ItpPattern = (SmtLibItpPattern<Z3SmtLibItpMarker>) pattern;
 
@@ -158,7 +158,7 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
         for (var i = 0; i < markerCount; i++) {
             final var res = parseItpResponse(solverBinary.readResponse());
             itpList.add(termTransformer.toExpr(res, BoolExprs.Bool(),
-                new SmtLibModel(Collections.emptyMap())));
+                    new SmtLibModel(Collections.emptyMap())));
         }
         // itpList.add(False());
 
@@ -183,8 +183,8 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
     }
 
     private void buildItpMapFormList(final ItpMarkerTree<Z3SmtLibItpMarker> pattern,
-        final List<Expr<BoolType>> itpList,
-        final Map<ItpMarker, Expr<BoolType>> itpMap) {
+                                     final List<Expr<BoolType>> itpList,
+                                     final Map<ItpMarker, Expr<BoolType>> itpMap) {
         for (final ItpMarkerTree<Z3SmtLibItpMarker> child : pattern.getChildren()) {
             buildItpMapFormList(child, itpList, itpMap);
         }
@@ -218,7 +218,7 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
         } catch (Exception e) {
             try {
                 throw new SmtLibSolverException(
-                    parser.response().general_response_error().reason.getText());
+                        parser.response().general_response_error().reason.getText());
             } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
@@ -227,6 +227,6 @@ public final class Z3OldSmtLibItpSolver extends SmtLibItpSolver<Z3SmtLibItpMarke
 
     private static String extractString(final ParserRuleContext ctx) {
         return ctx.start.getInputStream()
-            .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 public class Prod2ExplPredDedicatedTransFunc<A extends ExprAction> implements
-    TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
+        TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
 
     private final Prod2ExplPredAbstractor prod2ExplPredAbstractor;
 
@@ -43,22 +43,22 @@ public class Prod2ExplPredDedicatedTransFunc<A extends ExprAction> implements
     }
 
     public static <A extends ExprAction> Prod2ExplPredDedicatedTransFunc<A> create(
-        final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
+            final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
         return new Prod2ExplPredDedicatedTransFunc<A>(prod2ExplPredAbstractor);
     }
 
     @Override
     public Collection<? extends Prod2State<ExplState, PredState>> getSuccStates(
-        Prod2State<ExplState, PredState> state,
-        A action, Prod2Prec<ExplPrec, PredPrec> prec) {
+            Prod2State<ExplState, PredState> state,
+            A action, Prod2Prec<ExplPrec, PredPrec> prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
 
         final Collection<Prod2State<ExplState, PredState>> succStates = prod2ExplPredAbstractor.createStatesForExpr(
-            And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
-            action.nextIndexing(), prec.getPrec1()::createState, 0);
+                And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
+                action.nextIndexing(), prec.getPrec1()::createState, 0);
         return succStates.isEmpty() ? Collections.singleton(
-            Prod2State.of(ExplState.bottom(), PredState.bottom())) : succStates;
+                Prod2State.of(ExplState.bottom(), PredState.bottom())) : succStates;
     }
 }

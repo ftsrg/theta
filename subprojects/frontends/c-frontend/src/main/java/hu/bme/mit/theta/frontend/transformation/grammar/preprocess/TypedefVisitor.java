@@ -33,7 +33,7 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
 
     public Optional<CComplexType> getType(String id) {
         return declarations.stream().filter(cDeclaration -> cDeclaration.getName().equals(id))
-            .map(CDeclaration::getActualType).findFirst();
+                .map(CDeclaration::getActualType).findFirst();
     }
 
     @Override
@@ -49,9 +49,9 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
     public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
         List<CDeclaration> ret = new ArrayList<>();
         if (ctx.declaration().declarationSpecifiers().declarationSpecifier(0).getText()
-            .equals("typedef")) {
+                .equals("typedef")) {
             List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(
-                ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+                    ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
             ret.addAll(declarations);
             return ret;
         }

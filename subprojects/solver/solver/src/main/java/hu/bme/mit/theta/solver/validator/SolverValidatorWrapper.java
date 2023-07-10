@@ -48,7 +48,7 @@ public class SolverValidatorWrapper implements Solver {
             for (Expr<BoolType> assertion : solver.getAssertions()) {
                 if (!assertion.eval(model).equals(True())) {
                     throw new RuntimeException(
-                        "Solver problem: " + assertion + " not True over {" + model + "}");
+                            "Solver problem: " + assertion + " not True over {" + model + "}");
                 }
             }
         }

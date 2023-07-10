@@ -55,12 +55,12 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 
     @Override
     public Collection<ExplState> getSuccStates(final ExplState state, final StmtAction action,
-        final ExplPrec prec) {
+                                               final ExplPrec prec) {
         return getSuccStates(state, action.getStmts(), prec);
     }
 
     Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts,
-        final ExplPrec prec) {
+                                        final ExplPrec prec) {
         final MutableValuation val = MutableValuation.copyOf(state);
         boolean triedSolver = false;
 
@@ -76,15 +76,15 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
                 triedSolver = true;
                 final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
                 final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts,
-                    VarIndexingFactory.indexing(0));
+                        VarIndexingFactory.indexing(0));
                 final Expr<BoolType> expr = And(val.toExpr(), And(toExprResult.getExprs()));
                 final VarIndexing nextIdx = toExprResult.getIndexing();
                 // We query (max + 1) states from the solver to see if there
                 // would be more than max
                 final int maxToQuery = maxSuccToEnumerate == 0 ? 0 : maxSuccToEnumerate + 1;
                 final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver,
-                    expr, 0,
-                    prec::createState, nextIdx, maxToQuery);
+                        expr, 0,
+                        prec::createState, nextIdx, maxToQuery);
 
                 if (succStates.isEmpty()) {
                     return singleton(ExplState.bottom());

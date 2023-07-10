@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 
 public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> extends
-    MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
+        MultiaryExpr<Type, ArrayType<IndexType, ElemType>> {
 
     private static final int HASH_SEED = 241;
     private static final String OPERATOR_LABEL = "arrayinit";
@@ -54,21 +54,21 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
     private final Expr<ElemType> elseElem;
 
     private ArrayInitExpr(final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
-        final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
+                          final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
         //noinspection unchecked
         super(Stream.concat(List.of((Expr<Type>) elseElem).stream(),
-                Stream.concat(elems.stream().map(objects -> (Expr<Type>) objects.get1()),
-                    elems.stream().map(objects -> (Expr<Type>) objects.get2())))
-            .collect(Collectors.toList()));
+                        Stream.concat(elems.stream().map(objects -> (Expr<Type>) objects.get1()),
+                                elems.stream().map(objects -> (Expr<Type>) objects.get2())))
+                .collect(Collectors.toList()));
         this.type = checkNotNull(type);
         this.elseElem = checkNotNull(elseElem);
         this.elems = checkNotNull(elems);
     }
 
     public static <IndexType extends Type, ElemType extends Type> ArrayInitExpr<IndexType, ElemType> of(
-        final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
-        final Expr<ElemType> elseElem,
-        final ArrayType<IndexType, ElemType> type) {
+            final List<Tuple2<Expr<IndexType>, Expr<ElemType>>> elems,
+            final Expr<ElemType> elseElem,
+            final ArrayType<IndexType, ElemType> type) {
         return new ArrayInitExpr<>(elems, elseElem, type);
     }
 
@@ -88,8 +88,8 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
     @Override
     public LitExpr<ArrayType<IndexType, ElemType>> eval(final Valuation val) {
         return ArrayLitExpr.of(elems.stream()
-            .map(objects -> Tuple2.of(objects.get1().eval(val), objects.get2().eval(val)))
-            .collect(Collectors.toList()), elseElem, type);
+                .map(objects -> Tuple2.of(objects.get1().eval(val), objects.get2().eval(val)))
+                .collect(Collectors.toList()), elseElem, type);
     }
 
 
@@ -100,7 +100,7 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
         } else if (obj instanceof ArrayInitExpr) {
             final ArrayInitExpr<?, ?> that = (ArrayInitExpr<?, ?>) obj;
             return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(
-                that.elseElem);
+                    that.elseElem);
         } else {
             return false;
         }
@@ -110,7 +110,7 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
     @SuppressWarnings("unchecked")
     @Override
     public MultiaryExpr<Type, ArrayType<IndexType, ElemType>> with(
-        Iterable<? extends Expr<Type>> ops) {
+            Iterable<? extends Expr<Type>> ops) {
         long size = StreamSupport.stream(ops.spliterator(), false).count();
         checkState(size % 2 == 1, "Ops must be odd long!");
         long counter = 0;

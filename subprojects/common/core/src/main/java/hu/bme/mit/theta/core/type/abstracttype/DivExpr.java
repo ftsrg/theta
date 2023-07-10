@@ -21,14 +21,14 @@ import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
 
 public abstract class DivExpr<ExprType extends Multiplicative<ExprType>> extends
-    BinaryExpr<ExprType, ExprType> {
+        BinaryExpr<ExprType, ExprType> {
 
     protected DivExpr(final Expr<ExprType> leftOp, final Expr<ExprType> rightOp) {
         super(leftOp, rightOp);
     }
 
     public static <ExprType extends Multiplicative<ExprType>> DivExpr<?> create2(
-        final Expr<?> leftOp, final Expr<?> rightOp) {
+            final Expr<?> leftOp, final Expr<?> rightOp) {
         @SuppressWarnings("unchecked") final ExprType type = (ExprType) leftOp.getType();
         final Expr<ExprType> newLeftOp = cast(leftOp, type);
         final Expr<ExprType> newRightOp = cast(rightOp, type);

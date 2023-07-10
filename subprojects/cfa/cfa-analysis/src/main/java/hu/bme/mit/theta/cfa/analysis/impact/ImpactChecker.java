@@ -35,22 +35,22 @@ import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public final class ImpactChecker<S extends State, A extends Action, P extends Prec> implements
-    SafetyChecker<S, A, P> {
+        SafetyChecker<S, A, P> {
 
     private final ArgBuilder<S, A, P> argBuilder;
     private final ImpactRefiner<S, A> refiner;
     private final Function<? super S, ?> partitioning;
 
     private ImpactChecker(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
-        final Function<? super S, ?> partitioning) {
+                          final Function<? super S, ?> partitioning) {
         this.argBuilder = checkNotNull(argBuilder);
         this.refiner = checkNotNull(refiner);
         this.partitioning = checkNotNull(partitioning);
     }
 
     public static <S extends State, A extends Action, P extends Prec> ImpactChecker<S, A, P> create(
-        final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
-        final Function<? super S, ?> partitioning) {
+            final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
+            final Function<? super S, ?> partitioning) {
         return new ImpactChecker<>(argBuilder, refiner, partitioning);
     }
 
@@ -120,7 +120,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
             while (true) {
                 final Optional<ArgNode<S, A>> anyIncompleteNode = arg.getIncompleteNodes()
-                    .findAny();
+                        .findAny();
 
                 if (anyIncompleteNode.isPresent()) {
                     final ArgNode<S, A> v = anyIncompleteNode.get();

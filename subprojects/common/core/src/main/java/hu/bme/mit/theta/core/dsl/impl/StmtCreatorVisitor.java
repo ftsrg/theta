@@ -45,7 +45,7 @@ public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
     @Override
     public Stmt visitAssignStmt(final AssignStmtContext ctx) {
         @SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope,
-            ctx.lhs.getText());
+                ctx.lhs.getText());
         final Expr<?> expr = CoreDslHelper.createExpr(scope, ctx.value);
         final Expr<Type> value = TypeUtils.cast(expr, lhs.getType());
         return Assign(lhs, value);
@@ -68,7 +68,7 @@ public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
     @Override
     public Stmt visitHavocStmt(final HavocStmtContext ctx) {
         @SuppressWarnings("unchecked") final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope,
-            ctx.lhs.getText());
+                ctx.lhs.getText());
         return Havoc(lhs);
     }
 

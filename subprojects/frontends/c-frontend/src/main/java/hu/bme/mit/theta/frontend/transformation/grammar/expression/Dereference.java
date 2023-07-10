@@ -48,7 +48,7 @@ public class Dereference<R extends Type, T extends Type> extends UnaryExpr<R, T>
     @Override
     public LitExpr<T> eval(Valuation val) {
         throw new IllegalStateException(
-            "Reference/Dereference expressions are not meant to be evaluated!");
+                "Reference/Dereference expressions are not meant to be evaluated!");
     }
 
     @Override

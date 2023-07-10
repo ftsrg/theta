@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import java.util.function.Predicate;
 
 public class XstsStatePredicate<P extends Predicate, S extends ExprState> implements
-    Predicate<XstsState<S>> {
+        Predicate<XstsState<S>> {
 
     private final P pred;
 

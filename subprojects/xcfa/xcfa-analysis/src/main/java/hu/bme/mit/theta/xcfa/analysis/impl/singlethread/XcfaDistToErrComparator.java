@@ -46,7 +46,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
     }
 
     public XcfaDistToErrComparator(final XCFA xcfa, final XcfaLocation errLoc,
-        final int errorWeight, final int depthWeight) {
+                                   final int errorWeight, final int depthWeight) {
         this.xcfa = xcfa;
         this.errLoc = errLoc;
         this.errorWeight = errorWeight;
@@ -56,7 +56,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
 
     @Override
     public int compare(final ArgNode<? extends State, ? extends Action> n1,
-        final ArgNode<? extends State, ? extends Action> n2) {
+                       final ArgNode<? extends State, ? extends Action> n2) {
         final int dist1 = getWeightedDistance(n1);
         final int dist2 = getWeightedDistance(n2);
 
@@ -83,7 +83,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
     }
 
     static Map<XcfaLocation, Integer> calculateDistancesToError(final XCFA cfa,
-        final XcfaLocation errLoc) {
+                                                                final XcfaLocation errLoc) {
         List<XcfaLocation> queue = new LinkedList<>();
         final Map<XcfaLocation, Integer> distancesToError = Containers.createMap();
         queue.add(errLoc);

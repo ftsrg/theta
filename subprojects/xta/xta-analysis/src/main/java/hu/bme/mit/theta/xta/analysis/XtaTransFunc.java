@@ -27,7 +27,7 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 
 final class XtaTransFunc<S extends State, P extends Prec> implements
-    TransFunc<XtaState<S>, XtaAction, P> {
+        TransFunc<XtaState<S>, XtaAction, P> {
 
     private final TransFunc<S, ? super XtaAction, ? super P> transFunc;
 
@@ -36,13 +36,13 @@ final class XtaTransFunc<S extends State, P extends Prec> implements
     }
 
     public static <S extends State, P extends Prec> XtaTransFunc<S, P> create(
-        final TransFunc<S, ? super XtaAction, ? super P> transferFunc) {
+            final TransFunc<S, ? super XtaAction, ? super P> transferFunc) {
         return new XtaTransFunc<>(transferFunc);
     }
 
     @Override
     public Collection<XtaState<S>> getSuccStates(final XtaState<S> state, final XtaAction action,
-        final P prec) {
+                                                 final P prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
@@ -50,7 +50,7 @@ final class XtaTransFunc<S extends State, P extends Prec> implements
         final List<Loc> succLocs = action.getTargetLocs();
         final S subState = state.getState();
         final Collection<? extends S> succSubStates = transFunc.getSuccStates(subState, action,
-            prec);
+                prec);
         return XtaState.collectionOf(succLocs, succSubStates);
     }
 

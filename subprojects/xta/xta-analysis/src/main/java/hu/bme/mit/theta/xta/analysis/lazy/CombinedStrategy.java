@@ -36,7 +36,7 @@ import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 final class CombinedStrategy<S1 extends State, S2 extends State>
-    implements AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, XtaState<Prod2State<S1, S2>>> {
+        implements AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, XtaState<Prod2State<S1, S2>>> {
 
     private final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S1> strategy1;
     private final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S2> strategy2;
@@ -44,13 +44,13 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
     private final Function<XtaState<Prod2State<S1, S2>>, ?> projection;
 
     public CombinedStrategy(final XtaSystem system,
-        final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S1> strategy1,
-        final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S2> strategy2) {
+                            final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S1> strategy1,
+                            final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S2> strategy2) {
         this.strategy1 = checkNotNull(strategy1);
         this.strategy2 = checkNotNull(strategy2);
         this.analysis = createAnalysis(system);
         projection = s -> Tuple3.of(strategy1.getProjection().apply(s.getState().getState1()),
-            strategy2.getProjection().apply(s.getState().getState2()), s.getLocs());
+                strategy2.getProjection().apply(s.getState().getState2()), s.getLocs());
     }
 
     @Override
@@ -65,17 +65,17 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
 
     @Override
     public boolean mightCover(final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coveree,
-        final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer) {
+                              final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer) {
         return strategy1.mightCover(coveree, coverer) && strategy2.mightCover(coveree, coverer);
     }
 
     @Override
     public void cover(final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coveree,
-        final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer,
-        final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes,
-        final Builder stats) {
+                      final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer,
+                      final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes,
+                      final Builder stats) {
         assert coveree.getCoveringNode().isPresent() && coveree.getCoveringNode().get()
-            .equals(coverer);
+                .equals(coverer);
         strategy1.cover(coveree, coverer, uncoveredNodes, stats);
         if (coveree.isCovered()) {
             assert (!uncoveredNodes.contains(coveree));
@@ -85,10 +85,10 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
 
     @Override
     public void block(final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> node,
-        final XtaAction action,
-        final XtaState<Prod2State<S1, S2>> succState,
-        final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes,
-        final Builder stats) {
+                      final XtaAction action,
+                      final XtaState<Prod2State<S1, S2>> succState,
+                      final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes,
+                      final Builder stats) {
         assert succState.isBottom();
         if (succState.getState().isBottom1()) {
             strategy1.block(node, action, succState, uncoveredNodes, stats);
@@ -102,17 +102,17 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
     ////
 
     private Analysis<XtaState<Prod2State<S1, S2>>, XtaAction, UnitPrec> createAnalysis(
-        final XtaSystem system) {
+            final XtaSystem system) {
         final Analysis<S1, XtaAction, UnitPrec> analysis1 = strategy1.getAnalysis();
         final Analysis<S2, XtaAction, UnitPrec> analysis2 = strategy2.getAnalysis();
         final Analysis<Prod2State<S1, S2>, XtaAction, Prod2Prec<UnitPrec, UnitPrec>> prodAnalysis = Prod2Analysis
-            .create(analysis1, analysis2);
+                .create(analysis1, analysis2);
         final Analysis<XtaState<Prod2State<S1, S2>>, XtaAction, Prod2Prec<UnitPrec, UnitPrec>> xtaAnalysis = XtaAnalysis
-            .create(system, prodAnalysis);
+                .create(system, prodAnalysis);
         final Prod2Prec<UnitPrec, UnitPrec> prec = Prod2Prec.of(UnitPrec.getInstance(),
-            UnitPrec.getInstance());
+                UnitPrec.getInstance());
         final Analysis<XtaState<Prod2State<S1, S2>>, XtaAction, UnitPrec> analysis = PrecMappingAnalysis
-            .create(xtaAnalysis, p -> prec);
+                .create(xtaAnalysis, p -> prec);
         return analysis;
     }
 

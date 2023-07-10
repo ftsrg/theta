@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class Prod2ExplPredPreStrengtheningOperator implements
-    PreStrengtheningOperator<ExplState, PredState> {
+        PreStrengtheningOperator<ExplState, PredState> {
 
     private Prod2ExplPredPreStrengtheningOperator() {
     }

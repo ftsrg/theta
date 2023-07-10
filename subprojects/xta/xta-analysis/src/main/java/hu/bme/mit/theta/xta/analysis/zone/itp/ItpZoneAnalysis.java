@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 public final class ItpZoneAnalysis<A extends Action> implements
-    Analysis<ItpZoneState, A, ZonePrec> {
+        Analysis<ItpZoneState, A, ZonePrec> {
 
     private final InitFunc<ItpZoneState, ZonePrec> initFunc;
     private final TransFunc<ItpZoneState, A, ZonePrec> transFunc;
@@ -38,7 +38,7 @@ public final class ItpZoneAnalysis<A extends Action> implements
     }
 
     public static <A extends Action> ItpZoneAnalysis<A> create(
-        final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
+            final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
         return new ItpZoneAnalysis<>(analysis);
     }
 

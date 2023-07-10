@@ -37,7 +37,7 @@ final class Z3DeclTransformer {
     private int symbolCount;
 
     Z3DeclTransformer(final Z3TransformationManager transformer, final Z3SymbolTable symbolTable,
-        final Context context) {
+                      final Context context) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
         this.context = context;
@@ -66,8 +66,8 @@ final class Z3DeclTransformer {
 
             final com.microsoft.z3.Sort returnSort = transformer.toSort(returnType);
             final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream()
-                .map(t -> transformer.toSort(t))
-                .toArray(size -> new com.microsoft.z3.Sort[size]);
+                    .map(t -> transformer.toSort(t))
+                    .toArray(size -> new com.microsoft.z3.Sort[size]);
 
             symbol = context.mkFuncDecl(symbolNameFor(decl), paramSorts, returnSort);
             symbolTable.put(decl, symbol);
@@ -89,7 +89,7 @@ final class Z3DeclTransformer {
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
             final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
-                .addAll(paramTypes).build();
+                    .addAll(paramTypes).build();
             final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
             return result;

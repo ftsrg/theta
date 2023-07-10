@@ -40,19 +40,19 @@ public class GeneralResponse {
         return ctx.accept(new SMTLIBv2BaseVisitor<>() {
             @Override
             public GeneralResponse visitGeneral_response_success(
-                General_response_successContext ctx) {
+                    General_response_successContext ctx) {
                 return new GeneralResponse(true, null, null);
             }
 
             @Override
             public GeneralResponse visitGeneral_response_unsupported(
-                General_response_unsupportedContext ctx) {
+                    General_response_unsupportedContext ctx) {
                 return new GeneralResponse(false, "Unsupported", null);
             }
 
             @Override
             public GeneralResponse visitSpecific_success_response(
-                Specific_success_responseContext ctx) {
+                    Specific_success_responseContext ctx) {
                 return new GeneralResponse(true, null, SpecificResponse.fromContext(ctx));
             }
 

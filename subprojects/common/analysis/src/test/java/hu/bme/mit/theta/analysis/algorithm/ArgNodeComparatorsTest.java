@@ -41,15 +41,15 @@ public class ArgNodeComparatorsTest {
 
     private final ArgNode<State, Action> s0 = arg.createInitNode(new StateStub("s0"), false);
     private final ArgNode<State, Action> s10 = arg.createSuccNode(s0, act, new StateStub("s10"),
-        false);
+            false);
     private final ArgNode<State, Action> s20 = arg.createSuccNode(s10, act, new StateStub("s20"),
-        true);
+            true);
     private final ArgNode<State, Action> s21 = arg.createSuccNode(s10, act, new StateStub("s21"),
-        false);
+            false);
     private final ArgNode<State, Action> s11 = arg.createSuccNode(s0, act, new StateStub("s11"),
-        true);
+            true);
     private final ArgNode<State, Action> s12 = arg.createSuccNode(s0, act, new StateStub("s12"),
-        false);
+            false);
     private final List<ArgNode<State, Action>> nodes = arg.getNodes().collect(Collectors.toList());
 
     @Test

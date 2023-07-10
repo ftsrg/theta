@@ -29,14 +29,14 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends State> implements
-    ExprState {
+        ExprState {
 
     private Prod3State() {
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> of(
-        final S1 state1,
-        final S2 state2, final S3 state3) {
+            final S1 state1,
+            final S2 state2, final S3 state3) {
         checkNotNull(state1);
         checkNotNull(state2);
         checkNotNull(state3);
@@ -52,28 +52,28 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> bottom1(
-        final S1 state) {
+            final S1 state) {
         return new Bottom1<>(state);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> bottom2(
-        final S2 state) {
+            final S2 state) {
         return new Bottom2<>(state);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> bottom3(
-        final S3 state) {
+            final S3 state) {
         return new Bottom3<>(state);
     }
 
     private static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> product(
-        final S1 state1, final S2 state2, final S3 state3) {
+            final S1 state1, final S2 state2, final S3 state3) {
         return new Product<>(state1, state2, state3);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State> Collection<Prod3State<S1, S2, S3>> cartesian(
-        final Iterable<? extends S1> states1, final Iterable<? extends S2> states2,
-        final Iterable<? extends S3> states3) {
+            final Iterable<? extends S1> states1, final Iterable<? extends S2> states2,
+            final Iterable<? extends S3> states3) {
         final Collection<Prod3State<S1, S2, S3>> result = new ArrayList<>();
         for (final S1 state1 : states1) {
             for (final S2 state2 : states2) {
@@ -104,7 +104,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
     public abstract <S extends State> Prod3State<S1, S2, S> with3(final S state);
 
     private static final class Product<S1 extends State, S2 extends State, S3 extends State>
-        extends Prod3State<S1, S2, S3> {
+            extends Prod3State<S1, S2, S3> {
 
         private static final int HASH_SEED = 1459;
         private volatile int hashCode = 0;
@@ -190,7 +190,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
         @Override
         public Expr<BoolType> toExpr() {
             if (state1 instanceof ExprState && state2 instanceof ExprState
-                && state3 instanceof ExprState) {
+                    && state3 instanceof ExprState) {
                 final ExprState exprState1 = (ExprState) state1;
                 final ExprState exprState2 = (ExprState) state2;
                 final ExprState exprState3 = (ExprState) state3;
@@ -220,7 +220,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
             } else if (obj instanceof Product) {
                 final Product<?, ?, ?> that = (Product<?, ?, ?>) obj;
                 return this.state1.equals(that.state1) && this.state2.equals(that.state2)
-                    && this.state3.equals(that.state3);
+                        && this.state3.equals(that.state3);
             } else {
                 return false;
             }
@@ -229,13 +229,13 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
         @Override
         public String toString() {
             return Utils.lispStringBuilder(Prod3State.class.getSimpleName()).body().add(state1)
-                .add(state2).add(state3)
-                .toString();
+                    .add(state2).add(state3)
+                    .toString();
         }
     }
 
     private static abstract class Bottom<S1 extends State, S2 extends State, S3 extends State>
-        extends Prod3State<S1, S2, S3> {
+            extends Prod3State<S1, S2, S3> {
 
         private static final int HASH_SEED = 3251;
         private volatile int hashCode = 0;
@@ -282,7 +282,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
             } else if (obj instanceof Bottom) {
                 final Bottom<?, ?, ?> that = (Bottom<?, ?, ?>) obj;
                 return this.getIndex() == that.getIndex() && this.getState()
-                    .equals(that.getState());
+                        .equals(that.getState());
             } else {
                 return false;
             }
@@ -291,12 +291,12 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
         @Override
         public final String toString() {
             return Utils.lispStringBuilder(Prod3State.class.getSimpleName()).add(getIndex())
-                .add(getState()).toString();
+                    .add(getState()).toString();
         }
     }
 
     private static final class Bottom1<S1 extends State, S2 extends State, S3 extends State>
-        extends Bottom<S1, S2, S3> {
+            extends Bottom<S1, S2, S3> {
 
         private final S1 state;
 
@@ -367,7 +367,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
     }
 
     private static final class Bottom2<S1 extends State, S2 extends State, S3 extends State>
-        extends Bottom<S1, S2, S3> {
+            extends Bottom<S1, S2, S3> {
 
         private final S2 state;
 
@@ -438,7 +438,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
     }
 
     private static final class Bottom3<S1 extends State, S2 extends State, S3 extends State>
-        extends Bottom<S1, S2, S3> {
+            extends Bottom<S1, S2, S3> {
 
         private final S3 state;
 

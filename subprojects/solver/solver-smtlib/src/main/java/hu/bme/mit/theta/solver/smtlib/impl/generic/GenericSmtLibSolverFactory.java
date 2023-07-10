@@ -36,7 +36,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
     }
 
     protected GenericSmtLibSolverFactory(Path solverPath, String[] args,
-        EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride) {
+                                         EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride) {
         this.solverPath = solverPath;
         this.args = args;
         this.solverOverride = solverOverride;
@@ -54,7 +54,7 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-            false);
+                false);
     }
 
     @Override
@@ -65,12 +65,12 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-            true);
+                true);
     }
 
     @Override
     public ItpSolver createItpSolver() {
         throw new UnsupportedOperationException(
-            "The generic driver does not support interpolation");
+                "The generic driver does not support interpolation");
     }
 }

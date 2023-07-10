@@ -47,9 +47,9 @@ public final class SmtLibValuation extends Valuation {
     private volatile Collection<ConstDecl<?>> constDecls = null;
 
     public SmtLibValuation(
-        final SmtLibSymbolTable symbolTable,
-        final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibModel model
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibModel model
     ) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;

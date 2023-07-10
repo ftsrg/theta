@@ -62,9 +62,9 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
     private static long assertionCount = 0;
 
     public PrincessSmtLibItpSolver(
-        final SmtLibSymbolTable symbolTable,
-        final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
     }
@@ -84,7 +84,7 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
 
     @Override
     protected void add(final PrincessSmtLibItpMarker marker, final Expr<BoolType> assertion,
-        final Set<ConstDecl<?>> consts, final String term) {
+                       final Set<ConstDecl<?>> consts, final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
 
         final var name = String.format(assertionNamePattern, assertionCount++);
@@ -95,7 +95,7 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
         checkState(getStatus() == SolverStatus.UNSAT,
-            "Cannot get interpolant if status is not UNSAT.");
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
         @SuppressWarnings("unchecked") final var princessItpPattern = (SmtLibItpPattern<PrincessSmtLibItpMarker>) pattern;
 
@@ -106,7 +106,7 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
         solverBinary.issueCommand(String.format("(get-interpolants %s)", term));
         for (final var itp : parseItpResponse(solverBinary.readResponse())) {
             itpList.add(termTransformer.toExpr(itp, BoolExprs.Bool(),
-                new SmtLibModel(Collections.emptyMap())));
+                    new SmtLibModel(Collections.emptyMap())));
         }
         itpList.add(False());
 
@@ -125,7 +125,7 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
             term = assertionNames.get(terms.iterator().next().get1());
         } else {
             term = String.format("(and %s)", terms.stream().map(t -> assertionNames.get(t.get1()))
-                .collect(Collectors.joining(" ")));
+                    .collect(Collectors.joining(" ")));
         }
 
         final var children = markerTree.getChildren();
@@ -141,7 +141,7 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
     }
 
     private void buildItpMapFormList(final ItpMarkerTree<PrincessSmtLibItpMarker> pattern,
-        final List<Expr<BoolType>> itpList, final Map<ItpMarker, Expr<BoolType>> itpMap) {
+                                     final List<Expr<BoolType>> itpList, final Map<ItpMarker, Expr<BoolType>> itpMap) {
         for (final ItpMarkerTree<PrincessSmtLibItpMarker> child : pattern.getChildren()) {
             buildItpMapFormList(child, itpList, itpMap);
         }
@@ -178,7 +178,7 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
         } catch (Exception e) {
             try {
                 throw new SmtLibSolverException(
-                    parser.response().general_response_error().reason.getText());
+                        parser.response().general_response_error().reason.getText());
             } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
@@ -187,6 +187,6 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
 
     private static String extractString(final ParserRuleContext ctx) {
         return ctx.start.getInputStream()
-            .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

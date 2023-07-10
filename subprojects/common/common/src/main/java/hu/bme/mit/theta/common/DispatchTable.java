@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.function.Function;
 
@@ -35,7 +36,7 @@ public final class DispatchTable<R> {
     public <T> R dispatch(final T param) {
         final Class<?> clazz = param.getClass();
         @SuppressWarnings("unchecked") final Function<? super T, ? extends R> function = (Function<? super T, ? extends R>) cases.get(
-            clazz);
+                clazz);
         if (function == null) {
             return defaultCase.apply(param);
         } else {
@@ -61,7 +62,7 @@ public final class DispatchTable<R> {
         }
 
         public <T> Builder<R> addCase(final Class<T> clazz,
-            final Function<? super T, ? extends R> function) {
+                                      final Function<? super T, ? extends R> function) {
             checkState(!built, "Already built.");
             checkNotNull(clazz);
             checkNotNull(function);

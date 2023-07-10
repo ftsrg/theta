@@ -80,7 +80,7 @@ public final class IffExpr extends EqExpr<BoolType> {
         } else if (obj instanceof IffExpr) {
             final IffExpr that = (IffExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

@@ -44,20 +44,20 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
     private volatile int hashCode = 0;
 
     private IteExpr(final Expr<BoolType> cond, final Expr<ExprType> then,
-        final Expr<ExprType> elze) {
+                    final Expr<ExprType> elze) {
         this.cond = checkNotNull(cond);
         this.then = checkNotNull(then);
         this.elze = checkNotNull(elze);
     }
 
     public static <ExprType extends Type> IteExpr<ExprType> of(final Expr<BoolType> cond,
-        final Expr<ExprType> then,
-        final Expr<ExprType> elze) {
+                                                               final Expr<ExprType> then,
+                                                               final Expr<ExprType> elze) {
         return new IteExpr<>(cond, then, elze);
     }
 
     public static <ExprType extends Type> IteExpr<?> create(final Expr<?> cond, final Expr<?> then,
-        final Expr<?> elze) {
+                                                            final Expr<?> elze) {
         final Expr<BoolType> newCond = cast(cond, Bool());
         @SuppressWarnings("unchecked") final Expr<ExprType> newThen = (Expr<ExprType>) then;
         final Expr<ExprType> newElze = cast(elze, newThen.getType());
@@ -113,7 +113,7 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
     }
 
     public IteExpr<ExprType> with(final Expr<BoolType> cond, final Expr<ExprType> then,
-        final Expr<ExprType> elze) {
+                                  final Expr<ExprType> elze) {
         if (this.cond == cond && this.then == then && this.elze == elze) {
             return this;
         } else {
@@ -153,7 +153,7 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
         } else if (obj instanceof IteExpr) {
             final IteExpr<?> that = (IteExpr<?>) obj;
             return this.getCond().equals(that.getCond()) && this.getThen().equals(that.getThen())
-                && this.getElse().equals(that.getElse());
+                    && this.getElse().equals(that.getElse());
         } else {
             return false;
         }
@@ -162,7 +162,7 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(OPERATOR_LABEL).add(getCond()).add(getThen()).add(getElse())
-            .toString();
+                .toString();
     }
 
 }

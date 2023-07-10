@@ -62,8 +62,8 @@ public final class ExplPrec implements Prec {
     public ExplPrec join(final ExplPrec other) {
         checkNotNull(other);
         final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars)
-            .addAll(other.vars)
-            .build();
+                .addAll(other.vars)
+                .build();
         // If no new variable was added, return same instance (immutable)
         if (newVars.size() == this.vars.size()) {
             return this;
@@ -89,8 +89,8 @@ public final class ExplPrec implements Prec {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName())
-            .addAll(vars.stream().map(VarDecl::getName))
-            .toString();
+                .addAll(vars.stream().map(VarDecl::getName))
+                .toString();
     }
 
     @Override

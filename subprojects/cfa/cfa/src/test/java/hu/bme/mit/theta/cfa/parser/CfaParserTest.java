@@ -46,7 +46,7 @@ public final class CfaParserTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {"src/test/resources/counter5_true.lisp.cfa"},
+                {"src/test/resources/counter5_true.lisp.cfa"},
 
         });
     }

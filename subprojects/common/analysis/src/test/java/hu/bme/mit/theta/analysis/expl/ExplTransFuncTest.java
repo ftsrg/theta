@@ -42,7 +42,7 @@ public class ExplTransFuncTest {
     private final VarDecl<IntType> x = Var("x", Int());
     private final ExplPrec prec = ExplPrec.of(ImmutableList.of(x));
     private final ExplState state = ExplState.of(
-        ImmutableValuation.builder().put(x, Int(1)).build());
+            ImmutableValuation.builder().put(x, Int(1)).build());
 
     ExplTransFunc transFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver());
 
@@ -53,10 +53,10 @@ public class ExplTransFuncTest {
         when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
         final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action,
-            prec);
+                prec);
         Assert.assertEquals(1, succStates.size());
         Assert.assertEquals(ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build()),
-            succStates.iterator().next());
+                succStates.iterator().next());
     }
 
     @Test
@@ -66,7 +66,7 @@ public class ExplTransFuncTest {
         when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
         final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action,
-            prec);
+                prec);
         Assert.assertEquals(1, succStates.size());
         Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(succStates));
     }

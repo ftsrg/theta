@@ -82,17 +82,17 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
             Map<String, VarDecl<?>> vars = createVars(procedure, ctx.var_decl());
             int i = 0;
             for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> param : procedure.getParams()
-                .entrySet()) {
+                    .entrySet()) {
                 if (param.getValue() != XcfaProcedure.Direction.OUT) {
                     vars.put(ctx.chc_head().u_pred_atom().symbol(i++).getText(), param.getKey());
                 }
             }
             XcfaLocation middle = createLocation(procedure);
             XcfaEdge edge = XcfaEdge.of(procedure.getInitLoc(), middle,
-                getTailConditionLabels(ctx.chc_tail(), vars));
+                    getTailConditionLabels(ctx.chc_tail(), vars));
             procedure.addEdge(edge);
             createCalls(procedure, middle, procedure.getFinalLoc(), ctx.chc_tail().u_pred_atom(),
-                vars);
+                    vars);
         } else {
             String procName;
             if (ctx.chc_head() != null) {
@@ -103,7 +103,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
             procedure = procedures.get(procName);
             Stmt returnTrue = AssignStmt.create(getOutParam(procedure), BoolLitExpr.of(true));
             XcfaEdge edge = XcfaEdge.of(procedure.getInitLoc(), procedure.getFinalLoc(),
-                List.of(XcfaLabel.Stmt(returnTrue)));
+                    List.of(XcfaLabel.Stmt(returnTrue)));
             procedure.addEdge(edge);
         }
         return super.visitChc_assert(ctx);
@@ -117,10 +117,10 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
         Map<String, VarDecl<?>> vars = createVars(mainProcedure, ctx.var_decl());
         XcfaLocation middle = createLocation(mainProcedure);
         XcfaEdge edge = XcfaEdge.of(mainProcedure.getInitLoc(), middle,
-            getTailConditionLabels(ctx.chc_tail(), vars));
+                getTailConditionLabels(ctx.chc_tail(), vars));
         mainProcedure.addEdge(edge);
         createCalls(mainProcedure, middle, mainProcedure.getErrorLoc(),
-            ctx.chc_tail().u_pred_atom(), vars);
+                ctx.chc_tail().u_pred_atom(), vars);
         return super.visitChc_query(ctx);
     }
 
@@ -154,13 +154,13 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
 
     private VarDecl<?> getOutParam(XcfaProcedure.Builder procedure) {
         Optional<Map.Entry<VarDecl<?>, XcfaProcedure.Direction>> param = procedure.getParams()
-            .entrySet()
-            .stream().filter(entry -> entry.getValue() == XcfaProcedure.Direction.OUT).findAny();
+                .entrySet()
+                .stream().filter(entry -> entry.getValue() == XcfaProcedure.Direction.OUT).findAny();
         return param.map(Map.Entry::getKey).orElse(null);
     }
 
     private void createCalls(XcfaProcedure.Builder builder, XcfaLocation start, XcfaLocation end,
-        List<CHCParser.U_pred_atomContext> uPreds, Map<String, VarDecl<?>> localVars) {
+                             List<CHCParser.U_pred_atomContext> uPreds, Map<String, VarDecl<?>> localVars) {
         XcfaLocation from = start;
         for (CHCParser.U_pred_atomContext uPred : uPreds) {
             XcfaLocation middle = createLocation(builder);
@@ -168,21 +168,21 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
 
             XcfaProcedure.Builder calledProcedure = procedures.get(uPred.u_predicate().getText());
             VarDecl<BoolType> ret = Decls.Var(calledProcedure.getName() + "_ret_" + callCount++,
-                Bool());
+                    Bool());
             builder.createVar(ret, null);
             localVars.put(ret.getName(), ret);
             List<String> paramNames = new ArrayList<>(
-                uPred.symbol().stream().map(RuleContext::getText).toList());
+                    uPred.symbol().stream().map(RuleContext::getText).toList());
             paramNames.add(0, ret.getName());
             List<? extends Expr<?>> params = paramNames.stream().map(s -> localVars.get(s).getRef())
-                .toList();
+                    .toList();
 
             XcfaEdge callEdge = XcfaEdge.of(from, middle, List.of(
-                XcfaLabel.ProcedureCall((List<Expr<?>>) params, calledProcedure.getName())));
+                    XcfaLabel.ProcedureCall((List<Expr<?>>) params, calledProcedure.getName())));
             builder.addEdge(callEdge);
 
             XcfaEdge assertEdge = XcfaEdge.of(middle, to,
-                List.of(XcfaLabel.Stmt(AssumeStmt.of(ret.getRef()))));
+                    List.of(XcfaLabel.Stmt(AssumeStmt.of(ret.getRef()))));
             builder.addEdge(assertEdge);
 
             from = to;

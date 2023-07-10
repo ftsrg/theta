@@ -49,7 +49,7 @@ public final class XcfaTraceToWitness {
     }
 
     public static Graph buildWitness(
-        final Trace<XcfaState<ExplState>, XcfaAction> trace) {
+            final Trace<XcfaState<ExplState>, XcfaAction> trace) {
         concreteTrace = trace;
         witnessGraph = new Graph("id", ""); // TODO what should the id be?
 
@@ -69,12 +69,12 @@ public final class XcfaTraceToWitness {
             List<String> edgesFromAction = new ArrayList<>();
             for (Stmt stmt : stmtList) {
                 Optional<String> optionalLabel = makeEdgeLabelFromStatement(stmt,
-                    concreteTrace.getState(i + 1).getGlobalState().getVal());
+                        concreteTrace.getState(i + 1).getGlobalState().getVal());
                 optionalLabel.ifPresent(edgesFromAction::add);
             }
 
             if (concreteTrace.getAction(i).getTarget().isErrorLoc()
-                && edgesFromAction.size() == 0) {
+                    && edgesFromAction.size() == 0) {
                 addViolationNode();
                 addWitnessEdge("");
             }
@@ -82,7 +82,7 @@ public final class XcfaTraceToWitness {
             for (int j = 0; j < edgesFromAction.size(); j++) {
                 // if it is the last edge before reaching the violation node
                 if (concreteTrace.getAction(i).getTarget().isErrorLoc()
-                    && j + 1 == edgesFromAction.size()) {
+                        && j + 1 == edgesFromAction.size()) {
                     addViolationNode();
                 } else { // else the next node should be a normal one
                     addNextWitnessNode("");
@@ -100,7 +100,7 @@ public final class XcfaTraceToWitness {
         }
 
         final Optional<Object> sourceStatement = FrontendMetadata.getMetadataValue(stmt,
-            "sourceStatement");
+                "sourceStatement");
         if (sourceStatement.isEmpty()) {
             return Optional.empty();
         }
@@ -113,7 +113,7 @@ public final class XcfaTraceToWitness {
             Integer startLineNumber = (Integer) lineNumberStartO;
             if (startLineNumber != -1) {
                 edgeLabel.append("<data key=\"startline\">").append(startLineNumber)
-                    .append("</data>").append(System.lineSeparator());
+                        .append("</data>").append(System.lineSeparator());
             }
         }
 
@@ -122,7 +122,7 @@ public final class XcfaTraceToWitness {
             Integer endLineNumber = (Integer) lineNumberStopO;
             if (endLineNumber != -1) {
                 edgeLabel.append("<data key=\"endline\">").append(endLineNumber).append("</data>")
-                    .append(System.lineSeparator());
+                        .append(System.lineSeparator());
             }
         }
 
@@ -131,7 +131,7 @@ public final class XcfaTraceToWitness {
             Integer offsetStartNumber = (Integer) offsetStartO;
             if (offsetStartNumber != -1) {
                 edgeLabel.append("<data key=\"startoffset\">").append(offsetStartNumber)
-                    .append("</data>").append(System.lineSeparator());
+                        .append("</data>").append(System.lineSeparator());
             }
         }
 
@@ -139,7 +139,7 @@ public final class XcfaTraceToWitness {
             Optional<? extends LitExpr<?>> value = nextVal.eval(((HavocStmt<?>) stmt).getVarDecl());
             Object varName = ((HavocStmt<?>) stmt).getVarDecl().getName();
             if (value.isPresent() && FrontendMetadata.getMetadataValue(stmt, "sourceStatement")
-                .isPresent()) {
+                    .isPresent()) {
                 edgeLabel.append("<data key=\"assumption\">");
                 edgeLabel.append(varName).append(" == ").append(printLit(value.get())).append(";");
                 edgeLabel.append("</data>").append(System.lineSeparator());
@@ -147,15 +147,15 @@ public final class XcfaTraceToWitness {
         } else if (stmt instanceof AssumeStmt) {
             if (((AssumeStmt) stmt).getCond() instanceof EqExpr) {
                 edgeLabel.append("<data key=\"control\">condition-").append("false")
-                    .append("</data>").append(System.lineSeparator());
+                        .append("</data>").append(System.lineSeparator());
             } else if (((AssumeStmt) stmt).getCond() instanceof NeqExpr) {
                 edgeLabel.append("<data key=\"control\">condition-").append("true")
-                    .append("</data>").append(System.lineSeparator());
+                        .append("</data>").append(System.lineSeparator());
             }
         }
         // not an official witness data key, so no validator will use it, but it helps readability
         edgeLabel.append("<data key=\"stmt\">").append(escapeXml(stmt.toString()))
-            .append("</data>");
+                .append("</data>");
         return Optional.of(edgeLabel.toString());
     }
 
@@ -230,8 +230,8 @@ public final class XcfaTraceToWitness {
      */
     private static void addWitnessEdge(String label) {
         witnessGraph.addEdge("N" + (nodeCounter - 2),
-            "N" + (nodeCounter - 1),
-            new EdgeAttributes.Builder().label(label).build()
+                "N" + (nodeCounter - 1),
+                new EdgeAttributes.Builder().label(label).build()
         );
     }
 
@@ -242,7 +242,7 @@ public final class XcfaTraceToWitness {
      */
     private static void addNextWitnessNode(String label) {
         witnessGraph.addNode("N" + nodeCounter.toString(),
-            new NodeAttributes.Builder().label(label).build()
+                new NodeAttributes.Builder().label(label).build()
         );
         nodeCounter++;
     }

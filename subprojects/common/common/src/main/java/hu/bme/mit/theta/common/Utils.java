@@ -56,7 +56,7 @@ public final class Utils {
     ////
 
     public static <T> boolean anyMatch(final Optional<T> optional,
-        final Predicate<? super T> predicate) {
+                                       final Predicate<? super T> predicate) {
         if (optional.isPresent()) {
             return predicate.test(optional.get());
         } else {
@@ -65,7 +65,7 @@ public final class Utils {
     }
 
     public static <T> boolean allMatch(final Optional<T> optional,
-        final Predicate<? super T> predicate) {
+                                       final Predicate<? super T> predicate) {
         if (optional.isPresent()) {
             return predicate.test(optional.get());
         } else {

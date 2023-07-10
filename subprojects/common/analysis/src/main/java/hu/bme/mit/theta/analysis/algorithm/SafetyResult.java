@@ -47,18 +47,18 @@ public abstract class SafetyResult<S extends State, A extends Action> {
     }
 
     public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
-        final ARG<S, A> arg) {
+                                                                          final ARG<S, A> arg) {
         return new Unsafe<>(cex, arg, Optional.empty());
     }
 
     public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg,
-        final Statistics stats) {
+                                                                      final Statistics stats) {
         return new Safe<>(arg, Optional.of(stats));
     }
 
     public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
-        final ARG<S, A> arg,
-        final Statistics stats) {
+                                                                          final ARG<S, A> arg,
+                                                                          final Statistics stats) {
         return new Unsafe<>(cex, arg, Optional.of(stats));
     }
 
@@ -96,15 +96,15 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         @Override
         public Unsafe<S, A> asUnsafe() {
             throw new ClassCastException(
-                "Cannot cast " + Safe.class.getSimpleName() + " to "
-                    + Unsafe.class.getSimpleName());
+                    "Cannot cast " + Safe.class.getSimpleName() + " to "
+                            + Unsafe.class.getSimpleName());
         }
 
         @Override
         public String toString() {
             return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
-                .add(Safe.class.getSimpleName())
-                .toString();
+                    .add(Safe.class.getSimpleName())
+                    .toString();
         }
     }
 
@@ -113,7 +113,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         private final Trace<S, A> cex;
 
         private Unsafe(final Trace<S, A> cex, final ARG<S, A> arg,
-            final Optional<Statistics> stats) {
+                       final Optional<Statistics> stats) {
             super(arg, stats);
             this.cex = checkNotNull(cex);
         }
@@ -135,8 +135,8 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         @Override
         public Safe<S, A> asSafe() {
             throw new ClassCastException(
-                "Cannot cast " + Unsafe.class.getSimpleName() + " to "
-                    + Safe.class.getSimpleName());
+                    "Cannot cast " + Unsafe.class.getSimpleName() + " to "
+                            + Safe.class.getSimpleName());
         }
 
         @Override
@@ -147,8 +147,8 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         @Override
         public String toString() {
             return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
-                .add(Unsafe.class.getSimpleName())
-                .add("Trace length: " + cex.length()).toString();
+                    .add(Unsafe.class.getSimpleName())
+                    .add("Trace length: " + cex.length()).toString();
         }
     }
 

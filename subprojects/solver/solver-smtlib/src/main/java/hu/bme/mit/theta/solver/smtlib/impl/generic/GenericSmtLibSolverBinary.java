@@ -40,7 +40,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
     }
 
     public GenericSmtLibSolverBinary(final Path solverPath, final String[] args,
-        final EnumSet<Solver> solverOverride) {
+                                     final EnumSet<Solver> solverOverride) {
         final var processCmd = new ArrayList<String>();
         processCmd.add(solverPath.toAbsolutePath().toString());
         processCmd.addAll(Arrays.asList(args));
@@ -113,9 +113,9 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
                 final var output = inputQueue.peek();
                 final var eol = "\n".getBytes(StandardCharsets.US_ASCII);
                 final var cutoff = min(buffer.remaining() - eol.length,
-                    output.length() - headDoneIndex);
+                        output.length() - headDoneIndex);
                 buffer.put(output.substring(headDoneIndex, headDoneIndex + cutoff)
-                    .getBytes(StandardCharsets.US_ASCII));
+                        .getBytes(StandardCharsets.US_ASCII));
                 if (headDoneIndex + cutoff < output.length()) {
                     headDoneIndex = headDoneIndex + cutoff;
                 } else {

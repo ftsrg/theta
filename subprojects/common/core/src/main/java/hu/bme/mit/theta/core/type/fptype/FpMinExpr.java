@@ -87,7 +87,7 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
         } else if (obj instanceof FpMinExpr) {
             final FpMinExpr that = (FpMinExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }
@@ -98,7 +98,7 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
         final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
         final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
         if (FpUtils.fpLitExprToBigFloat(null, leftOpVal)
-            .lessThan(FpUtils.fpLitExprToBigFloat(null, rightOpVal))) {
+                .lessThan(FpUtils.fpLitExprToBigFloat(null, rightOpVal))) {
             return leftOpVal;
         } else {
             return rightOpVal;

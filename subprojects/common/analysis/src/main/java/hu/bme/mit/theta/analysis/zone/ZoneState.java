@@ -62,10 +62,10 @@ public final class ZoneState implements ExprState {
     ////
 
     public static ZoneState region(final Valuation valuation,
-        final Collection<VarDecl<RatType>> vars) {
+                                   final Collection<VarDecl<RatType>> vars) {
         checkNotNull(valuation);
         final Iterable<VarDecl<RatType>> constrainedVars = Iterables.filter(vars,
-            v -> valuation.eval(v).isPresent());
+                v -> valuation.eval(v).isPresent());
 
         final DBM dbm = DBM.top(constrainedVars);
 
@@ -168,7 +168,7 @@ public final class ZoneState implements ExprState {
     }
 
     public boolean isLeq(final ZoneState that,
-        final Collection<? extends VarDecl<RatType>> activeVars) {
+                         final Collection<? extends VarDecl<RatType>> activeVars) {
         return this.dbm.isLeq(that.dbm, activeVars);
     }
 
@@ -187,8 +187,8 @@ public final class ZoneState implements ExprState {
         Expr<BoolType> result = expr;
         if (result == null) {
             final Collection<Expr<BoolType>> exprs = dbm.getConstrs().stream()
-                .map(ClockConstr::toExpr)
-                .collect(toList());
+                    .map(ClockConstr::toExpr)
+                    .collect(toList());
             result = And(exprs);
             expr = result;
         }
@@ -224,7 +224,7 @@ public final class ZoneState implements ExprState {
     public String toString() {
         final Collection<ClockConstr> constrs = dbm.getConstrs();
         return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().addAll(constrs)
-            .toString();
+                .toString();
     }
 
     ////////
@@ -244,7 +244,7 @@ public final class ZoneState implements ExprState {
         }
 
         private static Builder project(final ZoneState state,
-            final Collection<? extends VarDecl<RatType>> clocks) {
+                                       final Collection<? extends VarDecl<RatType>> clocks) {
             return new Builder(DBM.project(state.dbm, clocks));
         }
 

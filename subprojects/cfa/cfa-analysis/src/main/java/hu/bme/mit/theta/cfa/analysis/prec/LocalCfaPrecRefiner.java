@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -33,7 +34,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 
 public final class LocalCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
-    implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
+        implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
     private final RefutationToPrec<P, R> refToPrec;
 
@@ -42,13 +43,13 @@ public final class LocalCfaPrecRefiner<S extends ExprState, A extends Action, P 
     }
 
     public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> LocalCfaPrecRefiner<S, A, P, R> create(
-        final RefutationToPrec<P, R> refToPrec) {
+            final RefutationToPrec<P, R> refToPrec) {
         return new LocalCfaPrecRefiner<>(refToPrec);
     }
 
     @Override
     public CfaPrec<P> refine(final CfaPrec<P> prec, final Trace<CfaState<S>, A> trace,
-        final R refutation) {
+                             final R refutation) {
         checkNotNull(trace);
         checkNotNull(prec);
         checkNotNull(refutation);

@@ -30,7 +30,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -89,7 +91,7 @@ final class DBM {
 
     // TODO replace BiFunction by IntBiFunction
     private DBM(final DbmSignature signature,
-        final BiFunction<? super VarDecl<RatType>, ? super VarDecl<RatType>, ? extends Integer> values) {
+                final BiFunction<? super VarDecl<RatType>, ? super VarDecl<RatType>, ? extends Integer> values) {
         this(signature, (final int x, final int y) -> {
             return values.apply(signature.getVar(x), signature.getVar(y));
         });
@@ -114,7 +116,7 @@ final class DBM {
                         final int newBound = negate(bound);
                         final DbmSignature newSignature = DbmSignature.over(Arrays.asList(x, y));
                         final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> newValues = (c1,
-                            c2) -> (c1 == y && c2 == x) ? newBound : defaultBound(c1, c2);
+                                                                                                   c2) -> (c1 == y && c2 == x) ? newBound : defaultBound(c1, c2);
                         final DBM newDBM = new DBM(newSignature, newValues);
                         result.add(newDBM);
                     }
@@ -307,7 +309,7 @@ final class DBM {
     }
 
     private static DbmSignature signatureFrom(final DbmSignature interpolantSignature,
-        final int[] cycle) {
+                                              final int[] cycle) {
         final Collection<VarDecl<RatType>> vars = new ArrayList<>();
         for (int i = 0; i + 1 < cycle.length; i++) {
             final VarDecl<RatType> varDecl = interpolantSignature.getVar(cycle[i]);
@@ -318,8 +320,8 @@ final class DBM {
 
     private static DbmSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
         final Set<VarDecl<RatType>> varsConstrainedByBothDBMS = Sets
-            .intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
-            .filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
+                .intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
+                .filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
         return DbmSignature.over(varsConstrainedByBothDBMS);
     }
 
@@ -379,7 +381,7 @@ final class DBM {
 
     public DbmRelation getRelation(final DBM that) {
         final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-            that.signature.toSet());
+                that.signature.toSet());
 
         boolean leq = true;
         boolean geq = true;
@@ -395,7 +397,7 @@ final class DBM {
 
     public boolean isLeq(final DBM that) {
         final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-            that.signature.toSet());
+                that.signature.toSet());
 
         for (final VarDecl<RatType> x : vars) {
             for (final VarDecl<RatType> y : vars) {
@@ -410,7 +412,7 @@ final class DBM {
 
     public boolean isLeq(final DBM that, final Collection<? extends VarDecl<RatType>> activeVars) {
         final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-            that.signature.toSet());
+                that.signature.toSet());
 
         for (final VarDecl<RatType> x : vars) {
             if (!activeVars.contains(x)) {
@@ -433,7 +435,7 @@ final class DBM {
 
     public boolean isLeq(final DBM that, final BoundFunc bound) {
         final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-            that.signature.toSet());
+                that.signature.toSet());
 
         if (!this.isConsistent()) {
             return true;
@@ -624,7 +626,7 @@ final class DBM {
     }
 
     private void ifTracksElse(final VarDecl<RatType> varDecl, final IntConsumer consumer,
-        final Procedure procedure) {
+                              final Procedure procedure) {
         if (tracks(varDecl)) {
             final int x = signature.indexOf(varDecl);
             consumer.accept(x);

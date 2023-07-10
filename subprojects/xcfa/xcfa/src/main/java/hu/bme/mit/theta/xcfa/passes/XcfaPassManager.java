@@ -57,45 +57,45 @@ public class XcfaPassManager {
 
     static {
         procedurePasses.addAll(List.of(
-            new EliminateSelfLoops(),
-            new PthreadCallsToThreadStmts(),
-            new VerifierFunctionsToLabels(),
-            new AddAtomicBeginEndsToFunctions(),
-            new ReferenceToMemory(),
-            new InitMemory(),
-            new FpFunctionsToExprs(),
-            new SimplifyExprs(),
+                new EliminateSelfLoops(),
+                new PthreadCallsToThreadStmts(),
+                new VerifierFunctionsToLabels(),
+                new AddAtomicBeginEndsToFunctions(),
+                new ReferenceToMemory(),
+                new InitMemory(),
+                new FpFunctionsToExprs(),
+                new SimplifyExprs(),
 //				new SimplifyAssumptions(),
-            new CallsToFinalLocs(),
-            new CallsToHavocs(),
+                new CallsToFinalLocs(),
+                new CallsToHavocs(),
 //				new HavocAssignments(),
-            //new UnusedVarRemovalPass(),
-            new EmptyEdgeRemovalPass(),
-            new ConditionalFinalsToAssumes(),
-            //new UnusedVarRemovalPass(),
-            new AddHavocRange(),
-            new RemoveDeadEnds(),
-            //new UnusedVarRemovalPass(),
-            new SimplifyExprs(),
-            new EmptyEdgeRemovalPass(),
+                //new UnusedVarRemovalPass(),
+                new EmptyEdgeRemovalPass(),
+                new ConditionalFinalsToAssumes(),
+                //new UnusedVarRemovalPass(),
+                new AddHavocRange(),
+                new RemoveDeadEnds(),
+                //new UnusedVarRemovalPass(),
+                new SimplifyExprs(),
+                new EmptyEdgeRemovalPass(),
 //				new SimpleLbePass(),
-            new PorPass(),
+                new PorPass(),
 //				new HavocPromotion(),
 //				new AssignmentChainRemoval(),
 //				new NoReadVarRemovalPass(),
 //				new GlobalVarsToStoreLoad(),
-            new UnusedVarRemovalPass(),
-            new EmptyEdgeRemovalPass(),
-            new RemoveDeadEnds()
+                new UnusedVarRemovalPass(),
+                new EmptyEdgeRemovalPass(),
+                new RemoveDeadEnds()
         ));
         processPasses.addAll(List.of(
-            new AnalyzeCallGraph(),
-            new FunctionInlining(),
-            new AssignFunctionParam()
+                new AnalyzeCallGraph(),
+                new FunctionInlining(),
+                new AssignFunctionParam()
         ));
         xcfaPasses.addAll((List.of(
-            new RemoveUnusedGlobals(),
-            new DemoteThreadLocalGlobals())));
+                new RemoveUnusedGlobals(),
+                new DemoteThreadLocalGlobals())));
     }
 
     public static void addProcedurePass(ProcedurePass pass) {
@@ -138,7 +138,7 @@ public class XcfaPassManager {
         XcfaProcedure.Builder runningBuilder = builder;
         for (ProcedurePass procedurePass : procedurePasses) {
             if (FunctionInlining.inlining != FunctionInlining.InlineFunctions.ON
-                || !procedurePass.isPostInlining() || ProcedurePass.postInlining) {
+                    || !procedurePass.isPostInlining() || ProcedurePass.postInlining) {
                 runningBuilder = procedurePass.run(runningBuilder);
             }
         }

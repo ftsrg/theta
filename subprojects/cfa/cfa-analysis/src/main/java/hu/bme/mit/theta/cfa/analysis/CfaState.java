@@ -102,7 +102,7 @@ public final class CfaState<S extends ExprState> implements ExprState {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(loc.getName()).body()
-            .add(state).toString();
+                .add(state).toString();
     }
 
 }

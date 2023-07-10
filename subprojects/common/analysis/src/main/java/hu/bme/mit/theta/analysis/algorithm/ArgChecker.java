@@ -60,7 +60,7 @@ public final class ArgChecker {
     ////
 
     private boolean subtreeIsWellLabeled(
-        final ArgNode<? extends ExprState, ? extends ExprAction> node) {
+            final ArgNode<? extends ExprState, ? extends ExprAction> node) {
         if (nodeIsWellLabeled(node)) {
             return node.getSuccNodes().allMatch(this::subtreeIsWellLabeled);
         } else {
@@ -69,7 +69,7 @@ public final class ArgChecker {
     }
 
     private boolean nodeIsWellLabeled(
-        final ArgNode<? extends ExprState, ? extends ExprAction> node) {
+            final ArgNode<? extends ExprState, ? extends ExprAction> node) {
         return nodeIsWellLabeledForCoverage(node) && nodeIsWellLabeledForActions(node);
     }
 
@@ -87,43 +87,43 @@ public final class ArgChecker {
     }
 
     private boolean isCoveredBy(final ArgNode<? extends ExprState, ?> node,
-        final ArgNode<? extends ExprState, ?> coveringNode) {
+                                final ArgNode<? extends ExprState, ?> coveringNode) {
         return partialOrd.isLeq(node.getState(), coveringNode.getState());
     }
 
     ////
 
     private boolean nodeIsWellLabeledForActions(
-        final ArgNode<? extends ExprState, ? extends ExprAction> node) {
+            final ArgNode<? extends ExprState, ? extends ExprAction> node) {
         final Set<ExprAction> actions = getActionsForNode(node);
         return actions.stream().allMatch(action -> nodeIsWellLabeledForAction(node, action));
     }
 
     private boolean nodeIsWellLabeledForAction(
-        final ArgNode<? extends ExprState, ? extends ExprAction> node,
-        final ExprAction action) {
+            final ArgNode<? extends ExprState, ? extends ExprAction> node,
+            final ExprAction action) {
         final ExprState state = node.getState();
         final Collection<ExprState> succStates = getSuccStatesOfNodeForAction(node, action);
         return hasSuccStates(state, action, succStates);
     }
 
     private boolean hasSuccStates(final ExprState state, final ExprAction action,
-        final Collection<? extends ExprState> succStates) {
+                                  final Collection<? extends ExprState> succStates) {
         return !ExprStateUtils.anyUncoveredSuccessor(state, action, succStates, solver).isPresent();
     }
 
     ////
 
     private static <S extends State, A extends Action> Set<A> getActionsForNode(
-        final ArgNode<? extends S, ? extends A> node) {
+            final ArgNode<? extends S, ? extends A> node) {
         return node.getOutEdges().map(ArgEdge::getAction).collect(toSet());
     }
 
     private static <S extends State, A extends Action> Collection<S> getSuccStatesOfNodeForAction(
-        final ArgNode<? extends S, ? extends A> node, final A action) {
+            final ArgNode<? extends S, ? extends A> node, final A action) {
         return node.outEdges.stream().filter(e -> e.getAction().equals(action))
-            .map(e -> e.getTarget().getState())
-            .collect(toList());
+                .map(e -> e.getTarget().getState())
+                .collect(toList());
     }
 
 }

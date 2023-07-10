@@ -83,24 +83,24 @@ public class Datalog {
         for (String expression : relations.split("\\.")) {
             String nospace = expression.replaceAll("[ \t\n]", "");
             if (nospace.matches(
-                "([a-z_][a-zA-Z0-9_]*)\\(([a-z_0-9][a-zA-Z0-9_]*)(,[a-z_0-9][a-zA-Z_0-9]*)*\\)")) { //fact assertion
+                    "([a-z_][a-zA-Z0-9_]*)\\(([a-z_0-9][a-zA-Z0-9_]*)(,[a-z_0-9][a-zA-Z_0-9]*)*\\)")) { //fact assertion
                 String[] splitString = nospace.split("\\(");
                 String[] arguments = splitString[1].replaceAll("\\)", "").split(",");
                 relationMap.putIfAbsent(splitString[0],
-                    datalog.createRelation("rel" + counter++, arguments.length));
+                        datalog.createRelation("rel" + counter++, arguments.length));
                 TupleN<DatalogArgument> argumentTuple = TupleN.of(
-                    Arrays.stream(arguments).map(StringDatalogArgument::new)
-                        .collect(Collectors.toList()));
+                        Arrays.stream(arguments).map(StringDatalogArgument::new)
+                                .collect(Collectors.toList()));
                 relationMap.get(splitString[0]).addFact(argumentTuple);
             } else if (nospace.matches(
-                "([a-z_][a-zA-Z_0-9]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\):-([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\)(,([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\))*")) { //deduction rule
+                    "([a-z_][a-zA-Z_0-9]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\):-([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\)(,([a-z_][a-zA-Z_]*)\\(([a-zA-Z_][a-zA-Z0-9_]*)(,[a-zA-Z_][a-zA-Z0-9_]*)*\\))*")) { //deduction rule
                 String[] splitExpression = nospace.split(":-");
 
                 Map<String, Variable> variableMap = new LinkedHashMap<>();
                 String[] splitString = splitExpression[0].split("\\(");
                 String[] arguments = splitString[1].replaceAll("\\)", "").split(",");
                 relationMap.putIfAbsent(splitString[0],
-                    datalog.createRelation("rel" + counter++, arguments.length));
+                        datalog.createRelation("rel" + counter++, arguments.length));
                 TupleN<Variable> argumentTuple = TupleN.of(Arrays.stream(arguments).map(s -> {
                     variableMap.putIfAbsent(s, datalog.getVariable());
                     return variableMap.get(s);
@@ -111,7 +111,7 @@ public class Datalog {
                     String[] dsplitString = dependency.split("\\(");
                     String[] darguments = dsplitString[1].replaceAll("\\)", "").split(",");
                     relationMap.putIfAbsent(dsplitString[0],
-                        datalog.createRelation("rel" + counter++, darguments.length));
+                            datalog.createRelation("rel" + counter++, darguments.length));
                     TupleN<Variable> dargumentTuple = TupleN.of(Arrays.stream(darguments).map(s -> {
                         variableMap.putIfAbsent(s, datalog.getVariable());
                         return variableMap.get(s);
@@ -124,7 +124,7 @@ public class Datalog {
                 String noquestion = nospace.replaceAll("\\?", "");
                 if (!relationMap.containsKey(noquestion)) {
                     throw new RuntimeException(
-                        "Query " + nospace + " does not query an existing relation!");
+                            "Query " + nospace + " does not query an existing relation!");
                 }
                 for (TupleN<DatalogArgument> element : relationMap.get(noquestion).getElements()) {
                     StringBuilder stringBuilder = new StringBuilder(noquestion + "(");
@@ -132,11 +132,11 @@ public class Datalog {
                         stringBuilder.append(o.toString()).append(",");
                     }
                     ret.append(stringBuilder.substring(0, stringBuilder.length() - 1)).append(").")
-                        .append("\r\n");
+                            .append("\r\n");
                 }
             } else {
                 throw new RuntimeException(
-                    "Input " + nospace + " does not match any type of expression!");
+                        "Input " + nospace + " does not match any type of expression!");
             }
         }
         return ret.toString();
@@ -164,7 +164,7 @@ public class Datalog {
 
     public Relation createRelation(String name, int n) {
         checkState(stackDepth == 0,
-            "Cannot create a relation when the program is in temporary (pushed) state");
+                "Cannot create a relation when the program is in temporary (pushed) state");
         checkState(n > 0, "Relation must have positive arity");
         Relation ret = new Relation(n);
         relations.put(name, ret);
@@ -176,38 +176,38 @@ public class Datalog {
         Relation path = createRelation(name, 2);
         Datalog.Variable var1, var2, var3;
         path.addRule(
-            TupleN.of(
-                var1 = getVariable(),
-                var2 = getVariable()
-            ),
-            Set.of(
-                Tuple2.of(
-                    simple,
-                    TupleN.of(var1, var2)
+                TupleN.of(
+                        var1 = getVariable(),
+                        var2 = getVariable()
+                ),
+                Set.of(
+                        Tuple2.of(
+                                simple,
+                                TupleN.of(var1, var2)
+                        )
                 )
-            )
         );
         path.addRule(
-            TupleN.of(
-                var1 = getVariable(),
-                var2 = getVariable()
-            ),
-            Set.of(
-                Tuple2.of(
-                    path,
-                    TupleN.of(
-                        var1,
-                        var3 = getVariable()
-                    )
+                TupleN.of(
+                        var1 = getVariable(),
+                        var2 = getVariable()
                 ),
-                Tuple2.of(
-                    path,
-                    TupleN.of(
-                        var3,
-                        var2
-                    )
+                Set.of(
+                        Tuple2.of(
+                                path,
+                                TupleN.of(
+                                        var1,
+                                        var3 = getVariable()
+                                )
+                        ),
+                        Tuple2.of(
+                                path,
+                                TupleN.of(
+                                        var3,
+                                        var2
+                                )
+                        )
                 )
-            )
         );
         return path;
     }
@@ -219,7 +219,7 @@ public class Datalog {
                 arity = relation.getArity();
             } else {
                 checkState(relation.getArity() == arity,
-                    "Only same arity relations are supported!");
+                        "Only same arity relations are supported!");
             }
         }
         checkState(arity != null, "At least one relation is necessary!");
@@ -231,13 +231,13 @@ public class Datalog {
         TupleN<Variable> varTuple = TupleN.of(vars);
         for (Relation relation : relations) {
             disjunction.addRule(
-                varTuple,
-                Set.of(
-                    Tuple2.of(
-                        relation,
-                        varTuple
+                    varTuple,
+                    Set.of(
+                            Tuple2.of(
+                                    relation,
+                                    varTuple
+                            )
                     )
-                )
             );
         }
         return disjunction;
@@ -257,7 +257,7 @@ public class Datalog {
                 varTuple = TupleN.of(vars);
             } else {
                 checkState(relation.getArity() == arity,
-                    "Only same arity relations are supported!");
+                        "Only same arity relations are supported!");
             }
 
             deps.add(Tuple2.of(relation, varTuple));
@@ -265,8 +265,8 @@ public class Datalog {
         checkState(arity != null, "At least one relation is necessary!");
         Relation conjuction = createRelation(name, arity);
         conjuction.addRule(
-            varTuple,
-            deps
+                varTuple,
+                deps
         );
         return conjuction;
     }
@@ -326,9 +326,9 @@ public class Datalog {
         }
 
         public void addRule(TupleN<Variable> args,
-            Set<Tuple2<Relation, TupleN<Variable>>> dependencies) {
+                            Set<Tuple2<Relation, TupleN<Variable>>> dependencies) {
             checkState(stackDepth == 0,
-                "Cannot create new rule when the program is in temporary (pushed) state");
+                    "Cannot create new rule when the program is in temporary (pushed) state");
             checkState(args.arity() == arity);
             for (Tuple2<Relation, TupleN<Variable>> dependency : dependencies) {
                 checkState(dependency.get1().arity == dependency.get2().arity());
@@ -348,22 +348,22 @@ public class Datalog {
         }
 
         private boolean validate(List<Tuple2<Relation, TupleN<Variable>>> oldClauses,
-            Map<Variable, DatalogArgument> currentAssignments,
-            List<Map<Variable, DatalogArgument>> assignments) {
+                                 Map<Variable, DatalogArgument> currentAssignments,
+                                 List<Map<Variable, DatalogArgument>> assignments) {
             List<Tuple2<Relation, TupleN<Variable>>> clauses = new ArrayList<>(oldClauses);
             if (clauses.size() > 0) {
                 Tuple2<Relation, TupleN<Variable>> clause = clauses.get(0);
                 clauses.remove(0);
                 for (TupleN<DatalogArgument> element : clause.get1().elements) {
                     Map<Variable, DatalogArgument> nextAssignments = new LinkedHashMap<>(
-                        currentAssignments);
+                            currentAssignments);
                     if (!putAssignments(nextAssignments, clause, element)) {
                         validate(clauses, nextAssignments, assignments);
                     }
                 }
                 for (TupleN<DatalogArgument> element : clause.get1().newElements) {
                     Map<Variable, DatalogArgument> nextAssignments = new LinkedHashMap<>(
-                        currentAssignments);
+                            currentAssignments);
                     if (!putAssignments(nextAssignments, clause, element)) {
                         validate(clauses, nextAssignments, assignments);
                     }
@@ -384,8 +384,8 @@ public class Datalog {
                     while (atLeastOne) {
                         atLeastOne = false;
                         for (TupleN<DatalogArgument> newElement : clause.get1().newElements.stream()
-                            .filter(objects -> !alreadyAdded.contains(objects))
-                            .collect(Collectors.toCollection(LinkedHashSet::new))) {
+                                .filter(objects -> !alreadyAdded.contains(objects))
+                                .collect(Collectors.toCollection(LinkedHashSet::new))) {
                             cnt = addElements(cnt, rule, clause, newElement);
                             alreadyAdded.add(newElement);
                             atLeastOne = true;
@@ -396,8 +396,8 @@ public class Datalog {
                     while (atLeastOne) {
                         atLeastOne = false;
                         for (TupleN<DatalogArgument> newElement : clause.get1().toAdd.stream()
-                            .filter(objects -> !alreadyAdded.contains(objects))
-                            .collect(Collectors.toCollection(LinkedHashSet::new))) {
+                                .filter(objects -> !alreadyAdded.contains(objects))
+                                .collect(Collectors.toCollection(LinkedHashSet::new))) {
                             cnt = addElements(cnt, rule, clause, newElement);
                             alreadyAdded.add(newElement);
                             atLeastOne = true;
@@ -409,8 +409,8 @@ public class Datalog {
         }
 
         private int addElements(int cnt,
-            Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>> rule,
-            Tuple2<Relation, TupleN<Variable>> clause, TupleN<DatalogArgument> newElement) {
+                                Tuple2<TupleN<Variable>, Set<Tuple2<Relation, TupleN<Variable>>>> rule,
+                                Tuple2<Relation, TupleN<Variable>> clause, TupleN<DatalogArgument> newElement) {
             Map<Variable, DatalogArgument> assignments = new LinkedHashMap<>();
             if (putAssignments(assignments, clause, newElement)) {
                 return cnt;
@@ -427,12 +427,12 @@ public class Datalog {
                     for (Object o : rule.get1()) {
                         Variable v = (Variable) o;
                         checkState(satisfyingAssignment.containsKey(v),
-                            "Not all variables are bound!");
+                                "Not all variables are bound!");
                         arguments.add(satisfyingAssignment.get(v));
                     }
                     TupleN<DatalogArgument> item = TupleN.of(arguments);
                     if (!elements.contains(item) && !newElements.contains(item) && !toAdd.contains(
-                        item)) {
+                            item)) {
                         toAdd.add(item);
                         if (debug) {
                             System.out.println("(" + name + ")Adding " + item);
@@ -446,7 +446,7 @@ public class Datalog {
         }
 
         private boolean putAssignments(Map<Variable, DatalogArgument> assignments,
-            Tuple2<Relation, TupleN<Variable>> validatorClause, TupleN<DatalogArgument> element) {
+                                       Tuple2<Relation, TupleN<Variable>> validatorClause, TupleN<DatalogArgument> element) {
             for (int i = 0; i < element.arity(); i++) {
                 if (assignments.containsKey(validatorClause.get2().get(i))) {
                     if (!assignments.get(validatorClause.get2().get(i)).equals(element.get(i))) {
@@ -463,11 +463,11 @@ public class Datalog {
             if (debug) {
                 StringBuilder stringBuilder = new StringBuilder("[");
                 newElements.forEach(
-                    objects -> stringBuilder.append(objects.toString()).append(", "));
+                        objects -> stringBuilder.append(objects.toString()).append(", "));
 
                 System.out.println(
-                    "(" + name + ") Promoting newElements to elements: " + stringBuilder.append("]")
-                        .toString());
+                        "(" + name + ") Promoting newElements to elements: " + stringBuilder.append("]")
+                                .toString());
             }
             elements.addAll(newElements);
             newElements.clear();
@@ -477,8 +477,8 @@ public class Datalog {
                 toAdd.forEach(objects -> stringBuilder1.append(objects.toString()).append(", "));
 
                 System.out.println(
-                    "(" + name + ") Promoting toAdd to newElements: " + stringBuilder1.append("]")
-                        .toString());
+                        "(" + name + ") Promoting toAdd to newElements: " + stringBuilder1.append("]")
+                                .toString());
             }
             newElements.addAll(toAdd);
             toAdd.clear();

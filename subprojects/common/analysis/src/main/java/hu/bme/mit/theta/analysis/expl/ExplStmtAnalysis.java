@@ -33,7 +33,7 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
     private final TransFunc<ExplState, StmtAction, ExplPrec> transFunc;
 
     private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr,
-        final int maxSuccToEnumerate) {
+                             final int maxSuccToEnumerate) {
         checkNotNull(solver);
         checkNotNull(initExpr);
         this.partialOrd = ExplOrd.getInstance();
@@ -42,7 +42,7 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
     }
 
     public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
-        final int maxSuccToEnumerate) {
+                                          final int maxSuccToEnumerate) {
         return new ExplStmtAnalysis(solver, initExpr, maxSuccToEnumerate);
     }
 

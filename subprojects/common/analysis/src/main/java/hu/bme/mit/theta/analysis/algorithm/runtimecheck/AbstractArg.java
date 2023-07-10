@@ -56,7 +56,7 @@ public class AbstractArg<S extends State, A extends Action, P extends Prec> {
         AbstractArg<S, A, P> that = (AbstractArg<S, A, P>) o;
         // return (states.equals(that.states) && prec.equals(that.prec));
         return (states.equals(that.states) && prec.equals(that.prec) && inEdges.equals(
-            that.inEdges));
+                that.inEdges));
     }
 
     @Override

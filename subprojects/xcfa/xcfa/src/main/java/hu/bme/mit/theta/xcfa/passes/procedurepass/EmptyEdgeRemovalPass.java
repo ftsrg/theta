@@ -32,8 +32,8 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
     public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
         // removing empty loops (empty edge that has the same source and target) - they are completely unnecessary
         List<XcfaEdge> emptyLoops = builder.getEdges().stream().filter(
-            xcfaEdge -> xcfaEdge.getLabels().size() == 0
-                && xcfaEdge.getTarget() == xcfaEdge.getSource()).collect(Collectors.toList());
+                xcfaEdge -> xcfaEdge.getLabels().size() == 0
+                        && xcfaEdge.getTarget() == xcfaEdge.getSource()).collect(Collectors.toList());
         for (XcfaEdge loop : emptyLoops) {
             builder.removeEdge(loop);
         }
@@ -42,14 +42,14 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
         // (there can be more than two between two given locations and there can be more sets of parallel empty edges going out from a given locations)
         for (XcfaLocation loc : builder.getLocs()) {
             List<XcfaEdge> emptyEdges = loc.getOutgoingEdges().stream()
-                .filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).collect(Collectors.toList());
+                    .filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).collect(Collectors.toList());
             List<XcfaEdge> toRemove = new ArrayList<>();
 
             while (!emptyEdges.isEmpty()) {
                 XcfaEdge emptyEdge = emptyEdges.get(0);
                 List<XcfaEdge> parallels = loc.getOutgoingEdges().stream()
-                    .filter(edge -> emptyEdge != edge && emptyEdge.getTarget() == edge.getTarget())
-                    .collect(Collectors.toList());
+                        .filter(edge -> emptyEdge != edge && emptyEdge.getTarget() == edge.getTarget())
+                        .collect(Collectors.toList());
                 emptyEdges.remove(emptyEdge);
                 emptyEdges.removeAll(parallels);
                 toRemove.addAll(parallels);
@@ -65,11 +65,11 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
             found = false;
             for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
                 if (edge.getLabels().size() == 0 && edge.getSource().getOutgoingEdges().size() == 1
-                    && edge.getTarget().getIncomingEdges().size() == 1 &&
-                    !edge.getTarget().isErrorLoc() && !edge.getTarget().isEndLoc()) {
+                        && edge.getTarget().getIncomingEdges().size() == 1 &&
+                        !edge.getTarget().isErrorLoc() && !edge.getTarget().isEndLoc()) {
                     builder.removeEdge(edge);
                     for (XcfaEdge outgoingEdge : new ArrayList<>(
-                        edge.getTarget().getOutgoingEdges())) {
+                            edge.getTarget().getOutgoingEdges())) {
                         builder.removeEdge(outgoingEdge);
                         builder.addEdge(outgoingEdge.withSource(edge.getSource()));
                     }
@@ -81,7 +81,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 
         for (XcfaLocation loc : new ArrayList<>(builder.getLocs())) {
             if (loc.getOutgoingEdges().size() == 0 && loc.getIncomingEdges().size() == 0
-                && !loc.isErrorLoc() && !loc.isEndLoc()) {
+                    && !loc.isErrorLoc() && !loc.isEndLoc()) {
                 builder.removeLoc(loc);
             }
         }
@@ -96,7 +96,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
     // but this way, if the starting location can start more than one sequence, we can easily merge them all
     private XcfaProcedure.Builder removeEmptySequences(XcfaProcedure.Builder builder) {
         List<XcfaEdge> edgesToStartSequenceOn = builder.getEdges().stream()
-            .filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).collect(Collectors.toList());
+                .filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).collect(Collectors.toList());
         while (edgesToStartSequenceOn.size() != 0) {
             XcfaEdge startEdge = edgesToStartSequenceOn.get(0);
             Set<XcfaLocation> sequence = new LinkedHashSet<>();
@@ -110,13 +110,13 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
             while (!sequenceEnd) {
                 XcfaLocation nextLocation = currentEdge.getTarget();
                 if (hasNoLoops(nextLocation) // has no loop edges
-                    && !nextLocation.isEndLoc() // not a final location
-                    && !nextLocation.isErrorLoc() // not an error location
-                    && hasNIncomingEdge(nextLocation, 1)
-                    // has exactly one incoming edge (which is the current edge)
-                    && !sequence.contains(nextLocation) // is not already in the sequence
-                    && hasNOutgoingEdge(nextLocation, 1) // has exactly one outgoing edge
-                    && hasNOutgoingEmptyEdge(nextLocation, 1) // which is empty
+                        && !nextLocation.isEndLoc() // not a final location
+                        && !nextLocation.isErrorLoc() // not an error location
+                        && hasNIncomingEdge(nextLocation, 1)
+                        // has exactly one incoming edge (which is the current edge)
+                        && !sequence.contains(nextLocation) // is not already in the sequence
+                        && hasNOutgoingEdge(nextLocation, 1) // has exactly one outgoing edge
+                        && hasNOutgoingEmptyEdge(nextLocation, 1) // which is empty
                 ) {
                     // the next location can be added to the sequence
                     sequence.add(nextLocation);
@@ -127,10 +127,10 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
                 }
 
                 edgesToStartSequenceOn.remove(
-                    currentEdge); // was checked already, we don't want to check it in the future
+                        currentEdge); // was checked already, we don't want to check it in the future
                 if (!sequenceEnd) { // a location was added and has exactly one outgoing edge, which will be the next edge to check
                     currentEdge = nextLocation.getOutgoingEdges().stream()
-                        .filter(xcfaEdge -> xcfaEdge.getLabels().isEmpty()).findFirst().get();
+                            .filter(xcfaEdge -> xcfaEdge.getLabels().isEmpty()).findFirst().get();
                 }
             }
 
@@ -149,8 +149,8 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 
                 // add the outgoing empty edge of the end location to the starting location
                 builder.addEdge(
-                    XcfaEdge.of(startingLocation, endLocation.getOutgoingEdges().get(0).getTarget(),
-                        endLocation.getOutgoingEdges().get(0).getLabels()));
+                        XcfaEdge.of(startingLocation, endLocation.getOutgoingEdges().get(0).getTarget(),
+                                endLocation.getOutgoingEdges().get(0).getLabels()));
 
                 // remove the old edges and locations
                 for (XcfaEdge edge : incomingEdges) {
@@ -176,7 +176,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 
     private boolean hasNOutgoingEmptyEdge(XcfaLocation loc, int n) {
         return loc.getOutgoingEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0)
-            .count() == n;
+                .count() == n;
     }
 
     private boolean hasNOutgoingEdge(XcfaLocation loc, int n) {
@@ -189,7 +189,7 @@ public class EmptyEdgeRemovalPass extends ProcedurePass {
 
     private boolean hasNoLoops(XcfaLocation loc) {
         return loc.getOutgoingEdges().stream()
-            .noneMatch(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget());
+                .noneMatch(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget());
     }
 
 }

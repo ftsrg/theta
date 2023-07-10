@@ -64,8 +64,8 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
         BigFloat value = FpUtils.fpLitExprToBigFloat(roundingMode, opVal);
         BigInteger bigInteger = value.toBigInteger();
         BigFloat round = value.round(
-            new BinaryMathContext(bigInteger.bitLength(), opVal.getType().getExponent(),
-                FpUtils.getMathContextRoundingMode(roundingMode)));
+                new BinaryMathContext(bigInteger.bitLength(), opVal.getType().getExponent(),
+                        FpUtils.getMathContextRoundingMode(roundingMode)));
         round = round.round(FpUtils.getMathContext(getType(), roundingMode));
         FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(round, this.getType());
         return fpLitExpr;

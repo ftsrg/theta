@@ -84,7 +84,7 @@ public final class FpLtExpr extends LtExpr<FpType> {
         } else if (obj instanceof FpLtExpr) {
             final FpLtExpr that = (FpLtExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

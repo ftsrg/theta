@@ -34,30 +34,30 @@ final class ExprAtomCollector {
 
     private static final Collection<Class<?>> CONNECTIVES = ImmutableSet.<Class<?>>builder()
 
-        .add(NotExpr.class)
+            .add(NotExpr.class)
 
-        .add(ImplyExpr.class)
+            .add(ImplyExpr.class)
 
-        .add(IffExpr.class)
+            .add(IffExpr.class)
 
-        .add(AndExpr.class)
+            .add(AndExpr.class)
 
-        .add(OrExpr.class)
+            .add(OrExpr.class)
 
-        // .add(IteExpr.class)
+            // .add(IteExpr.class)
 
-        .add(PrimeExpr.class)
+            .add(PrimeExpr.class)
 
-        .build();
+            .build();
 
     private ExprAtomCollector() {
     }
 
     static void collectAtoms(final Expr<BoolType> expr,
-        final Collection<Expr<BoolType>> collectTo) {
+                             final Collection<Expr<BoolType>> collectTo) {
         if (CONNECTIVES.contains(expr.getClass())) {
             expr.getOps().stream()
-                .forEach(op -> collectAtoms(TypeUtils.cast(op, Bool()), collectTo));
+                    .forEach(op -> collectAtoms(TypeUtils.cast(op, Bool()), collectTo));
         } else {
             collectTo.add(expr);
         }

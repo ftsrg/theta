@@ -48,7 +48,7 @@ public final class BmcTrace<S extends ExprState, A extends StmtAction> {
     private final List<Stmt> statements;
 
     private BmcTrace(final List<? extends S> states, final List<? extends A> actions,
-        final List<Stmt> statements) {
+                     final List<Stmt> statements) {
         checkNotNull(states);
         checkNotNull(actions);
         checkArgument(!states.isEmpty(), "A trace must contain at least one state.");
@@ -60,9 +60,9 @@ public final class BmcTrace<S extends ExprState, A extends StmtAction> {
 
     private BmcTrace(final List<? extends S> states, final List<? extends A> actions) {
         this(states,
-            actions,
-            actions.stream().map(a -> a.getStmts().stream()).reduce(Streams::concat)
-                .map(s -> s.collect(Collectors.toList())).orElse(List.of()));
+                actions,
+                actions.stream().map(a -> a.getStmts().stream()).reduce(Streams::concat)
+                        .map(s -> s.collect(Collectors.toList())).orElse(List.of()));
     }
 
     /**
@@ -70,7 +70,7 @@ public final class BmcTrace<S extends ExprState, A extends StmtAction> {
      * one less than the number of states.
      */
     public static <S extends ExprState, A extends StmtAction> BmcTrace<S, A> of(
-        final List<? extends S> states, final List<? extends A> actions) {
+            final List<? extends S> states, final List<? extends A> actions) {
         return new BmcTrace<>(states, actions);
     }
 

@@ -49,20 +49,20 @@ public final class SExpTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {A, atom(A), A},
+                {A, atom(A), A},
 
-            {of(), list(), "()"},
+                {of(), list(), "()"},
 
-            {of(A), list(atom(A)), "(A)"},
+                {of(A), list(atom(A)), "(A)"},
 
-            {of(A, B), list(atom(A), atom(B)), "(A B)"},
+                {of(A, B), list(atom(A), atom(B)), "(A B)"},
 
-            {of(A, B, C), list(atom(A), atom(B), atom(C)), "(A B C)"},
+                {of(A, B, C), list(atom(A), atom(B), atom(C)), "(A B C)"},
 
-            {of(A, of(B, C)), list(atom(A), list(atom(B), atom(C))), "(A (B C))"},
+                {of(A, of(B, C)), list(atom(A), list(atom(B), atom(C))), "(A (B C))"},
 
-            {of(A, B, of(C, of(A))), list(atom(A), atom(B), list(atom(C), list(atom(A)))),
-                "(A B (C (A)))"}
+                {of(A, B, of(C, of(A))), list(atom(A), atom(B), list(atom(C), list(atom(A)))),
+                        "(A B (C (A)))"}
 
         });
     }

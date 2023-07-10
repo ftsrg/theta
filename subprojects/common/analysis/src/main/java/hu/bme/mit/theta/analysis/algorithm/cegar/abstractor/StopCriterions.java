@@ -53,36 +53,36 @@ public final class StopCriterions {
      * @return Criterion that stops after a given number of counterexamples
      */
     public static <S extends State, A extends Action> StopCriterion<S, A> atLeastNCexs(
-        final int n) {
+            final int n) {
         return new AtLeastNCexs<>(n);
     }
 
     private static final class FirstCex<S extends State, A extends Action> implements
-        StopCriterion<S, A> {
+            StopCriterion<S, A> {
 
         @Override
         public boolean canStop(final ARG<S, A> arg) {
             return arg.getUnsafeNodes().findAny().isPresent() && arg.getCexs()
-                .anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
+                    .anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
         }
 
         @Override
         public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
             return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded())
-                && arg.getCexs()
-                .anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
+                    && arg.getCexs()
+                    .anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
         }
 
         @Override
         public String toString() {
             return Utils.lispStringBuilder(StopCriterion.class.getSimpleName())
-                .add(getClass().getSimpleName())
-                .toString();
+                    .add(getClass().getSimpleName())
+                    .toString();
         }
     }
 
     private static final class FullExploration<S extends State, A extends Action> implements
-        StopCriterion<S, A> {
+            StopCriterion<S, A> {
 
         @Override
         public boolean canStop(final ARG<S, A> arg) {
@@ -97,13 +97,13 @@ public final class StopCriterions {
         @Override
         public String toString() {
             return Utils.lispStringBuilder(StopCriterion.class.getSimpleName())
-                .add(getClass().getSimpleName())
-                .toString();
+                    .add(getClass().getSimpleName())
+                    .toString();
         }
     }
 
     private static final class AtLeastNCexs<S extends State, A extends Action> implements
-        StopCriterion<S, A> {
+            StopCriterion<S, A> {
 
         private final int n;
 
@@ -127,8 +127,8 @@ public final class StopCriterions {
         @Override
         public String toString() {
             return Utils.lispStringBuilder(StopCriterion.class.getSimpleName())
-                .add(getClass().getSimpleName())
-                .add("N = " + n).toString();
+                    .add(getClass().getSimpleName())
+                    .add("N = " + n).toString();
         }
     }
 }

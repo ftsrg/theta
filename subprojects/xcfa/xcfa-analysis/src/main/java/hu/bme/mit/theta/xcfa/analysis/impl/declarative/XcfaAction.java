@@ -35,7 +35,7 @@ public class XcfaAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction
     private final XcfaLocation target;
 
     protected XcfaAction(final Integer process, final XcfaLocation source,
-        final XcfaLocation target, final List<XcfaLabel> labels) {
+                         final XcfaLocation target, final List<XcfaLabel> labels) {
         this.process = checkNotNull(process);
         this.source = checkNotNull(source);
         this.target = checkNotNull(target);
@@ -70,7 +70,7 @@ public class XcfaAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction
 
     public boolean touchesGlobal() {
         return labels.stream().anyMatch(
-            label -> LabelUtils.isGlobal(label, source.getParent().getParent().getParent()));
+                label -> LabelUtils.isGlobal(label, source.getParent().getParent().getParent()));
     }
 
     public Integer getProcess() {

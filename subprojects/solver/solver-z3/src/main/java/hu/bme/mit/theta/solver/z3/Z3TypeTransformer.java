@@ -62,25 +62,25 @@ final class Z3TypeTransformer {
         } else if (type instanceof BvType) {
             final BvType bvType = (BvType) type;
             final Optional<com.microsoft.z3.BitVecSort> bvSort = bvSorts.stream()
-                .filter(sort -> sort.getSize() == bvType.getSize()).findAny();
+                    .filter(sort -> sort.getSize() == bvType.getSize()).findAny();
             if (bvSort.isPresent()) {
                 return bvSort.get();
             } else {
                 final com.microsoft.z3.BitVecSort newBvSort = context.mkBitVecSort(
-                    bvType.getSize());
+                        bvType.getSize());
                 bvSorts.add(newBvSort);
                 return newBvSort;
             }
         } else if (type instanceof FpType) {
             final FpType fpType = (FpType) type;
             final Optional<com.microsoft.z3.FPSort> fpSort = fpSorts.stream().filter(
-                sort -> sort.getEBits() == fpType.getExponent()
-                    && sort.getSBits() == fpType.getSignificand()).findAny();
+                    sort -> sort.getEBits() == fpType.getExponent()
+                            && sort.getSBits() == fpType.getSignificand()).findAny();
             if (fpSort.isPresent()) {
                 return fpSort.get();
             } else {
                 final com.microsoft.z3.FPSort newFpSort = context.mkFPSort(fpType.getExponent(),
-                    fpType.getSignificand());
+                        fpType.getSignificand());
                 fpSorts.add(newFpSort);
                 return newFpSort;
             }
@@ -91,7 +91,7 @@ final class Z3TypeTransformer {
             return context.mkArraySort(indexSort, elemSort);
         } else {
             throw new UnsupportedOperationException(
-                "Unsupporte type: " + type.getClass().getSimpleName());
+                    "Unsupporte type: " + type.getClass().getSimpleName());
         }
     }
 

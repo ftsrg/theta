@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 public final class PredTransFunc<A extends ExprAction> implements
-    TransFunc<PredState, A, PredPrec> {
+        TransFunc<PredState, A, PredPrec> {
 
     private final PredAbstractor predAbstractor;
 
@@ -36,21 +36,21 @@ public final class PredTransFunc<A extends ExprAction> implements
     }
 
     public static <A extends ExprAction> PredTransFunc<A> create(
-        final PredAbstractor predAbstractor) {
+            final PredAbstractor predAbstractor) {
         return new PredTransFunc<A>(predAbstractor);
     }
 
     @Override
     public Collection<? extends PredState> getSuccStates(final PredState state,
-        final ExprAction action,
-        final PredPrec prec) {
+                                                         final ExprAction action,
+                                                         final PredPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
 
         final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
-            And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
-            action.nextIndexing());
+                And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
+                action.nextIndexing());
         return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
     }
 

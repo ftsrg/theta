@@ -82,7 +82,7 @@ public final class RatLtExpr extends LtExpr<RatType> {
         } else if (obj instanceof RatLtExpr) {
             final RatLtExpr that = (RatLtExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

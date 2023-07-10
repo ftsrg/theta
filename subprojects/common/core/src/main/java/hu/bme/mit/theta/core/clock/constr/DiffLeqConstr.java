@@ -33,7 +33,7 @@ public final class DiffLeqConstr extends DiffConstr {
     private volatile RatLeqExpr expr = null;
 
     DiffLeqConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar,
-        final int bound) {
+                  final int bound) {
         super(leftVar, rightVar, bound);
     }
 
@@ -51,7 +51,7 @@ public final class DiffLeqConstr extends DiffConstr {
 
     @Override
     public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-        final P param) {
+                           final P param) {
         return visitor.visit(this, param);
     }
 
@@ -62,7 +62,7 @@ public final class DiffLeqConstr extends DiffConstr {
         } else if (obj instanceof DiffLeqConstr) {
             final DiffLeqConstr that = (DiffLeqConstr) obj;
             return this.getBound() == that.getBound() && this.getLeftVar().equals(that.getLeftVar())
-                && this.getRightVar().equals(that.getRightVar());
+                    && this.getRightVar().equals(that.getRightVar());
         } else {
             return false;
         }

@@ -26,7 +26,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> implements
-    Expr<ExprType> {
+        Expr<ExprType> {
 
     private final Expr<OpType> leftOp;
     private final Expr<OpType> rightOp;
@@ -84,7 +84,7 @@ public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> imp
     }
 
     public abstract BinaryExpr<OpType, ExprType> with(final Expr<OpType> leftOp,
-        final Expr<OpType> rightOp);
+                                                      final Expr<OpType> rightOp);
 
     public abstract BinaryExpr<OpType, ExprType> withLeftOp(final Expr<OpType> leftOp);
 

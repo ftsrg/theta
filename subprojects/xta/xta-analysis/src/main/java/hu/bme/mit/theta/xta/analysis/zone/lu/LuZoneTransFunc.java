@@ -36,20 +36,20 @@ final class LuZoneTransFunc<A extends Action> implements TransFunc<LuZoneState, 
     }
 
     public static <A extends Action> LuZoneTransFunc<A> create(
-        final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+            final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
         return new LuZoneTransFunc<>(transFunc);
     }
 
     @Override
     public Collection<LuZoneState> getSuccStates(final LuZoneState state, final A action,
-        final ZonePrec prec) {
+                                                 final ZonePrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
 
         final ZoneState subState = state.getZone();
         final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState,
-            action, prec);
+                action, prec);
 
         if (subSuccStates.isEmpty()) {
             final LuZoneState succState = LuZoneState.of(ZoneState.bottom(), BoundFunc.top());

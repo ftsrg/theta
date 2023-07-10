@@ -82,7 +82,7 @@ public final class BvURemExpr extends RemExpr<BvType> {
         } else if (obj instanceof BvURemExpr) {
             final BvURemExpr that = (BvURemExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

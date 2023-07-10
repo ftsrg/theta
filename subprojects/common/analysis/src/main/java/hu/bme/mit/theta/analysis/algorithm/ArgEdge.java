@@ -35,8 +35,8 @@ public final class ArgEdge<S extends State, A extends Action> {
         }
         ArgEdge<?, ?> argEdge = (ArgEdge<?, ?>) o;
         return Objects.equals(source.getState(), argEdge.source.getState())
-            && Objects.equals(target.getState(), argEdge.target.getState())
-            && Objects.equals(action.toString(), argEdge.action.toString());
+                && Objects.equals(target.getState(), argEdge.target.getState())
+                && Objects.equals(action.toString(), argEdge.action.toString());
     }
 
     @Override

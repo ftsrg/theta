@@ -47,7 +47,7 @@ public final class XtaLuZoneUtils {
     ////
 
     private static BoundFunc preForBasicAction(final BoundFunc boundFunction,
-        final BasicXtaAction action) {
+                                               final BasicXtaAction action) {
         final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -62,7 +62,7 @@ public final class XtaLuZoneUtils {
     }
 
     private static BoundFunc preForBinaryAction(final BoundFunc boundFunction,
-        final BinaryXtaAction action) {
+                                                final BinaryXtaAction action) {
         final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -82,7 +82,7 @@ public final class XtaLuZoneUtils {
     ////
 
     private static void applyInverseUpdates(final BoundFunc.Builder succStateBuilder,
-        final Edge edge) {
+                                            final Edge edge) {
         for (final Update update : edge.getUpdates()) {
             if (update.isClockUpdate()) {
                 final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
@@ -101,7 +101,7 @@ public final class XtaLuZoneUtils {
     }
 
     private static void applyInvariants(final BoundFunc.Builder succStateBuilder,
-        final List<Loc> targetLocs) {
+                                        final List<Loc> targetLocs) {
         for (final Loc loc : targetLocs) {
             for (final Guard invar : loc.getInvars()) {
                 if (invar.isClockGuard()) {

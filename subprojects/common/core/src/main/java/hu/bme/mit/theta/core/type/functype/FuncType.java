@@ -36,7 +36,7 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
     }
 
     public static <ParamType extends Type, ResultType extends Type> FuncType<ParamType, ResultType> of(
-        final ParamType paramType, final ResultType resultType) {
+            final ParamType paramType, final ResultType resultType) {
         return new FuncType<>(paramType, resultType);
     }
 
@@ -67,7 +67,7 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
         } else if (obj instanceof FuncType<?, ?>) {
             final FuncType<?, ?> that = (FuncType<?, ?>) obj;
             return this.getParamType().equals(that.getParamType()) && this.getResultType()
-                .equals(that.getResultType());
+                    .equals(that.getResultType());
         } else {
             return false;
         }

@@ -67,18 +67,18 @@ public class PnmlToXSTS {
             for (PnmlArc inArc : transition.getInArcs()) {
                 final PnmlNode sourceNode = inArc.getSourceNode();
                 checkArgument(sourceNode instanceof PnmlPlace,
-                    "Transition %s has an illegal source", transition.getId(), sourceNode.getId());
+                        "Transition %s has an illegal source", transition.getId(), sourceNode.getId());
                 final PnmlPlace sourcePlace = (PnmlPlace) sourceNode;
 
                 final VarDecl<IntType> placeVar = placeIdToVar.get(sourcePlace.getId());
                 final int weight = inArc.getWeight();
 
                 final Stmt enoughTokens = AssumeStmt.of(
-                    GeqExpr.create2(placeVar.getRef(), Int(weight)));
+                        GeqExpr.create2(placeVar.getRef(), Int(weight)));
                 stmts.add(enoughTokens);
 
                 final Stmt removeTokens = AssignStmt.of(placeVar,
-                    Sub(placeVar.getRef(), Int(weight)));
+                        Sub(placeVar.getRef(), Int(weight)));
                 stmts.add(removeTokens);
             }
 
@@ -86,15 +86,15 @@ public class PnmlToXSTS {
             for (PnmlArc outArc : transition.getOutArcs()) {
                 final PnmlNode targetNode = outArc.getTargetNode();
                 checkArgument(targetNode instanceof PnmlPlace,
-                    "Transition %s has an illegal target %s", transition.getId(),
-                    targetNode.getId());
+                        "Transition %s has an illegal target %s", transition.getId(),
+                        targetNode.getId());
                 final PnmlPlace targetPlace = (PnmlPlace) targetNode;
 
                 final VarDecl<IntType> placeVar = placeIdToVar.get(targetPlace.getId());
                 final int weight = outArc.getWeight();
 
                 final Stmt placeTokens = AssignStmt.of(placeVar,
-                    Add(placeVar.getRef(), Int(weight)));
+                        Add(placeVar.getRef(), Int(weight)));
                 stmts.add(placeTokens);
             }
 
@@ -119,13 +119,13 @@ public class PnmlToXSTS {
         if (markingMatcher.matches()) {
             final String[] valueStrings = property.split("\\s");
             final Integer[] values = Arrays.stream(valueStrings).map(Integer::parseInt)
-                .toArray(Integer[]::new);
+                    .toArray(Integer[]::new);
 
             checkArgument(values.length == net.getPlaces().size());
             final List<Expr<BoolType>> exprs = new ArrayList<>();
             for (int i = 0; i < values.length; i++) {
                 exprs.add(
-                    Eq(placeIdToVar.get(net.getPlaces().get(i).getId()).getRef(), Int(values[i])));
+                        Eq(placeIdToVar.get(net.getPlaces().get(i).getId()).getRef(), Int(values[i])));
             }
             propExpr = Not(And(exprs));
         } else {
@@ -153,7 +153,7 @@ public class PnmlToXSTS {
             }
         }
         checkArgument(startingCurlyIndex > -1 && endingCurlyIndex < propertyFile.length(),
-            "Illegally formatted property %s", propertyFile);
+                "Illegally formatted property %s", propertyFile);
         return propertyFile.substring(startingCurlyIndex, endingCurlyIndex);
     }
 

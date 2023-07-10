@@ -60,16 +60,16 @@ public class ReferenceToMemory extends ProcedurePass {
     }
 
     private <P extends Type> XcfaProcedure.Builder handleWithGenerics(
-        XcfaProcedure.Builder builder) {
+            XcfaProcedure.Builder builder) {
         Set<RefExpr<?>> referencedVariables = FrontendMetadata.lookupMetadata("referenced", true)
-            .stream().map(o -> (RefExpr<?>) o).collect(Collectors.toSet());
+                .stream().map(o -> (RefExpr<?>) o).collect(Collectors.toSet());
         Expr<?> unifiedMemoryMap = null;
         CComplexType fitsall = CComplexType.getFitsall();
         CComplexType ptr = new CPointer(null, null);
         VarDecl<?> placeholderVariable = Var("placeholder", ptr.getSmtType());
 
         Set<RefExpr<?>> dereferenced = FrontendMetadata.lookupMetadata("dereferenced", true)
-            .stream().map(o -> (RefExpr<?>) o).collect(Collectors.toSet());
+                .stream().map(o -> (RefExpr<?>) o).collect(Collectors.toSet());
         if (dereferenced.size() > 0 && ArchitectureConfig.multiThreading) {
             throw new UnsupportedOperationException("Pointers and multithreading do not yet mix!");
         }
@@ -82,32 +82,32 @@ public class ReferenceToMemory extends ProcedurePass {
             Expr<?> expr;
 
             Optional<Object> ptrValueOpt = FrontendMetadata.getMetadataValue(referencedVariable,
-                "ptrValue");
+                    "ptrValue");
             checkState(ptrValueOpt.isPresent() && ptrValueOpt.get() instanceof Integer,
-                "pointer value must be integer!");
+                    "pointer value must be integer!");
             int ptrValue = (int) ptrValueOpt.get();
             //noinspection unchecked
             LitExpr<P> ptrExpr = (LitExpr<P>) ptr.getValue(String.valueOf(ptrValue));
             Type type = CComplexType.getType(referencedVariable).getSmtType();
 
             Optional<Object> dereferencedOpt = FrontendMetadata.getMetadataValue(referencedVariable,
-                "refSubstitute");
+                    "refSubstitute");
             if (dereferencedOpt.isPresent() && dereferencedOpt.get() instanceof VarDecl) {
                 //noinspection unchecked
                 VarDecl<ArrayType<P, ?>> memoryMap = (VarDecl<ArrayType<P, ?>>) dereferencedOpt.get();
                 expr = ArrayReadExpr.of(
-                    cast(memoryMap.getRef(), ArrayType.of(ptr.getSmtType(), type)),
-                    cast(ptrExpr, ptr.getSmtType()));
+                        cast(memoryMap.getRef(), ArrayType.of(ptr.getSmtType(), type)),
+                        cast(ptrExpr, ptr.getSmtType()));
                 dereferencedLut.put(referencedVariable.getDecl(), Tuple2.of(memoryMap, ptrExpr));
             } else {
                 checkState(dereferencedOpt.isEmpty(),
-                    "Dereferenced variable not annotated with a variable!");
+                        "Dereferenced variable not annotated with a variable!");
                 expr = referencedVariable;
             }
 
             if (unifiedMemoryMap != null) {
                 unifiedMemoryMap = Ite(Eq(ptrExpr, placeholderVariable.getRef()),
-                    fitsall.castTo(expr), unifiedMemoryMap);
+                        fitsall.castTo(expr), unifiedMemoryMap);
             } else {
                 unifiedMemoryMap = fitsall.castTo(expr);
             }
@@ -121,7 +121,7 @@ public class ReferenceToMemory extends ProcedurePass {
             boolean found = false;
             for (XcfaLabel stmt : edge.getLabels()) {
                 found = handleStmt(unifiedMemoryMap, ptr, dereferencedLut, newStmts, found, stmt,
-                    placeholderVariable);
+                        placeholderVariable);
             }
             if (found) {
                 builder.removeEdge(edge);
@@ -140,7 +140,7 @@ public class ReferenceToMemory extends ProcedurePass {
                     FrontendMetadata.create(o, "dereferenced", true);
                     ;
                     FrontendMetadata.create(o, "refSubstitute",
-                        FrontendMetadata.getMetadataValue(refExpr, "refSubstitute").get());
+                            FrontendMetadata.getMetadataValue(refExpr, "refSubstitute").get());
                     ;
                     addDereferencedToPointers((RefExpr<?>) o);
                 }
@@ -150,18 +150,18 @@ public class ReferenceToMemory extends ProcedurePass {
     }
 
     private <P extends Type> boolean handleStmt(Expr<?> memoryMap, CComplexType ptr,
-        Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> dereferencedLut,
-        List<XcfaLabel> newStmts, boolean found, XcfaLabel stmt, VarDecl<?> placeholderVariable) {
+                                                Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> dereferencedLut,
+                                                List<XcfaLabel> newStmts, boolean found, XcfaLabel stmt, VarDecl<?> placeholderVariable) {
         Optional<? extends XcfaLabel> newStmt = XcfaStmtUtils.replaceExprsInStmt(stmt, expr -> {
             if (expr instanceof Dereference) {
                 Optional<? extends Expr<?>> replaced = ExpressionReplacer.replace(memoryMap,
-                    typeExpr -> {
-                        if (typeExpr.equals(placeholderVariable.getRef())) {
-                            //noinspection unchecked
-                            return Optional.of((Expr<Type>) ((Dereference<?, ?>) expr).getOp());
-                        }
-                        return Optional.empty();
-                    });
+                        typeExpr -> {
+                            if (typeExpr.equals(placeholderVariable.getRef())) {
+                                //noinspection unchecked
+                                return Optional.of((Expr<Type>) ((Dereference<?, ?>) expr).getOp());
+                            }
+                            return Optional.empty();
+                        });
                 Expr<?> newExpr;
                 if (replaced.isEmpty()) {
                     newExpr = memoryMap;

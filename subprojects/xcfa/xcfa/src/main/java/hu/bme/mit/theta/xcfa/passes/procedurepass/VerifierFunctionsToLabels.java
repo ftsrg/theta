@@ -38,9 +38,9 @@ public class VerifierFunctionsToLabels extends ProcedurePass {
     public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
         for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
             Optional<XcfaLabel> e = edge.getLabels().stream().filter(
-                stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel
-                    && ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure()
-                    .startsWith("__VERIFIER")).findAny();
+                    stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel
+                            && ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure()
+                            .startsWith("__VERIFIER")).findAny();
             if (e.isPresent()) {
                 List<XcfaLabel> collect = new ArrayList<>();
                 for (XcfaLabel label : edge.getLabels()) {
@@ -55,9 +55,9 @@ public class VerifierFunctionsToLabels extends ProcedurePass {
                                 break;
                             default:
                                 if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON
-                                    && !procName.startsWith("__VERIFIER_nondet")) {
+                                        && !procName.startsWith("__VERIFIER_nondet")) {
                                     throw new UnsupportedOperationException(
-                                        "Not yet supported: " + procName);
+                                            "Not yet supported: " + procName);
                                 }
                                 collect.add(label);
                                 break;

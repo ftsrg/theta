@@ -42,7 +42,7 @@ public class FrontendMetadata {
 
     public static <X> Optional<Object> getMetadataValue(X owner, String key) {
         return Optional.ofNullable(
-            lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of()).get(key));
+                lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of()).get(key));
     }
 
     public static <T, X> void create(X owner, String key, T value) {
@@ -52,7 +52,7 @@ public class FrontendMetadata {
         set.add(owner);
         lookupOwner.put(tup, set);
         Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(
-            Tuple2.of(owner, getHashCode(owner)), new LinkedHashMap<>());
+                Tuple2.of(owner, getHashCode(owner)), new LinkedHashMap<>());
         keyvalues.put(key, value);
         lookupKeyValue.put(Tuple2.of(owner, getHashCode(owner)), keyvalues);
     }

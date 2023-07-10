@@ -48,7 +48,7 @@ public final class CpuTimeKeeper {
         try {
             Process process = Runtime.getRuntime().exec("ps --ppid " + pid + " -o %p%x");
             BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
+                    new InputStreamReader(process.getInputStream()));
             String line = "";
             String cputimeString = reader.readLine(); // skip the TIME header
             while ((cputimeString = reader.readLine()) != null) {
@@ -68,9 +68,9 @@ public final class CpuTimeKeeper {
         long cputime = 0;
         try {
             Process process = Runtime.getRuntime()
-                .exec("ps --pid " + pid + " --ppid " + pid + " -o %p%x");
+                    .exec("ps --pid " + pid + " --ppid " + pid + " -o %p%x");
             BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
+                    new InputStreamReader(process.getInputStream()));
             String line = "";
             String cputimeString = reader.readLine(); // skip the TIME header
             while ((cputimeString = reader.readLine()) != null) {
@@ -92,7 +92,7 @@ public final class CpuTimeKeeper {
         long pid = Long.parseLong(split[0]);
         String[] timeSplit = split[1].split(":");
         long time = Long.parseLong(timeSplit[0]) * 3600 + Long.parseLong(timeSplit[1]) * 60
-            + Long.parseLong(timeSplit[2]);
+                + Long.parseLong(timeSplit[2]);
 
         return Tuple2.of(pid, time);
     }

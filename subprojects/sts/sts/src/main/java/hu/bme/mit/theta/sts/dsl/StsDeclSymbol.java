@@ -53,7 +53,7 @@ final class StsDeclSymbol implements ScopedSymbol {
     }
 
     public static StsDeclSymbol create(final StsSpecSymbol enclosingScope,
-        final StsDeclContext tcfaDeclCtx) {
+                                       final StsDeclContext tcfaDeclCtx) {
         return new StsDeclSymbol(enclosingScope, tcfaDeclCtx);
     }
 
@@ -82,12 +82,12 @@ final class StsDeclSymbol implements ScopedSymbol {
     ////
 
     public StsDefScope instantiate(final Substitution assignment,
-        final List<? extends Expr<?>> args) {
+                                   final List<? extends Expr<?>> args) {
         final List<Expr<?>> simplifiedArgs = ExprUtils.simplifyAll(args);
         final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
         final Substitution newAssignment = NestedSubstitution.create(assignment, binding);
         final StsDefScope stsDefScope = StsCreator.createSts(this, newAssignment,
-            stsDeclContext.def);
+                stsDeclContext.def);
         return stsDefScope;
     }
 

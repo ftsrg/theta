@@ -152,8 +152,8 @@ public class NamedType extends CSimpleType {
             default:
                 if (!cSimpleType.isTypedef()) {
                     throw new RuntimeException(
-                        "namedType should be short or long or type specifier, instead it is "
-                            + namedType);
+                            "namedType should be short or long or type specifier, instead it is "
+                                    + namedType);
                 }
                 break;
         }

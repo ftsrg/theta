@@ -53,8 +53,8 @@ public class AssignFunctionParam extends ProcessPass {
                     if (label instanceof XcfaLabel.ProcedureCallXcfaLabel) {
                         XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) label;
                         Optional<XcfaProcedure.Builder> procedureOpt = builtBuilder.getProcedures()
-                            .stream().filter(xcfaProcedure -> xcfaProcedure.getName()
-                                .equals(callLabel.getProcedure())).findAny();
+                                .stream().filter(xcfaProcedure -> xcfaProcedure.getName()
+                                        .equals(callLabel.getProcedure())).findAny();
                         procedureOpt.ifPresent(calledProcedure -> {
                             assignParams(procedure, callLabel, calledProcedure);
                             if (calledProcedure.getRetType() != null) {
@@ -68,7 +68,7 @@ public class AssignFunctionParam extends ProcessPass {
             edgesToRemove.forEach(procedure::removeEdge);
             edgesToAdd.forEach(procedure::addEdge);
             procedureCalls.forEach((calledProcedure, callLabels) -> callLabels.forEach(
-                calledProcedure::addParamInitLoc));
+                    calledProcedure::addParamInitLoc));
         }
 
         return builtBuilder;
@@ -98,40 +98,40 @@ public class AssignFunctionParam extends ProcessPass {
     }
 
     private void assignParams(XcfaProcedure.Builder callingProcedure,
-        XcfaLabel.ProcedureCallXcfaLabel callLabel, XcfaProcedure.Builder calledProcedure) {
+                              XcfaLabel.ProcedureCallXcfaLabel callLabel, XcfaProcedure.Builder calledProcedure) {
         Map<XcfaLabel.ProcedureCallXcfaLabel, XcfaProcedure.Builder> callLabels = procedureCalls.getOrDefault(
-            calledProcedure, new HashMap<>());
+                calledProcedure, new HashMap<>());
         callLabels.put(callLabel, callingProcedure);
         procedureCalls.put(calledProcedure, callLabels);
     }
 
     private void assignReturns(XcfaProcedure.Builder procedure, XcfaEdge edge,
-        List<XcfaLabel> retStmts) {
+                               List<XcfaLabel> retStmts) {
         XcfaLocation middle = XcfaLocation.uniqeCopyOf(edge.getSource());
         procedure.addLoc(middle);
         edgesToRemove.add(edge);
         edgesToAdd.add(XcfaEdge.of(edge.getSource(), middle, edge.getLabels()));
         XcfaEdge retEdge = XcfaEdge.of(middle, edge.getTarget(), retStmts);
         FrontendMetadata.lookupMetadata(edge)
-            .forEach((s, o) -> FrontendMetadata.create(retEdge, s, o));
+                .forEach((s, o) -> FrontendMetadata.create(retEdge, s, o));
         edgesToAdd.add(retEdge);
     }
 
     private List<XcfaLabel> getRetStmts(XcfaLabel.ProcedureCallXcfaLabel callLabel,
-        XcfaProcedure.Builder calledProcedure) {
+                                        XcfaProcedure.Builder calledProcedure) {
         List<XcfaLabel> retStmts = new ArrayList<>();
         int paramCnt = 0;
         for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : calledProcedure.getParams()
-            .entrySet()) {
+                .entrySet()) {
             VarDecl<?> varDecl = entry.getKey();
             XcfaProcedure.Direction direction = entry.getValue();
             if (direction != XcfaProcedure.Direction.IN) {
                 Expr<?> expr = callLabel.getParams().get(paramCnt);
                 checkState(
-                    expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>);
+                        expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>);
                 retStmts.add(Stmt(
-                    Assign(cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), varDecl.getType()),
-                        cast(varDecl.getRef(), varDecl.getType()))));
+                        Assign(cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), varDecl.getType()),
+                                cast(varDecl.getRef(), varDecl.getType()))));
             }
             ++paramCnt;
         }

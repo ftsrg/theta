@@ -31,7 +31,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
         }
 
         public static <S extends State, A extends Action> Succesful<S, A> succesful(
-            final Trace<S, A> trace) {
+                final Trace<S, A> trace) {
             return new Succesful<>(trace);
         }
 

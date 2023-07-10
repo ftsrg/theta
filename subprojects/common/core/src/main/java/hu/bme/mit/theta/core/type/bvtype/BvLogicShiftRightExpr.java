@@ -80,7 +80,7 @@ public final class BvLogicShiftRightExpr extends BinaryExpr<BvType, BvType> {
         } else if (obj instanceof BvLogicShiftRightExpr) {
             final BvLogicShiftRightExpr that = (BvLogicShiftRightExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

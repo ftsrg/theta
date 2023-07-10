@@ -97,7 +97,7 @@ public final class OutputHandler {
         // create the directory only, if needed
         if (outputConfiguration == OutputOptions.OUTPUT_RESULTS) {
             File resultsDir = new File(
-                model + "-" + LocalDateTime.now().toString().replace(":", "-") + "-results");
+                    model + "-" + LocalDateTime.now().toString().replace(":", "-") + "-results");
             boolean bool = resultsDir.mkdir();
             if (!bool) {
                 throw new RuntimeException("Couldn't create results directory");
@@ -113,15 +113,15 @@ public final class OutputHandler {
     }
 
     public void writeCounterexamples(SafetyResult<?, ?> status, String refinementSolver)
-        throws Exception {
+            throws Exception {
         if (outputConfiguration == OutputOptions.NONE) {
             return;
         }
         SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
         final Trace<XcfaState<?>, XcfaAction> trace = (Trace<XcfaState<?>, XcfaAction>) status.asUnsafe()
-            .getTrace();
+                .getTrace();
         final Trace<XcfaState<ExplState>, XcfaAction> concrTrace = XcfaTraceConcretizer.concretize(
-            trace, cexSolverFactory);
+                trace, cexSolverFactory);
 
         if (outputConfiguration == OutputOptions.WITNESS_ONLY) {
             Path workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
@@ -130,7 +130,7 @@ public final class OutputHandler {
             Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
             // TODO make WitnessWriter singleton
             WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(),
-                "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
+                    "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
             try {
                 ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
             } catch (FileNotFoundException e) {
@@ -154,14 +154,14 @@ public final class OutputHandler {
             Graph witnessGraph = XcfaTraceToWitness.buildWitness(concrTrace);
             // TODO make WitnessWriter singleton
             WitnessWriter ww = WitnessWriter.createViolationWitnessWriter(model.getAbsolutePath(),
-                "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
+                    "CHECK( init(main()), LTL(G ! call(reach_error())) )", false);
             try {
                 ww.writeFile(witnessGraph, witnessfile.getAbsolutePath());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
             WitnessGraphvizWriter.getInstance()
-                .writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
+                    .writeFile(witnessGraph, dotwitnessfile.getAbsolutePath());
         }
         CpuTimeKeeper.saveSolverTimes();
         SolverManager.closeAll();
@@ -177,61 +177,61 @@ public final class OutputHandler {
         String taskHash = WitnessWriter.createTaskHash(model.getAbsolutePath());
         StringBuilder dummyWitness = new StringBuilder();
         dummyWitness.append(
-                "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
-            .append(System.lineSeparator()).append(
-                "<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>")
-            .append(System.lineSeparator()).append(
-                "<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>")
-            .append(System.lineSeparator()).append(
-                "<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator())
-            .append(
-                "<default>false</default>").append(System.lineSeparator()).append(
-                "</key>").append(System.lineSeparator()).append(
-                "<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">")
-            .append(System.lineSeparator()).append(
-                "<default>false</default>").append(System.lineSeparator()).append(
-                "</key>").append(System.lineSeparator()).append(
-                "<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>")
-            .append(System.lineSeparator()).append(
-                "<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>")
-            .append(System.lineSeparator()).append(
-                "<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>")
-            .append(System.lineSeparator()).append(
-                "<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>")
-            .append(System.lineSeparator()).append(
-                "<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>")
-            .append(System.lineSeparator()).append(
-                "<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>")
-            .append(System.lineSeparator()).append(
-                "<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
-                "<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator())
-            .append(
-                "<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
-                "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>")
-            .append(System.lineSeparator()).append(
-                "<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
-                "<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
-                "<data key=\"programhash\">");
+                        "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
+                .append(System.lineSeparator()).append(
+                        "<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>")
+                .append(System.lineSeparator()).append(
+                        "<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>")
+                .append(System.lineSeparator()).append(
+                        "<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator())
+                .append(
+                        "<default>false</default>").append(System.lineSeparator()).append(
+                        "</key>").append(System.lineSeparator()).append(
+                        "<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">")
+                .append(System.lineSeparator()).append(
+                        "<default>false</default>").append(System.lineSeparator()).append(
+                        "</key>").append(System.lineSeparator()).append(
+                        "<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>")
+                .append(System.lineSeparator()).append(
+                        "<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>")
+                .append(System.lineSeparator()).append(
+                        "<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>")
+                .append(System.lineSeparator()).append(
+                        "<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>")
+                .append(System.lineSeparator()).append(
+                        "<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>")
+                .append(System.lineSeparator()).append(
+                        "<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>")
+                .append(System.lineSeparator()).append(
+                        "<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
+                        "<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator())
+                .append(
+                        "<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
+                        "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>")
+                .append(System.lineSeparator()).append(
+                        "<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
+                        "<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
+                        "<data key=\"programhash\">");
         dummyWitness.append(taskHash);
         dummyWitness.append("</data>").append(System.lineSeparator()).append(
-            "<data key=\"creationtime\">");
+                "<data key=\"creationtime\">");
 
         TimeZone tz = TimeZone.getTimeZone("UTC");
         DateFormat df = new SimpleDateFormat(
-            "yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+                "yyyy-MM-dd'T'HH:mm:ss'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
         df.setTimeZone(tz);
         String ISOdate = df.format(new Date());
 
         dummyWitness.append(ISOdate);
         dummyWitness.append("</data>").append(System.lineSeparator()).append(
-            "<data key=\"programfile\">");
+                "<data key=\"programfile\">");
         dummyWitness.append(model.getName());
         dummyWitness.append("</data>").append(System.lineSeparator()).append(
-            "<node id=\"N0\">").append(System.lineSeparator()).append(
-            "<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
-            "</node>").append(System.lineSeparator()).append(
-            "</graph>").append(System.lineSeparator()).append(
-            "</graphml>");
+                "<node id=\"N0\">").append(System.lineSeparator()).append(
+                "<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
+                "</node>").append(System.lineSeparator()).append(
+                "</graph>").append(System.lineSeparator()).append(
+                "</graphml>");
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(witnessfile))) {
             bw.write(dummyWitness.toString());
@@ -255,7 +255,7 @@ public final class OutputHandler {
     }
 
     public void writeTxtLine(CegarConfiguration configuration, long timeout, long timeTaken,
-        long cpuTimeTaken, Result result) {
+                             long cpuTimeTaken, Result result) {
         if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) {
             return;
         }
@@ -277,7 +277,7 @@ public final class OutputHandler {
     }
 
     public void writeCsvLine(CegarConfiguration configuration, long timeout, long timeTaken,
-        long cpuTimeTaken, Result result) {
+                             long cpuTimeTaken, Result result) {
         if (outputConfiguration != OutputOptions.OUTPUT_RESULTS) {
             return;
         }

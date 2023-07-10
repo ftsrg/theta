@@ -32,7 +32,7 @@ public abstract class DiffConstr extends AtomicConstr {
     private volatile int hashCode = 0;
 
     protected DiffConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar,
-        final int bound) {
+                         final int bound) {
         super(bound);
         this.leftVar = checkNotNull(leftVar);
         this.rightVar = checkNotNull(rightVar);

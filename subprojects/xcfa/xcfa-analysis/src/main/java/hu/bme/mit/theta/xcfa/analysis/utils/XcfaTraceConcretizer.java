@@ -42,21 +42,21 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class XcfaTraceConcretizer {
 
     public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
-        final Trace<XcfaState<?>, XcfaAction> trace, SolverFactory solverFactory) {
+            final Trace<XcfaState<?>, XcfaAction> trace, SolverFactory solverFactory) {
         List<XcfaState<?>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
 
         sbeStates.add(trace.getState(0));
         for (int i = 0; i < trace.getActions().size(); ++i) {
             final XcfaEdge edge = XcfaEdge.of(trace.getAction(i).getSource(),
-                trace.getAction(i).getTarget(), trace.getAction(i).getLabels());
+                    trace.getAction(i).getTarget(), trace.getAction(i).getLabels());
             sbeActions.add(XcfaAction.create(edge));
             sbeStates.add(trace.getState(i + 1));
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(
-            BoolExprs.True(),
-            BoolExprs.True(), solverFactory.createItpSolver());
+                BoolExprs.True(),
+                BoolExprs.True(), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
         checkArgument(status.isFeasible(), "Infeasible trace.");
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
@@ -66,7 +66,7 @@ public class XcfaTraceConcretizer {
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
             cfaStates.add(XcfaState.create(sbeTrace.getState(i).getCurrentLoc(),
-                ExplState.of(valuations.getState(i))));
+                    ExplState.of(valuations.getState(i))));
         }
 
         return Trace.of(cfaStates, sbeTrace.getActions());

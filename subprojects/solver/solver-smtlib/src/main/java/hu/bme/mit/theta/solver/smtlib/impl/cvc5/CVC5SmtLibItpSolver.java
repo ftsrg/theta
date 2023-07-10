@@ -50,9 +50,9 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
     private final Supplier<? extends SmtLibSolverBinary> itpSolverBinaryFactory;
 
     public CVC5SmtLibItpSolver(final SmtLibSymbolTable symbolTable,
-        final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
-        final Supplier<? extends SmtLibSolverBinary> itpSolverBinaryFactory) {
+                               final SmtLibTransformationManager transformationManager,
+                               final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+                               final Supplier<? extends SmtLibSolverBinary> itpSolverBinaryFactory) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
         this.itpSolverBinaryFactory = itpSolverBinaryFactory;
     }
@@ -72,7 +72,7 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
 
     @Override
     protected void add(CVC5SmtLibItpMarker marker, Expr<BoolType> assertion,
-        Set<ConstDecl<?>> consts, String term) {
+                       Set<ConstDecl<?>> consts, String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
         issueGeneralCommand(String.format("(assert %s)", term));
     }
@@ -80,14 +80,14 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
     @Override
     public Interpolant getInterpolant(ItpPattern pattern) {
         checkState(getStatus() == SolverStatus.UNSAT,
-            "Cannot get interpolant if status is not UNSAT.");
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
 
         try (final var itpSolverBinary = itpSolverBinaryFactory.get()) {
             itpSolverBinary.issueCommand("(set-option :produce-interpolants true)");
             itpSolverBinary.issueCommand("(set-logic ALL)");
             declarationStack.forEach(
-                constDecl -> itpSolverBinary.issueCommand(symbolTable.getDeclaration(constDecl)));
+                    constDecl -> itpSolverBinary.issueCommand(symbolTable.getDeclaration(constDecl)));
 
             @SuppressWarnings("unchecked") final var cvc5ItpPattern = (SmtLibItpPattern<CVC5SmtLibItpMarker>) pattern;
             final List<CVC5SmtLibItpMarker> markers = cvc5ItpPattern.getSequence();
@@ -102,19 +102,19 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
 
                 if (B.size() != 0) {
                     final var aTerm = A.stream()
-                        .flatMap(m -> m.getTerms().stream().map(Tuple2::get2));
+                            .flatMap(m -> m.getTerms().stream().map(Tuple2::get2));
                     final var bTerm = B.stream()
-                        .flatMap(m -> m.getTerms().stream().map(Tuple2::get2));
+                            .flatMap(m -> m.getTerms().stream().map(Tuple2::get2));
 
                     itpSolverBinary.issueCommand(
-                        String.format("(assert (and %s))", aTerm.collect(Collectors.joining(" "))));
+                            String.format("(assert (and %s))", aTerm.collect(Collectors.joining(" "))));
                     itpSolverBinary.issueCommand(
-                        String.format("(get-interpolant _cvc5_interpolant%d (not (and %s)))",
-                            interpolantCount++, bTerm.collect(Collectors.joining(" "))));
+                            String.format("(get-interpolant _cvc5_interpolant%d (not (and %s)))",
+                                    interpolantCount++, bTerm.collect(Collectors.joining(" "))));
 
                     itpMap.put(marker,
-                        termTransformer.toExpr(parseItpResponse(itpSolverBinary.readResponse()),
-                            Bool(), new SmtLibModel(Collections.emptyMap())));
+                            termTransformer.toExpr(parseItpResponse(itpSolverBinary.readResponse()),
+                                    Bool(), new SmtLibModel(Collections.emptyMap())));
                 } else {
                     itpMap.put(marker, False());
                 }
@@ -138,7 +138,7 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
         } catch (Exception e) {
             try {
                 throw new SmtLibSolverException(
-                    parser.response().general_response_error().reason.getText());
+                        parser.response().general_response_error().reason.getText());
             } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
@@ -147,6 +147,6 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
 
     private static String extractString(final ParserRuleContext ctx) {
         return ctx.start.getInputStream()
-            .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

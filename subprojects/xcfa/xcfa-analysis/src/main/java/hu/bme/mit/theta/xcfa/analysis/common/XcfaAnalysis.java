@@ -30,15 +30,15 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XcfaAnalysis<S extends ExprState, A extends StmtAction, P extends Prec>
-    implements Analysis<XcfaState<S>, A, XcfaPrec<P>> {
+        implements Analysis<XcfaState<S>, A, XcfaPrec<P>> {
 
     private final PartialOrd<XcfaState<S>> partialOrd;
     private final InitFunc<XcfaState<S>, XcfaPrec<P>> initFunc;
     private final TransFunc<XcfaState<S>, A, XcfaPrec<P>> transFunc;
 
     private XcfaAnalysis(final List<XcfaLocation> initLoc, PartialOrd<XcfaState<S>> partialOrd,
-        InitFunc<XcfaState<S>, XcfaPrec<P>> initFunc,
-        TransFunc<XcfaState<S>, A, XcfaPrec<P>> transFunc) {
+                         InitFunc<XcfaState<S>, XcfaPrec<P>> initFunc,
+                         TransFunc<XcfaState<S>, A, XcfaPrec<P>> transFunc) {
         this.partialOrd = partialOrd;
         this.initFunc = initFunc;
         this.transFunc = transFunc;
@@ -46,9 +46,9 @@ public class XcfaAnalysis<S extends ExprState, A extends StmtAction, P extends P
     }
 
     public static <S extends ExprState, A extends StmtAction, P extends Prec> XcfaAnalysis<S, A, P> create(
-        final List<XcfaLocation> initLoc, PartialOrd<XcfaState<S>> partialOrd,
-        InitFunc<XcfaState<S>, XcfaPrec<P>> initFunc,
-        TransFunc<XcfaState<S>, A, XcfaPrec<P>> transFunc) {
+            final List<XcfaLocation> initLoc, PartialOrd<XcfaState<S>> partialOrd,
+            InitFunc<XcfaState<S>, XcfaPrec<P>> initFunc,
+            TransFunc<XcfaState<S>, A, XcfaPrec<P>> transFunc) {
         return new XcfaAnalysis<>(initLoc, partialOrd, initFunc, transFunc);
     }
 

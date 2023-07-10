@@ -67,8 +67,8 @@ public class PredAbstractors {
          * @return
          */
         Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-            final VarIndexing exprIndexing,
-            final PredPrec prec, final VarIndexing precIndexing);
+                                                  final VarIndexing exprIndexing,
+                                                  final PredPrec prec, final VarIndexing precIndexing);
     }
 
     /**
@@ -119,8 +119,8 @@ public class PredAbstractors {
 
         @Override
         public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-            final VarIndexing exprIndexing,
-            final PredPrec prec, final VarIndexing precIndexing) {
+                                                         final VarIndexing exprIndexing,
+                                                         final PredPrec prec, final VarIndexing precIndexing) {
             checkNotNull(expr);
             checkNotNull(exprIndexing);
             checkNotNull(prec);
@@ -136,7 +136,7 @@ public class PredAbstractors {
                 solver.add(PathUtils.unfold(expr, exprIndexing));
                 for (int i = 0; i < preds.size(); ++i) {
                     solver.add(
-                        Iff(actLits.get(i).getRef(), PathUtils.unfold(preds.get(i), precIndexing)));
+                            Iff(actLits.get(i).getRef(), PathUtils.unfold(preds.get(i), precIndexing)));
                 }
                 while (solver.check().isSat()) {
                     final Valuation model = solver.getModel();
@@ -163,7 +163,7 @@ public class PredAbstractors {
             }
             if (!split && states.size() > 1) {
                 final Expr<BoolType> pred = Or(
-                    states.stream().map(PredState::toExpr).collect(Collectors.toList()));
+                        states.stream().map(PredState::toExpr).collect(Collectors.toList()));
                 return Collections.singleton(PredState.of(pred));
             } else {
                 return states;
@@ -187,8 +187,8 @@ public class PredAbstractors {
 
         @Override
         public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
-            final VarIndexing exprIndexing,
-            final PredPrec prec, final VarIndexing precIndexing) {
+                                                         final VarIndexing exprIndexing,
+                                                         final PredPrec prec, final VarIndexing precIndexing) {
             final List<Expr<BoolType>> newStatePreds = new ArrayList<>();
 
             try (WithPushPop wp = new WithPushPop(solver)) {
@@ -211,7 +211,7 @@ public class PredAbstractors {
                     }
 
                     assert !(ponEntailed
-                        && negEntailed) : "Ponated and negated predicates are both entailed.";
+                            && negEntailed) : "Ponated and negated predicates are both entailed.";
 
                     if (ponEntailed) {
                         newStatePreds.add(pred);

@@ -48,7 +48,7 @@ public class LabelUtils {
 
     public static boolean isGlobal(XcfaLabel label, XCFA xcfa) {
         return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream()
-            .anyMatch(varDecl -> xcfa.getGlobalVars().contains(varDecl));
+                .anyMatch(varDecl -> xcfa.getGlobalVars().contains(varDecl));
     }
 
     public static Collection<VarDecl<?>> getVars(XcfaLabel xcfaLabel) {
@@ -65,17 +65,17 @@ public class LabelUtils {
 
             @Override
             public Collection<VarDecl<?>> visit(XcfaLabel.ProcedureCallXcfaLabel label,
-                Void param) {
+                                                Void param) {
                 return label.getParams().stream().map(expr -> ExprUtils.getVars(expr).stream())
-                    .reduce(Streams::concat)
-                    .map(varDeclStream -> varDeclStream.collect(Collectors.toSet()))
-                    .orElse(Set.of());
+                        .reduce(Streams::concat)
+                        .map(varDeclStream -> varDeclStream.collect(Collectors.toSet()))
+                        .orElse(Set.of());
             }
 
             @Override
             public Collection<VarDecl<?>> visit(XcfaLabel.StartThreadXcfaLabel label, Void param) {
                 return Streams.concat(ExprUtils.getVars(label.getParam()).stream(),
-                    Stream.of(label.getKey())).collect(Collectors.toSet());
+                        Stream.of(label.getKey())).collect(Collectors.toSet());
             }
 
             @Override
@@ -85,13 +85,13 @@ public class LabelUtils {
 
             @Override
             public <T extends Type> Collection<VarDecl<?>> visit(XcfaLabel.LoadXcfaLabel<T> label,
-                Void param) {
+                                                                 Void param) {
                 return Set.of(label.getGlobal(), label.getLocal());
             }
 
             @Override
             public <T extends Type> Collection<VarDecl<?>> visit(XcfaLabel.StoreXcfaLabel<T> label,
-                Void param) {
+                                                                 Void param) {
                 return Set.of(label.getGlobal(), label.getLocal());
             }
 
@@ -108,15 +108,15 @@ public class LabelUtils {
             @Override
             public Collection<VarDecl<?>> visit(XcfaLabel.SequenceLabel sequenceLabel, Void param) {
                 return sequenceLabel.getLabels().stream().map(LabelUtils::getVars).reduce(
-                        (a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet()))
-                    .orElse(Set.of());
+                                (a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet()))
+                        .orElse(Set.of());
             }
 
             @Override
             public Collection<VarDecl<?>> visit(XcfaLabel.NondetLabel nondetLabel, Void param) {
                 return nondetLabel.getLabels().stream().map(LabelUtils::getVars).reduce(
-                        (a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet()))
-                    .orElse(Set.of());
+                                (a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet()))
+                        .orElse(Set.of());
             }
 
             @Override
@@ -131,13 +131,13 @@ public class LabelUtils {
 
             @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt,
-                Void param) {
+                                                                        Void param) {
                 return StmtUtils.getVars(stmt);
             }
 
             @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt,
-                Void param) {
+                                                                        Void param) {
                 return StmtUtils.getVars(stmt);
             }
 
@@ -170,7 +170,7 @@ public class LabelUtils {
     }
 
     public static void getAssortedVars(XcfaLabel label, Set<VarDecl<?>> assignedToVars,
-        Set<VarDecl<?>> usedUpVars) {
+                                       Set<VarDecl<?>> usedUpVars) {
         final Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> ret = Tuple2.of(assignedToVars, usedUpVars);
         label.accept(new XcfaLabelVarCollector(), Tuple2.of(assignedToVars, usedUpVars));
     }
@@ -183,8 +183,8 @@ public class LabelUtils {
     }
 
     public static boolean isNotLocal(XcfaLabel label,
-        Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
+                                     Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
         return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream()
-            .anyMatch(varDecl -> !localVars.containsKey(varDecl));
+                .anyMatch(varDecl -> !localVars.containsKey(varDecl));
     }
 }

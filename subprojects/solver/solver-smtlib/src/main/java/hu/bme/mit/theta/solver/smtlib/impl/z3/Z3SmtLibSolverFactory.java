@@ -38,7 +38,7 @@ public class Z3SmtLibSolverFactory extends GenericSmtLibSolverFactory {
     }
 
     public static Z3SmtLibSolverFactory create(Path solverPath, String[] args,
-        Z3ItpSupport itpSupport) {
+                                               Z3ItpSupport itpSupport) {
         return new Z3SmtLibSolverFactory(solverPath, args, itpSupport);
     }
 
@@ -52,16 +52,16 @@ public class Z3SmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
             if (itpSupport.equals(Z3ItpSupport.OLD)) {
                 return new Z3OldSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-                    solverBinary);
+                        solverBinary);
             } else if (itpSupport.equals(Z3ItpSupport.NEW)) {
                 return new Z3NewSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-                    solverBinary);
+                        solverBinary);
             } else {
                 throw new AssertionError();
             }
         } else {
             throw new UnsupportedOperationException(
-                "Z3 interpolation supported below 4.5.0 and above 4.8.8");
+                    "Z3 interpolation supported below 4.5.0 and above 4.8.8");
         }
     }
 }

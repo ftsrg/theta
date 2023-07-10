@@ -41,8 +41,8 @@ public class InitMemory extends ProcedurePass {
     public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
         final Set<Object> dereferencedVars = FrontendMetadata.lookupMetadata("dereferenced", true);
         final Set<Object> memories = dereferencedVars.stream()
-            .map(o -> FrontendMetadata.getMetadataValue(o, "refSubstitute"))
-            .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+                .map(o -> FrontendMetadata.getMetadataValue(o, "refSubstitute"))
+                .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
         final List<XcfaLabel> stms = new ArrayList<>();
         for (Object memoryO : memories) {
             addInit(stms, (VarDecl<ArrayType<Type, Type>>) memoryO);
@@ -57,12 +57,12 @@ public class InitMemory extends ProcedurePass {
     }
 
     private <E extends Type, T extends Type> void addInit(final List<XcfaLabel> stms,
-        final VarDecl<ArrayType<E, T>> memory) {
+                                                          final VarDecl<ArrayType<E, T>> memory) {
         final Optional<Object> defaultElement = FrontendMetadata.getMetadataValue(memory,
-            "defaultElement");
+                "defaultElement");
         if (defaultElement.isPresent() && defaultElement.get() instanceof LitExpr) {
             stms.add(Stmt(Assign(memory,
-                ArrayLitExpr.of(List.of(), (LitExpr<T>) defaultElement.get(), memory.getType()))));
+                    ArrayLitExpr.of(List.of(), (LitExpr<T>) defaultElement.get(), memory.getType()))));
         }
     }
 

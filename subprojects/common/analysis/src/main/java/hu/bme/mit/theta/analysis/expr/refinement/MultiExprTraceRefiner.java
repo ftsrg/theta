@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
-    implements Refiner<S, A, P> {
+        implements Refiner<S, A, P> {
 
     private final ExprTraceChecker<R> exprTraceChecker;
     private final PrecRefiner<S, A, P, R> precRefiner;
@@ -43,8 +43,8 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
     private final Logger logger;
 
     private MultiExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-        final PrecRefiner<S, A, P, R> precRefiner,
-        final PruneStrategy pruneStrategy, final Logger logger) {
+                                  final PrecRefiner<S, A, P, R> precRefiner,
+                                  final PruneStrategy pruneStrategy, final Logger logger) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
@@ -52,8 +52,8 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
     }
 
     public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> MultiExprTraceRefiner<S, A, P, R> create(
-        final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
-        final PruneStrategy pruneStrategy, final Logger logger) {
+            final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
+            final PruneStrategy pruneStrategy, final Logger logger) {
         return new MultiExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
     }
 
@@ -65,7 +65,7 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 
         final List<ArgTrace<S, A>> cexs = arg.getCexs().collect(Collectors.toList());
         final List<Trace<S, A>> traces = arg.getCexs().map(ArgTrace::toTrace)
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
         assert traces.size() == cexs.size();
 
         logger.write(Level.INFO, "|  |  Number of traces: %d%n", traces.size());
@@ -84,14 +84,14 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
         if (cexStatuses.stream().anyMatch(ExprTraceStatus::isFeasible)) {
             logger.write(Level.SUBSTEP, "done, result: found feasible%n");
             return RefinerResult.unsafe(traces.get(
-                cexStatuses.indexOf(
-                    cexStatuses.stream().filter(ExprTraceStatus::isFeasible).findFirst().get())));
+                    cexStatuses.indexOf(
+                            cexStatuses.stream().filter(ExprTraceStatus::isFeasible).findFirst().get())));
         } else {
             assert cexStatuses.size() == cexs.size();
             logger.write(Level.SUBSTEP, "done, result: all infeasible%n");
             final List<R> refutations = cexStatuses.stream()
-                .map(s -> s.asInfeasible().getRefutation())
-                .collect(Collectors.toList());
+                    .map(s -> s.asInfeasible().getRefutation())
+                    .collect(Collectors.toList());
             assert refutations.size() == cexs.size();
 
             final List<ArgNode<S, A>> nodesToPrune = new ArrayList<>(traces.size());
@@ -116,7 +116,7 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
             for (int i = 0; i < refutations.size(); ++i) {
                 if (!skip.get(i)) {
                     refinedPrec = precRefiner.refine(refinedPrec, traces.get(i),
-                        refutations.get(i));
+                            refutations.get(i));
                 }
             }
 

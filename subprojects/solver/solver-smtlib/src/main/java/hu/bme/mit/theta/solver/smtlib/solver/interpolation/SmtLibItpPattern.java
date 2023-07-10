@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 public class SmtLibItpPattern<T extends SmtLibItpMarker> implements ItpPattern.Binary<T>,
-    ItpPattern.Sequence<T>, ItpPattern.Tree<T> {
+        ItpPattern.Sequence<T>, ItpPattern.Tree<T> {
 
     final ItpMarkerTree<T> markerTree;
 
@@ -90,10 +90,10 @@ public class SmtLibItpPattern<T extends SmtLibItpMarker> implements ItpPattern.B
 
     private boolean isBinary() {
         return
-            markerTree != null &&
-                markerTree.getChildrenNumber() == 1 &&
-                markerTree.getChild(0) != null &&
-                markerTree.getChild(0).getChildrenNumber() == 0;
+                markerTree != null &&
+                        markerTree.getChildrenNumber() == 1 &&
+                        markerTree.getChild(0) != null &&
+                        markerTree.getChild(0).getChildrenNumber() == 0;
     }
 
     private boolean isSequence() {

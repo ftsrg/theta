@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 
 public final class ItpExplAnalysis<A extends Action> implements
-    Analysis<ItpExplState, A, UnitPrec> {
+        Analysis<ItpExplState, A, UnitPrec> {
 
     private final InitFunc<ItpExplState, UnitPrec> initFunc;
     private final TransFunc<ItpExplState, A, UnitPrec> transFunc;
@@ -38,7 +38,7 @@ public final class ItpExplAnalysis<A extends Action> implements
     }
 
     public static <A extends Action> ItpExplAnalysis<A> create(
-        final Analysis<ExplState, ? super A, UnitPrec> analysis) {
+            final Analysis<ExplState, ? super A, UnitPrec> analysis) {
         return new ItpExplAnalysis<>(analysis);
     }
 

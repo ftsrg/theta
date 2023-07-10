@@ -74,79 +74,79 @@ public class CfaTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {"src/test/resources/arithmetic-bool00.cfa", PRED_CART, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool00.cfa", PRED_CART, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool00.cfa", PRED_BOOL, BW_BIN_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool00.cfa", PRED_BOOL, BW_BIN_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool00.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool00.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool01.cfa", PRED_CART, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool01.cfa", PRED_CART, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool01.cfa", PRED_BOOL, BW_BIN_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool01.cfa", PRED_BOOL, BW_BIN_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool01.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool01.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool10.cfa", PRED_BOOL, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool10.cfa", PRED_BOOL, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool10.cfa", PRED_CART, BW_BIN_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool10.cfa", PRED_CART, BW_BIN_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool10.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool10.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool11.cfa", PRED_CART, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool11.cfa", PRED_CART, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool11.cfa", PRED_BOOL, BW_BIN_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool11.cfa", PRED_BOOL, BW_BIN_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-bool11.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
+                {"src/test/resources/arithmetic-bool11.cfa", EXPL, SEQ_ITP, false, 15, "Z3"},
 
-            {"src/test/resources/arithmetic-int.cfa", PRED_CART, SEQ_ITP, false, 13, "Z3"},
+                {"src/test/resources/arithmetic-int.cfa", PRED_CART, SEQ_ITP, false, 13, "Z3"},
 
-            {"src/test/resources/arithmetic-int.cfa", PRED_BOOL, BW_BIN_ITP, false, 13, "Z3"},
+                {"src/test/resources/arithmetic-int.cfa", PRED_BOOL, BW_BIN_ITP, false, 13, "Z3"},
 
-            {"src/test/resources/arithmetic-int.cfa", EXPL, SEQ_ITP, false, 13, "Z3"},
+                {"src/test/resources/arithmetic-int.cfa", EXPL, SEQ_ITP, false, 13, "Z3"},
 
-            {"src/test/resources/arithmetic-mod.cfa", PRED_CART, SEQ_ITP, true, 0, "Z3"},
+                {"src/test/resources/arithmetic-mod.cfa", PRED_CART, SEQ_ITP, true, 0, "Z3"},
 
-            {"src/test/resources/arithmetic-mod.cfa", EXPL, BW_BIN_ITP, true, 0, "Z3"},
+                {"src/test/resources/arithmetic-mod.cfa", EXPL, BW_BIN_ITP, true, 0, "Z3"},
 
-            {"src/test/resources/arrays.cfa", PRED_CART, SEQ_ITP, false, 8, "Z3"},
+                {"src/test/resources/arrays.cfa", PRED_CART, SEQ_ITP, false, 8, "Z3"},
 
-            {"src/test/resources/arrays.cfa", PRED_BOOL, BW_BIN_ITP, false, 8, "Z3"},
+                {"src/test/resources/arrays.cfa", PRED_BOOL, BW_BIN_ITP, false, 8, "Z3"},
 
-            {"src/test/resources/arrayinit.cfa", PRED_CART, BW_BIN_ITP, false, 3, "Z3"},
+                {"src/test/resources/arrayinit.cfa", PRED_CART, BW_BIN_ITP, false, 3, "Z3"},
 
-            {"src/test/resources/arrays.cfa", EXPL, SEQ_ITP, false, 8, "Z3"},
+                {"src/test/resources/arrays.cfa", EXPL, SEQ_ITP, false, 8, "Z3"},
 
-            {"src/test/resources/counter5_true.cfa", PRED_BOOL, SEQ_ITP, true, 0, "Z3"},
+                {"src/test/resources/counter5_true.cfa", PRED_BOOL, SEQ_ITP, true, 0, "Z3"},
 
-            {"src/test/resources/counter5_true.cfa", PRED_CART, BW_BIN_ITP, true, 0, "Z3"},
+                {"src/test/resources/counter5_true.cfa", PRED_CART, BW_BIN_ITP, true, 0, "Z3"},
 
-            {"src/test/resources/counter5_true.cfa", EXPL, SEQ_ITP, true, 0, "Z3"},
+                {"src/test/resources/counter5_true.cfa", EXPL, SEQ_ITP, true, 0, "Z3"},
 
-            {"src/test/resources/counter_bv_true.cfa", EXPL, NWT_IT_WP, true, 0, "Z3"},
+                {"src/test/resources/counter_bv_true.cfa", EXPL, NWT_IT_WP, true, 0, "Z3"},
 
-            {"src/test/resources/counter_bv_false.cfa", EXPL, NWT_IT_WP, false, 13, "Z3"},
+                {"src/test/resources/counter_bv_false.cfa", EXPL, NWT_IT_WP, false, 13, "Z3"},
 
-            {"src/test/resources/counter_bv_true.cfa", PRED_CART, NWT_IT_WP, true, 0, "Z3"},
+                {"src/test/resources/counter_bv_true.cfa", PRED_CART, NWT_IT_WP, true, 0, "Z3"},
 
-            {"src/test/resources/counter_bv_false.cfa", PRED_CART, UCB, false, 13, "Z3"},
+                {"src/test/resources/counter_bv_false.cfa", PRED_CART, UCB, false, 13, "Z3"},
 
-            {"src/test/resources/counter_bv_true.cfa", EXPL, SEQ_ITP, true, 0, "mathsat:latest"},
+                {"src/test/resources/counter_bv_true.cfa", EXPL, SEQ_ITP, true, 0, "mathsat:latest"},
 
-            {"src/test/resources/counter_bv_false.cfa", EXPL, SEQ_ITP, false, 13, "mathsat:latest"},
+                {"src/test/resources/counter_bv_false.cfa", EXPL, SEQ_ITP, false, 13, "mathsat:latest"},
 
-            {"src/test/resources/fp1.cfa", PRED_CART, NWT_IT_WP, true, 0, "Z3"},
+                {"src/test/resources/fp1.cfa", PRED_CART, NWT_IT_WP, true, 0, "Z3"},
 
-            {"src/test/resources/fp2.cfa", PRED_CART, NWT_IT_WP, false, 5, "Z3"},
+                {"src/test/resources/fp2.cfa", PRED_CART, NWT_IT_WP, false, 5, "Z3"},
 
-            {"src/test/resources/counter_fp_true.cfa", EXPL, NWT_IT_WP, true, 0, "Z3"},
+                {"src/test/resources/counter_fp_true.cfa", EXPL, NWT_IT_WP, true, 0, "Z3"},
 
-            {"src/test/resources/ifelse.cfa", PRED_CART, SEQ_ITP, false, 3, "Z3"},
+                {"src/test/resources/ifelse.cfa", PRED_CART, SEQ_ITP, false, 3, "Z3"},
 
-            {"src/test/resources/ifelse.cfa", PRED_BOOL, BW_BIN_ITP, false, 3, "Z3"},
+                {"src/test/resources/ifelse.cfa", PRED_BOOL, BW_BIN_ITP, false, 3, "Z3"},
 
-            {"src/test/resources/ifelse.cfa", EXPL, SEQ_ITP, false, 3, "Z3"},
+                {"src/test/resources/ifelse.cfa", EXPL, SEQ_ITP, false, 3, "Z3"},
 
-            {"src/test/resources/locking.cfa", PRED_CART, SEQ_ITP, true, 0, "Z3"},
+                {"src/test/resources/locking.cfa", PRED_CART, SEQ_ITP, true, 0, "Z3"},
 
         });
     }
@@ -156,7 +156,7 @@ public class CfaTest {
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             SolverManager.registerSolverManager(
-                SmtLibSolverManager.create(SmtLibSolverManager.HOME, NullLogger.getInstance()));
+                    SmtLibSolverManager.create(SmtLibSolverManager.HOME, NullLogger.getInstance()));
         }
 
         final SolverFactory solverFactory;
@@ -170,14 +170,14 @@ public class CfaTest {
         try {
             CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
             CfaConfig<? extends State, ? extends Action, ? extends Prec> config
-                = new CfaConfigBuilder(domain, refinement, solverFactory).build(cfa,
-                cfa.getErrorLoc().get());
+                    = new CfaConfigBuilder(domain, refinement, solverFactory).build(cfa,
+                    cfa.getErrorLoc().get());
             SafetyResult<? extends State, ? extends Action> result = config.check();
             Assert.assertEquals(isSafe, result.isSafe());
             if (result.isUnsafe()) {
                 Trace<CfaState<ExplState>, CfaAction> trace = CfaTraceConcretizer.concretize(
-                    (Trace<CfaState<?>, CfaAction>) result.asUnsafe().getTrace(),
-                    solverFactory);
+                        (Trace<CfaState<?>, CfaAction>) result.asUnsafe().getTrace(),
+                        solverFactory);
                 Assert.assertEquals(cexLength, trace.length());
             }
         } finally {

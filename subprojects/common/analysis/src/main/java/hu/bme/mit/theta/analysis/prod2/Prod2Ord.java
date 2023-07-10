@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 
 public final class Prod2Ord<S1 extends State, S2 extends State> implements
-    PartialOrd<Prod2State<S1, S2>> {
+        PartialOrd<Prod2State<S1, S2>> {
 
     private final PartialOrd<S1> partialOrd1;
     private final PartialOrd<S2> partialOrd2;
@@ -32,8 +32,8 @@ public final class Prod2Ord<S1 extends State, S2 extends State> implements
     }
 
     public static <S1 extends State, S2 extends State> Prod2Ord<S1, S2> create(
-        final PartialOrd<S1> partialOrd1,
-        final PartialOrd<S2> partialOrd2) {
+            final PartialOrd<S1> partialOrd1,
+            final PartialOrd<S2> partialOrd2) {
         return new Prod2Ord<>(partialOrd1, partialOrd2);
     }
 
@@ -45,7 +45,7 @@ public final class Prod2Ord<S1 extends State, S2 extends State> implements
             return false;
         } else {
             return partialOrd1.isLeq(state1.getState1(), state2.getState1()) && partialOrd2.isLeq(
-                state1.getState2(), state2.getState2());
+                    state1.getState2(), state2.getState2());
         }
     }
 

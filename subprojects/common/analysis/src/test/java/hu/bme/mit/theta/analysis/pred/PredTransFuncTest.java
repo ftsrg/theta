@@ -47,7 +47,7 @@ public class PredTransFuncTest {
     private final VarDecl<IntType> y = Var("y", Int());
     private final Solver solver = Z3SolverFactory.getInstance().createSolver();
     private final PredTransFunc transFunc = PredTransFunc.create(
-        PredAbstractors.booleanSplitAbstractor(solver));
+            PredAbstractors.booleanSplitAbstractor(solver));
 
     @Test
     public void test1() {
@@ -71,7 +71,7 @@ public class PredTransFuncTest {
     public void test3() {
         // (x>0) ---[x := x+y]--> (x>0, y>0)?
         final PredPrec prec = PredPrec.of(
-            ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
+                ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
         final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
         final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), y.getRef())));
         Assert.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
@@ -84,7 +84,7 @@ public class PredTransFuncTest {
         final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
         final ExprAction action = new BasicStmtAction(Stmts.Assume(Eq(Int(0), x.getRef())));
         final Collection<? extends PredState> succStates = transFunc.getSuccStates(state, action,
-            prec);
+                prec);
         Assert.assertEquals(1, succStates.size());
         Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(succStates));
     }

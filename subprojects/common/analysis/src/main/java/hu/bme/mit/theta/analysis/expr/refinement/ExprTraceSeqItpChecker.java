@@ -46,21 +46,21 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
     private final Expr<BoolType> target;
 
     private ExprTraceSeqItpChecker(final Expr<BoolType> init, final Expr<BoolType> target,
-        final ItpSolver solver) {
+                                   final ItpSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
     }
 
     public static ExprTraceSeqItpChecker create(final Expr<BoolType> init,
-        final Expr<BoolType> target,
-        final ItpSolver solver) {
+                                                final Expr<BoolType> target,
+                                                final ItpSolver solver) {
         return new ExprTraceSeqItpChecker(init, target, solver);
     }
 
     @Override
     public ExprTraceStatus<ItpRefutation> check(
-        final Trace<? extends ExprState, ? extends ExprAction> trace) {
+            final Trace<? extends ExprState, ? extends ExprAction> trace) {
         checkNotNull(trace);
         final int stateCount = trace.getStates().size();
 
@@ -76,19 +76,19 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 
             solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
             solver.add(markers.get(0),
-                PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
+                    PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
             assert solver.check().isSat() : "Initial state of the trace is not feasible";
 
             for (int i = 1; i < stateCount; ++i) {
                 indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
                 solver.add(markers.get(i),
-                    PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
+                        PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
                 solver.add(markers.get(i),
-                    PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
+                        PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
             }
 
             solver.add(markers.get(trace.getStates().size()),
-                PathUtils.unfold(target, indexings.get(stateCount - 1)));
+                    PathUtils.unfold(target, indexings.get(stateCount - 1)));
             final boolean concretizable = solver.check().isSat();
 
             if (concretizable) {
@@ -103,7 +103,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
                 final Interpolant interpolant = solver.getInterpolant(pattern);
                 for (int i = 0; i < markers.size() - 1; ++i) {
                     interpolants.add(
-                        PathUtils.foldin(interpolant.eval(markers.get(i)), indexings.get(i)));
+                            PathUtils.foldin(interpolant.eval(markers.get(i)), indexings.get(i)));
                 }
                 return ExprTraceStatus.infeasible(ItpRefutation.sequence(interpolants));
             }

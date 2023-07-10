@@ -21,8 +21,8 @@ import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntType implements Additive<IntType>, Multiplicative<IntType>,
-    Divisible<IntType>, Equational<IntType>, Ordered<IntType>,
-    Castable<IntType> {
+        Divisible<IntType>, Equational<IntType>, Ordered<IntType>,
+        Castable<IntType> {
 
     private static final IntType INSTANCE = new IntType();
     private static final int HASH_SEED = 222670;
@@ -124,10 +124,10 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 
     @Override
     public <TargetType extends Type> Expr<TargetType> Cast(final Expr<IntType> op,
-        final TargetType type) {
+                                                           final TargetType type) {
         if (type instanceof RatType) {
             @SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(
-                op);
+                    op);
             return result;
         } else {
             throw new ClassCastException("Int cannot be cast to " + type);

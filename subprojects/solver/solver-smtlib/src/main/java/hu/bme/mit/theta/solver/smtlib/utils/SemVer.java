@@ -110,7 +110,7 @@ public class SemVer implements Comparable<SemVer> {
         private final Map<OsHelper.OperatingSystem, Map<OsHelper.Architecture, String>> string;
 
         private VersionDecoder(final SemVer version,
-            final Map<OsHelper.OperatingSystem, Map<OsHelper.Architecture, String>> string) {
+                               final Map<OsHelper.OperatingSystem, Map<OsHelper.Architecture, String>> string) {
             this.version = version;
             this.string = string;
         }
@@ -124,14 +124,14 @@ public class SemVer implements Comparable<SemVer> {
         }
 
         public String getOsArchString(final OsHelper.OperatingSystem os,
-            final OsHelper.Architecture arch) {
+                                      final OsHelper.Architecture arch) {
             if (!string.containsKey(os)) {
                 throw new UnsupportedOperationException(
-                    String.format("Operating system %s is not supported by z3", os));
+                        String.format("Operating system %s is not supported by z3", os));
             } else if (!string.get(os).containsKey(arch)) {
                 throw new UnsupportedOperationException(
-                    String.format("Architecture %s on operating system %s is not supported by z3",
-                        arch, os));
+                        String.format("Architecture %s on operating system %s is not supported by z3",
+                                arch, os));
             } else {
                 return string.get(os).get(arch);
             }
@@ -148,7 +148,7 @@ public class SemVer implements Comparable<SemVer> {
             }
 
             public VersionDecoder.Builder addString(final OsHelper.OperatingSystem os,
-                final OsHelper.Architecture arch, final String string) {
+                                                    final OsHelper.Architecture arch, final String string) {
                 if (!this.string.containsKey(os)) {
                     this.string.put(os, new HashMap<>());
                 }

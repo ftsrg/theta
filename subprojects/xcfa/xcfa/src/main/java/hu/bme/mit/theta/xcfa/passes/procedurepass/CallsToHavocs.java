@@ -42,12 +42,12 @@ public class CallsToHavocs extends ProcedurePass {
     public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
         for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
             Optional<XcfaLabel> e = edge.getLabels().stream().filter(
-                    stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel
-                        && FrontendMetadata.getMetadataValue(
-                            ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction")
-                        .isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(
-                        ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").get())
-                .findAny();
+                            stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel
+                                    && FrontendMetadata.getMetadataValue(
+                                            ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction")
+                                    .isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(
+                                    ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").get())
+                    .findAny();
             if (e.isPresent()) {
                 XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) e.get();
                 List<XcfaLabel> collect = new ArrayList<>();
@@ -56,19 +56,19 @@ public class CallsToHavocs extends ProcedurePass {
                         if (callLabel.getProcedure().startsWith("__VERIFIER_nondet")) {
                             for (Expr<?> expr : callLabel.getParams()) {
                                 checkState(expr instanceof RefExpr
-                                    && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
+                                        && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
                                 VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
                                 if (!(CComplexType.getType(var.getRef()) instanceof CVoid)) {
                                     final HavocStmt<?> havoc = Havoc(var);
                                     FrontendMetadata.lookupMetadata(stmt)
-                                        .forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+                                            .forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
                                     collect.add(Stmt(havoc));
                                 }
                             }
                         } else {
                             if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON) {
                                 throw new UnsupportedOperationException(
-                                    "Non-nondet function call used as nondet!");
+                                        "Non-nondet function call used as nondet!");
                             }
                             collect.add(stmt);
                         }

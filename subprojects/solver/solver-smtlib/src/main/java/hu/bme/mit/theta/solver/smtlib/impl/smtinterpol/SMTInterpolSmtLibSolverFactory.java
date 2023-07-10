@@ -49,7 +49,7 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-            false);
+                false);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-            true);
+                true);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class SMTInterpolSmtLibSolverFactory implements SolverFactory {
         final var solverBinary = new GenericSmtLibSolverBinary(getJavaBinary(), getSolverArgs());
 
         return new SMTInterpolSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-            solverBinary);
+                solverBinary);
     }
 
     private Path getJavaBinary() {

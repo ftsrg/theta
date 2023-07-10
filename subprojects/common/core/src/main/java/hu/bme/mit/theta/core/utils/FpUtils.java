@@ -34,7 +34,7 @@ public final class FpUtils {
     }
 
     public static BigFloat fpLitExprToBigFloat(final FpRoundingMode roundingMode,
-        final FpLitExpr expr) {
+                                               final FpLitExpr expr) {
         if (expr.isNaN()) {
             return BigFloat.NaN(expr.getType().getSignificand());
         } else if (expr.isPositiveInfinity()) {
@@ -49,12 +49,12 @@ public final class FpUtils {
             final var maxExponent = (1L << (expr.getType().getExponent() - 1)) - 1;
 
             final var exponent = BvUtils.neutralBvLitExprToBigInteger(expr.getExponent())
-                .subtract(BigInteger.valueOf(maxExponent));
+                    .subtract(BigInteger.valueOf(maxExponent));
             final var significand = BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand())
-                .add(BigInteger.TWO.pow(expr.getType().getSignificand() - 1));
+                    .add(BigInteger.TWO.pow(expr.getType().getSignificand() - 1));
 
             return new BigFloat(expr.getHidden(), significand, exponent.longValue(),
-                getMathContext(expr.getType(), roundingMode));
+                    getMathContext(expr.getType(), roundingMode));
         }
     }
 
@@ -62,10 +62,10 @@ public final class FpUtils {
         if (bigFloat.isNaN()) {
             return NaN(type);
         } else if (bigFloat.isInfinite() && bigFloat.greaterThan(
-            BigFloat.zero(type.getSignificand()))) {
+                BigFloat.zero(type.getSignificand()))) {
             return PositiveInfinity(type);
         } else if (bigFloat.isInfinite() && bigFloat.lessThan(
-            BigFloat.zero(type.getSignificand()))) {
+                BigFloat.zero(type.getSignificand()))) {
             return NegativeInfinity(type);
         } else {
             final var minExponent = -(1L << (type.getExponent() - 1)) + 2;
@@ -73,13 +73,13 @@ public final class FpUtils {
             final var round = bigFloat.round(getMathContext(type, FpRoundingMode.RNE));
 
             final var exponent = BigInteger.valueOf(round.exponent(minExponent, maxExponent))
-                .add(BigInteger.valueOf(maxExponent));
+                    .add(BigInteger.valueOf(maxExponent));
             final var significand = round.significand(minExponent, maxExponent);
 
             return FpLitExpr.of(
-                bigFloat.sign(),
-                BvUtils.bigIntegerToNeutralBvLitExpr(exponent, type.getExponent()),
-                BvUtils.bigIntegerToNeutralBvLitExpr(significand, type.getSignificand() - 1)
+                    bigFloat.sign(),
+                    BvUtils.bigIntegerToNeutralBvLitExpr(exponent, type.getExponent()),
+                    BvUtils.bigIntegerToNeutralBvLitExpr(significand, type.getSignificand() - 1)
             );
         }
     }
@@ -106,8 +106,8 @@ public final class FpUtils {
     }
 
     public static BinaryMathContext getMathContext(final FpType type,
-        final FpRoundingMode roundingMode) {
+                                                   final FpRoundingMode roundingMode) {
         return new BinaryMathContext(type.getSignificand(), type.getExponent(),
-            getMathContextRoundingMode(roundingMode));
+                getMathContextRoundingMode(roundingMode));
     }
 }

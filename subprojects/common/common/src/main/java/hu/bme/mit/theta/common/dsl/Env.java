@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.function.Function;
 
@@ -62,7 +63,7 @@ public final class Env {
     }
 
     public <S extends Symbol, V extends Object> Object compute(final S symbol,
-        final Function<? super S, ? extends Object> mapping) {
+                                                               final Function<? super S, ? extends Object> mapping) {
         checkNotNull(symbol);
         checkNotNull(mapping);
         Object value = currentFrame.eval(symbol);
@@ -86,7 +87,7 @@ public final class Env {
 
         public void define(final Symbol symbol, final Object value) {
             checkArgument(eval(symbol) == null,
-                "Symbol " + symbol.getName() + " is already defined");
+                    "Symbol " + symbol.getName() + " is already defined");
             symbolToValue.put(symbol, value);
         }
 
@@ -104,9 +105,9 @@ public final class Env {
         @Override
         public String toString() {
             return Utils.lispStringBuilder(getClass().getSimpleName())
-                .addAll(symbolToValue.entrySet().stream()
-                    .map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
-                .toString();
+                    .addAll(symbolToValue.entrySet().stream()
+                            .map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
+                    .toString();
         }
     }
 

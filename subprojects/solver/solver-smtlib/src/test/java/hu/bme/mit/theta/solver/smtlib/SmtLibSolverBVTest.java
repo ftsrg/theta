@@ -82,11 +82,11 @@ public class SmtLibSolverBVTest {
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return Stream.concat(
-            BvTestUtils.BasicOperations().stream(),
-            Stream.concat(
-                BvTestUtils.BitvectorOperations().stream(),
-                BvTestUtils.RelationalOperations().stream()
-            )
+                BvTestUtils.BasicOperations().stream(),
+                Stream.concat(
+                        BvTestUtils.BitvectorOperations().stream(),
+                        BvTestUtils.RelationalOperations().stream()
+                )
         ).collect(Collectors.toUnmodifiableList());
     }
 
@@ -101,15 +101,15 @@ public class SmtLibSolverBVTest {
 
         // Type checks
         assertTrue(
-            "The type of actual is " + actual.getClass().getName() + " instead of "
-                + exprType.getName(),
-            exprType.isInstance(actual)
+                "The type of actual is " + actual.getClass().getName() + " instead of "
+                        + exprType.getName(),
+                exprType.isInstance(actual)
         );
         assertEquals(
-            "The type of expected (" + expected.getType() + ") must match the type of actual ("
-                + actual.getType() + ")",
-            expected.getType(),
-            actual.getType()
+                "The type of expected (" + expected.getType() + ") must match the type of actual ("
+                        + actual.getType() + ")",
+                expected.getType(),
+                actual.getType()
         );
 
         // Equality check

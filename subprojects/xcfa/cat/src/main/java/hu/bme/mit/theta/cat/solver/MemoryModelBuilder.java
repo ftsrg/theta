@@ -81,7 +81,7 @@ public abstract class MemoryModelBuilder {
     }
 
     public Expr<BoolType> addConstraints(final List<Tuple2<?, ConstDecl<?>>> writeConst,
-        final List<Tuple2<?, ConstDecl<?>>> readConst) {
+                                         final List<Tuple2<?, ConstDecl<?>>> readConst) {
         final List<Tuple2<Integer, ConstDecl<?>>> stores = new ArrayList<>();
         for (Tuple2<?, ConstDecl<?>> objects : writeConst) {
             final Object object = objects.get1();
@@ -114,8 +114,8 @@ public abstract class MemoryModelBuilder {
     public abstract int addPrimitive(final String name, final Object primitive);
 
     public abstract Expr<BoolType> getRfConstraints(
-        final List<Tuple2<Integer, ConstDecl<?>>> writeConst,
-        final List<Tuple2<Integer, ConstDecl<?>>> readConst);
+            final List<Tuple2<Integer, ConstDecl<?>>> writeConst,
+            final List<Tuple2<Integer, ConstDecl<?>>> readConst);
 
     public abstract MemoryModelBuilder duplicate();
 }

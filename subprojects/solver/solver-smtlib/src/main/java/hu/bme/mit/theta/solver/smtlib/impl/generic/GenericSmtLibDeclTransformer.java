@@ -37,7 +37,7 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
     private int symbolCount;
 
     public GenericSmtLibDeclTransformer(final SmtLibTransformationManager transformer,
-        final SmtLibSymbolTable symbolTable) {
+                                        final SmtLibSymbolTable symbolTable) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
 
@@ -79,12 +79,12 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
 
         final String returnSort = transformer.toSort(returnType);
         final String[] paramSorts = paramTypes.stream().map(transformer::toSort)
-            .toArray(String[]::new);
+                .toArray(String[]::new);
 
         final String symbolName = symbolNameFor(decl);
         final String symbolDeclaration = String.format(
-            "(declare-fun %s (%s) %s)",
-            symbolName, String.join(" ", paramSorts), returnSort
+                "(declare-fun %s (%s) %s)",
+                symbolName, String.join(" ", paramSorts), returnSort
         );
         symbolTable.put(decl, symbolName, symbolDeclaration);
     }
@@ -102,7 +102,7 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
             final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
-                .addAll(paramTypes).build();
+                    .addAll(paramTypes).build();
             final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
             return result;

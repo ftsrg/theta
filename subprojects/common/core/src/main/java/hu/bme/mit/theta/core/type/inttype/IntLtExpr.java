@@ -82,7 +82,7 @@ public final class IntLtExpr extends LtExpr<IntType> {
         } else if (obj instanceof IntLtExpr) {
             final IntLtExpr that = (IntLtExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

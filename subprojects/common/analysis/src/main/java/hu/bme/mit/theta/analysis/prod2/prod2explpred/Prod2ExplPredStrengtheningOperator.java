@@ -27,11 +27,13 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.Collection;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Set;
 
 public final class Prod2ExplPredStrengtheningOperator implements
-    StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
+        StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> {
 
     private final Solver solver;
 
@@ -45,8 +47,8 @@ public final class Prod2ExplPredStrengtheningOperator implements
 
     @Override
     public Collection<Prod2State<ExplState, PredState>> strengthen(
-        Collection<Prod2State<ExplState, PredState>> prod2States,
-        Prod2Prec<ExplPrec, PredPrec> prec) {
+            Collection<Prod2State<ExplState, PredState>> prod2States,
+            Prod2Prec<ExplPrec, PredPrec> prec) {
 
         Set<Prod2State<ExplState, PredState>> validStates = Containers.createSet();
 

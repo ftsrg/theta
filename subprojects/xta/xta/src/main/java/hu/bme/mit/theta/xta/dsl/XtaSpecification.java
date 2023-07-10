@@ -103,7 +103,7 @@ final class XtaSpecification implements Scope {
                         processSymbol.instantiate(system, name, argumentList, env);
                     } else {
                         throw new RuntimeException(
-                            "Symbol \"" + procName + "\" is not a template.");
+                                "Symbol \"" + procName + "\" is not a template.");
                     }
                 }
             } else {
@@ -115,7 +115,7 @@ final class XtaSpecification implements Scope {
     }
 
     private static String createName(final XtaProcessSymbol processSymbol,
-        final List<Expr<?>> argumentList) {
+                                     final List<Expr<?>> argumentList) {
         final StringBuilder sb = new StringBuilder();
         sb.append(processSymbol.getName());
         argumentList.forEach(a -> sb.append("_" + a.toString()));
@@ -136,13 +136,13 @@ final class XtaSpecification implements Scope {
                 // do nothing; will be defined lazily on first occurrence
             } else {
                 final XtaVariableSymbol.InstantiateResult instantiateResult = variable.instantiate(
-                    "", env);
+                        "", env);
                 if (instantiateResult.isChannel()) {
                     final Label label = instantiateResult.asChannel().getLabel();
                     env.define(variable, label);
                 } else if (instantiateResult.isClockVariable()) {
                     final VarDecl<RatType> varDecl = instantiateResult.asClockVariable()
-                        .getVarDecl();
+                            .getVarDecl();
                     env.define(variable, varDecl);
                     system.addClockVar(varDecl);
                 } else if (instantiateResult.isDataVariable()) {
@@ -182,7 +182,7 @@ final class XtaSpecification implements Scope {
         final TypeContext typeContext = context.fType;
         for (final VariableIdContext variableIdContext : context.fVariableIds) {
             final XtaVariableSymbol variableSymbol = new XtaVariableSymbol(this, typeContext,
-                variableIdContext);
+                    variableIdContext);
             variables.add(variableSymbol);
             symbolTable.add(variableSymbol);
         }

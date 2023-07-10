@@ -28,14 +28,14 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 
 public final class PrecMappingAnalysis<S extends State, A extends Action, PP extends Prec, PR extends Prec>
-    implements Analysis<S, A, PP> {
+        implements Analysis<S, A, PP> {
 
     private final PartialOrd<S> partialOrd;
     private final InitFunc<S, PP> initFunc;
     private final TransFunc<S, A, PP> transFunc;
 
     private PrecMappingAnalysis(final Analysis<S, ? super A, ? super PR> analysis,
-        final Function<? super PP, ? extends PR> mapping) {
+                                final Function<? super PP, ? extends PR> mapping) {
         checkNotNull(analysis);
         checkNotNull(mapping);
         this.partialOrd = analysis.getPartialOrd();
@@ -44,8 +44,8 @@ public final class PrecMappingAnalysis<S extends State, A extends Action, PP ext
     }
 
     public static <S extends State, A extends Action, PP extends Prec, PR extends Prec> PrecMappingAnalysis<S, A, PP, PR> create(
-        final Analysis<S, ? super A, ? super PR> analysis,
-        final Function<? super PP, ? extends PR> mapping) {
+            final Analysis<S, ? super A, ? super PR> analysis,
+            final Function<? super PP, ? extends PR> mapping) {
         return new PrecMappingAnalysis<>(analysis, mapping);
     }
 

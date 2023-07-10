@@ -25,7 +25,7 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XstsTransFunc<S extends ExprState, P extends Prec> implements
-    TransFunc<XstsState<S>, XstsAction, P> {
+        TransFunc<XstsState<S>, XstsAction, P> {
 
     private final TransFunc<S, ? super XstsAction, ? super P> transFunc;
 
@@ -34,13 +34,13 @@ public final class XstsTransFunc<S extends ExprState, P extends Prec> implements
     }
 
     public static <S extends ExprState, P extends Prec> XstsTransFunc<S, P> create(
-        final TransFunc<S, ? super XstsAction, ? super P> transFunc) {
+            final TransFunc<S, ? super XstsAction, ? super P> transFunc) {
         return new XstsTransFunc<>(transFunc);
     }
 
     @Override
     public Collection<? extends XstsState<S>> getSuccStates(final XstsState<S> state,
-        final XstsAction action, final P prec) {
+                                                            final XstsAction action, final P prec) {
 
         checkNotNull(state);
         checkNotNull(action);
@@ -51,7 +51,7 @@ public final class XstsTransFunc<S extends ExprState, P extends Prec> implements
         final boolean succWasLastEnv = !state.lastActionWasEnv();
 
         final Collection<? extends S> subSuccStates = transFunc.getSuccStates(subState, action,
-            prec);
+                prec);
         for (final S subSuccState : subSuccStates) {
             final XstsState<S> succState = XstsState.of(subSuccState, succWasLastEnv, true);
             succStates.add(succState);

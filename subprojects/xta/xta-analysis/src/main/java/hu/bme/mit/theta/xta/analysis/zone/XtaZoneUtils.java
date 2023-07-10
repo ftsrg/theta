@@ -43,7 +43,7 @@ public final class XtaZoneUtils {
     }
 
     public static ZoneState post(final ZoneState state, final XtaAction action,
-        final ZonePrec prec) {
+                                 final ZonePrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
@@ -60,7 +60,7 @@ public final class XtaZoneUtils {
     }
 
     private static ZoneState postForBasicAction(final ZoneState state, final BasicXtaAction action,
-        final ZonePrec prec) {
+                                                final ZonePrec prec) {
         final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -80,8 +80,8 @@ public final class XtaZoneUtils {
     }
 
     private static ZoneState postForBinaryAction(final ZoneState state,
-        final BinaryXtaAction action,
-        final ZonePrec prec) {
+                                                 final BinaryXtaAction action,
+                                                 final ZonePrec prec) {
         final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -105,8 +105,8 @@ public final class XtaZoneUtils {
     }
 
     private static ZoneState postForBroadcastAction(final ZoneState state,
-        final BroadcastXtaAction action,
-        final ZonePrec prec) {
+                                                    final BroadcastXtaAction action,
+                                                    final ZonePrec prec) {
         final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -120,13 +120,13 @@ public final class XtaZoneUtils {
 
         if (recvEdges.stream().anyMatch(XtaZoneUtils::hasClockGuards)) {
             throw new UnsupportedOperationException(
-                "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not supported.");
         }
 
         if (nonRecvEdgeCols.stream()
-            .anyMatch(c -> c.stream().anyMatch(XtaZoneUtils::hasClockGuards))) {
+                .anyMatch(c -> c.stream().anyMatch(XtaZoneUtils::hasClockGuards))) {
             throw new UnsupportedOperationException(
-                "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not supported.");
         }
 
         applyUpdates(succStateBuilder, emitEdge);
@@ -148,7 +148,7 @@ public final class XtaZoneUtils {
     ////
 
     public static ZoneState pre(final ZoneState state, final XtaAction action,
-        final ZonePrec prec) {
+                                final ZonePrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
@@ -165,7 +165,7 @@ public final class XtaZoneUtils {
     }
 
     private static ZoneState preForBasicAction(final ZoneState state, final BasicXtaAction action,
-        final ZonePrec prec) {
+                                               final ZonePrec prec) {
         final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -185,7 +185,7 @@ public final class XtaZoneUtils {
     }
 
     private static ZoneState preForBinaryAction(final ZoneState state, final BinaryXtaAction action,
-        final ZonePrec prec) {
+                                                final ZonePrec prec) {
         final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -208,8 +208,8 @@ public final class XtaZoneUtils {
     }
 
     private static ZoneState preForBroadcastAction(final ZoneState state,
-        final BroadcastXtaAction action,
-        final ZonePrec prec) {
+                                                   final BroadcastXtaAction action,
+                                                   final ZonePrec prec) {
         final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
         final List<Loc> sourceLocs = action.getSourceLocs();
@@ -223,18 +223,18 @@ public final class XtaZoneUtils {
         }
         applyInvariants(preStateBuilder, targetLocs);
         reverseRecvEdges.stream()
-            .forEachOrdered(recvEdge -> applyInverseUpdates(preStateBuilder, recvEdge));
+                .forEachOrdered(recvEdge -> applyInverseUpdates(preStateBuilder, recvEdge));
         applyInverseUpdates(preStateBuilder, emitEdge);
 
         if (nonRecvEdgeCols.stream()
-            .anyMatch(c -> c.stream().anyMatch(XtaZoneUtils::hasClockGuards))) {
+                .anyMatch(c -> c.stream().anyMatch(XtaZoneUtils::hasClockGuards))) {
             throw new UnsupportedOperationException(
-                "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not supported.");
         }
 
         if (reverseRecvEdges.stream().anyMatch(XtaZoneUtils::hasClockGuards)) {
             throw new UnsupportedOperationException(
-                "Clock guards on edges with broadcast synchronization labels are not supported.");
+                    "Clock guards on edges with broadcast synchronization labels are not supported.");
         }
 
         applyGuards(preStateBuilder, emitEdge);
@@ -261,7 +261,7 @@ public final class XtaZoneUtils {
     }
 
     private static void applyInvariants(final ZoneState.Builder builder,
-        final Collection<Loc> locs) {
+                                        final Collection<Loc> locs) {
         for (final Loc target : locs) {
             for (final Guard invar : target.getInvars()) {
                 if (invar.isClockGuard()) {

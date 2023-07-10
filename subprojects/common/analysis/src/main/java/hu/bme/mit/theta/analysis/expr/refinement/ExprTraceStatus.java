@@ -32,7 +32,7 @@ public abstract class ExprTraceStatus<R extends Refutation> {
     }
 
     public static <R extends Refutation> Feasible<R> feasible(
-        final Trace<Valuation, ? extends Action> valuations) {
+            final Trace<Valuation, ? extends Action> valuations) {
         return new Feasible<>(valuations);
     }
 
@@ -74,15 +74,15 @@ public abstract class ExprTraceStatus<R extends Refutation> {
         @Override
         public Feasible<R> asFeasible() {
             throw new ClassCastException(
-                "Cannot cast " + Infeasible.class.getSimpleName() + " to "
-                    + Feasible.class.getSimpleName());
+                    "Cannot cast " + Infeasible.class.getSimpleName() + " to "
+                            + Feasible.class.getSimpleName());
         }
 
         @Override
         public String toString() {
             return Utils.lispStringBuilder(ExprTraceStatus.class.getSimpleName())
-                .add(getClass().getSimpleName())
-                .toString();
+                    .add(getClass().getSimpleName())
+                    .toString();
         }
 
     }
@@ -112,8 +112,8 @@ public abstract class ExprTraceStatus<R extends Refutation> {
         @Override
         public Infeasible<R> asInfeasible() {
             throw new ClassCastException(
-                "Cannot cast " + Feasible.class.getSimpleName() + " to "
-                    + Infeasible.class.getSimpleName());
+                    "Cannot cast " + Feasible.class.getSimpleName() + " to "
+                            + Infeasible.class.getSimpleName());
         }
 
         @Override
@@ -124,8 +124,8 @@ public abstract class ExprTraceStatus<R extends Refutation> {
         @Override
         public String toString() {
             return Utils.lispStringBuilder(ExprTraceStatus.class.getSimpleName())
-                .add(getClass().getSimpleName())
-                .toString();
+                    .add(getClass().getSimpleName())
+                    .toString();
         }
 
     }

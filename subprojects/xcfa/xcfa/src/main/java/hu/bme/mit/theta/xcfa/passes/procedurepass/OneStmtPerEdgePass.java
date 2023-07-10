@@ -38,32 +38,32 @@ public class OneStmtPerEdgePass extends ProcedurePass {
         while (!notFound) {
             notFound = true;
             Optional<XcfaEdge> edge = builder.getEdges().stream()
-                .filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).findFirst();
+                    .filter(xcfaEdge -> xcfaEdge.getLabels().size() == 0).findFirst();
             if (edge.isPresent()) {
                 notFound = false;
                 XcfaEdge xcfaEdge = XcfaEdge.of(edge.get().getSource(), edge.get().getTarget(),
-                    List.of(Stmt(Skip())));
+                        List.of(Stmt(Skip())));
                 builder.addEdge(xcfaEdge);
                 FrontendMetadata.lookupMetadata(edge.get())
-                    .forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
+                        .forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
                 builder.removeEdge(edge.get());
             }
             edge = builder.getEdges().stream().filter(xcfaEdge -> xcfaEdge.getLabels().size() > 1)
-                .findFirst();
+                    .findFirst();
             if (edge.isPresent()) {
                 notFound = false;
                 XcfaLocation lastLoc = edge.get().getSource(), interLoc;
                 for (XcfaLabel stmt : edge.get().getLabels()) {
                     interLoc =
-                        edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1
-                            ? edge.get().getTarget() : XcfaLocation.create("tmp_" + tmpcnt++);
+                            edge.get().getLabels().indexOf(stmt) == edge.get().getLabels().size() - 1
+                                    ? edge.get().getTarget() : XcfaLocation.create("tmp_" + tmpcnt++);
                     builder.addLoc(interLoc);
                     FrontendMetadata.create(edge.get(), "xcfaInterLoc", interLoc);
                     XcfaEdge xcfaEdge = XcfaEdge.of(lastLoc, interLoc, List.of(stmt));
                     lastLoc = interLoc;
                     builder.addEdge(xcfaEdge);
                     FrontendMetadata.lookupMetadata(edge.get())
-                        .forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
+                            .forEach((s, o) -> FrontendMetadata.create(xcfaEdge, s, o));
                 }
                 builder.removeEdge(edge.get());
             }

@@ -32,8 +32,8 @@ public final class Exprs {
     }
 
     public static <ExprType extends Type> IteExpr<ExprType> Ite(final Expr<BoolType> cond,
-        final Expr<ExprType> then,
-        final Expr<ExprType> elze) {
+                                                                final Expr<ExprType> then,
+                                                                final Expr<ExprType> elze) {
         return IteExpr.of(cond, then, elze);
     }
 
@@ -46,7 +46,7 @@ public final class Exprs {
      */
 
     public static <ExprType extends Type> PrimeExpr<ExprType> Prime(final Expr<ExprType> op,
-        final int i) {
+                                                                    final int i) {
         checkArgument(i > 0);
         if (i == 1) {
             return Prime(op);

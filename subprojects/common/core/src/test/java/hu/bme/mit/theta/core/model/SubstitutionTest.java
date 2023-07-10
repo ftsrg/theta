@@ -36,7 +36,7 @@ public class SubstitutionTest {
     @Test
     public void testBasic() {
         final Substitution sb = BasicSubstitution.builder().put(ca, Add(Int(1), Int(2)))
-            .put(cb, Int(3)).build();
+                .put(cb, Int(3)).build();
         Assert.assertEquals(2, sb.getDecls().size());
         Assert.assertEquals(Add(Int(1), Int(2)), sb.eval(ca).get());
         Assert.assertEquals(Int(3), sb.eval(cb).get());
@@ -46,9 +46,9 @@ public class SubstitutionTest {
     @Test
     public void testNested() {
         final Substitution sb1 = BasicSubstitution.builder().put(ca, Int(1)).put(cb, Int(2))
-            .build();
+                .build();
         final Substitution sb2 = BasicSubstitution.builder().put(ca, Int(3)).put(cc, Int(4))
-            .build();
+                .build();
         final NestedSubstitution sb = NestedSubstitution.create(sb1, sb2);
         Assert.assertEquals(3, sb.getDecls().size());
         Assert.assertEquals(Int(3), sb.eval(ca).get());

@@ -65,15 +65,15 @@ public class RemoveDeadEnds extends ProcedurePass {
 
             filterReachableEdges(builder.getInitLoc(), reachableEdges);
             Set<XcfaEdge> collect = builder.getEdges().stream()
-                .filter(xcfaEdge -> !nonDeadEndEdges.contains(xcfaEdge)
-                    || !reachableEdges.contains(xcfaEdge)).collect(Collectors.toSet());
+                    .filter(xcfaEdge -> !nonDeadEndEdges.contains(xcfaEdge)
+                            || !reachableEdges.contains(xcfaEdge)).collect(Collectors.toSet());
             for (XcfaEdge edge : collect) {
                 builder.removeEdge(edge);
             }
             List<XcfaLocation> toRemove = builder.getLocs().stream()
-                .filter(loc -> loc.getIncomingEdges().size() == 0
-                    && loc.getOutgoingEdges().size() == 0 && !loc.isEndLoc()
-                    && !loc.isErrorLoc()).collect(Collectors.toList());
+                    .filter(loc -> loc.getIncomingEdges().size() == 0
+                            && loc.getOutgoingEdges().size() == 0 && !loc.isEndLoc()
+                            && !loc.isErrorLoc()).collect(Collectors.toList());
             for (XcfaLocation location : toRemove) {
                 if (builder.getInitLoc() != location) {
                     builder.removeLoc(location);

@@ -45,10 +45,10 @@ public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Lit
     }
 
     private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(
-        CArray type) {
+            CArray type) {
         //noinspection unchecked
         ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
         return Array(List.of(), cast(type.getEmbeddedType().getNullValue(), smtType.getElemType()),
-            smtType);
+                smtType);
     }
 }

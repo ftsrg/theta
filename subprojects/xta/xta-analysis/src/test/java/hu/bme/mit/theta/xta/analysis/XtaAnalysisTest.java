@@ -48,17 +48,17 @@ public final class XtaAnalysisTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {"/critical-2-25-50.xta"},
+                {"/critical-2-25-50.xta"},
 
-            {"/csma-2.xta"},
+                {"/csma-2.xta"},
 
-            {"/fddi-2.xta"},
+                {"/fddi-2.xta"},
 
-            {"/fischer-2-32-64.xta"},
+                {"/fischer-2-32-64.xta"},
 
-            {"/lynch-2-16.xta"},
+                {"/lynch-2-16.xta"},
 
-            {"/broadcast.xta"},
+                {"/broadcast.xta"},
 
         });
     }
@@ -73,21 +73,21 @@ public final class XtaAnalysisTest {
 
         final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
         final Analysis<XtaState<UnitState>, XtaAction, UnitPrec> analysis = XtaAnalysis.create(
-            system,
-            UnitAnalysis.getInstance());
+                system,
+                UnitAnalysis.getInstance());
         final ArgBuilder<XtaState<UnitState>, XtaAction, UnitPrec> argBuilder = ArgBuilder.create(
-            lts, analysis,
-            s -> false);
+                lts, analysis,
+                s -> false);
 
         final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor.builder(
-                argBuilder)
-            .projection(s -> s.getLocs()).build();
+                        argBuilder)
+                .projection(s -> s.getLocs()).build();
 
         final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
         abstractor.check(arg, UnitPrec.getInstance());
 
         System.out.println(
-            GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
     }
 
 }

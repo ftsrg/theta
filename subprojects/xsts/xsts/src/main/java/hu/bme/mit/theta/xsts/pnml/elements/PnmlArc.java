@@ -23,7 +23,7 @@ public class PnmlArc {
     private final PnmlNode targetNode;
 
     public PnmlArc(final String id, int weight, final PnmlNode sourceNode,
-        final PnmlNode targetNode) {
+                   final PnmlNode targetNode) {
         this.id = id;
         this.weight = weight;
         this.sourceNode = sourceNode;

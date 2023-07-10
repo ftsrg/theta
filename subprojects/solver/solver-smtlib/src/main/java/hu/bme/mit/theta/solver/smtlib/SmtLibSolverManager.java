@@ -49,12 +49,12 @@ public final class SmtLibSolverManager extends SolverManager {
     private static Tuple2<String, Class<? extends GenericSmtLibSolverInstaller>> genericInstallerDeclaration;
 
     public static <T extends SmtLibSolverInstaller> void registerInstaller(final String name,
-        final Class<T> decl) {
+                                                                           final Class<T> decl) {
         installerDeclarations.put(name, decl);
     }
 
     public static <T extends GenericSmtLibSolverInstaller> void registerGenericInstaller(
-        final String name, final Class<T> decl) {
+            final String name, final Class<T> decl) {
         checkState(genericInstallerDeclaration == null);
         genericInstallerDeclaration = Tuple2.of(name, decl);
     }
@@ -117,24 +117,24 @@ public final class SmtLibSolverManager extends SolverManager {
 
         try {
             this.genericInstaller = Tuple2.of(
-                genericInstallerDeclaration.get1(),
-                genericInstallerDeclaration.get2().getDeclaredConstructor(Logger.class)
-                    .newInstance(logger)
+                    genericInstallerDeclaration.get1(),
+                    genericInstallerDeclaration.get2().getDeclaredConstructor(Logger.class)
+                            .newInstance(logger)
             );
 
             this.installers = Stream.concat(
-                Stream.of(this.genericInstaller),
-                installerDeclarations.entrySet().stream()
-                    .map(p -> {
-                        try {
-                            return Tuple2.of(p.getKey(),
-                                p.getValue().getDeclaredConstructor(Logger.class)
-                                    .newInstance(logger));
-                        } catch (InstantiationException | IllegalAccessException |
-                                 InvocationTargetException | NoSuchMethodException e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
+                    Stream.of(this.genericInstaller),
+                    installerDeclarations.entrySet().stream()
+                            .map(p -> {
+                                try {
+                                    return Tuple2.of(p.getKey(),
+                                            p.getValue().getDeclaredConstructor(Logger.class)
+                                                    .newInstance(logger));
+                                } catch (InstantiationException | IllegalAccessException |
+                                         InvocationTargetException | NoSuchMethodException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
             ).collect(Collectors.toUnmodifiableMap(Tuple2::get1, Tuple2::get2));
         } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
                  IllegalAccessException e) {
@@ -145,7 +145,7 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public static SmtLibSolverManager create(final Path home, final Logger logger)
-        throws IOException {
+            throws IOException {
         createIfNotExists(home);
         return new SmtLibSolverManager(home, logger);
     }
@@ -161,16 +161,16 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public void install(final String solver, final String version, final String name,
-        final Path solverPath, final boolean installUnsupported)
-        throws SmtLibSolverInstallerException {
+                        final Path solverPath, final boolean installUnsupported)
+            throws SmtLibSolverInstallerException {
         checkArgument(!solver.equals(genericInstaller.get1()));
 
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         } else if (!getSupportedVersions(solver).contains(getVersionString(solver, version, false))
-            && !installUnsupported) {
+                && !installUnsupported) {
             throw new SmtLibSolverInstallerException(
-                "Installing unsupported solvers is not enabled");
+                    "Installing unsupported solvers is not enabled");
         }
 
         final var installDir = home.resolve(solver);
@@ -184,15 +184,15 @@ public final class SmtLibSolverManager extends SolverManager {
 
         if (solverPath != null) {
             installers.get(solver).install(installDir, getVersionString(solver, version, false),
-                getVersionString(solver, name, false), solverPath);
+                    getVersionString(solver, name, false), solverPath);
         } else {
             installers.get(solver).install(installDir, getVersionString(solver, version, false),
-                getVersionString(solver, name, false));
+                    getVersionString(solver, name, false));
         }
     }
 
     public void installGeneric(final String version, final Path solverPath, final String[] args)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         final var installDir = home.resolve(genericInstaller.get1());
         try {
             if (!Files.exists(installDir)) {
@@ -205,43 +205,43 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public void uninstall(final String solver, final String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
 
         installers.get(solver)
-            .uninstall(home.resolve(solver), getVersionString(solver, version, true));
+                .uninstall(home.resolve(solver), getVersionString(solver, version, true));
     }
 
     public void rename(final String solver, final String version, final String name)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
 
         installers.get(solver)
-            .rename(home.resolve(solver), getVersionString(solver, version, true), name);
+                .rename(home.resolve(solver), getVersionString(solver, version, true), name);
     }
 
     public String getInfo(final String solver, final String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
 
         return installers.get(solver)
-            .getInfo(home.resolve(solver), getVersionString(solver, version, true));
+                .getInfo(home.resolve(solver), getVersionString(solver, version, true));
     }
 
     public Path getArgsFile(final String solver, final String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
 
         return installers.get(solver)
-            .getArgsFile(home.resolve(solver), getVersionString(solver, version, true));
+                .getArgsFile(home.resolve(solver), getVersionString(solver, version, true));
     }
 
     @Override
@@ -251,13 +251,13 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public SolverFactory getSolverFactory(final String solver, final String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
 
         return new ManagedFactory(installers.get(solver)
-            .getSolverFactory(home.resolve(solver), getVersionString(solver, version, true)));
+                .getSolverFactory(home.resolve(solver), getVersionString(solver, version, true)));
     }
 
     public List<String> getSupportedSolvers() {
@@ -265,7 +265,7 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public List<Tuple2<String, List<String>>> getSupportedVersions()
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         final var builder = ImmutableList.<Tuple2<String, List<String>>>builder();
 
         for (final var solver : getSupportedSolvers()) {
@@ -276,7 +276,7 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public List<String> getSupportedVersions(final String solver)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
@@ -285,7 +285,7 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public List<Tuple2<String, List<String>>> getInstalledVersions()
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         final var builder = ImmutableList.<Tuple2<String, List<String>>>builder();
 
         for (final var solver : getSupportedSolvers()) {
@@ -296,7 +296,7 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     public List<String> getInstalledVersions(final String solver)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         if (!installers.containsKey(solver)) {
             throw new SmtLibSolverInstallerException(String.format("Unknown solver: %s", solver));
         }
@@ -305,20 +305,20 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     private String getVersionString(final String solver, final String version,
-        final boolean installed) throws SmtLibSolverInstallerException {
+                                    final boolean installed) throws SmtLibSolverInstallerException {
         if (!version.equals("latest")) {
             return version;
         } else {
             final var supportedVersions = getSupportedVersions(solver);
             final var versions = installed ? getInstalledVersions(solver).stream()
-                .filter(supportedVersions::contains).collect(Collectors.toList())
-                : supportedVersions;
+                    .filter(supportedVersions::contains).collect(Collectors.toList())
+                    : supportedVersions;
             if (versions.size() > 0) {
                 return versions.get(0);
             } else {
                 throw new SmtLibSolverInstallerException(
-                    String.format("There are no %s versions of solver: %s",
-                        installed ? "installed" : "supported", solver));
+                        String.format("There are no %s versions of solver: %s",
+                                installed ? "installed" : "supported", solver));
             }
         }
     }

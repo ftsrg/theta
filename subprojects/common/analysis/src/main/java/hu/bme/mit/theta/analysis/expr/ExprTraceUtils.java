@@ -34,7 +34,7 @@ public final class ExprTraceUtils {
     }
 
     public static <A extends ExprAction> Trace<ExprState, A> traceFrom(
-        final List<? extends A> actions) {
+            final List<? extends A> actions) {
         checkNotNull(actions);
         final List<ExprState> states = new ArrayList<>(actions.size() + 1);
         for (int i = 0; i < actions.size() + 1; i++) {
@@ -44,15 +44,15 @@ public final class ExprTraceUtils {
     }
 
     public static boolean isInductive(final Trace<? extends ExprState, ? extends ExprAction> trace,
-        final Solver solver) {
+                                      final Solver solver) {
         for (int i = 0; i < trace.length(); i++) {
             final ExprState sourceState = trace.getState(i);
             final ExprAction action = trace.getAction(i);
             final ExprState targetState = trace.getState(i + 1);
 
             final Optional<Valuation> uncoveredSuccessor = anyUncoveredSuccessor(sourceState,
-                action,
-                singleton(targetState), solver);
+                    action,
+                    singleton(targetState), solver);
             if (uncoveredSuccessor.isPresent()) {
                 return false;
             }

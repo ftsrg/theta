@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> implements
-    Expr<ResultType> {
+        Expr<ResultType> {
 
     private static final int HASH_SEED = 7951;
 
@@ -38,19 +38,19 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
     private volatile int hashCode = 0;
 
     private FuncAppExpr(final Expr<FuncType<ParamType, ResultType>> func,
-        final Expr<ParamType> param) {
+                        final Expr<ParamType> param) {
         this.func = checkNotNull(func);
         this.param = checkNotNull(param);
     }
 
     public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> of(
-        final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
+            final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
         return new FuncAppExpr<>(func, param);
     }
 
     public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<?, ?> create(
-        final Expr<?> func,
-        final Expr<?> param) {
+            final Expr<?> func,
+            final Expr<?> param) {
         @SuppressWarnings("unchecked") final FuncType<ParamType, ResultType> funcType = (FuncType<ParamType, ResultType>) func.getType();
         final Expr<FuncType<ParamType, ResultType>> newFunc = cast(func, funcType);
         final Expr<ParamType> newParam = cast(param, funcType.getParamType());
@@ -92,7 +92,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
     }
 
     public FuncAppExpr<ParamType, ResultType> with(final Expr<FuncType<ParamType, ResultType>> func,
-        final Expr<ParamType> param) {
+                                                   final Expr<ParamType> param) {
         if (this.func == func && this.param == param) {
             return this;
         } else {
@@ -101,7 +101,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
     }
 
     public FuncAppExpr<ParamType, ResultType> withFunc(
-        final Expr<FuncType<ParamType, ResultType>> func) {
+            final Expr<FuncType<ParamType, ResultType>> func) {
         return with(func, getParam());
     }
 

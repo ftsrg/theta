@@ -47,7 +47,7 @@ public class VarIndexingTest {
     @Test
     public void testInc() {
         final VarIndexing indexes = VarIndexingFactory.indexingBuilder(0).inc(x).inc(z).inc(x)
-            .build();
+                .build();
 
         assertEquals(2, indexes.get(x));
         assertEquals(0, indexes.get(y));
@@ -57,7 +57,7 @@ public class VarIndexingTest {
     @Test
     public void testIncNeg() {
         final VarIndexing indexes = VarIndexingFactory.basicIndexingBuilder(2).inc(x, -1).inc(z, -1)
-            .inc(x, -1).build();
+                .inc(x, -1).build();
 
         assertEquals(0, indexes.get(x));
         assertEquals(2, indexes.get(y));
@@ -92,7 +92,7 @@ public class VarIndexingTest {
     @Test
     public void testSub() {
         final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).inc(x).inc(y).inc(y)
-            .build();
+                .build();
         final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(0).inc(x).inc(z).build();
         final VarIndexing sub = indexes1.sub(indexes2);
         assertEquals(1, sub.get(x));
@@ -114,7 +114,7 @@ public class VarIndexingTest {
     public void testSubException() {
         final VarIndexing indexes1 = VarIndexingFactory.indexingBuilder(1).inc(x).build();
         final VarIndexing indexes2 = VarIndexingFactory.indexingBuilder(0).inc(x).inc(x).inc(x)
-            .build();
+                .build();
         indexes1.sub(indexes2);
     }
 

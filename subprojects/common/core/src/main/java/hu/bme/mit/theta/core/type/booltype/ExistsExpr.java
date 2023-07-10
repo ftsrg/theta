@@ -34,12 +34,12 @@ public final class ExistsExpr extends QuantifiedExpr {
     }
 
     public static ExistsExpr of(final Iterable<? extends ParamDecl<?>> paramDecls,
-        final Expr<BoolType> op) {
+                                final Expr<BoolType> op) {
         return new ExistsExpr(paramDecls, op);
     }
 
     public static ExistsExpr create(final Iterable<? extends ParamDecl<?>> paramDecls,
-        final Expr<?> op) {
+                                    final Expr<?> op) {
         final Expr<BoolType> newOp = cast(op, Bool());
         return ExistsExpr.of(paramDecls, newOp);
     }
@@ -65,7 +65,7 @@ public final class ExistsExpr extends QuantifiedExpr {
         } else if (obj instanceof ExistsExpr) {
             final ExistsExpr that = (ExistsExpr) obj;
             return this.getParamDecls().equals(that.getParamDecls()) && this.getOp()
-                .equals(that.getOp());
+                    .equals(that.getOp());
         } else {
             return false;
         }

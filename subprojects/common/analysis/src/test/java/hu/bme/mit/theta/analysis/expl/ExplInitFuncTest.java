@@ -51,7 +51,7 @@ public class ExplInitFuncTest {
     public void test2() {
         final ExplPrec prec = ExplPrec.of(ImmutableList.of(x, y));
         final ExplInitFunc initFunc = ExplInitFunc.create(solver,
-            And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(5))));
+                And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(5))));
         Assert.assertEquals(6, initFunc.getInitStates(prec).size());
     }
 
@@ -59,7 +59,7 @@ public class ExplInitFuncTest {
     public void test3() {
         final ExplPrec prec = ExplPrec.of(ImmutableList.of(x, y));
         final ExplInitFunc initFunc = ExplInitFunc.create(solver,
-            And(Leq(Int(0), x.getRef()), Leq(x.getRef(), y.getRef()), Leq(y.getRef(), Int(3))));
+                And(Leq(Int(0), x.getRef()), Leq(x.getRef(), y.getRef()), Leq(y.getRef(), Int(3))));
         Assert.assertEquals(10, initFunc.getInitStates(prec).size());
     }
 
@@ -67,7 +67,7 @@ public class ExplInitFuncTest {
     public void testBottom() {
         final ExplPrec prec = ExplPrec.of(ImmutableList.of(x, y));
         final ExplInitFunc initFunc = ExplInitFunc.create(solver,
-            And(Leq(Int(5), x.getRef()), Leq(x.getRef(), y.getRef()), Leq(y.getRef(), Int(3))));
+                And(Leq(Int(5), x.getRef()), Leq(x.getRef(), y.getRef()), Leq(y.getRef(), Int(3))));
         final Collection<? extends ExplState> initStates = initFunc.getInitStates(prec);
         Assert.assertEquals(1, initStates.size());
         Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(initStates));

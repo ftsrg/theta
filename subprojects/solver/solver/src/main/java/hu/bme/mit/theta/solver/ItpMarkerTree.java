@@ -46,13 +46,13 @@ public final class ItpMarkerTree<T extends ItpMarker> {
 
     @SafeVarargs
     public static <T extends ItpMarker> ItpMarkerTree<T> Tree(final T marker,
-        final ItpMarkerTree<T>... subtrees) {
+                                                              final ItpMarkerTree<T>... subtrees) {
         return new ItpMarkerTree<>(marker, Arrays.asList(subtrees));
     }
 
     @SafeVarargs
     public static <T extends ItpMarker> ItpMarkerTree<T> Subtree(final T marker,
-        final ItpMarkerTree<T>... subtrees) {
+                                                                 final ItpMarkerTree<T>... subtrees) {
         return Tree(marker, subtrees);
     }
 

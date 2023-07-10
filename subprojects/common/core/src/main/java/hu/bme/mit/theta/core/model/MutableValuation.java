@@ -85,15 +85,15 @@ public final class MutableValuation extends Valuation {
     public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
         checkNotNull(decl);
         @SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(
-            decl);
+                decl);
         return Optional.ofNullable(val);
     }
 
     @Override
     public Expr<BoolType> toExpr() {
         return SmartBoolExprs.And(
-            declToExpr.entrySet().stream().map(e -> Eq(e.getKey().getRef(), e.getValue()))
-                .collect(toImmutableList()));
+                declToExpr.entrySet().stream().map(e -> Eq(e.getKey().getRef(), e.getValue()))
+                        .collect(toImmutableList()));
     }
 
     @Override

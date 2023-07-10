@@ -27,13 +27,13 @@ public class VisualizationTest {
         g.addNode("n2", NodeAttributes.builder().lineColor(Color.BLUE).label("2").build());
         g.addNode("n3", NodeAttributes.builder().lineStyle(LineStyle.DASHED).label("3").build());
         g.addNode("n4",
-            NodeAttributes.builder().peripheries(3).label("4").shape(Shape.RECTANGLE).build());
+                NodeAttributes.builder().peripheries(3).label("4").shape(Shape.RECTANGLE).build());
 
         g.addCompositeNode("c1",
-            NodeAttributes.builder().label("cluster1").lineStyle(LineStyle.DOTTED)
-                .shape(Shape.RECTANGLE).peripheries(2).build());
+                NodeAttributes.builder().label("cluster1").lineStyle(LineStyle.DOTTED)
+                        .shape(Shape.RECTANGLE).peripheries(2).build());
         g.addCompositeNode("c2",
-            NodeAttributes.builder().label("cluster2").shape(Shape.RECTANGLE).build());
+                NodeAttributes.builder().label("cluster2").shape(Shape.RECTANGLE).build());
 
         g.setChild("c1", "n1");
         g.setChild("c1", "n2");

@@ -30,7 +30,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XcfaTransFunc<S extends ExprState, A extends StmtAction, P extends Prec> implements
-    TransFunc<hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S>, A, XcfaPrec<P>> {
+        TransFunc<hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S>, A, XcfaPrec<P>> {
 
     private final TransFunc<S, A, ? super P> transFunc;
 
@@ -39,14 +39,14 @@ public class XcfaTransFunc<S extends ExprState, A extends StmtAction, P extends 
     }
 
     public static <S extends ExprState, A extends StmtAction, P extends Prec> XcfaTransFunc<S, A, P> create(
-        final TransFunc<S, A, ? super P> transFunc) {
+            final TransFunc<S, A, ? super P> transFunc) {
         return new XcfaTransFunc<>(transFunc);
     }
 
     @Override
     public Collection<? extends XcfaState<S>> getSuccStates(
-        final hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S> commonState, final A commonAction,
-        final XcfaPrec<P> prec) {
+            final hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S> commonState, final A commonAction,
+            final XcfaPrec<P> prec) {
         XcfaState<S> state = (XcfaState<S>) commonState;
         hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaAction action = (hu.bme.mit.theta.xcfa.analysis.impl.interleavings.XcfaAction) commonAction;
 
@@ -83,10 +83,10 @@ public class XcfaTransFunc<S extends ExprState, A extends StmtAction, P extends 
 
         Collection<XcfaState<S>> newStates = new ArrayList<>();
         for (final S succState : transFunc.getSuccStates(state.getGlobalState(),
-            (A) action.withLabels(stmts), prec.getGlobalPrec())) {
+                (A) action.withLabels(stmts), prec.getGlobalPrec())) {
             final XcfaState<S> newState = state.atomicbegin(action.getProcess(), atomicBegin)
-                .startthreads(startThreadList).jointhreads(action.getProcess(), joinThreadList)
-                .advance(succState, action);
+                    .startthreads(startThreadList).jointhreads(action.getProcess(), joinThreadList)
+                    .advance(succState, action);
             newStates.add(newState);
         }
         return newStates;

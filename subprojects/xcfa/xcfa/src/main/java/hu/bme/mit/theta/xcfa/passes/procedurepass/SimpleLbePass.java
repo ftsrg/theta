@@ -175,7 +175,7 @@ public class SimpleLbePass extends ProcedurePass {
         HashMap<XcfaLocation, List<XcfaEdge>> edgesByTarget = new HashMap<>();
         for (XcfaEdge edge : location.getOutgoingEdges()) {
             List<XcfaEdge> edgesToTarget = edgesByTarget.getOrDefault(edge.getTarget(),
-                new ArrayList<>());
+                    new ArrayList<>());
             edgesToTarget.add(edge);
             edgesByTarget.put(edge.getTarget(), edgesToTarget);
         }
@@ -212,7 +212,7 @@ public class SimpleLbePass extends ProcedurePass {
      *                         this list
      */
     private void collapsePartOfSnake(XcfaLocation location, List<XcfaLocation> locationsToVisit,
-        List<XcfaLocation> removedLocations) {
+                                     List<XcfaLocation> removedLocations) {
         if (location.getIncomingEdges().size() == 1 && location.getOutgoingEdges().size() == 1) {
             XcfaLocation previousLocation = location.getIncomingEdges().get(0).getSource();
             removeMiddleLocation(location);

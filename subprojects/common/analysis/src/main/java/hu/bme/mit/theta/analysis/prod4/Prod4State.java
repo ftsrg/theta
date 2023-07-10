@@ -29,13 +29,13 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-    implements ExprState {
+        implements ExprState {
 
     private Prod4State() {
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Prod4State<S1, S2, S3, S4> of(
-        final S1 state1, final S2 state2, final S3 state3, final S4 state4) {
+            final S1 state1, final S2 state2, final S3 state3, final S4 state4) {
         checkNotNull(state1);
         checkNotNull(state2);
         checkNotNull(state3);
@@ -54,33 +54,33 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Prod4State<S1, S2, S3, S4> bottom1(
-        final S1 state) {
+            final S1 state) {
         return new Bottom1<>(state);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Prod4State<S1, S2, S3, S4> bottom2(
-        final S2 state) {
+            final S2 state) {
         return new Bottom2<>(state);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Prod4State<S1, S2, S3, S4> bottom3(
-        final S3 state) {
+            final S3 state) {
         return new Bottom3<>(state);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Prod4State<S1, S2, S3, S4> bottom4(
-        final S4 state) {
+            final S4 state) {
         return new Bottom4<>(state);
     }
 
     private static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Prod4State<S1, S2, S3, S4> product(
-        final S1 state1, final S2 state2, final S3 state3, final S4 state4) {
+            final S1 state1, final S2 state2, final S3 state3, final S4 state4) {
         return new Product<>(state1, state2, state3, state4);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Collection<Prod4State<S1, S2, S3, S4>> cartesian(
-        final Iterable<? extends S1> states1, final Iterable<? extends S2> states2,
-        final Iterable<? extends S3> states3, final Iterable<? extends S4> states4) {
+            final Iterable<? extends S1> states1, final Iterable<? extends S2> states2,
+            final Iterable<? extends S3> states3, final Iterable<? extends S4> states4) {
         final Collection<Prod4State<S1, S2, S3, S4>> result = new ArrayList<>();
         for (final S1 state1 : states1) {
             for (final S2 state2 : states2) {
@@ -119,7 +119,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
     public abstract <S extends State> Prod4State<S1, S2, S3, S> with4(final S state);
 
     private static final class Product<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-        extends Prod4State<S1, S2, S3, S4> {
+            extends Prod4State<S1, S2, S3, S4> {
 
         private static final int HASH_SEED = 2297;
         private volatile int hashCode = 0;
@@ -228,13 +228,13 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
         @Override
         public Expr<BoolType> toExpr() {
             if (state1 instanceof ExprState && state2 instanceof ExprState
-                && state3 instanceof ExprState) {
+                    && state3 instanceof ExprState) {
                 final ExprState exprState1 = (ExprState) state1;
                 final ExprState exprState2 = (ExprState) state2;
                 final ExprState exprState3 = (ExprState) state3;
                 final ExprState exprState4 = (ExprState) state4;
                 return And(exprState1.toExpr(), exprState2.toExpr(), exprState3.toExpr(),
-                    exprState4.toExpr());
+                        exprState4.toExpr());
             } else {
                 throw new UnsupportedOperationException();
             }
@@ -261,7 +261,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
             } else if (obj instanceof Product) {
                 final Product<?, ?, ?, ?> that = (Product<?, ?, ?, ?>) obj;
                 return this.state1.equals(that.state1) && this.state2.equals(that.state2)
-                    && this.state3.equals(that.state3) && this.state4.equals(that.state4);
+                        && this.state3.equals(that.state3) && this.state4.equals(that.state4);
             } else {
                 return false;
             }
@@ -270,13 +270,13 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
         @Override
         public String toString() {
             return Utils.lispStringBuilder(Prod4State.class.getSimpleName()).body().add(state1)
-                .add(state2).add(state3)
-                .add(state4).toString();
+                    .add(state2).add(state3)
+                    .add(state4).toString();
         }
     }
 
     private static abstract class Bottom<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-        extends Prod4State<S1, S2, S3, S4> {
+            extends Prod4State<S1, S2, S3, S4> {
 
         private static final int HASH_SEED = 4129;
         private volatile int hashCode = 0;
@@ -323,7 +323,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
             } else if (obj instanceof Bottom) {
                 final Bottom<?, ?, ?, ?> that = (Bottom<?, ?, ?, ?>) obj;
                 return this.getIndex() == that.getIndex() && this.getState()
-                    .equals(that.getState());
+                        .equals(that.getState());
             } else {
                 return false;
             }
@@ -332,12 +332,12 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
         @Override
         public final String toString() {
             return Utils.lispStringBuilder(Prod4State.class.getSimpleName()).add(getIndex())
-                .add(getState()).toString();
+                    .add(getState()).toString();
         }
     }
 
     private static final class Bottom1<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-        extends Bottom<S1, S2, S3, S4> {
+            extends Bottom<S1, S2, S3, S4> {
 
         private final S1 state;
 
@@ -424,7 +424,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
     }
 
     private static final class Bottom2<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-        extends Bottom<S1, S2, S3, S4> {
+            extends Bottom<S1, S2, S3, S4> {
 
         private final S2 state;
 
@@ -511,7 +511,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
     }
 
     private static final class Bottom3<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-        extends Bottom<S1, S2, S3, S4> {
+            extends Bottom<S1, S2, S3, S4> {
 
         private final S3 state;
 
@@ -598,7 +598,7 @@ public abstract class Prod4State<S1 extends State, S2 extends State, S3 extends 
     }
 
     private static final class Bottom4<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-        extends Bottom<S1, S2, S3, S4> {
+            extends Bottom<S1, S2, S3, S4> {
 
         private final S4 state;
 

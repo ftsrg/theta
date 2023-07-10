@@ -36,7 +36,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
     }
 
     public static MathSATSmtLibSolverFactory create(Path solverPath, String[] args,
-        boolean itpSupported) {
+                                                    boolean itpSupported) {
         return new MathSATSmtLibSolverFactory(solverPath, args, itpSupported);
     }
 
@@ -48,7 +48,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-            false);
+                false);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-            true);
+                true);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
             final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
             return new MathSATSmtLibItpSolver(symbolTable, transformationManager, termTransformer,
-                solverBinary);
+                    solverBinary);
         } else {
             throw new UnsupportedOperationException("MathSAT interpolation supported above 5.4.0");
         }

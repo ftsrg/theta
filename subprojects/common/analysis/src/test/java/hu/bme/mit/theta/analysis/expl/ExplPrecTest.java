@@ -53,7 +53,7 @@ public class ExplPrecTest {
     public void testMapping() {
         final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
         final ExplState s1 = prec.createState(
-            ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
+                ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
         final ExplState s2 = prec.createState(ImmutableValuation.builder().put(y, Int(2)).build());
 
         Assert.assertEquals(1, s1.getDecls().size());

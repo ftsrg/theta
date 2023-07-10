@@ -28,7 +28,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<RatType>,
-    Comparable<RatLitExpr> {
+        Comparable<RatLitExpr> {
 
     private static final int HASH_SEED = 149;
 
@@ -94,14 +94,14 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 
     public RatLitExpr add(final RatLitExpr that) {
         return RatLitExpr.of(
-            this.getNum().multiply(that.getDenom()).add(this.getDenom().multiply(that.getNum())),
-            this.getDenom().multiply(that.getDenom()));
+                this.getNum().multiply(that.getDenom()).add(this.getDenom().multiply(that.getNum())),
+                this.getDenom().multiply(that.getDenom()));
     }
 
     public RatLitExpr sub(final RatLitExpr that) {
         return RatLitExpr.of(this.getNum().multiply(that.getDenom())
-                .subtract(this.getDenom().multiply(that.getNum())),
-            this.getDenom().multiply(that.getDenom()));
+                        .subtract(this.getDenom().multiply(that.getNum())),
+                this.getDenom().multiply(that.getDenom()));
     }
 
     public RatLitExpr pos() {
@@ -114,42 +114,42 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 
     public RatLitExpr mul(final RatLitExpr that) {
         return RatLitExpr.of(this.getNum().multiply(that.getNum()),
-            this.getDenom().multiply(that.getDenom()));
+                this.getDenom().multiply(that.getDenom()));
     }
 
     public RatLitExpr div(final RatLitExpr that) {
         return RatLitExpr.of(this.getNum().multiply(that.getDenom()),
-            this.getDenom().multiply(that.getNum()));
+                this.getDenom().multiply(that.getNum()));
     }
 
     public BoolLitExpr eq(final RatLitExpr that) {
         return Bool(this.getNum().compareTo(that.getNum()) == 0
-            && this.getDenom().compareTo(that.getDenom()) == 0);
+                && this.getDenom().compareTo(that.getDenom()) == 0);
     }
 
     public BoolLitExpr neq(final RatLitExpr that) {
         return Bool(this.getNum().compareTo(that.getNum()) != 0
-            || this.getDenom().compareTo(that.getDenom()) != 0);
+                || this.getDenom().compareTo(that.getDenom()) != 0);
     }
 
     public BoolLitExpr lt(final RatLitExpr that) {
         return Bool(this.getNum().multiply(that.getDenom())
-            .compareTo(this.getDenom().multiply(that.getNum())) < 0);
+                .compareTo(this.getDenom().multiply(that.getNum())) < 0);
     }
 
     public BoolLitExpr leq(final RatLitExpr that) {
         return Bool(this.getNum().multiply(that.getDenom())
-            .compareTo(this.getDenom().multiply(that.getNum())) <= 0);
+                .compareTo(this.getDenom().multiply(that.getNum())) <= 0);
     }
 
     public BoolLitExpr gt(final RatLitExpr that) {
         return Bool(this.getNum().multiply(that.getDenom())
-            .compareTo(this.getDenom().multiply(that.getNum())) > 0);
+                .compareTo(this.getDenom().multiply(that.getNum())) > 0);
     }
 
     public BoolLitExpr geq(final RatLitExpr that) {
         return Bool(this.getNum().multiply(that.getDenom())
-            .compareTo(this.getDenom().multiply(that.getNum())) >= 0);
+                .compareTo(this.getDenom().multiply(that.getNum())) >= 0);
     }
 
     public RatLitExpr abs() {
@@ -179,7 +179,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
         } else if (obj instanceof RatLitExpr) {
             final RatLitExpr that = (RatLitExpr) obj;
             return (this.getNum().compareTo(that.getNum()) == 0
-                && this.getDenom().compareTo(that.getDenom()) == 0);
+                    && this.getDenom().compareTo(that.getDenom()) == 0);
         } else {
             return false;
         }
@@ -197,7 +197,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
     @Override
     public int compareTo(final RatLitExpr that) {
         return this.getNum().multiply(that.getDenom())
-            .compareTo(this.getDenom().multiply(that.getNum()));
+                .compareTo(this.getDenom().multiply(that.getNum()));
     }
 
     public IntLitExpr toInt() {

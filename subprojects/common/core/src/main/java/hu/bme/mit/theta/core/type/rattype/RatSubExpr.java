@@ -79,7 +79,7 @@ public final class RatSubExpr extends SubExpr<RatType> {
         } else if (obj instanceof RatSubExpr) {
             final RatSubExpr that = (RatSubExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

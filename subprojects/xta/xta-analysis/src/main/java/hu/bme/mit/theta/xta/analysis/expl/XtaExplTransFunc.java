@@ -39,7 +39,7 @@ final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec
 
     @Override
     public Collection<ExplState> getSuccStates(final ExplState state, final XtaAction action,
-        final UnitPrec prec) {
+                                               final UnitPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);

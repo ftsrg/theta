@@ -270,7 +270,7 @@ final class BasicDbm {
             for (int i = 0; i <= nClocks; i++) {
                 for (int j = 0; j <= nClocks; j++) {
                     final int newBound = min(matrix.get(i, j),
-                        add(matrix.get(i, k), matrix.get(k, j)));
+                            add(matrix.get(i, k), matrix.get(k, j)));
                     if (i == j && newBound < Leq(0)) {
                         matrix.set(0, 0, Leq(-1));
                         return;

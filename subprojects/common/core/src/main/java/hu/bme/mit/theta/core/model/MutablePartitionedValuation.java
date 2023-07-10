@@ -71,7 +71,7 @@ public final class MutablePartitionedValuation extends Valuation {
     }
 
     public MutablePartitionedValuation put(final int id, final Decl<?> decl,
-        final LitExpr<?> value) {
+                                           final LitExpr<?> value) {
         checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
         checkArgument(partitions.size() > id, "Index out of bounds");
         partitions.get(id).put(decl, value);
@@ -136,7 +136,7 @@ public final class MutablePartitionedValuation extends Valuation {
         checkNotNull(decl);
         for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
             @SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) decls.get(
-                decl);
+                    decl);
             if (val != null) {
                 return Optional.of(val);
             }
@@ -147,7 +147,7 @@ public final class MutablePartitionedValuation extends Valuation {
     @Override
     public Expr<BoolType> toExpr() {
         return SmartBoolExprs.And(getDecls().stream().map(e -> Eq(e.getRef(), eval(e).get()))
-            .collect(toImmutableList()));
+                .collect(toImmutableList()));
     }
 
     @Override

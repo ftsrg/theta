@@ -53,11 +53,11 @@ public final class CFA {
         locs = ImmutableSet.copyOf(builder.locs);
         edges = ImmutableList.copyOf(builder.edges);
         vars = edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream())
-            .collect(toImmutableSet());
+                .collect(toImmutableSet());
         Set<String> varNames = Containers.createSet();
         for (var v : vars) {
             checkArgument(!varNames.contains(v.getName()),
-                "Variable with name '" + v.getName() + "' already exists in the CFA.");
+                    "Variable with name '" + v.getName() + "' already exists in the CFA.");
             varNames.add(v.getName());
         }
     }
@@ -96,8 +96,8 @@ public final class CFA {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("process").aligned().addAll(vars).body()
-            .addAll(locs.stream().map(this::locToString))
-            .addAll(edges.stream().map(this::edgeToString)).toString();
+                .addAll(locs.stream().map(this::locToString))
+                .addAll(edges.stream().map(this::edgeToString)).toString();
     }
 
     private String locToString(final Loc loc) {
@@ -114,8 +114,8 @@ public final class CFA {
 
     private String edgeToString(final Edge edge) {
         return Utils.lispStringBuilder("edge").add(edge.getSource().getName())
-            .add(edge.getTarget().getName())
-            .add(edge.getStmt()).toString();
+                .add(edge.getTarget().getName())
+                .add(edge.getStmt()).toString();
     }
 
     public static final class Loc {
@@ -241,7 +241,7 @@ public final class CFA {
         public Loc createLoc(final String name) {
             checkNotBuilt();
             checkArgument(!locNames.contains(name),
-                "Location with name '" + name + "' already exists in the CFA.");
+                    "Location with name '" + name + "' already exists in the CFA.");
             final Loc loc = new Loc(name);
             locs.add(loc);
             locNames.add(name);
@@ -268,11 +268,11 @@ public final class CFA {
             checkState(initLoc != null, "Initial location must be set.");
             if (finalLoc != null) {
                 checkState(finalLoc.getOutEdges().isEmpty(),
-                    "Final location cannot have outgoing edges.");
+                        "Final location cannot have outgoing edges.");
             }
             if (errorLoc != null) {
                 checkState(errorLoc.getOutEdges().isEmpty(),
-                    "Error location cannot have outgoing edges.");
+                        "Error location cannot have outgoing edges.");
             }
             built = true;
             return new CFA(this);

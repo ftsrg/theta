@@ -44,50 +44,50 @@ public class SequentialPortfolio extends AbstractPortfolio {
     private long analysisTime; // in ms, init time subtracted from sumTime
 
     public SequentialPortfolio(Logger.Level logLevel, String modelName, String smtlibhome)
-        throws Exception {
+            throws Exception {
         super(logLevel, modelName, smtlibhome); // registers solver factories
 
         configurations[0] = new CegarConfiguration(
-            XcfaConfigBuilder.Domain.EXPL,
-            XcfaConfigBuilder.Refinement.SEQ_ITP,
-            XcfaConfigBuilder.Search.ERR,
-            XcfaConfigBuilder.PredSplit.WHOLE,
-            XcfaConfigBuilder.Algorithm.SINGLETHREAD,
-            1,
-            XcfaConfigBuilder.InitPrec.EMPTY,
-            PruneStrategy.LAZY,
-            false,
-            "Z3", "Z3"
+                XcfaConfigBuilder.Domain.EXPL,
+                XcfaConfigBuilder.Refinement.SEQ_ITP,
+                XcfaConfigBuilder.Search.ERR,
+                XcfaConfigBuilder.PredSplit.WHOLE,
+                XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+                1,
+                XcfaConfigBuilder.InitPrec.EMPTY,
+                PruneStrategy.LAZY,
+                false,
+                "Z3", "Z3"
         );
         configurations[1] = new CegarConfiguration(
-            XcfaConfigBuilder.Domain.PRED_CART,
-            XcfaConfigBuilder.Refinement.BW_BIN_ITP,
-            XcfaConfigBuilder.Search.ERR,
-            XcfaConfigBuilder.PredSplit.WHOLE,
-            XcfaConfigBuilder.Algorithm.SINGLETHREAD,
-            1,
-            XcfaConfigBuilder.InitPrec.EMPTY,
-            PruneStrategy.LAZY,
-            false,
-            "Z3", "Z3"
+                XcfaConfigBuilder.Domain.PRED_CART,
+                XcfaConfigBuilder.Refinement.BW_BIN_ITP,
+                XcfaConfigBuilder.Search.ERR,
+                XcfaConfigBuilder.PredSplit.WHOLE,
+                XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+                1,
+                XcfaConfigBuilder.InitPrec.EMPTY,
+                PruneStrategy.LAZY,
+                false,
+                "Z3", "Z3"
         );
         configurations[2] = new CegarConfiguration(
-            XcfaConfigBuilder.Domain.EXPL,
-            XcfaConfigBuilder.Refinement.NWT_IT_WP,
-            XcfaConfigBuilder.Search.ERR,
-            XcfaConfigBuilder.PredSplit.WHOLE,
-            XcfaConfigBuilder.Algorithm.SINGLETHREAD,
-            1,
-            XcfaConfigBuilder.InitPrec.EMPTY,
-            PruneStrategy.LAZY,
-            false,
-            "Z3", "Z3"
+                XcfaConfigBuilder.Domain.EXPL,
+                XcfaConfigBuilder.Refinement.NWT_IT_WP,
+                XcfaConfigBuilder.Search.ERR,
+                XcfaConfigBuilder.PredSplit.WHOLE,
+                XcfaConfigBuilder.Algorithm.SINGLETHREAD,
+                1,
+                XcfaConfigBuilder.InitPrec.EMPTY,
+                PruneStrategy.LAZY,
+                false,
+                "Z3", "Z3"
         );
     }
 
     @Override
     public SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime)
-        throws Exception {
+            throws Exception {
         logger.write(Logger.Level.MAINSTEP, "Executing sequential portfolio...");
         logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
         long startCpuTime = CpuTimeKeeper.getCurrentCpuTime() * 1000;
@@ -98,7 +98,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
             CegarConfiguration configuration = configurations[i];
 
             long remainingTime =
-                analysisTime - (CpuTimeKeeper.getCurrentCpuTime() * 1000 - startCpuTime);
+                    analysisTime - (CpuTimeKeeper.getCurrentCpuTime() * 1000 - startCpuTime);
 
             long timeout;
             if (i == 2) {
@@ -112,7 +112,7 @@ public class SequentialPortfolio extends AbstractPortfolio {
             if (result.get1().equals(Result.SUCCESS)) {
                 checkState(result.get2().isPresent());
                 logger.write(Logger.Level.MAINSTEP,
-                    "Sequential portfolio successful, solver: " + configuration);
+                        "Sequential portfolio successful, solver: " + configuration);
                 logger.write(Logger.Level.MAINSTEP, System.lineSeparator());
 
                 SafetyResult<?, ?> safetyResult = result.get2().get();

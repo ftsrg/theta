@@ -81,12 +81,12 @@ public final class FpExprs {
     }
 
     public static FpAddExpr Add(final FpRoundingMode roundingMode,
-        final Iterable<? extends Expr<FpType>> ops) {
+                                final Iterable<? extends Expr<FpType>> ops) {
         return FpAddExpr.of(roundingMode, ops);
     }
 
     public static FpSubExpr Sub(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-        final Expr<FpType> rightOp) {
+                                final Expr<FpType> rightOp) {
         return FpSubExpr.of(roundingMode, leftOp, rightOp);
     }
 
@@ -99,12 +99,12 @@ public final class FpExprs {
     }
 
     public static FpMulExpr Mul(final FpRoundingMode roundingMode,
-        final Iterable<? extends Expr<FpType>> ops) {
+                                final Iterable<? extends Expr<FpType>> ops) {
         return FpMulExpr.of(roundingMode, ops);
     }
 
     public static FpDivExpr Div(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-        final Expr<FpType> rightOp) {
+                                final Expr<FpType> rightOp) {
         return FpDivExpr.of(roundingMode, leftOp, rightOp);
     }
 
@@ -117,7 +117,7 @@ public final class FpExprs {
     }
 
     public static FpFromBvExpr FromBv(final FpRoundingMode roundingMode, final Expr<BvType> op,
-        final FpType fpType, final boolean signed) {
+                                      final FpType fpType, final boolean signed) {
         return FpFromBvExpr.of(roundingMode, op, fpType, signed);
     }
 
@@ -158,7 +158,7 @@ public final class FpExprs {
     }
 
     public static FpRoundToIntegralExpr RoundToIntegral(final FpRoundingMode roundingMode,
-        final Expr<FpType> op) {
+                                                        final Expr<FpType> op) {
         return FpRoundToIntegralExpr.of(roundingMode, op);
     }
 
@@ -175,12 +175,12 @@ public final class FpExprs {
     }
 
     public static FpToBvExpr ToBv(final FpRoundingMode roundingMode, final Expr<FpType> op,
-        final int size, final boolean sgn) {
+                                  final int size, final boolean sgn) {
         return FpToBvExpr.of(roundingMode, op, size, sgn);
     }
 
     public static FpToFpExpr ToFp(final FpRoundingMode roundingMode, final Expr<FpType> op,
-        final int exp, final int sig) {
+                                  final int exp, final int sig) {
         return FpToFpExpr.of(roundingMode, op, exp, sig);
     }
 }

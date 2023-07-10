@@ -46,21 +46,21 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
     private final Expr<BoolType> target;
 
     private ExprTraceUnsatCoreChecker(final Expr<BoolType> init, final Expr<BoolType> target,
-        final UCSolver solver) {
+                                      final UCSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
     }
 
     public static ExprTraceUnsatCoreChecker create(final Expr<BoolType> init,
-        final Expr<BoolType> target,
-        final UCSolver solver) {
+                                                   final Expr<BoolType> target,
+                                                   final UCSolver solver) {
         return new ExprTraceUnsatCoreChecker(init, target, solver);
     }
 
     @Override
     public ExprTraceStatus<VarsRefutation> check(
-        final Trace<? extends ExprState, ? extends ExprAction> trace) {
+            final Trace<? extends ExprState, ? extends ExprAction> trace) {
         checkNotNull(trace);
         final int stateCount = trace.getStates().size();
 
@@ -70,17 +70,17 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
         try (WithPushPop wpp = new WithPushPop(solver)) {
             solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
             solver.track(ExprUtils.getConjuncts(
-                PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
+                    PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
             assert solver.check().isSat() : "Initial state of the trace is not feasible";
             boolean concretizable = true;
 
             for (int i = 1; i < stateCount; ++i) {
                 indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
                 solver.track(ExprUtils.getConjuncts(
-                    PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
+                        PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
                 solver.track(ExprUtils
-                    .getConjuncts(
-                        PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
+                        .getConjuncts(
+                                PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
 
                 if (!solver.check().isSat()) {
                     concretizable = false;
@@ -90,7 +90,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 
             if (concretizable) {
                 solver.track(ExprUtils.getConjuncts(
-                    PathUtils.unfold(target, indexings.get(stateCount - 1))));
+                        PathUtils.unfold(target, indexings.get(stateCount - 1))));
                 concretizable = solver.check().isSat();
             }
 

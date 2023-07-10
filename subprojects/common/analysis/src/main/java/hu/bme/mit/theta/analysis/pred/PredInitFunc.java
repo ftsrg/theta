@@ -37,7 +37,7 @@ public final class PredInitFunc implements InitFunc<PredState, PredPrec> {
     }
 
     public static PredInitFunc create(final PredAbstractor predAbstractor,
-        final Expr<BoolType> expr) {
+                                      final Expr<BoolType> expr) {
         return new PredInitFunc(predAbstractor, expr);
     }
 
@@ -45,8 +45,8 @@ public final class PredInitFunc implements InitFunc<PredState, PredPrec> {
     public Collection<? extends PredState> getInitStates(final PredPrec prec) {
         checkNotNull(prec);
         final Collection<PredState> initStates = predAbstractor.createStatesForExpr(initExpr,
-            VarIndexingFactory.indexing(0), prec,
-            VarIndexingFactory.indexing(0));
+                VarIndexingFactory.indexing(0), prec,
+                VarIndexingFactory.indexing(0));
         return initStates.isEmpty() ? Collections.singleton(PredState.bottom()) : initStates;
     }
 

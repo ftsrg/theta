@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.cfa.analysis.utils;
 
 import java.awt.Color;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -73,15 +75,15 @@ public final class CfaVisualizer {
             sb.append('\n').append(var.getName()).append(": ").append(var.getType());
         }
         final NodeAttributes attrs = NodeAttributes.builder().label(sb.toString())
-            .shape(Shape.RECTANGLE)
-            .fillColor(FILL_COLOR).lineColor(LINE_COLOR).lineStyle(LineStyle.DASHED)
-            .alignment(Alignment.LEFT)
-            .build();
+                .shape(Shape.RECTANGLE)
+                .fillColor(FILL_COLOR).lineColor(LINE_COLOR).lineStyle(LineStyle.DASHED)
+                .alignment(Alignment.LEFT)
+                .build();
         graph.addNode(CFA_ID + "_vars", attrs);
     }
 
     private static void addLocation(final Graph graph, final CFA cfa, final Loc loc,
-        final Map<Loc, String> ids) {
+                                    final Map<Loc, String> ids) {
         final String id = LOC_ID_PREFIX + ids.size();
         ids.put(loc, id);
         String label = loc.getName();
@@ -95,20 +97,20 @@ public final class CfaVisualizer {
         }
         final int peripheries = isError ? 2 : 1;
         final NodeAttributes nAttrs = NodeAttributes.builder().label(label).fillColor(FILL_COLOR)
-            .lineColor(LINE_COLOR)
-            .lineStyle(LOC_LINE_STYLE).peripheries(peripheries).build();
+                .lineColor(LINE_COLOR)
+                .lineStyle(LOC_LINE_STYLE).peripheries(peripheries).build();
         graph.addNode(id, nAttrs);
     }
 
     private static void addEdge(final Graph graph, final Edge edge, final Map<Loc, String> ids) {
         final EdgeAttributes eAttrs = EdgeAttributes.builder()
-            .label(new CoreDslManager().writeStmt(edge.getStmt()))
-            .color(LINE_COLOR).lineStyle(EDGE_LINE_STYLE).font(EDGE_FONT).build();
+                .label(new CoreDslManager().writeStmt(edge.getStmt()))
+                .color(LINE_COLOR).lineStyle(EDGE_LINE_STYLE).font(EDGE_FONT).build();
         graph.addEdge(ids.get(edge.getSource()), ids.get(edge.getTarget()), eAttrs);
     }
 
     public static void printTraceTable(final Trace<CfaState<ExplState>, CfaAction> trace,
-        final TableWriter writer) {
+                                       final TableWriter writer) {
         final Set<Decl<?>> allVars = new LinkedHashSet<>();
         for (final CfaState<ExplState> state : trace.getStates()) {
             allVars.addAll(state.getState().getDecls());
@@ -131,7 +133,7 @@ public final class CfaVisualizer {
             if (i < trace.getActions().size()) {
                 final StringBuilder sb = new StringBuilder();
                 trace.getAction(i).getStmts()
-                    .forEach(s -> sb.append(s.toString()).append(System.lineSeparator()));
+                        .forEach(s -> sb.append(s.toString()).append(System.lineSeparator()));
                 writer.cell(sb.toString(), nCols);
                 writer.newRow();
             }

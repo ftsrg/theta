@@ -39,12 +39,12 @@ public class CVC5SmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args,
-            EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
+                EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
 
         return new CVC5SmtLibItpSolver(
-            symbolTable, transformationManager, termTransformer, solverBinary,
-            () -> new GenericSmtLibSolverBinary(solverPath, args,
-                EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class))
+                symbolTable, transformationManager, termTransformer, solverBinary,
+                () -> new GenericSmtLibSolverBinary(solverPath, args,
+                        EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class))
         );
     }
 }

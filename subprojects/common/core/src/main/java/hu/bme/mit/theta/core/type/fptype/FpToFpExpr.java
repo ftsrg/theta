@@ -35,7 +35,7 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
     private final FpRoundingMode roundingMode;
 
     private FpToFpExpr(final FpRoundingMode roundingMode, final Expr<FpType> op, final int expBits,
-        final int signBits) {
+                       final int signBits) {
         super(op);
         checkNotNull(op);
         this.op = op;
@@ -48,12 +48,12 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
     }
 
     public static FpToFpExpr of(final FpRoundingMode roundingMode, final Expr<FpType> op,
-        final int exp, final int signBits) {
+                                final int exp, final int signBits) {
         return new FpToFpExpr(roundingMode, op, exp, signBits);
     }
 
     public static FpToFpExpr create(final FpRoundingMode roundingMode, final Expr<FpType> op,
-        final int exp, final int signBits) {
+                                    final int exp, final int signBits) {
         return FpToFpExpr.of(roundingMode, op, exp, signBits);
     }
 
@@ -94,7 +94,7 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
         } else if (obj instanceof FpToFpExpr) {
             final FpToFpExpr that = (FpToFpExpr) obj;
             return this.getOp().equals(that.getOp()) && expBits == that.expBits
-                && signBits == that.signBits && roundingMode.equals(that.roundingMode);
+                    && signBits == that.signBits && roundingMode.equals(that.roundingMode);
         } else {
             return false;
         }

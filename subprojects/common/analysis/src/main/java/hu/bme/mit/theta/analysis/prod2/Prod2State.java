@@ -34,7 +34,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
     }
 
     public static <S1 extends State, S2 extends State> Prod2State<S1, S2> of(final S1 state1,
-        final S2 state2) {
+                                                                             final S2 state2) {
         checkNotNull(state1);
         checkNotNull(state2);
         if (state1.isBottom()) {
@@ -55,12 +55,12 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
     }
 
     private static <S1 extends State, S2 extends State> Prod2State<S1, S2> product(final S1 state1,
-        final S2 state2) {
+                                                                                   final S2 state2) {
         return new Product<>(state1, state2);
     }
 
     public static <S1 extends State, S2 extends State> Collection<Prod2State<S1, S2>> cartesian(
-        final Iterable<? extends S1> states1, final Iterable<? extends S2> states2) {
+            final Iterable<? extends S1> states1, final Iterable<? extends S2> states2) {
         final Collection<Prod2State<S1, S2>> result = new ArrayList<>();
         for (final S1 state1 : states1) {
             for (final S2 state2 : states2) {
@@ -83,7 +83,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
     public abstract <S extends State> Prod2State<S1, S> with2(final S state);
 
     private static final class Product<S1 extends State, S2 extends State> extends
-        Prod2State<S1, S2> {
+            Prod2State<S1, S2> {
 
         private static final int HASH_SEED = 7879;
         private volatile int hashCode = 0;
@@ -181,12 +181,12 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
         @Override
         public String toString() {
             return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).body().add(state1)
-                .add(state2).toString();
+                    .add(state2).toString();
         }
     }
 
     private static abstract class Bottom<S1 extends State, S2 extends State> extends
-        Prod2State<S1, S2> {
+            Prod2State<S1, S2> {
 
         private static final int HASH_SEED = 2879;
         private volatile int hashCode = 0;
@@ -233,7 +233,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
             } else if (obj instanceof Bottom) {
                 final Bottom<?, ?> that = (Bottom<?, ?>) obj;
                 return this.getIndex() == that.getIndex() && this.getState()
-                    .equals(that.getState());
+                        .equals(that.getState());
             } else {
                 return false;
             }
@@ -242,7 +242,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
         @Override
         public final String toString() {
             return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).add(getIndex())
-                .add(getState()).toString();
+                    .add(getState()).toString();
         }
     }
 

@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -76,11 +77,11 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
     }
 
     public static DbmSignature intersection(final DbmSignature signature1,
-        final DbmSignature signature2) {
+                                            final DbmSignature signature2) {
         checkNotNull(signature1);
         checkNotNull(signature2);
         final Set<VarDecl<RatType>> vars = Sets.intersection(signature1.toSet(),
-            signature2.toSet());
+                signature2.toSet());
         return new DbmSignature(vars);
     }
 

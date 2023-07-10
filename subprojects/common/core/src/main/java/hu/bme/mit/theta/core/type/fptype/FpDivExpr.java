@@ -30,19 +30,19 @@ public final class FpDivExpr extends DivExpr<FpType> {
     private final FpRoundingMode roundingMode;
 
     private FpDivExpr(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-        final Expr<FpType> rightOp) {
+                      final Expr<FpType> rightOp) {
         super(leftOp, rightOp);
         checkAllTypesEqual(leftOp, rightOp);
         this.roundingMode = roundingMode;
     }
 
     public static FpDivExpr of(final FpRoundingMode roundingMode, final Expr<FpType> leftOp,
-        final Expr<FpType> rightOp) {
+                               final Expr<FpType> rightOp) {
         return new FpDivExpr(roundingMode, leftOp, rightOp);
     }
 
     public static FpDivExpr create(final FpRoundingMode roundingMode, final Expr<?> leftOp,
-        final Expr<?> rightOp) {
+                                   final Expr<?> rightOp) {
         final Expr<FpType> newLeftOp = castFp(leftOp);
         final Expr<FpType> newRightOp = castFp(rightOp);
         return FpDivExpr.of(roundingMode, newLeftOp, newRightOp);
@@ -91,7 +91,7 @@ public final class FpDivExpr extends DivExpr<FpType> {
         } else if (obj instanceof FpDivExpr) {
             final FpDivExpr that = (FpDivExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp()) && roundingMode == that.roundingMode;
+                    .equals(that.getRightOp()) && roundingMode == that.roundingMode;
         } else {
             return false;
         }

@@ -50,7 +50,7 @@ public final class DiffEqConstr extends DiffConstr {
 
     @Override
     public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-        final P param) {
+                           final P param) {
         return visitor.visit(this, param);
     }
 
@@ -61,7 +61,7 @@ public final class DiffEqConstr extends DiffConstr {
         } else if (obj instanceof DiffEqConstr) {
             final DiffEqConstr that = (DiffEqConstr) obj;
             return this.getBound() == that.getBound() && this.getLeftVar().equals(that.getLeftVar())
-                && this.getRightVar().equals(that.getRightVar());
+                    && this.getRightVar().equals(that.getRightVar());
         } else {
             return false;
         }

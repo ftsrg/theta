@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public abstract class PosExpr<ExprType extends Additive<ExprType>> extends
-    UnaryExpr<ExprType, ExprType> {
+        UnaryExpr<ExprType, ExprType> {
 
     protected PosExpr(final Expr<ExprType> op) {
         super(op);

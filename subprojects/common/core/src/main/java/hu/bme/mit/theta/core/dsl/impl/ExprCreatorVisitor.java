@@ -200,12 +200,12 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
             checkArgument(params.size() == 1);
             @SuppressWarnings("unchecked") final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(
-                params);
+                    params);
 
             push(params);
 
             @SuppressWarnings("unchecked") final Expr<Type> result = (Expr<Type>) ctx.result.accept(
-                this);
+                    this);
 
             pop();
 
@@ -221,8 +221,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
             return Collections.emptyList();
         } else {
             final List<ParamDecl<?>> paramDecls = ctx.decls.stream()
-                .map(d -> Param(d.name.getText(), d.ttype.accept(TypeCreatorVisitor.getInstance())))
-                .collect(toList());
+                    .map(d -> Param(d.name.getText(), d.ttype.accept(TypeCreatorVisitor.getInstance())))
+                    .collect(toList());
             return paramDecls;
         }
     }
@@ -297,7 +297,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     public Expr<?> visitOrExpr(final OrExprContext ctx) {
         if (ctx.ops.size() > 1) {
             final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
             final Collection<Expr<BoolType>> ops = opStream.collect(toList());
             return Or(ops);
         } else {
@@ -309,7 +309,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     public Expr<?> visitAndExpr(final AndExprContext ctx) {
         if (ctx.ops.size() > 1) {
             final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-                .map(op -> TypeUtils.cast(op.accept(this), Bool()));
+                    .map(op -> TypeUtils.cast(op.accept(this), Bool()));
             final Collection<Expr<BoolType>> ops = opStream.collect(toList());
             return And(ops);
         } else {
@@ -487,7 +487,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-        final List<? extends Token> opers) {
+                                       final List<? extends Token> opers) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -506,7 +506,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-        final Token oper) {
+                                          final Token oper) {
         switch (oper.getType()) {
 
             case PLUS:
@@ -530,7 +530,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         if (leftOp instanceof AddExpr) {
             final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
             final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps())
-                .add(rightOp).build();
+                    .add(rightOp).build();
             return Add(ops);
         } else {
             return Add(leftOp, rightOp);
@@ -545,8 +545,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         if (leftOp instanceof BvAddExpr) {
             final BvAddExpr addLeftOp = (BvAddExpr) leftOp;
             final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                .addAll(addLeftOp.getOps()).add(rightOp)
-                .build();
+                    .addAll(addLeftOp.getOps()).add(rightOp)
+                    .build();
             return BvExprs.Add(ops);
         } else {
             return BvExprs.Add(Arrays.asList(leftOp, rightOp));
@@ -576,8 +576,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead,
-        final List<? extends Expr<?>> opsTail,
-        final List<? extends Token> opers) {
+                                             final List<? extends Expr<?>> opsTail,
+                                             final List<? extends Token> opers) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -596,7 +596,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-        final Token oper) {
+                                                final Token oper) {
         switch (oper.getType()) {
 
             case MUL:
@@ -638,7 +638,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         if (leftOp instanceof MulExpr) {
             final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
             final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps())
-                .add(rightOp).build();
+                    .add(rightOp).build();
             return Mul(ops);
         } else {
             return Mul(leftOp, rightOp);
@@ -649,8 +649,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         if (leftOp instanceof BvMulExpr) {
             final BvMulExpr addLeftOp = (BvMulExpr) leftOp;
             final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                .addAll(addLeftOp.getOps()).add(rightOp)
-                .build();
+                    .addAll(addLeftOp.getOps()).add(rightOp)
+                    .build();
             return BvExprs.Mul(ops);
         } else {
             return BvExprs.Mul(Arrays.asList(leftOp, rightOp));
@@ -711,7 +711,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> createConcatExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-        final List<? extends Token> opers) {
+                                     final List<? extends Token> opers) {
         checkArgument(opsTail.size() == opers.size());
 
         if (opsTail.isEmpty()) {
@@ -730,7 +730,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> createConcatSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-        final Token oper) {
+                                        final Token oper) {
         switch (oper.getType()) {
             case BV_CONCAT:
                 return createBvConcatExpr(castBv(leftOp), castBv(rightOp));
@@ -744,8 +744,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
         if (leftOp instanceof BvConcatExpr) {
             final BvConcatExpr addLeftOp = (BvConcatExpr) leftOp;
             final List<Expr<BvType>> ops = ImmutableList.<Expr<BvType>>builder()
-                .addAll(addLeftOp.getOps()).add(rightOp)
-                .build();
+                    .addAll(addLeftOp.getOps()).add(rightOp)
+                    .build();
             return BvExprs.Concat(ops);
         } else {
             return BvExprs.Concat(Arrays.asList(leftOp, rightOp));

@@ -55,19 +55,19 @@ final class ExplStrategy<S extends State> implements AlgorithmStrategy<S, ExplSt
 
     @Override
     public boolean mightCover(final ArgNode<S, XtaAction> coveree,
-        final ArgNode<S, XtaAction> coverer) {
+                              final ArgNode<S, XtaAction> coverer) {
         assert lens.get(coveree.getState()).equals(lens.get(coverer.getState()));
         return true;
     }
 
     @Override
     public void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
-        final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+                      final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
     }
 
     @Override
     public void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
-        final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+                      final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
         assert lens.get(succState).isBottom();
     }
 

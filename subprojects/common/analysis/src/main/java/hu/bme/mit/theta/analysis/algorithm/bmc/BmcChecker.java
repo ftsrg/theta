@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkState;
 
 public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Prec> implements
-    SafetyChecker<S, A, P> {
+        SafetyChecker<S, A, P> {
 
     private final LTS<S, A> lts;
     private final InitFunc<S, P> initFunc;
@@ -52,12 +52,12 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
     private final boolean onlyFeasible; // only keep feasible traces (i.e. test in each iteration)
 
     private BmcChecker(final LTS<S, A> lts,
-        final InitFunc<S, P> initFunc,
-        final TransFunc<S, A, P> transFunc,
-        final Predicate<S> unsafePredicate,
-        final Solver solver,
-        final Logger logger,
-        final int upperBound, boolean onlyFeasible) {
+                       final InitFunc<S, P> initFunc,
+                       final TransFunc<S, A, P> transFunc,
+                       final Predicate<S> unsafePredicate,
+                       final Solver solver,
+                       final Logger logger,
+                       final int upperBound, boolean onlyFeasible) {
         this.lts = lts;
         this.initFunc = initFunc;
         this.transFunc = transFunc;
@@ -69,28 +69,28 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
     }
 
     public static <S extends ExprState, A extends StmtAction, P extends Prec> BmcChecker<S, A, P> create(
-        final LTS<S, A> lts,
-        final InitFunc<S, P> initFunc,
-        final TransFunc<S, A, P> transFunc,
-        final Predicate<S> unsafePredicate,
-        final Solver solver,
-        final Logger logger,
-        final int upperBound,
-        final boolean onlyFeasible) {
+            final LTS<S, A> lts,
+            final InitFunc<S, P> initFunc,
+            final TransFunc<S, A, P> transFunc,
+            final Predicate<S> unsafePredicate,
+            final Solver solver,
+            final Logger logger,
+            final int upperBound,
+            final boolean onlyFeasible) {
         return new BmcChecker<S, A, P>(lts, initFunc, transFunc, unsafePredicate, solver, logger,
-            upperBound, onlyFeasible);
+                upperBound, onlyFeasible);
     }
 
     public static <S extends ExprState, A extends StmtAction, P extends Prec> BmcChecker<S, A, P> create(
-        final LTS<S, A> lts,
-        final InitFunc<S, P> initFunc,
-        final TransFunc<S, A, P> transFunc,
-        final Predicate<S> unsafePredicate,
-        final Solver solver,
-        final Logger logger,
-        final boolean onlyFeasible) {
+            final LTS<S, A> lts,
+            final InitFunc<S, P> initFunc,
+            final TransFunc<S, A, P> transFunc,
+            final Predicate<S> unsafePredicate,
+            final Solver solver,
+            final Logger logger,
+            final boolean onlyFeasible) {
         return new BmcChecker<S, A, P>(lts, initFunc, transFunc, unsafePredicate, solver, logger,
-            -1, onlyFeasible);
+                -1, onlyFeasible);
     }
 
     @Override
@@ -98,8 +98,8 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
         logger.write(Logger.Level.INFO, "Configuration: %s%n", this);
         final Collection<? extends S> initStates = initFunc.getInitStates(prec);
         final List<BmcTrace<S, A>> traces = initStates.stream()
-            .map(s -> BmcTrace.of(List.<S>of(s), List.<A>of()))
-            .collect(Collectors.toCollection(LinkedList::new));
+                .map(s -> BmcTrace.of(List.<S>of(s), List.<A>of()))
+                .collect(Collectors.toCollection(LinkedList::new));
         int currentBound = 0;
         SafetyResult<S, A> bmcresult = null;
         outerloop:
@@ -120,7 +120,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
                 for (A a : actions) {
                     actionCnt++;
                     final Collection<? extends S> states = transFunc.getSuccStates(lastState, a,
-                        prec);
+                            prec);
                     int stateCnt = 0;
                     for (S succState : states) {
                         stateCnt++;
@@ -141,8 +141,8 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
                                 final boolean unsafe = unsafePredicate.test(succState);
                                 if (unsafe) {
                                     bmcresult = SafetyResult.unsafe(trace.toImmutableTrace(),
-                                        ARG.create(
-                                            (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+                                            ARG.create(
+                                                    (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
                                     break outerloop;
                                 }
                             } else {
@@ -156,8 +156,8 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
                         } else {
                             if (unsafePredicate.test(succState) && trace.isFeasible(solver)) {
                                 bmcresult = SafetyResult.unsafe(trace.toImmutableTrace(),
-                                    ARG.create(
-                                        (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+                                        ARG.create(
+                                                (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
                                 break outerloop;
                             }
                         }
@@ -175,7 +175,7 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
         }
         if (bmcresult == null) {
             bmcresult = SafetyResult.safe(ARG.create(
-                (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+                    (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
         }
         logger.write(Logger.Level.RESULT, "%s%n", bmcresult);
         return bmcresult;
@@ -184,6 +184,6 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(upperBound).add(lts)
-            .add(initFunc).toString();
+                .add(initFunc).toString();
     }
 }

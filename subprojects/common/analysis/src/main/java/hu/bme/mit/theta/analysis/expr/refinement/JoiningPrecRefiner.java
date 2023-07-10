@@ -28,7 +28,7 @@ import hu.bme.mit.theta.common.Utils;
  * Precision and joins them.
  */
 public final class JoiningPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
-    implements PrecRefiner<S, A, P, R> {
+        implements PrecRefiner<S, A, P, R> {
 
     private final RefutationToPrec<P, R> refToPrec;
 
@@ -37,7 +37,7 @@ public final class JoiningPrecRefiner<S extends State, A extends Action, P exten
     }
 
     public static <S extends State, A extends Action, P extends Prec, R extends Refutation> JoiningPrecRefiner<S, A, P, R> create(
-        final RefutationToPrec<P, R> refToPrec) {
+            final RefutationToPrec<P, R> refToPrec) {
         return new JoiningPrecRefiner<>(refToPrec);
     }
 

@@ -36,14 +36,14 @@ import java.util.function.Function;
 public class ExpressionReplacer<T extends Type, R extends Type> {
 
     public static <T extends Type, R extends Type> Optional<Expr<T>> replace(Expr<T> expr,
-        Function<Expr<?>, Optional<Expr<R>>> mapper) {
+                                                                             Function<Expr<?>, Optional<Expr<R>>> mapper) {
         return new ExpressionReplacer<T, R>().replaceExpr(expr, mapper);
     }
 
     private Optional<Expr<T>> replaceExpr(Expr<T> expr,
-        Function<Expr<?>, Optional<Expr<R>>> mapper) {
+                                          Function<Expr<?>, Optional<Expr<R>>> mapper) {
         if (Arrays.stream(getClass().getTypeParameters()).map(TypeVariable::getGenericDeclaration)
-            .distinct().count() == 1) {
+                .distinct().count() == 1) {
             Optional<Expr<R>> transformed = mapper.apply(expr);
             if (transformed.isPresent()) {
                 return Optional.of((Expr<T>) transformed.get());

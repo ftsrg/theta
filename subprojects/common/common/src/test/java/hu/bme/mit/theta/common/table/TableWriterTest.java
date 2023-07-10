@@ -41,7 +41,7 @@ public class TableWriterTest {
 
         final String nl = System.lineSeparator();
         final String expected =
-            "X11Y,X12Y" + nl + "X2Y," + nl + "X31Y,X32Y" + nl + "X41Y,X42Y" + nl;
+                "X11Y,X12Y" + nl + "X2Y," + nl + "X31Y,X32Y" + nl + "X41Y,X42Y" + nl;
 
         Assert.assertEquals(expected, actual);
     }

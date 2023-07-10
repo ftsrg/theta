@@ -200,7 +200,7 @@ public class BasicVarIndexing implements VarIndexing {
         public BasicVarIndexingBuilder add(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
             checkArgument(genericThat instanceof BasicVarIndexingBuilder,
-                "Only builders of the same type can be added together!");
+                    "Only builders of the same type can be added together!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
@@ -208,7 +208,7 @@ public class BasicVarIndexing implements VarIndexing {
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
             final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                that.varToOffset.keySet());
+                    that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -229,7 +229,7 @@ public class BasicVarIndexing implements VarIndexing {
         public BasicVarIndexingBuilder sub(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
             checkArgument(genericThat instanceof BasicVarIndexingBuilder,
-                "Only builders of the same type can be subtracted!");
+                    "Only builders of the same type can be subtracted!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
@@ -238,7 +238,7 @@ public class BasicVarIndexing implements VarIndexing {
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
             final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                that.varToOffset.keySet());
+                    that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -259,7 +259,7 @@ public class BasicVarIndexing implements VarIndexing {
         public BasicVarIndexingBuilder join(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
             checkArgument(genericThat instanceof BasicVarIndexingBuilder,
-                "Only builders of the same type can be joined!");
+                    "Only builders of the same type can be joined!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
@@ -267,7 +267,7 @@ public class BasicVarIndexing implements VarIndexing {
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
             final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                that.varToOffset.keySet());
+                    that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);

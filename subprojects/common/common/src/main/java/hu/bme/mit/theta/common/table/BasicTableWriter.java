@@ -32,7 +32,7 @@ public final class BasicTableWriter implements TableWriter {
     private boolean isFirstCell = true;
 
     public BasicTableWriter(final PrintStream stream, final String delimeter, final String prefix,
-        final String postfix) {
+                            final String postfix) {
         this.stream = stream;
         this.delimeter = delimeter;
         this.prefix = prefix;

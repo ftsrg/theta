@@ -30,7 +30,9 @@ import org.junit.Test;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Set;
 
 public class EncodingTest {

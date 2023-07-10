@@ -40,7 +40,7 @@ public final class XstsLts<S extends ExprState> implements LTS<XstsState<S>, Xst
     }
 
     public static <S extends ExprState> LTS<XstsState<S>, XstsAction> create(final XSTS xsts,
-        final XstsStmtOptimizer<S> stmtOptimizer) {
+                                                                             final XstsStmtOptimizer<S> stmtOptimizer) {
         return new XstsLts<>(xsts, stmtOptimizer);
     }
 
@@ -56,8 +56,8 @@ public final class XstsLts<S extends ExprState> implements LTS<XstsState<S>, Xst
         }
 
         return enabledSet.getStmts().stream()
-            .map(stmt -> stmtOptimizer.optimizeStmt(state, stmt))
-            .map(XstsAction::create)
-            .collect(Collectors.toList());
+                .map(stmt -> stmtOptimizer.optimizeStmt(state, stmt))
+                .map(XstsAction::create)
+                .collect(Collectors.toList());
     }
 }

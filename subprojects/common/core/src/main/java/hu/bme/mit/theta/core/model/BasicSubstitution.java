@@ -21,7 +21,9 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -52,7 +54,7 @@ public final class BasicSubstitution implements Substitution {
         checkNotNull(decl);
         if (declToExpr.containsKey(decl)) {
             @SuppressWarnings("unchecked") final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(
-                decl);
+                    decl);
             return Optional.of(val);
         }
         return Optional.empty();
@@ -66,9 +68,9 @@ public final class BasicSubstitution implements Substitution {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("Substitution")
-            .addAll(declToExpr.entrySet().stream()
-                .map(e -> e.getKey().getName() + " <- " + e.getValue()))
-            .toString();
+                .addAll(declToExpr.entrySet().stream()
+                        .map(e -> e.getKey().getName() + " <- " + e.getValue()))
+                .toString();
     }
 
     @Override

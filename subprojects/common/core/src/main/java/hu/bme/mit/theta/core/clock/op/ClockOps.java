@@ -95,7 +95,7 @@ public final class ClockOps {
 
         @Override
         public <DeclType extends Type> ClockOp visit(final HavocStmt<DeclType> stmt,
-            final Void param) {
+                                                     final Void param) {
             final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
             return Free(varDecl);
         }
@@ -127,7 +127,7 @@ public final class ClockOps {
 
         @Override
         public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt,
-            final Void param) {
+                                                     final Void param) {
 
             final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
             final Expr<?> expr = stmt.getExpr();

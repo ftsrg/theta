@@ -58,7 +58,7 @@ public final class XorExpr extends NeqExpr<BoolType> {
 
     @Override
     public BinaryExpr<BoolType, BoolType> with(final Expr<BoolType> leftOp,
-        final Expr<BoolType> rightOp) {
+                                               final Expr<BoolType> rightOp) {
         if (leftOp == getLeftOp() && rightOp == getRightOp()) {
             return this;
         } else {
@@ -83,7 +83,7 @@ public final class XorExpr extends NeqExpr<BoolType> {
         } else if (obj instanceof XorExpr) {
             final XorExpr that = (XorExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

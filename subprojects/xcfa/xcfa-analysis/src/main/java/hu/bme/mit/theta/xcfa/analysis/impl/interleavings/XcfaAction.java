@@ -75,7 +75,7 @@ public class XcfaAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaAction
 
     public boolean touchesGlobal() {
         return labels.stream().anyMatch(
-            label -> LabelUtils.isGlobal(label, source.getParent().getParent().getParent()));
+                label -> LabelUtils.isGlobal(label, source.getParent().getParent().getParent()));
     }
 
     public Integer getProcess() {

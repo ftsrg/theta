@@ -52,9 +52,9 @@ public class ArchitectureConfig {
         public final Map<String, Integer> standardTypeSizes = new LinkedHashMap<>();
 
         ArchitectureType(int _bool, int _char, int _short, int _int, int _long, int _longlong,
-            int _float_significand, int _float_exponent, int _double_significand,
-            int _double_exponent,
-            int _longdouble_significand, int _longdouble_exponend, int _fitsall) {
+                         int _float_significand, int _float_exponent, int _double_significand,
+                         int _double_exponent,
+                         int _longdouble_significand, int _longdouble_exponend, int _fitsall) {
             standardTypeSizes.put("void", 1);
             standardTypeSizes.put("bool", _bool);
             standardTypeSizes.put("char", _char);

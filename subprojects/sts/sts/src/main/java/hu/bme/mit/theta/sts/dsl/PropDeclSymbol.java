@@ -40,7 +40,7 @@ final class PropDeclSymbol implements Symbol {
     }
 
     public static PropDeclSymbol create(final StsSpecSymbol scope,
-        final PropDeclContext propDeclContext) {
+                                        final PropDeclContext propDeclContext) {
         return new PropDeclSymbol(scope, propDeclContext);
     }
 
@@ -55,7 +55,7 @@ final class PropDeclSymbol implements Symbol {
 
     public STS instantiate(final Substitution assignment) {
         final StsDefScope stsDefScope = StsCreator.createSts(scope, assignment,
-            propDeclContext.system);
+                propDeclContext.system);
         final Expr<BoolType> prop = createBoolExpr(stsDefScope, assignment, propDeclContext.cond);
 
         final STS sts = stsDefScope.getSts();

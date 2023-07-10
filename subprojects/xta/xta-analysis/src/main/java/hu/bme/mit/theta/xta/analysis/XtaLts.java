@@ -58,8 +58,8 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
     }
 
     private static void addActionsForEdge(final Collection<XtaAction> result,
-        final XtaSystem system,
-        final XtaState<?> state, final Edge edge) {
+                                          final XtaSystem system,
+                                          final XtaState<?> state, final Edge edge) {
         if (edge.getSync().isPresent()) {
             final Sync sync = edge.getSync().get();
             if (sync.getKind() == EMIT) {
@@ -75,8 +75,8 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
     }
 
     private static void addBroadcastActionsForEdge(final Collection<XtaAction> result,
-        final XtaSystem system,
-        final XtaState<?> state, final Edge emitEdge, final Sync emitSync) {
+                                                   final XtaSystem system,
+                                                   final XtaState<?> state, final Edge emitEdge, final Sync emitSync) {
         assert emitEdge.getSync().isPresent();
         assert emitEdge.getSync().get().equals(emitSync);
         assert emitSync.getKind().equals(EMIT);
@@ -85,14 +85,14 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
         final Collection<List<Edge>> initialRecvEdgeColls = new ArrayList<>();
         initialRecvEdgeColls.add(new ArrayList<>());
         Collection<List<Edge>> recvEdgeColls = recvEdgesForEmitEdge(emitEdge, emitSync,
-            state.getLocs(), initialRecvEdgeColls);
+                state.getLocs(), initialRecvEdgeColls);
 
         // filter out all non well-formed actions if the state is committed
         final Loc emitLoc = emitEdge.getSource();
         if (state.isCommitted() && emitLoc.getKind() != COMMITTED) {
             recvEdgeColls = recvEdgeColls.stream().filter(edges ->
-                edges.stream().anyMatch(edge ->
-                    edge.getSource().getKind() == COMMITTED)).collect(toList());
+                    edges.stream().anyMatch(edge ->
+                            edge.getSource().getKind() == COMMITTED)).collect(toList());
         }
 
         for (List<Edge> recvEdges : recvEdgeColls) {
@@ -101,9 +101,9 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
     }
 
     private static Collection<List<Edge>> recvEdgesForEmitEdge(final Edge emitEdge,
-        final Sync emitSync,
-        final List<Loc> remainingLocs,
-        final Collection<List<Edge>> accumulator) {
+                                                               final Sync emitSync,
+                                                               final List<Loc> remainingLocs,
+                                                               final Collection<List<Edge>> accumulator) {
         assert emitEdge.getSync().isPresent();
         assert emitEdge.getSync().get().equals(emitSync);
         assert emitSync.getKind().equals(EMIT);
@@ -149,8 +149,8 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 
 
     private static void addBinaryActionsForEdge(final Collection<XtaAction> result,
-        final XtaSystem system,
-        final XtaState<?> state, final Edge emitEdge, final Sync emitSync) {
+                                                final XtaSystem system,
+                                                final XtaState<?> state, final Edge emitEdge, final Sync emitSync) {
         assert emitEdge.getSync().isPresent();
         assert emitEdge.getSync().get().equals(emitSync);
         assert emitSync.getKind().equals(EMIT);
@@ -165,7 +165,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
             }
 
             if (state.isCommitted() && emitLoc.getKind() != COMMITTED
-                && recvLoc.getKind() != COMMITTED) {
+                    && recvLoc.getKind() != COMMITTED) {
                 continue;
             }
 
@@ -183,7 +183,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 
                 if (emitLabel.equals(recvLabel)) {
                     final XtaAction action = XtaAction.binary(system, state.getLocs(), emitEdge,
-                        recvEdge);
+                            recvEdge);
                     result.add(action);
                 }
             }
@@ -191,8 +191,8 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
     }
 
     private static void addBasicActionsForEdge(final Collection<XtaAction> result,
-        final XtaSystem system,
-        final XtaState<?> state, final Edge edge) {
+                                               final XtaSystem system,
+                                               final XtaState<?> state, final Edge edge) {
         final Loc loc = edge.getSource();
         if (state.isCommitted() && loc.getKind() != COMMITTED) {
             return;

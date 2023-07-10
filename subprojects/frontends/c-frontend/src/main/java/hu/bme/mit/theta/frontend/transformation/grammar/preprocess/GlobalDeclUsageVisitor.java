@@ -44,7 +44,7 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
     @Override
     public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
         List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(
-            ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+                ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
                 globalUsages.put(declaration.getName(), new LinkedHashSet<>());
@@ -59,9 +59,9 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
 
     @Override
     public List<CDeclaration> visitExternalFunctionDefinition(
-        CParser.ExternalFunctionDefinitionContext ctx) {
+            CParser.ExternalFunctionDefinitionContext ctx) {
         CDeclaration funcDecl = ctx.functionDefinition().declarator()
-            .accept(DeclarationVisitor.instance);
+                .accept(DeclarationVisitor.instance);
         globalUsages.put(funcDecl.getName(), new LinkedHashSet<>());
         usedContexts.add(Tuple2.of(funcDecl.getName(), ctx));
         current = funcDecl.getName();
@@ -77,11 +77,11 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
     }
 
     public List<CParser.ExternalDeclarationContext> getGlobalUsages(
-        CParser.CompilationUnitContext ctx) {
+            CParser.CompilationUnitContext ctx) {
         globalUsages.clear();
         usedContexts.clear();
         for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit()
-            .externalDeclaration()) {
+                .externalDeclaration()) {
             externalDeclarationContext.accept(this);
         }
         checkState(globalUsages.containsKey("main"), "Main function not found!");
@@ -93,11 +93,11 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
             String rem = remOpt.get();
             ret.add(rem);
             Set<String> toAdd = globalUsages.get(rem).stream().filter(globalUsages::containsKey)
-                .collect(Collectors.toSet());
+                    .collect(Collectors.toSet());
             remaining.addAll(toAdd);
             remaining.removeAll(ret);
         }
         return usedContexts.stream().filter(objects -> ret.contains(objects.get1()))
-            .map(Tuple2::get2).distinct().collect(Collectors.toList());
+                .map(Tuple2::get2).distinct().collect(Collectors.toList());
     }
 }

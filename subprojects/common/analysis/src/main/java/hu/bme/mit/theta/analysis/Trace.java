@@ -50,7 +50,7 @@ public final class Trace<S, A> {
      * one less than the number of states.
      */
     public static <S, A> Trace<S, A> of(final List<? extends S> states,
-        final List<? extends A> actions) {
+                                        final List<? extends A> actions) {
         return new Trace<>(states, actions);
     }
 

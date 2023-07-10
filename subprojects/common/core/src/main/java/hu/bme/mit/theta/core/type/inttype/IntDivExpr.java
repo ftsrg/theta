@@ -80,7 +80,7 @@ public final class IntDivExpr extends DivExpr<IntType> {
         } else if (obj instanceof IntDivExpr) {
             final IntDivExpr that = (IntDivExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

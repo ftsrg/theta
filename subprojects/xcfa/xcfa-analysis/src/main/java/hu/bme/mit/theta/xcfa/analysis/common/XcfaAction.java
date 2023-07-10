@@ -41,7 +41,7 @@ public abstract class XcfaAction extends StmtAction {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("XcfaAction")
-            .add(getSource().getName() + "->" + getTarget().getName()).add(getLabels()).toString();
+                .add(getSource().getName() + "->" + getTarget().getName()).add(getLabels()).toString();
     }
 
     private static class SimpleXcfaAction extends XcfaAction {

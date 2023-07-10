@@ -44,18 +44,18 @@ public final class CfaPredImpactCheckerTest {
     public void test() throws FileNotFoundException, IOException {
         // Arrange
         final CFA cfa = CfaDslManager.createCfa(
-            new FileInputStream("src/test/resources/counter5_true.cfa"));
+                new FileInputStream("src/test/resources/counter5_true.cfa"));
 
         final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
         final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
 
         final PredImpactChecker checker = PredImpactChecker.create(
-            CfaLbeLts.of(cfa.getErrorLoc().get()), cfa.getInitLoc(),
-            l -> l.equals(cfa.getErrorLoc().get()), abstractionSolver, refinementSolver);
+                CfaLbeLts.of(cfa.getErrorLoc().get()), cfa.getInitLoc(),
+                l -> l.equals(cfa.getErrorLoc().get()), abstractionSolver, refinementSolver);
 
         // Act
         final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(
-            UnitPrec.getInstance());
+                UnitPrec.getInstance());
 
         // Assert
         assertTrue(status.isSafe());
@@ -67,6 +67,6 @@ public final class CfaPredImpactCheckerTest {
         assertTrue(argChecker.isWellLabeled(arg));
 
         System.out.println(
-            GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
     }
 }

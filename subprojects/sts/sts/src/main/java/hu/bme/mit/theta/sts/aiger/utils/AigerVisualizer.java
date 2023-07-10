@@ -18,6 +18,7 @@ package hu.bme.mit.theta.sts.aiger.utils;
 import static java.lang.System.lineSeparator;
 
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Set;
 
 import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
@@ -34,12 +35,12 @@ import hu.bme.mit.theta.sts.aiger.elements.Latch;
 public final class AigerVisualizer {
 
     private static final String INPUTNODE =
-        "\t%s [shape=invhouse,margin=0,width=0,height=0];" + lineSeparator();
+            "\t%s [shape=invhouse,margin=0,width=0,height=0];" + lineSeparator();
     private static final String LATCHNODE =
-        "\t%s [shape=rectangle,margin=0.05,width=0,height=0];" + lineSeparator();
+            "\t%s [shape=rectangle,margin=0.05,width=0,height=0];" + lineSeparator();
     private static final String OUTPUTNODE = INPUTNODE;
     private static final String ANDNODE =
-        "\t%s [shape=ellipse,margin=0.02,width=0,height=0];" + lineSeparator();
+            "\t%s [shape=ellipse,margin=0.02,width=0,height=0];" + lineSeparator();
     private static final String INVHEAD = "odot";
 
     private AigerVisualizer() {
@@ -70,7 +71,7 @@ public final class AigerVisualizer {
                 sb.append(String.format(ANDNODE, node.getName()));
             } else {
                 throw new UnsupportedOperationException(
-                    "Unknown node: " + node.getClass().getName());
+                        "Unknown node: " + node.getClass().getName());
             }
         }
         sb.append(String.format(OUTPUTNODE, system.getOutput().getName()));
@@ -83,7 +84,7 @@ public final class AigerVisualizer {
         wires.addAll(system.getOutput().getInWires());
         for (final AigerWire wire : wires) {
             sb.append(String.format("\t%s -> %s", wire.getSource().getName(),
-                wire.getTarget().getName()));
+                    wire.getTarget().getName()));
             if (!wire.isPonated()) {
                 sb.append(" [arrowhead=" + INVHEAD + "]");
             }

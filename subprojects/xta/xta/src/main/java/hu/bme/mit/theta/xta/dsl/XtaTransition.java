@@ -76,15 +76,15 @@ final class XtaTransition implements Scope {
 
     private Optional<XtaExpression> extractGuard(final TransitionContext context) {
         return Optional.ofNullable(context.fTransitionBody.fGuard)
-            .map(g -> new XtaExpression(this, g.fExpression));
+                .map(g -> new XtaExpression(this, g.fExpression));
     }
 
     private List<XtaUpdate> extractUpdates(final TransitionContext context) {
         if (context.fTransitionBody.fAssign != null) {
             if (context.fTransitionBody.fAssign.fExpressions != null) {
                 return context.fTransitionBody.fAssign.fExpressions.stream()
-                    .map(e -> new XtaUpdate(this, e))
-                    .collect(toList());
+                        .map(e -> new XtaUpdate(this, e))
+                        .collect(toList());
             }
         }
         return emptyList();
@@ -124,7 +124,7 @@ final class XtaTransition implements Scope {
         }
 
         final List<Stmt> assignments = updates.stream().map(u -> u.instantiate(env))
-            .collect(toList());
+                .collect(toList());
         final Optional<Sync> label = sync.map(s -> s.instantiate(env));
 
         process.createEdge(source, target, guards, label, assignments);

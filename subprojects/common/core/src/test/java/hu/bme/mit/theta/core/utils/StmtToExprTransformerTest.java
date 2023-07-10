@@ -58,35 +58,35 @@ public class StmtToExprTransformerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {Stmts.Assume(And(True(), False())), ImmutableList.of(And(True(), False()))},
+                {Stmts.Assume(And(True(), False())), ImmutableList.of(And(True(), False()))},
 
-            {Stmts.Havoc(VX), ImmutableList.of(True())},
+                {Stmts.Havoc(VX), ImmutableList.of(True())},
 
-            {Stmts.Assign(VX, Int(2)), ImmutableList.of(Eq(Prime(VX.getRef()), Int(2)))},
+                {Stmts.Assign(VX, Int(2)), ImmutableList.of(Eq(Prime(VX.getRef()), Int(2)))},
 
-            {Stmts.SequenceStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))),
-                ImmutableList.of(And(ImmutableList.of(And(True(), False()))))},
+                {Stmts.SequenceStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))),
+                        ImmutableList.of(And(ImmutableList.of(And(True(), False()))))},
 
-            {Stmts.SequenceStmt(
-                ImmutableList.of(Stmts.Assign(VX, Int(2)), Stmts.Assign(VX, Int(2)))),
-                ImmutableList.of(
-                    And(Eq(Prime(VX.getRef()), Int(2)), Eq(Prime(Prime(VX.getRef())), Int(2))))},
+                {Stmts.SequenceStmt(
+                        ImmutableList.of(Stmts.Assign(VX, Int(2)), Stmts.Assign(VX, Int(2)))),
+                        ImmutableList.of(
+                                And(Eq(Prime(VX.getRef()), Int(2)), Eq(Prime(Prime(VX.getRef())), Int(2))))},
 
-            {Stmts.NonDetStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))),
-                ImmutableList.of(Or(ImmutableList.of(And(ImmutableList.of(
-                    And(Eq(TEMP0.getRef(), Int(0)),
-                        And(ImmutableList.of(And(True(), False())))))))))},
+                {Stmts.NonDetStmt(ImmutableList.of(Stmts.Assume(And(True(), False())))),
+                        ImmutableList.of(Or(ImmutableList.of(And(ImmutableList.of(
+                                And(Eq(TEMP0.getRef(), Int(0)),
+                                        And(ImmutableList.of(And(True(), False())))))))))},
 
-            {Stmts.NonDetStmt(ImmutableList.of(Stmts.Assign(VX, Int(2)))), ImmutableList.of(
-                Or(ImmutableList.of(And(ImmutableList.of(And(Eq(TEMP0.getRef(), Int(0)),
-                    And(ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))))))))))},
+                {Stmts.NonDetStmt(ImmutableList.of(Stmts.Assign(VX, Int(2)))), ImmutableList.of(
+                        Or(ImmutableList.of(And(ImmutableList.of(And(Eq(TEMP0.getRef(), Int(0)),
+                                And(ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))))))))))},
 
-            {Stmts.NonDetStmt(ImmutableList.of(Stmts.Assume(True()), Stmts.Assign(VX, Int(2)))),
-                ImmutableList.of(Or(ImmutableList.of(And(ImmutableList.of(
-                    And(Eq(TEMP0.getRef(), Int(0)), And(ImmutableList.of(True()))),
-                    Eq(VX.getRef(), Prime(VX.getRef())))), And(ImmutableList.of(
-                    And(Eq(TEMP0.getRef(), Int(1)),
-                        And(ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))))))))))}
+                {Stmts.NonDetStmt(ImmutableList.of(Stmts.Assume(True()), Stmts.Assign(VX, Int(2)))),
+                        ImmutableList.of(Or(ImmutableList.of(And(ImmutableList.of(
+                                And(Eq(TEMP0.getRef(), Int(0)), And(ImmutableList.of(True()))),
+                                Eq(VX.getRef(), Prime(VX.getRef())))), And(ImmutableList.of(
+                                And(Eq(TEMP0.getRef(), Int(1)),
+                                        And(ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))))))))))}
 
         });
     }
@@ -96,7 +96,7 @@ public class StmtToExprTransformerTest {
         VarPoolUtil.returnInt(TEMP0);
 
         final StmtUnfoldResult unfoldResult = StmtUtils.toExpr(stmt,
-            VarIndexingFactory.indexing(0));
+                VarIndexingFactory.indexing(0));
         final Collection<Expr<BoolType>> actualExprs = unfoldResult.getExprs();
         Assert.assertEquals(expectedExprs, actualExprs);
     }

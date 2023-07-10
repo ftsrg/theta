@@ -61,8 +61,8 @@ public final class XtaExplUtils {
 
     public static Valuation interpolate(final Valuation valA, final Expr<BoolType> exprB) {
         final Collection<VarDecl<?>> vars = ExprUtils.getVars(exprB).stream()
-            .filter(valA.getDecls()::contains)
-            .collect(toList());
+                .filter(valA.getDecls()::contains)
+                .collect(toList());
         final MutableValuation valI = new MutableValuation();
         for (final VarDecl<?> var : vars) {
             final LitExpr<?> val = valA.eval(var).get();
@@ -121,7 +121,7 @@ public final class XtaExplUtils {
     }
 
     private static ExplState postForBinaryAction(final Valuation val,
-        final BinaryXtaAction action) {
+                                                 final BinaryXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final Edge recvEdge = action.getRecvEdge();
         final List<Loc> targetLocs = action.getTargetLocs();
@@ -150,14 +150,14 @@ public final class XtaExplUtils {
     }
 
     private static ExplState postForBroadcastAction(final Valuation val,
-        final BroadcastXtaAction action) {
+                                                    final BroadcastXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final List<Edge> recvEdges = action.getRecvEdges();
         final List<Collection<Edge>> nonRecvEdges = action.getNonRecvEdges();
         final List<Loc> targetLocs = action.getTargetLocs();
 
         if (recvEdges.stream().anyMatch(recvEdge ->
-            !checkSync(emitEdge, recvEdge, val))) {
+                !checkSync(emitEdge, recvEdge, val))) {
             return ExplState.bottom();
         }
 
@@ -166,12 +166,12 @@ public final class XtaExplUtils {
         }
 
         if (recvEdges.stream().anyMatch(recvEdge ->
-            !checkGuards(recvEdge, val))) {
+                !checkGuards(recvEdge, val))) {
             return ExplState.bottom();
         }
 
         if (nonRecvEdges.stream().anyMatch(c -> c.stream().anyMatch(nonRecvEdge ->
-            nonRecvEdgeDefinitelyEnabled(emitEdge, nonRecvEdge, val)))) {
+                nonRecvEdgeDefinitelyEnabled(emitEdge, nonRecvEdge, val)))) {
             return ExplState.bottom();
         }
 
@@ -188,7 +188,7 @@ public final class XtaExplUtils {
     }
 
     private static boolean nonRecvEdgeDefinitelyEnabled(final Edge emitEdge, final Edge nonRecvEdge,
-        final Valuation val) {
+                                                        final Valuation val) {
         for (final Guard guard : nonRecvEdge.getGuards()) {
             if (guard.isDataGuard()) {
                 final DataGuard dataGuard = guard.asDataGuard();
@@ -202,7 +202,7 @@ public final class XtaExplUtils {
         final List<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs();
         final List<Expr<?>> recvArgs = nonRecvEdge.getSync().get().getArgs();
         if (zip(emitArgs.stream(), recvArgs.stream(),
-            (e, r) -> !e.eval(val).equals(r.eval(val))).anyMatch(x -> x)) {
+                (e, r) -> !e.eval(val).equals(r.eval(val))).anyMatch(x -> x)) {
             return false;
         }
 
@@ -210,11 +210,11 @@ public final class XtaExplUtils {
     }
 
     private static boolean checkSync(final Edge emitEdge, final Edge recvEdge,
-        final Valuation val) {
+                                     final Valuation val) {
         final List<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs();
         final List<Expr<?>> recvArgs = recvEdge.getSync().get().getArgs();
         return zip(emitArgs.stream(), recvArgs.stream(),
-            (e, r) -> e.eval(val).equals(r.eval(val))).allMatch(x -> x);
+                (e, r) -> e.eval(val).equals(r.eval(val))).allMatch(x -> x);
     }
 
     private static boolean checkGuards(final Edge edge, final Valuation val) {
@@ -240,7 +240,7 @@ public final class XtaExplUtils {
             for (final Guard invar : invars) {
                 if (invar.isDataGuard()) {
                     final Expr<BoolType> expr = ExprUtils.simplify(invar.asDataGuard().toExpr(),
-                        val);
+                            val);
                     if (expr instanceof FalseExpr) {
                         return false;
                     }
@@ -285,7 +285,7 @@ public final class XtaExplUtils {
     }
 
     private static Expr<BoolType> preForBasicAction(final Expr<BoolType> expr,
-        final BasicXtaAction action) {
+                                                    final BasicXtaAction action) {
         final Edge edge = action.getEdge();
         final WpState wp0 = WpState.of(expr);
         final WpState wp1 = applyInverseUpdates(wp0, edge);
@@ -294,7 +294,7 @@ public final class XtaExplUtils {
     }
 
     private static Expr<BoolType> preForBinaryAction(final Expr<BoolType> expr,
-        final BinaryXtaAction action) {
+                                                     final BinaryXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final Edge recvEdge = action.getRecvEdge();
         final WpState wp0 = WpState.of(expr);
@@ -307,7 +307,7 @@ public final class XtaExplUtils {
     }
 
     private static Expr<BoolType> preForBroadcastAction(final Expr<BoolType> expr,
-        final BroadcastXtaAction action) {
+                                                        final BroadcastXtaAction action) {
         final Edge emitEdge = action.getEmitEdge();
         final List<Edge> recvEdges = action.getRecvEdges();
         final List<Edge> reverseRecvEdges = Lists.reverse(recvEdges);
@@ -363,28 +363,28 @@ public final class XtaExplUtils {
     }
 
     private static WpState applySync(final WpState state, final Edge emitEdge,
-        final Edge recvEdge) {
+                                     final Edge recvEdge) {
         final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
         final Stream<Expr<?>> recvArgs = recvEdge.getSync().get().getArgs().stream();
         final List<Expr<BoolType>> exprs = zip(emitArgs, recvArgs,
-            (e, r) -> (Expr<BoolType>) Eq(e, r))
-            .collect(toImmutableList());
+                (e, r) -> (Expr<BoolType>) Eq(e, r))
+                .collect(toImmutableList());
         final Expr<BoolType> andExpr = And(exprs);
         return state.wep(Assume(andExpr));
     }
 
     private static WpState applyNonRecvEdge(final WpState state, final Edge emitEdge,
-        final Edge nonRecvEdge) {
+                                            final Edge nonRecvEdge) {
         final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
         final Stream<Expr<?>> nonRecvArgs = nonRecvEdge.getSync().get().getArgs().stream();
         final Stream<Expr<BoolType>> notEqExprs = zip(emitArgs, nonRecvArgs,
-            (e, r) -> Not(Eq(e, r)));
+                (e, r) -> Not(Eq(e, r)));
         final Stream<Expr<BoolType>> notGuards = nonRecvEdge.getGuards().stream()
-            .filter(Guard::isDataGuard)
-            .map(Guard::toExpr)
-            .map(SmartBoolExprs::Not);
+                .filter(Guard::isDataGuard)
+                .map(Guard::toExpr)
+                .map(SmartBoolExprs::Not);
         final List<Expr<BoolType>> exprs = Streams.concat(notEqExprs, notGuards)
-            .collect(toImmutableList());
+                .collect(toImmutableList());
         return state.wep(Assume(Or(exprs)));
     }
 }

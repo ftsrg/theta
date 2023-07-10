@@ -39,7 +39,7 @@ public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
     }
 
     public static <P1 extends Prec, P2 extends Prec> Prod2Prec<P1, P2> of(final P1 prec1,
-        final P2 prec2) {
+                                                                          final P2 prec2) {
         return new Prod2Prec<>(prec1, prec2);
     }
 
@@ -83,6 +83,6 @@ public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
     @Override
     public Collection<VarDecl<?>> getUsedVars() {
         return Streams.concat(prec1.getUsedVars().stream(), prec2.getUsedVars().stream())
-            .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
     }
 }

@@ -70,10 +70,10 @@ public class SmtLibSolver implements UCSolver, Solver {
     private SolverStatus status;
 
     public SmtLibSolver(
-        final SmtLibSymbolTable symbolTable,
-        final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
-        boolean unsatCoreEnabled
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+            boolean unsatCoreEnabled
     ) {
         this.solverBinary = solverBinary;
         this.symbolTable = symbolTable;
@@ -205,7 +205,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         } else if (res.isSpecific()) {
             final GetModelResponse getModelResponse = res.asSpecific().asGetModelResponse();
             return new SmtLibValuation(symbolTable, transformationManager, termTransformer,
-                getModelResponse.getModel());
+                    getModelResponse.getModel());
         } else {
             throw new AssertionError();
         }
@@ -235,7 +235,7 @@ public class SmtLibSolver implements UCSolver, Solver {
             throw new SmtLibSolverException(res.getReason());
         } else if (res.isSpecific()) {
             final GetUnsatCoreResponse getUnsatCoreResponse = res.asSpecific()
-                .asGetUnsatCoreResponse();
+                    .asGetUnsatCoreResponse();
             unsatCoreLabels = getUnsatCoreResponse.getLabels();
         } else {
             throw new AssertionError();

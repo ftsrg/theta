@@ -26,7 +26,7 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XcfaOrd<S extends ExprState> implements
-    PartialOrd<hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S>> {
+        PartialOrd<hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S>> {
 
     private final PartialOrd<S> partialOrd;
 
@@ -40,7 +40,7 @@ public class XcfaOrd<S extends ExprState> implements
 
     @Override
     public boolean isLeq(final hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S> cState1,
-        final hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S> cState2) {
+                         final hu.bme.mit.theta.xcfa.analysis.common.XcfaState<S> cState2) {
         XcfaState<S> state1 = (XcfaState<S>) cState1;
         XcfaState<S> state2 = (XcfaState<S>) cState2;
         if (state1.getEnabledProcesses().size() != state2.getEnabledProcesses().size()) {
@@ -54,6 +54,6 @@ public class XcfaOrd<S extends ExprState> implements
             occurrences.put(value, occurrences.getOrDefault(value, 0) - 1);
         }
         return occurrences.values().stream().allMatch(integer -> integer == 0) &&
-            state1.isLeq(partialOrd, state2);
+                state1.isLeq(partialOrd, state2);
     }
 }

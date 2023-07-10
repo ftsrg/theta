@@ -47,8 +47,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 
 public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisible<BvType>,
-    Equational<BvType>, Ordered<BvType>,
-    Castable<BvType> {
+        Equational<BvType>, Ordered<BvType>,
+        Castable<BvType> {
 
     private final static int HASH_SEED = 5674;
     private final static String TYPE_LABEL = "Bv";

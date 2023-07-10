@@ -27,19 +27,19 @@ public abstract class SpecificResponse {
         return ctx.accept(new SMTLIBv2BaseVisitor<>() {
             @Override
             public SpecificResponse visitCheck_sat_response(
-                SMTLIBv2Parser.Check_sat_responseContext ctx) {
+                    SMTLIBv2Parser.Check_sat_responseContext ctx) {
                 return CheckSatResponse.fromContext(ctx);
             }
 
             @Override
             public SpecificResponse visitGet_unsat_core_response(
-                SMTLIBv2Parser.Get_unsat_core_responseContext ctx) {
+                    SMTLIBv2Parser.Get_unsat_core_responseContext ctx) {
                 return GetUnsatCoreResponse.fromContext(ctx);
             }
 
             @Override
             public SpecificResponse visitGet_model_response(
-                SMTLIBv2Parser.Get_model_responseContext ctx) {
+                    SMTLIBv2Parser.Get_model_responseContext ctx) {
                 return GetModelResponse.fromContext(ctx);
             }
         });
@@ -51,16 +51,16 @@ public abstract class SpecificResponse {
 
     public boolean isGetUnsatCoreResponse() {
         return
-            this instanceof GetUnsatCoreResponse ||
-                this instanceof GetModelResponse
-                    && ((GetModelResponse) this).getModel().size() == 0;
+                this instanceof GetUnsatCoreResponse ||
+                        this instanceof GetModelResponse
+                                && ((GetModelResponse) this).getModel().size() == 0;
     }
 
     public boolean isGetModelResponse() {
         return
-            this instanceof GetModelResponse ||
-                this instanceof GetUnsatCoreResponse
-                    && ((GetUnsatCoreResponse) this).getLabels().size() == 0;
+                this instanceof GetModelResponse ||
+                        this instanceof GetUnsatCoreResponse
+                                && ((GetUnsatCoreResponse) this).getLabels().size() == 0;
     }
 
     public CheckSatResponse asCheckSatResponse() {

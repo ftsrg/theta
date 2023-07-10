@@ -104,7 +104,7 @@ final class StsSpecSymbol implements ScopedSymbol {
         final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
         // TODO Handle recursive constant definitions
         final Substitution constAssignment = StsDslHelper.createConstDefs(this, binding,
-            stsSpecContext.constDecls);
+                stsSpecContext.constDecls);
         final Substitution assignment = NestedSubstitution.create(binding, constAssignment);
         final StsSpec stsSpec = StsSpec.create(this, assignment);
         return stsSpec;

@@ -130,7 +130,7 @@ public class EqualityLinkedHashMap<K, V> implements Map<K, V> {
     @Override
     public Set<K> keySet() {
         throw new UnsupportedOperationException(
-            "Key set is not possible for an EqualityLinkedHashMap!");
+                "Key set is not possible for an EqualityLinkedHashMap!");
     }
 
     @Override

@@ -77,7 +77,7 @@ public class StmtSimplifier {
     }
 
     private static class StmtSimplifierVisitor implements
-        StmtVisitor<MutableValuation, SimplifyResult> {
+            StmtVisitor<MutableValuation, SimplifyResult> {
 
         @Override
         public SimplifyResult visit(final SkipStmt stmt, final MutableValuation valuation) {
@@ -99,7 +99,7 @@ public class StmtSimplifier {
 
         @Override
         public <DeclType extends Type> SimplifyResult visit(final AssignStmt<DeclType> stmt,
-            final MutableValuation valuation) {
+                                                            final MutableValuation valuation) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final Expr<DeclType> expr = ExprUtils.simplify(stmt.getExpr(), valuation);
             if (expr instanceof LitExpr<?>) {
@@ -113,7 +113,7 @@ public class StmtSimplifier {
 
         @Override
         public <DeclType extends Type> SimplifyResult visit(final HavocStmt<DeclType> stmt,
-            final MutableValuation valuation) {
+                                                            final MutableValuation valuation) {
             final VarDecl<?> varDecl = stmt.getVarDecl();
             valuation.remove(varDecl);
             return SimplifyResult.of(stmt, SimplifyStatus.SUCCESS);
@@ -122,12 +122,12 @@ public class StmtSimplifier {
         @Override
         public SimplifyResult visit(final SequenceStmt stmt, final MutableValuation valuation) {
             final var subStmtsUnrolled = stmt.getStmts().stream()
-                .map(subStmt -> subStmt.accept(this, valuation)).collect(Collectors.toList());
+                    .map(subStmt -> subStmt.accept(this, valuation)).collect(Collectors.toList());
             final var simplifiedStmt = SequenceStmt.of(
-                subStmtsUnrolled.stream().map(result -> result.stmt)
-                    .collect(Collectors.toList()));
+                    subStmtsUnrolled.stream().map(result -> result.stmt)
+                            .collect(Collectors.toList()));
             final boolean anyBottom = subStmtsUnrolled.stream()
-                .anyMatch(result -> result.status == SimplifyStatus.BOTTOM);
+                    .anyMatch(result -> result.status == SimplifyStatus.BOTTOM);
             if (anyBottom) {
                 return SimplifyResult.of(AssumeStmt.of(False()), SimplifyStatus.BOTTOM);
             } else {
@@ -187,10 +187,10 @@ public class StmtSimplifier {
                 var toValue = ((IntLitExpr) toUnrolled).getValue();
                 var stmts = new ArrayList<Stmt>();
                 for (BigInteger bi = fromValue; bi.compareTo(toValue) < 0;
-                    bi = bi.add(BigInteger.ONE)) {
+                     bi = bi.add(BigInteger.ONE)) {
                     var assignToLoopVar = AssignStmt.of(stmt.getLoopVariable(), Int(bi));
                     var loopVarIncAndSubStmt = SequenceStmt.of(
-                        ImmutableList.of(assignToLoopVar, stmt.getStmt()));
+                            ImmutableList.of(assignToLoopVar, stmt.getStmt()));
                     var result = loopVarIncAndSubStmt.accept(this, valuation);
                     if (result.status == SimplifyStatus.SUCCESS) {
                         stmts.add(result.stmt);
@@ -202,7 +202,7 @@ public class StmtSimplifier {
                 return SimplifyResult.of(SequenceStmt.of(stmts), SimplifyStatus.SUCCESS);
             }
             throw new IllegalArgumentException(
-                String.format("Couldn't unroll loop statement %s", stmt));
+                    String.format("Couldn't unroll loop statement %s", stmt));
         }
 
         public SimplifyResult visit(IfStmt stmt, MutableValuation valuation) {
@@ -223,35 +223,35 @@ public class StmtSimplifier {
                 final SimplifyResult elzeResult = stmt.getElze().accept(this, elzeVal);
 
                 if (thenResult.status == SimplifyStatus.BOTTOM
-                    && elzeResult.status == SimplifyStatus.BOTTOM) {
+                        && elzeResult.status == SimplifyStatus.BOTTOM) {
                     return SimplifyResult.of(AssumeStmt.of(False()), SimplifyStatus.BOTTOM);
                 }
 
                 if (thenResult.status == SimplifyStatus.SUCCESS
-                    && elzeResult.status == SimplifyStatus.BOTTOM) {
+                        && elzeResult.status == SimplifyStatus.BOTTOM) {
                     final AssumeStmt assume = AssumeStmt.of(cond);
                     final SequenceStmt assumeAndThen = SequenceStmt.of(
-                        ImmutableList.of(assume, stmt.getThen()));
+                            ImmutableList.of(assume, stmt.getThen()));
                     return assumeAndThen.accept(this, valuation);
                 }
 
                 if (thenResult.status == SimplifyStatus.BOTTOM
-                    && elzeResult.status == SimplifyStatus.SUCCESS) {
+                        && elzeResult.status == SimplifyStatus.SUCCESS) {
                     final AssumeStmt assumeNot = AssumeStmt.of(Not(cond));
                     final SequenceStmt assumeAndElze = SequenceStmt.of(
-                        ImmutableList.of(assumeNot, stmt.getElze()));
+                            ImmutableList.of(assumeNot, stmt.getElze()));
                     return assumeAndElze.accept(this, valuation);
                 }
 
                 stmt.getThen().accept(this, valuation);
                 var toRemove = valuation.getDecls().stream()
-                    .filter(it -> !valuation.eval(it).equals(elzeVal.eval(it)))
-                    .collect(Collectors.toSet());
+                        .filter(it -> !valuation.eval(it).equals(elzeVal.eval(it)))
+                        .collect(Collectors.toSet());
                 for (Decl<?> decl : toRemove) {
                     valuation.remove(decl);
                 }
                 return SimplifyResult.of(IfStmt.of(cond, thenResult.stmt, elzeResult.stmt),
-                    SimplifyStatus.SUCCESS);
+                        SimplifyStatus.SUCCESS);
             }
         }
     }

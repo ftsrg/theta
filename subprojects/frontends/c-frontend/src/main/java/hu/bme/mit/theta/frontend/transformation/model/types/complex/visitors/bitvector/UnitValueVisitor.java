@@ -47,40 +47,40 @@ public class UnitValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Lit
     @Override
     public LitExpr<?> visit(CDouble type, Void param) {
         return FpUtils.bigFloatToFpLitExpr(
-            new BigFloat(
-                "1.0",
-                new BinaryMathContext(
-                    ArchitectureConfig.architecture.getBitWidth("double_e"),
-                    ArchitectureConfig.architecture.getBitWidth("double_s"))),
-            FpType.of(
-                ArchitectureConfig.architecture.getBitWidth("double_e"),
-                ArchitectureConfig.architecture.getBitWidth("double_s")));
+                new BigFloat(
+                        "1.0",
+                        new BinaryMathContext(
+                                ArchitectureConfig.architecture.getBitWidth("double_e"),
+                                ArchitectureConfig.architecture.getBitWidth("double_s"))),
+                FpType.of(
+                        ArchitectureConfig.architecture.getBitWidth("double_e"),
+                        ArchitectureConfig.architecture.getBitWidth("double_s")));
     }
 
     @Override
     public LitExpr<?> visit(CFloat type, Void param) {
         return FpUtils.bigFloatToFpLitExpr(
-            new BigFloat(
-                "1.0",
-                new BinaryMathContext(
-                    ArchitectureConfig.architecture.getBitWidth("float_e"),
-                    ArchitectureConfig.architecture.getBitWidth("float_s"))),
-            FpType.of(
-                ArchitectureConfig.architecture.getBitWidth("float_e"),
-                ArchitectureConfig.architecture.getBitWidth("float_s")));
+                new BigFloat(
+                        "1.0",
+                        new BinaryMathContext(
+                                ArchitectureConfig.architecture.getBitWidth("float_e"),
+                                ArchitectureConfig.architecture.getBitWidth("float_s"))),
+                FpType.of(
+                        ArchitectureConfig.architecture.getBitWidth("float_e"),
+                        ArchitectureConfig.architecture.getBitWidth("float_s")));
     }
 
     @Override
     public LitExpr<?> visit(CLongDouble type, Void param) {
         return FpUtils.bigFloatToFpLitExpr(
-            new BigFloat(
-                "1.0",
-                new BinaryMathContext(
-                    ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
-                    ArchitectureConfig.architecture.getBitWidth("longdouble_s"))),
-            FpType.of(
-                ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
-                ArchitectureConfig.architecture.getBitWidth("longdouble_s")));
+                new BigFloat(
+                        "1.0",
+                        new BinaryMathContext(
+                                ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+                                ArchitectureConfig.architecture.getBitWidth("longdouble_s"))),
+                FpType.of(
+                        ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
+                        ArchitectureConfig.architecture.getBitWidth("longdouble_s")));
     }
 
     @Override
@@ -98,10 +98,10 @@ public class UnitValueVisitor extends CComplexType.CComplexTypeVisitor<Void, Lit
     }
 
     private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(
-        CArray type) {
+            CArray type) {
         //noinspection unchecked
         ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
         return Array(List.of(), cast(type.getEmbeddedType().getUnitValue(), smtType.getElemType()),
-            smtType);
+                smtType);
     }
 }

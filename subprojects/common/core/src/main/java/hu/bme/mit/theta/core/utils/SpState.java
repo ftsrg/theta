@@ -109,8 +109,8 @@ public class SpState {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr)
-            .add(Integer.valueOf(constCount))
-            .toString();
+                .add(Integer.valueOf(constCount))
+                .toString();
     }
 
     private static final class SpVisitor implements StmtVisitor<SpState, SpState> {
@@ -134,7 +134,7 @@ public class SpState {
 
         @Override
         public <DeclType extends Type> SpState visit(final AssignStmt<DeclType> stmt,
-            final SpState state) {
+                                                     final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
             final String valName = String.format("_sp_%d", constCount);
@@ -149,7 +149,7 @@ public class SpState {
 
         @Override
         public <DeclType extends Type> SpState visit(final HavocStmt<DeclType> stmt,
-            final SpState state) {
+                                                     final SpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
             final String valName = String.format("_sp_%d", constCount);

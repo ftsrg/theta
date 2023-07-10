@@ -43,9 +43,9 @@ public class AddHavocRange extends ProcedurePass {
             found = false;
             for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
                 Optional<XcfaLabel> e = edge.getLabels().stream().filter(
-                    stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel
-                        && stmt.getStmt() instanceof HavocStmt && !alreadyAssumed.contains(
-                        (HavocStmt<?>) stmt.getStmt())).findAny();
+                        stmt -> stmt instanceof XcfaLabel.StmtXcfaLabel
+                                && stmt.getStmt() instanceof HavocStmt && !alreadyAssumed.contains(
+                                (HavocStmt<?>) stmt.getStmt())).findAny();
                 if (e.isPresent()) {
                     List<XcfaLabel> collect = new ArrayList<>();
                     for (XcfaLabel stmt : edge.getLabels()) {
@@ -53,9 +53,9 @@ public class AddHavocRange extends ProcedurePass {
                             VarDecl<?> var = ((HavocStmt<?>) e.get().getStmt()).getVarDecl();
                             collect.add(stmt);
                             if (FrontendMetadata.getMetadataValue(var.getRef(), "cType")
-                                .isPresent()) {
+                                    .isPresent()) {
                                 Stmt wraparoundAssumption = CComplexType.getType(var.getRef())
-                                    .limit(var.getRef());
+                                        .limit(var.getRef());
                                 collect.add(Stmt(wraparoundAssumption));
                             }
                         } else {

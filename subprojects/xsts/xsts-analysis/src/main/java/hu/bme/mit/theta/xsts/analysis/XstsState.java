@@ -35,7 +35,7 @@ public final class XstsState<S extends ExprState> implements ExprState {
     }
 
     public static <S extends ExprState> XstsState<S> of(final S state,
-        final boolean lastActionWasEnv, final boolean initialized) {
+                                                        final boolean lastActionWasEnv, final boolean initialized) {
         return new XstsState<>(state, lastActionWasEnv, initialized);
     }
 
@@ -64,8 +64,8 @@ public final class XstsState<S extends ExprState> implements ExprState {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).aligned()
-            .add(initialized ? "post_init" : "pre_init")
-            .add(lastActionWasEnv ? "last_env" : "last_internal").body().add(state).toString();
+                .add(initialized ? "post_init" : "pre_init")
+                .add(lastActionWasEnv ? "last_env" : "last_internal").body().add(state).toString();
     }
 
     @Override
@@ -78,7 +78,7 @@ public final class XstsState<S extends ExprState> implements ExprState {
         }
         XstsState<?> xstsState = (XstsState<?>) o;
         return lastActionWasEnv == xstsState.lastActionWasEnv
-            && initialized == xstsState.initialized && state.equals(xstsState.state);
+                && initialized == xstsState.initialized && state.equals(xstsState.state);
     }
 
     @Override

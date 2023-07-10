@@ -57,7 +57,7 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
         BigFloat leftFloat = FpUtils.fpLitExprToBigFloat(null, leftOpVal);
         BigFloat rightFloat = FpUtils.fpLitExprToBigFloat(null, rightOpVal);
         BigFloat remainder = leftFloat.remainder(rightFloat,
-            FpUtils.getMathContext(this.getType(), null));
+                FpUtils.getMathContext(this.getType(), null));
 
         return FpUtils.bigFloatToFpLitExpr(remainder, this.getType());
     }
@@ -89,7 +89,7 @@ public final class FpRemExpr extends BinaryExpr<FpType, FpType> {
         } else if (obj instanceof FpRemExpr) {
             final FpRemExpr that = (FpRemExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

@@ -82,7 +82,7 @@ public final class IntLeqExpr extends LeqExpr<IntType> {
         } else if (obj instanceof IntLeqExpr) {
             final IntLeqExpr that = (IntLeqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

@@ -33,8 +33,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> extends
-    NullaryExpr<ArrayType<IndexType, ElemType>>
-    implements LitExpr<ArrayType<IndexType, ElemType>> {
+        NullaryExpr<ArrayType<IndexType, ElemType>>
+        implements LitExpr<ArrayType<IndexType, ElemType>> {
 
     private static final int HASH_SEED = 229;
     private static final String OPERATOR_LABEL = "array";
@@ -48,29 +48,29 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
     private volatile int hashCode;
 
     private ArrayLitExpr(
-        final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
-        final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
+            final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
+            final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
         this.type = checkNotNull(type);
         Expr<ElemType> simplifiedElem = ExprSimplifier.simplify(checkNotNull(elseElem),
-            ImmutableValuation.empty());
+                ImmutableValuation.empty());
         checkState(simplifiedElem instanceof LitExpr,
-            "ArrayLitExprs shall only contain literal values!");
+                "ArrayLitExprs shall only contain literal values!");
         this.elseElem = (LitExpr<ElemType>) simplifiedElem;
         this.elems = checkNotNull(elems).stream().map(elem -> {
             Expr<IndexType> index = ExprSimplifier.simplify(elem.get1(),
-                ImmutableValuation.empty());
+                    ImmutableValuation.empty());
             Expr<ElemType> element = ExprSimplifier.simplify(elem.get2(),
-                ImmutableValuation.empty());
+                    ImmutableValuation.empty());
             checkState(index instanceof LitExpr && element instanceof LitExpr,
-                "ArrayLitExprs shall only contain literal values");
+                    "ArrayLitExprs shall only contain literal values");
             return Tuple2.of((LitExpr<IndexType>) index, (LitExpr<ElemType>) element);
         }).collect(Collectors.toList());
     }
 
     public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> of(
-        final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
-        final Expr<ElemType> elseElem,
-        final ArrayType<IndexType, ElemType> type) {
+            final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
+            final Expr<ElemType> elseElem,
+            final ArrayType<IndexType, ElemType> type) {
         return new ArrayLitExpr<>(elems, elseElem, type);
     }
 
@@ -113,7 +113,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
         } else if (obj instanceof ArrayLitExpr) {
             final ArrayLitExpr<?, ?> that = (ArrayLitExpr<?, ?>) obj;
             return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(
-                that.elseElem);
+                    that.elseElem);
         } else {
             return false;
         }
@@ -122,9 +122,9 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
     @Override
     public String toString() {
         return Utils.lispStringBuilder(OPERATOR_LABEL)
-            .addAll(elems.stream().map(elem -> String.format("(%s %s)", elem.get1(), elem.get2())))
-            .add((String.format("(default %s)", elseElem)))
-            .toString();
+                .addAll(elems.stream().map(elem -> String.format("(%s %s)", elem.get1(), elem.get2())))
+                .add((String.format("(default %s)", elseElem)))
+                .toString();
     }
 
 }

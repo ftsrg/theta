@@ -56,41 +56,41 @@ public class SmartExprsTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {True(), SmartBoolExprs.Not(False())},
+                {True(), SmartBoolExprs.Not(False())},
 
-            {False(), SmartBoolExprs.Not(True())},
+                {False(), SmartBoolExprs.Not(True())},
 
-            {A, SmartBoolExprs.Not(SmartBoolExprs.Not(A))},
+                {A, SmartBoolExprs.Not(SmartBoolExprs.Not(A))},
 
-            {Not(A), SmartBoolExprs.Not(SmartBoolExprs.Not(SmartBoolExprs.Not(A)))},
+                {Not(A), SmartBoolExprs.Not(SmartBoolExprs.Not(SmartBoolExprs.Not(A)))},
 
-            {True(), SmartBoolExprs.And(Collections.emptySet())},
+                {True(), SmartBoolExprs.And(Collections.emptySet())},
 
-            {A, SmartBoolExprs.And(Collections.singleton(A))},
+                {A, SmartBoolExprs.And(Collections.singleton(A))},
 
-            {A, SmartBoolExprs.And(A, True())},
+                {A, SmartBoolExprs.And(A, True())},
 
-            {A, SmartBoolExprs.And(A, True(), True())},
+                {A, SmartBoolExprs.And(A, True(), True())},
 
-            {False(), SmartBoolExprs.And(A, False(), True())},
+                {False(), SmartBoolExprs.And(A, False(), True())},
 
-            {True(), SmartBoolExprs.And(True(), True())},
+                {True(), SmartBoolExprs.And(True(), True())},
 
-            {And(A, B, C), SmartBoolExprs.And(A, B, C, True())},
+                {And(A, B, C), SmartBoolExprs.And(A, B, C, True())},
 
-            {False(), SmartBoolExprs.Or(Collections.emptySet())},
+                {False(), SmartBoolExprs.Or(Collections.emptySet())},
 
-            {A, SmartBoolExprs.Or(Collections.singleton(A))},
+                {A, SmartBoolExprs.Or(Collections.singleton(A))},
 
-            {A, SmartBoolExprs.Or(A, False())},
+                {A, SmartBoolExprs.Or(A, False())},
 
-            {A, SmartBoolExprs.Or(A, False(), False())},
+                {A, SmartBoolExprs.Or(A, False(), False())},
 
-            {True(), SmartBoolExprs.Or(A, False(), True())},
+                {True(), SmartBoolExprs.Or(A, False(), True())},
 
-            {False(), SmartBoolExprs.Or(False(), False())},
+                {False(), SmartBoolExprs.Or(False(), False())},
 
-            {Or(A, B, C), SmartBoolExprs.Or(A, B, C, False())},
+                {Or(A, B, C), SmartBoolExprs.Or(A, B, C, False())},
 
         });
 

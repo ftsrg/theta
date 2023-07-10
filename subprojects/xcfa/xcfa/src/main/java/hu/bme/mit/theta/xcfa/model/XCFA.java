@@ -53,7 +53,7 @@ public final class XCFA {
     private XCFA(Builder builder) {
         globalVars = ImmutableMap.copyOf(builder.globalVars);
         processes = builder.processes.stream().map(builder1 -> builder1.build(this))
-            .collect(ImmutableList.toImmutableList());
+                .collect(ImmutableList.toImmutableList());
         mainProcess = builder.mainProcess.build(this);
         name = builder.name;
         dynamic = builder.dynamic;
@@ -68,9 +68,9 @@ public final class XCFA {
      */
     public CFA createCFA() {
         checkState(getProcesses().size() == 1,
-            "XCFA cannot be converted to CFA because it has more than one process.");
+                "XCFA cannot be converted to CFA because it has more than one process.");
         checkState(getMainProcess().getProcedures().size() == 1,
-            "XCFA cannot be converted to CFA because it has more than one procedure.");
+                "XCFA cannot be converted to CFA because it has more than one procedure.");
 
         CFA.Builder builder = CFA.builder();
 
@@ -107,12 +107,12 @@ public final class XCFA {
             // Adding edges
             for (int i = 0; i < e.getLabels().size(); ++i) {
                 CFA.Edge edge = builder.createEdge(locations.get(i), locations.get(i + 1),
-                    e.getLabels().get(i).accept(new XcfaLabelVarReplacer(), varLut).getStmt());
+                        e.getLabels().get(i).accept(new XcfaLabelVarReplacer(), varLut).getStmt());
                 FrontendMetadata.create(e, "cfaEdge", edge);
             }
             if (e.getLabels().size() == 0) {
                 CFA.Edge edge = builder.createEdge(locations.get(0), locations.get(1),
-                    SkipStmt.getInstance());
+                        SkipStmt.getInstance());
                 FrontendMetadata.create(e, "cfaEdge", edge);
             }
         }
@@ -152,7 +152,7 @@ public final class XCFA {
         StringBuilder ret = new StringBuilder("digraph G{\n");
         for (VarDecl<? extends Type> globalVar : getGlobalVars()) {
             ret.append("\"var ").append(globalVar).append(" = ")
-                .append(getInitValue(globalVar).get()).append("\";\n");
+                    .append(getInitValue(globalVar).get()).append("\";\n");
         }
         ret.append(getMainProcess().toDot(cexLocations, cexEdges));
         ret.append("}\n");

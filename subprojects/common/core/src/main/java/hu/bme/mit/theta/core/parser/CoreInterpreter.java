@@ -156,7 +156,7 @@ public class CoreInterpreter {
     }
 
     public void defineExpr(final String symbol,
-        final BiFunction<Env, List<SExpr>, Expr<?>> function) {
+                           final BiFunction<Env, List<SExpr>, Expr<?>> function) {
         final Function<List<SExpr>, Expr<?>> interpretation = sexprs -> function.apply(env, sexprs);
         env.define(symbol, interpretation);
     }
@@ -248,7 +248,7 @@ public class CoreInterpreter {
     ////
 
     public final BiFunction<Env, List<SExpr>, Type> typeBinaryOperator(
-        final BinaryOperator<Type> function) {
+            final BinaryOperator<Type> function) {
         return (env, sexprs) -> {
             checkArgument(sexprs.size() == 2);
             final Type type1 = type(sexprs.get(0));
@@ -258,7 +258,7 @@ public class CoreInterpreter {
     }
 
     public final BiFunction<Env, List<SExpr>, Expr<?>> exprUnaryOperator(
-        final UnaryOperator<Expr<?>> function) {
+            final UnaryOperator<Expr<?>> function) {
         return (env, sexprs) -> {
             checkArgument(sexprs.size() == 1);
             final Expr<?> op = expr(sexprs.get(0));
@@ -267,7 +267,7 @@ public class CoreInterpreter {
     }
 
     public final BiFunction<Env, List<SExpr>, Expr<?>> exprBinaryOperator(
-        final BinaryOperator<Expr<?>> function) {
+            final BinaryOperator<Expr<?>> function) {
         return (env, sexprs) -> {
             checkArgument(sexprs.size() == 2);
             final Expr<?> op1 = expr(sexprs.get(0));
@@ -277,7 +277,7 @@ public class CoreInterpreter {
     }
 
     public final BiFunction<Env, List<SExpr>, Expr<?>> exprTernaryOperator(
-        final TernaryOperator<Expr<?>> function) {
+            final TernaryOperator<Expr<?>> function) {
         return (env, sexprs) -> {
             checkArgument(sexprs.size() == 3);
             final Expr<?> op1 = expr(sexprs.get(0));
@@ -288,14 +288,14 @@ public class CoreInterpreter {
     }
 
     public final BiFunction<Env, List<SExpr>, Expr<?>> exprMultiaryOperator(
-        final Function<List<Expr<?>>, Expr<?>> function) {
+            final Function<List<Expr<?>>, Expr<?>> function) {
         return (env, sexprs) -> {
             return function.apply(sexprs.stream().map(this::expr).collect(toImmutableList()));
         };
     }
 
     public final BiFunction<Env, List<SExpr>, Expr<?>> exprQuantifier(
-        final BiFunction<List<ParamDecl<?>>, Expr<?>, Expr<?>> function) {
+            final BiFunction<List<ParamDecl<?>>, Expr<?>, Expr<?>> function) {
         return (env, sexprs) -> {
             checkArgument(sexprs.size() == 2);
             env.push();

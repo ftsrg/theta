@@ -84,7 +84,7 @@ public final class BvNeqExpr extends NeqExpr<BvType> {
         } else if (obj instanceof BvNeqExpr) {
             final BvNeqExpr that = (BvNeqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 
 final class Prod4Ord<S1 extends State, S2 extends State, S3 extends State, S4 extends State>
-    implements PartialOrd<Prod4State<S1, S2, S3, S4>> {
+        implements PartialOrd<Prod4State<S1, S2, S3, S4>> {
 
     private final PartialOrd<S1> partialOrd1;
     private final PartialOrd<S2> partialOrd2;
@@ -29,7 +29,7 @@ final class Prod4Ord<S1 extends State, S2 extends State, S3 extends State, S4 ex
     private final PartialOrd<S4> partialOrd4;
 
     private Prod4Ord(final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
-        final PartialOrd<S3> partialOrd3, final PartialOrd<S4> partialOrd4) {
+                     final PartialOrd<S3> partialOrd3, final PartialOrd<S4> partialOrd4) {
         this.partialOrd1 = checkNotNull(partialOrd1);
         this.partialOrd2 = checkNotNull(partialOrd2);
         this.partialOrd3 = checkNotNull(partialOrd3);
@@ -37,24 +37,24 @@ final class Prod4Ord<S1 extends State, S2 extends State, S3 extends State, S4 ex
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State, S4 extends State> Prod4Ord<S1, S2, S3, S4> create(
-        final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
-        final PartialOrd<S3> partialOrd3,
-        final PartialOrd<S4> partialOrd4) {
+            final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
+            final PartialOrd<S3> partialOrd3,
+            final PartialOrd<S4> partialOrd4) {
         return new Prod4Ord<>(partialOrd1, partialOrd2, partialOrd3, partialOrd4);
     }
 
     @Override
     public boolean isLeq(final Prod4State<S1, S2, S3, S4> state1,
-        final Prod4State<S1, S2, S3, S4> state2) {
+                         final Prod4State<S1, S2, S3, S4> state2) {
         if (state1.isBottom()) {
             return true;
         } else if (state2.isBottom()) {
             return false;
         } else {
             return partialOrd1.isLeq(state1.getState1(), state2.getState1())
-                && partialOrd2.isLeq(state1.getState2(), state2.getState2())
-                && partialOrd3.isLeq(state1.getState3(), state2.getState3())
-                && partialOrd4.isLeq(state1.getState4(), state2.getState4());
+                    && partialOrd2.isLeq(state1.getState2(), state2.getState2())
+                    && partialOrd3.isLeq(state1.getState3(), state2.getState3())
+                    && partialOrd4.isLeq(state1.getState4(), state2.getState4());
         }
     }
 

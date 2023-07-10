@@ -44,7 +44,7 @@ public final class BvExtractExpr implements Expr<BvType> {
     private volatile int hashCode = 0;
 
     private BvExtractExpr(final Expr<BvType> bitvec, final IntLitExpr from,
-        final IntLitExpr until) {
+                          final IntLitExpr until) {
         checkNotNull(bitvec);
         checkNotNull(from);
         checkNotNull(until);
@@ -58,12 +58,12 @@ public final class BvExtractExpr implements Expr<BvType> {
     }
 
     public static BvExtractExpr of(final Expr<BvType> bitvec, final IntLitExpr from,
-        final IntLitExpr until) {
+                                   final IntLitExpr until) {
         return new BvExtractExpr(bitvec, from, until);
     }
 
     public static BvExtractExpr create(final Expr<?> bitvec, final Expr<?> from,
-        final Expr<?> until) {
+                                       final Expr<?> until) {
         final Expr<BvType> newBitvec = castBv(bitvec);
         final IntLitExpr newFrom = (IntLitExpr) cast(from, Int());
         final IntLitExpr newUntil = (IntLitExpr) cast(until, Int());
@@ -138,8 +138,8 @@ public final class BvExtractExpr implements Expr<BvType> {
         } else if (obj instanceof BvExtractExpr) {
             final BvExtractExpr that = (BvExtractExpr) obj;
             return this.getBitvec().equals(that.getBitvec()) && this.getFrom()
-                .equals(that.getFrom())
-                && this.getUntil().equals(that.getUntil());
+                    .equals(that.getFrom())
+                    && this.getUntil().equals(that.getUntil());
         } else {
             return false;
         }
@@ -148,6 +148,6 @@ public final class BvExtractExpr implements Expr<BvType> {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(OPERATOR_LABEL).add(getBitvec()).add(getFrom())
-            .add(getUntil()).toString();
+                .add(getUntil()).toString();
     }
 }

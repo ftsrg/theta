@@ -84,7 +84,7 @@ public final class BvSGtExpr extends GtExpr<BvType> {
         } else if (obj instanceof BvSGtExpr) {
             final BvSGtExpr that = (BvSGtExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

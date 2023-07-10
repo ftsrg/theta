@@ -53,32 +53,32 @@ public class ExprCnfCheckerTest {
     @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-            // A
-            {A, true},
-            // !A
-            {Not(A), true},
-            // !A or B or !C
-            {Or(Not(A), B, Not(C)), true},
-            // !A and B and !C
-            {And(Not(A), B, Not(C)), true},
-            // !A and (B and !C)
-            {And(Not(A), And(B, Not(C))), true},
-            // !A and (B or !C)
-            {And(Not(A), Or(B, Not(C))), true},
-            // !!A
-            {Not(Not(A)), false},
-            // !A and B and !C
-            {And(Not(A), B, Not(C)), true},
-            // !A or (B and !C)
-            {Or(Not(A), And(B, Not(C))), false},
-            // !(A and B)
-            {Not(And(A, B)), false},
-            // !(A or B)
-            {Not(Or(A, B)), false},
-            // A -> B
-            {Imply(A, B), false},
-            // A <-> B
-            {Iff(A, B), false},});
+                // A
+                {A, true},
+                // !A
+                {Not(A), true},
+                // !A or B or !C
+                {Or(Not(A), B, Not(C)), true},
+                // !A and B and !C
+                {And(Not(A), B, Not(C)), true},
+                // !A and (B and !C)
+                {And(Not(A), And(B, Not(C))), true},
+                // !A and (B or !C)
+                {And(Not(A), Or(B, Not(C))), true},
+                // !!A
+                {Not(Not(A)), false},
+                // !A and B and !C
+                {And(Not(A), B, Not(C)), true},
+                // !A or (B and !C)
+                {Or(Not(A), And(B, Not(C))), false},
+                // !(A and B)
+                {Not(And(A, B)), false},
+                // !(A or B)
+                {Not(Or(A, B)), false},
+                // A -> B
+                {Imply(A, B), false},
+                // A <-> B
+                {Iff(A, B), false},});
 
     }
 

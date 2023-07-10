@@ -36,7 +36,7 @@ public final class SolverUtils {
     }
 
     public static boolean entails(final Solver solver, final Expr<BoolType> antecedent,
-        final Expr<BoolType> consequent) {
+                                  final Expr<BoolType> consequent) {
         checkNotNull(solver);
         checkNotNull(antecedent);
         checkNotNull(consequent);
@@ -48,8 +48,8 @@ public final class SolverUtils {
     }
 
     public static boolean entails(final Solver solver,
-        final Iterable<? extends Expr<BoolType>> antecedents,
-        final Iterable<? extends Expr<BoolType>> consequents) {
+                                  final Iterable<? extends Expr<BoolType>> antecedents,
+                                  final Iterable<? extends Expr<BoolType>> consequents) {
         checkNotNull(solver);
         checkNotNull(antecedents);
         checkNotNull(consequents);
@@ -65,7 +65,7 @@ public final class SolverUtils {
     }
 
     public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr,
-        final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
+                                           final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
         final Iterable<Valuation> iterable = () -> new ModelIterator(factory, expr, feedback);
         return StreamSupport.stream(iterable.spliterator(), false);
     }
@@ -76,7 +76,7 @@ public final class SolverUtils {
         private final Function<? super Valuation, ? extends Expr<BoolType>> feedback;
 
         private ModelIterator(final SolverFactory factory, final Expr<BoolType> expr,
-            final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
+                              final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
             checkNotNull(expr);
             checkNotNull(factory);
             this.feedback = checkNotNull(feedback);

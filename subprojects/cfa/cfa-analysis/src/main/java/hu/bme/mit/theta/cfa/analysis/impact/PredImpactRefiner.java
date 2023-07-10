@@ -50,7 +50,7 @@ public final class PredImpactRefiner implements ImpactRefiner<CfaState<PredState
 
     @Override
     public RefinementResult<CfaState<PredState>, CfaAction> refine(
-        final Trace<CfaState<PredState>, CfaAction> cex) {
+            final Trace<CfaState<PredState>, CfaAction> cex) {
         final List<CfaAction> actions = cex.getActions();
 
         final Trace<ExprState, ExprAction> exprTrace = ExprTraceUtils.traceFrom(actions);

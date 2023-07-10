@@ -41,8 +41,8 @@ public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> 
     }
 
     public static <P1 extends Prec, P2 extends Prec, P3 extends Prec> Prod3Prec<P1, P2, P3> of(
-        final P1 prec1,
-        final P2 prec2, final P3 prec3) {
+            final P1 prec1,
+            final P2 prec2, final P3 prec3) {
         return new Prod3Prec<>(prec1, prec2, prec3);
     }
 
@@ -78,7 +78,7 @@ public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> 
         } else if (obj instanceof Prod3Prec) {
             final Prod3Prec<?, ?, ?> that = (Prod3Prec<?, ?, ?>) obj;
             return this.prec1.equals(that.prec1) && this.prec2.equals(that.prec2)
-                && this.prec3.equals(that.prec3);
+                    && this.prec3.equals(that.prec3);
         } else {
             return false;
         }
@@ -92,6 +92,6 @@ public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> 
     @Override
     public Collection<VarDecl<?>> getUsedVars() {
         return Streams.concat(prec1.getUsedVars().stream(), prec2.getUsedVars().stream(),
-            prec3.getUsedVars().stream()).collect(Collectors.toSet());
+                prec3.getUsedVars().stream()).collect(Collectors.toSet());
     }
 }

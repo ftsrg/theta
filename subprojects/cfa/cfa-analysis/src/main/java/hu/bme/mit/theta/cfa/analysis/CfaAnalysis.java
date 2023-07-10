@@ -26,14 +26,14 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 
 public final class CfaAnalysis<S extends ExprState, P extends Prec>
-    implements Analysis<CfaState<S>, CfaAction, CfaPrec<P>> {
+        implements Analysis<CfaState<S>, CfaAction, CfaPrec<P>> {
 
     private final PartialOrd<CfaState<S>> partialOrd;
     private final InitFunc<CfaState<S>, CfaPrec<P>> initFunc;
     private final TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> transFunc;
 
     private CfaAnalysis(final Loc initLoc,
-        final Analysis<S, ? super CfaAction, ? super P> analysis) {
+                        final Analysis<S, ? super CfaAction, ? super P> analysis) {
         checkNotNull(initLoc);
         checkNotNull(analysis);
         partialOrd = CfaOrd.create(analysis.getPartialOrd());
@@ -42,7 +42,7 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
     }
 
     public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
-        final Analysis<S, ? super CfaAction, ? super P> analysis) {
+                                                                                 final Analysis<S, ? super CfaAction, ? super P> analysis) {
         return new CfaAnalysis<>(initLoc, analysis);
     }
 

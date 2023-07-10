@@ -68,7 +68,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
         final StringBuilder sb = new StringBuilder();
         sb.append("digraph ").append(graph.getId()).append(" {").append(System.lineSeparator());
         sb.append("\tlabel=\"").append(graph.getLabel()).append("\";")
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
 
         graph.getRootNodes().forEach(n -> printNode(n, sb));
 
@@ -80,7 +80,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
     }
 
     public void writeFile(final Graph graph, final String fileName, final Format format)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
         final String dotFile = fileName + ".dot";
         super.writeFile(graph, dotFile);
         final String[] cmd = {"dot", format.getOption(), dotFile, "-o", fileName};
@@ -101,7 +101,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
     }
 
     public void writeFileAutoConvert(final Graph graph, final String fileName)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
         String ext = getFileExtension(fileName.toLowerCase());
         if (ext.equals("dot")) {
             writeFile(graph, fileName);
@@ -154,7 +154,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 
         sb.append("\t\t").append(node.getId());
         sb.append(" [label=\"")
-            .append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append('\"');
+                .append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append('\"');
         if (attributes.getPeripheries() > 1) {
             sb.append(",peripheries=").append(attributes.getPeripheries());
         }
@@ -173,9 +173,9 @@ public final class GraphvizWriter extends AbstractGraphWriter {
         final String style = mapLineStyleToString(attributes.getLineStyle());
 
         sb.append("\tsubgraph cluster_").append(node.getId()).append(" {")
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
         sb.append("\t\tcolor=").append(mapColorToString(attributes.getLineColor())).append(';')
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
         if (!"".equals(style)) {
             sb.append("\t\tstyle=").append(style).append(';').append(System.lineSeparator());
         }
@@ -183,8 +183,8 @@ public final class GraphvizWriter extends AbstractGraphWriter {
             sb.append(",fontname=\"").append(attributes.getFont()).append('\"');
         }
         sb.append("\t\tlabel=\"")
-            .append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\";")
-            .append(System.lineSeparator());
+                .append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\";")
+                .append(System.lineSeparator());
         for (final Node child : node.getChildren()) {
             printNode(child, sb);
         }
@@ -195,16 +195,16 @@ public final class GraphvizWriter extends AbstractGraphWriter {
         if (node instanceof CompositeNode) {
             if (node.getOutEdges().size() != 0) {
                 throw new UnsupportedOperationException(
-                    "GraphViz does not support edges between clusters.");
+                        "GraphViz does not support edges between clusters.");
             }
         } else {
             for (final Edge edge : node.getOutEdges()) {
                 final EdgeAttributes attributes = edge.getAttributes();
                 sb.append('\t').append(edge.getSource().getId()).append(" -> ")
-                    .append(edge.getTarget().getId());
+                        .append(edge.getTarget().getId());
                 sb.append(" [label=\"")
-                    .append(convertLabel(attributes.getLabel(), attributes.getAlignment()))
-                    .append('\"');
+                        .append(convertLabel(attributes.getLabel(), attributes.getAlignment()))
+                        .append('\"');
                 sb.append(",color=").append(mapColorToString(attributes.getColor()));
                 final String style = mapLineStyleToString(attributes.getLineStyle());
                 if (!"".equals(style)) {
@@ -244,7 +244,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 
     private String mapColorToString(final Color color) {
         return String.format("\"#%02X%02X%02X\"", color.getRed(), color.getGreen(),
-            color.getBlue());
+                color.getBlue());
     }
 
     private String mapLineStyleToString(final LineStyle lineStyle) {

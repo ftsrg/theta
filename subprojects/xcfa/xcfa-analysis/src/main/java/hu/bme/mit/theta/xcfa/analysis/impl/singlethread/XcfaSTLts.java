@@ -32,10 +32,10 @@ public final class XcfaSTLts implements LTS<XcfaSTState<?>, XcfaSTAction> {
         final XcfaLocation loc = state.getCurrentLoc();
         for (XcfaEdge outgoingEdge : loc.getOutgoingEdges()) {
             final XcfaSTAction xcfaAction =
-                FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON ?
-                    XcfaSTAction.create(outgoingEdge) :
-                    XcfaSTAction.createWithVars(outgoingEdge,
-                        ((XcfaSTStateStack<?>) state).getCurrentVars());
+                    FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON ?
+                            XcfaSTAction.create(outgoingEdge) :
+                            XcfaSTAction.createWithVars(outgoingEdge,
+                                    ((XcfaSTStateStack<?>) state).getCurrentVars());
             xcfaActions.add(xcfaAction);
         }
         return xcfaActions;

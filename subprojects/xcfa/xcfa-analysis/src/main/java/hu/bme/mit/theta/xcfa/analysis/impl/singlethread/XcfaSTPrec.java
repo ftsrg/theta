@@ -52,7 +52,7 @@ public final class XcfaSTPrec<P extends Prec> implements Prec {
                 for (XcfaEdge edge : procedure.getEdges()) {
                     for (XcfaLabel label : edge.getLabels()) {
                         if (label instanceof XcfaLabel.StmtXcfaLabel
-                            && label.getStmt() instanceof AssumeStmt) {
+                                && label.getStmt() instanceof AssumeStmt) {
                             AssumeStmt assumeStmt = (AssumeStmt) label.getStmt();
                             assumes.add(ExprUtils.ponate(assumeStmt.getCond()));
                         }

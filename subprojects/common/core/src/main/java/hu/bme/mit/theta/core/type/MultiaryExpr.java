@@ -26,7 +26,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> implements
-    Expr<ExprType> {
+        Expr<ExprType> {
 
     private final List<Expr<OpType>> ops;
 
@@ -55,7 +55,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
         } else {
             final OpType opType = getOps().get(0).getType();
             final List<Expr<OpType>> newOps = ops.stream().map(op -> TypeUtils.cast(op, opType))
-                .collect(toImmutableList());
+                    .collect(toImmutableList());
             return with(newOps);
         }
     }

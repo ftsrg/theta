@@ -96,7 +96,7 @@ final class CfaStatement {
                 return Assign(tVar, tExpr);
             } else {
                 throw new IllegalArgumentException(
-                    "Type of " + var + " is incompatilbe with " + expr);
+                        "Type of " + var + " is incompatilbe with " + expr);
             }
         }
 

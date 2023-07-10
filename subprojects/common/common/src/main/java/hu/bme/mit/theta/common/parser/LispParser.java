@@ -37,7 +37,7 @@ public final class LispParser {
     public List<SExpr> sexprs() {
         final ImmutableList.Builder<SExpr> builder = ImmutableList.builder();
         while (lookahead().getType() == TokenType.ATOM
-            || lookahead().getType() == TokenType.LPAREN) {
+                || lookahead().getType() == TokenType.LPAREN) {
             final SExpr sexpr = sexpr();
             builder.add(sexpr);
         }

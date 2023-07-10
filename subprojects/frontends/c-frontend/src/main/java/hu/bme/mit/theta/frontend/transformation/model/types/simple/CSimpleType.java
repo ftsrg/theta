@@ -69,7 +69,7 @@ public abstract class CSimpleType {
     public void setBool(boolean bool) {
         if (bool) {
             setSigned(
-                false); // _Bool isn't signed, but signed might be the default value in some cases
+                    false); // _Bool isn't signed, but signed might be the default value in some cases
         }
         this.bool = bool;
     }
@@ -163,12 +163,12 @@ public abstract class CSimpleType {
 
     public CSimpleType copyOf() {
         throw new UnsupportedOperationException(
-            "Abstract base class CSimpleType should not be copied");
+                "Abstract base class CSimpleType should not be copied");
     }
 
     public CComplexType getActualType() {
         throw new UnsupportedOperationException(
-            "Abstract base class CSimpleType should not be used");
+                "Abstract base class CSimpleType should not be used");
     }
 
     protected void setThreadLocal(boolean threadLocal) {

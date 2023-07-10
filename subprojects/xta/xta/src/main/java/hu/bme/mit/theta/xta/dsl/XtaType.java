@@ -44,7 +44,7 @@ final class XtaType {
     private final List<ArrayIndexContext> arrayIndexContexts;
 
     public XtaType(final Scope scope, final TypeContext typeContext,
-        final List<ArrayIndexContext> arrayIndexContexts) {
+                   final List<ArrayIndexContext> arrayIndexContexts) {
         this.scope = checkNotNull(scope);
         this.typeContext = checkNotNull(typeContext);
         this.arrayIndexContexts = checkNotNull(arrayIndexContexts);
@@ -157,7 +157,7 @@ final class XtaType {
                 final XtaVariableSymbol variableSymbol = (XtaVariableSymbol) symbol;
                 assert variableSymbol.isConstant();
                 final Object value = env.compute(variableSymbol,
-                    v -> v.instantiate("", env).asConstant().getExpr());
+                        v -> v.instantiate("", env).asConstant().getExpr());
 
                 final IntLitExpr elemCount = (IntLitExpr) value;
                 final Type result = RangeType.Range(0, elemCount.getValue().intValue() - 1);

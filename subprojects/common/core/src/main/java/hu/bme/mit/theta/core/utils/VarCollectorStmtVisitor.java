@@ -58,7 +58,7 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
     @Override
     public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
-        final Collection<VarDecl<?>> vars) {
+                                              final Collection<VarDecl<?>> vars) {
         vars.add(stmt.getVarDecl());
         ExprUtils.collectVars(stmt.getExpr(), vars);
         return null;
@@ -66,7 +66,7 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
     @Override
     public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
-        final Collection<VarDecl<?>> vars) {
+                                              final Collection<VarDecl<?>> vars) {
         vars.add(stmt.getVarDecl());
         return null;
     }

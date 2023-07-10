@@ -18,7 +18,9 @@ package hu.bme.mit.theta.core.model;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,7 +43,7 @@ public final class NestedSubstitution implements Substitution {
     }
 
     public static NestedSubstitution create(final Substitution enclosingSubst,
-        final Substitution subst) {
+                                            final Substitution subst) {
         return new NestedSubstitution(enclosingSubst, subst);
     }
 
@@ -55,7 +57,7 @@ public final class NestedSubstitution implements Substitution {
 
     @Override
     public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(
-        final Decl<DeclType> decl) {
+            final Decl<DeclType> decl) {
         final Optional<? extends Expr<DeclType>> optExpr = subst.eval(decl);
         if (optExpr.isPresent()) {
             return optExpr;

@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 public class Z3ItpPattern implements ItpPattern.Binary<Z3ItpMarker>,
-    ItpPattern.Sequence<Z3ItpMarker>, ItpPattern.Tree<Z3ItpMarker> {
+        ItpPattern.Sequence<Z3ItpMarker>, ItpPattern.Tree<Z3ItpMarker> {
 
     final ItpMarkerTree<Z3ItpMarker> markerTree;
 
@@ -90,10 +90,10 @@ public class Z3ItpPattern implements ItpPattern.Binary<Z3ItpMarker>,
 
     private boolean isBinary() {
         return
-            markerTree != null &&
-                markerTree.getChildrenNumber() == 1 &&
-                markerTree.getChild(0) != null &&
-                markerTree.getChild(0).getChildrenNumber() == 0;
+                markerTree != null &&
+                        markerTree.getChildrenNumber() == 1 &&
+                        markerTree.getChild(0) != null &&
+                        markerTree.getChild(0).getChildrenNumber() == 0;
     }
 
     private boolean isSequence() {

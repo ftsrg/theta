@@ -21,22 +21,22 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 
 final class Prod3Ord<S1 extends State, S2 extends State, S3 extends State>
-    implements PartialOrd<Prod3State<S1, S2, S3>> {
+        implements PartialOrd<Prod3State<S1, S2, S3>> {
 
     private final PartialOrd<S1> partialOrd1;
     private final PartialOrd<S2> partialOrd2;
     private final PartialOrd<S3> partialOrd3;
 
     private Prod3Ord(final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
-        final PartialOrd<S3> partialOrd3) {
+                     final PartialOrd<S3> partialOrd3) {
         this.partialOrd1 = checkNotNull(partialOrd1);
         this.partialOrd2 = checkNotNull(partialOrd2);
         this.partialOrd3 = checkNotNull(partialOrd3);
     }
 
     public static <S1 extends State, S2 extends State, S3 extends State> Prod3Ord<S1, S2, S3> create(
-        final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
-        final PartialOrd<S3> partialOrd3) {
+            final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
+            final PartialOrd<S3> partialOrd3) {
         return new Prod3Ord<>(partialOrd1, partialOrd2, partialOrd3);
     }
 
@@ -48,8 +48,8 @@ final class Prod3Ord<S1 extends State, S2 extends State, S3 extends State>
             return false;
         } else {
             return partialOrd1.isLeq(state1.getState1(), state2.getState1())
-                && partialOrd2.isLeq(state1.getState2(), state2.getState2())
-                && partialOrd3.isLeq(state1.getState3(), state2.getState3());
+                    && partialOrd2.isLeq(state1.getState2(), state2.getState2())
+                    && partialOrd3.isLeq(state1.getState3(), state2.getState3());
         }
     }
 

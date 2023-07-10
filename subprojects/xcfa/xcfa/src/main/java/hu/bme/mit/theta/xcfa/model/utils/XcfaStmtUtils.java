@@ -41,9 +41,9 @@ public class XcfaStmtUtils {
      * @return Optional.empty() when no modification was necessary, the new XcfaLabel otherwise
      */
     public static <T extends Type> Optional<XcfaLabel> replaceExprsInStmt(final XcfaLabel stmt,
-        final Function<Expr<?>, Optional<Expr<T>>> mapper) {
+                                                                          final Function<Expr<?>, Optional<Expr<T>>> mapper) {
         return stmt.accept(new LabelExpressionMappingVisitor<>(),
-            LabelExpressionMappingVisitor.Mapper.create(mapper, v -> Optional.empty()));
+                LabelExpressionMappingVisitor.Mapper.create(mapper, v -> Optional.empty()));
     }
 
     /**
@@ -54,17 +54,17 @@ public class XcfaStmtUtils {
      * @return Optional.empty() when no modification was necessary, the new XcfaLabel otherwise
      */
     public static <T extends Type> Optional<XcfaLabel> replacesVarsInStmt(final XcfaLabel stmt,
-        final Function<VarDecl<?>, Optional<VarDecl<T>>> mapper) {
+                                                                          final Function<VarDecl<?>, Optional<VarDecl<T>>> mapper) {
         return stmt.accept(new LabelExpressionMappingVisitor<>(),
-            LabelExpressionMappingVisitor.Mapper.create(e -> {
-                Optional<VarDecl<T>> vOpt;
-                if (e instanceof RefExpr && (vOpt = mapper.apply(
-                    (VarDecl<T>) ((RefExpr<T>) e).getDecl())).isPresent()) {
-                    return Optional.of(vOpt.get().getRef());
-                } else {
-                    return Optional.empty();
-                }
-            }, mapper));
+                LabelExpressionMappingVisitor.Mapper.create(e -> {
+                    Optional<VarDecl<T>> vOpt;
+                    if (e instanceof RefExpr && (vOpt = mapper.apply(
+                            (VarDecl<T>) ((RefExpr<T>) e).getDecl())).isPresent()) {
+                        return Optional.of(vOpt.get().getRef());
+                    } else {
+                        return Optional.empty();
+                    }
+                }, mapper));
     }
 
     /**
@@ -75,7 +75,7 @@ public class XcfaStmtUtils {
      * @return Returns the statement(s) - multiple in the case of a Havoc stmt
      */
     public static <P extends Type> List<XcfaLabel> replaceVarWithArrayItem(final XcfaLabel stmt,
-        final Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> lookup) {
+                                                                           final Map<Decl<?>, Tuple2<VarDecl<ArrayType<P, ?>>, LitExpr<P>>> lookup) {
         return stmt.accept(new StmtVarToArrayItemVisitor<>(), lookup);
     }
 }

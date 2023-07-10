@@ -38,26 +38,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * needed. It also provides certain statistics about its execution.
  */
 public final class CegarChecker<S extends State, A extends Action, P extends Prec> implements
-    SafetyChecker<S, A, P> {
+        SafetyChecker<S, A, P> {
 
     private final Abstractor<S, A, P> abstractor;
     private final Refiner<S, A, P> refiner;
     private final Logger logger;
 
     private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner,
-        final Logger logger) {
+                         final Logger logger) {
         this.abstractor = checkNotNull(abstractor);
         this.refiner = checkNotNull(refiner);
         this.logger = checkNotNull(logger);
     }
 
     public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
-        final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner) {
+            final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner) {
         return new CegarChecker<>(abstractor, refiner, NullLogger.getInstance());
     }
 
     public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
-        final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
+            final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
         return new CegarChecker<>(abstractor, refiner, logger);
     }
 
@@ -81,7 +81,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             abstractorResult = abstractor.check(arg, prec);
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
             logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n",
-                abstractorResult);
+                    abstractorResult);
 
             if (abstractorResult.isUnsafe()) {
                 ArgCexCheckHandler.instance.checkAndStop(arg, prec);
@@ -92,7 +92,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
                 refinerResult = refiner.refine(arg, prec);
                 refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
                 logger.write(Level.MAINSTEP, "Refining abstraction done, result: %s%n",
-                    refinerResult);
+                        refinerResult);
 
                 if (refinerResult.isSpurious()) {
                     prec = refinerResult.asSpurious().getRefinedPrec();
@@ -100,10 +100,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
                 if (lastPrec.equals(prec)) {
                     logger.write(Level.MAINSTEP,
-                        "! Precision did NOT change in this iteration" + System.lineSeparator());
+                            "! Precision did NOT change in this iteration" + System.lineSeparator());
                 } else {
                     logger.write(Level.MAINSTEP,
-                        "! Precision DID change in this iteration" + System.lineSeparator());
+                            "! Precision DID change in this iteration" + System.lineSeparator());
                 }
 
             }
@@ -113,8 +113,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         stopwatch.stop();
         SafetyResult<S, A> cegarResult = null;
         final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS),
-            abstractorTime,
-            refinerTime, iteration);
+                abstractorTime,
+                refinerTime, iteration);
 
         assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
 
@@ -133,6 +133,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner)
-            .toString();
+                .toString();
     }
 }

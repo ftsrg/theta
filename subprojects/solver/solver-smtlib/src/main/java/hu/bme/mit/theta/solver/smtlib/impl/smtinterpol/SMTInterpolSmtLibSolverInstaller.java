@@ -43,16 +43,16 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     protected void installSolver(final Path installDir, final String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
 
         try (
-            final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
-            final var outputChannel = new FileOutputStream(
-                installDir.resolve(getSolverBinaryName(version)).toAbsolutePath()
-                    .toString()).getChannel()
+                final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
+                final var outputChannel = new FileOutputStream(
+                        installDir.resolve(getSolverBinaryName(version)).toAbsolutePath()
+                                .toString()).getChannel()
         ) {
             logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n",
-                getDownloadUrl(version).toString());
+                    getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
@@ -73,9 +73,9 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version,
-        final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+                                          final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath =
-            solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
+                solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
         return SMTInterpolSmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
@@ -85,7 +85,7 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
     }
 
     private URL getDownloadUrl(final String version)
-        throws SmtLibSolverInstallerException, MalformedURLException {
+            throws SmtLibSolverInstallerException, MalformedURLException {
         final String fileName;
         switch (version) {
             case "2.5-1230":
@@ -108,8 +108,8 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
         }
 
         return URI.create(String.format(
-            "https://ultimate.informatik.uni-freiburg.de/smtinterpol/smtinterpol-%s.jar",
-            fileName
+                "https://ultimate.informatik.uni-freiburg.de/smtinterpol/smtinterpol-%s.jar",
+                fileName
         )).toURL();
     }
 

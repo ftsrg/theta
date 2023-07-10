@@ -56,7 +56,7 @@ final class CfaEdgeDefinition {
         final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
         final Loc targetLoc = (Loc) env.eval(targetSymbol);
         final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env))
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
         if (stmts.isEmpty()) {
             stmts.add(Stmts.Skip());
         }

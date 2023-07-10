@@ -65,7 +65,7 @@ final class ExprCnfChecker {
                 return false;
             } else {
                 return andExpr.getOps().stream()
-                    .allMatch(op -> isExprCnf(op, CnfStatus.INSIDE_AND));
+                        .allMatch(op -> isExprCnf(op, CnfStatus.INSIDE_AND));
             }
 
         } else if (expr instanceof OrExpr) {

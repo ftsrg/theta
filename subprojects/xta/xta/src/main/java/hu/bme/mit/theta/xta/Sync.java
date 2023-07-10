@@ -49,7 +49,7 @@ public final class Sync {
         final List<Type> types = label.getParamTypes();
         checkArgument(args.size() == types.size());
         checkArgument(
-            zip(args.stream(), types.stream(), (a, t) -> a.getType() == t).allMatch(p -> p));
+                zip(args.stream(), types.stream(), (a, t) -> a.getType() == t).allMatch(p -> p));
         this.label = label;
         this.args = ImmutableList.copyOf(args);
         this.kind = kind;
@@ -100,7 +100,7 @@ public final class Sync {
         } else if (obj instanceof Sync) {
             final Sync that = (Sync) obj;
             return this.label.equals(that.label) && this.kind.equals(that.kind) && this.args.equals(
-                that.args);
+                    that.args);
         } else {
             return false;
         }
@@ -109,7 +109,7 @@ public final class Sync {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(label.getName()).add(kind == EMIT ? "!" : "?").addAll(args)
-            .toString();
+                .toString();
     }
 
 }

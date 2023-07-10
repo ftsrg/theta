@@ -44,7 +44,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Basic implementation for the abstractor, relying on an ArgBuilder.
  */
 public final class BasicAbstractor<S extends State, A extends Action, P extends Prec> implements
-    Abstractor<S, A, P> {
+        Abstractor<S, A, P> {
 
     private final ArgBuilder<S, A, P> argBuilder;
     private final Function<? super S, ?> projection;
@@ -53,9 +53,9 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
     private final Logger logger;
 
     private BasicAbstractor(final ArgBuilder<S, A, P> argBuilder,
-        final Function<? super S, ?> projection,
-        final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion,
-        final Logger logger) {
+                            final Function<? super S, ?> projection,
+                            final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion,
+                            final Logger logger) {
         this.argBuilder = checkNotNull(argBuilder);
         this.projection = checkNotNull(projection);
         this.waitlist = checkNotNull(waitlist);
@@ -64,7 +64,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
     }
 
     public static <S extends State, A extends Action, P extends Prec> Builder<S, A, P> builder(
-        final ArgBuilder<S, A, P> argBuilder) {
+            final ArgBuilder<S, A, P> argBuilder) {
         return new Builder<>(argBuilder);
     }
 
@@ -92,12 +92,12 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
         ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S, A, P>(arg, prec));
         logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n",
-            arg.getNodes().count(),
-            arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
+                arg.getNodes().count(),
+                arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
         logger.write(Level.SUBSTEP, "|  |  Building ARG...");
 
         final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(
-            n -> projection.apply(n.getState()));
+                n -> projection.apply(n.getState()));
         waitlist.clear();
 
         reachedSet.addAll(arg.getNodes());
@@ -124,8 +124,8 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
         logger.write(Level.SUBSTEP, "done%n");
         logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n",
-            arg.getNodes().count(),
-            arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
+                arg.getNodes().count(),
+                arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
 
         waitlist.clear(); // Optimization
 

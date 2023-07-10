@@ -69,10 +69,10 @@ final class XtaUpdate {
                 return visitChildren(ctx);
             } else {
                 @SuppressWarnings("unchecked") final RefExpr<Type> leftOp = (RefExpr<Type>) ctx.fLeftOp.accept(
-                    visitor);
+                        visitor);
                 final VarDecl<Type> varDecl = (VarDecl<Type>) leftOp.getDecl();
                 @SuppressWarnings("unchecked") final Expr<Type> rightOp = (Expr<Type>) ctx.fRightOp.accept(
-                    visitor);
+                        visitor);
 
                 final AssignmentOpContext op = ctx.fOper;
                 if (op.fAssignOp != null) {

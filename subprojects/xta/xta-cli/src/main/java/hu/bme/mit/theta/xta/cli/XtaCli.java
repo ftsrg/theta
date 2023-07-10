@@ -50,11 +50,11 @@ public final class XtaCli {
     String model;
 
     @Parameter(names = {"--discrete",
-        "-d"}, description = "Refinement strategy for discrete variables", required = false)
+            "-d"}, description = "Refinement strategy for discrete variables", required = false)
     DataStrategy dataStrategy = DataStrategy.NONE;
 
     @Parameter(names = {"--clock",
-        "-c"}, description = "Refinement strategy for clock variables", required = true)
+            "-c"}, description = "Refinement strategy for clock variables", required = true)
     ClockStrategy clockStrategy;
 
     @Parameter(names = {"--search", "-s"}, description = "Search strategy", required = true)
@@ -64,11 +64,11 @@ public final class XtaCli {
     Boolean benchmarkMode = false;
 
     @Parameter(names = {"--visualize",
-        "-v"}, description = "Write proof or counterexample to file in dot format")
+            "-v"}, description = "Write proof or counterexample to file in dot format")
     String dotfile = null;
 
     @Parameter(names = {"--header",
-        "-h"}, description = "Print only a header (for benchmarks)", help = true)
+            "-h"}, description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
 
     @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
@@ -110,8 +110,8 @@ public final class XtaCli {
         try {
             final XtaSystem system = loadModel();
             final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system,
-                dataStrategy,
-                clockStrategy, searchStrategy);
+                    dataStrategy,
+                    clockStrategy, searchStrategy);
             final SafetyResult<?, ?> result = check(checker);
             printResult(result);
             if (dotfile != null) {
@@ -129,8 +129,8 @@ public final class XtaCli {
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(
-                "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
-                ex);
+                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    ex);
         }
     }
 
@@ -171,10 +171,10 @@ public final class XtaCli {
     }
 
     private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
-        throws FileNotFoundException {
+            throws FileNotFoundException {
         final Graph graph =
-            status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
-                : TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
+                status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
+                        : TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }
 

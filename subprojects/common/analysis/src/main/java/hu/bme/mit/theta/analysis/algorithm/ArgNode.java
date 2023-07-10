@@ -20,7 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -50,7 +52,7 @@ public final class ArgNode<S extends State, A extends Action> {
     boolean expanded; // Set by ArgBuilder
 
     ArgNode(final ARG<S, A> arg, final S state, final int id, final int depth,
-        final boolean target) {
+            final boolean target) {
         this.arg = arg;
         this.state = state;
         this.id = id;
@@ -223,7 +225,7 @@ public final class ArgNode<S extends State, A extends Action> {
 
     public Stream<ArgNode<S, A>> properAncestors() {
         return getParent().map(p -> Stream.concat(Stream.of(p), p.properAncestors()))
-            .orElse(Stream.empty());
+                .orElse(Stream.empty());
     }
 
     public Stream<ArgNode<S, A>> ancestors() {
@@ -255,7 +257,7 @@ public final class ArgNode<S extends State, A extends Action> {
             return Stream.empty();
         } else {
             return Stream.concat(Stream.of(this),
-                this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
+                    this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
         }
     }
 

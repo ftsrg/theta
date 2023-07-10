@@ -51,17 +51,17 @@ final class Z3ItpSolver implements ItpSolver, Solver {
     private final Stack<Z3ItpMarker> markers;
 
     public Z3ItpSolver(final Z3SymbolTable symbolTable,
-        final Z3TransformationManager transformationManager,
-        final Z3TermTransformer termTransformer,
-        final com.microsoft.z3.InterpolationContext z3Context,
-        final com.microsoft.z3.Solver z3Solver) {
+                       final Z3TransformationManager transformationManager,
+                       final Z3TermTransformer termTransformer,
+                       final com.microsoft.z3.InterpolationContext z3Context,
+                       final com.microsoft.z3.Solver z3Solver) {
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.z3Context = z3Context;
         this.z3Solver = z3Solver;
 
         solver = new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-            z3Solver);
+                z3Solver);
 
         markers = new StackImpl<>();
     }
@@ -86,7 +86,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         checkArgument(markers.toCollection().contains(marker), "Marker not found in solver");
         final Z3ItpMarker z3Marker = (Z3ItpMarker) marker;
         final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
-            assertion);
+                assertion);
         solver.add(assertion, term);
         z3Marker.add(term);
     }
@@ -94,7 +94,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
         checkState(solver.getStatus() == SolverStatus.UNSAT,
-            "Cannot get interpolant if status is not UNSAT.");
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof Z3ItpPattern);
         final Z3ItpPattern z3ItpPattern = (Z3ItpPattern) pattern;
 
@@ -107,7 +107,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 
         for (final com.microsoft.z3.BoolExpr itpTerm : itpArray) {
             @SuppressWarnings("unchecked") final Expr<BoolType> itpExpr = (Expr<BoolType>) termTransformer.toExpr(
-                itpTerm);
+                    itpTerm);
             itpList.add(itpExpr);
         }
 
@@ -129,14 +129,14 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         }
 
         final com.microsoft.z3.BoolExpr andTerm = z3Context
-            .mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
+                .mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
         final com.microsoft.z3.BoolExpr term = z3Context.MkInterpolant(andTerm);
         return term;
     }
 
     private void buildItpMapFormList(final ItpMarkerTree<Z3ItpMarker> pattern,
-        final List<Expr<BoolType>> itpList,
-        final Map<ItpMarker, Expr<BoolType>> itpMap) {
+                                     final List<Expr<BoolType>> itpList,
+                                     final Map<ItpMarker, Expr<BoolType>> itpMap) {
         for (final ItpMarkerTree<Z3ItpMarker> child : pattern.getChildren()) {
             buildItpMapFormList(child, itpList, itpMap);
         }

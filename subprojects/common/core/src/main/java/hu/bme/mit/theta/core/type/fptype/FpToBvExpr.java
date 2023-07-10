@@ -42,7 +42,7 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
     private final FpRoundingMode roundingMode;
 
     private FpToBvExpr(final FpRoundingMode roundingMode, final Expr<FpType> op, final int size,
-        final boolean sgn) {
+                       final boolean sgn) {
         super(op);
         checkNotNull(op);
         this.op = op;
@@ -55,12 +55,12 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
     }
 
     public static FpToBvExpr of(final FpRoundingMode roundingMode, final Expr<FpType> op,
-        final int size, final boolean sgn) {
+                                final int size, final boolean sgn) {
         return new FpToBvExpr(roundingMode, op, size, sgn);
     }
 
     public static FpToBvExpr create(final FpRoundingMode roundingMode, final Expr<FpType> op,
-        final int size, final boolean sgn) {
+                                    final int size, final boolean sgn) {
         return FpToBvExpr.of(roundingMode, op, size, sgn);
     }
 
@@ -105,7 +105,7 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
         } else if (obj instanceof FpToBvExpr) {
             final FpToBvExpr that = (FpToBvExpr) obj;
             return this.getOp().equals(that.getOp()) && size == that.size && sgn == that.sgn
-                && roundingMode.equals(that.roundingMode);
+                    && roundingMode.equals(that.roundingMode);
         } else {
             return false;
         }

@@ -38,7 +38,7 @@ final class UnitTransFunc implements TransFunc<UnitState, Action, UnitPrec> {
 
     @Override
     public Collection<UnitState> getSuccStates(final UnitState state, final Action action,
-        final UnitPrec prec) {
+                                               final UnitPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);

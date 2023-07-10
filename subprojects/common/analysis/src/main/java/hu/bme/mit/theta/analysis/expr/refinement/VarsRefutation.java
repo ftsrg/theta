@@ -32,7 +32,7 @@ public final class VarsRefutation implements Refutation {
     private VarsRefutation(final IndexedVars indexedVars) {
         checkNotNull(indexedVars);
         checkArgument(!indexedVars.isEmpty(),
-            "Trying to create refutation with empty set of variables");
+                "Trying to create refutation with empty set of variables");
         this.indexedVars = indexedVars;
         int i = 0;
         while (indexedVars.getVars(i).isEmpty()) {

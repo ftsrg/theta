@@ -27,25 +27,25 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class ArrayNeqExpr<IndexType extends Type, ElemType extends Type>
-    extends NeqExpr<ArrayType<IndexType, ElemType>> {
+        extends NeqExpr<ArrayType<IndexType, ElemType>> {
 
     private static final int HASH_SEED = 5233;
     private static final String OPERATOR_LABEL = "/=";
 
     private ArrayNeqExpr(final Expr<ArrayType<IndexType, ElemType>> leftOp,
-        final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+                         final Expr<ArrayType<IndexType, ElemType>> rightOp) {
         super(leftOp, rightOp);
     }
 
     public static <IndexType extends Type, ElemType extends Type> ArrayNeqExpr<IndexType, ElemType> of(
-        final Expr<ArrayType<IndexType, ElemType>> leftOp,
-        final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+            final Expr<ArrayType<IndexType, ElemType>> leftOp,
+            final Expr<ArrayType<IndexType, ElemType>> rightOp) {
         return new ArrayNeqExpr<>(leftOp, rightOp);
     }
 
     public static <IndexType extends Type, ElemType extends Type> ArrayNeqExpr<?, ?> create(
-        final Expr<?> leftOp,
-        final Expr<?> rightOp) {
+            final Expr<?> leftOp,
+            final Expr<?> rightOp) {
         @SuppressWarnings("unchecked") final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) leftOp.getType();
         final Expr<ArrayType<IndexType, ElemType>> newLeftOp = cast(leftOp, arrayType);
         final Expr<ArrayType<IndexType, ElemType>> newRightOp = cast(rightOp, arrayType);
@@ -64,8 +64,8 @@ public final class ArrayNeqExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public BinaryExpr<ArrayType<IndexType, ElemType>, BoolType> with(
-        final Expr<ArrayType<IndexType, ElemType>> leftOp,
-        final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+            final Expr<ArrayType<IndexType, ElemType>> leftOp,
+            final Expr<ArrayType<IndexType, ElemType>> rightOp) {
         if (leftOp == getLeftOp() && rightOp == getRightOp()) {
             return this;
         } else {
@@ -75,13 +75,13 @@ public final class ArrayNeqExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public BinaryExpr<ArrayType<IndexType, ElemType>, BoolType> withLeftOp(
-        final Expr<ArrayType<IndexType, ElemType>> leftOp) {
+            final Expr<ArrayType<IndexType, ElemType>> leftOp) {
         return with(leftOp, getRightOp());
     }
 
     @Override
     public BinaryExpr<ArrayType<IndexType, ElemType>, BoolType> withRightOp(
-        final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+            final Expr<ArrayType<IndexType, ElemType>> rightOp) {
         return with(getLeftOp(), rightOp);
     }
 
@@ -92,7 +92,7 @@ public final class ArrayNeqExpr<IndexType extends Type, ElemType extends Type>
         } else if (obj instanceof ArrayNeqExpr) {
             final ArrayNeqExpr<?, ?> that = (ArrayNeqExpr<?, ?>) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

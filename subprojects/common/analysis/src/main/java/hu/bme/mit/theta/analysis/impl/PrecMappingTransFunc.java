@@ -26,20 +26,20 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 
 final class PrecMappingTransFunc<S extends State, A extends Action, PP extends Prec, PR extends Prec>
-    implements TransFunc<S, A, PP> {
+        implements TransFunc<S, A, PP> {
 
     private final TransFunc<S, ? super A, ? super PR> transFunc;
     private final Function<? super PP, ? extends PR> mapping;
 
     private PrecMappingTransFunc(final TransFunc<S, ? super A, ? super PR> transFunc,
-        final Function<? super PP, ? extends PR> mapping) {
+                                 final Function<? super PP, ? extends PR> mapping) {
         this.transFunc = checkNotNull(transFunc);
         this.mapping = checkNotNull(mapping);
     }
 
     public static <S extends State, A extends Action, PP extends Prec, PR extends Prec> PrecMappingTransFunc<S, A, PP, PR> create(
-        final TransFunc<S, ? super A, ? super PR> transFunc,
-        final Function<? super PP, ? extends PR> mapping) {
+            final TransFunc<S, ? super A, ? super PR> transFunc,
+            final Function<? super PP, ? extends PR> mapping) {
         return new PrecMappingTransFunc<>(transFunc, mapping);
     }
 

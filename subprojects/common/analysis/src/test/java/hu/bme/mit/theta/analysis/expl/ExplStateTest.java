@@ -69,7 +69,7 @@ public class ExplStateTest {
         Assert.assertEquals(True(), ExplState.top().toExpr());
         Assert.assertEquals(False(), ExplState.bottom().toExpr());
         Assert.assertEquals(And(Eq(x.getRef(), Int(1)), Eq(y.getRef(), Int(2))),
-            ExplState.of(ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build())
-                .toExpr());
+                ExplState.of(ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build())
+                        .toExpr());
     }
 }

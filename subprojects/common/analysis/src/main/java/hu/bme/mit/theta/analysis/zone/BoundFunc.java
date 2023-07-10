@@ -21,7 +21,9 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -53,7 +55,7 @@ public final class BoundFunc {
     }
 
     private BoundFunc(final Map<VarDecl<RatType>, Integer> varToLower,
-        final Map<VarDecl<RatType>, Integer> varToUpper) {
+                      final Map<VarDecl<RatType>, Integer> varToUpper) {
         this.varToLower = varToLower;
         this.varToUpper = varToUpper;
     }
@@ -113,10 +115,10 @@ public final class BoundFunc {
     }
 
     private static boolean isLeq(final Map<VarDecl<RatType>, Integer> map1,
-        final Map<VarDecl<RatType>, Integer> map2) {
+                                 final Map<VarDecl<RatType>, Integer> map2) {
         return map1.entrySet().stream()
-            .allMatch(
-                e1 -> map2.containsKey(e1.getKey()) && e1.getValue() <= map2.get(e1.getKey()));
+                .allMatch(
+                        e1 -> map2.containsKey(e1.getKey()) && e1.getValue() <= map2.get(e1.getKey()));
     }
 
     @Override
@@ -138,7 +140,7 @@ public final class BoundFunc {
         } else if (obj instanceof BoundFunc) {
             final BoundFunc that = (BoundFunc) obj;
             return this.varToLower.equals(that.varToLower) && this.varToUpper.equals(
-                that.varToUpper);
+                    that.varToUpper);
         } else {
             return false;
         }
@@ -147,17 +149,17 @@ public final class BoundFunc {
     @Override
     public String toString() {
         final String lowerToString = Utils.lispStringBuilder("L").addAll(
-                varToLower.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue())
-                    .collect(toList()))
-            .toString();
+                        varToLower.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue())
+                                .collect(toList()))
+                .toString();
 
         final String UpperToString = Utils.lispStringBuilder("U").addAll(
-                varToUpper.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue())
-                    .collect(toList()))
-            .toString();
+                        varToUpper.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue())
+                                .collect(toList()))
+                .toString();
 
         return Utils.lispStringBuilder(this.getClass().getSimpleName()).add(lowerToString)
-            .add(UpperToString).toString();
+                .add(UpperToString).toString();
     }
 
     public static final class Builder {
@@ -206,7 +208,7 @@ public final class BoundFunc {
     }
 
     private static final class BoundFunctionVarConstrVisitor extends
-        FailClockConstrVisitor<Builder, Void> {
+            FailClockConstrVisitor<Builder, Void> {
 
         private static final BoundFunctionVarConstrVisitor INSTANCE = new BoundFunctionVarConstrVisitor();
 

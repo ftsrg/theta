@@ -47,17 +47,17 @@ public class CegarConfiguration {
     public final boolean validateSolver;
 
     public CegarConfiguration(XcfaConfigBuilder.Domain domain,
-        XcfaConfigBuilder.Refinement refinement,
-        XcfaConfigBuilder.Search search,
-        XcfaConfigBuilder.PredSplit predSplit,
-        XcfaConfigBuilder.Algorithm algorithm,
-        int maxEnum,
-        XcfaConfigBuilder.InitPrec initPrec,
-        PruneStrategy pruneStrategy,
-        boolean argCexCheck,
-        String abstractionSolver,
-        String refinementSolver,
-        boolean validateSolver) {
+                              XcfaConfigBuilder.Refinement refinement,
+                              XcfaConfigBuilder.Search search,
+                              XcfaConfigBuilder.PredSplit predSplit,
+                              XcfaConfigBuilder.Algorithm algorithm,
+                              int maxEnum,
+                              XcfaConfigBuilder.InitPrec initPrec,
+                              PruneStrategy pruneStrategy,
+                              boolean argCexCheck,
+                              String abstractionSolver,
+                              String refinementSolver,
+                              boolean validateSolver) {
         this.domain = domain;
         this.refinement = refinement;
         this.search = search;
@@ -73,16 +73,16 @@ public class CegarConfiguration {
     }
 
     public CegarConfiguration(XcfaConfigBuilder.Domain domain,
-        XcfaConfigBuilder.Refinement refinement,
-        XcfaConfigBuilder.Search search,
-        XcfaConfigBuilder.PredSplit predSplit,
-        XcfaConfigBuilder.Algorithm algorithm,
-        int maxEnum,
-        XcfaConfigBuilder.InitPrec initPrec,
-        PruneStrategy pruneStrategy,
-        boolean argCexCheck,
-        String abstractionSolver,
-        String refinementSolver) {
+                              XcfaConfigBuilder.Refinement refinement,
+                              XcfaConfigBuilder.Search search,
+                              XcfaConfigBuilder.PredSplit predSplit,
+                              XcfaConfigBuilder.Algorithm algorithm,
+                              int maxEnum,
+                              XcfaConfigBuilder.InitPrec initPrec,
+                              PruneStrategy pruneStrategy,
+                              boolean argCexCheck,
+                              String abstractionSolver,
+                              String refinementSolver) {
         this.domain = domain;
         this.refinement = refinement;
         this.search = search;
@@ -101,13 +101,13 @@ public class CegarConfiguration {
      * Sets up arg-cex check (if it is enabled) and builds configuration
      */
     public XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa, ConsoleLogger logger)
-        throws Exception {
+            throws Exception {
         // set up Arg-Cex check
         if (!argCexCheck) {
             ArgCexCheckHandler.instance.setArgCexCheck(false, false);
         } else {
             ArgCexCheckHandler.instance.setArgCexCheck(true,
-                refinement.equals(XcfaConfigBuilder.Refinement.MULTI_SEQ));
+                    refinement.equals(XcfaConfigBuilder.Refinement.MULTI_SEQ));
         }
 
         try {
@@ -121,10 +121,10 @@ public class CegarConfiguration {
                 abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
             }
             return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory,
-                abstractionSolverFactory, algorithm)
-                .search(search)
-                .predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
-                .pruneStrategy(pruneStrategy).logger(logger).build(xcfa);
+                    abstractionSolverFactory, algorithm)
+                    .search(search)
+                    .predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
+                    .pruneStrategy(pruneStrategy).logger(logger).build(xcfa);
 
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
@@ -134,18 +134,18 @@ public class CegarConfiguration {
     @Override
     public String toString() {
         return "Configuration{" +
-            "domain=" + domain +
-            ", refinement=" + refinement +
-            ", search=" + search +
-            ", predSplit=" + predSplit +
-            ", algorithm=" + algorithm +
-            ", maxEnum=" + maxEnum +
-            ", initPrec=" + initPrec +
-            ", pruneStrategy=" + pruneStrategy +
-            ", argCexCheck=" + argCexCheck +
-            ", abstraction solver=" + abstractionSolver +
-            ", refinement solver=" + refinementSolver +
-            '}';
+                "domain=" + domain +
+                ", refinement=" + refinement +
+                ", search=" + search +
+                ", predSplit=" + predSplit +
+                ", algorithm=" + algorithm +
+                ", maxEnum=" + maxEnum +
+                ", initPrec=" + initPrec +
+                ", pruneStrategy=" + pruneStrategy +
+                ", argCexCheck=" + argCexCheck +
+                ", abstraction solver=" + abstractionSolver +
+                ", refinement solver=" + refinementSolver +
+                '}';
     }
 
 }

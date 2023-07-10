@@ -64,9 +64,9 @@ public final class BvConcatExpr implements Expr<BvType> {
     @Override
     public BvLitExpr eval(final Valuation val) {
         return getOps().stream().skip(1).reduce(
-            (BvLitExpr) getOps().get(0).eval(val),
-            (op1, op2) -> (op1.concat((BvLitExpr) op2.eval(val))),
-            BvLitExpr::concat
+                (BvLitExpr) getOps().get(0).eval(val),
+                (op1, op2) -> (op1.concat((BvLitExpr) op2.eval(val))),
+                BvLitExpr::concat
         );
     }
 

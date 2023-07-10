@@ -37,7 +37,7 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
     private final boolean signed;
 
     private FpFromBvExpr(final FpRoundingMode roundingMode, final Expr<BvType> op,
-        final FpType fpType, final boolean signed) {
+                         final FpType fpType, final boolean signed) {
         super(op);
         this.fpType = fpType;
         this.signed = signed;
@@ -46,12 +46,12 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
     }
 
     public static FpFromBvExpr of(final FpRoundingMode roundingMode, final Expr<BvType> op,
-        final FpType fpType, final boolean signed) {
+                                  final FpType fpType, final boolean signed) {
         return new FpFromBvExpr(roundingMode, op, fpType, signed);
     }
 
     public static FpFromBvExpr create(final FpRoundingMode roundingMode, final Expr<BvType> op,
-        final FpType fpType, final boolean signed) {
+                                      final FpType fpType, final boolean signed) {
         return FpFromBvExpr.of(roundingMode, op, fpType, signed);
     }
 
@@ -77,8 +77,8 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
         BinaryMathContext mathContext = FpUtils.getMathContext(fpType, roundingMode);
         BvLitExpr eval = (BvLitExpr) getOp().eval(val);
         return FpUtils.bigFloatToFpLitExpr(new BigFloat(
-            signed ? BvUtils.signedBvLitExprToBigInteger(eval)
-                : BvUtils.unsignedBvLitExprToBigInteger(eval), mathContext), fpType);
+                signed ? BvUtils.signedBvLitExprToBigInteger(eval)
+                        : BvUtils.unsignedBvLitExprToBigInteger(eval), mathContext), fpType);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
         } else if (obj instanceof FpFromBvExpr) {
             final FpFromBvExpr that = (FpFromBvExpr) obj;
             return this.getOp().equals(that.getOp()) && fpType.equals(that.fpType)
-                && roundingMode.equals(that.roundingMode);
+                    && roundingMode.equals(that.roundingMode);
         } else {
             return false;
         }

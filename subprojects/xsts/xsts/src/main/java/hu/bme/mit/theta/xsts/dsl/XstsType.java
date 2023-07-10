@@ -52,7 +52,7 @@ final class XstsType {
     }
 
     private static class TypeCreatorVisitor extends
-        XstsDslBaseVisitor<hu.bme.mit.theta.xsts.type.XstsType> {
+            XstsDslBaseVisitor<hu.bme.mit.theta.xsts.type.XstsType> {
 
         private final SymbolTable typeTable;
         private final Env env;
@@ -67,11 +67,11 @@ final class XstsType {
             Optional<? extends Symbol> optSymbol = typeTable.get(ctx.name.getText());
             if (optSymbol.isEmpty()) {
                 throw new ParseException(ctx,
-                    "Type '" + ctx.name.getText() + "' cannot be resolved");
+                        "Type '" + ctx.name.getText() + "' cannot be resolved");
             }
             final Symbol symbol = optSymbol.get();
             final hu.bme.mit.theta.xsts.type.XstsType xstsType = (hu.bme.mit.theta.xsts.type.XstsType) env.eval(
-                symbol);
+                    symbol);
             return xstsType;
         }
 

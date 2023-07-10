@@ -49,14 +49,14 @@ public class AssignmentChainRemoval extends ProcedurePass {
                 VarDecl<?> newVar = null;
                 Expr<?> newExpr = null;
                 if (label instanceof XcfaLabel.StmtXcfaLabel
-                    && label.getStmt() instanceof AssignStmt) {
+                        && label.getStmt() instanceof AssignStmt) {
                     Expr<?> lastExpr = ((AssignStmt<?>) label.getStmt()).getExpr();
                     VarDecl<?> lastVar = ((AssignStmt<?>) label.getStmt()).getVarDecl();
                     if (lastExpr instanceof RefExpr<?> && lastExprs.containsKey(
-                        (VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl())) {
+                            (VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl())) {
                         newLabels.add(Stmt(Assign(cast(lastVar, lastVar.getType()),
-                            cast(lastExprs.get((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl()),
-                                lastVar.getType()))));
+                                cast(lastExprs.get((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl()),
+                                        lastVar.getType()))));
                         newVar = lastVar;
                         newExpr = lastExprs.get((VarDecl<?>) ((RefExpr<?>) lastExpr).getDecl());
                     } else {
@@ -68,14 +68,14 @@ public class AssignmentChainRemoval extends ProcedurePass {
                     newLabels.add(label);
                 }
                 final Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> assortedVars = LabelUtils.getAssortedVars(
-                    label);
+                        label);
                 for (Map.Entry<VarDecl<?>, Expr<?>> entry : new LinkedHashSet<>(
-                    lastExprs.entrySet())) {
+                        lastExprs.entrySet())) {
                     VarDecl<?> lastVar = entry.getKey();
                     Expr<?> lastExpr = entry.getValue();
                     final Set<VarDecl<?>> usedVars = ExprUtils.getVars(lastExpr);
                     if (assortedVars.get1().contains(lastVar) || assortedVars.get1().stream()
-                        .anyMatch(usedVars::contains)) {
+                            .anyMatch(usedVars::contains)) {
                         lastExprs.remove(lastVar);
                     }
                 }

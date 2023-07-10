@@ -26,7 +26,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 public abstract class XcfaState<S extends ExprState> implements ExprState {
 
     public static XcfaState<ExplState> create(final XcfaLocation currentLoc,
-        final ExplState state) {
+                                              final ExplState state) {
         return new SimpleXcfaState<>(currentLoc, state);
     }
 
@@ -41,7 +41,7 @@ public abstract class XcfaState<S extends ExprState> implements ExprState {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("XcfaState").add(getCurrentLoc()).add(getGlobalState())
-            .toString();
+                .toString();
     }
 
     private static class SimpleXcfaState<S extends ExprState> extends XcfaState<S> {

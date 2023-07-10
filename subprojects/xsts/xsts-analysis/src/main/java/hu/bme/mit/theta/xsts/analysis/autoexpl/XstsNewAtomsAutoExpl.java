@@ -39,9 +39,9 @@ public class XstsNewAtomsAutoExpl implements XstsAutoExpl {
         atoms.addAll(ExprUtils.getAtoms(xsts.getInitFormula()));
 
         final Set<Expr<BoolType>> canonicalAtoms = atoms.stream()
-            .map(ExprUtils::canonize)
-            .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
-            .collect(Collectors.toSet());
+                .map(ExprUtils::canonize)
+                .flatMap(atom -> ExprUtils.getAtoms(atom).stream())
+                .collect(Collectors.toSet());
         return new NewAtomsAutoExpl(xsts.getCtrlVars(), canonicalAtoms, 0);
     }
 }

@@ -85,7 +85,7 @@ public class EvaluationTest {
     }
 
     private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
-        final Valuation val) {
+                                                                      final Valuation val) {
         return expr.eval(val);
     }
 
@@ -408,7 +408,7 @@ public class EvaluationTest {
         assertEquals(Int(1), evaluate(Ite(True(), Int(1), Int(2))));
         assertEquals(Int(2), evaluate(Ite(False(), Int(1), Int(2))));
         assertEquals(Int(1),
-            evaluate(Ite(True(), Ite(True(), Ite(True(), Int(1), Int(2)), Int(3)), Int(4))));
+                evaluate(Ite(True(), Ite(True(), Ite(True(), Int(1), Int(2)), Int(3)), Int(4))));
     }
 
     @Test

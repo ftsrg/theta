@@ -91,7 +91,7 @@ public final class ItpExplState implements ExprState {
         } else if (obj instanceof ItpExplState) {
             final ItpExplState that = (ItpExplState) obj;
             return this.concrState.equals(that.concrState) && this.abstrState.equals(
-                that.abstrState);
+                    that.abstrState);
         } else {
             return false;
         }
@@ -100,7 +100,7 @@ public final class ItpExplState implements ExprState {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(concrState)
-            .add(abstrState).toString();
+                .add(abstrState).toString();
     }
 
 }

@@ -48,13 +48,13 @@ public class StmtWriteTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {Stmts.Havoc(VX), "havoc x"},
+                {Stmts.Havoc(VX), "havoc x"},
 
-            {Stmts.Assume(BoolExprs.False()), "assume false"},
+                {Stmts.Assume(BoolExprs.False()), "assume false"},
 
-            {Stmts.Assign(VX, IntExprs.Int(1)), "x := 1"},
+                {Stmts.Assign(VX, IntExprs.Int(1)), "x := 1"},
 
-            {Stmts.Skip(), "skip"},
+                {Stmts.Skip(), "skip"},
 
         });
     }

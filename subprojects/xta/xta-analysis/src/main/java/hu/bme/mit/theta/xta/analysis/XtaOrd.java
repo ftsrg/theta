@@ -37,7 +37,7 @@ final class XtaOrd<S extends State> implements PartialOrd<XtaState<S>> {
         checkNotNull(state1);
         checkNotNull(state2);
         return state1.getLocs().equals(state2.getLocs()) && partialOrd.isLeq(state1.getState(),
-            state2.getState());
+                state2.getState());
     }
 
 }

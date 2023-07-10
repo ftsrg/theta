@@ -29,7 +29,7 @@ import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public final class XstsArrayType<IndexType extends Type, ElemType extends Type> implements
-    XstsType<ArrayType<IndexType, ElemType>> {
+        XstsType<ArrayType<IndexType, ElemType>> {
 
     private final XstsType<IndexType> indexType;
     private final XstsType<ElemType> elemType;
@@ -42,7 +42,7 @@ public final class XstsArrayType<IndexType extends Type, ElemType extends Type> 
     }
 
     public static <IndexType extends Type, ElemType extends Type> XstsArrayType<IndexType, ElemType> of(
-        XstsType<IndexType> indexType, XstsType<ElemType> elemType) {
+            XstsType<IndexType> indexType, XstsType<ElemType> elemType) {
         return new XstsArrayType<>(indexType, elemType);
     }
 
@@ -60,11 +60,11 @@ public final class XstsArrayType<IndexType extends Type, ElemType extends Type> 
         Preconditions.checkArgument(literal.getType().equals(type));
         final ArrayLitExpr<IndexType, ElemType> arrayLitExpr = (ArrayLitExpr<IndexType, ElemType>) literal;
         return Utils.lispStringBuilder("array")
-            .addAll(arrayLitExpr.getElements().stream().map(
-                elem -> String.format("(%s %s)", indexType.serializeLiteral(elem.get1()),
-                    elemType.serializeLiteral(elem.get2()))))
-            .add((String.format("(default %s)",
-                elemType.serializeLiteral(arrayLitExpr.getElseElem()))))
-            .toString();
+                .addAll(arrayLitExpr.getElements().stream().map(
+                        elem -> String.format("(%s %s)", indexType.serializeLiteral(elem.get1()),
+                                elemType.serializeLiteral(elem.get2()))))
+                .add((String.format("(default %s)",
+                        elemType.serializeLiteral(arrayLitExpr.getElseElem()))))
+                .toString();
     }
 }

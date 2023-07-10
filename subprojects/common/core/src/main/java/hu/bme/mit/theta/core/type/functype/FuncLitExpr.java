@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
-    implements LitExpr<FuncType<ParamType, ResultType>> {
+        implements LitExpr<FuncType<ParamType, ResultType>> {
 
     private static final int HASH_SEED = 53;
     private static final String OPERATOR_LABEL = "func";
@@ -48,7 +48,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
     }
 
     public static <ParamType extends Type, ResultType extends Type> FuncLitExpr<ParamType, ResultType> of(
-        final ParamDecl<ParamType> param, final Expr<ResultType> result) {
+            final ParamDecl<ParamType> param, final Expr<ResultType> result) {
         return new FuncLitExpr<>(param, result);
     }
 
@@ -115,7 +115,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
         } else if (obj instanceof FuncLitExpr) {
             final FuncLitExpr<?, ?> that = (FuncLitExpr<?, ?>) obj;
             return this.getParam().equals(that.getParam()) && this.getResult()
-                .equals(that.getResult());
+                    .equals(that.getResult());
         } else {
             return false;
         }

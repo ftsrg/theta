@@ -23,7 +23,9 @@ import static java.lang.String.format;
 
 import java.util.Collection;
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Set;
 
 import hu.bme.mit.theta.common.Utils;
@@ -97,10 +99,10 @@ public final class STS {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("system").aligned().addAll(vars).body()
-            .addAll(getConjuncts(init).stream().map(e -> format("(init %s)", e)))
-            .addAll(getConjuncts(trans).stream().map(e -> format("(trans %s)", e)))
-            .add(format("(prop %s)", prop))
-            .toString();
+                .addAll(getConjuncts(init).stream().map(e -> format("(init %s)", e)))
+                .addAll(getConjuncts(trans).stream().map(e -> format("(trans %s)", e)))
+                .add(format("(prop %s)", prop))
+                .toString();
     }
 
     /**

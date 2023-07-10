@@ -63,7 +63,7 @@ public class ArgPruningTest {
         assertEquals(2, n0.getCoveredNodes().count());
 
         System.out.println(
-            GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
         System.out.println("=========================");
 
         arg.prune(n00);
@@ -77,6 +77,6 @@ public class ArgPruningTest {
         assertFalse(n02.getCoveringNode().isPresent());
 
         System.out.println(
-            GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
     }
 }

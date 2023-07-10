@@ -35,20 +35,20 @@ final class ItpExplTransFunc<A extends Action> implements TransFunc<ItpExplState
     }
 
     public static final <A extends Action> ItpExplTransFunc<A> create(
-        final TransFunc<ExplState, ? super A, UnitPrec> transFunc) {
+            final TransFunc<ExplState, ? super A, UnitPrec> transFunc) {
         return new ItpExplTransFunc<>(transFunc);
     }
 
     @Override
     public Collection<ItpExplState> getSuccStates(final ItpExplState state, final A action,
-        final UnitPrec prec) {
+                                                  final UnitPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
 
         final ExplState subState = state.getConcrState();
         final Collection<? extends ExplState> subSuccStates = transFunc.getSuccStates(subState,
-            action, prec);
+                action, prec);
 
         if (subSuccStates.isEmpty()) {
             final ItpExplState succState = ItpExplState.of(ExplState.bottom(), ExplState.top());

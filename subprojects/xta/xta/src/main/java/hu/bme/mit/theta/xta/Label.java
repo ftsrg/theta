@@ -33,14 +33,14 @@ public final class Label {
     private final boolean broadcast;
 
     private Label(final String name, final List<? extends Type> paramTypes,
-        final boolean broadcast) {
+                  final boolean broadcast) {
         this.name = checkNotNull(name);
         this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
         this.broadcast = broadcast;
     }
 
     public static Label of(final String name, final List<? extends Type> paramTypes,
-        final boolean broadcast) {
+                           final boolean broadcast) {
         return new Label(name, paramTypes, broadcast);
     }
 

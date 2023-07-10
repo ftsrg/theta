@@ -60,11 +60,11 @@ public final class Z3SolverFactory implements SolverFactory {
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
         final Z3TransformationManager transformationManager = new Z3TransformationManager(
-            symbolTable, z3Context);
+                symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
         return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-            z3Solver);
+                z3Solver);
     }
 
     @Override
@@ -74,11 +74,11 @@ public final class Z3SolverFactory implements SolverFactory {
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
         final Z3TransformationManager transformationManager = new Z3TransformationManager(
-            symbolTable, z3Context);
+                symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
         return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
-            z3Solver);
+                z3Solver);
     }
 
     @Override
@@ -88,11 +88,11 @@ public final class Z3SolverFactory implements SolverFactory {
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
         final Z3TransformationManager transformationManager = new Z3TransformationManager(
-            symbolTable, z3Context);
+                symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
         return new Z3ItpSolver(symbolTable, transformationManager, termTransformer, z3Context,
-            z3Solver);
+                z3Solver);
     }
 
 }

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.cfa.analysis;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class DistToErrComparator implements ArgNodeComparator {
     }
 
     public DistToErrComparator(final CFA cfa, final Loc errLoc, final int errorWeight,
-        final int depthWeight) {
+                               final int depthWeight) {
         this.cfa = cfa;
         this.errLoc = errLoc;
         this.errorWeight = errorWeight;
@@ -58,7 +59,7 @@ public class DistToErrComparator implements ArgNodeComparator {
 
     @Override
     public int compare(final ArgNode<? extends State, ? extends Action> n1,
-        final ArgNode<? extends State, ? extends Action> n2) {
+                       final ArgNode<? extends State, ? extends Action> n2) {
         final int dist1 = getWeightedDistance(n1);
         final int dist2 = getWeightedDistance(n2);
 

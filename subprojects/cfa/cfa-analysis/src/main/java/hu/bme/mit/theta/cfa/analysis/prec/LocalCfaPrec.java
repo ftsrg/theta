@@ -68,7 +68,7 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
     }
 
     public static <P extends Prec> LocalCfaPrec<P> create(final Map<Loc, P> mapping,
-        final P defaultPrec) {
+                                                          final P defaultPrec) {
         return new LocalCfaPrec<>(mapping, Optional.of(defaultPrec));
     }
 
@@ -114,7 +114,7 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
             builder.add(Utils.lispStringBuilder("default").add(defaultPrec.get()).toString());
         }
         mapping.entrySet()
-            .forEach(e -> builder.add(Utils.lispStringBuilder(e.getKey() + "").add(e.getValue())));
+                .forEach(e -> builder.add(Utils.lispStringBuilder(e.getKey() + "").add(e.getValue())));
         return builder.toString();
     }
 
@@ -138,7 +138,7 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
     @Override
     public Collection<VarDecl<?>> getUsedVars() {
         return mapping.values().stream().map(Prec::getUsedVars).reduce(
-            (varDecls, varDecls2) -> Streams.concat(varDecls.stream(), varDecls2.stream())
-                .collect(Collectors.toSet())).orElse(Set.of());
+                (varDecls, varDecls2) -> Streams.concat(varDecls.stream(), varDecls2.stream())
+                        .collect(Collectors.toSet())).orElse(Set.of());
     }
 }

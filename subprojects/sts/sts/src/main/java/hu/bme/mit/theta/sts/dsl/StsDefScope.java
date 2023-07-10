@@ -53,7 +53,7 @@ final class StsDefScope implements Scope {
     private final STS sts;
 
     private StsDefScope(final Scope enclosingScope, final Substitution assignment,
-        final DefStsContext defTcfaContext) {
+                        final DefStsContext defTcfaContext) {
         checkNotNull(assignment);
         this.enclosingScope = checkNotNull(enclosingScope);
         this.defStsContext = checkNotNull(defTcfaContext);
@@ -64,7 +64,7 @@ final class StsDefScope implements Scope {
 
         // TODO Handle recursive constant definitions
         final Substitution constAssignment = StsDslHelper.createConstDefs(this, assignment,
-            defTcfaContext.constDecls);
+                defTcfaContext.constDecls);
         this.assignment = NestedSubstitution.create(assignment, constAssignment);
 
         stsBuilder = STS.builder();
@@ -80,7 +80,7 @@ final class StsDefScope implements Scope {
     }
 
     public static StsDefScope create(final Scope enclosingScope, final Substitution assignment,
-        final DefStsContext defTcfaContext) {
+                                     final DefStsContext defTcfaContext) {
         return new StsDefScope(enclosingScope, assignment, defTcfaContext);
     }
 

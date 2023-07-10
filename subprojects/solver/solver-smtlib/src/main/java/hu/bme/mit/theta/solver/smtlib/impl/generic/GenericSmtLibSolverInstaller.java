@@ -44,7 +44,7 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
     }
 
     public void install(final Path home, final String version, final Path solverPath,
-        final String[] solverArgs) throws SmtLibSolverInstallerException {
+                        final String[] solverArgs) throws SmtLibSolverInstallerException {
         this.solverPath = solverPath;
         this.solverArgs = solverArgs;
         super.install(home, version, version, solverPath);
@@ -52,19 +52,19 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
 
     @Override
     protected void installSolver(Path installDir, String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         checkState(solverPath != null);
         try {
             final var solverFilePath = solverFile(installDir);
             Files.writeString(solverFilePath, solverPath.toAbsolutePath().toString(),
-                StandardCharsets.UTF_8);
+                    StandardCharsets.UTF_8);
 
             final var solverInfoPath = infoFile(installDir);
             final var info = Files.readString(solverInfoPath, StandardCharsets.UTF_8);
             Files.writeString(
-                solverInfoPath,
-                info + String.format("binary=%s\n", solverPath.toAbsolutePath().toString()),
-                StandardCharsets.UTF_8
+                    solverInfoPath,
+                    info + String.format("binary=%s\n", solverPath.toAbsolutePath().toString()),
+                    StandardCharsets.UTF_8
             );
 
             solverPath = null;
@@ -75,7 +75,7 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
 
     @Override
     protected void uninstallSolver(Path installDir, String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         try {
             final var solverFilePath = solverFile(installDir);
             Files.delete(solverFilePath);
@@ -86,7 +86,7 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version,
-        final Path solverPath, final String[] solverArgs) {
+                                          final Path solverPath, final String[] solverArgs) {
         return GenericSmtLibSolverFactory.create(solverPath, solverArgs);
     }
 

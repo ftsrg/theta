@@ -46,28 +46,28 @@ public class ExprStatesTest {
         final VarIndexing idx = VarIndexingFactory.indexing(0);
 
         Assert.assertEquals(1,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 1).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 1).size());
         Assert.assertEquals(5,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 5).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 5).size());
         Assert.assertEquals(10,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 10).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 10).size());
     }
 
     @Test
     public void test2() {
         final Expr<BoolType> expr = BoolExprs.And(Geq(vx.getRef(), Int(0)),
-            Geq(Int(3), vx.getRef()));
+                Geq(Int(3), vx.getRef()));
         final VarIndexing idx = VarIndexingFactory.indexing(0);
 
         Assert.assertEquals(2,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 2).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 2).size());
         Assert.assertEquals(4,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 4).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 4).size());
         Assert.assertEquals(4,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 10).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 10).size());
         Assert.assertEquals(4,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 0).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx, 0).size());
         Assert.assertEquals(4,
-            ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx).size());
+                ExprStates.createStatesForExpr(solver, expr, 0, prec::createState, idx).size());
     }
 }

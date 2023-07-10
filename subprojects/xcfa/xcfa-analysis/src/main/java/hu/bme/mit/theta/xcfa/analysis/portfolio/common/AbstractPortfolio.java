@@ -46,7 +46,7 @@ public abstract class AbstractPortfolio {
     protected final String smtlibHome;
 
     public AbstractPortfolio(Logger.Level logLevel, String modelName, String smtlibHome)
-        throws Exception {
+            throws Exception {
         logger = new ConsoleLogger(logLevel);
         closeAndRegisterAllSolverManagers(smtlibHome, logger);
         this.modelName = modelName;
@@ -64,7 +64,7 @@ public abstract class AbstractPortfolio {
      * @throws Exception
      */
     public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?, ?> executeAnalysis(
-        XCFA xcfa, Duration initializationTime) throws Exception;
+            XCFA xcfa, Duration initializationTime) throws Exception;
 
     /**
      * Creates and saves the counterexample into a file, also saves statistics into files
@@ -75,7 +75,7 @@ public abstract class AbstractPortfolio {
      * @throws Exception most likely solver exception
      */
     public void outputResultFiles(SafetyResult<?, ?> status, String refinementSolver)
-        throws Exception {
+            throws Exception {
         if (status != null && status.isUnsafe()) {
             OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
         } else if (status != null && status.isSafe()) {
@@ -94,12 +94,12 @@ public abstract class AbstractPortfolio {
      * @return the result of the analysis
      */
     protected Tuple2<Result, Optional<SafetyResult<?, ?>>> executeConfiguration(
-        CegarConfiguration configuration, XCFA xcfa, long timeout) {
+            CegarConfiguration configuration, XCFA xcfa, long timeout) {
         logger.write(Logger.Level.RESULT, "Executing ");
         logger.write(Logger.Level.RESULT, configuration.toString());
         logger.write(Logger.Level.RESULT, System.lineSeparator());
         logger.write(Logger.Level.RESULT,
-            "Timeout is set to " + timeout / 1000.0 + " sec (cputime)...");
+                "Timeout is set to " + timeout / 1000.0 + " sec (cputime)...");
         logger.write(Logger.Level.RESULT, System.lineSeparator());
         logger.write(Logger.Level.RESULT, System.lineSeparator());
 
@@ -174,7 +174,7 @@ public abstract class AbstractPortfolio {
                 }
             }
             System.err.println(
-                "Timeouting thread dead after " + dieTimer.elapsed(TimeUnit.MILLISECONDS) + "ms");
+                    "Timeouting thread dead after " + dieTimer.elapsed(TimeUnit.MILLISECONDS) + "ms");
 
             cegarAnalysisThread.timeout(); // set the result to TIMEOUT and null
             dieTimer.stop();
@@ -203,9 +203,9 @@ public abstract class AbstractPortfolio {
         logger.write(Logger.Level.RESULT, System.lineSeparator());
 
         OutputHandler.getInstance()
-            .writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+                .writeCsvLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
         OutputHandler.getInstance()
-            .writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
+                .writeTxtLine(configuration, timeout, timeTaken, cpuTimeTaken, result);
         try {
             closeAndRegisterAllSolverManagers(smtlibHome, logger);
         } catch (Exception e) {
@@ -225,7 +225,7 @@ public abstract class AbstractPortfolio {
      * @throws Exception SMT solver exceptions
      */
     private static void closeAndRegisterAllSolverManagers(String home, Logger logger)
-        throws Exception {
+            throws Exception {
         CpuTimeKeeper.saveSolverTimes();
         SolverManager.closeAll();
         // register solver managers

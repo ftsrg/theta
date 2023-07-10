@@ -67,9 +67,9 @@ final class Z3Solver implements UCSolver, Solver {
     private SolverStatus status;
 
     public Z3Solver(final Z3SymbolTable symbolTable,
-        final Z3TransformationManager transformationManager,
-        final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
-        final com.microsoft.z3.Solver z3Solver) {
+                    final Z3TransformationManager transformationManager,
+                    final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
+                    final com.microsoft.z3.Solver z3Solver) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
@@ -86,7 +86,7 @@ final class Z3Solver implements UCSolver, Solver {
     public void add(final Expr<BoolType> assertion) {
         checkNotNull(assertion);
         final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
-            assertion);
+                assertion);
         add(assertion, term);
     }
 
@@ -102,7 +102,7 @@ final class Z3Solver implements UCSolver, Solver {
 
         assertions.add(assertion);
         final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
-            assertion);
+                assertion);
         final String label = String.format(ASSUMPTION_LABEL, labelNum++);
         final com.microsoft.z3.BoolExpr labelTerm = z3Context.mkBoolConst(label);
 
@@ -294,13 +294,13 @@ final class Z3Solver implements UCSolver, Solver {
 
         private LitExpr<?> extractFuncLiteral(final FuncDecl funcDecl) {
             final Expr<?> expr = termTransformer.toFuncLitExpr(funcDecl, z3Model,
-                new ArrayList<>());
+                    new ArrayList<>());
             return (LitExpr<?>) expr;
         }
 
         private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
             final Expr<?> expr = termTransformer.toArrayLitExpr(funcDecl, z3Model,
-                new ArrayList<>());
+                    new ArrayList<>());
             return (LitExpr<?>) expr;
         }
 

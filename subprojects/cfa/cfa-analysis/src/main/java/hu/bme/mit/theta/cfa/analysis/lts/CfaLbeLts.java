@@ -54,7 +54,7 @@ public final class CfaLbeLts implements CfaLts {
             edges.add(edge);
             Loc running = edge.getTarget();
             while (running.getInEdges().size() == 1 && running.getOutEdges().size() == 1
-                && !running.equals(targetLoc)) {
+                    && !running.equals(targetLoc)) {
                 final Edge next = Utils.singleElementOf(running.getOutEdges());
                 edges.add(next);
                 running = next.getTarget();

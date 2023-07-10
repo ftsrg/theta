@@ -83,8 +83,8 @@ public class IfStmt implements Stmt {
         } else if (obj instanceof IfStmt) {
             final IfStmt that = (IfStmt) obj;
             return this.cond.equals(that.getCond()) &&
-                this.then.equals(that.getThen()) &&
-                this.elze.equals(that.getElze());
+                    this.then.equals(that.getThen()) &&
+                    this.elze.equals(that.getElze());
         } else {
             return false;
         }

@@ -47,7 +47,7 @@ public final class ARG<S extends State, A extends Action> {
     }
 
     public static <S extends State, A extends Action> ARG<S, A> create(
-        final PartialOrd<S> partialOrd) {
+            final PartialOrd<S> partialOrd) {
         return new ARG<>(partialOrd);
     }
 
@@ -107,7 +107,7 @@ public final class ARG<S extends State, A extends Action> {
     }
 
     public ArgNode<S, A> createSuccNode(final ArgNode<S, A> node, final A action, final S succState,
-        final boolean target) {
+                                        final boolean target) {
         checkNotNull(node);
         checkNotNull(action);
         checkNotNull(succState);
@@ -125,7 +125,7 @@ public final class ARG<S extends State, A extends Action> {
     }
 
     private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action,
-        final ArgNode<S, A> target) {
+                                     final ArgNode<S, A> target) {
         final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
         source.outEdges.add(edge);
         target.inEdge = Optional.of(edge);
@@ -205,7 +205,7 @@ public final class ARG<S extends State, A extends Action> {
     public double getMeanBranchingFactor() {
         final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(ArgNode::isExpanded);
         final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average()
-            .orElse(0);
+                .orElse(0);
         return mean;
     }
 

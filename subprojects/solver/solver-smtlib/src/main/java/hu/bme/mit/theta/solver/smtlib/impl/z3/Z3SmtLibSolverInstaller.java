@@ -45,73 +45,73 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
         versions = new ArrayList<>();
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.12"))
-            .addString(LINUX, X64, "x64-glibc-2.31")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.16")
-            .build()
+                .addString(LINUX, X64, "x64-glibc-2.31")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.16")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.11"))
-            .addString(LINUX, X64, "x64-glibc-2.31")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.15.7")
-            .build()
+                .addString(LINUX, X64, "x64-glibc-2.31")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.15.7")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.10"))
-            .addString(LINUX, X64, "x64-ubuntu-18.04")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.15.7")
-            .build()
+                .addString(LINUX, X64, "x64-ubuntu-18.04")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.15.7")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.5"))
-            .addString(LINUX, X64, "x64-ubuntu-16.04")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.14.6")
-            .build()
+                .addString(LINUX, X64, "x64-ubuntu-16.04")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.14.6")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.5"))
-            .addString(LINUX, X64, "x64-ubuntu-16.04")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.14.2")
-            .build()
+                .addString(LINUX, X64, "x64-ubuntu-16.04")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.14.2")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.4"))
-            .addString(LINUX, X64, "x64-ubuntu-16.04")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.14.1")
-            .build()
+                .addString(LINUX, X64, "x64-ubuntu-16.04")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.14.1")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.8.3"))
-            .addString(LINUX, X64, "x64-ubuntu-16.04")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.13.6")
-            .build()
+                .addString(LINUX, X64, "x64-ubuntu-16.04")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.13.6")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.6.0"))
-            .addString(LINUX, X64, "x64-ubuntu-16.04")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.11.6")
-            .build()
+                .addString(LINUX, X64, "x64-ubuntu-16.04")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.11.6")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.4.0"))
-            .addString(LINUX, X64, "x64-ubuntu-14.04")
-            .addString(LINUX, X86, "x86-ubuntu-14.04")
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .addString(MAC, X64, "x64-osx-10.11.6")
-            .build()
+                .addString(LINUX, X64, "x64-ubuntu-14.04")
+                .addString(LINUX, X86, "x86-ubuntu-14.04")
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .addString(MAC, X64, "x64-osx-10.11.6")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("4.3.2"))
-            .addString(WINDOWS, X64, "x64-win")
-            .addString(WINDOWS, X86, "x86-win")
-            .build()
+                .addString(WINDOWS, X64, "x64-win")
+                .addString(WINDOWS, X86, "x86-win")
+                .build()
         );
     }
 
@@ -122,7 +122,7 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected void installSolver(final Path installDir, final String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         final var semVer = SemVer.of(version);
         String archStr = null;
 
@@ -134,20 +134,20 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         }
         if (archStr == null) {
             throw new SmtLibSolverInstallerException(
-                String.format("z3 on operating system %s and architecture %s is not supported",
-                    OsHelper.getOs(), OsHelper.getArch()));
+                    String.format("z3 on operating system %s and architecture %s is not supported",
+                            OsHelper.getOs(), OsHelper.getArch()));
         }
 
         final var downloadUrl = URI.create(String.format(
-            "https://github.com/Z3Prover/z3/releases/download/z3-%s/z3-%s-%s.zip",
-            version, version, archStr
+                "https://github.com/Z3Prover/z3/releases/download/z3-%s/z3-%s-%s.zip",
+                version, version, archStr
         ));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
         try (final var inputStream = downloadUrl.toURL().openStream()) {
             Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
             installDir.resolve("bin").resolve(getSolverBinaryName()).toFile()
-                .setExecutable(true, true);
+                    .setExecutable(true, true);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
@@ -167,29 +167,29 @@ public class Z3SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version,
-        final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+                                          final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = solverPath != null ? solverPath
-            : installDir.resolve("bin").resolve(getSolverBinaryName());
+                : installDir.resolve("bin").resolve(getSolverBinaryName());
         if (SemVer.of(version).compareTo(SemVer.of("4.5.0")) <= 0) {
             return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs,
-                Z3SmtLibSolverFactory.Z3ItpSupport.OLD);
+                    Z3SmtLibSolverFactory.Z3ItpSupport.OLD);
         } else if (SemVer.of(version).compareTo(SemVer.of("4.8.8")) >= 0) {
             return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs,
-                Z3SmtLibSolverFactory.Z3ItpSupport.NEW);
+                    Z3SmtLibSolverFactory.Z3ItpSupport.NEW);
         } else {
             return Z3SmtLibSolverFactory.create(solverFilePath, solverArgs,
-                Z3SmtLibSolverFactory.Z3ItpSupport.NONE);
+                    Z3SmtLibSolverFactory.Z3ItpSupport.NONE);
         }
     }
 
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-            "4.11.2", "4.11.0", "4.10.2", "4.10.1", "4.10.0", "4.9.1", "4.9.0",
-            "4.8.17", "4.8.16", "4.8.15", "4.8.14", "4.8.13", "4.8.12", "4.8.11", "4.8.10", "4.8.9",
-            "4.8.8", "4.8.7",
-            "4.8.6", "4.8.5", "4.8.4", "4.8.3", "4.8.2", "4.8.1", "4.7.1", "4.6.0", "4.5.0",
-            "4.4.1", "4.4.0", "4.3.2"
+                "4.11.2", "4.11.0", "4.10.2", "4.10.1", "4.10.0", "4.9.1", "4.9.0",
+                "4.8.17", "4.8.16", "4.8.15", "4.8.14", "4.8.13", "4.8.12", "4.8.11", "4.8.10", "4.8.9",
+                "4.8.8", "4.8.7",
+                "4.8.6", "4.8.5", "4.8.4", "4.8.3", "4.8.2", "4.8.1", "4.7.1", "4.6.0", "4.5.0",
+                "4.4.1", "4.4.0", "4.3.2"
         );
     }
 

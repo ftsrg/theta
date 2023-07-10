@@ -24,8 +24,8 @@ public final class Tuple5<T1, T2, T3, T4, T5> extends Tuple {
     }
 
     public static <T1, T2, T3, T4, T5> Tuple5<T1, T2, T3, T4, T5> of(final T1 e1, final T2 e2,
-        final T3 e3, final T4 e4,
-        final T5 e5) {
+                                                                     final T3 e3, final T4 e4,
+                                                                     final T5 e5) {
         return new Tuple5<>(e1, e2, e3, e4, e5);
     }
 

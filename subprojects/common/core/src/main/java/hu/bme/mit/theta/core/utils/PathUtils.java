@@ -149,7 +149,7 @@ public class PathUtils {
      * @return Values
      */
     public static Valuation extractValuation(final Valuation model, final VarIndexing indexing,
-        final Collection<? extends VarDecl<?>> varDecls) {
+                                             final Collection<? extends VarDecl<?>> varDecls) {
         final ImmutableValuation.Builder builder = ImmutableValuation.builder();
         for (final VarDecl<?> varDecl : varDecls) {
             final int index = indexing.get(varDecl);
@@ -171,7 +171,7 @@ public class PathUtils {
      * @return Values
      */
     public static Valuation extractValuation(final Valuation model, final int i,
-        final Collection<? extends VarDecl<?>> varDecls) {
+                                             final Collection<? extends VarDecl<?>> varDecls) {
         checkArgument(i >= 0);
         return extractValuation(model, VarIndexingFactory.indexing(i), varDecls);
     }

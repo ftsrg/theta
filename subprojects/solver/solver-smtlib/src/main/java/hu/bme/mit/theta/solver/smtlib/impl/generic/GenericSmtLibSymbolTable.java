@@ -53,7 +53,7 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
     @Override
     public boolean definesSymbol(final String symbol) {
         return constToSymbol.inverse().containsKey(
-            symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+                symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
     }
 
     @Override
@@ -81,8 +81,8 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
         checkNotNull(declaration);
         checkState(!constToSymbol.containsKey(constDecl), "Constant not found.");
         constToSymbol.put(constDecl,
-            symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+                symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
         constToDeclaration.put(constDecl,
-            declaration.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+                declaration.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
     }
 }

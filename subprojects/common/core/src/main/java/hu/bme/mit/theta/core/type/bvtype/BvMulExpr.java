@@ -54,9 +54,9 @@ public final class BvMulExpr extends MulExpr<BvType> {
     @Override
     public BvLitExpr eval(final Valuation val) {
         return getOps().stream().skip(1).reduce(
-            (BvLitExpr) getOps().get(0).eval(val),
-            (op1, op2) -> (op1.mul((BvLitExpr) op2.eval(val))),
-            BvLitExpr::mul
+                (BvLitExpr) getOps().get(0).eval(val),
+                (op1, op2) -> (op1.mul((BvLitExpr) op2.eval(val))),
+                BvLitExpr::mul
         );
     }
 

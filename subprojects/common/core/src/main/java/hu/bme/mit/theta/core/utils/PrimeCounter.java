@@ -36,7 +36,7 @@ final class PrimeCounter {
     }
 
     private static BasicVarIndexing.BasicVarIndexingBuilder collectPrimes(final Expr<?> expr,
-        final int nPrimes) {
+                                                                          final int nPrimes) {
         if (expr instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) expr;
             final Decl<?> decl = ref.getDecl();
@@ -54,8 +54,8 @@ final class PrimeCounter {
 
         final List<? extends Expr<?>> ops = expr.getOps();
         return ops.stream().map(op -> collectPrimes(op, nPrimes))
-            .reduce(VarIndexingFactory.basicIndexingBuilder(0),
-                BasicVarIndexing.BasicVarIndexingBuilder::join);
+                .reduce(VarIndexingFactory.basicIndexingBuilder(0),
+                        BasicVarIndexing.BasicVarIndexingBuilder::join);
     }
 
 }

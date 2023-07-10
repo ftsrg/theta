@@ -70,7 +70,7 @@ public final class XcfaProcedure {
     }
 
     public XcfaProcedure(final XcfaProcess parent, final XcfaProcedure from,
-        final Map<VarDecl<?>, VarDecl<?>> varLut) {
+                         final Map<VarDecl<?>, VarDecl<?>> varLut) {
         params = ImmutableMap.copyOf(from.params.entrySet().stream().map(e -> {
             final VarDecl<?> varDecl = e.getKey();
             final VarDecl<?> newVar = Var(varDecl.getName(), varDecl.getType());
@@ -84,7 +84,7 @@ public final class XcfaProcedure {
             return Map.entry(cast(newVar, varDecl.getType()), e.getValue());
         }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         altVars = localVars.keySet().stream().map(var ->
-            Map.entry(var, XcfaProcedure.getAltVar(var))
+                Map.entry(var, XcfaProcedure.getAltVar(var))
         ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         final Map<XcfaLocation, XcfaLocation> locLut = new LinkedHashMap<>();
         locs = ImmutableList.copyOf(from.locs.stream().map(xcfaLocation -> {
@@ -95,7 +95,7 @@ public final class XcfaProcedure {
         locs.forEach(location -> location.setParent(this));
         paramInitLocs = new LinkedHashMap<>();
         from.paramInitLocs.forEach(
-            (callLabel, initLoc) -> paramInitLocs.put(callLabel, locLut.get(initLoc)));
+                (callLabel, initLoc) -> paramInitLocs.put(callLabel, locLut.get(initLoc)));
         instantiatedVars = new LinkedHashMap<>();
         from.instantiatedVars.forEach((stack, localVarLut) -> {
             Stack<XcfaLocation> newStack = new Stack<>();
@@ -108,12 +108,12 @@ public final class XcfaProcedure {
         errorLoc = locLut.get(from.errorLoc);
         finalLoc = locLut.get(from.finalLoc);
         edges = ImmutableList.copyOf(from.edges.stream().map(
-                xcfaEdge -> xcfaEdge.withSource(locLut.get(xcfaEdge.getSource()))
-                    .withTarget(xcfaEdge.getTarget()).mapLabels(
-                        label -> XcfaStmtUtils.replacesVarsInStmt(label,
-                            varDecl -> Optional.ofNullable(varLut.get(varDecl))
-                                .map(varDecl1 -> cast(varDecl1, varDecl.getType()))).orElse(label)))
-            .collect(Collectors.toList()));
+                        xcfaEdge -> xcfaEdge.withSource(locLut.get(xcfaEdge.getSource()))
+                                .withTarget(xcfaEdge.getTarget()).mapLabels(
+                                        label -> XcfaStmtUtils.replacesVarsInStmt(label,
+                                                varDecl -> Optional.ofNullable(varLut.get(varDecl))
+                                                        .map(varDecl1 -> cast(varDecl1, varDecl.getType()))).orElse(label)))
+                .collect(Collectors.toList()));
         for (XcfaEdge edge : edges) {
             edge.getTarget().addIncomingEdge(edge);
             edge.getSource().addOutgoingEdge(edge);
@@ -236,7 +236,7 @@ public final class XcfaProcedure {
     }
 
     public XcfaProcedure duplicate(final XcfaProcess parent,
-        final Map<VarDecl<?>, VarDecl<?>> varLut) {
+                                   final Map<VarDecl<?>, VarDecl<?>> varLut) {
         return new XcfaProcedure(parent, this, varLut);
     }
 
@@ -347,7 +347,7 @@ public final class XcfaProcedure {
         }
 
         public void addParamInitLoc(XcfaLabel.ProcedureCallXcfaLabel callLabel,
-            XcfaProcedure.Builder callingProcedure) {
+                                    XcfaProcedure.Builder callingProcedure) {
             checkNotBuilt();
 
             List<XcfaLabel> paramAssignments = new ArrayList<>();
@@ -355,8 +355,8 @@ public final class XcfaProcedure {
             for (Map.Entry<VarDecl<?>, Direction> entry : params.entrySet()) {
                 if (entry.getValue() != Direction.OUT) {
                     paramAssignments.add(XcfaLabel.Stmt(AssignStmt.create(entry.getKey(),
-                        XcfaLabelVarReplacer.replaceVars(callLabel.getParams().get(i),
-                            callingProcedure.altVars))));
+                            XcfaLabelVarReplacer.replaceVars(callLabel.getParams().get(i),
+                                    callingProcedure.altVars))));
                 }
                 ++i;
             }
@@ -412,8 +412,8 @@ public final class XcfaProcedure {
             if (!locs.contains(loc)) {
                 checkState(locs.stream().noneMatch(l -> l.getName().equals(loc.getName())));
                 checkArgument(
-                    loc.getIncomingEdges().size() == 0 && loc.getOutgoingEdges().size() == 0,
-                    "Loc already part of an XCFA procedure!");
+                        loc.getIncomingEdges().size() == 0 && loc.getOutgoingEdges().size() == 0,
+                        "Loc already part of an XCFA procedure!");
                 locs.add(loc);
             }
             return loc;
@@ -453,9 +453,9 @@ public final class XcfaProcedure {
             checkNotBuilt();
             checkArgument(locs.contains(initLoc), "Init location not present in XCFA.");
             checkArgument(!initLoc.equals(errorLoc),
-                "Init location cannot be the same as error location.");
+                    "Init location cannot be the same as error location.");
             checkArgument(finalLoc == null || !finalLoc.equals(initLoc),
-                "Init location cannot be the same as final location.");
+                    "Init location cannot be the same as final location.");
             this.initLoc = initLoc;
         }
 
@@ -468,9 +468,9 @@ public final class XcfaProcedure {
             checkNotBuilt();
             checkArgument(locs.contains(errorLoc), "Error location not present in XCFA.");
             checkArgument(initLoc == null || !initLoc.equals(errorLoc),
-                "Error location cannot be the same as init location.");
+                    "Error location cannot be the same as init location.");
             checkArgument(finalLoc == null || !finalLoc.equals(errorLoc),
-                "Error location cannot be the same as final location.");
+                    "Error location cannot be the same as final location.");
             if (errorLoc != null) {
                 errorLoc.setErrorLoc(true);
             } else {
@@ -488,9 +488,9 @@ public final class XcfaProcedure {
             checkNotBuilt();
             checkArgument(locs.contains(finalLoc), "Final location not present in XCFA.");
             checkArgument(!finalLoc.equals(errorLoc),
-                "Final location cannot be the same as error location.");
+                    "Final location cannot be the same as error location.");
             checkArgument(initLoc == null || !initLoc.equals(finalLoc),
-                "Final location cannot be the same as init location.");
+                    "Final location cannot be the same as init location.");
             this.finalLoc = finalLoc;
             finalLoc.setEndLoc(true);
         }
@@ -503,10 +503,10 @@ public final class XcfaProcedure {
             checkState(initLoc != null, "Initial location must be set.");
             checkState(finalLoc != null, "Final location must be set.");
             checkState(finalLoc.getOutgoingEdges().isEmpty(),
-                "Final location cannot have outgoing edges.");
+                    "Final location cannot have outgoing edges.");
             if (errorLoc != null) {
                 checkState(errorLoc.getOutgoingEdges().isEmpty(),
-                    "Error location cannot have outgoing edges.");
+                        "Error location cannot have outgoing edges.");
             }
             XcfaProcedure procedure = new XcfaProcedure(this, process);
             built = procedure;

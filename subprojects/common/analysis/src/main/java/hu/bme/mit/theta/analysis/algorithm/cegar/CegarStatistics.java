@@ -28,8 +28,8 @@ public final class CegarStatistics extends Statistics {
     private final int iterations;
 
     public CegarStatistics(final long algorithmTimeMs, final long abstractorTimeMs,
-        final long refinerTimeMs,
-        final int iterations) {
+                           final long refinerTimeMs,
+                           final int iterations) {
         this.algorithmTimeMs = algorithmTimeMs;
         this.abstractorTimeMs = abstractorTimeMs;
         this.refinerTimeMs = refinerTimeMs;

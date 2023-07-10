@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import java.math.BigInteger;
 
 public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<IntType>,
-    Comparable<IntLitExpr> {
+        Comparable<IntLitExpr> {
 
     private static final int HASH_SEED = 4111;
     private volatile int hashCode = 0;
@@ -104,17 +104,17 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
         final var thisAbs = this.value.abs();
         final var thatAbs = that.value.abs();
         if (this.value.compareTo(BigInteger.ZERO) < 0
-            && that.value.compareTo(BigInteger.ZERO) < 0) {
+                && that.value.compareTo(BigInteger.ZERO) < 0) {
             var result = thisAbs.mod(thatAbs);
             if (result.compareTo(BigInteger.ZERO) != 0) {
                 result = result.subtract(thatAbs);
             }
             return new IntLitExpr(result);
         } else if (this.value.compareTo(BigInteger.ZERO) >= 0
-            && that.value.compareTo(BigInteger.ZERO) < 0) {
+                && that.value.compareTo(BigInteger.ZERO) < 0) {
             return new IntLitExpr(thisAbs.mod(thatAbs).negate());
         } else if (this.value.compareTo(BigInteger.ZERO) < 0
-            && that.value.compareTo(BigInteger.ZERO) >= 0) {
+                && that.value.compareTo(BigInteger.ZERO) >= 0) {
             var result = thisAbs.mod(thatAbs);
             if (result.compareTo(BigInteger.ZERO) != 0) {
                 result = thatAbs.subtract(result);

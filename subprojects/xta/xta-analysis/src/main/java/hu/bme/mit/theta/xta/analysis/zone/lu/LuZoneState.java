@@ -26,7 +26,9 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -99,7 +101,7 @@ public final class LuZoneState implements ExprState {
                 @SuppressWarnings("unchecked") final VarDecl<RatType> dx = (VarDecl<RatType>) vx;
 
                 @SuppressWarnings("unchecked") final ParamDecl<RatType> dxp = (ParamDecl<RatType>) mapping.get(
-                    dx);
+                        dx);
 
                 final Expr<RatType> x = dx.getRef();
                 final Expr<RatType> xp = dxp.getRef();
@@ -165,12 +167,12 @@ public final class LuZoneState implements ExprState {
         if (!boundFunc.getLowerVars().isEmpty()) {
             sj.add("L:");
             boundFunc.getLowerVars()
-                .forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getLower(c).get()));
+                    .forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getLower(c).get()));
         }
         if (!boundFunc.getUpperVars().isEmpty()) {
             sj.add("U:");
             boundFunc.getUpperVars()
-                .forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getUpper(c).get()));
+                    .forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getUpper(c).get()));
         }
         return sj.toString();
     }

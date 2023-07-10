@@ -21,7 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -93,7 +95,7 @@ public final class Graph {
      * @param attributes
      */
     public void addEdge(final String sourceId, final String targetId,
-        final EdgeAttributes attributes) {
+                        final EdgeAttributes attributes) {
         checkArgument(nodes.containsKey(sourceId), "Source node does not exist!");
         checkArgument(nodes.containsKey(targetId), "Target node does not exist!");
         final Node source = nodes.get(sourceId);

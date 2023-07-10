@@ -37,7 +37,7 @@ public final class LuZoneAnalysis<A extends Action> implements Analysis<LuZoneSt
     }
 
     public static <A extends Action> LuZoneAnalysis<A> create(
-        final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
+            final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
         return new LuZoneAnalysis<>(analysis);
     }
 

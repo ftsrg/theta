@@ -45,8 +45,8 @@ public final class ExprTraceStatusMergers {
             } else {
                 assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
                 return statuses.stream().map(ExprTraceStatus::asInfeasible).min((s1, s2) -> Integer
-                    .compare(s1.getRefutation().getPruneIndex(),
-                        s2.getRefutation().getPruneIndex())).get();
+                        .compare(s1.getRefutation().getPruneIndex(),
+                                s2.getRefutation().getPruneIndex())).get();
             }
         }
     }
@@ -64,8 +64,8 @@ public final class ExprTraceStatusMergers {
             } else {
                 assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
                 return statuses.stream().map(ExprTraceStatus::asInfeasible).max((s1, s2) -> Integer
-                    .compare(s1.getRefutation().getPruneIndex(),
-                        s2.getRefutation().getPruneIndex())).get();
+                        .compare(s1.getRefutation().getPruneIndex(),
+                                s2.getRefutation().getPruneIndex())).get();
             }
         }
     }

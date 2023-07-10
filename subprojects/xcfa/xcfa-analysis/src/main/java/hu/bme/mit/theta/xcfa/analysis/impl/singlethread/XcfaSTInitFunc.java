@@ -29,7 +29,7 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class XcfaSTInitFunc<S extends ExprState, P extends Prec> implements
-    InitFunc<XcfaState<S>, XcfaPrec<P>> {
+        InitFunc<XcfaState<S>, XcfaPrec<P>> {
 
     private final XcfaLocation initLoc;
     private final InitFunc<S, ? super P> initFunc;
@@ -40,7 +40,7 @@ public class XcfaSTInitFunc<S extends ExprState, P extends Prec> implements
     }
 
     public static <S extends ExprState, P extends Prec> XcfaSTInitFunc<S, P> create(
-        final XcfaLocation initLoc, final InitFunc<S, ? super P> initFunc) {
+            final XcfaLocation initLoc, final InitFunc<S, ? super P> initFunc) {
         return new XcfaSTInitFunc<>(initLoc, initFunc);
     }
 

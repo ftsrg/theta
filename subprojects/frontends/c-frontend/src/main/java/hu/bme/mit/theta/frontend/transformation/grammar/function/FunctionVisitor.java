@@ -97,7 +97,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     }
 
     private void createVars(String name, CDeclaration declaration, CComplexType type,
-        List<VarDecl<?>> vars) {
+                            List<VarDecl<?>> vars) {
         if (type instanceof CStruct) {
             ((CStruct) type).getFields().forEach((s, type1) -> {
                 createVars(name + "." + s, declaration, type1, vars);
@@ -132,15 +132,15 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
 
         List<CParser.ExternalDeclarationContext> globalUsages = GlobalDeclUsageVisitor.instance.getGlobalUsages(
-            ctx);
+                ctx);
 
         // if arithemetic is set on efficient, we change it to either bv or int arithmetic here
         if (ArchitectureConfig.arithmetic
-            == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
+                == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
             BitwiseOption bitwiseOption = BitwiseChecker.instance.checkIfBitwise(globalUsages);
             ArchitectureConfig.arithmetic =
-                (bitwiseOption == BitwiseOption.INTEGER) ? ArchitectureConfig.ArithmeticType.integer
-                    : ArchitectureConfig.ArithmeticType.bitvector;
+                    (bitwiseOption == BitwiseOption.INTEGER) ? ArchitectureConfig.ArithmeticType.integer
+                            : ArchitectureConfig.ArithmeticType.bitvector;
         }
 
         CProgram program = new CProgram();
@@ -166,7 +166,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         int colNumberStart = start.getCharPositionInLine();
         int lineNumberStop = stop.getLine() + stopLines;
         int colNumberStop = stopLines == 0 ? stop.getCharPositionInLine() + stopText.length() - 1
-            : stopTextLines[stopLines].length();
+                : stopTextLines[stopLines].length();
         int offsetStart = start.getStartIndex();
         int offsetEnd = stop.getStopIndex();
         FrontendMetadata.create(statement, "lineNumberStart", lineNumberStart);
@@ -181,7 +181,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     @Override
     public CStatement visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
         List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(
-            ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+                ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
         CDecls decls = new CDecls();
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
@@ -195,7 +195,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     declaration.setType(returnType);
                     if (!variables.peek().containsKey(declaration.getName())) {
                         FrontendMetadata.create(declaration.getName(), "cType",
-                            returnType.getActualType());
+                                returnType.getActualType());
                         createVars(declaration);
                         for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                             functions.put(varDecl, declaration);
@@ -272,10 +272,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
         CStmtCounter.incrementBranches();
         CExpr cexpr = new CExpr(
-            ctx.constantExpression().accept(ExpressionVisitor.create(variables, functions)));
+                ctx.constantExpression().accept(ExpressionVisitor.create(variables, functions)));
         CCase cCase = new CCase(
-            cexpr,
-            ctx.statement().accept(this));
+                cexpr,
+                ctx.statement().accept(this));
         recordMetadata(ctx, cCase);
         recordMetadata(ctx.constantExpression(), cexpr);
         return cCase;
@@ -301,7 +301,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     @Override
     public CStatement visitExpressionStatement(CParser.ExpressionStatementContext ctx) {
         CStatement statement =
-            ctx.expression() == null ? new CCompound() : ctx.expression().accept(this);
+                ctx.expression() == null ? new CCompound() : ctx.expression().accept(this);
         recordMetadata(ctx, statement);
         return statement;
     }
@@ -311,9 +311,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         CStmtCounter.incrementBranches();
         variables.push(new LinkedHashMap<>());
         CIf cIf = new CIf(
-            ctx.expression().accept(this),
-            ctx.statement(0).accept(this),
-            ctx.statement().size() > 1 ? ctx.statement(1).accept(this) : null);
+                ctx.expression().accept(this),
+                ctx.statement(0).accept(this),
+                ctx.statement().size() > 1 ? ctx.statement(1).accept(this) : null);
         recordMetadata(ctx, cIf);
         variables.pop();
         return cIf;
@@ -323,8 +323,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     public CStatement visitSwitchStatement(CParser.SwitchStatementContext ctx) {
         variables.push(new LinkedHashMap<>());
         CSwitch cSwitch = new CSwitch(
-            ctx.expression().accept(this),
-            ctx.statement().accept(this));
+                ctx.expression().accept(this),
+                ctx.statement().accept(this));
         recordMetadata(ctx, cSwitch);
         variables.pop();
         return cSwitch;
@@ -335,8 +335,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         CStmtCounter.incrementWhileLoops();
         variables.push(new LinkedHashMap<>());
         CWhile cWhile = new CWhile(
-            ctx.statement().accept(this),
-            ctx.expression().accept(this));
+                ctx.statement().accept(this),
+                ctx.expression().accept(this));
         recordMetadata(ctx, cWhile);
         variables.pop();
         return cWhile;
@@ -346,8 +346,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     public CStatement visitDoWhileStatement(CParser.DoWhileStatementContext ctx) {
         variables.push(new LinkedHashMap<>());
         CDoWhile cDoWhile = new CDoWhile(
-            ctx.statement().accept(this),
-            ctx.expression().accept(this));
+                ctx.statement().accept(this),
+                ctx.expression().accept(this));
         recordMetadata(ctx, cDoWhile);
         variables.pop();
         return cDoWhile;
@@ -361,10 +361,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         CStatement test = ctx.forCondition().forTest().accept(this);
         CStatement incr = ctx.forCondition().forIncr().accept(this);
         CFor cFor = new CFor(
-            ctx.statement().accept(this),
-            init,
-            test,
-            incr);
+                ctx.statement().accept(this),
+                init,
+                test,
+                incr);
         recordMetadata(ctx, cFor);
         variables.pop();
         return cFor;
@@ -406,30 +406,30 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     @Override
     public CStatement visitBodyDeclaration(CParser.BodyDeclarationContext ctx) {
         List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(
-            ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+                ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
         CCompound compound = new CCompound();
         for (CDeclaration declaration : declarations) {
             if (declaration.getInitExpr() != null) {
                 createVars(declaration);
                 if (declaration.getType() instanceof Struct) {
                     checkState(declaration.getInitExpr() instanceof CInitializerList,
-                        "Struct can only be initialized via an initializer list!");
+                            "Struct can only be initialized via an initializer list!");
                     List<VarDecl<?>> varDecls = declaration.getVarDecls();
                     for (int i = 0; i < varDecls.size(); i++) {
                         VarDecl<?> varDecl = varDecls.get(i);
                         Tuple2<Optional<CStatement>, CStatement> initializer = ((CInitializerList) declaration.getInitExpr()).getStatements()
-                            .get(i);
+                                .get(i);
 
                         CAssignment cAssignment = new CAssignment(varDecl.getRef(),
-                            initializer.get2(), "=");
+                                initializer.get2(), "=");
                         recordMetadata(ctx, cAssignment);
                         compound.getcStatementList().add(cAssignment);
                     }
                 } else {
                     checkState(declaration.getVarDecls().size() == 1,
-                        "non-struct declarations shall only have one variable!");
+                            "non-struct declarations shall only have one variable!");
                     CAssignment cAssignment = new CAssignment(
-                        declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=");
+                            declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=");
                     recordMetadata(ctx, cAssignment);
                     compound.getcStatementList().add(cAssignment);
                 }
@@ -439,9 +439,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                 if (declaration.getType() instanceof Struct) {
                     for (VarDecl<?> varDecl : declaration.getVarDecls()) {
                         if (!(varDecl.getType() instanceof ArrayType)
-                            && !(varDecl.getType() instanceof BoolType)) { // BoolType is either well-defined true/false, or a struct in disguise
+                                && !(varDecl.getType() instanceof BoolType)) { // BoolType is either well-defined true/false, or a struct in disguise
                             AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef())
-                                .limit(varDecl.getRef());
+                                    .limit(varDecl.getRef());
                             CAssume cAssume = new CAssume(assumeStmt);
                             compound.getcStatementList().add(cAssume);
                         }
@@ -449,9 +449,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                 } else {
                     VarDecl<?> varDecl = declaration.getVarDecls().get(0);
                     if (!(varDecl.getType() instanceof ArrayType)
-                        && !(varDecl.getType() instanceof BoolType)) {
+                            && !(varDecl.getType() instanceof BoolType)) {
                         AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef())
-                            .limit(varDecl.getRef());
+                                .limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt);
                         compound.getcStatementList().add(cAssume);
                     }
@@ -474,14 +474,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitAssignmentExpressionAssignmentExpression(
-        CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
+            CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
         ExpressionVisitor expressionVisitor = ExpressionVisitor.create(variables, functions);
         CCompound compound = new CCompound();
         CCompound preStatements = new CCompound();
         CCompound postStatements = new CCompound();
         Expr<?> ret = ctx.unaryExpression().accept(expressionVisitor);
         CAssignment cAssignment = new CAssignment(ret, ctx.assignmentExpression().accept(this),
-            ctx.assignmentOperator().getText());
+                ctx.assignmentOperator().getText());
         compound.getcStatementList().add(cAssignment);
         preStatements.getcStatementList().addAll(expressionVisitor.getPreStatements());
         compound.setPreStatements(preStatements);
@@ -494,7 +494,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitAssignmentExpressionConditionalExpression(
-        CParser.AssignmentExpressionConditionalExpressionContext ctx) {
+            CParser.AssignmentExpressionConditionalExpressionContext ctx) {
         ExpressionVisitor expressionVisitor = ExpressionVisitor.create(variables, functions);
         CCompound compound = new CCompound();
         CCompound preStatements = new CCompound();
@@ -514,14 +514,14 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     @Override
     public CStatement visitForDeclaration(CParser.ForDeclarationContext ctx) {
         List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(
-            ctx.declarationSpecifiers(), ctx.initDeclaratorList());
+                ctx.declarationSpecifiers(), ctx.initDeclaratorList());
         CCompound compound = new CCompound();
         for (CDeclaration declaration : declarations) {
             createVars(declaration);
             checkState(declaration.getVarDecls().size() == 1,
-                "For loops cannot have struct declarations! (not yet implemented)");
+                    "For loops cannot have struct declarations! (not yet implemented)");
             CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(),
-                declaration.getInitExpr(), "=");
+                    declaration.getInitExpr(), "=");
             recordMetadata(ctx, cAssignment);
             if (declaration.getInitExpr() != null) {
                 compound.getcStatementList().add(cAssignment);

@@ -124,9 +124,9 @@ public final class Z3SolverTest {
         final Expr<IntType> x = px.getRef();
 
         solver.add(BoolExprs.Forall(of(px),
-            BoolExprs.Imply(IntExprs.Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
+                BoolExprs.Imply(IntExprs.Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
         solver.add(BoolExprs.Forall(of(px),
-            BoolExprs.Imply(IntExprs.Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
+                BoolExprs.Imply(IntExprs.Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
 
         // Act
         final SolverStatus status = solver.check();
@@ -268,7 +268,7 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, false, false})));
         solver.add(BvExprs.Eq(cy.getRef(),
-            BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[]{false, false, false, true})))));
+                BvExprs.Add(List.of(cx.getRef(), Bv(new boolean[]{false, false, false, true})))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -289,7 +289,7 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
         solver.add(BvExprs.Eq(cy.getRef(),
-            BvExprs.Sub(cx.getRef(), Bv(new boolean[]{false, false, false, true}))));
+                BvExprs.Sub(cx.getRef(), Bv(new boolean[]{false, false, false, true}))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -330,7 +330,7 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{false, false, true, false})));
         solver.add(BvExprs.Eq(cy.getRef(),
-            BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[]{false, false, true, false})))));
+                BvExprs.Mul(List.of(cx.getRef(), Bv(new boolean[]{false, false, true, false})))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -371,7 +371,7 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cx.getRef(), Bv(new boolean[]{true, false, true, false})));
         solver.add(BvExprs.Eq(cy.getRef(),
-            BvExprs.SMod(cx.getRef(), Bv(new boolean[]{false, true, false, false}))));
+                BvExprs.SMod(cx.getRef(), Bv(new boolean[]{false, true, false, false}))));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -392,7 +392,7 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
         solver.add(BvExprs.Eq(BvExprs.Or(List.of(cx.getRef(), cy.getRef())),
-            Bv(new boolean[]{true, true, false, false})));
+                Bv(new boolean[]{true, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -413,7 +413,7 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
         solver.add(BvExprs.Eq(BvExprs.And(List.of(cx.getRef(), cy.getRef())),
-            Bv(new boolean[]{false, true, false, false})));
+                Bv(new boolean[]{false, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -434,7 +434,7 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
         solver.add(BvExprs.Eq(BvExprs.Xor(List.of(cx.getRef(), cy.getRef())),
-            Bv(new boolean[]{false, true, false, false})));
+                Bv(new boolean[]{false, true, false, false})));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());
@@ -455,8 +455,8 @@ public final class Z3SolverTest {
 
         solver.add(BvExprs.Eq(cy.getRef(), Bv(new boolean[]{false, true, false, false})));
         solver.add(BvExprs.Eq(
-            BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[]{false, false, false, true})),
-            cx.getRef()));
+                BvExprs.ArithShiftRight(cy.getRef(), Bv(new boolean[]{false, false, false, true})),
+                cx.getRef()));
 
         SolverStatus status = solver.check();
         assertTrue(status.isSat());

@@ -55,18 +55,18 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Store;
 
 public class XcfaLabelVarReplacer implements
-    XcfaLabelVisitor<Map<VarDecl<?>, VarDecl<?>>, XcfaLabel> {
+        XcfaLabelVisitor<Map<VarDecl<?>, VarDecl<?>>, XcfaLabel> {
 
     public static <T extends Type> Expr<T> replaceVars(Expr<T> expr,
-        Map<? extends Decl<?>, ? extends Decl<?>> varLut) {
+                                                       Map<? extends Decl<?>, ? extends Decl<?>> varLut) {
         if (expr instanceof RefExpr<?>) {
             if (varLut.get(((RefExpr<T>) expr).getDecl()) == null) {
                 return expr;
             } else {
                 Expr<T> tExpr = cast(varLut.get(((RefExpr<T>) expr).getDecl()).getRef(),
-                    expr.getType());
+                        expr.getType());
                 FrontendMetadata.lookupMetadata(expr)
-                    .forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
+                        .forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
                 return tExpr;
             }
         }
@@ -82,14 +82,14 @@ public class XcfaLabelVarReplacer implements
         }
         Expr<T> tExpr = expr.withOps(newOps);
         FrontendMetadata.lookupMetadata(expr)
-            .forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
+                .forEach((s, o) -> FrontendMetadata.create(tExpr, s, o));
         return tExpr;
     }
 
     public static List<XcfaLabel> replaceVars(List<XcfaLabel> labels,
-        Map<VarDecl<?>, VarDecl<?>> varLut) {
+                                              Map<VarDecl<?>, VarDecl<?>> varLut) {
         return labels.stream().map(label -> label.accept(new XcfaLabelVarReplacer(), varLut))
-            .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -104,17 +104,17 @@ public class XcfaLabelVarReplacer implements
 
     @Override
     public <DeclType extends Type> XcfaLabel visit(AssignStmt<DeclType> stmt,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                                                   Map<VarDecl<?>, VarDecl<?>> param) {
         return Stmt(Assign(cast(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()),
-            stmt.getVarDecl().getType()), replaceVars(stmt.getExpr(), param)));
+                stmt.getVarDecl().getType()), replaceVars(stmt.getExpr(), param)));
     }
 
     @Override
     public <DeclType extends Type> XcfaLabel visit(HavocStmt<DeclType> stmt,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                                                   Map<VarDecl<?>, VarDecl<?>> param) {
         final HavocStmt<?> havoc = Havoc(param.getOrDefault(stmt.getVarDecl(), stmt.getVarDecl()));
         FrontendMetadata.lookupMetadata(stmt)
-            .forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+                .forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
         return Stmt(havoc);
     }
 
@@ -160,34 +160,34 @@ public class XcfaLabelVarReplacer implements
 
     @Override
     public XcfaLabel visit(XcfaLabel.ProcedureCallXcfaLabel label,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                           Map<VarDecl<?>, VarDecl<?>> param) {
         List<Expr<?>> exprs = label.getParams();
         List<Expr<?>> newExprs = new ArrayList<>();
         exprs.forEach((expr) ->
-            newExprs.add(replaceVars(expr, param))
+                newExprs.add(replaceVars(expr, param))
         );
         return XcfaLabel.ProcedureCallXcfaLabel.of(newExprs, label.getProcedure());
     }
 
     @Override
     public <S extends Type> XcfaLabel visit(XcfaLabel.StoreXcfaLabel<S> label,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                                            Map<VarDecl<?>, VarDecl<?>> param) {
         return Store(
-            param.getOrDefault(label.getLocal(), label.getLocal()),
-            param.getOrDefault(label.getGlobal(), label.getGlobal()),
-            label.isAtomic(),
-            label.getOrdering()
+                param.getOrDefault(label.getLocal(), label.getLocal()),
+                param.getOrDefault(label.getGlobal(), label.getGlobal()),
+                label.isAtomic(),
+                label.getOrdering()
         );
     }
 
     @Override
     public <S extends Type> XcfaLabel visit(XcfaLabel.LoadXcfaLabel<S> label,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                                            Map<VarDecl<?>, VarDecl<?>> param) {
         return Load(
-            param.getOrDefault(label.getLocal(), label.getLocal()),
-            param.getOrDefault(label.getGlobal(), label.getGlobal()),
-            label.isAtomic(),
-            label.getOrdering()
+                param.getOrDefault(label.getLocal(), label.getLocal()),
+                param.getOrDefault(label.getGlobal(), label.getGlobal()),
+                label.isAtomic(),
+                label.getOrdering()
         );
     }
 
@@ -203,40 +203,40 @@ public class XcfaLabelVarReplacer implements
 
     @Override
     public XcfaLabel visit(XcfaLabel.SequenceLabel sequenceLabel,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                           Map<VarDecl<?>, VarDecl<?>> param) {
         return Sequence(sequenceLabel.getLabels().stream().map(label -> label.accept(this, param))
-            .collect(Collectors.toList()));
+                .collect(Collectors.toList()));
     }
 
     @Override
     public XcfaLabel visit(XcfaLabel.NondetLabel nondetLabel, Map<VarDecl<?>, VarDecl<?>> param) {
         return Sequence(nondetLabel.getLabels().stream().map(label -> label.accept(this, param))
-            .collect(Collectors.toList()));
+                .collect(Collectors.toList()));
     }
 
     @Override
     public XcfaLabel visit(XcfaLabel.AtomicBeginXcfaLabel atomicBeginStmt,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                           Map<VarDecl<?>, VarDecl<?>> param) {
         return atomicBeginStmt;
     }
 
     @Override
     public XcfaLabel visit(XcfaLabel.AtomicEndXcfaLabel atomicEndStmt,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                           Map<VarDecl<?>, VarDecl<?>> param) {
         return atomicEndStmt;
     }
 
     @Override
     public XcfaLabel visit(XcfaLabel.StartThreadXcfaLabel startThreadStmt,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                           Map<VarDecl<?>, VarDecl<?>> param) {
         return StartThread(startThreadStmt.getKey(), startThreadStmt.getThreadName(),
-            startThreadStmt.getParam() == null ? null
-                : replaceVars(startThreadStmt.getParam(), param));
+                startThreadStmt.getParam() == null ? null
+                        : replaceVars(startThreadStmt.getParam(), param));
     }
 
     @Override
     public XcfaLabel visit(XcfaLabel.JoinThreadXcfaLabel joinThreadStmt,
-        Map<VarDecl<?>, VarDecl<?>> param) {
+                           Map<VarDecl<?>, VarDecl<?>> param) {
         return joinThreadStmt;
     }
 }

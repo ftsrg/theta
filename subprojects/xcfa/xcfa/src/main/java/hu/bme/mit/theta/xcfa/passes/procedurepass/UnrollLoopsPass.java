@@ -45,8 +45,8 @@ public class UnrollLoopsPass extends ProcedurePass {
             Set<XcfaEdge> reverseEdges = collectReverseEdges(builder.getInitLoc());
             Set<XcfaLocation> toDuplicate = new LinkedHashSet<>();
             reverseEdges.stream().filter(xcfaEdge -> reverseEdges.stream()
-                    .anyMatch(xcfaEdge1 -> xcfaEdge.getTarget() == xcfaEdge1.getSource()))
-                .forEach(xcfaEdge -> toDuplicate.add(xcfaEdge.getTarget()));
+                            .anyMatch(xcfaEdge1 -> xcfaEdge.getTarget() == xcfaEdge1.getSource()))
+                    .forEach(xcfaEdge -> toDuplicate.add(xcfaEdge.getTarget()));
             if (!toDuplicate.isEmpty()) {
                 for (XcfaLocation location : toDuplicate) {
                     XcfaLocation copy = XcfaLocation.uniqeCopyOf(location);
@@ -54,7 +54,7 @@ public class UnrollLoopsPass extends ProcedurePass {
                     for (XcfaEdge incomingEdge : new LinkedHashSet<>(location.getIncomingEdges())) {
                         builder.removeEdge(incomingEdge);
                         builder.addEdge(
-                            XcfaEdge.of(incomingEdge.getSource(), copy, incomingEdge.getLabels()));
+                                XcfaEdge.of(incomingEdge.getSource(), copy, incomingEdge.getLabels()));
                     }
                     builder.addEdge(XcfaEdge.of(copy, location, List.of()));
                 }
@@ -63,8 +63,8 @@ public class UnrollLoopsPass extends ProcedurePass {
                 this.reverseEdges.addAll(reverseEdges);
             }
             forwardEdges.addAll(builder.getEdges().stream()
-                .filter(xcfaEdge -> !this.reverseEdges.contains(xcfaEdge))
-                .collect(Collectors.toSet()));
+                    .filter(xcfaEdge -> !this.reverseEdges.contains(xcfaEdge))
+                    .collect(Collectors.toSet()));
             originalLocs.addAll(builder.getLocs());
             for (XcfaLocation location : builder.getLocs()) {
                 locationCopies.putIfAbsent(location, new Stack<>());
@@ -84,8 +84,8 @@ public class UnrollLoopsPass extends ProcedurePass {
 
         //noinspection UnstableApiUsage
         Streams.concat(forwardEdges.stream(), reverseEdges.stream()).forEach(
-            xcfaEdge -> builder.addEdge(XcfaEdge.of(locationLut.get(xcfaEdge.getSource()),
-                locationLut.get(xcfaEdge.getTarget()), xcfaEdge.getLabels())));
+                xcfaEdge -> builder.addEdge(XcfaEdge.of(locationLut.get(xcfaEdge.getSource()),
+                        locationLut.get(xcfaEdge.getTarget()), xcfaEdge.getLabels())));
 
         for (XcfaEdge reverseEdge : reverseEdges) {
             XcfaLocation source = lastLocationLut.get(reverseEdge.getSource());
@@ -98,7 +98,7 @@ public class UnrollLoopsPass extends ProcedurePass {
                     for (XcfaLocation forwardTarget : locationCopies.get(reverseEdge.getSource())) {
                         if (source != forwardTarget) {
                             builder.addEdge(
-                                XcfaEdge.of(source, forwardTarget, outgoingEdge.getLabels()));
+                                    XcfaEdge.of(source, forwardTarget, outgoingEdge.getLabels()));
                         }
                     }
                 }
@@ -106,9 +106,9 @@ public class UnrollLoopsPass extends ProcedurePass {
         }
 
         builder.addEdge(
-            XcfaEdge.of(locationLut.get(builder.getErrorLoc()), builder.getErrorLoc(), List.of()));
+                XcfaEdge.of(locationLut.get(builder.getErrorLoc()), builder.getErrorLoc(), List.of()));
         builder.addEdge(
-            XcfaEdge.of(locationLut.get(builder.getFinalLoc()), builder.getFinalLoc(), List.of()));
+                XcfaEdge.of(locationLut.get(builder.getFinalLoc()), builder.getFinalLoc(), List.of()));
 
         return builder;
     }

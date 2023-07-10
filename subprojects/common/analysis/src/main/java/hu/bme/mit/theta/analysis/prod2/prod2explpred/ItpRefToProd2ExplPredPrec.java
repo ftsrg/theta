@@ -27,25 +27,27 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.util.Collection;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ItpRefToProd2ExplPredPrec implements
-    RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
+        RefutationToPrec<Prod2Prec<ExplPrec, PredPrec>, ItpRefutation> {
 
     private final Set<VarDecl<?>> explPreferredVars;
     private final ExprSplitter exprSplitter;
 
     private ItpRefToProd2ExplPredPrec(final Set<VarDecl<?>> explPreferredVars,
-        final ExprSplitter exprSplitter) {
+                                      final ExprSplitter exprSplitter) {
         this.explPreferredVars = checkNotNull(explPreferredVars);
         this.exprSplitter = checkNotNull(exprSplitter);
     }
 
     public static ItpRefToProd2ExplPredPrec create(final Set<VarDecl<?>> explPreferredVars,
-        final ExprSplitter exprSplitter) {
+                                                   final ExprSplitter exprSplitter) {
         return new ItpRefToProd2ExplPredPrec(explPreferredVars, exprSplitter);
     }
 
@@ -74,9 +76,9 @@ public final class ItpRefToProd2ExplPredPrec implements
 
     @Override
     public Prod2Prec<ExplPrec, PredPrec> join(Prod2Prec<ExplPrec, PredPrec> prec1,
-        Prod2Prec<ExplPrec, PredPrec> prec2) {
+                                              Prod2Prec<ExplPrec, PredPrec> prec2) {
         return Prod2Prec.of(prec1.getPrec1().join(prec2.getPrec1()),
-            prec1.getPrec2().join(prec2.getPrec2()));
+                prec1.getPrec2().join(prec2.getPrec2()));
     }
 
     @Override

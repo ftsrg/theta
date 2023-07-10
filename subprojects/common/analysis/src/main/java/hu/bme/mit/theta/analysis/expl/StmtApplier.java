@@ -55,7 +55,7 @@ public final class StmtApplier {
     }
 
     public static ApplyResult apply(final Stmt stmt, final MutableValuation val,
-        final boolean approximate) {
+                                    final boolean approximate) {
         if (stmt instanceof AssignStmt) {
             final AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
             return applyAssign(assignStmt, val, approximate);
@@ -88,7 +88,7 @@ public final class StmtApplier {
     }
 
     private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,
-        final boolean approximate) {
+                                           final boolean approximate) {
         final VarDecl<?> varDecl = stmt.getVarDecl();
         final Expr<?> expr = ExprUtils.simplify(stmt.getExpr(), val);
         if (expr instanceof LitExpr<?>) {
@@ -104,7 +104,7 @@ public final class StmtApplier {
     }
 
     private static ApplyResult applyAssume(final AssumeStmt stmt, final MutableValuation val,
-        final boolean approximate) {
+                                           final boolean approximate) {
         final Expr<BoolType> cond = ExprUtils.simplify(stmt.getCond(), val);
         if (cond instanceof BoolLitExpr) {
             final BoolLitExpr condLit = (BoolLitExpr) cond;
@@ -126,7 +126,7 @@ public final class StmtApplier {
 
     // Helper function to evaluate assumptions of form [x = 1] or [not x != 1]
     private static boolean checkAssumeVarEqualsLit(final Expr<BoolType> cond,
-        final MutableValuation val) {
+                                                   final MutableValuation val) {
         RefExpr<?> ref = null;
         LitExpr<?> lit = null;
 
@@ -134,13 +134,13 @@ public final class StmtApplier {
             final EqExpr<?> condEq = (EqExpr<?>) cond;
 
             if (condEq.getLeftOp() instanceof RefExpr<?>
-                && condEq.getRightOp() instanceof LitExpr<?>) {
+                    && condEq.getRightOp() instanceof LitExpr<?>) {
                 ref = (RefExpr<?>) condEq.getLeftOp();
                 lit = (LitExpr<?>) condEq.getRightOp();
             }
 
             if (condEq.getRightOp() instanceof RefExpr<?>
-                && condEq.getLeftOp() instanceof LitExpr<?>) {
+                    && condEq.getLeftOp() instanceof LitExpr<?>) {
                 ref = (RefExpr<?>) condEq.getRightOp();
                 lit = (LitExpr<?>) condEq.getLeftOp();
             }
@@ -152,13 +152,13 @@ public final class StmtApplier {
                 final NeqExpr<?> condNeq = (NeqExpr<?>) condNE.getOp();
 
                 if (condNeq.getLeftOp() instanceof RefExpr<?>
-                    && condNeq.getRightOp() instanceof LitExpr<?>) {
+                        && condNeq.getRightOp() instanceof LitExpr<?>) {
                     ref = (RefExpr<?>) condNeq.getLeftOp();
                     lit = (LitExpr<?>) condNeq.getRightOp();
                 }
 
                 if (condNeq.getRightOp() instanceof RefExpr<?>
-                    && condNeq.getLeftOp() instanceof LitExpr<?>) {
+                        && condNeq.getLeftOp() instanceof LitExpr<?>) {
                     ref = (RefExpr<?>) condNeq.getRightOp();
                     lit = (LitExpr<?>) condNeq.getLeftOp();
                 }
@@ -184,7 +184,7 @@ public final class StmtApplier {
     }
 
     private static ApplyResult applySequence(final SequenceStmt stmt, final MutableValuation val,
-        final boolean approximate) {
+                                             final boolean approximate) {
         MutableValuation copy = MutableValuation.copyOf(val);
         for (Stmt subStmt : stmt.getStmts()) {
             ApplyResult res = apply(subStmt, copy, approximate);
@@ -198,13 +198,13 @@ public final class StmtApplier {
     }
 
     private static ApplyResult applyLoop(final LoopStmt stmt, final MutableValuation val,
-        final boolean approximate) {
+                                         final boolean approximate) {
         throw new UnsupportedOperationException(
-            String.format("Loop statement %s was not unrolled", stmt));
+                String.format("Loop statement %s was not unrolled", stmt));
     }
 
     private static ApplyResult applyNonDet(final NonDetStmt stmt, final MutableValuation val,
-        final boolean approximate) {
+                                           final boolean approximate) {
         List<MutableValuation> valuations = new ArrayList<MutableValuation>();
         int successIndex = -1;
         for (int i = 0; i < stmt.getStmts().size(); i++) {
@@ -245,7 +245,7 @@ public final class StmtApplier {
     }
 
     private static ApplyResult applyIf(final IfStmt stmt, final MutableValuation val,
-        final boolean approximate) {
+                                       final boolean approximate) {
         final Expr<BoolType> cond = ExprUtils.simplify(stmt.getCond(), val);
 
         if (cond instanceof BoolLitExpr) {
@@ -272,21 +272,21 @@ public final class StmtApplier {
 
             if (thenResult == ApplyResult.SUCCESS && elzeResult == ApplyResult.BOTTOM) {
                 SequenceStmt seq = SequenceStmt.of(
-                    ImmutableList.of(AssumeStmt.of(cond), stmt.getThen()));
+                        ImmutableList.of(AssumeStmt.of(cond), stmt.getThen()));
                 return apply(seq, val, approximate);
             }
 
             if (thenResult == ApplyResult.BOTTOM && elzeResult == ApplyResult.SUCCESS) {
                 SequenceStmt seq = SequenceStmt.of(
-                    ImmutableList.of(AssumeStmt.of(Not(cond)), stmt.getElze()));
+                        ImmutableList.of(AssumeStmt.of(Not(cond)), stmt.getElze()));
                 return apply(seq, val, approximate);
             }
 
             if (approximate) {
                 apply(stmt.getThen(), val, approximate);
                 var toRemove = val.getDecls().stream()
-                    .filter(it -> !val.eval(it).equals(elzeVal.eval(it)))
-                    .collect(Collectors.toSet());
+                        .filter(it -> !val.eval(it).equals(elzeVal.eval(it)))
+                        .collect(Collectors.toSet());
                 for (Decl<?> decl : toRemove) {
                     val.remove(decl);
                 }
@@ -298,7 +298,7 @@ public final class StmtApplier {
     }
 
     private static ApplyResult applyOrt(final OrtStmt stmt, final MutableValuation val,
-        final boolean approximate) {
+                                        final boolean approximate) {
         throw new UnsupportedOperationException();
     }
 

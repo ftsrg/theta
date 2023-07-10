@@ -31,7 +31,7 @@ public class DemoteThreadLocalGlobals extends XcfaPass {
     @Override
     public XCFA.Builder run(XCFA.Builder builder) {
         for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> entry : new ArrayList<>(
-            builder.getGlobalVars().entrySet())) {
+                builder.getGlobalVars().entrySet())) {
             VarDecl<?> varDecl = entry.getKey();
             Optional<LitExpr<?>> litExpr = entry.getValue();
 

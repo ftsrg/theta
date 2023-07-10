@@ -72,7 +72,7 @@ public class PnmlTest {
 
     @Test
     public void test()
-        throws IOException, XPathExpressionException, SAXException, ParserConfigurationException {
+            throws IOException, XPathExpressionException, SAXException, ParserConfigurationException {
 
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
 
@@ -80,14 +80,14 @@ public class PnmlTest {
 
         XSTS xsts;
         try (InputStream propStream = new ByteArrayInputStream(
-            ("prop { " + targetMarking + " }").getBytes())) {
+                ("prop { " + targetMarking + " }").getBytes())) {
             xsts = PnmlToXSTS.createXSTS(pnmlNet, propStream);
         }
 
         final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain,
-            XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance(),
-            Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS)
-            .maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
+                XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance(),
+                Z3SolverFactory.getInstance()).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS)
+                .maxEnum(250).initPrec(XstsConfigBuilder.InitPrec.ALLVARS).logger(logger).build(xsts);
         final SafetyResult<?, ?> status = configuration.check();
         if (safe) {
             assertTrue(status.isSafe());

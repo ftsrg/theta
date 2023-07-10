@@ -23,7 +23,9 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -86,7 +88,7 @@ final class StsDslHelper {
     }
 
     public static Substitution createConstDefs(final Scope scope, final Substitution assignment,
-        final List<? extends ConstDeclContext> constDeclCtxs) {
+                                               final List<? extends ConstDeclContext> constDeclCtxs) {
         final Map<Decl<?>, Expr<?>> declToExpr = Containers.createMap();
         for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
             addDef(scope, assignment, declToExpr, constDeclCtx);
@@ -95,8 +97,8 @@ final class StsDslHelper {
     }
 
     private static void addDef(final Scope scope, final Substitution assignment,
-        final Map<Decl<?>, Expr<?>> declToExpr,
-        final ConstDeclContext constDeclCtx) {
+                               final Map<Decl<?>, Expr<?>> declToExpr,
+                               final ConstDeclContext constDeclCtx) {
         final String name = constDeclCtx.ddecl.name.getText();
         final DeclSymbol declSymbol = resolveDecl(scope, name);
         final Decl<?> decl = declSymbol.getDecl();
@@ -111,35 +113,35 @@ final class StsDslHelper {
     }
 
     public static Expr<?> createExpr(final Scope scope, final Substitution assignment,
-        final ExprContext exprCtx) {
+                                     final ExprContext exprCtx) {
         final Expr<?> expr = exprCtx.accept(new StsExprCreatorVisitor(scope, assignment));
         assert expr != null;
         return expr;
     }
 
     public static List<Expr<?>> createExprList(final Scope scope, final Substitution assignment,
-        final ExprListContext exprListCtx) {
+                                               final ExprListContext exprListCtx) {
         if (exprListCtx == null || exprListCtx.exprs == null) {
             return Collections.emptyList();
         } else {
             final List<Expr<?>> exprs = exprListCtx.exprs.stream()
-                .map(ctx -> createExpr(scope, assignment, ctx))
-                .collect(toList());
+                    .map(ctx -> createExpr(scope, assignment, ctx))
+                    .collect(toList());
             return exprs;
         }
     }
 
     public static Expr<BoolType> createBoolExpr(final Scope scope, final Substitution assignment,
-        final ExprContext exprCtx) {
+                                                final ExprContext exprCtx) {
         return TypeUtils.cast(createExpr(scope, assignment, exprCtx), Bool());
     }
 
     public static List<Expr<BoolType>> createBoolExprList(final Scope scope,
-        final Substitution assignment,
-        final ExprListContext exprListCtx) {
+                                                          final Substitution assignment,
+                                                          final ExprListContext exprListCtx) {
         final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
         final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool()))
-            .collect(toList());
+                .collect(toList());
         return boolExprs;
     }
 

@@ -83,17 +83,17 @@ public final class XstsCustomType implements XstsType<IntType> {
     @Override
     public Expr<BoolType> createBoundExpr(VarDecl<IntType> decl) {
         return Or(literals.stream()
-            .map(lit -> Eq(decl.getRef(), Int(lit.getIntValue())))
-            .collect(Collectors.toList()));
+                .map(lit -> Eq(decl.getRef(), Int(lit.getIntValue())))
+                .collect(Collectors.toList()));
     }
 
     @Override
     public String serializeLiteral(LitExpr<IntType> literal) {
         final IntLitExpr intLitExpr = (IntLitExpr) literal;
         final var customLiteral = literals.stream()
-            .filter(lit -> lit.getIntValue().equals(intLitExpr.getValue())).findFirst();
+                .filter(lit -> lit.getIntValue().equals(intLitExpr.getValue())).findFirst();
         Preconditions.checkArgument(customLiteral.isPresent(), "Literal %s not found",
-            intLitExpr.getValue());
+                intLitExpr.getValue());
         return customLiteral.get().getName();
     }
 }

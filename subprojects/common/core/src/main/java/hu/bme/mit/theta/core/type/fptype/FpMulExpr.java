@@ -34,7 +34,7 @@ public class FpMulExpr extends MulExpr<FpType> {
     private final FpRoundingMode roundingMode;
 
     private FpMulExpr(final FpRoundingMode roundingMode,
-        final Iterable<? extends Expr<FpType>> ops) {
+                      final Iterable<? extends Expr<FpType>> ops) {
         super(ops);
         checkAllTypesEqual(ops);
         checkNotNull(roundingMode);
@@ -42,15 +42,15 @@ public class FpMulExpr extends MulExpr<FpType> {
     }
 
     public static FpMulExpr of(final FpRoundingMode roundingMode,
-        final Iterable<? extends Expr<FpType>> ops) {
+                               final Iterable<? extends Expr<FpType>> ops) {
         return new FpMulExpr(roundingMode, ops);
     }
 
     public static FpMulExpr create(final FpRoundingMode roundingMode,
-        final List<? extends Expr<?>> ops) {
+                                   final List<? extends Expr<?>> ops) {
         checkNotNull(ops);
         return FpMulExpr.of(roundingMode,
-            ops.stream().map(TypeUtils::castFp).collect(toImmutableList()));
+                ops.stream().map(TypeUtils::castFp).collect(toImmutableList()));
     }
 
     public FpRoundingMode getRoundingMode() {
@@ -65,9 +65,9 @@ public class FpMulExpr extends MulExpr<FpType> {
     @Override
     public FpLitExpr eval(final Valuation val) {
         return getOps().stream().skip(1).reduce(
-            (FpLitExpr) getOps().get(0).eval(val),
-            (op1, op2) -> (op1.mul(roundingMode, (FpLitExpr) op2.eval(val))),
-            (op1, op2) -> (op1.mul(roundingMode, op2))
+                (FpLitExpr) getOps().get(0).eval(val),
+                (op1, op2) -> (op1.mul(roundingMode, (FpLitExpr) op2.eval(val))),
+                (op1, op2) -> (op1.mul(roundingMode, op2))
         );
     }
 

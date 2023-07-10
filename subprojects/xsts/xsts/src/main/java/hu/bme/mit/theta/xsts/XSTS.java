@@ -74,8 +74,8 @@ public final class XSTS {
     }
 
     public XSTS(final Map<VarDecl<?>, XstsType<?>> varToType, final Set<VarDecl<?>> ctrlVars,
-        final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env,
-        final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
+                final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env,
+                final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
         this.tran = checkNotNull(tran);
         this.init = checkNotNull(init);
         this.env = checkNotNull(env);

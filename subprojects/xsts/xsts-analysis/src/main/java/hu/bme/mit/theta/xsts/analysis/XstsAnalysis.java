@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XstsAnalysis<S extends ExprState, P extends Prec>
-    implements Analysis<XstsState<S>, XstsAction, P> {
+        implements Analysis<XstsState<S>, XstsAction, P> {
 
     private final PartialOrd<XstsState<S>> partialOrd;
     private final InitFunc<XstsState<S>, P> initFunc;
@@ -35,7 +35,7 @@ public final class XstsAnalysis<S extends ExprState, P extends Prec>
     }
 
     public static <S extends ExprState, P extends Prec> XstsAnalysis<S, P> create(
-        final Analysis<S, ? super XstsAction, ? super P> analysis) {
+            final Analysis<S, ? super XstsAction, ? super P> analysis) {
         return new XstsAnalysis<>(analysis);
     }
 

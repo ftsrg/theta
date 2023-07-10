@@ -59,17 +59,17 @@ public class ExprSizeTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {True(), 1},
+                {True(), 1},
 
-            {A, 1},
+                {A, 1},
 
-            {And(A, True()), 3},
+                {And(A, True()), 3},
 
-            {And(A, True(), False()), 4},
+                {And(A, True(), False()), 4},
 
-            {And(A, And(True(), False())), 5},
+                {And(A, And(True(), False())), 5},
 
-            {Add(B, Sub(Int(1), Int(2)), Int(3)), 6},
+                {Add(B, Sub(Int(1), Int(2)), Int(3)), 6},
 
         });
     }

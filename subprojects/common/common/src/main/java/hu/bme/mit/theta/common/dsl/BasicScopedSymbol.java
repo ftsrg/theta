@@ -27,7 +27,7 @@ public final class BasicScopedSymbol implements ScopedSymbol {
     private final BasicScope scope;
 
     public BasicScopedSymbol(final String name, final Scope eclosingScope,
-        final Collection<? extends Symbol> symbols) {
+                             final Collection<? extends Symbol> symbols) {
         checkNotNull(name);
         checkArgument(name.length() > 0);
         this.name = name;

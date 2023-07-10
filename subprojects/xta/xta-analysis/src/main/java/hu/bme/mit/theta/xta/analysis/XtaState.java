@@ -72,7 +72,7 @@ public final class XtaState<S extends State> implements ExprState {
     }
 
     public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
-        final Collection<? extends S> states) {
+                                                                         final Collection<? extends S> states) {
         final Collection<XtaState<S>> result = new ArrayList<>();
         for (final S state : states) {
             final XtaState<S> initXtaState = XtaState.of(locs, state);
@@ -144,7 +144,7 @@ public final class XtaState<S extends State> implements ExprState {
     public String toString() {
         final String prefix = getClass().getSimpleName();
         final String locString = Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName))
-            .toString();
+                .toString();
         return Utils.lispStringBuilder(prefix).add(locString).body().add(state).toString();
     }
 

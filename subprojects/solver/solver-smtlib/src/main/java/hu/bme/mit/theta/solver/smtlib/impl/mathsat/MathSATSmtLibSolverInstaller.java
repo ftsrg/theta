@@ -45,59 +45,59 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
 
         versions = new ArrayList<>();
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.6.7"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(MAC, X64, "osx")
-            .addString(WINDOWS, X64, "win64-msvc")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(MAC, X64, "osx")
+                .addString(WINDOWS, X64, "win64-msvc")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.5.0"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(MAC, X64, "darwin-libcxx-x86_64")
-            .addString(WINDOWS, X64, "win64-msvc")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(MAC, X64, "darwin-libcxx-x86_64")
+                .addString(WINDOWS, X64, "win64-msvc")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.3.6"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(LINUX, X86, "linux-x86")
-            .addString(MAC, X64, "darwin-libcxx-x86_64")
-            .addString(WINDOWS, X64, "win64-msvc")
-            .addString(WINDOWS, X86, "win32-msvc")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(LINUX, X86, "linux-x86")
+                .addString(MAC, X64, "darwin-libcxx-x86_64")
+                .addString(WINDOWS, X64, "win64-msvc")
+                .addString(WINDOWS, X86, "win32-msvc")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.2.12"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(LINUX, X86, "linux-x86")
-            .addString(MAC, X64, "darwin-libcxx-x86_64")
-            .addString(WINDOWS, X64, "win64-msvc18")
-            .addString(WINDOWS, X86, "win32-msvc18")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(LINUX, X86, "linux-x86")
+                .addString(MAC, X64, "darwin-libcxx-x86_64")
+                .addString(WINDOWS, X64, "win64-msvc18")
+                .addString(WINDOWS, X86, "win32-msvc18")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.2.9"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(LINUX, X86, "linux-x86")
-            .addString(MAC, X64, "darwin-libcxx-x86_64")
-            .addString(WINDOWS, X64, "win64-msvc")
-            .addString(WINDOWS, X86, "win32-msvc")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(LINUX, X86, "linux-x86")
+                .addString(MAC, X64, "darwin-libcxx-x86_64")
+                .addString(WINDOWS, X64, "win64-msvc")
+                .addString(WINDOWS, X86, "win32-msvc")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.2.6"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(LINUX, X86, "linux-x86")
-            .addString(MAC, X64, "darwin-x86_64")
-            .addString(WINDOWS, X64, "win64-msvc")
-            .addString(WINDOWS, X86, "win32-msvc")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(LINUX, X86, "linux-x86")
+                .addString(MAC, X64, "darwin-x86_64")
+                .addString(WINDOWS, X64, "win64-msvc")
+                .addString(WINDOWS, X86, "win32-msvc")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.1.10"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(LINUX, X86, "linux-x86")
-            .addString(MAC, X64, "darwin-x86_64")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(LINUX, X86, "linux-x86")
+                .addString(MAC, X64, "darwin-x86_64")
+                .build()
         );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("5.1.1"))
-            .addString(LINUX, X64, "linux-x86_64")
-            .addString(LINUX, X86, "linux-x86")
-            .build()
+                .addString(LINUX, X64, "linux-x86_64")
+                .addString(LINUX, X86, "linux-x86")
+                .build()
         );
     }
 
@@ -108,7 +108,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
 
     @Override
     protected void installSolver(Path installDir, String version)
-        throws SmtLibSolverInstallerException {
+            throws SmtLibSolverInstallerException {
         final var semVer = SemVer.of(version);
         String archStr = null;
 
@@ -120,13 +120,13 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
         }
         if (archStr == null) {
             throw new SmtLibSolverInstallerException(
-                String.format("MathSAT on operating system %s and architecture %s is not supported",
-                    OsHelper.getOs(), OsHelper.getArch()));
+                    String.format("MathSAT on operating system %s and architecture %s is not supported",
+                            OsHelper.getOs(), OsHelper.getArch()));
         }
 
         final var downloadUrl = URI.create(String.format(
-            "https://mathsat.fbk.eu/download.php?file=mathsat-%s-%s.%s",
-            version, archStr, OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"
+                "https://mathsat.fbk.eu/download.php?file=mathsat-%s-%s.%s",
+                version, archStr, OsHelper.getOs().equals(WINDOWS) ? "zip" : "tar.gz"
         ));
 
         logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", downloadUrl.toString());
@@ -138,7 +138,7 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
                 Compress.extract(inputStream, installDir, Compress.CompressionType.TARGZ);
             }
             installDir.resolve("bin").resolve(getSolverBinaryName()).toFile()
-                .setExecutable(true, true);
+                    .setExecutable(true, true);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
@@ -158,27 +158,27 @@ public class MathSATSmtLibSolverInstaller extends SmtLibSolverInstaller.Default 
 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version,
-        final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+                                          final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath = solverPath != null ? solverPath
-            : installDir.resolve("bin").resolve(getSolverBinaryName());
+                : installDir.resolve("bin").resolve(getSolverBinaryName());
         return MathSATSmtLibSolverFactory.create(
-            solverFilePath, solverArgs,
-            !SemVer.valid(version) || SemVer.of(version).compareTo(SemVer.of("5.4.0")) >= 0
+                solverFilePath, solverArgs,
+                !SemVer.valid(version) || SemVer.of(version).compareTo(SemVer.of("5.4.0")) >= 0
         );
     }
 
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-            "5.6.8", "5.6.7", "5.6.6", "5.6.5", "5.6.4", "5.6.3", "5.6.2", "5.6.1", "5.6.0",
-            "5.5.4", "5.5.3", "5.5.2", "5.5.1", "5.5.0",
-            "5.4.1", "5.4.0",
-            "5.3.14", "5.3.13", "5.3.12", "5.3.11", "5.3.10", "5.3.9", "5.3.8", "5.3.7", "5.3.6",
-            "5.3.5", "5.3.4", "5.3.3", "5.3.2", "5.3.1",
-            "5.2.12", "5.2.11", "5.2.10", "5.2.9", "5.2.8", "5.2.7", "5.2.6", "5.2.5", "5.2.4",
-            "5.2.3", "5.2.2", "5.2.1",
-            "5.1.12", "5.1.11", "5.1.10", "5.1.9", "5.1.8", "5.1.7", "5.1.6", "5.1.5", "5.1.4",
-            "5.1.3"
+                "5.6.8", "5.6.7", "5.6.6", "5.6.5", "5.6.4", "5.6.3", "5.6.2", "5.6.1", "5.6.0",
+                "5.5.4", "5.5.3", "5.5.2", "5.5.1", "5.5.0",
+                "5.4.1", "5.4.0",
+                "5.3.14", "5.3.13", "5.3.12", "5.3.11", "5.3.10", "5.3.9", "5.3.8", "5.3.7", "5.3.6",
+                "5.3.5", "5.3.4", "5.3.3", "5.3.2", "5.3.1",
+                "5.2.12", "5.2.11", "5.2.10", "5.2.9", "5.2.8", "5.2.7", "5.2.6", "5.2.5", "5.2.4",
+                "5.2.3", "5.2.2", "5.2.1",
+                "5.1.12", "5.1.11", "5.1.10", "5.1.9", "5.1.8", "5.1.7", "5.1.6", "5.1.5", "5.1.4",
+                "5.1.3"
         );
     }
 

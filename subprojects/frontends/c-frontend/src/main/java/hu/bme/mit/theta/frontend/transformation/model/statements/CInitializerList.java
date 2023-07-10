@@ -61,12 +61,12 @@ public class CInitializerList extends CStatement {
             Expr<E> expr = (Expr<E>) type.castTo(cStatement.get2().getExpression());
             list.add(Tuple2.of(currentValue, expr));
             currentValue = (LitExpr<I>) Add(currentValue, unitValue).eval(
-                ImmutableValuation.empty());
+                    ImmutableValuation.empty());
         }
         return ArrayInitExpr.of(list,
-            (Expr<E>) type.getNullValue(),
-            (ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong().getSmtType(),
-                type.getSmtType()));
+                (Expr<E>) type.getNullValue(),
+                (ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong().getSmtType(),
+                        type.getSmtType()));
     }
 
     public void addStatement(CStatement index, CStatement value) {

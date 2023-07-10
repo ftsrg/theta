@@ -98,7 +98,7 @@ public final class RatDivExpr extends DivExpr<RatType> {
         } else if (obj instanceof RatDivExpr) {
             final RatDivExpr that = (RatDivExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

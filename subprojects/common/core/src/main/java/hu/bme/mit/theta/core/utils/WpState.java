@@ -118,8 +118,8 @@ public final class WpState {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr)
-            .add(Integer.valueOf(constCount))
-            .toString();
+                .add(Integer.valueOf(constCount))
+                .toString();
     }
 
     private static final class WpVisitor implements StmtVisitor<WpState, WpState> {
@@ -143,10 +143,10 @@ public final class WpState {
 
         @Override
         public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt,
-            final WpState state) {
+                                                     final WpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final Substitution sub = BasicSubstitution.builder().put(varDecl, stmt.getExpr())
-                .build();
+                    .build();
             final Expr<BoolType> expr = sub.apply(state.getExpr());
             final int constCount = state.constCount;
             return new WpState(expr, constCount);
@@ -154,7 +154,7 @@ public final class WpState {
 
         @Override
         public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt,
-            final WpState state) {
+                                                     final WpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final int constCount = state.constCount + 1;
             final String valName = String.format("_wp_%d", constCount);
@@ -217,13 +217,13 @@ public final class WpState {
 
         @Override
         public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt,
-            final WpState state) {
+                                                     final WpState state) {
             return WpVisitor.getInstance().visit(stmt, state);
         }
 
         @Override
         public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt,
-            final WpState state) {
+                                                     final WpState state) {
             return WpVisitor.getInstance().visit(stmt, state);
         }
 

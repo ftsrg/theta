@@ -136,7 +136,7 @@ public final class IntMatrix {
             for (int j = 0; j < nCols; j++) {
                 if (j < nCols - 1) {
                     sb.append(
-                        String.format("%" + Integer.toString(-maxLength - 1) + "s", get(i, j)));
+                            String.format("%" + Integer.toString(-maxLength - 1) + "s", get(i, j)));
                 } else {
                     sb.append(get(i, j));
                     if (i < getNRows() - 1) {

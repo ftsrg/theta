@@ -50,7 +50,7 @@ public class Reference<R extends Type, T extends Type> extends UnaryExpr<T, R> {
     }
 
     public static <R extends Type, T extends Type> Reference<R, T> of(Expr<T> op, R ptrType,
-        int id) {
+                                                                      int id) {
         return new Reference<>(op, ptrType, id);
     }
 
@@ -62,7 +62,7 @@ public class Reference<R extends Type, T extends Type> extends UnaryExpr<T, R> {
     @Override
     public LitExpr<R> eval(Valuation val) {
         throw new IllegalStateException(
-            "Reference/Dereference expressions are not meant to be evaluated!");
+                "Reference/Dereference expressions are not meant to be evaluated!");
     }
 
     @Override

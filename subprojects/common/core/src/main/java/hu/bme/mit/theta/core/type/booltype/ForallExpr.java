@@ -34,12 +34,12 @@ public final class ForallExpr extends QuantifiedExpr {
     }
 
     public static ForallExpr of(final Iterable<? extends ParamDecl<?>> paramDecls,
-        final Expr<BoolType> op) {
+                                final Expr<BoolType> op) {
         return new ForallExpr(paramDecls, op);
     }
 
     public static ForallExpr create(final Iterable<? extends ParamDecl<?>> paramDecls,
-        final Expr<?> op) {
+                                    final Expr<?> op) {
         final Expr<BoolType> newOp = cast(op, Bool());
         return ForallExpr.of(paramDecls, newOp);
     }
@@ -65,7 +65,7 @@ public final class ForallExpr extends QuantifiedExpr {
         } else if (obj instanceof ForallExpr) {
             final ForallExpr that = (ForallExpr) obj;
             return this.getParamDecls().equals(that.getParamDecls()) && this.getOp()
-                .equals(that.getOp());
+                    .equals(that.getOp());
         } else {
             return false;
         }

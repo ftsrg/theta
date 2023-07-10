@@ -35,10 +35,10 @@ public final class StsTraceConcretizer {
     }
 
     public static Trace<Valuation, StsAction> concretize(
-        final STS sts, final Trace<ExprState, StsAction> trace, final SolverFactory solverFactory) {
+            final STS sts, final Trace<ExprState, StsAction> trace, final SolverFactory solverFactory) {
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(
-            sts.getInit(),
-            BoolExprs.Not(sts.getProp()), solverFactory.createItpSolver());
+                sts.getInit(),
+                BoolExprs.Not(sts.getProp()), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
         checkArgument(status.isFeasible(), "Infeasible trace.");
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();

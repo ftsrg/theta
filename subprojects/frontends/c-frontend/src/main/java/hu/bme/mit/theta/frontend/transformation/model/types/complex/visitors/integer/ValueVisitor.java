@@ -46,10 +46,10 @@ public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitEx
     }
 
     private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(
-        CArray type, String param) {
+            CArray type, String param) {
         //noinspection unchecked
         ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
         return Array(List.of(), cast(type.getEmbeddedType().getValue(param), smtType.getElemType()),
-            smtType);
+                smtType);
     }
 }

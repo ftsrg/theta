@@ -150,216 +150,216 @@ public final class ExprSimplifier {
 
     private static final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
 
-        // Boolean
+            // Boolean
 
-        .addCase(NotExpr.class, ExprSimplifier::simplifyNot)
+            .addCase(NotExpr.class, ExprSimplifier::simplifyNot)
 
-        .addCase(ImplyExpr.class, ExprSimplifier::simplifyImply)
+            .addCase(ImplyExpr.class, ExprSimplifier::simplifyImply)
 
-        .addCase(IffExpr.class, ExprSimplifier::simplifyIff)
+            .addCase(IffExpr.class, ExprSimplifier::simplifyIff)
 
-        .addCase(XorExpr.class, ExprSimplifier::simplifyXor)
+            .addCase(XorExpr.class, ExprSimplifier::simplifyXor)
 
-        .addCase(AndExpr.class, ExprSimplifier::simplifyAnd)
+            .addCase(AndExpr.class, ExprSimplifier::simplifyAnd)
 
-        .addCase(OrExpr.class, ExprSimplifier::simplifyOr)
+            .addCase(OrExpr.class, ExprSimplifier::simplifyOr)
 
-        // Rational
+            // Rational
 
-        .addCase(RatAddExpr.class, ExprSimplifier::simplifyRatAdd)
+            .addCase(RatAddExpr.class, ExprSimplifier::simplifyRatAdd)
 
-        .addCase(RatSubExpr.class, ExprSimplifier::simplifyRatSub)
+            .addCase(RatSubExpr.class, ExprSimplifier::simplifyRatSub)
 
-        .addCase(RatPosExpr.class, ExprSimplifier::simplifyRatPos)
+            .addCase(RatPosExpr.class, ExprSimplifier::simplifyRatPos)
 
-        .addCase(RatNegExpr.class, ExprSimplifier::simplifyRatNeg)
+            .addCase(RatNegExpr.class, ExprSimplifier::simplifyRatNeg)
 
-        .addCase(RatMulExpr.class, ExprSimplifier::simplifyRatMul)
+            .addCase(RatMulExpr.class, ExprSimplifier::simplifyRatMul)
 
-        .addCase(RatDivExpr.class, ExprSimplifier::simplifyRatDiv)
+            .addCase(RatDivExpr.class, ExprSimplifier::simplifyRatDiv)
 
-        .addCase(RatEqExpr.class, ExprSimplifier::simplifyRatEq)
+            .addCase(RatEqExpr.class, ExprSimplifier::simplifyRatEq)
 
-        .addCase(RatNeqExpr.class, ExprSimplifier::simplifyRatNeq)
+            .addCase(RatNeqExpr.class, ExprSimplifier::simplifyRatNeq)
 
-        .addCase(RatGeqExpr.class, ExprSimplifier::simplifyRatGeq)
+            .addCase(RatGeqExpr.class, ExprSimplifier::simplifyRatGeq)
 
-        .addCase(RatGtExpr.class, ExprSimplifier::simplifyRatGt)
+            .addCase(RatGtExpr.class, ExprSimplifier::simplifyRatGt)
 
-        .addCase(RatLeqExpr.class, ExprSimplifier::simplifyRatLeq)
+            .addCase(RatLeqExpr.class, ExprSimplifier::simplifyRatLeq)
 
-        .addCase(RatLtExpr.class, ExprSimplifier::simplifyRatLt)
+            .addCase(RatLtExpr.class, ExprSimplifier::simplifyRatLt)
 
-        .addCase(RatToIntExpr.class, ExprSimplifier::simplifyRatToInt)
+            .addCase(RatToIntExpr.class, ExprSimplifier::simplifyRatToInt)
 
-        // Integer
+            // Integer
 
-        .addCase(IntToRatExpr.class, ExprSimplifier::simplifyIntToRat)
+            .addCase(IntToRatExpr.class, ExprSimplifier::simplifyIntToRat)
 
-        .addCase(IntAddExpr.class, ExprSimplifier::simplifyIntAdd)
+            .addCase(IntAddExpr.class, ExprSimplifier::simplifyIntAdd)
 
-        .addCase(IntSubExpr.class, ExprSimplifier::simplifyIntSub)
+            .addCase(IntSubExpr.class, ExprSimplifier::simplifyIntSub)
 
-        .addCase(IntPosExpr.class, ExprSimplifier::simplifyIntPos)
+            .addCase(IntPosExpr.class, ExprSimplifier::simplifyIntPos)
 
-        .addCase(IntNegExpr.class, ExprSimplifier::simplifyIntNeg)
+            .addCase(IntNegExpr.class, ExprSimplifier::simplifyIntNeg)
 
-        .addCase(IntMulExpr.class, ExprSimplifier::simplifyIntMul)
+            .addCase(IntMulExpr.class, ExprSimplifier::simplifyIntMul)
 
-        .addCase(IntDivExpr.class, ExprSimplifier::simplifyIntDiv)
+            .addCase(IntDivExpr.class, ExprSimplifier::simplifyIntDiv)
 
-        .addCase(IntModExpr.class, ExprSimplifier::simplifyMod)
+            .addCase(IntModExpr.class, ExprSimplifier::simplifyMod)
 
-        .addCase(IntRemExpr.class, ExprSimplifier::simplifyRem)
+            .addCase(IntRemExpr.class, ExprSimplifier::simplifyRem)
 
-        .addCase(IntEqExpr.class, ExprSimplifier::simplifyIntEq)
+            .addCase(IntEqExpr.class, ExprSimplifier::simplifyIntEq)
 
-        .addCase(IntNeqExpr.class, ExprSimplifier::simplifyIntNeq)
+            .addCase(IntNeqExpr.class, ExprSimplifier::simplifyIntNeq)
 
-        .addCase(IntGeqExpr.class, ExprSimplifier::simplifyIntGeq)
+            .addCase(IntGeqExpr.class, ExprSimplifier::simplifyIntGeq)
 
-        .addCase(IntGtExpr.class, ExprSimplifier::simplifyIntGt)
+            .addCase(IntGtExpr.class, ExprSimplifier::simplifyIntGt)
 
-        .addCase(IntLeqExpr.class, ExprSimplifier::simplifyIntLeq)
+            .addCase(IntLeqExpr.class, ExprSimplifier::simplifyIntLeq)
 
-        .addCase(IntLtExpr.class, ExprSimplifier::simplifyIntLt)
+            .addCase(IntLtExpr.class, ExprSimplifier::simplifyIntLt)
 
-        // Array
+            // Array
 
-        .addCase(ArrayReadExpr.class, ExprSimplifier::simplifyArrayRead)
+            .addCase(ArrayReadExpr.class, ExprSimplifier::simplifyArrayRead)
 
-        .addCase(ArrayWriteExpr.class, ExprSimplifier::simplifyArrayWrite)
+            .addCase(ArrayWriteExpr.class, ExprSimplifier::simplifyArrayWrite)
 
-        .addCase(ArrayInitExpr.class, ExprSimplifier::simplifyArrayInit)
+            .addCase(ArrayInitExpr.class, ExprSimplifier::simplifyArrayInit)
 
-        // Bitvectors
+            // Bitvectors
 
-        .addCase(BvConcatExpr.class, ExprSimplifier::simplifyBvConcat)
+            .addCase(BvConcatExpr.class, ExprSimplifier::simplifyBvConcat)
 
-        .addCase(BvExtractExpr.class, ExprSimplifier::simplifyBvExtract)
+            .addCase(BvExtractExpr.class, ExprSimplifier::simplifyBvExtract)
 
-        .addCase(BvZExtExpr.class, ExprSimplifier::simplifyBvZExt)
+            .addCase(BvZExtExpr.class, ExprSimplifier::simplifyBvZExt)
 
-        .addCase(BvSExtExpr.class, ExprSimplifier::simplifyBvSExt)
+            .addCase(BvSExtExpr.class, ExprSimplifier::simplifyBvSExt)
 
-        .addCase(BvAddExpr.class, ExprSimplifier::simplifyBvAdd)
+            .addCase(BvAddExpr.class, ExprSimplifier::simplifyBvAdd)
 
-        .addCase(BvSubExpr.class, ExprSimplifier::simplifyBvSub)
+            .addCase(BvSubExpr.class, ExprSimplifier::simplifyBvSub)
 
-        .addCase(BvPosExpr.class, ExprSimplifier::simplifyBvPos)
+            .addCase(BvPosExpr.class, ExprSimplifier::simplifyBvPos)
 
-        .addCase(BvNegExpr.class, ExprSimplifier::simplifyBvNeg)
+            .addCase(BvNegExpr.class, ExprSimplifier::simplifyBvNeg)
 
-        .addCase(BvMulExpr.class, ExprSimplifier::simplifyBvMul)
+            .addCase(BvMulExpr.class, ExprSimplifier::simplifyBvMul)
 
-        .addCase(BvUDivExpr.class, ExprSimplifier::simplifyBvUDiv)
+            .addCase(BvUDivExpr.class, ExprSimplifier::simplifyBvUDiv)
 
-        .addCase(BvSDivExpr.class, ExprSimplifier::simplifyBvSDiv)
+            .addCase(BvSDivExpr.class, ExprSimplifier::simplifyBvSDiv)
 
-        .addCase(BvSModExpr.class, ExprSimplifier::simplifyBvSMod)
+            .addCase(BvSModExpr.class, ExprSimplifier::simplifyBvSMod)
 
-        .addCase(BvURemExpr.class, ExprSimplifier::simplifyBvURem)
+            .addCase(BvURemExpr.class, ExprSimplifier::simplifyBvURem)
 
-        .addCase(BvSRemExpr.class, ExprSimplifier::simplifyBvSRem)
+            .addCase(BvSRemExpr.class, ExprSimplifier::simplifyBvSRem)
 
-        .addCase(BvAndExpr.class, ExprSimplifier::simplifyBvAnd)
+            .addCase(BvAndExpr.class, ExprSimplifier::simplifyBvAnd)
 
-        .addCase(BvOrExpr.class, ExprSimplifier::simplifyBvOr)
+            .addCase(BvOrExpr.class, ExprSimplifier::simplifyBvOr)
 
-        .addCase(BvXorExpr.class, ExprSimplifier::simplifyBvXor)
+            .addCase(BvXorExpr.class, ExprSimplifier::simplifyBvXor)
 
-        .addCase(BvNotExpr.class, ExprSimplifier::simplifyBvNot)
+            .addCase(BvNotExpr.class, ExprSimplifier::simplifyBvNot)
 
-        .addCase(BvShiftLeftExpr.class, ExprSimplifier::simplifyBvShiftLeft)
+            .addCase(BvShiftLeftExpr.class, ExprSimplifier::simplifyBvShiftLeft)
 
-        .addCase(BvArithShiftRightExpr.class, ExprSimplifier::simplifyBvArithShiftRight)
+            .addCase(BvArithShiftRightExpr.class, ExprSimplifier::simplifyBvArithShiftRight)
 
-        .addCase(BvLogicShiftRightExpr.class, ExprSimplifier::simplifyBvLogicShiftRight)
+            .addCase(BvLogicShiftRightExpr.class, ExprSimplifier::simplifyBvLogicShiftRight)
 
-        .addCase(BvRotateLeftExpr.class, ExprSimplifier::simplifyBvRotateLeft)
+            .addCase(BvRotateLeftExpr.class, ExprSimplifier::simplifyBvRotateLeft)
 
-        .addCase(BvRotateRightExpr.class, ExprSimplifier::simplifyBvRotateRight)
+            .addCase(BvRotateRightExpr.class, ExprSimplifier::simplifyBvRotateRight)
 
-        .addCase(BvEqExpr.class, ExprSimplifier::simplifyBvEq)
+            .addCase(BvEqExpr.class, ExprSimplifier::simplifyBvEq)
 
-        .addCase(BvNeqExpr.class, ExprSimplifier::simplifyBvNeq)
+            .addCase(BvNeqExpr.class, ExprSimplifier::simplifyBvNeq)
 
-        .addCase(BvUGeqExpr.class, ExprSimplifier::simplifyBvUGeq)
+            .addCase(BvUGeqExpr.class, ExprSimplifier::simplifyBvUGeq)
 
-        .addCase(BvUGtExpr.class, ExprSimplifier::simplifyBvUGt)
+            .addCase(BvUGtExpr.class, ExprSimplifier::simplifyBvUGt)
 
-        .addCase(BvULeqExpr.class, ExprSimplifier::simplifyBvULeq)
+            .addCase(BvULeqExpr.class, ExprSimplifier::simplifyBvULeq)
 
-        .addCase(BvULtExpr.class, ExprSimplifier::simplifyBvULt)
+            .addCase(BvULtExpr.class, ExprSimplifier::simplifyBvULt)
 
-        .addCase(BvSGeqExpr.class, ExprSimplifier::simplifyBvSGeq)
+            .addCase(BvSGeqExpr.class, ExprSimplifier::simplifyBvSGeq)
 
-        .addCase(BvSGtExpr.class, ExprSimplifier::simplifyBvSGt)
+            .addCase(BvSGtExpr.class, ExprSimplifier::simplifyBvSGt)
 
-        .addCase(BvSLeqExpr.class, ExprSimplifier::simplifyBvSLeq)
+            .addCase(BvSLeqExpr.class, ExprSimplifier::simplifyBvSLeq)
 
-        .addCase(BvSLtExpr.class, ExprSimplifier::simplifyBvSLt)
+            .addCase(BvSLtExpr.class, ExprSimplifier::simplifyBvSLt)
 
-        // Floating points
+            // Floating points
 
-        .addCase(FpAddExpr.class, ExprSimplifier::simplifyFpAdd)
+            .addCase(FpAddExpr.class, ExprSimplifier::simplifyFpAdd)
 
-        .addCase(FpSubExpr.class, ExprSimplifier::simplifyFpSub)
+            .addCase(FpSubExpr.class, ExprSimplifier::simplifyFpSub)
 
-        .addCase(FpPosExpr.class, ExprSimplifier::simplifyFpPos)
+            .addCase(FpPosExpr.class, ExprSimplifier::simplifyFpPos)
 
-        .addCase(FpNegExpr.class, ExprSimplifier::simplifyFpNeg)
+            .addCase(FpNegExpr.class, ExprSimplifier::simplifyFpNeg)
 
-        .addCase(FpMulExpr.class, ExprSimplifier::simplifyFpMul)
+            .addCase(FpMulExpr.class, ExprSimplifier::simplifyFpMul)
 
-        .addCase(FpDivExpr.class, ExprSimplifier::simplifyFpDiv)
+            .addCase(FpDivExpr.class, ExprSimplifier::simplifyFpDiv)
 
-        .addCase(FpEqExpr.class, ExprSimplifier::simplifyFpEq)
+            .addCase(FpEqExpr.class, ExprSimplifier::simplifyFpEq)
 
-        .addCase(FpAssignExpr.class, ExprSimplifier::simplifyFpAssign)
+            .addCase(FpAssignExpr.class, ExprSimplifier::simplifyFpAssign)
 
-        .addCase(FpGeqExpr.class, ExprSimplifier::simplifyFpGeq)
+            .addCase(FpGeqExpr.class, ExprSimplifier::simplifyFpGeq)
 
-        .addCase(FpLeqExpr.class, ExprSimplifier::simplifyFpLeq)
+            .addCase(FpLeqExpr.class, ExprSimplifier::simplifyFpLeq)
 
-        .addCase(FpGtExpr.class, ExprSimplifier::simplifyFpGt)
+            .addCase(FpGtExpr.class, ExprSimplifier::simplifyFpGt)
 
-        .addCase(FpLtExpr.class, ExprSimplifier::simplifyFpLt)
+            .addCase(FpLtExpr.class, ExprSimplifier::simplifyFpLt)
 
-        .addCase(FpNeqExpr.class, ExprSimplifier::simplifyFpNeq)
+            .addCase(FpNeqExpr.class, ExprSimplifier::simplifyFpNeq)
 
-        .addCase(FpAbsExpr.class, ExprSimplifier::simplifyFpAbs)
+            .addCase(FpAbsExpr.class, ExprSimplifier::simplifyFpAbs)
 
-        .addCase(FpRoundToIntegralExpr.class, ExprSimplifier::simplifyFpRoundToIntegral)
+            .addCase(FpRoundToIntegralExpr.class, ExprSimplifier::simplifyFpRoundToIntegral)
 
-        .addCase(FpMaxExpr.class, ExprSimplifier::simplifyFpMax)
+            .addCase(FpMaxExpr.class, ExprSimplifier::simplifyFpMax)
 
-        .addCase(FpMinExpr.class, ExprSimplifier::simplifyFpMin)
+            .addCase(FpMinExpr.class, ExprSimplifier::simplifyFpMin)
 
-        .addCase(FpSqrtExpr.class, ExprSimplifier::simplifyFpSqrt)
+            .addCase(FpSqrtExpr.class, ExprSimplifier::simplifyFpSqrt)
 
-        .addCase(FpIsNanExpr.class, ExprSimplifier::simplifyFpIsNan)
+            .addCase(FpIsNanExpr.class, ExprSimplifier::simplifyFpIsNan)
 
-        .addCase(FpFromBvExpr.class, ExprSimplifier::simplifyFpFromBv)
+            .addCase(FpFromBvExpr.class, ExprSimplifier::simplifyFpFromBv)
 
-        .addCase(FpToBvExpr.class, ExprSimplifier::simplifyFpToBv)
+            .addCase(FpToBvExpr.class, ExprSimplifier::simplifyFpToBv)
 
-        .addCase(FpToFpExpr.class, ExprSimplifier::simplifyFpToFp)
+            .addCase(FpToFpExpr.class, ExprSimplifier::simplifyFpToFp)
 
-        // General
+            // General
 
-        .addCase(RefExpr.class, ExprSimplifier::simplifyRef)
+            .addCase(RefExpr.class, ExprSimplifier::simplifyRef)
 
-        .addCase(IteExpr.class, ExprSimplifier::simplifyIte)
+            .addCase(IteExpr.class, ExprSimplifier::simplifyIte)
 
-        // Default
+            // Default
 
-        .addDefault((o, val) -> {
-            final Expr<?> expr = (Expr<?>) o;
-            return expr.map(e -> simplify(e, val));
-        })
+            .addDefault((o, val) -> {
+                final Expr<?> expr = (Expr<?>) o;
+                return expr.map(e -> simplify(e, val));
+            })
 
-        .build();
+            .build();
 
     private ExprSimplifier() {
     }
@@ -380,8 +380,8 @@ public final class ExprSimplifier {
     // TODO Eliminate helper method once the Java compiler is able to handle
     // this kind of type inference
     private static <DeclType extends Type> Expr<DeclType> simplifyGenericRef(
-        final RefExpr<DeclType> expr,
-        final Valuation val) {
+            final RefExpr<DeclType> expr,
+            final Valuation val) {
         final Optional<LitExpr<DeclType>> eval = val.eval(expr.getDecl());
         if (eval.isPresent()) {
             return eval.get();
@@ -397,8 +397,8 @@ public final class ExprSimplifier {
     // TODO Eliminate helper method once the Java compiler is able to handle
     // this kind of type inference
     private static <ExprType extends Type> Expr<ExprType> simplifyGenericIte(
-        final IteExpr<ExprType> expr,
-        final Valuation val) {
+            final IteExpr<ExprType> expr,
+            final Valuation val) {
         final Expr<BoolType> cond = simplify(expr.getCond(), val);
 
         if (cond instanceof TrueExpr) {
@@ -425,14 +425,14 @@ public final class ExprSimplifier {
         Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
         Expr<IT> index = simplify(expr.getIndex(), val);
         if (arr instanceof LitExpr<?>
-            && index instanceof LitExpr<?>) { //The index is required to be a literal so that we can use 'equals' to compare it against existing keys in the array
+                && index instanceof LitExpr<?>) { //The index is required to be a literal so that we can use 'equals' to compare it against existing keys in the array
             return expr.eval(val);
         }
         return expr.with(arr, index);
     }
 
     private static Expr<?> simplifyArrayWrite(final ArrayWriteExpr<?, ?> expr,
-        final Valuation val) {
+                                              final Valuation val) {
         return simplifyGenericArrayWrite(expr, val);
     }
 
@@ -442,7 +442,7 @@ public final class ExprSimplifier {
         Expr<IT> index = simplify(expr.getIndex(), val);
         Expr<ET> elem = simplify(expr.getElem(), val);
         if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>
-            && elem instanceof LitExpr<?>) {
+                && elem instanceof LitExpr<?>) {
             return expr.eval(val);
         }
         return expr.with(arr, index, elem);
@@ -1032,7 +1032,7 @@ public final class ExprSimplifier {
             final IntLitExpr rightLit = (IntLitExpr) rightOp;
             return leftLit.mod(rightLit);
         } else if (leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp()
-            .equals(rightOp)) {
+                .equals(rightOp)) {
             return leftOp;
         }
 
@@ -1048,7 +1048,7 @@ public final class ExprSimplifier {
             final IntLitExpr rightLit = (IntLitExpr) rightOp;
             return leftLit.rem(rightLit);
         } else if (leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp()
-            .equals(rightOp)) {
+                .equals(rightOp)) {
             return simplify(leftOp, val);
         }
 
@@ -1574,7 +1574,7 @@ public final class ExprSimplifier {
     }
 
     private static Expr<BvType> simplifyBvShiftLeft(final BvShiftLeftExpr expr,
-        final Valuation val) {
+                                                    final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
@@ -1588,7 +1588,7 @@ public final class ExprSimplifier {
     }
 
     private static Expr<BvType> simplifyBvArithShiftRight(final BvArithShiftRightExpr expr,
-        final Valuation val) {
+                                                          final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
@@ -1602,7 +1602,7 @@ public final class ExprSimplifier {
     }
 
     private static Expr<BvType> simplifyBvLogicShiftRight(final BvLogicShiftRightExpr expr,
-        final Valuation val) {
+                                                          final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
@@ -1616,7 +1616,7 @@ public final class ExprSimplifier {
     }
 
     private static Expr<BvType> simplifyBvRotateLeft(final BvRotateLeftExpr expr,
-        final Valuation val) {
+                                                     final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
@@ -1630,7 +1630,7 @@ public final class ExprSimplifier {
     }
 
     private static Expr<BvType> simplifyBvRotateRight(final BvRotateRightExpr expr,
-        final Valuation val) {
+                                                      final Valuation val) {
         final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
 
@@ -1838,7 +1838,7 @@ public final class ExprSimplifier {
             }
         }
         final FpLitExpr zero = FpUtils.bigFloatToFpLitExpr(
-            BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+                BigFloat.zero(expr.getType().getSignificand()), expr.getType());
         FpLitExpr value = zero;
 
         for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
@@ -1876,7 +1876,7 @@ public final class ExprSimplifier {
         if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
             if (leftOp.equals(rightOp)) {
                 return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()),
-                    expr.getType());
+                        expr.getType());
             }
         }
 
@@ -1923,19 +1923,19 @@ public final class ExprSimplifier {
     }
 
     private static Expr<BoolType> simplifyFpIsInfinite(final FpIsInfiniteExpr expr,
-        final Valuation val) {
+                                                       final Valuation val) {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
         if (op instanceof FpLitExpr) {
             return Bool(
-                (((FpLitExpr) op).isNegativeInfinity() || ((FpLitExpr) op).isPositiveInfinity()));
+                    (((FpLitExpr) op).isNegativeInfinity() || ((FpLitExpr) op).isPositiveInfinity()));
         }
 
         return expr.with(op);
     }
 
     private static Expr<FpType> simplifyFpRoundToIntegral(final FpRoundToIntegralExpr expr,
-        final Valuation val) {
+                                                          final Valuation val) {
         final Expr<FpType> op = simplify(expr.getOp(), val);
 
         if (op instanceof FpRoundToIntegralExpr) {
@@ -1960,10 +1960,10 @@ public final class ExprSimplifier {
         }
 
         final FpLitExpr ZERO = FpUtils.bigFloatToFpLitExpr(
-            BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+                BigFloat.zero(expr.getType().getSignificand()), expr.getType());
         final FpLitExpr ONE = FpUtils.bigFloatToFpLitExpr(
-            new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())),
-            expr.getType());
+                new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())),
+                expr.getType());
 
         FpLitExpr value = ONE;
         for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
@@ -2004,8 +2004,8 @@ public final class ExprSimplifier {
         if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
             if (leftOp.equals(rightOp)) {
                 return FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f,
-                        FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())),
-                    expr.getType());
+                                FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())),
+                        expr.getType());
             }
         }
 

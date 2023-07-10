@@ -31,10 +31,10 @@ public abstract class XcfaSTState<S extends ExprState> extends XcfaState<S> {
     }
 
     public static <S extends ExprState> XcfaSTState<S> create(final XcfaLocation currentLoc,
-        final S globalState) {
+                                                              final S globalState) {
         return FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON ?
-            new XcfaSTStateSimple<>(currentLoc, globalState) :
-            new XcfaSTStateStack<>(currentLoc, globalState);
+                new XcfaSTStateSimple<>(currentLoc, globalState) :
+                new XcfaSTStateStack<>(currentLoc, globalState);
     }
 
     @Override

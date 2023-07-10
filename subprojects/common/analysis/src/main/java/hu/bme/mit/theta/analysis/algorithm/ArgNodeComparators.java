@@ -31,7 +31,7 @@ public class ArgNodeComparators {
     }
 
     public interface ArgNodeComparator extends
-        Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+            Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
 
     }
 
@@ -50,7 +50,7 @@ public class ArgNodeComparators {
     }
 
     public static ArgNodeComparator combine(final ArgNodeComparator first,
-        final ArgNodeComparator then) {
+                                            final ArgNodeComparator then) {
         return new Combinator(first, then);
     }
 
@@ -74,7 +74,7 @@ public class ArgNodeComparators {
 
         @Override
         public int compare(final ArgNode<? extends State, ? extends Action> n1,
-            final ArgNode<? extends State, ? extends Action> n2) {
+                           final ArgNode<? extends State, ? extends Action> n2) {
             return Integer.compare(n1.getDepth(), n2.getDepth());
         }
 
@@ -90,7 +90,7 @@ public class ArgNodeComparators {
 
         @Override
         public int compare(final ArgNode<? extends State, ? extends Action> n1,
-            final ArgNode<? extends State, ? extends Action> n2) {
+                           final ArgNode<? extends State, ? extends Action> n2) {
             return Integer.compare(n1.getId(), n2.getId());
         }
 
@@ -106,7 +106,7 @@ public class ArgNodeComparators {
 
         @Override
         public int compare(final ArgNode<? extends State, ? extends Action> n1,
-            final ArgNode<? extends State, ? extends Action> n2) {
+                           final ArgNode<? extends State, ? extends Action> n2) {
             return Boolean.compare(n1.isTarget(), n2.isTarget()) * -1;
         }
 
@@ -127,7 +127,7 @@ public class ArgNodeComparators {
 
         @Override
         public int compare(final ArgNode<? extends State, ? extends Action> n1,
-            final ArgNode<? extends State, ? extends Action> n2) {
+                           final ArgNode<? extends State, ? extends Action> n2) {
             return comparator.compare(n1, n2) * -1;
         }
 
@@ -149,7 +149,7 @@ public class ArgNodeComparators {
 
         @Override
         public int compare(final ArgNode<? extends State, ? extends Action> n1,
-            final ArgNode<? extends State, ? extends Action> n2) {
+                           final ArgNode<? extends State, ? extends Action> n2) {
             final int compareFirst = first.compare(n1, n2);
             if (compareFirst == 0) {
                 return then.compare(n1, n2);
@@ -161,7 +161,7 @@ public class ArgNodeComparators {
         @Override
         public String toString() {
             return Utils.lispStringBuilder(getClass().getSimpleName()).add(first).add(then)
-                .toString();
+                    .toString();
         }
     }
 }

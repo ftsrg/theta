@@ -28,7 +28,7 @@ public class XstsStmtOptimizer<S extends ExprState> implements StmtOptimizer<Xst
     }
 
     public static <S extends ExprState> XstsStmtOptimizer<S> create(
-        final StmtOptimizer<S> stmtOptimizer) {
+            final StmtOptimizer<S> stmtOptimizer) {
         return new XstsStmtOptimizer<>(stmtOptimizer);
     }
 

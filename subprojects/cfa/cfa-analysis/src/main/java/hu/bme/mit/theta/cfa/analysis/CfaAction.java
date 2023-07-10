@@ -40,7 +40,7 @@ public final class CfaAction extends StmtAction {
         this.target = checkNotNull(target);
         this.edges = Collections.unmodifiableList(checkNotNull(edges));
         this.stmts = Collections.unmodifiableList(
-            edges.stream().map(Edge::getStmt).collect(Collectors.toList()));
+                edges.stream().map(Edge::getStmt).collect(Collectors.toList()));
     }
 
     public static CfaAction create(final Edge edge) {

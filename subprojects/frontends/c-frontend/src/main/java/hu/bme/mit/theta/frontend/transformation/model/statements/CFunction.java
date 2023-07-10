@@ -33,7 +33,7 @@ public class CFunction extends CStatement {
         this.compound = compound;
         this.flatVariables = flatVariables;
         FrontendMetadata.lookupMetadata(funcDecl)
-            .forEach((s, o) -> FrontendMetadata.create(this, s, o));
+                .forEach((s, o) -> FrontendMetadata.create(this, s, o));
     }
 
     public CStatement getCompound() {

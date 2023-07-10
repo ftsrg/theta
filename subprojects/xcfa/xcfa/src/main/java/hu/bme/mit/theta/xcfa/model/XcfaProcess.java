@@ -57,7 +57,7 @@ public final class XcfaProcess {
         params = ImmutableList.copyOf(builder.params);
         threadLocalVars = ImmutableMap.copyOf(builder.threadLocalVars);
         procedures = builder.procedures.stream().map(builder1 -> builder1.build(this))
-            .collect(ImmutableList.toImmutableList());
+                .collect(ImmutableList.toImmutableList());
         mainProcedure = builder.mainProcedure.build(this);
         name = builder.name == null ? mainProcedure.getName() : builder.name;
         threadStartStmt = null;
@@ -207,7 +207,7 @@ public final class XcfaProcess {
         public void setMainProcedure(final XcfaProcedure.Builder mainProcedure) {
             checkNotBuilt();
             checkArgument(procedures.contains(mainProcedure),
-                "'procedures' does not contain main procedure");
+                    "'procedures' does not contain main procedure");
             this.mainProcedure = mainProcedure;
         }
 
@@ -236,9 +236,9 @@ public final class XcfaProcess {
                     for (XcfaLabel label : edge.getLabels()) {
                         if (label instanceof XcfaLabel.StartThreadXcfaLabel) {
                             ((XcfaLabel.StartThreadXcfaLabel) label).setProcedure(
-                                process.getProcedures().stream().filter(pr -> pr.getName().equals(
-                                        ((XcfaLabel.StartThreadXcfaLabel) label).getThreadName()))
-                                    .findAny().get());
+                                    process.getProcedures().stream().filter(pr -> pr.getName().equals(
+                                                    ((XcfaLabel.StartThreadXcfaLabel) label).getThreadName()))
+                                            .findAny().get());
                         }
                     }
                 }

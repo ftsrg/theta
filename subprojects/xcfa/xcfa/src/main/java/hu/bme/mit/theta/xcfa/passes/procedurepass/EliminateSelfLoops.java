@@ -30,12 +30,12 @@ public class EliminateSelfLoops extends ProcedurePass {
     @Override
     public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
         Set<XcfaEdge> selfLoops = builder.getEdges().stream()
-            .filter(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget())
-            .collect(Collectors.toSet());
+                .filter(xcfaEdge -> xcfaEdge.getSource() == xcfaEdge.getTarget())
+                .collect(Collectors.toSet());
         Map<XcfaLocation, List<XcfaEdge>> locSelfLoops = new HashMap<>();
         for (XcfaEdge selfLoop : selfLoops) {
             List<XcfaEdge> loops = locSelfLoops.getOrDefault(selfLoop.getSource(),
-                new ArrayList<>());
+                    new ArrayList<>());
             loops.add(selfLoop);
             locSelfLoops.put(selfLoop.getSource(), loops);
         }

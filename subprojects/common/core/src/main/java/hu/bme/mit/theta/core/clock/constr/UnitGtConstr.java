@@ -48,7 +48,7 @@ public final class UnitGtConstr extends UnitConstr {
 
     @Override
     public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor,
-        final P param) {
+                           final P param) {
         return visitor.visit(this, param);
     }
 

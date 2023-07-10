@@ -105,7 +105,7 @@ public final class ItpZoneState implements ExprState {
         } else if (obj instanceof ItpZoneState) {
             final ItpZoneState that = (ItpZoneState) obj;
             return this.concrState.equals(that.concrState) && this.abstrState.equals(
-                that.abstrState);
+                    that.abstrState);
         } else {
             return false;
         }
@@ -114,7 +114,7 @@ public final class ItpZoneState implements ExprState {
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(concrState)
-            .add(abstrState).toString();
+                .add(abstrState).toString();
     }
 
 }

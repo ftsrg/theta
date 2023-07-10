@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements
-    Expr<ElemType> {
+        Expr<ElemType> {
 
     private static final int HASH_SEED = 1321;
 
@@ -42,19 +42,19 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
     private final Expr<IndexType> index;
 
     private ArrayReadExpr(final Expr<ArrayType<IndexType, ElemType>> array,
-        final Expr<IndexType> index) {
+                          final Expr<IndexType> index) {
         this.array = checkNotNull(array);
         this.index = checkNotNull(index);
     }
 
     public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<IndexType, ElemType> of(
-        final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
+            final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
         return new ArrayReadExpr<>(array, index);
     }
 
     public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<?, ?> create(
-        final Expr<?> array,
-        final Expr<?> index) {
+            final Expr<?> array,
+            final Expr<?> index) {
         @SuppressWarnings("unchecked") final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
         final Expr<ArrayType<IndexType, ElemType>> newArray = cast(array, arrayType);
         final Expr<IndexType> newIndex = cast(index, arrayType.getIndexType());
@@ -77,7 +77,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
     @Override
     public LitExpr<ElemType> eval(final Valuation val) {
         ArrayLitExpr<IndexType, ElemType> arrayVal = (ArrayLitExpr<IndexType, ElemType>) array.eval(
-            val);
+                val);
         LitExpr<IndexType> indexVal = index.eval(val);
         for (Tuple2<LitExpr<IndexType>, LitExpr<ElemType>> elem : arrayVal.getElements()) {
             if (elem.get1().equals(indexVal)) {
@@ -107,7 +107,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
     }
 
     public ArrayReadExpr<IndexType, ElemType> with(final Expr<ArrayType<IndexType, ElemType>> array,
-        final Expr<IndexType> index) {
+                                                   final Expr<IndexType> index) {
         if (this.array == array && this.index == index) {
             return this;
         } else {
@@ -116,7 +116,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
     }
 
     public ArrayReadExpr<IndexType, ElemType> withArray(
-        final Expr<ArrayType<IndexType, ElemType>> array) {
+            final Expr<ArrayType<IndexType, ElemType>> array) {
         return with(array, getIndex());
     }
 
@@ -144,7 +144,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
         } else if (obj instanceof ArrayReadExpr<?, ?>) {
             final ArrayReadExpr<?, ?> that = (ArrayReadExpr<?, ?>) obj;
             return this.getArray().equals(that.getArray()) && this.getIndex()
-                .equals(that.getIndex());
+                    .equals(that.getIndex());
         } else {
             return false;
         }

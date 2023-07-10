@@ -82,21 +82,21 @@ public final class XstsStateSequence {
         for (int i = 0; i <= length(); i++) {
             XstsState<ExplState> state = states.get(i);
             sb.add(Utils.lispStringBuilder(XstsState.class.getSimpleName())
-                .add(state.isInitialized() ? "post_init" : "pre_init")
-                .add(state.lastActionWasEnv() ? "last_env" : "last_internal").body()
-                .add(stateToString(state.getState())).toString());
+                    .add(state.isInitialized() ? "post_init" : "pre_init")
+                    .add(state.lastActionWasEnv() ? "last_env" : "last_internal").body()
+                    .add(stateToString(state.getState())).toString());
         }
         return sb.toString();
     }
 
     public String stateToString(ExplState state) {
         final LispStringBuilder sb = Utils.lispStringBuilder(ExplState.class.getSimpleName())
-            .body();
+                .body();
         for (VarDecl decl : xsts.getVars()) {
             Optional<LitExpr> val = state.eval(decl);
             if (val.isPresent() && xsts.getVarToType().containsKey(decl)) {
                 sb.add(String.format("(%s %s)", decl.getName(),
-                    xsts.getVarToType().get(decl).serializeLiteral(val.get())));
+                        xsts.getVarToType().get(decl).serializeLiteral(val.get())));
             }
         }
         return sb.toString();

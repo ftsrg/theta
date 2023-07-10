@@ -52,18 +52,18 @@ public class GenericSmtLibTransformationManager implements SmtLibTransformationM
     }
 
     protected SmtLibTypeTransformer instantiateTypeTransformer(
-        final SmtLibTransformationManager transformer) {
+            final SmtLibTransformationManager transformer) {
         return new GenericSmtLibTypeTransformer(transformer);
     }
 
     protected SmtLibDeclTransformer instantiateDeclTransformer(
-        final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable
     ) {
         return new GenericSmtLibDeclTransformer(transformer, symbolTable);
     }
 
     protected SmtLibExprTransformer instantiateExprTransformer(
-        final SmtLibTransformationManager transformer) {
+            final SmtLibTransformationManager transformer) {
         return new GenericSmtLibExprTransformer(transformer);
     }
 }

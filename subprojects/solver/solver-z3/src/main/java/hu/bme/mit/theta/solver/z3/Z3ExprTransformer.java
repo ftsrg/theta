@@ -168,239 +168,239 @@ final class Z3ExprTransformer {
 
         table = DispatchTable.<com.microsoft.z3.Expr>builder()
 
-            // General
+                // General
 
-            .addCase(RefExpr.class, this::transformRef)
+                .addCase(RefExpr.class, this::transformRef)
 
-            .addCase(IteExpr.class, this::transformIte)
+                .addCase(IteExpr.class, this::transformIte)
 
-            // Boolean
+                // Boolean
 
-            .addCase(FalseExpr.class, this::transformFalse)
+                .addCase(FalseExpr.class, this::transformFalse)
 
-            .addCase(TrueExpr.class, this::transformTrue)
+                .addCase(TrueExpr.class, this::transformTrue)
 
-            .addCase(NotExpr.class, this::transformNot)
+                .addCase(NotExpr.class, this::transformNot)
 
-            .addCase(ImplyExpr.class, this::transformImply)
+                .addCase(ImplyExpr.class, this::transformImply)
 
-            .addCase(IffExpr.class, this::transformIff)
+                .addCase(IffExpr.class, this::transformIff)
 
-            .addCase(XorExpr.class, this::transformXor)
+                .addCase(XorExpr.class, this::transformXor)
 
-            .addCase(AndExpr.class, this::transformAnd)
+                .addCase(AndExpr.class, this::transformAnd)
 
-            .addCase(OrExpr.class, this::transformOr)
+                .addCase(OrExpr.class, this::transformOr)
 
-            .addCase(ExistsExpr.class, this::transformExists)
+                .addCase(ExistsExpr.class, this::transformExists)
 
-            .addCase(ForallExpr.class, this::transformForall)
+                .addCase(ForallExpr.class, this::transformForall)
 
-            // Rationals
+                // Rationals
 
-            .addCase(RatLitExpr.class, this::transformRatLit)
+                .addCase(RatLitExpr.class, this::transformRatLit)
 
-            .addCase(RatAddExpr.class, this::transformRatAdd)
+                .addCase(RatAddExpr.class, this::transformRatAdd)
 
-            .addCase(RatSubExpr.class, this::transformRatSub)
+                .addCase(RatSubExpr.class, this::transformRatSub)
 
-            .addCase(RatPosExpr.class, this::transformRatPos)
+                .addCase(RatPosExpr.class, this::transformRatPos)
 
-            .addCase(RatNegExpr.class, this::transformRatNeg)
+                .addCase(RatNegExpr.class, this::transformRatNeg)
 
-            .addCase(RatMulExpr.class, this::transformRatMul)
+                .addCase(RatMulExpr.class, this::transformRatMul)
 
-            .addCase(RatDivExpr.class, this::transformRatDiv)
+                .addCase(RatDivExpr.class, this::transformRatDiv)
 
-            .addCase(RatEqExpr.class, this::transformRatEq)
+                .addCase(RatEqExpr.class, this::transformRatEq)
 
-            .addCase(RatNeqExpr.class, this::transformRatNeq)
+                .addCase(RatNeqExpr.class, this::transformRatNeq)
 
-            .addCase(RatGeqExpr.class, this::transformRatGeq)
+                .addCase(RatGeqExpr.class, this::transformRatGeq)
 
-            .addCase(RatGtExpr.class, this::transformRatGt)
+                .addCase(RatGtExpr.class, this::transformRatGt)
 
-            .addCase(RatLeqExpr.class, this::transformRatLeq)
+                .addCase(RatLeqExpr.class, this::transformRatLeq)
 
-            .addCase(RatLtExpr.class, this::transformRatLt)
+                .addCase(RatLtExpr.class, this::transformRatLt)
 
-            .addCase(RatToIntExpr.class, this::transformRatToInt)
+                .addCase(RatToIntExpr.class, this::transformRatToInt)
 
-            // Integers
+                // Integers
 
-            .addCase(IntLitExpr.class, this::transformIntLit)
+                .addCase(IntLitExpr.class, this::transformIntLit)
 
-            .addCase(IntAddExpr.class, this::transformIntAdd)
+                .addCase(IntAddExpr.class, this::transformIntAdd)
 
-            .addCase(IntSubExpr.class, this::transformIntSub)
+                .addCase(IntSubExpr.class, this::transformIntSub)
 
-            .addCase(IntPosExpr.class, this::transformIntPos)
+                .addCase(IntPosExpr.class, this::transformIntPos)
 
-            .addCase(IntNegExpr.class, this::transformIntNeg)
+                .addCase(IntNegExpr.class, this::transformIntNeg)
 
-            .addCase(IntMulExpr.class, this::transformIntMul)
+                .addCase(IntMulExpr.class, this::transformIntMul)
 
-            .addCase(IntDivExpr.class, this::transformIntDiv)
+                .addCase(IntDivExpr.class, this::transformIntDiv)
 
-            .addCase(IntModExpr.class, this::transformIntMod)
+                .addCase(IntModExpr.class, this::transformIntMod)
 
-            .addCase(IntRemExpr.class, this::transformIntRem)
+                .addCase(IntRemExpr.class, this::transformIntRem)
 
-            .addCase(IntEqExpr.class, this::transformIntEq)
+                .addCase(IntEqExpr.class, this::transformIntEq)
 
-            .addCase(IntNeqExpr.class, this::transformIntNeq)
+                .addCase(IntNeqExpr.class, this::transformIntNeq)
 
-            .addCase(IntGeqExpr.class, this::transformIntGeq)
+                .addCase(IntGeqExpr.class, this::transformIntGeq)
 
-            .addCase(IntGtExpr.class, this::transformIntGt)
+                .addCase(IntGtExpr.class, this::transformIntGt)
 
-            .addCase(IntLeqExpr.class, this::transformIntLeq)
+                .addCase(IntLeqExpr.class, this::transformIntLeq)
 
-            .addCase(IntLtExpr.class, this::transformIntLt)
+                .addCase(IntLtExpr.class, this::transformIntLt)
 
-            .addCase(IntToRatExpr.class, this::transformIntToRat)
+                .addCase(IntToRatExpr.class, this::transformIntToRat)
 
-            // Bitvectors
+                // Bitvectors
 
-            .addCase(BvLitExpr.class, this::transformBvLit)
+                .addCase(BvLitExpr.class, this::transformBvLit)
 
-            .addCase(BvConcatExpr.class, this::transformBvConcat)
+                .addCase(BvConcatExpr.class, this::transformBvConcat)
 
-            .addCase(BvExtractExpr.class, this::transformBvExtract)
+                .addCase(BvExtractExpr.class, this::transformBvExtract)
 
-            .addCase(BvZExtExpr.class, this::transformBvZExt)
+                .addCase(BvZExtExpr.class, this::transformBvZExt)
 
-            .addCase(BvSExtExpr.class, this::transformBvSExt)
+                .addCase(BvSExtExpr.class, this::transformBvSExt)
 
-            .addCase(BvAddExpr.class, this::transformBvAdd)
+                .addCase(BvAddExpr.class, this::transformBvAdd)
 
-            .addCase(BvSubExpr.class, this::transformBvSub)
+                .addCase(BvSubExpr.class, this::transformBvSub)
 
-            .addCase(BvPosExpr.class, this::transformBvPos)
+                .addCase(BvPosExpr.class, this::transformBvPos)
 
-            .addCase(BvNegExpr.class, this::transformBvNeg)
+                .addCase(BvNegExpr.class, this::transformBvNeg)
 
-            .addCase(BvMulExpr.class, this::transformBvMul)
+                .addCase(BvMulExpr.class, this::transformBvMul)
 
-            .addCase(BvUDivExpr.class, this::transformBvUDiv)
+                .addCase(BvUDivExpr.class, this::transformBvUDiv)
 
-            .addCase(BvSDivExpr.class, this::transformBvSDiv)
+                .addCase(BvSDivExpr.class, this::transformBvSDiv)
 
-            .addCase(BvSModExpr.class, this::transformBvSMod)
+                .addCase(BvSModExpr.class, this::transformBvSMod)
 
-            .addCase(BvURemExpr.class, this::transformBvURem)
+                .addCase(BvURemExpr.class, this::transformBvURem)
 
-            .addCase(BvSRemExpr.class, this::transformBvSRem)
+                .addCase(BvSRemExpr.class, this::transformBvSRem)
 
-            .addCase(BvAndExpr.class, this::transformBvAnd)
+                .addCase(BvAndExpr.class, this::transformBvAnd)
 
-            .addCase(BvOrExpr.class, this::transformBvOr)
+                .addCase(BvOrExpr.class, this::transformBvOr)
 
-            .addCase(BvXorExpr.class, this::transformBvXor)
+                .addCase(BvXorExpr.class, this::transformBvXor)
 
-            .addCase(BvNotExpr.class, this::transformBvNot)
+                .addCase(BvNotExpr.class, this::transformBvNot)
 
-            .addCase(BvShiftLeftExpr.class, this::transformBvShiftLeft)
+                .addCase(BvShiftLeftExpr.class, this::transformBvShiftLeft)
 
-            .addCase(BvArithShiftRightExpr.class, this::transformBvArithShiftRight)
+                .addCase(BvArithShiftRightExpr.class, this::transformBvArithShiftRight)
 
-            .addCase(BvLogicShiftRightExpr.class, this::transformBvLogicShiftRight)
+                .addCase(BvLogicShiftRightExpr.class, this::transformBvLogicShiftRight)
 
-            .addCase(BvRotateLeftExpr.class, this::transformBvRotateLeft)
+                .addCase(BvRotateLeftExpr.class, this::transformBvRotateLeft)
 
-            .addCase(BvRotateRightExpr.class, this::transformBvRotateRight)
+                .addCase(BvRotateRightExpr.class, this::transformBvRotateRight)
 
-            .addCase(BvEqExpr.class, this::transformBvEq)
+                .addCase(BvEqExpr.class, this::transformBvEq)
 
-            .addCase(BvNeqExpr.class, this::transformBvNeq)
+                .addCase(BvNeqExpr.class, this::transformBvNeq)
 
-            .addCase(BvUGeqExpr.class, this::transformBvUGeq)
+                .addCase(BvUGeqExpr.class, this::transformBvUGeq)
 
-            .addCase(BvUGtExpr.class, this::transformBvUGt)
+                .addCase(BvUGtExpr.class, this::transformBvUGt)
 
-            .addCase(BvULeqExpr.class, this::transformBvULeq)
+                .addCase(BvULeqExpr.class, this::transformBvULeq)
 
-            .addCase(BvULtExpr.class, this::transformBvULt)
+                .addCase(BvULtExpr.class, this::transformBvULt)
 
-            .addCase(BvSGeqExpr.class, this::transformBvSGeq)
+                .addCase(BvSGeqExpr.class, this::transformBvSGeq)
 
-            .addCase(BvSGtExpr.class, this::transformBvSGt)
+                .addCase(BvSGtExpr.class, this::transformBvSGt)
 
-            .addCase(BvSLeqExpr.class, this::transformBvSLeq)
+                .addCase(BvSLeqExpr.class, this::transformBvSLeq)
 
-            .addCase(BvSLtExpr.class, this::transformBvSLt)
+                .addCase(BvSLtExpr.class, this::transformBvSLt)
 
-            // Floating points
+                // Floating points
 
-            .addCase(FpLitExpr.class, this::transformFpLit)
+                .addCase(FpLitExpr.class, this::transformFpLit)
 
-            .addCase(FpAddExpr.class, this::transformFpAdd)
+                .addCase(FpAddExpr.class, this::transformFpAdd)
 
-            .addCase(FpSubExpr.class, this::transformFpSub)
+                .addCase(FpSubExpr.class, this::transformFpSub)
 
-            .addCase(FpPosExpr.class, this::transformFpPos)
+                .addCase(FpPosExpr.class, this::transformFpPos)
 
-            .addCase(FpNegExpr.class, this::transformFpNeg)
+                .addCase(FpNegExpr.class, this::transformFpNeg)
 
-            .addCase(FpMulExpr.class, this::transformFpMul)
+                .addCase(FpMulExpr.class, this::transformFpMul)
 
-            .addCase(FpDivExpr.class, this::transformFpDiv)
+                .addCase(FpDivExpr.class, this::transformFpDiv)
 
-            .addCase(FpEqExpr.class, this::transformFpEq)
+                .addCase(FpEqExpr.class, this::transformFpEq)
 
-            .addCase(FpAssignExpr.class, this::transformFpAssign)
+                .addCase(FpAssignExpr.class, this::transformFpAssign)
 
-            .addCase(FpGeqExpr.class, this::transformFpGeq)
+                .addCase(FpGeqExpr.class, this::transformFpGeq)
 
-            .addCase(FpLeqExpr.class, this::transformFpLeq)
+                .addCase(FpLeqExpr.class, this::transformFpLeq)
 
-            .addCase(FpGtExpr.class, this::transformFpGt)
+                .addCase(FpGtExpr.class, this::transformFpGt)
 
-            .addCase(FpLtExpr.class, this::transformFpLt)
+                .addCase(FpLtExpr.class, this::transformFpLt)
 
-            .addCase(FpNeqExpr.class, this::transformFpNeq)
+                .addCase(FpNeqExpr.class, this::transformFpNeq)
 
-            .addCase(FpAbsExpr.class, this::transformFpAbs)
+                .addCase(FpAbsExpr.class, this::transformFpAbs)
 
-            .addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
+                .addCase(FpRoundToIntegralExpr.class, this::transformFpRoundToIntegral)
 
-            .addCase(FpMaxExpr.class, this::transformFpMax)
+                .addCase(FpMaxExpr.class, this::transformFpMax)
 
-            .addCase(FpMinExpr.class, this::transformFpMin)
+                .addCase(FpMinExpr.class, this::transformFpMin)
 
-            .addCase(FpSqrtExpr.class, this::transformFpSqrt)
+                .addCase(FpSqrtExpr.class, this::transformFpSqrt)
 
-            .addCase(FpRemExpr.class, this::transformFpRem)
+                .addCase(FpRemExpr.class, this::transformFpRem)
 
-            .addCase(FpIsNanExpr.class, this::transformFpIsNan)
+                .addCase(FpIsNanExpr.class, this::transformFpIsNan)
 
-            .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
+                .addCase(FpIsInfiniteExpr.class, this::transformFpIsInfinite)
 
-            .addCase(FpFromBvExpr.class, this::transformFpFromBv)
+                .addCase(FpFromBvExpr.class, this::transformFpFromBv)
 
-            .addCase(FpToBvExpr.class, this::transformFpToBv)
+                .addCase(FpToBvExpr.class, this::transformFpToBv)
 
-            .addCase(FpToFpExpr.class, this::transformFpToFp)
+                .addCase(FpToFpExpr.class, this::transformFpToFp)
 
-            // Functions
+                // Functions
 
-            .addCase(FuncAppExpr.class, this::transformFuncApp)
+                .addCase(FuncAppExpr.class, this::transformFuncApp)
 
-            // Arrays
+                // Arrays
 
-            .addCase(ArrayReadExpr.class, this::transformArrayRead)
+                .addCase(ArrayReadExpr.class, this::transformArrayRead)
 
-            .addCase(ArrayWriteExpr.class, this::transformArrayWrite)
+                .addCase(ArrayWriteExpr.class, this::transformArrayWrite)
 
-            .addCase(ArrayEqExpr.class, this::transformArrayEq)
+                .addCase(ArrayEqExpr.class, this::transformArrayEq)
 
-            .addCase(ArrayNeqExpr.class, this::transformArrayNeq)
+                .addCase(ArrayNeqExpr.class, this::transformArrayNeq)
 
-            .addCase(ArrayLitExpr.class, this::transformArrayLit)
+                .addCase(ArrayLitExpr.class, this::transformArrayLit)
 
-            .addCase(ArrayInitExpr.class, this::transformArrayInit)
+                .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
-            .build();
+                .build();
     }
 
     private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
@@ -412,7 +412,7 @@ final class Z3ExprTransformer {
             final Expr<?> resFunc = funcAndArgs.get1();
             final List<Expr<?>> args = funcAndArgs.get2();
             final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
-                .build();
+                    .build();
             return Tuple2.of(resFunc, resArgs);
         } else {
             return Tuple2.of(func, ImmutableList.of(arg));
@@ -440,11 +440,11 @@ final class Z3ExprTransformer {
             return context.mkConst(funcDecl);
         } else if (decl instanceof ParamDecl) {
             final com.microsoft.z3.FuncDecl funcDecl = (com.microsoft.z3.FuncDecl) env.eval(
-                DeclSymbol.of(decl));
+                    DeclSymbol.of(decl));
             return context.mkConst(funcDecl);
         } else {
             throw new UnsupportedOperationException(
-                "Cannot transform reference for declaration: " + decl);
+                    "Cannot transform reference for declaration: " + decl);
         }
     }
 
@@ -493,15 +493,15 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformAnd(final AndExpr expr) {
         final BoolExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BoolExpr) toTerm(e))
-            .toArray(BoolExpr[]::new);
+                .map(e -> (BoolExpr) toTerm(e))
+                .toArray(BoolExpr[]::new);
         return context.mkAnd(opTerms);
     }
 
     private com.microsoft.z3.Expr transformOr(final OrExpr expr) {
         final BoolExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BoolExpr) toTerm(e))
-            .toArray(BoolExpr[]::new);
+                .map(e -> (BoolExpr) toTerm(e))
+                .toArray(BoolExpr[]::new);
         return context.mkOr(opTerms);
     }
 
@@ -557,16 +557,16 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformRatAdd(final RatAddExpr expr) {
         final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-            .toArray(com.microsoft.z3.ArithExpr[]::new);
+                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3.ArithExpr[]::new);
         return context.mkAdd(opTerms);
     }
 
     private com.microsoft.z3.Expr transformRatSub(final RatSubExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkSub(leftOpTerm, rightOpTerm);
     }
 
@@ -581,16 +581,16 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformRatMul(final RatMulExpr expr) {
         final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-            .toArray(com.microsoft.z3.ArithExpr[]::new);
+                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3.ArithExpr[]::new);
         return context.mkMul(opTerms);
     }
 
     private com.microsoft.z3.Expr transformRatDiv(final RatDivExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkDiv(leftOpTerm, rightOpTerm);
     }
 
@@ -608,33 +608,33 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformRatGeq(final RatGeqExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkGe(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformRatGt(final RatGtExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkGt(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformRatLeq(final RatLeqExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkLe(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformRatLt(final RatLtExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkLt(leftOpTerm, rightOpTerm);
     }
 
@@ -653,16 +653,16 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformIntAdd(final IntAddExpr expr) {
         final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-            .toArray(com.microsoft.z3.ArithExpr[]::new);
+                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3.ArithExpr[]::new);
         return context.mkAdd(opTerms);
     }
 
     private com.microsoft.z3.Expr transformIntSub(final IntSubExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkSub(leftOpTerm, rightOpTerm);
     }
 
@@ -677,32 +677,32 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformIntMul(final IntMulExpr expr) {
         final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-            .toArray(com.microsoft.z3.ArithExpr[]::new);
+                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3.ArithExpr[]::new);
         return context.mkMul(opTerms);
     }
 
     private com.microsoft.z3.Expr transformIntDiv(final IntDivExpr expr) {
         final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkDiv(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformIntMod(final IntModExpr expr) {
         final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkMod(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformIntRem(final IntRemExpr expr) {
         final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkRem(leftOpTerm, rightOpTerm);
     }
 
@@ -720,33 +720,33 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformIntGeq(final IntGeqExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkGe(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformIntGt(final IntGtExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkGt(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformIntLeq(final IntLeqExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkLe(leftOpTerm, rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformIntLt(final IntLtExpr expr) {
         final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getLeftOp());
+                expr.getLeftOp());
         final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
-            expr.getRightOp());
+                expr.getRightOp());
         return context.mkLt(leftOpTerm, rightOpTerm);
     }
 
@@ -761,7 +761,7 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
         return context.mkBV(BvUtils.neutralBvLitExprToBigInteger(expr).toString(),
-            expr.getType().getSize());
+                expr.getType().getSize());
     }
 
     private com.microsoft.z3.Expr transformBvEq(final BvEqExpr expr) {
@@ -778,8 +778,8 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformBvConcat(final BvConcatExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BitVecExpr) toTerm(e))
-            .toArray(BitVecExpr[]::new);
+                .map(e -> (BitVecExpr) toTerm(e))
+                .toArray(BitVecExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkConcat);
     }
@@ -808,8 +808,8 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BitVecExpr) toTerm(e))
-            .toArray(BitVecExpr[]::new);
+                .map(e -> (BitVecExpr) toTerm(e))
+                .toArray(BitVecExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVAdd);
     }
@@ -831,8 +831,8 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformBvMul(final BvMulExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BitVecExpr) toTerm(e))
-            .toArray(BitVecExpr[]::new);
+                .map(e -> (BitVecExpr) toTerm(e))
+                .toArray(BitVecExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVMul);
     }
@@ -874,24 +874,24 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformBvAnd(final BvAndExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BitVecExpr) toTerm(e))
-            .toArray(BitVecExpr[]::new);
+                .map(e -> (BitVecExpr) toTerm(e))
+                .toArray(BitVecExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVAND);
     }
 
     private com.microsoft.z3.Expr transformBvOr(final BvOrExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BitVecExpr) toTerm(e))
-            .toArray(BitVecExpr[]::new);
+                .map(e -> (BitVecExpr) toTerm(e))
+                .toArray(BitVecExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVOR);
     }
 
     private com.microsoft.z3.Expr transformBvXor(final BvXorExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (BitVecExpr) toTerm(e))
-            .toArray(BitVecExpr[]::new);
+                .map(e -> (BitVecExpr) toTerm(e))
+                .toArray(BitVecExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVXOR);
     }
@@ -999,24 +999,24 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformFpLit(final FpLitExpr expr) {
         return context.mkFP(context.mkBV(expr.getHidden() ? 1 : 0, 1),
-            (BitVecExpr) toTerm(expr.getExponent()), (BitVecExpr) toTerm(expr.getSignificand()));
+                (BitVecExpr) toTerm(expr.getExponent()), (BitVecExpr) toTerm(expr.getSignificand()));
     }
 
     private com.microsoft.z3.Expr transformFpAdd(final FpAddExpr expr) {
         final FPExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (FPExpr) toTerm(e))
-            .toArray(FPExpr[]::new);
+                .map(e -> (FPExpr) toTerm(e))
+                .toArray(FPExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0],
-            (op1, op2) -> context.mkFPAdd(transformFpRoundingMode(expr.getRoundingMode()), op1,
-                op2));
+                (op1, op2) -> context.mkFPAdd(transformFpRoundingMode(expr.getRoundingMode()), op1,
+                        op2));
     }
 
     private com.microsoft.z3.Expr transformFpSub(final FpSubExpr expr) {
         final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
         final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
         return context.mkFPSub(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm,
-            rightOpTerm);
+                rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformFpPos(final FpPosExpr expr) {
@@ -1055,12 +1055,12 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformFpMul(final FpMulExpr expr) {
         final FPExpr[] opTerms = expr.getOps().stream()
-            .map(e -> (FPExpr) toTerm(e))
-            .toArray(FPExpr[]::new);
+                .map(e -> (FPExpr) toTerm(e))
+                .toArray(FPExpr[]::new);
 
         return Stream.of(opTerms).skip(1).reduce(opTerms[0],
-            (op1, op2) -> context.mkFPMul(transformFpRoundingMode(expr.getRoundingMode()), op1,
-                op2));
+                (op1, op2) -> context.mkFPMul(transformFpRoundingMode(expr.getRoundingMode()), op1,
+                        op2));
     }
 
     private com.microsoft.z3.Expr transformFpDiv(final FpDivExpr expr) {
@@ -1068,7 +1068,7 @@ final class Z3ExprTransformer {
         final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
 
         return context.mkFPDiv(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm,
-            rightOpTerm);
+                rightOpTerm);
     }
 
     private com.microsoft.z3.Expr transformFpRem(final FpRemExpr expr) {
@@ -1151,9 +1151,9 @@ final class Z3ExprTransformer {
     private com.microsoft.z3.Expr transformFpFromBv(final FpFromBvExpr expr) {
         final BitVecExpr val = (BitVecExpr) toTerm(expr.getOp());
         final FPSort fpSort = context.mkFPSort(expr.getFpType().getExponent(),
-            expr.getFpType().getSignificand());
+                expr.getFpType().getSignificand());
         return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), val, fpSort,
-            expr.isSigned());
+                expr.isSigned());
     }
 
     private com.microsoft.z3.Expr transformFpToBv(final FpToBvExpr expr) {
@@ -1171,19 +1171,19 @@ final class Z3ExprTransformer {
         final FPExpr op = (FPExpr) toTerm(expr.getOp());
 
         return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), op,
-            new FPSort(context, expr.getExpBits(), expr.getSignBits()));
+                new FPSort(context, expr.getExpBits(), expr.getSignBits()));
     }
 
     private com.microsoft.z3.Expr transformArrayRead(final ArrayReadExpr<?, ?> expr) {
         final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(
-            expr.getArray());
+                expr.getArray());
         final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
         return context.mkSelect(arrayTerm, indexTerm);
     }
 
     private com.microsoft.z3.Expr transformArrayWrite(final ArrayWriteExpr<?, ?> expr) {
         final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(
-            expr.getArray());
+                expr.getArray());
         final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
         final com.microsoft.z3.Expr elemTerm = toTerm(expr.getElem());
         return context.mkStore(arrayTerm, indexTerm, elemTerm);
@@ -1207,7 +1207,7 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
         com.microsoft.z3.ArrayExpr running = context.mkConstArray(
-            transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
+                transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
             running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
         }
@@ -1216,7 +1216,7 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3.Expr transformArrayInit(final ArrayInitExpr<?, ?> expr) {
         com.microsoft.z3.ArrayExpr running = context.mkConstArray(
-            transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
+                transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
             running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
         }
@@ -1232,12 +1232,12 @@ final class Z3ExprTransformer {
             final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
             final List<Expr<?>> args = funcAndArgs.get2();
             final com.microsoft.z3.Expr[] argTerms = args.stream()
-                .map(this::toTerm)
-                .toArray(com.microsoft.z3.Expr[]::new);
+                    .map(this::toTerm)
+                    .toArray(com.microsoft.z3.Expr[]::new);
             return context.mkApp(funcDecl, argTerms);
         } else {
             throw new UnsupportedOperationException(
-                "Higher order functions are not supported: " + func);
+                    "Higher order functions are not supported: " + func);
         }
     }
 

@@ -45,8 +45,8 @@ public final class ExplInitFunc implements InitFunc<ExplState, ExplPrec> {
     public Collection<? extends ExplState> getInitStates(final ExplPrec prec) {
         checkNotNull(prec);
         final Collection<ExplState> initStates = ExprStates.createStatesForExpr(solver, initExpr, 0,
-            prec::createState,
-            VarIndexingFactory.indexing(0));
+                prec::createState,
+                VarIndexingFactory.indexing(0));
         return initStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : initStates;
     }
 

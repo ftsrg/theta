@@ -65,15 +65,15 @@ public class FpTypeTest {
 
         // Type checks
         assertTrue(
-            "The type of actual is " + actual.getClass().getName() + " instead of "
-                + exprType.getName(),
-            exprType.isInstance(actual)
+                "The type of actual is " + actual.getClass().getName() + " instead of "
+                        + exprType.getName(),
+                exprType.isInstance(actual)
         );
         assertEquals(
-            "The type of expected (" + expected.getType() + ") must match the type of actual ("
-                + actual.getType() + ")",
-            expected.getType(),
-            actual.getType()
+                "The type of expected (" + expected.getType() + ") must match the type of actual ("
+                        + actual.getType() + ")",
+                expected.getType(),
+                actual.getType()
         );
 
         // Equality check
@@ -88,10 +88,10 @@ public class FpTypeTest {
             } else {
                 //noinspection unchecked
                 FpLeqExpr leq = Leq(
-                    Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual.eval(val))),
-                    FpUtils.bigFloatToFpLitExpr(new BigFloat("1e-2",
-                            FpUtils.getMathContext((FpType) actual.getType(), RNE)),
-                        (FpType) actual.getType()));
+                        Abs(Sub(RNE, (FpLitExpr) expected, (Expr<FpType>) actual.eval(val))),
+                        FpUtils.bigFloatToFpLitExpr(new BigFloat("1e-2",
+                                        FpUtils.getMathContext((FpType) actual.getType(), RNE)),
+                                (FpType) actual.getType()));
                 assertEquals(Bool(true), leq.eval(val));
             }
         } else {

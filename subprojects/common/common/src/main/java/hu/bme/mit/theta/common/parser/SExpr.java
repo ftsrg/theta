@@ -53,12 +53,12 @@ public abstract class SExpr {
         } else if (object instanceof Iterable) {
             final Iterable<?> iterable = (Iterable<?>) object;
             final List<SExpr> sexprs = stream(iterable).map(SExpr::build)
-                .collect(toImmutableList());
+                    .collect(toImmutableList());
             return list(sexprs);
         } else {
             throw new IllegalArgumentException(
-                "Only String and Iterable types are supported, found: " + object.getClass()
-                    .getSimpleName());
+                    "Only String and Iterable types are supported, found: " + object.getClass()
+                            .getSimpleName());
         }
     }
 

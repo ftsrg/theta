@@ -69,6 +69,6 @@ public final class ZonePrec implements Prec {
     @Override
     public Collection<VarDecl<?>> getUsedVars() { // This could be way more elegant
         return clocks.stream().map(ratTypeVarDecl -> (VarDecl<?>) ratTypeVarDecl)
-            .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
     }
 }

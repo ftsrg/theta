@@ -50,9 +50,9 @@ public class UnusedVarRemovalPass extends ProcedurePass {
                         Set<VarDecl<?>> vars1 = new LinkedHashSet<>(getVars(label));
                         Set<VarDecl<?>> modifiedVars = getModifiedVars(label);
                         vars1.removeIf(varDecl ->
-                            modifiedVars.contains(varDecl) &&
-                                !builder.getParams().containsKey(varDecl) &&
-                                builder.getLocalVars().containsKey(varDecl)
+                                modifiedVars.contains(varDecl) &&
+                                        !builder.getParams().containsKey(varDecl) &&
+                                        builder.getLocalVars().containsKey(varDecl)
                         );
                         vars.addAll(vars1);
                     }
@@ -75,7 +75,7 @@ public class UnusedVarRemovalPass extends ProcedurePass {
                 }
             }
             List<VarDecl<?>> unused = builder.getLocalVars().keySet().stream()
-                .filter(var -> !vars.contains(var)).collect(Collectors.toList());
+                    .filter(var -> !vars.contains(var)).collect(Collectors.toList());
             for (VarDecl<?> varDecl : unused) {
                 builder.removeVar(varDecl);
             }

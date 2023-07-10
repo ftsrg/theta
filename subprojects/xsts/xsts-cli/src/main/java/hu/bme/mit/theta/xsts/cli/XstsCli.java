@@ -80,7 +80,7 @@ public class XstsCli {
     String model;
 
     @Parameter(names = {
-        "--property"}, description = "Input property as a string or a file (*.prop)", required = true)
+            "--property"}, description = "Input property as a string or a file (*.prop)", required = true)
     String property;
 
     @Parameter(names = {"--initialmarking"}, description = "Initial marking of the Petri net")
@@ -111,7 +111,7 @@ public class XstsCli {
     String cexfile = null;
 
     @Parameter(names = {
-        "--header"}, description = "Print only a header (for benchmarks)", help = true)
+            "--header"}, description = "Print only a header (for benchmarks)", help = true)
     boolean headerOnly = false;
 
     @Parameter(names = "--metrics", description = "Print metrics about the XSTS without running the algorithm")
@@ -124,7 +124,7 @@ public class XstsCli {
     boolean versionInfo = false;
 
     @Parameter(names = {
-        "--visualize"}, description = "Write proof or counterexample to file in dot format")
+            "--visualize"}, description = "Write proof or counterexample to file in dot format")
     String dotfile = null;
 
     @Parameter(names = {"--refinement-solver"}, description = "Refinement solver name")
@@ -203,14 +203,14 @@ public class XstsCli {
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(
-                "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
-                ex);
+                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    ex);
         }
     }
 
     private void printHeader() {
         Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-            "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars").forEach(writer::cell);
+                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars").forEach(writer::cell);
         writer.newRow();
     }
 
@@ -229,7 +229,7 @@ public class XstsCli {
             } else {
 
                 try (SequenceInputStream inputStream = new SequenceInputStream(
-                    new FileInputStream(model), propStream)) {
+                        new FileInputStream(model), propStream)) {
                     return XstsDslManager.createXsts(inputStream);
                 }
             }
@@ -249,28 +249,28 @@ public class XstsCli {
             ArgCexCheckHandler.instance.setArgCexCheck(false, false);
         } else {
             ArgCexCheckHandler.instance.setArgCexCheck(true,
-                refinement.equals(Refinement.MULTI_SEQ));
+                    refinement.equals(Refinement.MULTI_SEQ));
         }
 
         registerAllSolverManagers(solverHome, logger);
         SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(
-            abstractionSolver);
+                abstractionSolver);
         SolverFactory refinementSolverFactory = SolverManager.resolveSolverFactory(
-            refinementSolver);
+                refinementSolver);
 
         try {
             return new XstsConfigBuilder(domain, refinement, abstractionSolverFactory,
-                refinementSolverFactory)
-                .maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
-                .search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger)
-                .build(xsts);
+                    refinementSolverFactory)
+                    .maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
+                    .search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger)
+                    .build(xsts);
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
         }
     }
 
     private void printResult(final SafetyResult<?, ?> status, final XSTS sts,
-        final long totalTimeMs) {
+                             final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics) status.getStats().get();
         if (benchmarkMode) {
             writer.cell(status.isSafe());
@@ -299,7 +299,7 @@ public class XstsCli {
             writer.newRow();
         } else {
             logger.write(Logger.Level.RESULT, "%s occurred, message: %s%n",
-                ex.getClass().getSimpleName(), message);
+                    ex.getClass().getSimpleName(), message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
                 ex.printStackTrace(new PrintWriter(errors));
@@ -311,11 +311,11 @@ public class XstsCli {
     }
 
     private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts)
-        throws FileNotFoundException {
+            throws FileNotFoundException {
 
         @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
         final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace,
-            Z3SolverFactory.getInstance(), xsts);
+                Z3SolverFactory.getInstance(), xsts);
         final File file = new File(cexfile);
         try (PrintWriter printWriter = new PrintWriter(file)) {
             printWriter.write(concrTrace.toString());
@@ -323,10 +323,10 @@ public class XstsCli {
     }
 
     private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
-        throws FileNotFoundException {
+            throws FileNotFoundException {
         final Graph graph =
-            status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
-                : TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
+                status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
+                        : TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }
 
@@ -335,7 +335,7 @@ public class XstsCli {
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
             SmtLibSolverManager smtLibSolverManager = SmtLibSolverManager.create(Path.of(home),
-                logger);
+                    logger);
             SolverManager.registerSolverManager(smtLibSolverManager);
         }
     }

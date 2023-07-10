@@ -19,7 +19,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +40,7 @@ public final class ParamBinding implements Substitution {
     private final Map<Decl<?>, Expr<?>> paramToArg;
 
     public ParamBinding(final List<? extends ParamDecl<?>> params,
-        final List<? extends Expr<?>> args) {
+                        final List<? extends Expr<?>> args) {
         checkNotNull(params);
         checkNotNull(args);
         checkArgument(params.size() == args.size());
@@ -55,7 +57,7 @@ public final class ParamBinding implements Substitution {
     }
 
     public static ParamBinding create(final List<? extends ParamDecl<?>> params,
-        final List<? extends Expr<?>> args) {
+                                      final List<? extends Expr<?>> args) {
         return new ParamBinding(params, args);
     }
 
@@ -68,9 +70,9 @@ public final class ParamBinding implements Substitution {
 
     @Override
     public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(
-        final Decl<DeclType> decl) {
+            final Decl<DeclType> decl) {
         @SuppressWarnings("unchecked") final Expr<DeclType> value = (Expr<DeclType>) paramToArg.get(
-            decl);
+                decl);
         return Optional.ofNullable(value);
     }
 }

@@ -57,15 +57,15 @@ public final class ExprOrdLeqTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {PredState.of(), PredState.of(), true},
+                {PredState.of(), PredState.of(), true},
 
-            {PredState.of(Geq(X, Int(0))), PredState.of(True()), true},
+                {PredState.of(Geq(X, Int(0))), PredState.of(True()), true},
 
-            {PredState.of(False()), PredState.of(Leq(X, Int(1))), true},
+                {PredState.of(False()), PredState.of(Leq(X, Int(1))), true},
 
-            {PredState.of(True()), PredState.of(Geq(X, Int(0))), false},
+                {PredState.of(True()), PredState.of(Geq(X, Int(0))), false},
 
-            {PredState.of(Geq(X, Int(0))), PredState.of(False()), false}
+                {PredState.of(Geq(X, Int(0))), PredState.of(False()), false}
 
         });
     }

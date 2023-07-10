@@ -51,7 +51,7 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                "The type of declaration " + decl + " is not of type " + type);
+                    "The type of declaration " + decl + " is not of type " + type);
         }
     }
 
@@ -71,7 +71,7 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                "The type of declaration " + decl + " is not of type " + type);
+                    "The type of declaration " + decl + " is not of type " + type);
         }
     }
 
@@ -91,7 +91,7 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                "The type of expression " + expr + " is not of type " + type);
+                    "The type of expression " + expr + " is not of type " + type);
         }
     }
 
@@ -109,7 +109,7 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                "The type of expression " + expr + " is not of type BvType");
+                    "The type of expression " + expr + " is not of type BvType");
         }
     }
 
@@ -127,7 +127,7 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                "The type of expression " + expr + " is not of type FpType");
+                    "The type of expression " + expr + " is not of type FpType");
         }
     }
 

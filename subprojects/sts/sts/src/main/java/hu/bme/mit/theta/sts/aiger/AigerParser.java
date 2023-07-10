@@ -51,7 +51,7 @@ public final class AigerParser {
      */
     public static AigerSystem parse(final String fileName) throws IOException {
         final BufferedReader br = new BufferedReader(
-            new InputStreamReader(new FileInputStream(fileName)));
+                new InputStreamReader(new FileInputStream(fileName)));
 
         try {
             int nNodes;
@@ -69,7 +69,7 @@ public final class AigerParser {
 
             if (nOutputs != 1) {
                 throw new UnsupportedOperationException(
-                    "Only a single output variable is supported.");
+                        "Only a single output variable is supported.");
             }
 
             final AigerNode[] nodes = new AigerNode[nNodes + 1];
@@ -139,9 +139,9 @@ public final class AigerParser {
                 final AigerNode source1 = nodes[andGateInputs1.get(i) / 2];
                 final AigerNode source2 = nodes[andGateInputs2.get(i) / 2];
                 final AigerWire wire1 = new AigerWire(source1, andGate,
-                    andGateInputs1.get(i) % 2 == 0);
+                        andGateInputs1.get(i) % 2 == 0);
                 final AigerWire wire2 = new AigerWire(source2, andGate,
-                    andGateInputs2.get(i) % 2 == 0);
+                        andGateInputs2.get(i) % 2 == 0);
                 andGate.setInWire1(wire1);
                 andGate.setInWire2(wire2);
                 source1.addOutWire(wire1);

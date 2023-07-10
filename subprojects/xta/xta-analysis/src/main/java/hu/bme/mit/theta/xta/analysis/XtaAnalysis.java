@@ -26,14 +26,14 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.xta.XtaSystem;
 
 public final class XtaAnalysis<S extends State, P extends Prec> implements
-    Analysis<XtaState<S>, XtaAction, P> {
+        Analysis<XtaState<S>, XtaAction, P> {
 
     private final PartialOrd<XtaState<S>> partialOrd;
     private final InitFunc<XtaState<S>, P> initFunc;
     private final TransFunc<XtaState<S>, XtaAction, P> transFunc;
 
     private XtaAnalysis(final XtaSystem system,
-        final Analysis<S, ? super XtaAction, ? super P> analysis) {
+                        final Analysis<S, ? super XtaAction, ? super P> analysis) {
         checkNotNull(system);
         checkNotNull(analysis);
         partialOrd = XtaOrd.create(analysis.getPartialOrd());
@@ -42,7 +42,7 @@ public final class XtaAnalysis<S extends State, P extends Prec> implements
     }
 
     public static <S extends State, P extends Prec> XtaAnalysis<S, P> create(final XtaSystem system,
-        final Analysis<S, ? super XtaAction, ? super P> analysis) {
+                                                                             final Analysis<S, ? super XtaAction, ? super P> analysis) {
         return new XtaAnalysis<>(system, analysis);
     }
 

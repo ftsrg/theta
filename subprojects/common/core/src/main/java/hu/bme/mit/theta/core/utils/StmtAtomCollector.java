@@ -44,7 +44,7 @@ public class StmtAtomCollector {
     }
 
     private static class AllAssumesAndAssignsCollector implements
-        StmtVisitor<Set<Expr<BoolType>>, Void> {
+            StmtVisitor<Set<Expr<BoolType>>, Void> {
 
         @Override
         public Void visit(SkipStmt stmt, Set<Expr<BoolType>> atoms) {
@@ -59,7 +59,7 @@ public class StmtAtomCollector {
 
         @Override
         public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt,
-            Set<Expr<BoolType>> atoms) {
+                                                  Set<Expr<BoolType>> atoms) {
             final Expr<BoolType> eq = EqExpr.create2(stmt.getVarDecl().getRef(), stmt.getExpr());
             atoms.addAll(ExprUtils.getAtoms(eq));
             return null;
@@ -67,7 +67,7 @@ public class StmtAtomCollector {
 
         @Override
         public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt,
-            Set<Expr<BoolType>> atoms) {
+                                                  Set<Expr<BoolType>> atoms) {
             return null;
         }
 

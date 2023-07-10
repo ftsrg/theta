@@ -37,23 +37,23 @@ public final class DatalogStringTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-            {"succ"},
-            {"trains"}
-            //this benchmark is from the exercise in http://ysangkok.github.io/mitre-datalog.js/wrapper.html
+                {"succ"},
+                {"trains"}
+                //this benchmark is from the exercise in http://ysangkok.github.io/mitre-datalog.js/wrapper.html
         });
     }
 
     @Test
     public void test() {
         final InputStream inStream = getClass().getResourceAsStream(
-            "/datalog/in/" + name + ".datalog");
+                "/datalog/in/" + name + ".datalog");
         final InputStream outStream = getClass().getResourceAsStream(
-            "/datalog/out/" + name + ".output");
+                "/datalog/out/" + name + ".output");
 
         String input = new BufferedReader(new InputStreamReader(inStream)).lines()
-            .collect(Collectors.joining());
+                .collect(Collectors.joining());
         Set<String> output = new BufferedReader(new InputStreamReader(outStream)).lines()
-            .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
 
         String[] s = Datalog.runProgram(input).split("\r\n");
         for (String s1 : s) {

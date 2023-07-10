@@ -55,6 +55,6 @@ public class ItpRefToPredPrec implements RefutationToPrec<PredPrec, ItpRefutatio
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().add(exprSplitter)
-            .toString();
+                .toString();
     }
 }

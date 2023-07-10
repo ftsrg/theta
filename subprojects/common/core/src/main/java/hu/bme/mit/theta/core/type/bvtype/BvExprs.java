@@ -49,7 +49,7 @@ public final class BvExprs {
     }
 
     public static BvExtractExpr Extract(final Expr<BvType> bitvec, final IntLitExpr from,
-        final IntLitExpr until) {
+                                        final IntLitExpr until) {
         return BvExtractExpr.of(bitvec, from, until);
     }
 
@@ -122,22 +122,22 @@ public final class BvExprs {
     }
 
     public static BvArithShiftRightExpr ArithShiftRight(final Expr<BvType> leftOp,
-        final Expr<BvType> rightOp) {
+                                                        final Expr<BvType> rightOp) {
         return BvArithShiftRightExpr.of(leftOp, rightOp);
     }
 
     public static BvLogicShiftRightExpr LogicShiftRight(final Expr<BvType> leftOp,
-        final Expr<BvType> rightOp) {
+                                                        final Expr<BvType> rightOp) {
         return BvLogicShiftRightExpr.of(leftOp, rightOp);
     }
 
     public static BvRotateLeftExpr RotateLeft(final Expr<BvType> leftOp,
-        final Expr<BvType> rightOp) {
+                                              final Expr<BvType> rightOp) {
         return BvRotateLeftExpr.of(leftOp, rightOp);
     }
 
     public static BvRotateRightExpr RotateRight(final Expr<BvType> leftOp,
-        final Expr<BvType> rightOp) {
+                                                final Expr<BvType> rightOp) {
         return BvRotateRightExpr.of(leftOp, rightOp);
     }
 

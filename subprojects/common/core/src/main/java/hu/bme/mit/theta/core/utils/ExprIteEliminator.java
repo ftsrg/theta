@@ -51,7 +51,7 @@ final class ExprIteEliminator {
                 final Expr<BoolType> then = TypeUtils.cast(removeIte(iteExpr.getThen()), Bool());
                 final Expr<BoolType> elze = TypeUtils.cast(removeIte(iteExpr.getElse()), Bool());
                 @SuppressWarnings("unchecked") final Expr<T> result = (Expr<T>) And(
-                    Or(Not(cond), then), Or(cond, elze));
+                        Or(Not(cond), then), Or(cond, elze));
                 return result;
             } else {
                 return expr;
@@ -66,7 +66,7 @@ final class ExprIteEliminator {
             final IteExpr<T> iteExpr = (IteExpr<T>) expr;
             // Apply propagation to operand(s)
             return iteExpr.withThen(propagateIte(iteExpr.getThen()))
-                .withElse(propagateIte(iteExpr.getElse()));
+                    .withElse(propagateIte(iteExpr.getElse()));
         } else {
             // Apply propagation to operand(s) first, then apply pushdown
             return pushIte(expr.map(ExprIteEliminator::propagateIte));
@@ -83,7 +83,7 @@ final class ExprIteEliminator {
 
         // Get the first operand that is an ITE
         final Optional<? extends Expr<?>> optIte = ops.stream().filter(op -> op instanceof IteExpr)
-            .findFirst();
+                .findFirst();
 
         // Nothing to do if none of the operands are ITE
         if (!optIte.isPresent()) {

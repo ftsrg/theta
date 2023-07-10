@@ -35,7 +35,7 @@ final class ItpZoneTransFunc<A extends Action> implements TransFunc<ItpZoneState
     }
 
     public static <A extends Action> ItpZoneTransFunc<A> create(
-        final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+            final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
         return new ItpZoneTransFunc<>(transFunc);
     }
 
@@ -43,14 +43,14 @@ final class ItpZoneTransFunc<A extends Action> implements TransFunc<ItpZoneState
 
     @Override
     public Collection<ItpZoneState> getSuccStates(final ItpZoneState state, final A action,
-        final ZonePrec prec) {
+                                                  final ZonePrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
 
         final ZoneState subState = state.getConcrState();
         final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState,
-            action, prec);
+                action, prec);
 
         if (subSuccStates.isEmpty()) {
             final ItpZoneState succState = ItpZoneState.of(ZoneState.bottom(), ZoneState.top());

@@ -60,15 +60,15 @@ public class ModelStatistics {
         ret.modelName = modelName;
         ret.varCount = cfa.getVars().size();
         ret.havocCount = cfa.getEdges().stream().filter(edge -> edge.getStmt() instanceof HavocStmt)
-            .count();
+                .count();
         ret.locCount = cfa.getLocs().size();
         ret.edgeCount = cfa.getEdges().size();
         ret.skipEdgeCount = cfa.getEdges().stream().
-            filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count();
+                filter(edge -> edge.getStmt().equals(SkipStmt.getInstance())).count();
         ret.assumeCount = cfa.getEdges().stream()
-            .filter(edge -> edge.getStmt() instanceof AssumeStmt).count();
+                .filter(edge -> edge.getStmt() instanceof AssumeStmt).count();
         ret.assignCount = cfa.getEdges().stream()
-            .filter(edge -> edge.getStmt() instanceof AssignStmt).count();
+                .filter(edge -> edge.getStmt() instanceof AssignStmt).count();
 
         ret.cyclomaticComplexity = cfa.getEdges().size() - cfa.getLocs().size() + 2;
 
@@ -91,43 +91,43 @@ public class ModelStatistics {
         ret.modelName = modelName;
         ret.varCount = XcfaUtils.getVars(xcfa).size();
         ret.havocCount = xcfa.getProcesses().stream().map(
-            proc -> proc.getProcedures().stream().map(
-                p -> p.getEdges().stream().map(
-                    e -> e.getLabels().stream().filter(
-                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
-                            && edge.getStmt() instanceof HavocStmt).count()
-                ).reduce(Long::sum).orElse(0L)
-            ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+                proc -> proc.getProcedures().stream().map(
+                        p -> p.getEdges().stream().map(
+                                e -> e.getLabels().stream().filter(
+                                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
+                                                && edge.getStmt() instanceof HavocStmt).count()
+                        ).reduce(Long::sum).orElse(0L)
+                ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
         ret.locCount = xcfa.getProcesses().stream().map(
-            proc -> proc.getProcedures().stream().map(p -> p.getLocs().size()).reduce(Integer::sum)
-                .orElse(0)).reduce(Integer::sum).orElse(0);
+                proc -> proc.getProcedures().stream().map(p -> p.getLocs().size()).reduce(Integer::sum)
+                        .orElse(0)).reduce(Integer::sum).orElse(0);
         ret.edgeCount = xcfa.getProcesses().stream().map(
-            proc -> proc.getProcedures().stream().map(p -> p.getEdges().size()).reduce(Integer::sum)
-                .orElse(0)).reduce(Integer::sum).orElse(0);
+                proc -> proc.getProcedures().stream().map(p -> p.getEdges().size()).reduce(Integer::sum)
+                        .orElse(0)).reduce(Integer::sum).orElse(0);
         ret.skipEdgeCount = xcfa.getProcesses().stream().map(
-            proc -> proc.getProcedures().stream().map(
-                p -> p.getEdges().stream().map(
-                    e -> e.getLabels().stream().filter(
-                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
-                            && edge.getStmt() instanceof SkipStmt).count()
-                ).reduce(Long::sum).orElse(0L)
-            ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+                proc -> proc.getProcedures().stream().map(
+                        p -> p.getEdges().stream().map(
+                                e -> e.getLabels().stream().filter(
+                                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
+                                                && edge.getStmt() instanceof SkipStmt).count()
+                        ).reduce(Long::sum).orElse(0L)
+                ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
         ret.assumeCount = xcfa.getProcesses().stream().map(
-            proc -> proc.getProcedures().stream().map(
-                p -> p.getEdges().stream().map(
-                    e -> e.getLabels().stream().filter(
-                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
-                            && edge.getStmt() instanceof AssumeStmt).count()
-                ).reduce(Long::sum).orElse(0L)
-            ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+                proc -> proc.getProcedures().stream().map(
+                        p -> p.getEdges().stream().map(
+                                e -> e.getLabels().stream().filter(
+                                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
+                                                && edge.getStmt() instanceof AssumeStmt).count()
+                        ).reduce(Long::sum).orElse(0L)
+                ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
         ret.assignCount = xcfa.getProcesses().stream().map(
-            proc -> proc.getProcedures().stream().map(
-                p -> p.getEdges().stream().map(
-                    e -> e.getLabels().stream().filter(
-                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
-                            && edge.getStmt() instanceof AssignStmt).count()
-                ).reduce(Long::sum).orElse(0L)
-            ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
+                proc -> proc.getProcedures().stream().map(
+                        p -> p.getEdges().stream().map(
+                                e -> e.getLabels().stream().filter(
+                                        edge -> edge instanceof XcfaLabel.StmtXcfaLabel
+                                                && edge.getStmt() instanceof AssignStmt).count()
+                        ).reduce(Long::sum).orElse(0L)
+                ).reduce(Long::sum).orElse(0L)).reduce(Long::sum).orElse(0L);
 
         ret.cyclomaticComplexity = ret.edgeCount - ret.locCount + 2;
 
@@ -170,16 +170,16 @@ public class ModelStatistics {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("XCFA-data varCount ").append(locCount).append(System.lineSeparator());
         stringBuilder.append("XCFA-data havocCount ").append(havocCount)
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
         stringBuilder.append("XCFA-data locCount ").append(locCount).append(System.lineSeparator());
         stringBuilder.append("XCFA-data edgeCount ").append(edgeCount)
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
         stringBuilder.append("XCFA-data skipEdgeCount ").append(skipEdgeCount)
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
         stringBuilder.append("XCFA-data assumeStmts ").append(assumeCount).append("\n"); // assumes
         stringBuilder.append("XCFA-data assignStmts ").append(assignCount).append("\n"); // assign
         stringBuilder.append("XCFA-data cyclomatic complexity ").append(cyclomaticComplexity)
-            .append(System.lineSeparator());
+                .append(System.lineSeparator());
 
         stringBuilder.append("C-data forLoops ").append(forLoops).append("\n"); // for loops
         stringBuilder.append("C-data whileLoops ").append(whileLoops).append("\n"); // while loops

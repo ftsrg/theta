@@ -70,12 +70,12 @@ public class ExprIndexedVarCollectorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of()},
+                {And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of()},
 
-            {And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA))},
+                {And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA))},
 
-            {And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
-                ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA))},
+                {And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
+                        ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA))},
 
         });
 
@@ -92,7 +92,7 @@ public class ExprIndexedVarCollectorTest {
         }
 
         Assert.assertEquals(
-            expectedVars.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
-            actualVars.getAllVars());
+                expectedVars.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
+                actualVars.getAllVars());
     }
 }

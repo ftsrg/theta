@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public final class XstsInitFunc<S extends ExprState, P extends Prec> implements
-    InitFunc<XstsState<S>, P> {
+        InitFunc<XstsState<S>, P> {
 
     private final InitFunc<S, ? super P> initFunc;
 
@@ -32,7 +32,7 @@ public final class XstsInitFunc<S extends ExprState, P extends Prec> implements
     }
 
     public static <S extends ExprState, P extends Prec> XstsInitFunc<S, P> create(
-        final InitFunc<S, ? super P> initFunc) {
+            final InitFunc<S, ? super P> initFunc) {
         return new XstsInitFunc<>(initFunc);
     }
 

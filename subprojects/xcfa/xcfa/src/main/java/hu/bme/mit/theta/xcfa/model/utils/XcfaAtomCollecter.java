@@ -56,7 +56,7 @@ public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolT
 
     @Override
     public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt,
-        Collection<Expr<BoolType>> param) {
+                                              Collection<Expr<BoolType>> param) {
         param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
         return null;
@@ -64,7 +64,7 @@ public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolT
 
     @Override
     public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt,
-        Collection<Expr<BoolType>> param) {
+                                              Collection<Expr<BoolType>> param) {
         param.addAll(StmtAtomCollector.collectAtoms(stmt));
 
         return null;
@@ -118,7 +118,7 @@ public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolT
     @Override
     public Void visit(XcfaLabel.ProcedureCallXcfaLabel label, Collection<Expr<BoolType>> param) {
         throw new UnsupportedOperationException(
-            "Cannot get atoms of ProcedureCalls - did you mean to inline before?");
+                "Cannot get atoms of ProcedureCalls - did you mean to inline before?");
     }
 
     @Override
@@ -133,14 +133,14 @@ public class XcfaAtomCollecter implements XcfaLabelVisitor<Collection<Expr<BoolT
 
     @Override
     public <T extends Type> Void visit(XcfaLabel.LoadXcfaLabel<T> label,
-        Collection<Expr<BoolType>> param) {
+                                       Collection<Expr<BoolType>> param) {
         ExprUtils.collectAtoms(Eq(label.getGlobal().getRef(), label.getLocal().getRef()), param);
         return null;
     }
 
     @Override
     public <T extends Type> Void visit(XcfaLabel.StoreXcfaLabel<T> label,
-        Collection<Expr<BoolType>> param) {
+                                       Collection<Expr<BoolType>> param) {
         ExprUtils.collectAtoms(Eq(label.getGlobal().getRef(), label.getLocal().getRef()), param);
         return null;
     }

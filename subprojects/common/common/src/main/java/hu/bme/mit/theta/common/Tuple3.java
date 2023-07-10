@@ -45,7 +45,7 @@ public final class Tuple3<T1, T2, T3> extends Tuple {
     }
 
     public <R> R unpackTo(
-        final TriFunction<? super T1, ? super T2, ? super T3, ? extends R> function) {
+            final TriFunction<? super T1, ? super T2, ? super T3, ? extends R> function) {
         checkNotNull(function);
         return function.apply(get1(), get2(), get3());
     }

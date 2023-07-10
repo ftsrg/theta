@@ -42,14 +42,14 @@ final class XtaStateSymbol implements Symbol {
     private final XtaExpression expression;
 
     public XtaStateSymbol(final XtaProcessSymbol scope, final StateDeclContext context,
-        final UrgentContext urgent,
-        final CommitContext commit) {
+                          final UrgentContext urgent,
+                          final CommitContext commit) {
         checkNotNull(context);
         name = context.fId.getText();
         kind = isCommited(name, commit) ? LocKind.COMMITTED
-            : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
+                : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
         expression =
-            context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
+                context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
     }
 
     private static boolean isUrgent(final String name, final UrgentContext urgent) {

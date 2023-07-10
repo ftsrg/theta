@@ -19,7 +19,9 @@ import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
 import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
 
 import java.awt.Color;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,7 +54,7 @@ public final class ArgVisualizer<S extends State, A extends Action> {
     private static class LazyHolderDefault {
 
         static final ArgVisualizer<State, Action> INSTANCE = new ArgVisualizer<>(s -> s.toString(),
-            a -> a.toString());
+                a -> a.toString());
     }
 
     private static class LazyHolderStructureOnly {
@@ -61,13 +63,13 @@ public final class ArgVisualizer<S extends State, A extends Action> {
     }
 
     public ArgVisualizer(final Function<S, String> stateToString,
-        final Function<A, String> actionToString) {
+                         final Function<A, String> actionToString) {
         this.stateToString = stateToString;
         this.actionToString = actionToString;
     }
 
     public static <S extends State, A extends Action> ArgVisualizer<S, A> create(
-        final Function<S, String> stateToString, final Function<A, String> actionToString) {
+            final Function<S, String> stateToString, final Function<A, String> actionToString) {
         return new ArgVisualizer<>(stateToString, actionToString);
     }
 
@@ -85,23 +87,23 @@ public final class ArgVisualizer<S extends State, A extends Action> {
         final Set<ArgNode<? extends S, ? extends A>> traversed = Containers.createSet();
 
         for (final ArgNode<? extends S, ? extends A> initNode : arg.getInitNodes()
-            .collect(Collectors.toSet())) {
+                .collect(Collectors.toSet())) {
             traverse(graph, initNode, traversed);
             final NodeAttributes nAttributes = NodeAttributes.builder().label("")
-                .fillColor(FILL_COLOR)
-                .lineColor(FILL_COLOR).lineStyle(SUCC_EDGE_STYLE).peripheries(1).build();
+                    .fillColor(FILL_COLOR)
+                    .lineColor(FILL_COLOR).lineStyle(SUCC_EDGE_STYLE).peripheries(1).build();
             graph.addNode(PHANTOM_INIT_ID + initNode.getId(), nAttributes);
             final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
-                .lineStyle(SUCC_EDGE_STYLE).build();
+                    .lineStyle(SUCC_EDGE_STYLE).build();
             graph.addEdge(PHANTOM_INIT_ID + initNode.getId(), NODE_ID_PREFIX + initNode.getId(),
-                eAttributes);
+                    eAttributes);
         }
 
         return graph;
     }
 
     private void traverse(final Graph graph, final ArgNode<? extends S, ? extends A> node,
-        final Set<ArgNode<? extends S, ? extends A>> traversed) {
+                          final Set<ArgNode<? extends S, ? extends A>> traversed) {
         if (traversed.contains(node)) {
             return;
         } else {
@@ -112,20 +114,20 @@ public final class ArgVisualizer<S extends State, A extends Action> {
         final int peripheries = node.isTarget() ? 2 : 1;
 
         final NodeAttributes nAttributes = NodeAttributes.builder()
-            .label(stateToString.apply(node.getState()))
-            .alignment(LEFT).shape(RECTANGLE).font(FONT).fillColor(FILL_COLOR).lineColor(LINE_COLOR)
-            .lineStyle(lineStyle).peripheries(peripheries).build();
+                .label(stateToString.apply(node.getState()))
+                .alignment(LEFT).shape(RECTANGLE).font(FONT).fillColor(FILL_COLOR).lineColor(LINE_COLOR)
+                .lineStyle(lineStyle).peripheries(peripheries).build();
 
         graph.addNode(nodeId, nAttributes);
 
         for (final ArgEdge<? extends S, ? extends A> edge : node.getOutEdges()
-            .collect(Collectors.toSet())) {
+                .collect(Collectors.toSet())) {
             traverse(graph, edge.getTarget(), traversed);
             final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
             final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
             final EdgeAttributes eAttributes = EdgeAttributes.builder()
-                .label(actionToString.apply(edge.getAction()))
-                .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(SUCC_EDGE_STYLE).build();
+                    .label(actionToString.apply(edge.getAction()))
+                    .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(SUCC_EDGE_STYLE).build();
             graph.addEdge(sourceId, targetId, eAttributes);
         }
 
@@ -134,7 +136,7 @@ public final class ArgVisualizer<S extends State, A extends Action> {
             final String sourceId = NODE_ID_PREFIX + node.getId();
             final String targetId = NODE_ID_PREFIX + node.getCoveringNode().get().getId();
             final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
-                .lineStyle(COVER_EDGE_STYLE).weight(0).build();
+                    .lineStyle(COVER_EDGE_STYLE).weight(0).build();
             graph.addEdge(sourceId, targetId, eAttributes);
         }
     }

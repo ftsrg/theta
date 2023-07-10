@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Map;
@@ -83,7 +84,7 @@ public final class IndexedVars {
      */
     public Set<VarDecl<?>> getAllVars() {
         final Set<VarDecl<?>> allVars = varSets.values().stream().flatMap(Collection::stream)
-            .collect(Collectors.toSet());
+                .collect(Collectors.toSet());
         return Collections.unmodifiableSet(allVars);
     }
 

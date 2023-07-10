@@ -77,7 +77,7 @@ public class ExprIteEliminatorTest {
 
         // if A then (if B then C else D) else E
         assertEquals(eliminateIte(Ite(a, Ite(b, c, d), e)),
-            And(Or(Not(a), And(Or(Not(b), c), Or(b, d))), Or(a, e)));
+                And(Or(Not(a), And(Or(Not(b), c), Or(b, d))), Or(a, e)));
     }
 
     @Test
@@ -100,14 +100,14 @@ public class ExprIteEliminatorTest {
         assertEquals(eliminateIte(Eq(Ite(a, y, z), x)), And(Or(Not(a), Eq(y, x)), Or(a, Eq(z, x))));
         // X = (if A then (if B then Y else Z) else T)
         assertEquals(eliminateIte(Eq(x, Ite(a, Ite(b, y, z), t))),
-            And(Or(Not(a), And(Or(Not(b), Eq(x, y)), Or(b, Eq(x, z)))), Or(a, Eq(x, t))));
+                And(Or(Not(a), And(Or(Not(b), Eq(x, y)), Or(b, Eq(x, z)))), Or(a, Eq(x, t))));
         // (if A then (if B then Y else Z) else T) = X
         assertEquals(eliminateIte(Eq(Ite(a, Ite(b, y, z), t), x)),
-            And(Or(Not(a), And(Or(Not(b), Eq(y, x)), Or(b, Eq(z, x)))), Or(a, Eq(t, x))));
+                And(Or(Not(a), And(Or(Not(b), Eq(y, x)), Or(b, Eq(z, x)))), Or(a, Eq(t, x))));
         // (if A then X else Y) = (if B then Z else T)
         assertEquals(eliminateIte(Eq(Ite(a, x, y), Ite(b, z, t))),
-            And(Or(Not(a), And(Or(Not(b), Eq(x, z)), Or(b, Eq(x, t)))),
-                Or(a, And(Or(Not(b), Eq(y, z)), Or(b, Eq(y, t))))));
+                And(Or(Not(a), And(Or(Not(b), Eq(x, z)), Or(b, Eq(x, t)))),
+                        Or(a, And(Or(Not(b), Eq(y, z)), Or(b, Eq(y, t))))));
     }
 
     @Test
@@ -116,11 +116,11 @@ public class ExprIteEliminatorTest {
         assertEquals(eliminateIte(Or(a, b, Ite(c, d, e))), Or(a, b, And(Or(Not(c), d), Or(c, e))));
         // 1 = 2 + (if A then 3 else 4) + 5
         assertEquals(eliminateIte(Eq(i1, Add(i2, Ite(a, i3, i4), i5))),
-            And(Or(Not(a), Eq(i1, Add(i2, i3, i5))), Or(a, Eq(i1, Add(i2, i4, i5)))));
+                And(Or(Not(a), Eq(i1, Add(i2, i3, i5))), Or(a, Eq(i1, Add(i2, i4, i5)))));
         // 1 = 2 + (if A then 3 else 4) + (if B then X else Y)
         assertEquals(eliminateIte(Eq(i1, Add(i2, Ite(a, i3, i4), Ite(b, x, y)))),
-            And(Or(Not(a), And(Or(Not(b), Eq(i1, Add(i2, i3, x))), Or(b, Eq(i1, Add(i2, i3, y))))),
-                Or(a, And(Or(Not(b), Eq(i1, Add(i2, i4, x))), Or(b, Eq(i1, Add(i2, i4, y)))))));
+                And(Or(Not(a), And(Or(Not(b), Eq(i1, Add(i2, i3, x))), Or(b, Eq(i1, Add(i2, i3, y))))),
+                        Or(a, And(Or(Not(b), Eq(i1, Add(i2, i4, x))), Or(b, Eq(i1, Add(i2, i4, y)))))));
     }
 
     @Test
@@ -139,6 +139,6 @@ public class ExprIteEliminatorTest {
     public void testPrime() {
         // D = (if A then X else Y)'
         assertEquals(eliminateIte(Eq(z, Prime(Ite(a, x, y)))),
-            And(Or(Not(a), Eq(z, Prime(x))), Or(a, Eq(z, Prime(y)))));
+                And(Or(Not(a), Eq(z, Prime(x))), Or(a, Eq(z, Prime(y)))));
     }
 }

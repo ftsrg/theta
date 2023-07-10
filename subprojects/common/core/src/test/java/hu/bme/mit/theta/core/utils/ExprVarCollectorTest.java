@@ -69,13 +69,13 @@ public class ExprVarCollectorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {And(True(), False(), Eq(Int(1), Int(2))), of()},
+                {And(True(), False(), Eq(Int(1), Int(2))), of()},
 
-            {And(A, Not(D)), of(VA, VD)},
+                {And(A, Not(D)), of(VA, VD)},
 
-            {And(A, Eq(Int(1), B)), of(VA, VB)},
+                {And(A, Eq(Int(1), B)), of(VA, VB)},
 
-            {And(Imply(A, D), Eq(C, Rat(2, 3))), of(VA, VC, VD)},});
+                {And(Imply(A, D), Eq(C, Rat(2, 3))), of(VA, VC, VD)},});
     }
 
     @Test

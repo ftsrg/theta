@@ -306,7 +306,7 @@ public class XcfaCli {
                             xcfaBuilder = chcFrontend.buildXcfa(input);
                         } catch (UnsupportedOperationException e) {
                             System.err.println(
-                                "Non-linear CHC found, retrying using backward transformation...");
+                                    "Non-linear CHC found, retrying using backward transformation...");
                             chcFrontend = new ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD);
                             input = CharStreams.fromStream(new FileInputStream(this.input));
                             xcfaBuilder = chcFrontend.buildXcfa(input);
@@ -370,9 +370,9 @@ public class XcfaCli {
 
                 for (final CFA.Edge edge : cfa.getEdges()) {
                     procedureBuilder.addEdge(XcfaEdge.of(
-                        locLut.get(edge.getSource()),
-                        locLut.get(edge.getTarget()),
-                        List.of(XcfaLabel.StmtXcfaLabel.of(edge.getStmt()))
+                            locLut.get(edge.getSource()),
+                            locLut.get(edge.getTarget()),
+                            List.of(XcfaLabel.StmtXcfaLabel.of(edge.getStmt()))
                     ));
                 }
             } catch (IOException e) {
@@ -392,7 +392,7 @@ public class XcfaCli {
                     cfa = xcfa.createCFA();
                 } catch (IllegalStateException e) {
                     System.out.println(
-                        "XCFA not compatible with CFA, using multithreaded analyses.");
+                            "XCFA not compatible with CFA, using multithreaded analyses.");
                     cfa = null;
                 }
                 if (cfa != null) {
@@ -461,8 +461,8 @@ public class XcfaCli {
 
             Duration initTime = Duration.of(CpuTimeKeeper.getCurrentCpuTime(), ChronoUnit.SECONDS);
             logger.write(Logger.Level.RESULT,
-                "Time of model transformation: " + initTime.toMillis() + "ms"
-                    + System.lineSeparator());
+                    "Time of model transformation: " + initTime.toMillis() + "ms"
+                            + System.lineSeparator());
 
             try {
                 registerAllSolverManagers(home, logger);
@@ -483,10 +483,10 @@ public class XcfaCli {
                     break;
                 case SEQUENTIAL:
                     SequentialPortfolio sequentialPortfolio = new SequentialPortfolio(logLevel,
-                        this.input.getName(), home);
+                            this.input.getName(), home);
                     try {
                         sequentialPortfolio.executeAnalysis(xcfa,
-                            initTime); // check(configuration);
+                                initTime); // check(configuration);
                     } catch (PortfolioTimeoutException pte) {
                         System.err.println(pte.getMessage());
                         long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -498,7 +498,7 @@ public class XcfaCli {
                     break;
                 case COMPLEX:
                     ComplexPortfolio complexPortfolio = new ComplexPortfolio(logLevel,
-                        this.input.getName(), home, algorithm);
+                            this.input.getName(), home, algorithm);
                     try {
                         complexPortfolio.executeAnalysis(xcfa, initTime);
                     } catch (PortfolioTimeoutException pte) {
@@ -551,7 +551,7 @@ public class XcfaCli {
         }
 
         final XcfaConfig<?, ?, ?> configuration = buildConfiguration(xcfa, abstractionSolverFactory,
-            refinementSolverFactory);
+                refinementSolverFactory);
         SafetyResult<?, ?> status = check(configuration);
         if (status != null && status.isUnsafe()) {
             OutputHandler.getInstance().writeCounterexamples(status, refinementSolver);
@@ -561,8 +561,8 @@ public class XcfaCli {
     }
 
     private XcfaConfig<?, ?, ?> buildConfiguration(XCFA xcfa,
-        SolverFactory abstractionSolverFactory, SolverFactory refinementSolverFactory)
-        throws Exception {
+                                                   SolverFactory abstractionSolverFactory, SolverFactory refinementSolverFactory)
+            throws Exception {
         // set up Arg-Cex check
         if (noArgCexCheck) {
             ArgCexCheckHandler.instance.setArgCexCheck(false, false);
@@ -580,24 +580,24 @@ public class XcfaCli {
                 final Solver solver1 = refinementSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
                 final Solver solver2 = abstractionSolverFactory.createSolver(); // TODO handle separate solvers in a nicer way
                 final ExplStmtAnalysis domainAnalysis = ExplStmtAnalysis.create(solver2, True(),
-                    maxEnum);
+                        maxEnum);
                 final LTS lts = algorithm.getLts(xcfa);
                 final InitFunc<XcfaState<ExplState>, XcfaPrec<ExplPrec>> initFunc =
-                    algorithm.getInitFunc(xcfa.getProcesses().stream()
-                        .map(proc -> proc.getMainProcedure().getInitLoc())
-                        .collect(Collectors.toList()), domainAnalysis.getInitFunc());
+                        algorithm.getInitFunc(xcfa.getProcesses().stream()
+                                .map(proc -> proc.getMainProcedure().getInitLoc())
+                                .collect(Collectors.toList()), domainAnalysis.getInitFunc());
                 final TransFunc<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> transFunc =
-                    algorithm.getTransFunc(domainAnalysis.getTransFunc());
+                        algorithm.getTransFunc(domainAnalysis.getTransFunc());
                 final IterativeBmcChecker<XcfaState<ExplState>, StmtAction, XcfaPrec<ExplPrec>> bmcChecker = IterativeBmcChecker.create(
-                    lts, initFunc, transFunc, XcfaState::isError, solver1, logger, -1, 25);
+                        lts, initFunc, transFunc, XcfaState::isError, solver1, logger, -1, 25);
                 return XcfaConfig.create(bmcChecker, XcfaPrec.create(ExplPrec.empty()));
             } else {
                 return new XcfaConfigBuilder(domain, refinement, refinementSolverFactory,
-                    abstractionSolverFactory, algorithm)
-                    .search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
-                    .preCheck(preCheck)
-                    .pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel))
-                    .autoExpl(autoExpl).build(xcfa);
+                        abstractionSolverFactory, algorithm)
+                        .search(search).predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
+                        .preCheck(preCheck)
+                        .pruneStrategy(pruneStrategy).logger(new ConsoleLogger(logLevel))
+                        .autoExpl(autoExpl).build(xcfa);
             }
 
         } catch (final Exception ex) {
@@ -615,8 +615,8 @@ public class XcfaCli {
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(
-                "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
-                ex);
+                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    ex);
         }
     }
 

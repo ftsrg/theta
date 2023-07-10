@@ -74,7 +74,7 @@ public final class StmtUtils {
      * @return Expressions and new indexing
      */
     public static StmtUnfoldResult toExpr(final List<? extends Stmt> stmts,
-        final VarIndexing indexing) {
+                                          final VarIndexing indexing) {
         return StmtToExprTransformer.toExpr(stmts, indexing);
     }
 

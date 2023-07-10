@@ -46,7 +46,7 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
     }
 
     public static FpLitExpr of(final boolean hidden, final BvLitExpr exponent,
-        final BvLitExpr significand) {
+                               final BvLitExpr significand) {
         return new FpLitExpr(hidden, exponent, significand);
     }
 
@@ -121,14 +121,14 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
     public FpLitExpr add(final FpRoundingMode roundingMode, final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         var sum = fpLitExprToBigFloat(roundingMode, this).add(
-            fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+                fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
         return bigFloatToFpLitExpr(sum, getType());
     }
 
     public FpLitExpr sub(final FpRoundingMode roundingMode, final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         var sub = fpLitExprToBigFloat(roundingMode, this).subtract(
-            fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+                fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
         return bigFloatToFpLitExpr(sub, getType());
     }
 
@@ -144,14 +144,14 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
     public FpLitExpr mul(final FpRoundingMode roundingMode, final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         var sub = fpLitExprToBigFloat(roundingMode, this).multiply(
-            fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+                fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
         return bigFloatToFpLitExpr(sub, getType());
     }
 
     public FpLitExpr div(final FpRoundingMode roundingMode, final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         var sub = fpLitExprToBigFloat(roundingMode, this).divide(
-            fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
+                fpLitExprToBigFloat(roundingMode, that), getMathContext(this.getType(), roundingMode));
         return bigFloatToFpLitExpr(sub, getType());
     }
 
@@ -163,7 +163,7 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
             return BoolExprs.False();
         }
         return BoolExprs.Bool(this.hidden == that.hidden && this.exponent.equals(that.exponent)
-            && this.significand.equals(that.significand));
+                && this.significand.equals(that.significand));
     }
 
     public BoolLitExpr gt(final FpLitExpr that) {
@@ -230,7 +230,7 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
             return BoolExprs.False();
         }
         return BoolExprs.Bool(!(this.hidden == that.hidden && this.exponent.equals(that.exponent)
-            && this.significand.equals(that.significand)));
+                && this.significand.equals(that.significand)));
     }
 
     @Override
@@ -270,10 +270,10 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
     @Override
     public String toString() {
         return
-            (hidden ? "-" : "+") +
-                exponent.toString() +
-                "." +
-                significand.toString();
+                (hidden ? "-" : "+") +
+                        exponent.toString() +
+                        "." +
+                        significand.toString();
     }
 
     @Override

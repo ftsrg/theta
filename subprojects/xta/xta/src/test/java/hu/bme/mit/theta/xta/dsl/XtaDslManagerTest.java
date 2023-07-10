@@ -39,15 +39,15 @@ public final class XtaDslManagerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-            {"/critical-4-25-50.xta"},
+                {"/critical-4-25-50.xta"},
 
-            {"/csma-4.xta"},
+                {"/csma-4.xta"},
 
-            {"/fddi-4.xta"},
+                {"/fddi-4.xta"},
 
-            {"/fischer-4-32-64.xta"},
+                {"/fischer-4-32-64.xta"},
 
-            {"/lynch-4-16.xta"}
+                {"/lynch-4-16.xta"}
 
         });
     }
@@ -61,7 +61,7 @@ public final class XtaDslManagerTest {
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
         final XtaProcess process = system.getProcesses().get(0);
         System.out.println(
-            GraphvizWriter.getInstance().writeString(XtaVisualizer.visualize(process)));
+                GraphvizWriter.getInstance().writeString(XtaVisualizer.visualize(process)));
     }
 
 }

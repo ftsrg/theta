@@ -38,7 +38,7 @@ public final class XcfaEdge {
     private final List<XcfaLabel> labels;
 
     private XcfaEdge(final XcfaLocation source, final XcfaLocation target,
-        final List<XcfaLabel> labels) {
+                     final List<XcfaLabel> labels) {
         this.source = checkNotNull(source);
         this.target = checkNotNull(target);
         this.labels = ImmutableList.copyOf(labels);
@@ -46,7 +46,7 @@ public final class XcfaEdge {
 
     public XcfaEdge mapLabels(final Function<XcfaLabel, XcfaLabel> mapper) {
         return new XcfaEdge(source, target,
-            labels.stream().map(mapper).collect(Collectors.toList()));
+                labels.stream().map(mapper).collect(Collectors.toList()));
     }
 
     public XcfaEdge withSource(final XcfaLocation source) {
@@ -58,14 +58,14 @@ public final class XcfaEdge {
     }
 
     public static XcfaEdge copyOf(XcfaEdge edge, Map<XcfaLocation, XcfaLocation> locationLut,
-        Map<VarDecl<?>, VarDecl<?>> newVarLut) {
+                                  Map<VarDecl<?>, VarDecl<?>> newVarLut) {
         List<XcfaLabel> newStmts = new ArrayList<>();
         for (XcfaLabel label : edge.getLabels()) {
             XcfaLabel label1 = label.accept(new XcfaLabelVarReplacer(), newVarLut);
             newStmts.add(label1);
         }
         XcfaEdge xcfaEdge = of(locationLut.get(edge.source), locationLut.get(edge.target),
-            newStmts);
+                newStmts);
         FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
             FrontendMetadata.create(xcfaEdge, s, o);
         });
@@ -73,7 +73,7 @@ public final class XcfaEdge {
     }
 
     public static XcfaEdge of(final XcfaLocation source, final XcfaLocation target,
-        final List<XcfaLabel> labels) {
+                              final List<XcfaLabel> labels) {
         return new XcfaEdge(source, target, labels);
     }
 
@@ -92,11 +92,11 @@ public final class XcfaEdge {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("Edge").add(
-            Utils.lispStringBuilder("Source").add(source)
+                Utils.lispStringBuilder("Source").add(source)
         ).add(
-            Utils.lispStringBuilder("Target").add(target)
+                Utils.lispStringBuilder("Target").add(target)
         ).add(
-            Utils.lispStringBuilder("Stmts").addAll(labels)
+                Utils.lispStringBuilder("Stmts").addAll(labels)
         ).toString();
     }
 

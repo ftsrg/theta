@@ -39,7 +39,7 @@ class CegarAnalysisThread extends Thread {
     private volatile SafetyResult<?, ?> safetyResult;
 
     CegarAnalysisThread(XCFA xcfa, ConsoleLogger logger, CegarConfiguration configuration)
-        throws Exception {
+            throws Exception {
         this.xcfa = xcfa;
         this.logger = logger;
         this.configuration = configuration;
@@ -86,12 +86,12 @@ class CegarAnalysisThread extends Thread {
         } catch (OutOfMemoryError E) {
             System.err.println(System.lineSeparator());
             System.err.println("Used memory before gc: " + (Runtime.getRuntime().totalMemory()
-                - Runtime.getRuntime().freeMemory()));
+                    - Runtime.getRuntime().freeMemory()));
             System.gc();
             result = Result.OUTOFMEMORY;
             safetyResult = null;
             System.err.println("Used memory after gc: " + (Runtime.getRuntime().totalMemory()
-                - Runtime.getRuntime().freeMemory()));
+                    - Runtime.getRuntime().freeMemory()));
         }
     }
 

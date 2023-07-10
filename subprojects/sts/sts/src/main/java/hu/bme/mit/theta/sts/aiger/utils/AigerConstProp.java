@@ -43,8 +43,8 @@ public final class AigerConstProp {
      */
     public static void apply(final AigerSystem system) {
         final Optional<AigerNode> falseOpt = system.getNodes().stream()
-            .filter(n -> n instanceof FalseConst)
-            .findFirst();
+                .filter(n -> n instanceof FalseConst)
+                .findFirst();
         if (!falseOpt.isPresent()) {
             return;
         }
@@ -60,12 +60,12 @@ public final class AigerConstProp {
      */
     private static boolean propagateAnd(final AigerSystem system, final FalseConst falseConst) {
         final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
-            .filter(w -> w.getTarget() instanceof AndGate).findFirst();
+                .filter(w -> w.getTarget() instanceof AndGate).findFirst();
         if (wireOpt.isPresent()) {
             final AigerWire wire = wireOpt.get();
             final AndGate andGate = (AndGate) wire.getTarget();
             final AigerWire otherWire =
-                andGate.getInWire1().equals(wire) ? andGate.getInWire2() : andGate.getInWire1();
+                    andGate.getInWire1().equals(wire) ? andGate.getInWire2() : andGate.getInWire1();
             final AigerNode otherSource = otherWire.getSource();
             otherSource.getOutWires().remove(otherWire);
             final List<AigerWire> redirectedWires = new ArrayList<>();
@@ -94,7 +94,7 @@ public final class AigerConstProp {
      */
     private static boolean propagateLatch(final AigerSystem system, final FalseConst falseConst) {
         final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
-            .filter(w -> w.getTarget() instanceof Latch && w.isPonated()).findFirst();
+                .filter(w -> w.getTarget() instanceof Latch && w.isPonated()).findFirst();
         if (wireOpt.isPresent()) {
             final AigerWire wire = wireOpt.get();
             final Latch latch = (Latch) wire.getTarget();

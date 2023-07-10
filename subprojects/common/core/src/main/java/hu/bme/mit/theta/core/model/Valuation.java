@@ -39,7 +39,7 @@ public abstract class Valuation implements Substitution {
 
     @Override
     public abstract <DeclType extends Type> Optional<LitExpr<DeclType>> eval(
-        final Decl<DeclType> decl);
+            final Decl<DeclType> decl);
 
     public abstract Map<Decl<?>, LitExpr<?>> toMap();
 
@@ -98,9 +98,9 @@ public abstract class Valuation implements Substitution {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("val").aligned()
-            .addAll(
-                getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
-            .toString();
+                .addAll(
+                        getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
+                .toString();
     }
 
 }

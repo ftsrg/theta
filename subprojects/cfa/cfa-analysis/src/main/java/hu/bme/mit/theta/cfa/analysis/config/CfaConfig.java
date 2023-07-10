@@ -32,7 +32,7 @@ public final class CfaConfig<S extends State, A extends Action, P extends Prec> 
     }
 
     public static <S extends State, A extends Action, P extends Prec> CfaConfig<S, A, P> create(
-        final SafetyChecker<S, A, P> checker, final P initPrec) {
+            final SafetyChecker<S, A, P> checker, final P initPrec) {
         return new CfaConfig<>(checker, initPrec);
     }
 

@@ -28,7 +28,7 @@ public class MathSATSmtLibTransformationManager extends GenericSmtLibTransformat
 
     @Override
     protected SmtLibExprTransformer instantiateExprTransformer(
-        final SmtLibTransformationManager transformer) {
+            final SmtLibTransformationManager transformer) {
         return new MathSATSmtLibExprTransformer(transformer);
     }
 }

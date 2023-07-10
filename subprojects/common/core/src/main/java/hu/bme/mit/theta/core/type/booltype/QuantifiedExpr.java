@@ -39,7 +39,7 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
     private volatile int hashCode = 0;
 
     protected QuantifiedExpr(final Iterable<? extends ParamDecl<?>> paramDecls,
-        final Expr<BoolType> op) {
+                             final Expr<BoolType> op) {
         this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
         this.op = checkNotNull(op);
     }
@@ -90,8 +90,8 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
     @Override
     public final String toString() {
         final String paramString = paramDecls.stream()
-            .map(p -> "(" + p.getName() + " " + p.getType() + ")")
-            .collect(joining(" ", "(", ")"));
+                .map(p -> "(" + p.getName() + " " + p.getType() + ")")
+                .collect(joining(" ", "(", ")"));
         return Utils.lispStringBuilder(getOperatorLabel()).add(paramString).add(op).toString();
     }
 

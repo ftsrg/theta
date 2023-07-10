@@ -47,7 +47,7 @@ import java.util.stream.Stream;
 import static hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing;
 
 public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P extends Prec> implements
-    SafetyChecker<S, A, P> {
+        SafetyChecker<S, A, P> {
 
     private final LTS<S, A> lts;
     private final InitFunc<S, P> initFunc;
@@ -59,13 +59,13 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
     private final Logger logger;
 
     private IterativeBmcChecker(final LTS<S, A> lts,
-        final InitFunc<S, P> initFunc,
-        final TransFunc<S, A, P> transFunc,
-        final Predicate<S> unsafePredicate,
-        final Solver solver,
-        final Logger logger,
-        final int upperBound,
-        final int stepSize) {
+                                final InitFunc<S, P> initFunc,
+                                final TransFunc<S, A, P> transFunc,
+                                final Predicate<S> unsafePredicate,
+                                final Solver solver,
+                                final Logger logger,
+                                final int upperBound,
+                                final int stepSize) {
         this.lts = lts;
         this.initFunc = initFunc;
         this.transFunc = transFunc;
@@ -77,16 +77,16 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
     }
 
     public static <S extends ExprState, A extends StmtAction, P extends Prec> IterativeBmcChecker<S, A, P> create(
-        final LTS<S, A> lts,
-        final InitFunc<S, P> initFunc,
-        final TransFunc<S, A, P> transFunc,
-        final Predicate<S> unsafePredicate,
-        final Solver solver,
-        final Logger logger,
-        final int upperBound,
-        final int stepSize) {
+            final LTS<S, A> lts,
+            final InitFunc<S, P> initFunc,
+            final TransFunc<S, A, P> transFunc,
+            final Predicate<S> unsafePredicate,
+            final Solver solver,
+            final Logger logger,
+            final int upperBound,
+            final int stepSize) {
         return new IterativeBmcChecker<S, A, P>(lts, initFunc, transFunc, unsafePredicate, solver,
-            logger, upperBound, stepSize);
+                logger, upperBound, stepSize);
     }
 
     private final Collection<Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>>> resumeSet = new LinkedHashSet<>();
@@ -98,9 +98,9 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
         boolean isSafe = true;
         for (S initState : initFunc.getInitStates(prec)) {
             logger.write(Logger.Level.INFO, "Checking from state %s with a bound of %d%n",
-                initState, stepSize);
+                    initState, stepSize);
             final SafetyResult<S, A> result = check(null, indexing(0), initState, null, prec,
-                stepSize, 0);
+                    stepSize, 0);
             if (result == null) {
                 isSafe = false;
             } else if (result.isUnsafe()) {
@@ -110,26 +110,26 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
         }
         if (isSafe) {
             final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create(
-                (state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
+                    (state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
             logger.write(Logger.Level.RESULT, "%s%n", result);
             return result;
         }
 
         // From here on, proving safety is only possible if all paths are enumareted
         for (int bound = stepSize; (upperBound < 0 || bound <= upperBound) && resumeSet.size() > 0;
-            bound += stepSize) {
+             bound += stepSize) {
             final Collection<Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>>> localResumeSet = new LinkedHashSet<>(
-                resumeSet);
+                    resumeSet);
             resumeSet.clear();
             for (Tuple5<Trace<S, A>, VarIndexing, S, A, Collection<Expr<BoolType>>> resumePoint : localResumeSet) {
                 logger.write(Logger.Level.INFO,
-                    "Resuming from state %s with a bound of %d (current depth: %d)%n",
-                    resumePoint.get1().getState(resumePoint.get1().getStates().size() - 1),
-                    stepSize + bound, bound);
+                        "Resuming from state %s with a bound of %d (current depth: %d)%n",
+                        resumePoint.get1().getState(resumePoint.get1().getStates().size() - 1),
+                        stepSize + bound, bound);
                 solver.push();
                 solver.add(resumePoint.get5());
                 final SafetyResult<S, A> result = check(resumePoint.get1(), resumePoint.get2(),
-                    resumePoint.get3(), resumePoint.get4(), prec, bound + stepSize, bound);
+                        resumePoint.get3(), resumePoint.get4(), prec, bound + stepSize, bound);
                 solver.pop();
                 if (result != null && result.isUnsafe()) {
                     logger.write(Logger.Level.RESULT, "%s%n", result);
@@ -140,33 +140,33 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
 
         if (resumeSet.size() == 0) {
             final SafetyResult.Safe<S, A> result = SafetyResult.safe(ARG.create(
-                (state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
+                    (state1, state2) -> false));// TODO: this is only a placeholder, we don't give back an ARG)
             logger.write(Logger.Level.RESULT, "%s%n", result);
             return result;
         }
 
         SafetyResult<S, A> bmcresult = SafetyResult.safe(ARG.create(
-            (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+                (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
         logger.write(Logger.Level.RESULT, "BmcOutOfBounds: %s%n", bmcresult);
         return bmcresult;
     }
 
 
     private SafetyResult<S, A> check(final Trace<S, A> trace, final VarIndexing varIndexing,
-        final S state, final A action, final P prec, final int bound, final int currentStep) {
+                                     final S state, final A action, final P prec, final int bound, final int currentStep) {
         final Trace<S, A> nextTrace;
         if (trace == null) {
             nextTrace = Trace.of(List.of(state), List.<A>of());
         } else {
             nextTrace = Trace.of(
-                Streams.concat(trace.getStates().stream(), Stream.of(state))
-                    .collect(Collectors.toList()),
-                Streams.concat(trace.getActions().stream(), Stream.of(action))
-                    .collect(Collectors.toList()));
+                    Streams.concat(trace.getStates().stream(), Stream.of(state))
+                            .collect(Collectors.toList()),
+                    Streams.concat(trace.getActions().stream(), Stream.of(action))
+                            .collect(Collectors.toList()));
         }
         if (unsafePredicate.test(state)) {
             return SafetyResult.unsafe(trace, ARG.create(
-                (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
+                    (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG
         }
 
         if (currentStep >= bound) {
@@ -183,8 +183,8 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
                 for (final S succState : transFunc.getSuccStates(state, a, prec)) {
                     if (!succState.isBottom()) {
                         final SafetyResult<S, A> result = check(nextTrace,
-                            varIndexing.add(a.nextIndexing()), succState, a, prec, bound,
-                            currentStep + 1);
+                                varIndexing.add(a.nextIndexing()), succState, a, prec, bound,
+                                currentStep + 1);
                         if (result != null && result.isUnsafe()) {
                             solver.pop();
                             return result;
@@ -198,7 +198,7 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
         }
         if (isSafe) {
             return SafetyResult.safe(ARG.create(
-                (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG)
+                    (state1, state2) -> false)); // TODO: this is only a placeholder, we don't give back an ARG)
         }
         return null;
     }
@@ -206,6 +206,6 @@ public class IterativeBmcChecker<S extends ExprState, A extends StmtAction, P ex
     @Override
     public String toString() {
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(upperBound).add(lts)
-            .add(initFunc).add(transFunc).add(unsafePredicate).toString();
+                .add(initFunc).add(transFunc).add(unsafePredicate).toString();
     }
 }

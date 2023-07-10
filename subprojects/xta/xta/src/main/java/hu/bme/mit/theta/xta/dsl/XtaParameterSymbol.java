@@ -41,7 +41,7 @@ final class XtaParameterSymbol implements Symbol {
     private final XtaType type;
 
     public XtaParameterSymbol(final Scope scope, final TypeContext typeContext,
-        final ParameterIdContext parameterIdContext) {
+                              final ParameterIdContext parameterIdContext) {
         checkNotNull(typeContext);
         checkNotNull(parameterIdContext);
         name = parameterIdContext.fArrayId.fId.getText();

@@ -106,15 +106,15 @@ public class FunctionInlining extends ProcessPass {
         }
 
         FrontendMetadata.lookupMetadata("shouldInline", false).stream()
-            .filter(o -> o instanceof XcfaProcedure.Builder).map(o -> (XcfaProcedure.Builder) o)
-            .forEach(procedure -> newBuilder.addProcedure(XcfaPassManager.run(procedure)));
+                .filter(o -> o instanceof XcfaProcedure.Builder).map(o -> (XcfaProcedure.Builder) o)
+                .forEach(procedure -> newBuilder.addProcedure(XcfaPassManager.run(procedure)));
 
         return newBuilder;
 
     }
 
     private XcfaProcedure.Builder inlineProcedure(XcfaProcess.Builder builder,
-        XcfaProcess.Builder newBuilder, XcfaProcedure.Builder procedure) {
+                                                  XcfaProcess.Builder newBuilder, XcfaProcedure.Builder procedure) {
         //		mainProcBuilder.setErrorLoc(mainProcedure.getErrorLoc());
         Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints = new LinkedHashMap<>();
 
@@ -134,16 +134,16 @@ public class FunctionInlining extends ProcessPass {
      * truncate.
      */
     private void truncateAssignments(XcfaProcess.Builder builder,
-        XcfaProcedure.Builder procBuilder) {
+                                     XcfaProcedure.Builder procBuilder) {
         List<XcfaEdge> edgesCopy = new ArrayList<>(procBuilder.getEdges());
         for (XcfaEdge edge : edgesCopy) {
             boolean atLeastOneAssignmentTruncated = false;
             List<XcfaLabel> newStmts = new ArrayList<>(edge.getLabels());
             for (XcfaLabel label : edge.getLabels()) {
                 if (label instanceof XcfaLabel.StmtXcfaLabel
-                    && label.getStmt() instanceof AssignStmt
-                    && !(((AssignStmt<?>) label.getStmt()).getVarDecl()
-                    .getType() instanceof ArrayType)) {
+                        && label.getStmt() instanceof AssignStmt
+                        && !(((AssignStmt<?>) label.getStmt()).getVarDecl()
+                        .getType() instanceof ArrayType)) {
                     AssignStmt<?> assignStmt = (AssignStmt<?>) label.getStmt();
                     CComplexType leftType = CComplexType.getType(assignStmt.getVarDecl().getRef());
                     checkNotNull(leftType);
@@ -155,8 +155,8 @@ public class FunctionInlining extends ProcessPass {
                         atLeastOneAssignmentTruncated = true;
                         newStmts.remove(label);
                         AssignStmt<?> newStmt = Assign(
-                            cast(assignStmt.getVarDecl(), assignStmt.getVarDecl().getType()),
-                            cast(truncatedExpr, assignStmt.getVarDecl().getType()));
+                                cast(assignStmt.getVarDecl(), assignStmt.getVarDecl().getType()),
+                                cast(truncatedExpr, assignStmt.getVarDecl().getType()));
                         newStmts.add(Stmt(newStmt));
                     }
                 }
@@ -175,8 +175,8 @@ public class FunctionInlining extends ProcessPass {
     }
 
     private void splitAndInlineEdges(XcfaProcess.Builder oldBuilder,
-        XcfaProcedure.Builder procBuilder,
-        Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints) {
+                                     XcfaProcedure.Builder procBuilder,
+                                     Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints) {
         splittingPoints.forEach((xcfaEdge, xcfaCallStmts) -> {
             procBuilder.removeEdge(xcfaEdge);
             XcfaLabel.ProcedureCallXcfaLabel xcfaCallStmt = xcfaCallStmts.get(0);
@@ -203,7 +203,7 @@ public class FunctionInlining extends ProcessPass {
                 });
                 procBuilder.addLoc(loc1);
                 XcfaEdge edge = XcfaEdge.of(loc1, end,
-                    sublist(xcfaEdge.getLabels(), i + 1, xcfaEdge.getLabels().size()));
+                        sublist(xcfaEdge.getLabels(), i + 1, xcfaEdge.getLabels().size()));
                 procBuilder.addEdge(edge);
                 FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
                     FrontendMetadata.create(edge, s, o);
@@ -211,18 +211,18 @@ public class FunctionInlining extends ProcessPass {
                 end = loc1;
             }
             Optional<XcfaProcedure.Builder> procedureOpt = oldBuilder.getProcedures().stream()
-                .filter(
-                    xcfaProcedure -> xcfaProcedure.getName().equals(xcfaCallStmt.getProcedure()))
-                .findAny();
+                    .filter(
+                            xcfaProcedure -> xcfaProcedure.getName().equals(xcfaCallStmt.getProcedure()))
+                    .findAny();
             checkState(procedureOpt.isPresent());
             XcfaProcedure.Builder procedure = procedureOpt.get();
             for (VarDecl<?> localVar : procedure.getLocalVars().keySet()) {
                 checkState(procedure.getLocalVars().get(localVar).isEmpty(),
-                    "Non-global variable should not have a starting expression!");
+                        "Non-global variable should not have a starting expression!");
                 procBuilder.createVar(localVar, null);
             }
             procedure.getParams()
-                .forEach((varDecl, direction) -> procBuilder.createVar(varDecl, null));
+                    .forEach((varDecl, direction) -> procBuilder.createVar(varDecl, null));
             Map<XcfaLocation, XcfaLocation> locationLut = new LinkedHashMap<>();
             procedure.getLocs().forEach(loc -> {
                 XcfaLocation copy = XcfaLocation.uniqeCopyOf(loc);
@@ -230,15 +230,15 @@ public class FunctionInlining extends ProcessPass {
                 procBuilder.addLoc(copy);
             });
             procedure.getEdges().forEach(e -> procBuilder.addEdge(
-                XcfaEdge.of(locationLut.get(e.getSource()), locationLut.get(e.getTarget()),
-                    e.getLabels())));
+                    XcfaEdge.of(locationLut.get(e.getSource()), locationLut.get(e.getTarget()),
+                            e.getLabels())));
             procedure.getFinalLoc().setEndLoc(false);
 
             int paramCnt = 0;
             List<XcfaLabel> retStmts = new ArrayList<>();
             List<XcfaLabel> initStmts = new ArrayList<>();
             for (Map.Entry<VarDecl<?>, XcfaProcedure.Direction> entry : procedure.getParams()
-                .entrySet()) {
+                    .entrySet()) {
                 VarDecl<?> varDecl = entry.getKey();
                 XcfaProcedure.Direction direction = entry.getValue();
                 if (direction != XcfaProcedure.Direction.OUT) {
@@ -249,17 +249,17 @@ public class FunctionInlining extends ProcessPass {
                     FrontendMetadata.create(truncatedParam, "cType", funcParamType);
 
                     AssignStmt<?> assignStmt = Assign(cast(varDecl, varDecl.getType()),
-                        cast(truncatedParam, varDecl.getType()));
+                            cast(truncatedParam, varDecl.getType()));
                     initStmts.add(Stmt(assignStmt));
                     if (truncatedParam instanceof Reference) {
                         Optional<Object> pointsTo = FrontendMetadata.getMetadataValue(
-                            varDecl.getRef(), "pointsTo");
+                                varDecl.getRef(), "pointsTo");
                         if (pointsTo.isPresent() && pointsTo.get() instanceof Collection) {
                             ((Collection<Expr<?>>) pointsTo.get()).add(
-                                ((Reference<?, ?>) truncatedParam).getOp());
+                                    ((Reference<?, ?>) truncatedParam).getOp());
                         } else {
                             pointsTo = Optional.of(new LinkedHashSet<Expr<?>>(
-                                Set.of(((Reference<?, ?>) truncatedParam).getOp())));
+                                    Set.of(((Reference<?, ?>) truncatedParam).getOp())));
                         }
                         FrontendMetadata.create(varDecl.getRef(), "pointsTo", pointsTo.get());
                     }
@@ -267,20 +267,20 @@ public class FunctionInlining extends ProcessPass {
                 if (direction != XcfaProcedure.Direction.IN) {
                     Expr<?> expr = xcfaCallStmt.getParams().get(paramCnt);
                     checkState(expr instanceof RefExpr
-                        && ((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>);
+                            && ((RefExpr<?>) expr).getDecl() instanceof VarDecl<?>);
                     retStmts.add(Stmt(
-                        Assign(cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), varDecl.getType()),
-                            cast(varDecl.getRef(), varDecl.getType()))));
+                            Assign(cast((VarDecl<?>) ((RefExpr<?>) expr).getDecl(), varDecl.getType()),
+                                    cast(varDecl.getRef(), varDecl.getType()))));
                 }
                 ++paramCnt;
             }
             XcfaEdge xcfaEdge1 = XcfaEdge.of(start, locationLut.get(procedure.getInitLoc()),
-                initStmts);
+                    initStmts);
             FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
                 FrontendMetadata.create(xcfaEdge1, s, o);
             });
             XcfaEdge xcfaEdge2 = XcfaEdge.of(locationLut.get(procedure.getFinalLoc()), end,
-                retStmts);
+                    retStmts);
             FrontendMetadata.lookupMetadata(xcfaEdge).forEach((s, o) -> {
                 FrontendMetadata.create(xcfaEdge2, s, o);
             });
@@ -301,30 +301,30 @@ public class FunctionInlining extends ProcessPass {
 
 
     private boolean handleCallStmts(XcfaProcess.Builder builder,
-        XcfaProcedure.Builder mainProcBuilder,
-        Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints) {
+                                    XcfaProcedure.Builder mainProcBuilder,
+                                    Map<XcfaEdge, List<XcfaLabel.ProcedureCallXcfaLabel>> splittingPoints) {
         boolean anyMatch = false;
         for (XcfaEdge edge : mainProcBuilder.getEdges()) {
             boolean stillExists = true;
             while (stillExists) {
                 Optional<XcfaLabel> callStmtOpt = edge.getLabels().stream().filter(stmt ->
-                        stmt instanceof XcfaLabel.ProcedureCallXcfaLabel &&
-                            !alreadyHandled.contains(Tuple2.of(stmt, edge)) &&
-                            !nopFuncs.contains(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure())
-                            &&
-                            shouldInlineCall(builder, (XcfaLabel.ProcedureCallXcfaLabel) stmt))
-                    .findAny();
+                                stmt instanceof XcfaLabel.ProcedureCallXcfaLabel &&
+                                        !alreadyHandled.contains(Tuple2.of(stmt, edge)) &&
+                                        !nopFuncs.contains(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure())
+                                        &&
+                                        shouldInlineCall(builder, (XcfaLabel.ProcedureCallXcfaLabel) stmt))
+                        .findAny();
                 if (callStmtOpt.isPresent()) {
                     alreadyHandled.add(Tuple2.of(callStmtOpt.get(), edge));
                     anyMatch = true;
                     Optional<XcfaProcedure.Builder> procedure = builder.getProcedures().stream()
-                        .filter(xcfaProcedure -> xcfaProcedure.getName().equals(
-                            ((XcfaLabel.ProcedureCallXcfaLabel) callStmtOpt.get()).getProcedure()))
-                        .findAny();
+                            .filter(xcfaProcedure -> xcfaProcedure.getName().equals(
+                                    ((XcfaLabel.ProcedureCallXcfaLabel) callStmtOpt.get()).getProcedure()))
+                            .findAny();
                     if (procedure.isPresent()) {
                         splittingPoints.putIfAbsent(edge, new ArrayList<>());
                         splittingPoints.get(edge)
-                            .add((XcfaLabel.ProcedureCallXcfaLabel) callStmtOpt.get());
+                                .add((XcfaLabel.ProcedureCallXcfaLabel) callStmtOpt.get());
                     }
                 } else {
                     stillExists = false;
@@ -335,20 +335,20 @@ public class FunctionInlining extends ProcessPass {
     }
 
     private boolean shouldInlineCall(XcfaProcess.Builder builder,
-        XcfaLabel.ProcedureCallXcfaLabel callStmt) {
+                                     XcfaLabel.ProcedureCallXcfaLabel callStmt) {
         Optional<XcfaProcedure.Builder> procedure = builder.getProcedures().stream()
-            .filter(xcfaProcedure -> xcfaProcedure.getName().equals(callStmt.getProcedure()))
-            .findAny();
+                .filter(xcfaProcedure -> xcfaProcedure.getName().equals(callStmt.getProcedure()))
+                .findAny();
         if (procedure.isPresent()) {
             Optional<Object> shouldInlineProc = FrontendMetadata.getMetadataValue(procedure.get(),
-                "shouldInline");
+                    "shouldInline");
             if (shouldInlineProc.isPresent() && shouldInlineProc.get() instanceof Boolean) {
                 return (Boolean) shouldInlineProc.get();
             }
             Optional<Object> shouldInline = FrontendMetadata.getMetadataValue(
-                procedure.get().getName(), "shouldInline");
+                    procedure.get().getName(), "shouldInline");
             return shouldInline.isEmpty() || !(shouldInline.get() instanceof Boolean)
-                || (Boolean) shouldInline.get();
+                    || (Boolean) shouldInline.get();
         }
         return true;
     }

@@ -60,7 +60,7 @@ public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
     public LitExpr<FpType> eval(Valuation val) {
         final FpLitExpr opVal = (FpLitExpr) getOp().eval(val);
         BigFloat sqrt = FpUtils.fpLitExprToBigFloat(roundingMode, opVal)
-            .sqrt(FpUtils.getMathContext(getType(), roundingMode));
+                .sqrt(FpUtils.getMathContext(getType(), roundingMode));
         return FpUtils.bigFloatToFpLitExpr(sqrt, getType());
     }
 

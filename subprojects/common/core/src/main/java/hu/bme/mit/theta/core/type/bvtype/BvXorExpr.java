@@ -53,9 +53,9 @@ public final class BvXorExpr extends MultiaryExpr<BvType, BvType> {
     @Override
     public BvLitExpr eval(final Valuation val) {
         return getOps().stream().skip(1).reduce(
-            (BvLitExpr) getOps().get(0).eval(val),
-            (op1, op2) -> (op1.xor((BvLitExpr) op2.eval(val))),
-            BvLitExpr::xor
+                (BvLitExpr) getOps().get(0).eval(val),
+                (op1, op2) -> (op1.xor((BvLitExpr) op2.eval(val))),
+                BvLitExpr::xor
         );
     }
 

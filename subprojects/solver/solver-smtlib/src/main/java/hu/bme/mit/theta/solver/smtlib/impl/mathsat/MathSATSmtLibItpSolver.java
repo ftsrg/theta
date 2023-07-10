@@ -56,9 +56,9 @@ import static com.google.common.base.Preconditions.checkState;
 public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMarker> {
 
     public MathSATSmtLibItpSolver(
-        final SmtLibSymbolTable symbolTable,
-        final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
     }
@@ -78,16 +78,16 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
 
     @Override
     protected void add(final MathSATSmtLibItpMarker marker, final Expr<BoolType> assertion,
-        final Set<ConstDecl<?>> consts, final String term) {
+                       final Set<ConstDecl<?>> consts, final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
         issueGeneralCommand(
-            String.format("(assert (! %s :interpolation-group %s))", term, marker.getMarkerName()));
+                String.format("(assert (! %s :interpolation-group %s))", term, marker.getMarkerName()));
     }
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
         checkState(getStatus() == SolverStatus.UNSAT,
-            "Cannot get interpolant if status is not UNSAT.");
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
         @SuppressWarnings("unchecked") final var mathsatItpPattern = (SmtLibItpPattern<MathSATSmtLibItpMarker>) pattern;
 
@@ -104,8 +104,8 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
     }
 
     private List<MathSATSmtLibItpMarker> buildItpMapFromTree(
-        final ItpMarkerTree<MathSATSmtLibItpMarker> pattern,
-        final Map<ItpMarker, Expr<BoolType>> itpMap) {
+            final ItpMarkerTree<MathSATSmtLibItpMarker> pattern,
+            final Map<ItpMarker, Expr<BoolType>> itpMap) {
         final List<MathSATSmtLibItpMarker> markers = new ArrayList<>();
         for (final var child : pattern.getChildren()) {
             markers.addAll(buildItpMapFromTree(child, itpMap));
@@ -113,11 +113,11 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
         markers.add(pattern.getMarker());
 
         solverBinary.issueCommand(String.format("(get-interpolant (%s))",
-            markers.stream().map(MathSATSmtLibItpMarker::getMarkerName)
-                .collect(Collectors.joining(" "))));
+                markers.stream().map(MathSATSmtLibItpMarker::getMarkerName)
+                        .collect(Collectors.joining(" "))));
         final var res = parseItpResponse(solverBinary.readResponse());
         itpMap.put(pattern.getMarker(),
-            termTransformer.toExpr(res, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
+                termTransformer.toExpr(res, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
 
         return markers;
     }
@@ -134,7 +134,7 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
         } catch (Exception e) {
             try {
                 throw new SmtLibSolverException(
-                    parser.response().general_response_error().reason.getText());
+                        parser.response().general_response_error().reason.getText());
             } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
@@ -143,6 +143,6 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
 
     private static String extractString(final ParserRuleContext ctx) {
         return ctx.start.getInputStream()
-            .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

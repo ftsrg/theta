@@ -69,7 +69,7 @@ public final class LispLexer {
     private Token ATOM() {
         final StringBuilder sb = new StringBuilder();
         while (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != ';' && c != '(' && c != ')'
-            && c != EOF) {
+                && c != EOF) {
             sb.append((char) c);
             consume();
         }

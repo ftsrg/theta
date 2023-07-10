@@ -47,22 +47,22 @@ public class XcfaCliParseTest {
     @Parameterized.Parameters()
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-            {"/c/dekker.i"},
-            {"/c/litmustest/singlethread/00assignment.c"},
-            {"/c/litmustest/singlethread/01cast.c"},
-            {"/c/litmustest/singlethread/02types.c"},
-            {"/c/litmustest/singlethread/03bitwise.c"},
-            {"/c/litmustest/singlethread/04real.c"},
-            {"/c/litmustest/singlethread/05math.c"},
-            {"/c/litmustest/singlethread/06arrays.c"},
-            {"/c/litmustest/singlethread/07arrayinit.c"},
-            {"/c/litmustest/singlethread/08vararray.c"},
-            {"/c/litmustest/singlethread/09struct.c"},
-            {"/c/litmustest/singlethread/10ptr.c"},
-            {"/c/litmustest/singlethread/11ptrs.c"},
-            {"/c/litmustest/singlethread/12ptrtypes.c"},
-            {"/c/litmustest/singlethread/13typedef.c"},
-            {"/c/litmustest/singlethread/14ushort.c"},
+                {"/c/dekker.i"},
+                {"/c/litmustest/singlethread/00assignment.c"},
+                {"/c/litmustest/singlethread/01cast.c"},
+                {"/c/litmustest/singlethread/02types.c"},
+                {"/c/litmustest/singlethread/03bitwise.c"},
+                {"/c/litmustest/singlethread/04real.c"},
+                {"/c/litmustest/singlethread/05math.c"},
+                {"/c/litmustest/singlethread/06arrays.c"},
+                {"/c/litmustest/singlethread/07arrayinit.c"},
+                {"/c/litmustest/singlethread/08vararray.c"},
+                {"/c/litmustest/singlethread/09struct.c"},
+                {"/c/litmustest/singlethread/10ptr.c"},
+                {"/c/litmustest/singlethread/11ptrs.c"},
+                {"/c/litmustest/singlethread/12ptrtypes.c"},
+                {"/c/litmustest/singlethread/13typedef.c"},
+                {"/c/litmustest/singlethread/14ushort.c"},
         });
     }
 

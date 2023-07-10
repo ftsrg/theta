@@ -38,7 +38,7 @@ public final class CfaTraceConcretizer {
     }
 
     public static Trace<CfaState<ExplState>, CfaAction> concretize(
-        final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
+            final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
         List<CfaState<?>> sbeStates = new ArrayList<>();
         List<CfaAction> sbeActions = new ArrayList<>();
 
@@ -54,8 +54,8 @@ public final class CfaTraceConcretizer {
         }
         Trace<CfaState<?>, CfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(
-            BoolExprs.True(),
-            BoolExprs.True(), solverFactory.createItpSolver());
+                BoolExprs.True(),
+                BoolExprs.True(), solverFactory.createItpSolver());
         final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
         checkArgument(status.isFeasible(), "Infeasible trace.");
         final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
@@ -65,7 +65,7 @@ public final class CfaTraceConcretizer {
         final List<CfaState<ExplState>> cfaStates = new ArrayList<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
             cfaStates.add(
-                CfaState.of(sbeTrace.getState(i).getLoc(), ExplState.of(valuations.getState(i))));
+                    CfaState.of(sbeTrace.getState(i).getLoc(), ExplState.of(valuations.getState(i))));
         }
 
         return Trace.of(cfaStates, sbeTrace.getActions());

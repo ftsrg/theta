@@ -39,13 +39,13 @@ public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaActi
     private final XcfaLocation target;
 
     protected XcfaSTAction(final XcfaLocation source, final XcfaLocation target,
-        final List<XcfaLabel> labels) {
+                           final List<XcfaLabel> labels) {
         this.source = checkNotNull(source);
         this.target = checkNotNull(target);
         this.labels = checkNotNull(labels);
         checkState(
-            labels.stream().noneMatch(label -> label instanceof XcfaLabel.StartThreadXcfaLabel),
-            "Cannot use single-threaded analysis for multi-threaded programs!");
+                labels.stream().noneMatch(label -> label instanceof XcfaLabel.StartThreadXcfaLabel),
+                "Cannot use single-threaded analysis for multi-threaded programs!");
     }
 
     public static XcfaSTAction create(final XcfaEdge edge) {
@@ -53,9 +53,9 @@ public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaActi
     }
 
     public static XcfaSTAction createWithVars(final XcfaEdge edge,
-        Map<VarDecl<?>, VarDecl<?>> newVarLut) {
+                                              Map<VarDecl<?>, VarDecl<?>> newVarLut) {
         return new XcfaSTAction(edge.getSource(), edge.getTarget(),
-            XcfaLabelVarReplacer.replaceVars(edge.getLabels(), newVarLut));
+                XcfaLabelVarReplacer.replaceVars(edge.getLabels(), newVarLut));
     }
 
     public XcfaLocation getSource() {
@@ -88,7 +88,7 @@ public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaActi
         List<XcfaLabel> newStmts = XcfaLabelVarReplacer.replaceVars(action.getLabels(), newVarLut);
         XcfaSTAction xcfaSTAction = new XcfaSTAction(action.source, action.target, newStmts);
         FrontendMetadata.lookupMetadata(action)
-            .forEach((s, o) -> FrontendMetadata.create(xcfaSTAction, s, o));
+                .forEach((s, o) -> FrontendMetadata.create(xcfaSTAction, s, o));
         return xcfaSTAction;
     }
 
@@ -102,7 +102,7 @@ public class XcfaSTAction extends hu.bme.mit.theta.xcfa.analysis.common.XcfaActi
         }
         XcfaSTAction that = (XcfaSTAction) o;
         return labels.equals(that.labels) && source.equals(that.source) && target.equals(
-            that.target);
+                that.target);
     }
 
     @Override

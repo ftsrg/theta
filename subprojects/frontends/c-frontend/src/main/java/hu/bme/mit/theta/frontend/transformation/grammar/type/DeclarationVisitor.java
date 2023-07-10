@@ -42,7 +42,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
      * @return the corresponding CDeclarations
      */
     public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext,
-        CParser.InitDeclaratorListContext initDeclContext) {
+                                              CParser.InitDeclaratorListContext initDeclContext) {
         List<CDeclaration> ret = new ArrayList<>();
         CSimpleType cSimpleType = declSpecContext.accept(TypeVisitor.instance);
         if (cSimpleType.getAssociatedName() != null) {
@@ -58,20 +58,20 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                 if (context.initializer() != null) {
                     if (context.initializer().initializerList() != null) {
                         checkState(
-                            context.initializer().initializerList().designation().size() == 0,
-                            "Initializer list designators not yet implemented!");
+                                context.initializer().initializerList().designation().size() == 0,
+                                "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList = new CInitializerList(
-                            cSimpleType.getActualType());
+                                cSimpleType.getActualType());
                         for (CParser.InitializerContext initializer : context.initializer()
-                            .initializerList().initializers) {
+                                .initializerList().initializers) {
                             CStatement expr = initializer.assignmentExpression()
-                                .accept(FunctionVisitor.instance);
+                                    .accept(FunctionVisitor.instance);
                             cInitializerList.addStatement(null /* TODO: add designator */, expr);
                         }
                         initializerExpression = cInitializerList;
                     } else {
                         initializerExpression = context.initializer().assignmentExpression()
-                            .accept(FunctionVisitor.instance);
+                                .accept(FunctionVisitor.instance);
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
@@ -80,7 +80,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
             }
         }
         if (cSimpleType.getAssociatedName() == null && initDeclContext != null
-            && initDeclContext.initDeclarator().size() > 0) {
+                && initDeclContext.initDeclarator().size() > 0) {
             ret.get(0).incDerefCounter(cSimpleType.getPointerLevel());
         }
         return ret;
@@ -88,7 +88,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
     @Override
     public CDeclaration visitOrdinaryParameterDeclaration(
-        CParser.OrdinaryParameterDeclarationContext ctx) {
+            CParser.OrdinaryParameterDeclarationContext ctx) {
         CSimpleType cSimpleType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
         CDeclaration declaration = ctx.declarator().accept(this);
         declaration.setType(cSimpleType);
@@ -107,7 +107,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
     @Override
     public CDeclaration visitAbstractParameterDeclaration(
-        CParser.AbstractParameterDeclarationContext ctx) {
+            CParser.AbstractParameterDeclarationContext ctx) {
         CSimpleType cSimpleType = ctx.declarationSpecifiers2().accept(TypeVisitor.instance);
         checkState(ctx.abstractDeclarator() == null, "Abstract declarators not yet supported!");
         return new CDeclaration(cSimpleType);
@@ -116,7 +116,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     @Override
     public CDeclaration visitDeclarator(CParser.DeclaratorContext ctx) {
         checkState(ctx.pointer() == null || ctx.pointer().typeQualifierList().size() == 0,
-            "pointers should not have type qualifiers! (not yet implemented)");
+                "pointers should not have type qualifiers! (not yet implemented)");
         //checkState(ctx.gccDeclaratorExtension().size() == 0, "Cannot do anything with gccDeclaratorExtensions!");
         CDeclaration decl = ctx.directDeclarator().accept(this);
 
@@ -140,7 +140,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     @Override
     public CDeclaration visitDirectDeclaratorArray1(CParser.DirectDeclaratorArray1Context ctx) {
         checkState(ctx.typeQualifierList() == null,
-            "Type qualifiers inside array declarations are not yet implemented.");
+                "Type qualifiers inside array declarations are not yet implemented.");
 
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (ctx.assignmentExpression() != null) {
@@ -168,7 +168,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
     @Override
     public CDeclaration visitDirectDeclaratorFunctionDecl(
-        CParser.DirectDeclaratorFunctionDeclContext ctx) {
+            CParser.DirectDeclaratorFunctionDeclContext ctx) {
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
             System.err.println("WARNING: variable args are not supported!");
@@ -177,7 +177,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
         }
         if (ctx.parameterTypeList() != null) {
             for (CParser.ParameterDeclarationContext parameterDeclarationContext : ctx.parameterTypeList()
-                .parameterList().parameterDeclaration()) {
+                    .parameterList().parameterDeclaration()) {
                 decl.addFunctionParam(parameterDeclarationContext.accept(this));
             }
         }

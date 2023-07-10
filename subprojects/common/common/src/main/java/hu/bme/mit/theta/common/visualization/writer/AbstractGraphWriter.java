@@ -31,7 +31,7 @@ public abstract class AbstractGraphWriter implements GraphWriter {
 
     @Override
     public final void writeFile(final Graph graph, final String fileName)
-        throws FileNotFoundException {
+            throws FileNotFoundException {
         final File file = new File(fileName);
         PrintWriter printWriter = null;
         try {

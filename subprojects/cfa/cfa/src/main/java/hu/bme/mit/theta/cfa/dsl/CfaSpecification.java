@@ -66,8 +66,8 @@ final class CfaSpecification implements Scope {
         }
 
         final List<CfaProcessSymbol> mainProcesses = processes.stream()
-            .filter(CfaProcessSymbol::isMain)
-            .collect(toList());
+                .filter(CfaProcessSymbol::isMain)
+                .collect(toList());
 
         if (mainProcesses.isEmpty()) {
             throw new IllegalArgumentException("No main process defined");

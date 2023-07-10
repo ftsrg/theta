@@ -123,19 +123,19 @@ public final class RatExprs {
     }
 
     public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2,
-        final Expr<RatType> op3) {
+                                 final Expr<RatType> op3) {
         return RatAddExpr.of(ImmutableList.of(op1, op2, op3));
     }
 
     public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2,
-        final Expr<RatType> op3,
-        final Expr<RatType> op4) {
+                                 final Expr<RatType> op3,
+                                 final Expr<RatType> op4) {
         return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4));
     }
 
     public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2,
-        final Expr<RatType> op3,
-        final Expr<RatType> op4, final Expr<RatType> op5) {
+                                 final Expr<RatType> op3,
+                                 final Expr<RatType> op4, final Expr<RatType> op5) {
         return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
     }
 
@@ -146,19 +146,19 @@ public final class RatExprs {
     }
 
     public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2,
-        final Expr<RatType> op3) {
+                                 final Expr<RatType> op3) {
         return RatMulExpr.of(ImmutableList.of(op1, op2, op3));
     }
 
     public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2,
-        final Expr<RatType> op3,
-        final Expr<RatType> op4) {
+                                 final Expr<RatType> op3,
+                                 final Expr<RatType> op4) {
         return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4));
     }
 
     public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2,
-        final Expr<RatType> op3,
-        final Expr<RatType> op4, final Expr<RatType> op5) {
+                                 final Expr<RatType> op3,
+                                 final Expr<RatType> op4, final Expr<RatType> op5) {
         return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
     }
 

@@ -40,14 +40,14 @@ public final class ExplTransFunc implements TransFunc<ExplState, ExprAction, Exp
 
     @Override
     public Collection<? extends ExplState> getSuccStates(final ExplState state,
-        final ExprAction action,
-        final ExplPrec prec) {
+                                                         final ExprAction action,
+                                                         final ExplPrec prec) {
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
         final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver,
-            BoolExprs.And(state.toExpr(), action.toExpr()), 0, prec::createState,
-            action.nextIndexing());
+                BoolExprs.And(state.toExpr(), action.toExpr()), 0, prec::createState,
+                action.nextIndexing());
         return succStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : succStates;
     }
 

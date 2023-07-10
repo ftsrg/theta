@@ -43,7 +43,7 @@ final class Z3SymbolTable {
 
     public com.microsoft.z3.FuncDecl getSymbol(final ConstDecl<?> constDecl) {
         checkArgument(definesConst(constDecl), "Declaration %s not found in symbol table",
-            constDecl);
+                constDecl);
         return constToSymbol.get(constDecl);
     }
 

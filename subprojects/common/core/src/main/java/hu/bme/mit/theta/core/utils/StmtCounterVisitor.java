@@ -97,7 +97,7 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
     @Override
     public Integer visit(IfStmt stmt, Void param) {
         return stmt.getThen().accept(this, null)
-            + stmt.getElze().accept(this, null)
-            + 1;
+                + stmt.getElze().accept(this, null)
+                + 1;
     }
 }

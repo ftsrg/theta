@@ -48,9 +48,9 @@ public final class ExprStates {
      * @return States satisfying the expression
      */
     public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
-        final Expr<BoolType> expr, final int exprIndex,
-        final Function<? super Valuation, ? extends S> valuationToState,
-        final VarIndexing stateIndexing) {
+                                                                          final Expr<BoolType> expr, final int exprIndex,
+                                                                          final Function<? super Valuation, ? extends S> valuationToState,
+                                                                          final VarIndexing stateIndexing) {
         return createStatesForExpr(solver, expr, exprIndex, valuationToState, stateIndexing, 0);
     }
 
@@ -66,10 +66,10 @@ public final class ExprStates {
      * @return States satisfying the expression
      */
     public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
-        final Expr<BoolType> expr, final int exprIndex,
-        final Function<? super Valuation, ? extends S> valuationToState,
-        final VarIndexing stateIndexing,
-        final int limit) {
+                                                                          final Expr<BoolType> expr, final int exprIndex,
+                                                                          final Function<? super Valuation, ? extends S> valuationToState,
+                                                                          final VarIndexing stateIndexing,
+                                                                          final int limit) {
         try (WithPushPop wpp = new WithPushPop(solver)) {
             solver.add(PathUtils.unfold(expr, exprIndex));
 

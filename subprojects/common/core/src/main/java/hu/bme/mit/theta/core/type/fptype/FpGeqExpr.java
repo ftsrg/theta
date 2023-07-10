@@ -84,7 +84,7 @@ public final class FpGeqExpr extends GeqExpr<FpType> {
         } else if (obj instanceof FpGeqExpr) {
             final FpGeqExpr that = (FpGeqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
-                .equals(that.getRightOp());
+                    .equals(that.getRightOp());
         } else {
             return false;
         }

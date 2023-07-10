@@ -74,12 +74,12 @@ public final class CoreDslHelper {
     }
 
     public static List<Expr<?>> createExprList(final Scope scope,
-        final ExprListContext exprListCtx) {
+                                               final ExprListContext exprListCtx) {
         if (exprListCtx == null || exprListCtx.exprs == null) {
             return Collections.emptyList();
         } else {
             final List<Expr<?>> exprs = exprListCtx.exprs.stream()
-                .map(ctx -> createExpr(scope, ctx)).collect(toList());
+                    .map(ctx -> createExpr(scope, ctx)).collect(toList());
             return exprs;
         }
     }
@@ -89,10 +89,10 @@ public final class CoreDslHelper {
     }
 
     public static List<Expr<BoolType>> createBoolExprList(final Scope scope,
-        final ExprListContext exprListCtx) {
+                                                          final ExprListContext exprListCtx) {
         final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
         final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool()))
-            .collect(toList());
+                .collect(toList());
         return boolExprs;
     }
 
@@ -107,7 +107,7 @@ public final class CoreDslHelper {
             return Collections.emptyList();
         } else {
             final List<Stmt> stmts = stmtListCtx.stmts.stream().map(ctx -> createStmt(scope, ctx))
-                .collect(toList());
+                    .collect(toList());
             return stmts;
         }
     }

@@ -78,6 +78,6 @@ public final class WitnessGraphvizWriter extends AbstractGraphWriter {
         label = label.replace("\"", "\\\"");
         // graphviz throws a syntax error is node names have . in them, so we change them to _dot_
         modifiedGraph.addNode(n.getId().replace(".", "_dot_"),
-            NodeAttributes.builder().label(label).build());
+                NodeAttributes.builder().label(label).build());
     }
 }
