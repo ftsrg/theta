@@ -6,7 +6,7 @@ runs:
     - name: Checkout code
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Check for formatting
-      uses: leventeBajczi/intellij-idea-format@v1.0-beta
+      uses: leventeBajczi/intellij-idea-format@v1.0-beta-2
       with:
         settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
         file-mask: "*.java,*.kts,*.kt"
