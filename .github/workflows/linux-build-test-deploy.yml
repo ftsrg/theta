@@ -157,7 +157,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         uses: ./.github/actions/cache-build
         with:
-          arguments: build sonarqube --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m
+          arguments: build jacocoTestReport sonarqube --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m
 
   deploy-docs:
     runs-on: ubuntu-latest

@@ -15,7 +15,9 @@ runs:
   steps:
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-
+    - name: Create folder
+      shell: bash
+      run: mkdir -p ${{ inputs.path }}
     - name: Badge creation
       uses: emibcn/badge-action@v2.0.2
       with:
