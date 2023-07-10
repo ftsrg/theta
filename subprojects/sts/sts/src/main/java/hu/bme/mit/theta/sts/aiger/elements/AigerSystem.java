@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Represents an AIGER system, which is a collection of @link {@link AigerNode}s (connected with
- *
+ * <p>
  * {@link AigerWire}s) and an {@link OutputVar}.
  */
 public class AigerSystem {
