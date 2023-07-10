@@ -38,6 +38,7 @@ sonar {
     property("sonar.projectKey", "leventeBajczi_theta")
     property("sonar.organization", "bajczi-levente")
     property("sonar.host.url", "https://sonarcloud.io")
+    property("sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml")
   }
 }
 
