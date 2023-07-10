@@ -24,6 +24,22 @@ jobs:
           Install-VcRedist -VcList $VcList -Silent
       - name: Build
         uses: ./.github/actions/build-action
+      - name: Positive outcome badge
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Success"
+          color: 'Green'
+          path: "badges/build-${{ runner.os }}"
+      - name: Negative outcome badge
+        if: ${{ failure() && matrix.os ==  'windows-latest'  }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Failure"
+          color: 'red'
+          path: "badges/build-${{ runner.os }}"
       - name: Run tests
         uses: ./.github/actions/test-action
       - name: Positive outcome badge

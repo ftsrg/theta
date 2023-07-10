@@ -18,6 +18,22 @@ jobs:
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Build
         uses: ./.github/actions/build-action
+      - name: Positive outcome badge
+        if: ${{ matrix.os == 'macos-latest' }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Success"
+          color: 'Green'
+          path: "badges/build-${{ runner.os }}"
+      - name: Negative outcome badge
+        if: ${{ failure() && matrix.os == 'macos-latest' }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Failure"
+          color: 'red'
+          path: "badges/build-${{ runner.os }}"
       - name: Run tests
         uses: ./.github/actions/test-action
       - name: Positive outcome badge
