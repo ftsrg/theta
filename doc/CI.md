@@ -25,6 +25,7 @@ Theta adopts (with small adjustments) the coding style of [Google](https://githu
 
 Every file containing code should have the license header defined in `doc/copyright-header.txt`. This behavior can either be set up in [IDEA](https://www.jetbrains.com/help/idea/copyright.html), or be done via the [reapply_copyright.yml](todo) manually launchable github action, with options for direct commit (not to master) or an automatically opened PR. 
 
+Theta uses the [SonarCloud](https://sonarcloud.io/) tool for static analysis and code quality metrics. The current rules and quality gates are subject to change based on feedback.  
 
 ## Deployments
 

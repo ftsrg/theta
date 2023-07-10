@@ -18,6 +18,7 @@ plugins {
     id("jacoco-common")
     id("io.freefair.aggregate-javadoc") version "5.2"
     id("io.codearte.nexus-staging") version "0.30.0" apply true
+    id("org.sonarqube") version "4.2.1.3168"
 }
 
 buildscript {

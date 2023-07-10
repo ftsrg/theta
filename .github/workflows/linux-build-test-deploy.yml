@@ -79,24 +79,11 @@ jobs:
           status: "Failure"
           color: 'red'
           path: "badges/test-${{ runner.os }}"
-      # - name: Send test coverage to Codacy
-      #   if: matrix.os == 'ubuntu-latest'
-      #   shell: bash
-      #   run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Java $(find '**/jacoco*.xml' -printf '-r %p ')
-      #   env:
-      #     CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-      # - name: Add coverage to PR
-      #   uses: madrapps/jacoco-report@v1.3
-      #   with:
-      #     paths: ${{ github.workspace }}/build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     min-coverage-overall: 40
-      #     min-coverage-changed-files: 60
 
 
   deploy-release:
     needs: build
-    if: "${{ github.event.inputs.message != '' }}"
+    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -108,7 +95,7 @@ jobs:
 
   deploy-maven:
     needs: build
-    if: "${{ github.event.inputs.message != '' }}"
+    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -124,7 +111,7 @@ jobs:
   
   deploy-docker:
     needs: build
-    if: "${{ github.event.inputs.message != '' }}"
+    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}"
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
