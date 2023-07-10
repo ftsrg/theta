@@ -132,25 +132,6 @@ jobs:
           PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
           PGP_PWD: ${{ secrets.PGP_PWD }}
 
-  run-sonar:
-    needs: test-linux
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Setup java 17
-        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
-        with:
-          distribution: temurin
-          java-version: 17
-      - name: Analyze
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        uses: ./.github/actions/cache-build
-        with:
-          arguments: sonar --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m
-
   deploy-docs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
