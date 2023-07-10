@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  check-formatting:
+  check-version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
