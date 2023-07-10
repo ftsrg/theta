@@ -6,7 +6,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/cache@v3
+    - uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
       if: runner.os == 'Linux'
       id: cache
       with:

@@ -4,7 +4,7 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e
       with:
         python-version: 3.x
     - run: pip install mkdocs-material==8.3.9

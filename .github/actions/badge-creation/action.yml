@@ -19,7 +19,7 @@ runs:
       shell: bash
       run: mkdir -p ${{ inputs.path }}
     - name: Badge creation
-      uses: emibcn/badge-action@v2.0.2
+      uses: emibcn/badge-action@4209421db54c8764d8932070ffd0f81715a629bf
       with:
         label: ${{ inputs.label }}
         status: ${{ inputs.status }}
@@ -27,7 +27,7 @@ runs:
         path: ${{ inputs.path }}/badge.svg
     - name: setup rsync for windows
       if: runner.os == 'Windows'
-      uses: GuillaumeFalourd/setup-rsync@v1.1
+      uses: GuillaumeFalourd/setup-rsync@2b503a403f7185e6872bbc56f903d7395ddd75a2
     - name: Deploy badges
       if: github.ref == 'refs/heads/master' && ${{ always() }}
       uses: leventeBajczi/github-pages-deploy-action-winfix@6d31a3c68a3912555731864c0d5ef4239b02369d # v0.3

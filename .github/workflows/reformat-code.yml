@@ -26,7 +26,7 @@ jobs:
 
     - name: Create Pull Request
       if: ${{ !inputs.direct-commit }}
-      uses: peter-evans/create-pull-request@v5
+      uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38
       with:
         commit-message: "Reformatted code"
         branch: "code-reformat"
@@ -34,6 +34,6 @@ jobs:
 
     - name: Commit changes
       if: ${{ inputs.direct-commit }}
-      uses: stefanzweifel/git-auto-commit-action@v4
+      uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a
       with:
         commit_message: "Reformatted code"
