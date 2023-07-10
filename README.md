@@ -9,13 +9,6 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=leventeBajczi_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=leventeBajczi_theta)
-
-
-[![Windows build](https://github.com/ftsrg/theta/actions/workflows/build-win.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-win.yml)
-[![Linux build](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml)
-![Build dockerfiles](https://github.com/ftsrg/theta/workflows/Build%20dockerfiles/badge.svg)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ftsrg/theta&amp;utm_campaign=Badge_Grade)
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ftsrg/theta&utm_campaign=Badge_Coverage)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache--2-brightgreen.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ![Theta logo](doc/theta-logo.png)
