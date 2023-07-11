@@ -82,7 +82,7 @@ jobs:
 
 
   deploy-release:
-    needs: build
+    needs: test-linux
     if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' }}"
     runs-on: ubuntu-latest
     steps:
@@ -94,7 +94,7 @@ jobs:
           message: ${{ inputs.message }}
 
   deploy-maven:
-    needs: build
+    needs: test-linux
     if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}"
     runs-on: ubuntu-latest
     steps:
@@ -110,7 +110,7 @@ jobs:
           PGP_PWD: ${{ secrets.PGP_PWD }}
   
   deploy-docker:
-    needs: build
+    needs: test-linux
     if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}"
     strategy:
       matrix:
