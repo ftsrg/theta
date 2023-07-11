@@ -1,5 +1,8 @@
 name: 'Deploy javadoc'
 description: 'Deploying javadoc to github-pages'
+
+permissions: write-all
+
 runs:
   using: "composite"
   steps:
