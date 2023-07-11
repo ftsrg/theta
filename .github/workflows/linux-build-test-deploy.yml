@@ -120,18 +120,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: docker-login
-        uses: ./.github/workflows/docker-login
+        uses: ./.github/actions/docker-login
         with:
           username: ${{secrets.DOCKER_USERNAME}}
           token: ${{secrets.DOCKER_TOKEN}}
       - name: Build and publish docker file 
-        uses: ./.github/actions/deploy-maven
+        uses: ./.github/actions/docker-deploy
         with:
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          PGP_KEY: ${{ secrets.PGP_KEY }}
-          PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
-          PGP_PWD: ${{ secrets.PGP_PWD }}
+          project: ${{ matrix.dockerprojects }}
 
   deploy-docs:
     runs-on: ubuntu-latest
