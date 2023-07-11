@@ -20,5 +20,5 @@ runs:
       with:
         branch: gh-pages
         folder: doc/wiki/wiki
-        SINGLE_COMMIT: wiki
+        target-folder: wiki
         single-commit: true
