@@ -9,11 +9,12 @@ The `master` branch is protected, meaning direct pushes to the branch are forbid
 
 * At least one reviewer accepted the PR (no self-reviews are allowed)
 * All conversations are marked _resolved_.
+* The source is up-to-date with the destination.
 * The following checks passed:
     * License headers are present (and up-to-date) on all files (see [check-copyright.yml](todo))
     * The style guide `ThetaIntelliJCodeStyle.xml` is applied to all files (see [check-formatting.yml](todo))
     * SonarCloud check for code quality succeeds (see job `run-sonar` in [linux-build-test-deploy.yml](todo)), including test coverage criteria (at least 60% of the new code)
-    * Building and tests succeed for `ubuntu-latest` ([linux-build-test-deploy.yml](todo)), `windows-latest` ([win-build-test.yml](todo)) ~~and `macos-latest` ([mac-build-test.yml](todo))~~.
+    * Building and tests succeed for `ubuntu-latest` ([linux-build-test-deploy.yml](todo)), `windows-latest` ([win-build-test.yml](todo)) and `macos-latest` ([mac-build-test.yml](todo)).
     * Valid javadoc can be generated (`javadoc` in [linux-build-test-deploy.yml](todo))
     * The version must be different to that of `master` ([check-version.yml](todo)). For an automated version bump, see[version-bump.yml](todo).
 
