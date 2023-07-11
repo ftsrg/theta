@@ -16,7 +16,9 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Analyze
-        if: ${{ secrets.SONAR_TOKEN }} != ''
+        env: 
+          secret_workaround: ${{ secrets.SONAR_TOKEN }}
+        if: env.secret_workaround != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
