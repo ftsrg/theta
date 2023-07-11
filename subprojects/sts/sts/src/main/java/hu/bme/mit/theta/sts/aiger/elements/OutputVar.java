@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,33 +25,33 @@ import java.util.Collections;
  */
 public class OutputVar extends AigerNode {
 
-	private AigerWire inWire;
+    private AigerWire inWire;
 
-	public OutputVar(final int nr) {
-		super(String.format("OUT%d", nr));
-	}
+    public OutputVar(final int nr) {
+        super(String.format("OUT%d", nr));
+    }
 
-	@Override
-	public Collection<AigerWire> getInWires() {
-		return Collections.singleton(inWire);
-	}
+    @Override
+    public Collection<AigerWire> getInWires() {
+        return Collections.singleton(inWire);
+    }
 
-	public AigerWire getInWire() {
-		return inWire;
-	}
+    public AigerWire getInWire() {
+        return inWire;
+    }
 
-	public void setInWire(final AigerWire wire) {
-		checkArgument(wire.getTarget().equals(this));
-		this.inWire = wire;
-	}
+    public void setInWire(final AigerWire wire) {
+        checkArgument(wire.getTarget().equals(this));
+        this.inWire = wire;
+    }
 
-	@Override
-	public Collection<AigerWire> getOutWires() {
-		return Collections.emptyList();
-	}
+    @Override
+    public Collection<AigerWire> getOutWires() {
+        return Collections.emptyList();
+    }
 
-	@Override
-	public void addOutWire(final AigerWire outWire) {
-		throw new UnsupportedOperationException("Output variables cannot have outgoing wires.");
-	}
+    @Override
+    public void addOutWire(final AigerWire outWire) {
+        throw new UnsupportedOperationException("Output variables cannot have outgoing wires.");
+    }
 }

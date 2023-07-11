@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import java.util.Set;
 
 public class XcfaGlobalStaticAutoExpl implements XcfaAutoExpl {
-	@Override
-	public AutoExpl create(XCFA xcfa) {
-		return new StaticAutoExpl(Set.copyOf(xcfa.getGlobalVars()));
-	}
+
+    @Override
+    public AutoExpl create(XCFA xcfa) {
+        return new StaticAutoExpl(Set.copyOf(xcfa.getGlobalVars()));
+    }
 }

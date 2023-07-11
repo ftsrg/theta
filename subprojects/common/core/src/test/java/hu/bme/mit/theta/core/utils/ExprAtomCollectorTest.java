@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,36 +46,37 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 @RunWith(Parameterized.class)
 public class ExprAtomCollectorTest {
 
-	private static final Expr<BoolType> CA = Const("a", Bool()).getRef();
-	private static final Expr<BoolType> CB = Const("b", Bool()).getRef();
-	private static final Expr<IntType> CX = Const("x", Int()).getRef();
-	private static final Expr<IntType> CY = Const("y", Int()).getRef();
+    private static final Expr<BoolType> CA = Const("a", Bool()).getRef();
+    private static final Expr<BoolType> CB = Const("b", Bool()).getRef();
+    private static final Expr<IntType> CX = Const("x", Int()).getRef();
+    private static final Expr<IntType> CY = Const("y", Int()).getRef();
 
-	@Parameter(value = 0)
-	public Expr<BoolType> expr;
+    @Parameter(value = 0)
+    public Expr<BoolType> expr;
 
-	@Parameter(value = 1)
-	public Set<Expr<BoolType>> expectedAtoms;
+    @Parameter(value = 1)
+    public Set<Expr<BoolType>> expectedAtoms;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{And(CA, Or(CA, Not(CB))), of(CA, CB)},
+                {And(CA, Or(CA, Not(CB))), of(CA, CB)},
 
-				{Imply(Eq(CX, Int(2)), Not(Leq(CX, CY))), of(Eq(CX, Int(2)), Leq(CX, CY))},
+                {Imply(Eq(CX, Int(2)), Not(Leq(CX, CY))), of(Eq(CX, Int(2)), Leq(CX, CY))},
 
-				{Iff(And(Leq(CX, CY), Eq(CX, CY)), Or(Not(Leq(CX, CY)), CA)), of(CA, Leq(CX, CY), Eq(CX, CY))},
+                {Iff(And(Leq(CX, CY), Eq(CX, CY)), Or(Not(Leq(CX, CY)), CA)),
+                        of(CA, Leq(CX, CY), Eq(CX, CY))},
 
-				{And(Ite(CA, CA, CB), Not(CA)), of(CA, Ite(CA, CA, CB))},
+                {And(Ite(CA, CA, CB), Not(CA)), of(CA, Ite(CA, CA, CB))},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		final Set<Expr<BoolType>> atoms = ExprUtils.getAtoms(expr);
-		Assert.assertEquals(expectedAtoms, atoms);
-	}
+    @Test
+    public void test() {
+        final Set<Expr<BoolType>> atoms = ExprUtils.getAtoms(expr);
+        Assert.assertEquals(expectedAtoms, atoms);
+    }
 
 }

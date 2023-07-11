@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,46 +27,49 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class XcfaAction extends StmtAction {
-	public static XcfaAction create(final XcfaEdge edge) {
-		return new SimpleXcfaAction(edge);
-	}
 
-	public abstract XcfaLocation getSource();
+    public static XcfaAction create(final XcfaEdge edge) {
+        return new SimpleXcfaAction(edge);
+    }
 
-	public abstract XcfaLocation getTarget();
+    public abstract XcfaLocation getSource();
 
-	public abstract List<XcfaLabel> getLabels();
+    public abstract XcfaLocation getTarget();
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("XcfaAction").add(getSource().getName() + "->" + getTarget().getName()).add(getLabels()).toString();
-	}
+    public abstract List<XcfaLabel> getLabels();
 
-	private static class SimpleXcfaAction extends XcfaAction {
-		private final XcfaEdge edge;
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("XcfaAction")
+                .add(getSource().getName() + "->" + getTarget().getName()).add(getLabels()).toString();
+    }
 
-		private SimpleXcfaAction(XcfaEdge edge) {
-			this.edge = edge;
-		}
+    private static class SimpleXcfaAction extends XcfaAction {
 
-		@Override
-		public List<Stmt> getStmts() {
-			return edge.getLabels().stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
-		}
+        private final XcfaEdge edge;
 
-		@Override
-		public XcfaLocation getSource() {
-			return edge.getSource();
-		}
+        private SimpleXcfaAction(XcfaEdge edge) {
+            this.edge = edge;
+        }
 
-		@Override
-		public XcfaLocation getTarget() {
-			return edge.getTarget();
-		}
+        @Override
+        public List<Stmt> getStmts() {
+            return edge.getLabels().stream().map(XcfaLabel::getStmt).collect(Collectors.toList());
+        }
 
-		@Override
-		public List<XcfaLabel> getLabels() {
-			return edge.getLabels();
-		}
-	}
+        @Override
+        public XcfaLocation getSource() {
+            return edge.getSource();
+        }
+
+        @Override
+        public XcfaLocation getTarget() {
+            return edge.getTarget();
+        }
+
+        @Override
+        public List<XcfaLabel> getLabels() {
+            return edge.getLabels();
+        }
+    }
 }

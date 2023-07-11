@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,34 +22,35 @@ import java.util.Map;
 import java.util.Optional;
 
 public class Enum extends CSimpleType {
-	private final String id;
-	private final Map<String, Optional<Expr<?>>> fields;
 
-	Enum(String id, Map<String, Optional<Expr<?>>> fields) {
-		this.fields = fields;
-		this.id = id;
-	}
+    private final String id;
+    private final Map<String, Optional<Expr<?>>> fields;
 
-	public Map<String, Optional<Expr<?>>> getFields() {
-		return fields;
-	}
+    Enum(String id, Map<String, Optional<Expr<?>>> fields) {
+        this.fields = fields;
+        this.id = id;
+    }
 
-	public String getId() {
-		return id;
-	}
+    public Map<String, Optional<Expr<?>>> getFields() {
+        return fields;
+    }
 
-	@Override
-	protected void patch(CSimpleType cSimpleType) {
-		throw new RuntimeException("Should not be here! Cannot patch with an enum.");
-	}
+    public String getId() {
+        return id;
+    }
 
-	@Override
-	public CSimpleType getBaseType() {
-		Enum anEnum = new Enum(id, fields);
-		anEnum.setAtomic(this.isAtomic());
-		anEnum.setExtern(this.isExtern());
-		anEnum.setTypedef(this.isTypedef());
-		anEnum.setVolatile(this.isVolatile());
-		return anEnum;
-	}
+    @Override
+    protected void patch(CSimpleType cSimpleType) {
+        throw new RuntimeException("Should not be here! Cannot patch with an enum.");
+    }
+
+    @Override
+    public CSimpleType getBaseType() {
+        Enum anEnum = new Enum(id, fields);
+        anEnum.setAtomic(this.isAtomic());
+        anEnum.setExtern(this.isExtern());
+        anEnum.setTypedef(this.isTypedef());
+        anEnum.setVolatile(this.isVolatile());
+        return anEnum;
+    }
 }

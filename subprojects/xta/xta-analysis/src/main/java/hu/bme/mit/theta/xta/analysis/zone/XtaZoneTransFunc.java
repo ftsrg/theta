@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,19 +26,20 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 
 final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec> {
 
-	private final static XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
+    private final static XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
 
-	private XtaZoneTransFunc() {
-	}
+    private XtaZoneTransFunc() {
+    }
 
-	static XtaZoneTransFunc getInstance() {
-		return INSTANCE;
-	}
+    static XtaZoneTransFunc getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action, final ZonePrec prec) {
-		final ZoneState succState = XtaZoneUtils.post(state, action, prec);
-		return ImmutableList.of(succState);
-	}
+    @Override
+    public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action,
+                                               final ZonePrec prec) {
+        final ZoneState succState = XtaZoneUtils.post(state, action, prec);
+        return ImmutableList.of(succState);
+    }
 
 }

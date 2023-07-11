@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,106 +24,108 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class Guard {
 
-	private Guard() {
-	}
+    private Guard() {
+    }
 
-	static DataGuard dataGuard(final Expr<BoolType> expr) {
-		return new DataGuard(expr);
-	}
+    static DataGuard dataGuard(final Expr<BoolType> expr) {
+        return new DataGuard(expr);
+    }
 
-	static ClockGuard clockGuard(final Expr<BoolType> expr) {
-		return new ClockGuard(ClockConstrs.formExpr(expr));
-	}
+    static ClockGuard clockGuard(final Expr<BoolType> expr) {
+        return new ClockGuard(ClockConstrs.formExpr(expr));
+    }
 
-	public abstract Expr<BoolType> toExpr();
+    public abstract Expr<BoolType> toExpr();
 
-	public abstract boolean isDataGuard();
+    public abstract boolean isDataGuard();
 
-	public abstract boolean isClockGuard();
+    public abstract boolean isClockGuard();
 
-	public abstract DataGuard asDataGuard();
+    public abstract DataGuard asDataGuard();
 
-	public abstract ClockGuard asClockGuard();
+    public abstract ClockGuard asClockGuard();
 
-	public static final class DataGuard extends Guard {
-		private final Expr<BoolType> expr;
+    public static final class DataGuard extends Guard {
 
-		private DataGuard(final Expr<BoolType> expr) {
-			this.expr = checkNotNull(expr);
-		}
+        private final Expr<BoolType> expr;
 
-		@Override
-		public Expr<BoolType> toExpr() {
-			return expr;
-		}
+        private DataGuard(final Expr<BoolType> expr) {
+            this.expr = checkNotNull(expr);
+        }
 
-		@Override
-		public boolean isDataGuard() {
-			return true;
-		}
+        @Override
+        public Expr<BoolType> toExpr() {
+            return expr;
+        }
 
-		@Override
-		public boolean isClockGuard() {
-			return false;
-		}
+        @Override
+        public boolean isDataGuard() {
+            return true;
+        }
 
-		@Override
-		public DataGuard asDataGuard() {
-			return this;
-		}
+        @Override
+        public boolean isClockGuard() {
+            return false;
+        }
 
-		@Override
-		public ClockGuard asClockGuard() {
-			throw new ClassCastException();
-		}
+        @Override
+        public DataGuard asDataGuard() {
+            return this;
+        }
 
-		@Override
-		public String toString() {
-			return expr.toString();
-		}
-	}
+        @Override
+        public ClockGuard asClockGuard() {
+            throw new ClassCastException();
+        }
 
-	public static final class ClockGuard extends Guard {
-		private final ClockConstr clockConstr;
+        @Override
+        public String toString() {
+            return expr.toString();
+        }
+    }
 
-		private ClockGuard(final ClockConstr clockConstr) {
-			this.clockConstr = checkNotNull(clockConstr);
-		}
+    public static final class ClockGuard extends Guard {
 
-		public ClockConstr getClockConstr() {
-			return clockConstr;
-		}
+        private final ClockConstr clockConstr;
 
-		@Override
-		public Expr<BoolType> toExpr() {
-			return clockConstr.toExpr();
-		}
+        private ClockGuard(final ClockConstr clockConstr) {
+            this.clockConstr = checkNotNull(clockConstr);
+        }
 
-		@Override
-		public boolean isDataGuard() {
-			return false;
-		}
+        public ClockConstr getClockConstr() {
+            return clockConstr;
+        }
 
-		@Override
-		public boolean isClockGuard() {
-			return true;
-		}
+        @Override
+        public Expr<BoolType> toExpr() {
+            return clockConstr.toExpr();
+        }
 
-		@Override
-		public DataGuard asDataGuard() {
-			throw new ClassCastException();
-		}
+        @Override
+        public boolean isDataGuard() {
+            return false;
+        }
 
-		@Override
-		public ClockGuard asClockGuard() {
-			return this;
-		}
+        @Override
+        public boolean isClockGuard() {
+            return true;
+        }
 
-		@Override
-		public String toString() {
-			return clockConstr.toString();
-		}
+        @Override
+        public DataGuard asDataGuard() {
+            throw new ClassCastException();
+        }
 
-	}
+        @Override
+        public ClockGuard asClockGuard() {
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return clockConstr.toString();
+        }
+
+    }
 
 }

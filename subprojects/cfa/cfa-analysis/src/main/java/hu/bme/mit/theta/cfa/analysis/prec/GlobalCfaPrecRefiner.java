@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,39 +29,40 @@ import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 
 public final class GlobalCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
-		implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
+        implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
-	private final RefutationToPrec<P, R> refToPrec;
+    private final RefutationToPrec<P, R> refToPrec;
 
-	private GlobalCfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
-		this.refToPrec = checkNotNull(refToPrec);
-	}
+    private GlobalCfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+        this.refToPrec = checkNotNull(refToPrec);
+    }
 
-	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> GlobalCfaPrecRefiner<S, A, P, R> create(
-			final RefutationToPrec<P, R> refToPrec) {
-		return new GlobalCfaPrecRefiner<>(refToPrec);
-	}
+    public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> GlobalCfaPrecRefiner<S, A, P, R> create(
+            final RefutationToPrec<P, R> refToPrec) {
+        return new GlobalCfaPrecRefiner<>(refToPrec);
+    }
 
-	@Override
-	public CfaPrec<P> refine(final CfaPrec<P> prec, final Trace<CfaState<S>, A> trace, final R refutation) {
-		checkNotNull(trace);
-		checkNotNull(prec);
-		checkNotNull(refutation);
-		checkArgument(prec instanceof GlobalCfaPrec); // TODO: enforce this in a
-		// better way
+    @Override
+    public CfaPrec<P> refine(final CfaPrec<P> prec, final Trace<CfaState<S>, A> trace,
+                             final R refutation) {
+        checkNotNull(trace);
+        checkNotNull(prec);
+        checkNotNull(refutation);
+        checkArgument(prec instanceof GlobalCfaPrec); // TODO: enforce this in a
+        // better way
 
-		final GlobalCfaPrec<P> constPrec = (GlobalCfaPrec<P>) prec;
-		P runningPrec = constPrec.getPrec();
-		for (int i = 0; i < trace.getStates().size(); ++i) {
-			final P precFromRef = refToPrec.toPrec(refutation, i);
-			runningPrec = refToPrec.join(runningPrec, precFromRef);
-		}
-		return constPrec.refine(runningPrec);
-	}
+        final GlobalCfaPrec<P> constPrec = (GlobalCfaPrec<P>) prec;
+        P runningPrec = constPrec.getPrec();
+        for (int i = 0; i < trace.getStates().size(); ++i) {
+            final P precFromRef = refToPrec.toPrec(refutation, i);
+            runningPrec = refToPrec.join(runningPrec, precFromRef);
+        }
+        return constPrec.refine(runningPrec);
+    }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 
 }

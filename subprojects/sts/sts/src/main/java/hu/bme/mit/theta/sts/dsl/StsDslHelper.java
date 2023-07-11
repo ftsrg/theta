@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,115 +53,120 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.VarDeclContext;
 
 final class StsDslHelper {
 
-	private StsDslHelper() {
-	}
+    private StsDslHelper() {
+    }
 
-	public static ParamDecl<?> createParamDecl(final DeclContext declCtx) {
-		final String name = declCtx.name.getText();
-		final Type type = createType(declCtx.ttype);
-		final ParamDecl<?> paramDecl = Param(name, type);
-		return paramDecl;
-	}
+    public static ParamDecl<?> createParamDecl(final DeclContext declCtx) {
+        final String name = declCtx.name.getText();
+        final Type type = createType(declCtx.ttype);
+        final ParamDecl<?> paramDecl = Param(name, type);
+        return paramDecl;
+    }
 
-	public static List<ParamDecl<?>> createParamList(final DeclListContext declListCtx) {
-		if (declListCtx == null || declListCtx.decls == null) {
-			return Collections.emptyList();
-		} else {
-			return declListCtx.decls.stream().map(StsDslHelper::createParamDecl).collect(toList());
-		}
-	}
+    public static List<ParamDecl<?>> createParamList(final DeclListContext declListCtx) {
+        if (declListCtx == null || declListCtx.decls == null) {
+            return Collections.emptyList();
+        } else {
+            return declListCtx.decls.stream().map(StsDslHelper::createParamDecl).collect(toList());
+        }
+    }
 
-	public static ConstDecl<?> createConstDecl(final ConstDeclContext constDeclCtx) {
-		final DeclContext declCtx = constDeclCtx.ddecl;
-		final String name = declCtx.name.getText();
-		final Type type = createType(declCtx.ttype);
-		final ConstDecl<?> constDecl = Const(name, type);
-		return constDecl;
-	}
+    public static ConstDecl<?> createConstDecl(final ConstDeclContext constDeclCtx) {
+        final DeclContext declCtx = constDeclCtx.ddecl;
+        final String name = declCtx.name.getText();
+        final Type type = createType(declCtx.ttype);
+        final ConstDecl<?> constDecl = Const(name, type);
+        return constDecl;
+    }
 
-	public static VarDecl<?> createVarDecl(final VarDeclContext varDeclCtx) {
-		final DeclContext declCtx = varDeclCtx.ddecl;
-		final String name = declCtx.name.getText();
-		final Type type = createType(declCtx.ttype);
-		final VarDecl<?> varDecl = Var(name, type);
-		return varDecl;
-	}
+    public static VarDecl<?> createVarDecl(final VarDeclContext varDeclCtx) {
+        final DeclContext declCtx = varDeclCtx.ddecl;
+        final String name = declCtx.name.getText();
+        final Type type = createType(declCtx.ttype);
+        final VarDecl<?> varDecl = Var(name, type);
+        return varDecl;
+    }
 
-	public static Substitution createConstDefs(final Scope scope, final Substitution assignment,
-											   final List<? extends ConstDeclContext> constDeclCtxs) {
-		final Map<Decl<?>, Expr<?>> declToExpr = Containers.createMap();
-		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
-			addDef(scope, assignment, declToExpr, constDeclCtx);
-		}
-		return BasicSubstitution.builder().putAll(declToExpr).build();
-	}
+    public static Substitution createConstDefs(final Scope scope, final Substitution assignment,
+                                               final List<? extends ConstDeclContext> constDeclCtxs) {
+        final Map<Decl<?>, Expr<?>> declToExpr = Containers.createMap();
+        for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
+            addDef(scope, assignment, declToExpr, constDeclCtx);
+        }
+        return BasicSubstitution.builder().putAll(declToExpr).build();
+    }
 
-	private static void addDef(final Scope scope, final Substitution assignment, final Map<Decl<?>, Expr<?>> declToExpr,
-							   final ConstDeclContext constDeclCtx) {
-		final String name = constDeclCtx.ddecl.name.getText();
-		final DeclSymbol declSymbol = resolveDecl(scope, name);
-		final Decl<?> decl = declSymbol.getDecl();
-		final Expr<?> expr = createExpr(scope, assignment, constDeclCtx.value);
-		declToExpr.put(decl, expr);
-	}
+    private static void addDef(final Scope scope, final Substitution assignment,
+                               final Map<Decl<?>, Expr<?>> declToExpr,
+                               final ConstDeclContext constDeclCtx) {
+        final String name = constDeclCtx.ddecl.name.getText();
+        final DeclSymbol declSymbol = resolveDecl(scope, name);
+        final Decl<?> decl = declSymbol.getDecl();
+        final Expr<?> expr = createExpr(scope, assignment, constDeclCtx.value);
+        declToExpr.put(decl, expr);
+    }
 
-	public static Type createType(final TypeContext typeCtx) {
-		final Type type = typeCtx.accept(StsTypeCreatorVisitor.getInstance());
-		assert type != null;
-		return type;
-	}
+    public static Type createType(final TypeContext typeCtx) {
+        final Type type = typeCtx.accept(StsTypeCreatorVisitor.getInstance());
+        assert type != null;
+        return type;
+    }
 
-	public static Expr<?> createExpr(final Scope scope, final Substitution assignment, final ExprContext exprCtx) {
-		final Expr<?> expr = exprCtx.accept(new StsExprCreatorVisitor(scope, assignment));
-		assert expr != null;
-		return expr;
-	}
+    public static Expr<?> createExpr(final Scope scope, final Substitution assignment,
+                                     final ExprContext exprCtx) {
+        final Expr<?> expr = exprCtx.accept(new StsExprCreatorVisitor(scope, assignment));
+        assert expr != null;
+        return expr;
+    }
 
-	public static List<Expr<?>> createExprList(final Scope scope, final Substitution assignment,
-											   final ExprListContext exprListCtx) {
-		if (exprListCtx == null || exprListCtx.exprs == null) {
-			return Collections.emptyList();
-		} else {
-			final List<Expr<?>> exprs = exprListCtx.exprs.stream().map(ctx -> createExpr(scope, assignment, ctx))
-					.collect(toList());
-			return exprs;
-		}
-	}
+    public static List<Expr<?>> createExprList(final Scope scope, final Substitution assignment,
+                                               final ExprListContext exprListCtx) {
+        if (exprListCtx == null || exprListCtx.exprs == null) {
+            return Collections.emptyList();
+        } else {
+            final List<Expr<?>> exprs = exprListCtx.exprs.stream()
+                    .map(ctx -> createExpr(scope, assignment, ctx))
+                    .collect(toList());
+            return exprs;
+        }
+    }
 
-	public static Expr<BoolType> createBoolExpr(final Scope scope, final Substitution assignment,
-												final ExprContext exprCtx) {
-		return TypeUtils.cast(createExpr(scope, assignment, exprCtx), Bool());
-	}
+    public static Expr<BoolType> createBoolExpr(final Scope scope, final Substitution assignment,
+                                                final ExprContext exprCtx) {
+        return TypeUtils.cast(createExpr(scope, assignment, exprCtx), Bool());
+    }
 
-	public static List<Expr<BoolType>> createBoolExprList(final Scope scope, final Substitution assignment,
-														  final ExprListContext exprListCtx) {
-		final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
-		final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool())).collect(toList());
-		return boolExprs;
-	}
+    public static List<Expr<BoolType>> createBoolExprList(final Scope scope,
+                                                          final Substitution assignment,
+                                                          final ExprListContext exprListCtx) {
+        final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
+        final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool()))
+                .collect(toList());
+        return boolExprs;
+    }
 
-	public static DeclSymbol resolveDecl(final Scope scope, final String name) {
-		final Optional<? extends Symbol> optSymbol = scope.resolve(name);
+    public static DeclSymbol resolveDecl(final Scope scope, final String name) {
+        final Optional<? extends Symbol> optSymbol = scope.resolve(name);
 
-		checkArgument(optSymbol.isPresent());
-		final Symbol symbol = optSymbol.get();
+        checkArgument(optSymbol.isPresent());
+        final Symbol symbol = optSymbol.get();
 
-		checkArgument(symbol instanceof DeclSymbol);
-		final DeclSymbol declSymbol = (DeclSymbol) symbol;
+        checkArgument(symbol instanceof DeclSymbol);
+        final DeclSymbol declSymbol = (DeclSymbol) symbol;
 
-		return declSymbol;
-	}
+        return declSymbol;
+    }
 
-	public static StsDeclSymbol resolveSts(final Scope scope, final String name) {
-		final Optional<? extends Symbol> optSymbol = scope.resolve(name);
+    public static StsDeclSymbol resolveSts(final Scope scope, final String name) {
+        final Optional<? extends Symbol> optSymbol = scope.resolve(name);
 
-		checkArgument(optSymbol.isPresent());
-		final Symbol symbol = optSymbol.get();
+        checkArgument(optSymbol.isPresent());
+        final Symbol symbol = optSymbol.get();
 
-		checkArgument(symbol instanceof StsDeclSymbol);
-		final StsDeclSymbol stsSymbol = (StsDeclSymbol) symbol;
+        checkArgument(symbol instanceof StsDeclSymbol);
+        final StsDeclSymbol stsSymbol = (StsDeclSymbol) symbol;
 
-		return stsSymbol;
-	}
+        return stsSymbol;
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,25 +26,25 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 
 final class ExprPrimeApplier {
 
-	private ExprPrimeApplier() {
-	}
+    private ExprPrimeApplier() {
+    }
 
-	static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
-		if (expr instanceof RefExpr) {
-			final RefExpr<T> ref = (RefExpr<T>) expr;
-			final Decl<T> decl = ref.getDecl();
-			if (decl instanceof VarDecl) {
-				final VarDecl<T> varDecl = (VarDecl<T>) decl;
-				final int index = indexing.get(varDecl);
-				if (index == 0) {
-					return expr;
-				} else {
-					return Prime(expr, index);
-				}
-			}
-		}
+    static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
+        if (expr instanceof RefExpr) {
+            final RefExpr<T> ref = (RefExpr<T>) expr;
+            final Decl<T> decl = ref.getDecl();
+            if (decl instanceof VarDecl) {
+                final VarDecl<T> varDecl = (VarDecl<T>) decl;
+                final int index = indexing.get(varDecl);
+                if (index == 0) {
+                    return expr;
+                } else {
+                    return Prime(expr, index);
+                }
+            }
+        }
 
-		return expr.map(op -> applyPrimes(op, indexing));
-	}
+        return expr.map(op -> applyPrimes(op, indexing));
+    }
 
 }

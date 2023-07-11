@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,15 +23,16 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class GtExpr<OpType extends Ordered<OpType>> extends BinaryExpr<OpType, BoolType> {
 
-	protected GtExpr(final Expr<OpType> leftOp, final Expr<OpType> rightOp) {
-		super(leftOp, rightOp);
-	}
+    protected GtExpr(final Expr<OpType> leftOp, final Expr<OpType> rightOp) {
+        super(leftOp, rightOp);
+    }
 
-	public static <OpType extends Ordered<OpType>> GtExpr<?> create2(final Expr<?> leftOp, final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
-		final Expr<OpType> newLeftOp = cast(leftOp, type);
-		final Expr<OpType> newRightOp = cast(rightOp, type);
-		return type.Gt(newLeftOp, newRightOp);
-	}
+    public static <OpType extends Ordered<OpType>> GtExpr<?> create2(final Expr<?> leftOp,
+                                                                     final Expr<?> rightOp) {
+        @SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
+        final Expr<OpType> newLeftOp = cast(leftOp, type);
+        final Expr<OpType> newRightOp = cast(rightOp, type);
+        return type.Gt(newLeftOp, newRightOp);
+    }
 
 }

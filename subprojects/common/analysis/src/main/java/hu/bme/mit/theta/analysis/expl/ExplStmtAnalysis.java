@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,40 +28,41 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, ExplPrec> {
 
-	private final PartialOrd<ExplState> partialOrd;
-	private final InitFunc<ExplState, ExplPrec> initFunc;
-	private final TransFunc<ExplState, StmtAction, ExplPrec> transFunc;
+    private final PartialOrd<ExplState> partialOrd;
+    private final InitFunc<ExplState, ExplPrec> initFunc;
+    private final TransFunc<ExplState, StmtAction, ExplPrec> transFunc;
 
-	private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr, final int maxSuccToEnumerate) {
-		checkNotNull(solver);
-		checkNotNull(initExpr);
-		this.partialOrd = ExplOrd.getInstance();
-		this.initFunc = ExplInitFunc.create(solver, initExpr);
-		this.transFunc = ExplStmtTransFunc.create(solver, maxSuccToEnumerate);
-	}
+    private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr,
+                             final int maxSuccToEnumerate) {
+        checkNotNull(solver);
+        checkNotNull(initExpr);
+        this.partialOrd = ExplOrd.getInstance();
+        this.initFunc = ExplInitFunc.create(solver, initExpr);
+        this.transFunc = ExplStmtTransFunc.create(solver, maxSuccToEnumerate);
+    }
 
-	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
-										  final int maxSuccToEnumerate) {
-		return new ExplStmtAnalysis(solver, initExpr, maxSuccToEnumerate);
-	}
+    public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
+                                          final int maxSuccToEnumerate) {
+        return new ExplStmtAnalysis(solver, initExpr, maxSuccToEnumerate);
+    }
 
-	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
-		return create(solver, initExpr, 0);
-	}
+    public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
+        return create(solver, initExpr, 0);
+    }
 
-	@Override
-	public PartialOrd<ExplState> getPartialOrd() {
-		return partialOrd;
-	}
+    @Override
+    public PartialOrd<ExplState> getPartialOrd() {
+        return partialOrd;
+    }
 
-	@Override
-	public InitFunc<ExplState, ExplPrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<ExplState, ExplPrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<ExplState, StmtAction, ExplPrec> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<ExplState, StmtAction, ExplPrec> getTransFunc() {
+        return transFunc;
+    }
 
 }

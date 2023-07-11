@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,21 +22,21 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 final class ExprIndexedVarCollector {
 
-	private ExprIndexedVarCollector() {
-	}
+    private ExprIndexedVarCollector() {
+    }
 
-	static void collectIndexedVars(final Expr<?> expr, final IndexedVars.Builder builder) {
-		if (expr instanceof RefExpr) {
-			final RefExpr<?> ref = (RefExpr<?>) expr;
-			final Decl<?> decl = ref.getDecl();
-			if (decl instanceof IndexedConstDecl) {
-				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) decl;
-				builder.add(indexedConstDecl);
-				return;
-			}
-		}
+    static void collectIndexedVars(final Expr<?> expr, final IndexedVars.Builder builder) {
+        if (expr instanceof RefExpr) {
+            final RefExpr<?> ref = (RefExpr<?>) expr;
+            final Decl<?> decl = ref.getDecl();
+            if (decl instanceof IndexedConstDecl) {
+                final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) decl;
+                builder.add(indexedConstDecl);
+                return;
+            }
+        }
 
-		expr.getOps().stream().forEach(op -> collectIndexedVars(op, builder));
-	}
+        expr.getOps().stream().forEach(op -> collectIndexedVars(op, builder));
+    }
 
 }

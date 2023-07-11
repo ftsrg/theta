@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,58 +40,58 @@ import hu.bme.mit.theta.core.type.Type;
  */
 public final class CoreDslManager {
 
-	private final BasicScope scope;
+    private final BasicScope scope;
 
-	public CoreDslManager() {
-		this.scope = new BasicScope(null);
-	}
+    public CoreDslManager() {
+        this.scope = new BasicScope(null);
+    }
 
-	public void declare(final Decl<?> decl) {
-		checkNotNull(decl);
-		scope.declare(DeclSymbol.of(decl));
-	}
+    public void declare(final Decl<?> decl) {
+        checkNotNull(decl);
+        scope.declare(DeclSymbol.of(decl));
+    }
 
-	public Type parseType(final String string) {
-		checkNotNull(string);
-		final CoreDslParser parser = createParserForString(string);
-		final ParseTree tree = parser.type();
-		return tree.accept(TypeCreatorVisitor.getInstance());
-	}
+    public Type parseType(final String string) {
+        checkNotNull(string);
+        final CoreDslParser parser = createParserForString(string);
+        final ParseTree tree = parser.type();
+        return tree.accept(TypeCreatorVisitor.getInstance());
+    }
 
-	public Expr<?> parseExpr(final String string) {
-		checkNotNull(string);
-		final CoreDslParser parser = createParserForString(string);
-		final ParseTree tree = parser.expr();
-		return tree.accept(new ExprCreatorVisitor(scope));
-	}
+    public Expr<?> parseExpr(final String string) {
+        checkNotNull(string);
+        final CoreDslParser parser = createParserForString(string);
+        final ParseTree tree = parser.expr();
+        return tree.accept(new ExprCreatorVisitor(scope));
+    }
 
-	public Stmt parseStmt(final String string) {
-		checkNotNull(string);
-		final CoreDslParser parser = createParserForString(string);
-		final ParseTree tree = parser.stmt();
-		return tree.accept(new StmtCreatorVisitor(scope));
-	}
+    public Stmt parseStmt(final String string) {
+        checkNotNull(string);
+        final CoreDslParser parser = createParserForString(string);
+        final ParseTree tree = parser.stmt();
+        return tree.accept(new StmtCreatorVisitor(scope));
+    }
 
-	////
+    ////
 
-	public String writeExpr(final Expr<?> expr) {
-		checkNotNull(expr);
-		return ExprWriter.instance().write(expr);
-	}
+    public String writeExpr(final Expr<?> expr) {
+        checkNotNull(expr);
+        return ExprWriter.instance().write(expr);
+    }
 
-	public String writeStmt(final Stmt stmt) {
-		checkNotNull(stmt);
-		return stmt.accept(new StmtWriter(), null);
-	}
+    public String writeStmt(final Stmt stmt) {
+        checkNotNull(stmt);
+        return stmt.accept(new StmtWriter(), null);
+    }
 
-	////
+    ////
 
-	private static CoreDslParser createParserForString(final String string) {
-		final CharStream input = CharStreams.fromString(string);
-		final CoreDslLexer lexer = new CoreDslLexer(input);
-		final CommonTokenStream tokens = new CommonTokenStream(lexer);
-		final CoreDslParser parser = new CoreDslParser(tokens);
-		return parser;
-	}
+    private static CoreDslParser createParserForString(final String string) {
+        final CharStream input = CharStreams.fromString(string);
+        final CoreDslLexer lexer = new CoreDslLexer(input);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final CoreDslParser parser = new CoreDslParser(tokens);
+        return parser;
+    }
 
 }

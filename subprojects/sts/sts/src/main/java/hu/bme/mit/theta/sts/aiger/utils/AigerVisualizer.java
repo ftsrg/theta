@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.sts.aiger.utils;
 import static java.lang.System.lineSeparator;
 
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Set;
 
 import hu.bme.mit.theta.sts.aiger.elements.AigerNode;
@@ -33,56 +34,61 @@ import hu.bme.mit.theta.sts.aiger.elements.Latch;
  */
 public final class AigerVisualizer {
 
-	private static final String INPUTNODE = "\t%s [shape=invhouse,margin=0,width=0,height=0];" + lineSeparator();
-	private static final String LATCHNODE = "\t%s [shape=rectangle,margin=0.05,width=0,height=0];" + lineSeparator();
-	private static final String OUTPUTNODE = INPUTNODE;
-	private static final String ANDNODE = "\t%s [shape=ellipse,margin=0.02,width=0,height=0];" + lineSeparator();
-	private static final String INVHEAD = "odot";
+    private static final String INPUTNODE =
+            "\t%s [shape=invhouse,margin=0,width=0,height=0];" + lineSeparator();
+    private static final String LATCHNODE =
+            "\t%s [shape=rectangle,margin=0.05,width=0,height=0];" + lineSeparator();
+    private static final String OUTPUTNODE = INPUTNODE;
+    private static final String ANDNODE =
+            "\t%s [shape=ellipse,margin=0.02,width=0,height=0];" + lineSeparator();
+    private static final String INVHEAD = "odot";
 
-	private AigerVisualizer() {
-	}
+    private AigerVisualizer() {
+    }
 
-	/**
-	 * Visualize an AIGER system in dot format.
-	 *
-	 * @param system
-	 * @return
-	 */
-	public static String visualize(final AigerSystem system) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("digraph aiger {").append(lineSeparator());
-		appendNodes(system, sb);
-		appendWires(system, sb);
-		sb.append('}');
-		return sb.toString();
-	}
+    /**
+     * Visualize an AIGER system in dot format.
+     *
+     * @param system
+     * @return
+     */
+    public static String visualize(final AigerSystem system) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("digraph aiger {").append(lineSeparator());
+        appendNodes(system, sb);
+        appendWires(system, sb);
+        sb.append('}');
+        return sb.toString();
+    }
 
-	private static void appendNodes(final AigerSystem system, final StringBuilder sb) {
-		for (final AigerNode node : system.getNodes()) {
-			if (node instanceof InputVar || node instanceof FalseConst) {
-				sb.append(String.format(INPUTNODE, node.getName()));
-			} else if (node instanceof Latch) {
-				sb.append(String.format(LATCHNODE, node.getName()));
-			} else if (node instanceof AndGate) {
-				sb.append(String.format(ANDNODE, node.getName()));
-			} else {
-				throw new UnsupportedOperationException("Unknown node: " + node.getClass().getName());
-			}
-		}
-		sb.append(String.format(OUTPUTNODE, system.getOutput().getName()));
-	}
+    private static void appendNodes(final AigerSystem system, final StringBuilder sb) {
+        for (final AigerNode node : system.getNodes()) {
+            if (node instanceof InputVar || node instanceof FalseConst) {
+                sb.append(String.format(INPUTNODE, node.getName()));
+            } else if (node instanceof Latch) {
+                sb.append(String.format(LATCHNODE, node.getName()));
+            } else if (node instanceof AndGate) {
+                sb.append(String.format(ANDNODE, node.getName()));
+            } else {
+                throw new UnsupportedOperationException(
+                        "Unknown node: " + node.getClass().getName());
+            }
+        }
+        sb.append(String.format(OUTPUTNODE, system.getOutput().getName()));
+    }
 
-	private static void appendWires(final AigerSystem system, final StringBuilder sb) {
-		final Set<AigerWire> wires = Containers.createSet();
-		system.getNodes().forEach(n -> wires.addAll(n.getInWires()));
-		system.getNodes().forEach(n -> wires.addAll(n.getOutWires()));
-		wires.addAll(system.getOutput().getInWires());
-		for (final AigerWire wire : wires) {
-			sb.append(String.format("\t%s -> %s", wire.getSource().getName(), wire.getTarget().getName()));
-			if (!wire.isPonated()) {
-				sb.append(" [arrowhead=" + INVHEAD + "]");
-			}
-			sb.append(';').append(lineSeparator());
-		}
-	}
+    private static void appendWires(final AigerSystem system, final StringBuilder sb) {
+        final Set<AigerWire> wires = Containers.createSet();
+        system.getNodes().forEach(n -> wires.addAll(n.getInWires()));
+        system.getNodes().forEach(n -> wires.addAll(n.getOutWires()));
+        wires.addAll(system.getOutput().getInWires());
+        for (final AigerWire wire : wires) {
+            sb.append(String.format("\t%s -> %s", wire.getSource().getName(),
+                    wire.getTarget().getName()));
+            if (!wire.isPonated()) {
+                sb.append(" [arrowhead=" + INVHEAD + "]");
+            }
+            sb.append(';').append(lineSeparator());
+        }
+    }
 }

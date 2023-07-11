@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,57 +25,60 @@ import hu.bme.mit.theta.core.type.LitExpr;
 
 public final class ExistsExpr extends QuantifiedExpr {
 
-	private static final int HASH_SEED = 7993;
+    private static final int HASH_SEED = 7993;
 
-	private static final String OPERATOR_LABEL = "exists";
+    private static final String OPERATOR_LABEL = "exists";
 
-	private ExistsExpr(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
-		super(paramDecls, op);
-	}
+    private ExistsExpr(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
+        super(paramDecls, op);
+    }
 
-	public static ExistsExpr of(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
-		return new ExistsExpr(paramDecls, op);
-	}
+    public static ExistsExpr of(final Iterable<? extends ParamDecl<?>> paramDecls,
+                                final Expr<BoolType> op) {
+        return new ExistsExpr(paramDecls, op);
+    }
 
-	public static ExistsExpr create(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<?> op) {
-		final Expr<BoolType> newOp = cast(op, Bool());
-		return ExistsExpr.of(paramDecls, newOp);
-	}
+    public static ExistsExpr create(final Iterable<? extends ParamDecl<?>> paramDecls,
+                                    final Expr<?> op) {
+        final Expr<BoolType> newOp = cast(op, Bool());
+        return ExistsExpr.of(paramDecls, newOp);
+    }
 
-	@Override
-	public LitExpr<BoolType> eval(final Valuation val) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public LitExpr<BoolType> eval(final Valuation val) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public ExistsExpr with(final Expr<BoolType> op) {
-		if (op == getOp()) {
-			return this;
-		} else {
-			return ExistsExpr.of(getParamDecls(), op);
-		}
-	}
+    @Override
+    public ExistsExpr with(final Expr<BoolType> op) {
+        if (op == getOp()) {
+            return this;
+        } else {
+            return ExistsExpr.of(getParamDecls(), op);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof ExistsExpr) {
-			final ExistsExpr that = (ExistsExpr) obj;
-			return this.getParamDecls().equals(that.getParamDecls()) && this.getOp().equals(that.getOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof ExistsExpr) {
+            final ExistsExpr that = (ExistsExpr) obj;
+            return this.getParamDecls().equals(that.getParamDecls()) && this.getOp()
+                    .equals(that.getOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

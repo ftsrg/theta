@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,63 +40,64 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 
 @RunWith(Parameterized.class)
 public class SmartExprsTest {
-	// Constants for testing
-	private static final Expr<BoolType> A = Const("a", Bool()).getRef();
-	private static final Expr<BoolType> B = Const("b", Bool()).getRef();
-	private static final Expr<BoolType> C = Const("c", Bool()).getRef();
 
-	@Parameter(value = 0)
-	public Expr<BoolType> expr;
+    // Constants for testing
+    private static final Expr<BoolType> A = Const("a", Bool()).getRef();
+    private static final Expr<BoolType> B = Const("b", Bool()).getRef();
+    private static final Expr<BoolType> C = Const("c", Bool()).getRef();
 
-	@Parameter(value = 1)
-	public Expr<BoolType> smartExpr;
+    @Parameter(value = 0)
+    public Expr<BoolType> expr;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameter(value = 1)
+    public Expr<BoolType> smartExpr;
 
-				{True(), SmartBoolExprs.Not(False())},
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{False(), SmartBoolExprs.Not(True())},
+                {True(), SmartBoolExprs.Not(False())},
 
-				{A, SmartBoolExprs.Not(SmartBoolExprs.Not(A))},
+                {False(), SmartBoolExprs.Not(True())},
 
-				{Not(A), SmartBoolExprs.Not(SmartBoolExprs.Not(SmartBoolExprs.Not(A)))},
+                {A, SmartBoolExprs.Not(SmartBoolExprs.Not(A))},
 
-				{True(), SmartBoolExprs.And(Collections.emptySet())},
+                {Not(A), SmartBoolExprs.Not(SmartBoolExprs.Not(SmartBoolExprs.Not(A)))},
 
-				{A, SmartBoolExprs.And(Collections.singleton(A))},
+                {True(), SmartBoolExprs.And(Collections.emptySet())},
 
-				{A, SmartBoolExprs.And(A, True())},
+                {A, SmartBoolExprs.And(Collections.singleton(A))},
 
-				{A, SmartBoolExprs.And(A, True(), True())},
+                {A, SmartBoolExprs.And(A, True())},
 
-				{False(), SmartBoolExprs.And(A, False(), True())},
+                {A, SmartBoolExprs.And(A, True(), True())},
 
-				{True(), SmartBoolExprs.And(True(), True())},
+                {False(), SmartBoolExprs.And(A, False(), True())},
 
-				{And(A, B, C), SmartBoolExprs.And(A, B, C, True())},
+                {True(), SmartBoolExprs.And(True(), True())},
 
-				{False(), SmartBoolExprs.Or(Collections.emptySet())},
+                {And(A, B, C), SmartBoolExprs.And(A, B, C, True())},
 
-				{A, SmartBoolExprs.Or(Collections.singleton(A))},
+                {False(), SmartBoolExprs.Or(Collections.emptySet())},
 
-				{A, SmartBoolExprs.Or(A, False())},
+                {A, SmartBoolExprs.Or(Collections.singleton(A))},
 
-				{A, SmartBoolExprs.Or(A, False(), False())},
+                {A, SmartBoolExprs.Or(A, False())},
 
-				{True(), SmartBoolExprs.Or(A, False(), True())},
+                {A, SmartBoolExprs.Or(A, False(), False())},
 
-				{False(), SmartBoolExprs.Or(False(), False())},
+                {True(), SmartBoolExprs.Or(A, False(), True())},
 
-				{Or(A, B, C), SmartBoolExprs.Or(A, B, C, False())},
+                {False(), SmartBoolExprs.Or(False(), False())},
 
-		});
+                {Or(A, B, C), SmartBoolExprs.Or(A, B, C, False())},
 
-	}
+        });
 
-	@Test
-	public void test() {
-		Assert.assertEquals(expr, smartExpr);
-	}
+    }
+
+    @Test
+    public void test() {
+        Assert.assertEquals(expr, smartExpr);
+    }
 }

@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.smtinterpol;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -41,13 +56,15 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpolSmtLibItpMarker> {
+
     private final Map<Expr<BoolType>, String> assertionNames = new HashMap<>();
     private static final String assertionNamePattern = "_smtinterpol_assertion_%d";
     private static long assertionCount = 0;
 
     public SMTInterpolSmtLibItpSolver(
-        final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
     }
@@ -66,7 +83,8 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
     }
 
     @Override
-    protected void add(final SMTInterpolSmtLibItpMarker marker, final Expr<BoolType> assertion, final Set<ConstDecl<?>> consts, final String term) {
+    protected void add(final SMTInterpolSmtLibItpMarker marker, final Expr<BoolType> assertion,
+                       final Set<ConstDecl<?>> consts, final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
 
         final var name = String.format(assertionNamePattern, assertionCount++);
@@ -76,18 +94,19 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
-        checkState(getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
+        checkState(getStatus() == SolverStatus.UNSAT,
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
-        @SuppressWarnings("unchecked")
-        final var smtInterpolItpPattern = (SmtLibItpPattern<SMTInterpolSmtLibItpMarker>) pattern;
+        @SuppressWarnings("unchecked") final var smtInterpolItpPattern = (SmtLibItpPattern<SMTInterpolSmtLibItpMarker>) pattern;
 
         final var term = patternToTerm(smtInterpolItpPattern.getRoot());
 
         final List<Expr<BoolType>> itpList = new LinkedList<>();
 
         solverBinary.issueCommand(String.format("(get-interpolants %s)", term));
-        for(final var itp : parseItpResponse(solverBinary.readResponse())) {
-            itpList.add(termTransformer.toExpr(itp, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
+        for (final var itp : parseItpResponse(solverBinary.readResponse())) {
+            itpList.add(termTransformer.toExpr(itp, BoolExprs.Bool(),
+                    new SmtLibModel(Collections.emptyMap())));
         }
         itpList.add(False());
 
@@ -102,19 +121,18 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
 
         final var marker = markerTree.getMarker();
         final var terms = marker.getTerms();
-        if(terms.size() == 1) {
+        if (terms.size() == 1) {
             term = assertionNames.get(terms.iterator().next().get1());
-        }
-        else {
-            term = String.format("(and %s)", terms.stream().map(t -> assertionNames.get(t.get1())).collect(Collectors.joining(" ")));
+        } else {
+            term = String.format("(and %s)", terms.stream().map(t -> assertionNames.get(t.get1()))
+                    .collect(Collectors.joining(" ")));
         }
 
         final var children = markerTree.getChildren();
-        for(var i = children.size() - 1; i >= 0; i--) {
-            if(i == 0) {
+        for (var i = children.size() - 1; i >= 0; i--) {
+            if (i == 0) {
                 term = String.format("%s %s", patternToTerm(children.get(i)), term);
-            }
-            else {
+            } else {
                 term = String.format("(%s) %s", patternToTerm(children.get(i)), term);
             }
         }
@@ -122,7 +140,8 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
         return term;
     }
 
-    private void buildItpMapFormList(final ItpMarkerTree<SMTInterpolSmtLibItpMarker> pattern, final List<Expr<BoolType>> itpList, final Map<ItpMarker, Expr<BoolType>> itpMap) {
+    private void buildItpMapFormList(final ItpMarkerTree<SMTInterpolSmtLibItpMarker> pattern,
+                                     final List<Expr<BoolType>> itpList, final Map<ItpMarker, Expr<BoolType>> itpMap) {
         for (final ItpMarkerTree<SMTInterpolSmtLibItpMarker> child : pattern.getChildren()) {
             buildItpMapFormList(child, itpList, itpMap);
         }
@@ -151,23 +170,23 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
             parser.removeErrorListeners();
             parser.addErrorListener(new ThrowExceptionErrorListener());
 
-            for(final var term : parser.get_interpolants_response_smtinterpol().term()) {
+            for (final var term : parser.get_interpolants_response_smtinterpol().term()) {
                 interpolants.add(extractString(term));
             }
 
             return interpolants;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             try {
-                throw new SmtLibSolverException(parser.response().general_response_error().reason.getText());
-            }
-            catch(Exception ex) {
+                throw new SmtLibSolverException(
+                        parser.response().general_response_error().reason.getText());
+            } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
         }
     }
 
     private static String extractString(final ParserRuleContext ctx) {
-        return ctx.start.getInputStream().getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+        return ctx.start.getInputStream()
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

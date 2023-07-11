@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
         this.locationStack.push(new XcfaSTStateStack.ProcedureLocation(currentLoc));
     }
 
-    private XcfaSTStateStack(final Stack<XcfaSTStateStack.ProcedureLocation> locationStack, final S globalState) {
+    private XcfaSTStateStack(final Stack<XcfaSTStateStack.ProcedureLocation> locationStack,
+                             final S globalState) {
         super(globalState);
         this.locationStack = new Stack<>();
         this.locationStack.addAll(locationStack);
@@ -72,7 +73,8 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
     }
 
     public Map<VarDecl<?>, VarDecl<?>> getReverseVars() {
-        return this.getCurrentVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+        return this.getCurrentVars().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
     }
 
     XcfaLocation pop() {
@@ -88,20 +90,29 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
     }
 
     private void updateParams() {
-        Map<VarDecl<?>, VarDecl<?>> callingProcedureAltVars = locationStack.get(locationStack.size() - 2).location.getParent().getAltVars();
-        Map<VarDecl<?>, VarDecl<?>> callingProcedureVars = locationStack.get(locationStack.size() - 2).varLut;
+        Map<VarDecl<?>, VarDecl<?>> callingProcedureAltVars = locationStack.get(
+                locationStack.size() - 2).location.getParent().getAltVars();
+        Map<VarDecl<?>, VarDecl<?>> callingProcedureVars = locationStack.get(
+                locationStack.size() - 2).varLut;
         callingProcedureAltVars.forEach((var, altVar) -> {
             if (callingProcedureVars.get(var) != null) // calling proc has the same var instantiated
+            {
                 locationStack.peek().varLut.put(altVar, callingProcedureVars.get(var));
+            }
         });
     }
 
     @Override
     public boolean equalLocations(XcfaSTState<?> o) {
         XcfaSTStateStack<?> that = (XcfaSTStateStack<?>) o;
-        if (locationStack.size() != that.locationStack.size()) return false;
-        for (int i = 0; i < locationStack.size(); ++i)
-            if (!Objects.equals(locationStack.get(i), that.locationStack.get(i))) return false;
+        if (locationStack.size() != that.locationStack.size()) {
+            return false;
+        }
+        for (int i = 0; i < locationStack.size(); ++i) {
+            if (!Objects.equals(locationStack.get(i), that.locationStack.get(i))) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -122,6 +133,7 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
     }
 
     public static class ProcedureLocation {
+
         private final XcfaLocation location;
         private final Map<VarDecl<?>, VarDecl<?>> varLut;
 
@@ -144,10 +156,15 @@ public class XcfaSTStateStack<S extends ExprState> extends XcfaSTState<S> {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             XcfaSTStateStack.ProcedureLocation that = (XcfaSTStateStack.ProcedureLocation) o;
-            return location == that.location && varLut.entrySet().stream().noneMatch(entry -> that.varLut.get(entry.getKey()) != entry.getValue());
+            return location == that.location && varLut.entrySet().stream()
+                    .noneMatch(entry -> that.varLut.get(entry.getKey()) != entry.getValue());
         }
 
         @Override

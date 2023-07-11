@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,40 +38,40 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 @RunWith(Parameterized.class)
 public class SubstitutionApplyTest {
 
-	private static final VarDecl<IntType> VA = Var("a", Int());
-	private static final VarDecl<IntType> VB = Var("b", Int());
+    private static final VarDecl<IntType> VA = Var("a", Int());
+    private static final VarDecl<IntType> VB = Var("b", Int());
 
-	private static final Expr<IntType> A = VA.getRef();
-	private static final Expr<IntType> B = VB.getRef();
+    private static final Expr<IntType> A = VA.getRef();
+    private static final Expr<IntType> B = VB.getRef();
 
-	@Parameter(value = 0)
-	public Expr<Type> expr;
+    @Parameter(value = 0)
+    public Expr<Type> expr;
 
-	@Parameter(value = 1)
-	public Substitution sub;
+    @Parameter(value = 1)
+    public Substitution sub;
 
-	@Parameter(value = 2)
-	public Expr<Type> expected;
+    @Parameter(value = 2)
+    public Expr<Type> expected;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{Add(B, Int(3)), BasicSubstitution.builder().build(), Add(B, Int(3))},
+                {Add(B, Int(3)), BasicSubstitution.builder().build(), Add(B, Int(3))},
 
-				{Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(Int(1), Int(2))).build(),
-						Add(Add(Int(1), Int(2)), Int(3))},
+                {Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(Int(1), Int(2))).build(),
+                        Add(Add(Int(1), Int(2)), Int(3))},
 
-				{Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(B, Int(2))).build(),
-						Add(Add(B, Int(2)), Int(3))},
+                {Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(B, Int(2))).build(),
+                        Add(Add(B, Int(2)), Int(3))},
 
-				{Div(B, A), BasicSubstitution.builder().put(VB, A).put(VA, B).build(), Div(A, B)},
+                {Div(B, A), BasicSubstitution.builder().put(VB, A).put(VA, B).build(), Div(A, B)},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		assertEquals(expected, sub.apply(expr));
-	}
+    @Test
+    public void test() {
+        assertEquals(expected, sub.apply(expr));
+    }
 }

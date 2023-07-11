@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,53 +37,56 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.UrgentContext;
 
 final class XtaStateSymbol implements Symbol {
 
-	private final String name;
-	private final LocKind kind;
-	private final XtaExpression expression;
+    private final String name;
+    private final LocKind kind;
+    private final XtaExpression expression;
 
-	public XtaStateSymbol(final XtaProcessSymbol scope, final StateDeclContext context, final UrgentContext urgent,
-						  final CommitContext commit) {
-		checkNotNull(context);
-		name = context.fId.getText();
-		kind = isCommited(name, commit) ? LocKind.COMMITTED : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
-		expression = context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
-	}
+    public XtaStateSymbol(final XtaProcessSymbol scope, final StateDeclContext context,
+                          final UrgentContext urgent,
+                          final CommitContext commit) {
+        checkNotNull(context);
+        name = context.fId.getText();
+        kind = isCommited(name, commit) ? LocKind.COMMITTED
+                : isUrgent(name, urgent) ? LocKind.URGENT : LocKind.NORMAL;
+        expression =
+                context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
+    }
 
-	private static boolean isUrgent(final String name, final UrgentContext urgent) {
-		if (urgent == null) {
-			return false;
-		} else {
-			return urgent.fStateList.fIds.stream().anyMatch(id -> id.getText().equals(name));
-		}
+    private static boolean isUrgent(final String name, final UrgentContext urgent) {
+        if (urgent == null) {
+            return false;
+        } else {
+            return urgent.fStateList.fIds.stream().anyMatch(id -> id.getText().equals(name));
+        }
 
-	}
+    }
 
-	private static boolean isCommited(final String name, final CommitContext commit) {
-		if (commit == null) {
-			return false;
-		} else {
-			return commit.fStateList.fIds.stream().anyMatch(id -> id.getText().equals(name));
-		}
-	}
+    private static boolean isCommited(final String name, final CommitContext commit) {
+        if (commit == null) {
+            return false;
+        } else {
+            return commit.fStateList.fIds.stream().anyMatch(id -> id.getText().equals(name));
+        }
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	public Loc instantiate(final XtaProcess process, final Env env) {
-		final Collection<Expr<BoolType>> invars;
-		if (expression == null) {
-			invars = Collections.emptySet();
-		} else {
-			final Expr<?> expr = expression.instantiate(env);
-			final Expr<BoolType> invar = TypeUtils.cast(expr, Bool());
-			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(invar);
-			invars = conjuncts.stream().map(e -> e).collect(toList());
-		}
+    public Loc instantiate(final XtaProcess process, final Env env) {
+        final Collection<Expr<BoolType>> invars;
+        if (expression == null) {
+            invars = Collections.emptySet();
+        } else {
+            final Expr<?> expr = expression.instantiate(env);
+            final Expr<BoolType> invar = TypeUtils.cast(expr, Bool());
+            final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(invar);
+            invars = conjuncts.stream().map(e -> e).collect(toList());
+        }
 
-		final Loc loc = process.createLoc(process.getName() + "_" + name, kind, invars);
-		return loc;
-	}
+        final Loc loc = process.createLoc(process.getName() + "_" + name, kind, invars);
+        return loc;
+    }
 
 }

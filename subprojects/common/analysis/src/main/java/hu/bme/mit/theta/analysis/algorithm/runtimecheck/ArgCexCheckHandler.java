@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,42 +24,45 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.common.exception.NotSolvableException;
 
 public class ArgCexCheckHandler<S extends State, A extends Action> {
-	public static ArgCexCheckHandler instance = new ArgCexCheckHandler();
-	private AbstractArgStorage<S, A> abstractArgStorage;
 
-	public void setArgCexCheck(boolean shouldCheck, boolean multiseq) {
-		if (shouldCheck) {
-			if (multiseq) {
-				abstractArgStorage = new MultiCexAbstractArgStorage<S, A>();
-			} else {
-				abstractArgStorage = new SingleCexAbstractArgStorage<S, A>();
-			}
-		} else {
-			abstractArgStorage = null;
-		}
-	}
+    public static ArgCexCheckHandler instance = new ArgCexCheckHandler();
+    private AbstractArgStorage<S, A> abstractArgStorage;
 
-	public boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
-		if (abstractArgStorage != null) {
-			return abstractArgStorage.checkIfCounterexampleNew(cex);
-		} else return true;
-	}
+    public void setArgCexCheck(boolean shouldCheck, boolean multiseq) {
+        if (shouldCheck) {
+            if (multiseq) {
+                abstractArgStorage = new MultiCexAbstractArgStorage<S, A>();
+            } else {
+                abstractArgStorage = new SingleCexAbstractArgStorage<S, A>();
+            }
+        } else {
+            abstractArgStorage = null;
+        }
+    }
 
-	public <P extends Prec> void setCurrentArg(AbstractArg<S, A, P> arg) {
-		if (abstractArgStorage != null) {
-			abstractArgStorage.setCurrentArg(arg);
-		}
-	}
+    public boolean checkIfCounterexampleNew(ArgTrace<S, A> cex) {
+        if (abstractArgStorage != null) {
+            return abstractArgStorage.checkIfCounterexampleNew(cex);
+        } else {
+            return true;
+        }
+    }
 
-	public <P extends Prec> void checkAndStop(ARG<S, A> arg, P prec) {
-		if (abstractArgStorage != null && abstractArgStorage.check(arg, prec)) {
-			throw new NotSolvableException();
-		}
-	}
+    public <P extends Prec> void setCurrentArg(AbstractArg<S, A, P> arg) {
+        if (abstractArgStorage != null) {
+            abstractArgStorage.setCurrentArg(arg);
+        }
+    }
 
-	public void addCounterexample(ArgTrace<S, A> cexToConcretize) {
-		if (abstractArgStorage != null) {
-			abstractArgStorage.addCounterexample(cexToConcretize);
-		}
-	}
+    public <P extends Prec> void checkAndStop(ARG<S, A> arg, P prec) {
+        if (abstractArgStorage != null && abstractArgStorage.check(arg, prec)) {
+            throw new NotSolvableException();
+        }
+    }
+
+    public void addCounterexample(ArgTrace<S, A> cexToConcretize) {
+        if (abstractArgStorage != null) {
+            abstractArgStorage.addCounterexample(cexToConcretize);
+        }
+    }
 }

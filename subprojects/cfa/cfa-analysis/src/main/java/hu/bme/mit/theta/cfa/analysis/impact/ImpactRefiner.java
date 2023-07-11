@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,86 +23,88 @@ import hu.bme.mit.theta.analysis.Trace;
 
 public interface ImpactRefiner<S extends State, A extends Action> {
 
-	RefinementResult<S, A> refine(final Trace<S, A> cex);
+    RefinementResult<S, A> refine(final Trace<S, A> cex);
 
-	abstract class RefinementResult<S extends State, A extends Action> {
+    abstract class RefinementResult<S extends State, A extends Action> {
 
-		private RefinementResult() {
-		}
+        private RefinementResult() {
+        }
 
-		public static <S extends State, A extends Action> Succesful<S, A> succesful(final Trace<S, A> trace) {
-			return new Succesful<>(trace);
-		}
+        public static <S extends State, A extends Action> Succesful<S, A> succesful(
+                final Trace<S, A> trace) {
+            return new Succesful<>(trace);
+        }
 
-		public static <S extends State, A extends Action> Unsuccesful<S, A> unsuccesful() {
-			return new Unsuccesful<>();
-		}
+        public static <S extends State, A extends Action> Unsuccesful<S, A> unsuccesful() {
+            return new Unsuccesful<>();
+        }
 
-		public abstract boolean isSuccesful();
+        public abstract boolean isSuccesful();
 
-		public abstract boolean isUnsuccesful();
+        public abstract boolean isUnsuccesful();
 
-		public abstract Succesful<S, A> asSuccesful();
+        public abstract Succesful<S, A> asSuccesful();
 
-		public abstract Unsuccesful<S, A> asUnsuccesful();
-	}
+        public abstract Unsuccesful<S, A> asUnsuccesful();
+    }
 
-	final class Succesful<S extends State, A extends Action> extends RefinementResult<S, A> {
-		private final Trace<S, A> trace;
+    final class Succesful<S extends State, A extends Action> extends RefinementResult<S, A> {
 
-		private Succesful(final Trace<S, A> trace) {
-			this.trace = checkNotNull(trace);
-		}
+        private final Trace<S, A> trace;
 
-		public Trace<S, A> getTrace() {
-			return trace;
-		}
+        private Succesful(final Trace<S, A> trace) {
+            this.trace = checkNotNull(trace);
+        }
 
-		@Override
-		public boolean isSuccesful() {
-			return true;
-		}
+        public Trace<S, A> getTrace() {
+            return trace;
+        }
 
-		@Override
-		public boolean isUnsuccesful() {
-			return false;
-		}
+        @Override
+        public boolean isSuccesful() {
+            return true;
+        }
 
-		@Override
-		public Succesful<S, A> asSuccesful() {
-			return this;
-		}
+        @Override
+        public boolean isUnsuccesful() {
+            return false;
+        }
 
-		@Override
-		public Unsuccesful<S, A> asUnsuccesful() {
-			throw new ClassCastException();
-		}
-	}
+        @Override
+        public Succesful<S, A> asSuccesful() {
+            return this;
+        }
 
-	final class Unsuccesful<S extends State, A extends Action> extends RefinementResult<S, A> {
+        @Override
+        public Unsuccesful<S, A> asUnsuccesful() {
+            throw new ClassCastException();
+        }
+    }
 
-		private Unsuccesful() {
-		}
+    final class Unsuccesful<S extends State, A extends Action> extends RefinementResult<S, A> {
 
-		@Override
-		public boolean isSuccesful() {
-			return false;
-		}
+        private Unsuccesful() {
+        }
 
-		@Override
-		public boolean isUnsuccesful() {
-			return true;
-		}
+        @Override
+        public boolean isSuccesful() {
+            return false;
+        }
 
-		@Override
-		public Succesful<S, A> asSuccesful() {
-			throw new ClassCastException();
-		}
+        @Override
+        public boolean isUnsuccesful() {
+            return true;
+        }
 
-		@Override
-		public Unsuccesful<S, A> asUnsuccesful() {
-			return this;
-		}
-	}
+        @Override
+        public Succesful<S, A> asSuccesful() {
+            throw new ClassCastException();
+        }
+
+        @Override
+        public Unsuccesful<S, A> asUnsuccesful() {
+            return this;
+        }
+    }
 
 }

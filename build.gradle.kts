@@ -1,8 +1,24 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 plugins {
     base
     id("jacoco-common")
     id("io.freefair.aggregate-javadoc") version "5.2"
     id("io.codearte.nexus-staging") version "0.30.0" apply true
+    id("org.sonarqube") version "4.2.1.3168"
 }
 
 buildscript {
@@ -12,9 +28,18 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.theta"
-    version = "4.3.0"
+    version = "4.4.0"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
+}
+
+sonar {
+  properties {
+    property("sonar.projectKey", "leventeBajczi_theta")
+    property("sonar.organization", "bajczi-levente")
+    property("sonar.host.url", "https://sonarcloud.io")
+    property("sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml")
+  }
 }
 
 evaluationDependsOnChildren()
@@ -52,6 +77,8 @@ tasks {
     check {
         dependsOn(test)
     }
+
+    project.tasks["sonar"].dependsOn(jacocoRootReport)
 
     nexusStaging {
         serverUrl = "https://s01.oss.sonatype.org/service/local/"

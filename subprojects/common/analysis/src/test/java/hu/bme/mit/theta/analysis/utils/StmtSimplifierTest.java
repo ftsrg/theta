@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.analysis.utils;
 
 import static com.google.common.collect.ImmutableSet.of;
@@ -55,12 +70,19 @@ public final class StmtSimplifierTest {
     private static final Stmt ASSIGN_X_1 = Assign(X, Int(1));
     private static final Stmt ASSIGN_X_2 = Assign(X, Int(2));
     private static final Stmt ASSIGN_X_Y = Assign(X, Y.getRef());
-    private static final Stmt SEQ_ASSIGN_X_1_ASSUME_EQ_X_1 = SequenceStmt.of(ImmutableList.of(ASSIGN_X_1,ASSUME_EQ_X_1));
-    private static final Stmt SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0 = SequenceStmt.of(ImmutableList.of(ASSIGN_X_1,ASSUME_LEQ_X_0));
-    private static final Stmt SEQ_ASSIGN_X_1_ASSUME_TRUE = SequenceStmt.of(ImmutableList.of(ASSIGN_X_1,ASSUME_TRUE));
-    private static final Stmt NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0 = NonDetStmt.of(ImmutableList.of(SEQ_ASSIGN_X_1_ASSUME_EQ_X_1,SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0));
-    private static final Stmt NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE = NonDetStmt.of(ImmutableList.of(SEQ_ASSIGN_X_1_ASSUME_TRUE,SEQ_ASSIGN_X_1_ASSUME_TRUE));
-    private static final Stmt NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0_OR_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1 = NonDetStmt.of(ImmutableList.of(SEQ_ASSIGN_X_1_ASSUME_EQ_X_1,SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0,SEQ_ASSIGN_X_1_ASSUME_EQ_X_1));
+    private static final Stmt SEQ_ASSIGN_X_1_ASSUME_EQ_X_1 = SequenceStmt.of(
+            ImmutableList.of(ASSIGN_X_1, ASSUME_EQ_X_1));
+    private static final Stmt SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0 = SequenceStmt.of(
+            ImmutableList.of(ASSIGN_X_1, ASSUME_LEQ_X_0));
+    private static final Stmt SEQ_ASSIGN_X_1_ASSUME_TRUE = SequenceStmt.of(
+            ImmutableList.of(ASSIGN_X_1, ASSUME_TRUE));
+    private static final Stmt NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0 = NonDetStmt.of(
+            ImmutableList.of(SEQ_ASSIGN_X_1_ASSUME_EQ_X_1, SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0));
+    private static final Stmt NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE = NonDetStmt.of(
+            ImmutableList.of(SEQ_ASSIGN_X_1_ASSUME_TRUE, SEQ_ASSIGN_X_1_ASSUME_TRUE));
+    private static final Stmt NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0_OR_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1 = NonDetStmt.of(
+            ImmutableList.of(SEQ_ASSIGN_X_1_ASSUME_EQ_X_1, SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0,
+                    SEQ_ASSIGN_X_1_ASSUME_EQ_X_1));
 
     @Parameter(0)
     public Stmt stmt;
@@ -133,11 +155,14 @@ public final class StmtSimplifierTest {
 
                 {SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0, of(), ASSUME_FALSE},
 
-                {NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0, of(), SEQ_ASSIGN_X_1_ASSUME_TRUE},
+                {NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0, of(),
+                        SEQ_ASSIGN_X_1_ASSUME_TRUE},
 
-                {NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0_OR_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1, of(), NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE},
+                {NONDET_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1_OR_SEQ_ASSIGN_X_1_ASSUME_LEQ_X_0_OR_SEQ_ASSIGN_X_1_ASSUME_EQ_X_1,
+                        of(), NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE},
 
-                {NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE, of(), NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE}
+                {NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE, of(),
+                        NONDET_SEQ_ASSIGN_X_1_ASSUME_TRUE_OR_SEQ_ASSIGN_X_1_ASSUME_TRUE}
 
         });
     }

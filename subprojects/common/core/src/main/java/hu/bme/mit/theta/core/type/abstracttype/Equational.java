@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface Equational<OpType extends Equational<OpType>> extends Type {
 
-	EqExpr<OpType> Eq(Expr<OpType> leftOp, Expr<OpType> rightOp);
+    EqExpr<OpType> Eq(Expr<OpType> leftOp, Expr<OpType> rightOp);
 
-	NeqExpr<OpType> Neq(Expr<OpType> leftOp, Expr<OpType> rightOp);
+    NeqExpr<OpType> Neq(Expr<OpType> leftOp, Expr<OpType> rightOp);
 
 }

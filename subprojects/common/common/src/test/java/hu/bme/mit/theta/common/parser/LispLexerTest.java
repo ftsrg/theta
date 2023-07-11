@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,76 +33,77 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public final class LispLexerTest {
-	private static final Token LPAREN = Token.of("(", TokenType.LPAREN);
-	private static final Token RPAREN = Token.of(")", TokenType.RPAREN);
-	private static final Token ATOM1 = Token.of("atom1", TokenType.ATOM);
-	private static final Token ATOM2 = Token.of("atom2", TokenType.ATOM);
-	private static final Token ATOM3 = Token.of("atom3", TokenType.ATOM);
 
-	@Parameter(0)
-	public String string;
+    private static final Token LPAREN = Token.of("(", TokenType.LPAREN);
+    private static final Token RPAREN = Token.of(")", TokenType.RPAREN);
+    private static final Token ATOM1 = Token.of("atom1", TokenType.ATOM);
+    private static final Token ATOM2 = Token.of("atom2", TokenType.ATOM);
+    private static final Token ATOM3 = Token.of("atom3", TokenType.ATOM);
 
-	@Parameter(1)
-	public List<Token> tokens;
+    @Parameter(0)
+    public String string;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameter(1)
+    public List<Token> tokens;
 
-				{"", of()},
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{";", of()},
+                {"", of()},
 
-				{";;", of()},
+                {";", of()},
 
-				{"; comment", of()},
+                {";;", of()},
 
-				{"atom1", of(ATOM1)},
+                {"; comment", of()},
 
-				{"(", of(LPAREN)},
+                {"atom1", of(ATOM1)},
 
-				{")", of(RPAREN)},
+                {"(", of(LPAREN)},
 
-				{"()", of(LPAREN, RPAREN)},
+                {")", of(RPAREN)},
 
-				{"( )", of(LPAREN, RPAREN)},
+                {"()", of(LPAREN, RPAREN)},
 
-				{"( )", of(LPAREN, RPAREN)},
+                {"( )", of(LPAREN, RPAREN)},
 
-				{"() ; comment", of(LPAREN, RPAREN)},
+                {"( )", of(LPAREN, RPAREN)},
 
-				{"(atom1)", of(LPAREN, ATOM1, RPAREN)},
+                {"() ; comment", of(LPAREN, RPAREN)},
 
-				{"(atom1 atom2)", of(LPAREN, ATOM1, ATOM2, RPAREN)},
+                {"(atom1)", of(LPAREN, ATOM1, RPAREN)},
 
-				{"(atom1 atom2 atom3)", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
+                {"(atom1 atom2)", of(LPAREN, ATOM1, ATOM2, RPAREN)},
 
-				{"(atom1 atom2 atom3) ; comment", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
+                {"(atom1 atom2 atom3)", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
 
-				{"(atom1 (atom2 atom3))", of(LPAREN, ATOM1, LPAREN, ATOM2, ATOM3, RPAREN, RPAREN)},
+                {"(atom1 atom2 atom3) ; comment", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
 
-				{"(()(()", of(LPAREN, LPAREN, RPAREN, LPAREN, LPAREN, RPAREN)},
+                {"(atom1 (atom2 atom3))", of(LPAREN, ATOM1, LPAREN, ATOM2, ATOM3, RPAREN, RPAREN)},
 
-		});
-	}
+                {"(()(()", of(LPAREN, LPAREN, RPAREN, LPAREN, LPAREN, RPAREN)},
 
-	@Test
-	public void test() {
-		// Arrange
-		final Reader reader = new StringReader(string);
-		final LispLexer lexer = new LispLexer(reader);
+        });
+    }
 
-		final List<Token> actTokens = new ArrayList<>();
+    @Test
+    public void test() {
+        // Arrange
+        final Reader reader = new StringReader(string);
+        final LispLexer lexer = new LispLexer(reader);
 
-		// Act
-		Token token = lexer.nextToken();
-		while (token.getType() != TokenType.EOF) {
-			actTokens.add(token);
-			token = lexer.nextToken();
-		}
+        final List<Token> actTokens = new ArrayList<>();
 
-		// Assert
-		assertEquals(tokens, actTokens);
-	}
+        // Act
+        Token token = lexer.nextToken();
+        while (token.getType() != TokenType.EOF) {
+            actTokens.add(token);
+            token = lexer.nextToken();
+        }
+
+        // Assert
+        assertEquals(tokens, actTokens);
+    }
 
 }

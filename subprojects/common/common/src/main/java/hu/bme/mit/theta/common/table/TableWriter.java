@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,24 +19,25 @@ package hu.bme.mit.theta.common.table;
  * Interface for printing tables with cells and rows.
  */
 public interface TableWriter {
-	default TableWriter cell(final Object obj) {
-		return cell(obj, 1);
-	}
 
-	default TableWriter cells(final Iterable<?> objs) {
-		objs.forEach(this::cell);
-		return this;
-	}
+    default TableWriter cell(final Object obj) {
+        return cell(obj, 1);
+    }
 
-	TableWriter cell(Object obj, int colspan);
+    default TableWriter cells(final Iterable<?> objs) {
+        objs.forEach(this::cell);
+        return this;
+    }
 
-	TableWriter newRow();
+    TableWriter cell(Object obj, int colspan);
 
-	TableWriter startTable();
+    TableWriter newRow();
 
-	TableWriter endTable();
+    TableWriter startTable();
 
-	default TableWriter newRow(final Object obj) {
-		return cell(obj).newRow();
-	}
+    TableWriter endTable();
+
+    default TableWriter newRow(final Object obj) {
+        return cell(obj).newRow();
+    }
 }

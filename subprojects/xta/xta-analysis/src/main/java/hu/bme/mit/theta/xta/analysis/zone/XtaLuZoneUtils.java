@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,80 +31,84 @@ import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 
 public final class XtaLuZoneUtils {
 
-	private XtaLuZoneUtils() {
-	}
+    private XtaLuZoneUtils() {
+    }
 
-	public static BoundFunc pre(final BoundFunc boundFunction, final XtaAction action) {
-		if (action.isBasic()) {
-			return preForBasicAction(boundFunction, action.asBasic());
-		} else if (action.isBinary()) {
-			return preForBinaryAction(boundFunction, action.asBinary());
-		} else {
-			throw new AssertionError();
-		}
-	}
+    public static BoundFunc pre(final BoundFunc boundFunction, final XtaAction action) {
+        if (action.isBasic()) {
+            return preForBasicAction(boundFunction, action.asBasic());
+        } else if (action.isBinary()) {
+            return preForBinaryAction(boundFunction, action.asBinary());
+        } else {
+            throw new AssertionError();
+        }
+    }
 
-	////
+    ////
 
-	private static BoundFunc preForBasicAction(final BoundFunc boundFunction, final BasicXtaAction action) {
-		final BoundFunc.Builder succStateBuilder = boundFunction.transform();
+    private static BoundFunc preForBasicAction(final BoundFunc boundFunction,
+                                               final BasicXtaAction action) {
+        final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
-		final List<Loc> sourceLocs = action.getSourceLocs();
-		final List<Loc> targetLocs = action.getTargetLocs();
-		final Edge edge = action.getEdge();
+        final List<Loc> sourceLocs = action.getSourceLocs();
+        final List<Loc> targetLocs = action.getTargetLocs();
+        final Edge edge = action.getEdge();
 
-		applyInvariants(succStateBuilder, targetLocs);
-		applyInverseUpdates(succStateBuilder, edge);
-		applyGuards(succStateBuilder, edge);
-		applyInvariants(succStateBuilder, sourceLocs);
-		return succStateBuilder.build();
-	}
+        applyInvariants(succStateBuilder, targetLocs);
+        applyInverseUpdates(succStateBuilder, edge);
+        applyGuards(succStateBuilder, edge);
+        applyInvariants(succStateBuilder, sourceLocs);
+        return succStateBuilder.build();
+    }
 
-	private static BoundFunc preForBinaryAction(final BoundFunc boundFunction, final BinaryXtaAction action) {
-		final BoundFunc.Builder succStateBuilder = boundFunction.transform();
+    private static BoundFunc preForBinaryAction(final BoundFunc boundFunction,
+                                                final BinaryXtaAction action) {
+        final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
-		final List<Loc> sourceLocs = action.getSourceLocs();
-		final List<Loc> targetLocs = action.getTargetLocs();
-		final Edge emittingEdge = action.getEmitEdge();
-		final Edge receivingEdge = action.getRecvEdge();
+        final List<Loc> sourceLocs = action.getSourceLocs();
+        final List<Loc> targetLocs = action.getTargetLocs();
+        final Edge emittingEdge = action.getEmitEdge();
+        final Edge receivingEdge = action.getRecvEdge();
 
-		applyInvariants(succStateBuilder, targetLocs);
-		applyInverseUpdates(succStateBuilder, receivingEdge);
-		applyInverseUpdates(succStateBuilder, emittingEdge);
-		applyGuards(succStateBuilder, receivingEdge);
-		applyGuards(succStateBuilder, emittingEdge);
-		applyInvariants(succStateBuilder, sourceLocs);
-		return succStateBuilder.build();
-	}
+        applyInvariants(succStateBuilder, targetLocs);
+        applyInverseUpdates(succStateBuilder, receivingEdge);
+        applyInverseUpdates(succStateBuilder, emittingEdge);
+        applyGuards(succStateBuilder, receivingEdge);
+        applyGuards(succStateBuilder, emittingEdge);
+        applyInvariants(succStateBuilder, sourceLocs);
+        return succStateBuilder.build();
+    }
 
-	////
+    ////
 
-	private static void applyInverseUpdates(final BoundFunc.Builder succStateBuilder, final Edge edge) {
-		for (final Update update : edge.getUpdates()) {
-			if (update.isClockUpdate()) {
-				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<RatType> varDecl = op.getVar();
-				succStateBuilder.remove(varDecl);
-			}
-		}
-	}
+    private static void applyInverseUpdates(final BoundFunc.Builder succStateBuilder,
+                                            final Edge edge) {
+        for (final Update update : edge.getUpdates()) {
+            if (update.isClockUpdate()) {
+                final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
+                final VarDecl<RatType> varDecl = op.getVar();
+                succStateBuilder.remove(varDecl);
+            }
+        }
+    }
 
-	private static void applyGuards(final BoundFunc.Builder succStateBuilder, final Edge edge) {
-		for (final Guard guard : edge.getGuards()) {
-			if (guard.isClockGuard()) {
-				succStateBuilder.add(guard.asClockGuard().getClockConstr());
-			}
-		}
-	}
+    private static void applyGuards(final BoundFunc.Builder succStateBuilder, final Edge edge) {
+        for (final Guard guard : edge.getGuards()) {
+            if (guard.isClockGuard()) {
+                succStateBuilder.add(guard.asClockGuard().getClockConstr());
+            }
+        }
+    }
 
-	private static void applyInvariants(final BoundFunc.Builder succStateBuilder, final List<Loc> targetLocs) {
-		for (final Loc loc : targetLocs) {
-			for (final Guard invar : loc.getInvars()) {
-				if (invar.isClockGuard()) {
-					succStateBuilder.add(invar.asClockGuard().getClockConstr());
-				}
-			}
-		}
-	}
+    private static void applyInvariants(final BoundFunc.Builder succStateBuilder,
+                                        final List<Loc> targetLocs) {
+        for (final Loc loc : targetLocs) {
+            for (final Guard invar : loc.getInvars()) {
+                if (invar.isClockGuard()) {
+                    succStateBuilder.add(invar.asClockGuard().getClockConstr());
+                }
+            }
+        }
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,99 +51,106 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class ExplStmtTransFuncTest {
-	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
-	private final VarDecl<IntType> x = Var("x", Int());
-	private final VarDecl<IntType> y = Var("y", Int());
 
-	@Test
-	public void testSimple() {
-		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
-		final ExplState sourceState = ExplState.top();
-		final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
-		final List<Stmt> stmts = new ArrayList<>();
-		stmts.add(Havoc(x));
-		stmts.add(Assign(x, Int(0)));
-		stmts.add(Assign(x, Add(x.getRef(), Int(1))));
-		stmts.add(Assign(x, Add(x.getRef(), Int(1))));
-		stmts.add(Assume(Leq(x.getRef(), Int(100))));
+    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    private final VarDecl<IntType> x = Var("x", Int());
+    private final VarDecl<IntType> y = Var("y", Int());
 
-		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
+    @Test
+    public void testSimple() {
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Havoc(x));
+        stmts.add(Assign(x, Int(0)));
+        stmts.add(Assign(x, Add(x.getRef(), Int(1))));
+        stmts.add(Assign(x, Add(x.getRef(), Int(1))));
+        stmts.add(Assume(Leq(x.getRef(), Int(100))));
 
-		Assert.assertEquals(1, succStates.size());
-		final ExplState expectedState = ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build());
-		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
-	}
+        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
+                stmts, prec);
 
-	@Test
-	public void testBottom() {
-		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
-		final ExplState sourceState = ExplState.top();
-		final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
-		final List<Stmt> stmts = new ArrayList<>();
-		stmts.add(Havoc(x));
-		stmts.add(Assume(Lt(Mul(x.getRef(), x.getRef()), Int(0))));
+        Assert.assertEquals(1, succStates.size());
+        final ExplState expectedState = ExplState.of(
+                ImmutableValuation.builder().put(x, Int(2)).build());
+        Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
+    }
 
-		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
+    @Test
+    public void testBottom() {
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Havoc(x));
+        stmts.add(Assume(Lt(Mul(x.getRef(), x.getRef()), Int(0))));
 
-		Assert.assertEquals(1, succStates.size());
-		final ExplState expectedState = ExplState.bottom();
-		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
-	}
+        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
+                stmts, prec);
 
-	@Test
-	public void testComplex1() {
-		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
-		final ExplState sourceState = ExplState.top();
-		final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
-		final List<Stmt> stmts = new ArrayList<>();
-		stmts.add(Assign(x, Int(5)));
-		stmts.add(Assume(Eq(x.getRef(), y.getRef())));
+        Assert.assertEquals(1, succStates.size());
+        final ExplState expectedState = ExplState.bottom();
+        Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
+    }
 
-		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
+    @Test
+    public void testComplex1() {
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Assign(x, Int(5)));
+        stmts.add(Assume(Eq(x.getRef(), y.getRef())));
 
-		Assert.assertEquals(1, succStates.size());
-		final ExplState expectedState = ExplState
-				.of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
-		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
-	}
+        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
+                stmts, prec);
 
-	@Test
-	public void testComplex2() {
-		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 1);
-		final ExplState sourceState = ExplState.top();
-		final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
-		final List<Stmt> stmts = new ArrayList<>();
-		stmts.add(Assign(x, Int(5)));
-		stmts.add(Assume(Eq(x.getRef(), y.getRef())));
+        Assert.assertEquals(1, succStates.size());
+        final ExplState expectedState = ExplState
+                .of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+        Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
+    }
 
-		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
+    @Test
+    public void testComplex2() {
+        final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 1);
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Assign(x, Int(5)));
+        stmts.add(Assume(Eq(x.getRef(), y.getRef())));
 
-		Assert.assertEquals(1, succStates.size());
-		final ExplState expectedState = ExplState
-				.of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
-		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
-	}
+        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
+                stmts, prec);
 
-	@Test
-	public void testComplex3() {
-		final ExplState sourceState = ExplState.top();
-		final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
-		final List<Stmt> stmts = new ArrayList<>();
-		stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));
+        Assert.assertEquals(1, succStates.size());
+        final ExplState expectedState = ExplState
+                .of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+        Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
+    }
 
-		final Map<Integer, Integer> solverCallsToExpectedStates = Containers.createMap();
-		solverCallsToExpectedStates.put(1, 1);
-		solverCallsToExpectedStates.put(2, 1);
-		solverCallsToExpectedStates.put(3, 3);
-		solverCallsToExpectedStates.put(4, 3);
-		solverCallsToExpectedStates.put(0, 3);
+    @Test
+    public void testComplex3() {
+        final ExplState sourceState = ExplState.top();
+        final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
+        final List<Stmt> stmts = new ArrayList<>();
+        stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));
 
-		for (final Entry<Integer, Integer> entry : solverCallsToExpectedStates.entrySet()) {
-			final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, entry.getKey());
-			final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
+        final Map<Integer, Integer> solverCallsToExpectedStates = Containers.createMap();
+        solverCallsToExpectedStates.put(1, 1);
+        solverCallsToExpectedStates.put(2, 1);
+        solverCallsToExpectedStates.put(3, 3);
+        solverCallsToExpectedStates.put(4, 3);
+        solverCallsToExpectedStates.put(0, 3);
 
-			Assert.assertEquals(entry.getValue().intValue(), succStates.size());
-		}
+        for (final Entry<Integer, Integer> entry : solverCallsToExpectedStates.entrySet()) {
+            final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, entry.getKey());
+            final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
+                    stmts, prec);
 
-	}
+            Assert.assertEquals(entry.getValue().intValue(), succStates.size());
+        }
+
+    }
 }

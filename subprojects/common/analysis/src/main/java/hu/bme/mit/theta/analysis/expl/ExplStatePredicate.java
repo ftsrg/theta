@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,31 +31,31 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 public class ExplStatePredicate implements Predicate<ExplState> {
 
-	private final Expr<BoolType> expr;
-	private final Solver solver;
+    private final Expr<BoolType> expr;
+    private final Solver solver;
 
-	public ExplStatePredicate(final Expr<BoolType> expr, final Solver solver) {
-		this.expr = checkNotNull(expr);
-		this.solver = checkNotNull(solver);
-	}
+    public ExplStatePredicate(final Expr<BoolType> expr, final Solver solver) {
+        this.expr = checkNotNull(expr);
+        this.solver = checkNotNull(solver);
+    }
 
-	@Override
-	public boolean test(final ExplState state) {
-		final Expr<BoolType> simplified = ExprUtils.simplify(expr, state);
-		if (simplified.equals(True())) {
-			return true;
-		}
-		if (simplified.equals(False())) {
-			return false;
-		}
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			solver.add(PathUtils.unfold(simplified, 0));
-			return solver.check().isSat();
-		}
-	}
+    @Override
+    public boolean test(final ExplState state) {
+        final Expr<BoolType> simplified = ExprUtils.simplify(expr, state);
+        if (simplified.equals(True())) {
+            return true;
+        }
+        if (simplified.equals(False())) {
+            return false;
+        }
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            solver.add(PathUtils.unfold(simplified, 0));
+            return solver.check().isSat();
+        }
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr).toString();
+    }
 }

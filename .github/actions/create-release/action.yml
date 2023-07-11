@@ -1,0 +1,47 @@
+name: 'Create release'
+description: 'Create release and deploy JARs'
+inputs:
+    message:
+        required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        fetch-depth: 0
+    - name: Creating versions
+      id: 'value'
+      shell: bash
+      run: |
+        export version=$(grep "version" build.gradle.kts | tail -n 1 | cut -d "=" -f2 | xargs echo )
+        export lasttag=$(git describe --abbrev=0 --tags)
+        echo Last tag: $lasttag
+        export subprojects=$(git diff $lasttag --name-only | grep 'subprojects' | awk -F '/' '{ print $2"/"$3 }' | sort | uniq)
+        echo Modified subprojects: $subprojects
+        export message=$(printf "${{ inputs.message }}\n\nModified subprojects (since $lasttag):\n$subprojects")
+        echo Message: $message
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "tagname=v$version" >> $GITHUB_OUTPUT
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "message<<$EOF" >> $GITHUB_OUTPUT
+        echo $message >> $GITHUB_OUTPUT
+        echo "$EOF" >> $GITHUB_OUTPUT
+    - name: Verify variables
+      shell: bash
+      run: |
+        echo version "${{steps.value.outputs.version}}"
+        echo tagname "${{steps.value.outputs.tagname}}"
+        echo message "${{steps.value.outputs.message}}"
+    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+      with:
+        name: ThetaJars
+        path: jar/
+    - run: for i in $(find jar -name "*-all.jar"); do mv -v $i jar/$(basename ${i%-${{steps.value.outputs.version}}-all.jar}.jar); done
+      shell: bash
+    - name: Release
+      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1.0
+      with:
+        files: jar/**/*.jar
+        body: ${{steps.value.outputs.message}}
+        name: ${{steps.value.outputs.tagname}}
+        tag_name: ${{steps.value.outputs.tagname}}

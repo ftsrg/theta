@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,18 +19,18 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 
 public final class ZoneOrd implements PartialOrd<ZoneState> {
 
-	private static final ZoneOrd INSTANCE = new ZoneOrd();
+    private static final ZoneOrd INSTANCE = new ZoneOrd();
 
-	private ZoneOrd() {
-	}
+    private ZoneOrd() {
+    }
 
-	public static ZoneOrd getInstance() {
-		return INSTANCE;
-	}
+    public static ZoneOrd getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public boolean isLeq(final ZoneState state1, final ZoneState state2) {
-		return state1.isLeq(state2);
-	}
+    @Override
+    public boolean isLeq(final ZoneState state1, final ZoneState state2) {
+        return state1.isLeq(state2);
+    }
 
 }

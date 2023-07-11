@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,57 +72,59 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 @RunWith(Parameterized.class)
 public class ExprWriteTest {
 
-	private static final VarDecl<BoolType> VX = Decls.Var("x", BoolExprs.Bool());
-	private static final VarDecl<IntType> VY = Decls.Var("y", Int());
+    private static final VarDecl<BoolType> VX = Decls.Var("x", BoolExprs.Bool());
+    private static final VarDecl<IntType> VY = Decls.Var("y", Int());
 
-	@Parameter(value = 0)
-	public Expr<Type> actual;
+    @Parameter(value = 0)
+    public Expr<Type> actual;
 
-	@Parameter(value = 1)
-	public String expected;
+    @Parameter(value = 1)
+    public String expected;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{And(True(), Or(False(), True(), True())), "true and (false or true or true)"},
+                {And(True(), Or(False(), True(), True())), "true and (false or true or true)"},
 
-				{Iff(Not(True()), Imply(False(), True())), "(not true) iff (false imply true)"},
+                {Iff(Not(True()), Imply(False(), True())), "(not true) iff (false imply true)"},
 
-				{Add(Int(1), Sub(Int(2), Int(3)), Int(4), Neg(Int(5))), "1 + (2 - 3) + 4 + (-5)"},
+                {Add(Int(1), Sub(Int(2), Int(3)), Int(4), Neg(Int(5))), "1 + (2 - 3) + 4 + (-5)"},
 
-				{Mul(Int(1), Div(Int(2), Int(3)), Int(4)), "1 * (2 / 3) * 4"},
+                {Mul(Int(1), Div(Int(2), Int(3)), Int(4)), "1 * (2 / 3) * 4"},
 
-				{Mul(Mod(Int(4), Int(3)), Rem(Int(4), Int(3))), "(4 mod 3) * (4 rem 3)"},
+                {Mul(Mod(Int(4), Int(3)), Rem(Int(4), Int(3))), "(4 mod 3) * (4 rem 3)"},
 
-				{And(Eq(Int(1), Int(1)), Lt(Int(1), Int(2)), Gt(Int(2), Int(1))), "(1 = 1) and (1 < 2) and (2 > 1)"},
+                {And(Eq(Int(1), Int(1)), Lt(Int(1), Int(2)), Gt(Int(2), Int(1))),
+                        "(1 = 1) and (1 < 2) and (2 > 1)"},
 
-				{And(Neq(Int(1), Int(2)), Leq(Int(1), Int(2)), Geq(Int(2), Int(1))),
-						"(1 /= 2) and (1 <= 2) and (2 >= 1)"},
+                {And(Neq(Int(1), Int(2)), Leq(Int(1), Int(2)), Geq(Int(2), Int(1))),
+                        "(1 /= 2) and (1 <= 2) and (2 >= 1)"},
 
-				{Add(Rat(1, 2), Sub(Rat(3, 4), Rat(5, 6)), Rat(7, 8), Neg(Rat(9, 1))),
-						"1%2 + (3%4 - 5%6) + 7%8 + (-9%1)"},
+                {Add(Rat(1, 2), Sub(Rat(3, 4), Rat(5, 6)), Rat(7, 8), Neg(Rat(9, 1))),
+                        "1%2 + (3%4 - 5%6) + 7%8 + (-9%1)"},
 
-				{Mul(Rat(1, 2), Div(Rat(3, 4), Rat(5, 6)), Rat(7, 8)), "1%2 * (3%4 / 5%6) * 7%8"},
+                {Mul(Rat(1, 2), Div(Rat(3, 4), Rat(5, 6)), Rat(7, 8)), "1%2 * (3%4 / 5%6) * 7%8"},
 
-				{And(Eq(Rat(1, 2), Rat(1, 2)), Lt(Rat(1, 2), Rat(3, 4)), Gt(Rat(3, 4), Rat(1, 2))),
-						"(1%2 = 1%2) and (1%2 < 3%4) and (3%4 > 1%2)"},
+                {And(Eq(Rat(1, 2), Rat(1, 2)), Lt(Rat(1, 2), Rat(3, 4)), Gt(Rat(3, 4), Rat(1, 2))),
+                        "(1%2 = 1%2) and (1%2 < 3%4) and (3%4 > 1%2)"},
 
-				{And(Neq(Rat(1, 2), Rat(2, 1)), Leq(Rat(1, 2), Rat(3, 4)), Geq(Rat(3, 4), Rat(1, 2))),
-						"(1%2 /= 2%1) and (1%2 <= 3%4) and (3%4 >= 1%2)"},
+                {And(Neq(Rat(1, 2), Rat(2, 1)), Leq(Rat(1, 2), Rat(3, 4)), Geq(Rat(3, 4), Rat(1, 2))),
+                        "(1%2 /= 2%1) and (1%2 <= 3%4) and (3%4 >= 1%2)"},
 
-				{And(VX.getRef(), Eq(VY.getRef(), Int(1))), "x and (y = 1)"},
+                {And(VX.getRef(), Eq(VY.getRef(), Int(1))), "x and (y = 1)"},
 
-				{Ite(True(), Int(1), Ite(False(), Int(2), Int(3))), "if true then 1 else (if false then 2 else 3)"},
+                {Ite(True(), Int(1), Ite(False(), Int(2), Int(3))),
+                        "if true then 1 else (if false then 2 else 3)"},
 
-				{Eq(Prime(Prime(VY.getRef())), Prime(VY.getRef())), "((y')') = (y')"}
+                {Eq(Prime(Prime(VY.getRef())), Prime(VY.getRef())), "((y')') = (y')"}
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		final CoreDslManager manager = new CoreDslManager();
-		Assert.assertEquals(expected, manager.writeExpr(actual));
-	}
+    @Test
+    public void test() {
+        final CoreDslManager manager = new CoreDslManager();
+        Assert.assertEquals(expected, manager.writeExpr(actual));
+    }
 }

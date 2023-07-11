@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.mathsat;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -41,8 +56,9 @@ import static com.google.common.base.Preconditions.checkState;
 public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMarker> {
 
     public MathSATSmtLibItpSolver(
-        final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
     }
@@ -61,17 +77,19 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
     }
 
     @Override
-    protected void add(final MathSATSmtLibItpMarker marker, final Expr<BoolType> assertion, final Set<ConstDecl<?>> consts, final String term) {
+    protected void add(final MathSATSmtLibItpMarker marker, final Expr<BoolType> assertion,
+                       final Set<ConstDecl<?>> consts, final String term) {
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-        issueGeneralCommand(String.format("(assert (! %s :interpolation-group %s))", term, marker.getMarkerName()));
+        issueGeneralCommand(
+                String.format("(assert (! %s :interpolation-group %s))", term, marker.getMarkerName()));
     }
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
-        checkState(getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
+        checkState(getStatus() == SolverStatus.UNSAT,
+                "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof SmtLibItpPattern);
-        @SuppressWarnings("unchecked")
-        final var mathsatItpPattern = (SmtLibItpPattern<MathSATSmtLibItpMarker>) pattern;
+        @SuppressWarnings("unchecked") final var mathsatItpPattern = (SmtLibItpPattern<MathSATSmtLibItpMarker>) pattern;
 
         final Map<ItpMarker, Expr<BoolType>> itpMap = new HashMap<>();
         buildItpMapFromTree(mathsatItpPattern.getRoot(), itpMap);
@@ -85,16 +103,21 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
         issueGeneralCommand("(set-option :produce-interpolants true)");
     }
 
-    private List<MathSATSmtLibItpMarker> buildItpMapFromTree(final ItpMarkerTree<MathSATSmtLibItpMarker> pattern, final Map<ItpMarker, Expr<BoolType>> itpMap) {
+    private List<MathSATSmtLibItpMarker> buildItpMapFromTree(
+            final ItpMarkerTree<MathSATSmtLibItpMarker> pattern,
+            final Map<ItpMarker, Expr<BoolType>> itpMap) {
         final List<MathSATSmtLibItpMarker> markers = new ArrayList<>();
-        for(final var child : pattern.getChildren()) {
+        for (final var child : pattern.getChildren()) {
             markers.addAll(buildItpMapFromTree(child, itpMap));
         }
         markers.add(pattern.getMarker());
 
-        solverBinary.issueCommand(String.format("(get-interpolant (%s))", markers.stream().map(MathSATSmtLibItpMarker::getMarkerName).collect(Collectors.joining(" "))));
+        solverBinary.issueCommand(String.format("(get-interpolant (%s))",
+                markers.stream().map(MathSATSmtLibItpMarker::getMarkerName)
+                        .collect(Collectors.joining(" "))));
         final var res = parseItpResponse(solverBinary.readResponse());
-        itpMap.put(pattern.getMarker(), termTransformer.toExpr(res, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
+        itpMap.put(pattern.getMarker(),
+                termTransformer.toExpr(res, BoolExprs.Bool(), new SmtLibModel(Collections.emptyMap())));
 
         return markers;
     }
@@ -108,18 +131,18 @@ public class MathSATSmtLibItpSolver extends SmtLibItpSolver<MathSATSmtLibItpMark
             parser.removeErrorListeners();
             parser.addErrorListener(new ThrowExceptionErrorListener());
             return extractString(parser.term());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             try {
-                throw new SmtLibSolverException(parser.response().general_response_error().reason.getText());
-            }
-            catch(Exception ex) {
+                throw new SmtLibSolverException(
+                        parser.response().general_response_error().reason.getText());
+            } catch (Exception ex) {
                 throw new SmtLibSolverException("Could not parse solver output: " + response, e);
             }
         }
     }
 
     private static String extractString(final ParserRuleContext ctx) {
-        return ctx.start.getInputStream().getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+        return ctx.start.getInputStream()
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 }

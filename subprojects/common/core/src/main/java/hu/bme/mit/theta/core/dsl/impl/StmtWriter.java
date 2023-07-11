@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,52 +30,52 @@ import hu.bme.mit.theta.core.type.Type;
 
 public class StmtWriter implements StmtVisitor<Void, String> {
 
-	private static String writeExpr(final Expr<?> expr) {
-		return ExprWriter.instance().write(expr);
-	}
+    private static String writeExpr(final Expr<?> expr) {
+        return ExprWriter.instance().write(expr);
+    }
 
-	@Override
-	public String visit(final SkipStmt stmt, final Void param) {
-		return "skip";
-	}
+    @Override
+    public String visit(final SkipStmt stmt, final Void param) {
+        return "skip";
+    }
 
-	@Override
-	public String visit(final AssumeStmt stmt, final Void param) {
-		return "assume " + writeExpr(stmt.getCond());
-	}
+    @Override
+    public String visit(final AssumeStmt stmt, final Void param) {
+        return "assume " + writeExpr(stmt.getCond());
+    }
 
-	@Override
-	public <DeclType extends Type> String visit(final AssignStmt<DeclType> stmt, final Void param) {
-		return stmt.getVarDecl().getName() + " := " + writeExpr(stmt.getExpr());
-	}
+    @Override
+    public <DeclType extends Type> String visit(final AssignStmt<DeclType> stmt, final Void param) {
+        return stmt.getVarDecl().getName() + " := " + writeExpr(stmt.getExpr());
+    }
 
-	@Override
-	public <DeclType extends Type> String visit(final HavocStmt<DeclType> stmt, final Void param) {
-		return "havoc " + stmt.getVarDecl().getName();
-	}
+    @Override
+    public <DeclType extends Type> String visit(final HavocStmt<DeclType> stmt, final Void param) {
+        return "havoc " + stmt.getVarDecl().getName();
+    }
 
-	@Override
-	public String visit(SequenceStmt stmt, Void param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String visit(SequenceStmt stmt, Void param) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String visit(NonDetStmt stmt, Void param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String visit(NonDetStmt stmt, Void param) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String visit(OrtStmt stmt, Void param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String visit(OrtStmt stmt, Void param) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String visit(LoopStmt stmt, Void param) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String visit(LoopStmt stmt, Void param) {
+        throw new UnsupportedOperationException();
+    }
 
-	public String visit(IfStmt stmt, Void param) {
-		throw new UnsupportedOperationException();
-	}
+    public String visit(IfStmt stmt, Void param) {
+        throw new UnsupportedOperationException();
+    }
 
 }

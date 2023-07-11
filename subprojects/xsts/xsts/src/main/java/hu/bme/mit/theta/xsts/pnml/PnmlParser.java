@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.xsts.pnml;
 
 import hu.bme.mit.theta.common.container.Containers;
@@ -21,20 +36,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class PnmlParser {
 
-	private PnmlParser() {
-	}
+    private PnmlParser() {
+    }
 
-	public static PnmlNet parse(final String fileName, final String initialMarkingString) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+    public static PnmlNet parse(final String fileName, final String initialMarkingString)
+            throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
 
-		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		final DocumentBuilder builder = factory.newDocumentBuilder();
-		final Document document = builder.parse(fileName);
+        final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        final DocumentBuilder builder = factory.newDocumentBuilder();
+        final Document document = builder.parse(fileName);
 
         final Pattern pattern = Pattern.compile("([0-9]+\\s)*[0-9]+");
         final Matcher matcher = pattern.matcher(initialMarkingString);
         final boolean overrideInitialMarking = matcher.matches();
         final Integer[] values;
-        if(overrideInitialMarking){
+        if (overrideInitialMarking) {
             final String[] valueStrings = initialMarkingString.split("\\s");
             values = Arrays.stream(valueStrings).map(Integer::parseInt).toArray(Integer[]::new);
         } else {
@@ -43,93 +59,102 @@ public class PnmlParser {
 
         final XPath xPath = XPathFactory.newInstance().newXPath();
 
-		final Element pnmlElement = document.getDocumentElement();
-		final NodeList netList = pnmlElement.getElementsByTagName("net");
-		checkArgument(netList.getLength()==1,"Pnml model contains multiple nets");
-		final Element netElement = (Element) netList.item(0);
+        final Element pnmlElement = document.getDocumentElement();
+        final NodeList netList = pnmlElement.getElementsByTagName("net");
+        checkArgument(netList.getLength() == 1, "Pnml model contains multiple nets");
+        final Element netElement = (Element) netList.item(0);
 
-		final Map<String, PnmlNode> idToNodeMap = Containers.createMap();
-		final List<PnmlPlace> places = new ArrayList<>();
-		final List<PnmlTransition> transitions = new ArrayList<>();
+        final Map<String, PnmlNode> idToNodeMap = Containers.createMap();
+        final List<PnmlPlace> places = new ArrayList<>();
+        final List<PnmlTransition> transitions = new ArrayList<>();
 
-		// Find all places
-		final XPathExpression childPlacesExpr = xPath.compile("./place");
-		final NodeList placeList = (NodeList) childPlacesExpr.evaluate(netElement, XPathConstants.NODESET);
-		for(int i=0;i<placeList.getLength();i++){
-			final Element placeElement = (Element) placeList.item(i);
-			final String id = placeElement.getAttribute("id");
+        // Find all places
+        final XPathExpression childPlacesExpr = xPath.compile("./place");
+        final NodeList placeList = (NodeList) childPlacesExpr.evaluate(netElement,
+                XPathConstants.NODESET);
+        for (int i = 0; i < placeList.getLength(); i++) {
+            final Element placeElement = (Element) placeList.item(i);
+            final String id = placeElement.getAttribute("id");
 
-			final String name;
-			final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
-			final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
-			final String nameText = (String) nameTextExpr.evaluate(placeElement,XPathConstants.STRING);
-			if(nameText.equals("")){
-				name = (String) nameValueExpr.evaluate(placeElement,XPathConstants.STRING);
-			} else {
-				name = nameText;
-			}
-
-            final int initialMarking;
-			if(overrideInitialMarking){
-			    initialMarking = values[i];
+            final String name;
+            final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
+            final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
+            final String nameText = (String) nameTextExpr.evaluate(placeElement,
+                    XPathConstants.STRING);
+            if (nameText.equals("")) {
+                name = (String) nameValueExpr.evaluate(placeElement, XPathConstants.STRING);
             } else {
-                final XPathExpression initialMarkingTextExpr = xPath.compile("./initialMarking/text/text()");
-                initialMarking = ((Double) initialMarkingTextExpr.evaluate(placeElement,XPathConstants.NUMBER)).intValue();
+                name = nameText;
             }
 
-			final PnmlPlace place = new PnmlPlace(name,id,initialMarking);
-			idToNodeMap.put(id,place);
-			places.add(place);
-		}
+            final int initialMarking;
+            if (overrideInitialMarking) {
+                initialMarking = values[i];
+            } else {
+                final XPathExpression initialMarkingTextExpr = xPath.compile(
+                        "./initialMarking/text/text()");
+                initialMarking = ((Double) initialMarkingTextExpr.evaluate(placeElement,
+                        XPathConstants.NUMBER)).intValue();
+            }
 
-		// Find all transitions
-		final XPathExpression childTransitionsExpr = xPath.compile("./transition");
-		final NodeList transitionList = (NodeList) childTransitionsExpr.evaluate(netElement, XPathConstants.NODESET);
-		for(int i=0;i<transitionList.getLength();i++){
-			final Element transitionElement = (Element) transitionList.item(i);
-			final String id = transitionElement.getAttribute("id");
+            final PnmlPlace place = new PnmlPlace(name, id, initialMarking);
+            idToNodeMap.put(id, place);
+            places.add(place);
+        }
 
-			final String name;
-			final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
-			final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
-			final String nameText = (String) nameTextExpr.evaluate(transitionElement,XPathConstants.STRING);
-			if(nameText.equals("")){
-				name = (String) nameValueExpr.evaluate(transitionElement,XPathConstants.STRING);
-			} else {
-				name = nameText;
-			}
+        // Find all transitions
+        final XPathExpression childTransitionsExpr = xPath.compile("./transition");
+        final NodeList transitionList = (NodeList) childTransitionsExpr.evaluate(netElement,
+                XPathConstants.NODESET);
+        for (int i = 0; i < transitionList.getLength(); i++) {
+            final Element transitionElement = (Element) transitionList.item(i);
+            final String id = transitionElement.getAttribute("id");
 
-			final PnmlTransition transition = new PnmlTransition(name,id);
-			idToNodeMap.put(id,transition);
-			transitions.add(transition);
-		}
+            final String name;
+            final XPathExpression nameTextExpr = xPath.compile("./name/text/text()");
+            final XPathExpression nameValueExpr = xPath.compile("./name/value/text()");
+            final String nameText = (String) nameTextExpr.evaluate(transitionElement,
+                    XPathConstants.STRING);
+            if (nameText.equals("")) {
+                name = (String) nameValueExpr.evaluate(transitionElement, XPathConstants.STRING);
+            } else {
+                name = nameText;
+            }
 
-		// Find all arcs
-		final XPathExpression childArcsExpr = xPath.compile("./arc");
-		final NodeList arcList = (NodeList) childArcsExpr.evaluate(netElement, XPathConstants.NODESET);
-		for(int i=0;i<arcList.getLength();i++){
-			final Element arcElement = (Element) arcList.item(i);
-			final String id = arcElement.getAttribute("id");
+            final PnmlTransition transition = new PnmlTransition(name, id);
+            idToNodeMap.put(id, transition);
+            transitions.add(transition);
+        }
 
-			final String sourceId = arcElement.getAttribute("source");
-			final PnmlNode source = idToNodeMap.get(sourceId);
-			checkNotNull(source,"Source node not found of arc "+id);
+        // Find all arcs
+        final XPathExpression childArcsExpr = xPath.compile("./arc");
+        final NodeList arcList = (NodeList) childArcsExpr.evaluate(netElement,
+                XPathConstants.NODESET);
+        for (int i = 0; i < arcList.getLength(); i++) {
+            final Element arcElement = (Element) arcList.item(i);
+            final String id = arcElement.getAttribute("id");
 
-			final String targetId = arcElement.getAttribute("target");
-			final PnmlNode target = idToNodeMap.get(targetId);
-			checkNotNull(source,"Target node not found of arc "+id);
+            final String sourceId = arcElement.getAttribute("source");
+            final PnmlNode source = idToNodeMap.get(sourceId);
+            checkNotNull(source, "Source node not found of arc " + id);
 
-			final XPathExpression toolspecificWeightExpr = xPath.compile("./toolspecific/weight/text()");
-			final int toolspecificWeight = ((Double) toolspecificWeightExpr.evaluate(arcElement,XPathConstants.NUMBER)).intValue();
-			final int weight = toolspecificWeight==0?1:toolspecificWeight;
+            final String targetId = arcElement.getAttribute("target");
+            final PnmlNode target = idToNodeMap.get(targetId);
+            checkNotNull(source, "Target node not found of arc " + id);
 
-			final PnmlArc arc = new PnmlArc(id,weight,source,target);
-			source.addOutArc(arc);
-			target.addInArc(arc);
-		}
+            final XPathExpression toolspecificWeightExpr = xPath.compile(
+                    "./toolspecific/weight/text()");
+            final int toolspecificWeight = ((Double) toolspecificWeightExpr.evaluate(arcElement,
+                    XPathConstants.NUMBER)).intValue();
+            final int weight = toolspecificWeight == 0 ? 1 : toolspecificWeight;
 
-		return new PnmlNet(places,transitions);
+            final PnmlArc arc = new PnmlArc(id, weight, source, target);
+            source.addOutArc(arc);
+            target.addInArc(arc);
+        }
 
-	}
+        return new PnmlNet(places, transitions);
+
+    }
 
 }

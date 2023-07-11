@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,83 +31,85 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * A comparator for ArgNodes that is based on the distance from the error
- * location.
+ * A comparator for ArgNodes that is based on the distance from the error location.
  */
 public class XcfaDistToErrComparator implements ArgNodeComparator {
-	private Map<XcfaLocation, Integer> distancesToError;
-	private final int errorWeight;
-	private final int depthWeight;
-	private final XCFA xcfa;
-	private final XcfaLocation errLoc;
 
-	public XcfaDistToErrComparator(final XCFA xcfa, final XcfaLocation errLoc) {
-		this(xcfa, errLoc, 1, 0);
-	}
+    private Map<XcfaLocation, Integer> distancesToError;
+    private final int errorWeight;
+    private final int depthWeight;
+    private final XCFA xcfa;
+    private final XcfaLocation errLoc;
 
-	public XcfaDistToErrComparator(final XCFA xcfa, final XcfaLocation errLoc, final int errorWeight, final int depthWeight) {
-		this.xcfa = xcfa;
-		this.errLoc = errLoc;
-		this.errorWeight = errorWeight;
-		this.depthWeight = depthWeight;
-		distancesToError = null;
-	}
+    public XcfaDistToErrComparator(final XCFA xcfa, final XcfaLocation errLoc) {
+        this(xcfa, errLoc, 1, 0);
+    }
 
-	@Override
-	public int compare(final ArgNode<? extends State, ? extends Action> n1,
-					   final ArgNode<? extends State, ? extends Action> n2) {
-		final int dist1 = getWeightedDistance(n1);
-		final int dist2 = getWeightedDistance(n2);
+    public XcfaDistToErrComparator(final XCFA xcfa, final XcfaLocation errLoc,
+                                   final int errorWeight, final int depthWeight) {
+        this.xcfa = xcfa;
+        this.errLoc = errLoc;
+        this.errorWeight = errorWeight;
+        this.depthWeight = depthWeight;
+        distancesToError = null;
+    }
 
-		return Integer.compare(dist1, dist2);
-	}
+    @Override
+    public int compare(final ArgNode<? extends State, ? extends Action> n1,
+                       final ArgNode<? extends State, ? extends Action> n2) {
+        final int dist1 = getWeightedDistance(n1);
+        final int dist2 = getWeightedDistance(n2);
 
-	private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
-		checkArgument(node.getState() instanceof XcfaSTState, "XcfaSTState expected.");
-		final XcfaSTState<?> state = (XcfaSTState<?>) node.getState();
-		final int distanceToError = getDistanceToError(state.getCurrentLoc());
-		if (distanceToError == Integer.MAX_VALUE) {
-			return distanceToError;
-		}
-		return errorWeight * distanceToError + depthWeight * node.getDepth();
-	}
+        return Integer.compare(dist1, dist2);
+    }
 
-	private int getDistanceToError(final XcfaLocation loc) {
-		if (distancesToError == null) {
-			distancesToError = calculateDistancesToError(xcfa, errLoc);
-		} else if (errLoc == null) {
-			return Integer.MAX_VALUE;
-		}
-		return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
-	}
+    private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
+        checkArgument(node.getState() instanceof XcfaSTState, "XcfaSTState expected.");
+        final XcfaSTState<?> state = (XcfaSTState<?>) node.getState();
+        final int distanceToError = getDistanceToError(state.getCurrentLoc());
+        if (distanceToError == Integer.MAX_VALUE) {
+            return distanceToError;
+        }
+        return errorWeight * distanceToError + depthWeight * node.getDepth();
+    }
 
-	static Map<XcfaLocation, Integer> calculateDistancesToError(final XCFA cfa, final XcfaLocation errLoc) {
-		List<XcfaLocation> queue = new LinkedList<>();
-		final Map<XcfaLocation, Integer> distancesToError = Containers.createMap();
-		queue.add(errLoc);
-		distancesToError.put(errLoc, 0);
-		int distance = 1;
+    private int getDistanceToError(final XcfaLocation loc) {
+        if (distancesToError == null) {
+            distancesToError = calculateDistancesToError(xcfa, errLoc);
+        } else if (errLoc == null) {
+            return Integer.MAX_VALUE;
+        }
+        return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
+    }
 
-		while (!queue.isEmpty()) {
-			final List<XcfaLocation> predecessors = new LinkedList<>();
-			for (final XcfaLocation loc : queue) {
-				for (final XcfaEdge inEdge : loc.getIncomingEdges()) {
-					final XcfaLocation predecessor = inEdge.getSource();
-					if (!distancesToError.containsKey(predecessor)) {
-						distancesToError.put(predecessor, distance);
-						predecessors.add(predecessor);
-					}
-				}
-			}
-			queue = predecessors;
-			++distance;
-		}
+    static Map<XcfaLocation, Integer> calculateDistancesToError(final XCFA cfa,
+                                                                final XcfaLocation errLoc) {
+        List<XcfaLocation> queue = new LinkedList<>();
+        final Map<XcfaLocation, Integer> distancesToError = Containers.createMap();
+        queue.add(errLoc);
+        distancesToError.put(errLoc, 0);
+        int distance = 1;
 
-		return distancesToError;
-	}
+        while (!queue.isEmpty()) {
+            final List<XcfaLocation> predecessors = new LinkedList<>();
+            for (final XcfaLocation loc : queue) {
+                for (final XcfaEdge inEdge : loc.getIncomingEdges()) {
+                    final XcfaLocation predecessor = inEdge.getSource();
+                    if (!distancesToError.containsKey(predecessor)) {
+                        distancesToError.put(predecessor, distance);
+                        predecessors.add(predecessor);
+                    }
+                }
+            }
+            queue = predecessors;
+            ++distance;
+        }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+        return distancesToError;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

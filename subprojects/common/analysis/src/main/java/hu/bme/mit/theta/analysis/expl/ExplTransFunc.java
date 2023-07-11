@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,25 +28,27 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplTransFunc implements TransFunc<ExplState, ExprAction, ExplPrec> {
 
-	private final Solver solver;
+    private final Solver solver;
 
-	private ExplTransFunc(final Solver solver) {
-		this.solver = checkNotNull(solver);
-	}
+    private ExplTransFunc(final Solver solver) {
+        this.solver = checkNotNull(solver);
+    }
 
-	public static ExplTransFunc create(final Solver solver) {
-		return new ExplTransFunc(solver);
-	}
+    public static ExplTransFunc create(final Solver solver) {
+        return new ExplTransFunc(solver);
+    }
 
-	@Override
-	public Collection<? extends ExplState> getSuccStates(final ExplState state, final ExprAction action,
-														 final ExplPrec prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
-		final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver,
-				BoolExprs.And(state.toExpr(), action.toExpr()), 0, prec::createState, action.nextIndexing());
-		return succStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : succStates;
-	}
+    @Override
+    public Collection<? extends ExplState> getSuccStates(final ExplState state,
+                                                         final ExprAction action,
+                                                         final ExplPrec prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
+        final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver,
+                BoolExprs.And(state.toExpr(), action.toExpr()), 0, prec::createState,
+                action.nextIndexing());
+        return succStates.isEmpty() ? Collections.singleton(ExplState.bottom()) : succStates;
+    }
 
 }

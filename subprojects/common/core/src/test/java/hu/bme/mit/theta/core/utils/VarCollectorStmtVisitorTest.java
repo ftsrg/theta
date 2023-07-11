@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,41 +46,41 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 @RunWith(Parameterized.class)
 public class VarCollectorStmtVisitorTest {
 
-	private static final VarDecl<BoolType> VA = Var("a", Bool());
-	private static final VarDecl<IntType> VB = Var("b", Int());
-	private static final VarDecl<IntType> VC = Var("d", Int());
+    private static final VarDecl<BoolType> VA = Var("a", Bool());
+    private static final VarDecl<IntType> VB = Var("b", Int());
+    private static final VarDecl<IntType> VC = Var("d", Int());
 
-	@Parameter(value = 0)
-	public Stmt stmt;
+    @Parameter(value = 0)
+    public Stmt stmt;
 
-	@Parameter(value = 1)
-	public Set<VarDecl<?>> expectedVars;
+    @Parameter(value = 1)
+    public Set<VarDecl<?>> expectedVars;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{Skip(), of()},
+                {Skip(), of()},
 
-				{Havoc(VA), of(VA)},
+                {Havoc(VA), of(VA)},
 
-				{Havoc(VB), of(VB)},
+                {Havoc(VB), of(VB)},
 
-				{Assign(VB, Int(0)), of(VB)},
+                {Assign(VB, Int(0)), of(VB)},
 
-				{Assign(VB, Add(VB.getRef(), VB.getRef())), of(VB)},
+                {Assign(VB, Add(VB.getRef(), VB.getRef())), of(VB)},
 
-				{Assign(VB, Add(VB.getRef(), VC.getRef())), of(VB, VC)},
+                {Assign(VB, Add(VB.getRef(), VC.getRef())), of(VB, VC)},
 
-				{Assume(And(VA.getRef(), Eq(VB.getRef(), VC.getRef()))), of(VA, VB, VC)},
+                {Assume(And(VA.getRef(), Eq(VB.getRef(), VC.getRef()))), of(VA, VB, VC)},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		final Set<VarDecl<?>> vars = StmtUtils.getVars(stmt);
-		assertEquals(expectedVars, vars);
-	}
+    @Test
+    public void test() {
+        final Set<VarDecl<?>> vars = StmtUtils.getVars(stmt);
+        assertEquals(expectedVars, vars);
+    }
 
 }

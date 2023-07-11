@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,54 +23,54 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 class SolverStub implements Solver {
 
-	int nPush;
+    int nPush;
 
-	public SolverStub() {
-		nPush = 0;
-	}
+    public SolverStub() {
+        nPush = 0;
+    }
 
-	@Override
-	public void add(final Expr<BoolType> assertion) {
-		// Stub
-	}
+    @Override
+    public void add(final Expr<BoolType> assertion) {
+        // Stub
+    }
 
-	@Override
-	public SolverStatus check() {
-		return null;
-	}
+    @Override
+    public SolverStatus check() {
+        return null;
+    }
 
-	@Override
-	public void push() {
-		++nPush;
-	}
+    @Override
+    public void push() {
+        ++nPush;
+    }
 
-	@Override
-	public void pop(final int n) {
-		nPush -= n;
-	}
+    @Override
+    public void pop(final int n) {
+        nPush -= n;
+    }
 
-	@Override
-	public void reset() {
-		// Stub
-	}
+    @Override
+    public void reset() {
+        // Stub
+    }
 
-	@Override
-	public SolverStatus getStatus() {
-		return null;
-	}
+    @Override
+    public SolverStatus getStatus() {
+        return null;
+    }
 
-	@Override
-	public Valuation getModel() {
-		return null;
-	}
+    @Override
+    public Valuation getModel() {
+        return null;
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getAssertions() {
-		return null;
-	}
+    @Override
+    public Collection<Expr<BoolType>> getAssertions() {
+        return null;
+    }
 
-	@Override
-	public void close() {
-		// Nothing to close
-	}
+    @Override
+    public void close() {
+        // Nothing to close
+    }
 }

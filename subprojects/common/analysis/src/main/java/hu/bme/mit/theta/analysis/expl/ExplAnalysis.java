@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,36 +28,36 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplPrec> {
 
-	private final PartialOrd<ExplState> partialOrd;
-	private final InitFunc<ExplState, ExplPrec> initFunc;
-	private final TransFunc<ExplState, ExprAction, ExplPrec> transFunc;
+    private final PartialOrd<ExplState> partialOrd;
+    private final InitFunc<ExplState, ExplPrec> initFunc;
+    private final TransFunc<ExplState, ExprAction, ExplPrec> transFunc;
 
-	private ExplAnalysis(final Solver solver, final Expr<BoolType> initExpr) {
-		checkNotNull(solver);
-		checkNotNull(initExpr);
-		this.partialOrd = ExplOrd.getInstance();
-		this.initFunc = ExplInitFunc.create(solver, initExpr);
-		this.transFunc = ExplTransFunc.create(solver);
+    private ExplAnalysis(final Solver solver, final Expr<BoolType> initExpr) {
+        checkNotNull(solver);
+        checkNotNull(initExpr);
+        this.partialOrd = ExplOrd.getInstance();
+        this.initFunc = ExplInitFunc.create(solver, initExpr);
+        this.transFunc = ExplTransFunc.create(solver);
 
-	}
+    }
 
-	public static ExplAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
-		return new ExplAnalysis(solver, initExpr);
-	}
+    public static ExplAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
+        return new ExplAnalysis(solver, initExpr);
+    }
 
-	@Override
-	public PartialOrd<ExplState> getPartialOrd() {
-		return partialOrd;
-	}
+    @Override
+    public PartialOrd<ExplState> getPartialOrd() {
+        return partialOrd;
+    }
 
-	@Override
-	public InitFunc<ExplState, ExplPrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<ExplState, ExplPrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<ExplState, ExprAction, ExplPrec> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<ExplState, ExprAction, ExplPrec> getTransFunc() {
+        return transFunc;
+    }
 
 }

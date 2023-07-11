@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,20 +20,20 @@ package hu.bme.mit.theta.common.logging;
  */
 public abstract class BaseLogger implements Logger {
 
-	private final Level minLevel;
+    private final Level minLevel;
 
-	public BaseLogger(final Level minLevel) {
-		this.minLevel = minLevel;
-	}
+    public BaseLogger(final Level minLevel) {
+        this.minLevel = minLevel;
+    }
 
-	@Override
-	public Logger write(final Level level, final String pattern, final Object... objects) {
-		if (level.ordinal() <= minLevel.ordinal()) {
-			writeStr(String.format(pattern, objects));
-		}
-		return this;
-	}
+    @Override
+    public Logger write(final Level level, final String pattern, final Object... objects) {
+        if (level.ordinal() <= minLevel.ordinal()) {
+            writeStr(String.format(pattern, objects));
+        }
+        return this;
+    }
 
-	protected abstract void writeStr(String str);
+    protected abstract void writeStr(String str);
 
 }

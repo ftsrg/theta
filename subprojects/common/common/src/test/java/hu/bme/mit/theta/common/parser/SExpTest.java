@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,56 +31,58 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public final class SExpTest {
-	private static final String A = "A";
-	private static final String B = "B";
-	private static final String C = "C";
 
-	@Parameter(0)
-	public Object object;
+    private static final String A = "A";
+    private static final String B = "B";
+    private static final String C = "C";
 
-	@Parameter(1)
-	public SExpr sexpr;
+    @Parameter(0)
+    public Object object;
 
-	@Parameter(2)
-	public String string;
+    @Parameter(1)
+    public SExpr sexpr;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameter(2)
+    public String string;
 
-				{A, atom(A), A},
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{of(), list(), "()"},
+                {A, atom(A), A},
 
-				{of(A), list(atom(A)), "(A)"},
+                {of(), list(), "()"},
 
-				{of(A, B), list(atom(A), atom(B)), "(A B)"},
+                {of(A), list(atom(A)), "(A)"},
 
-				{of(A, B, C), list(atom(A), atom(B), atom(C)), "(A B C)"},
+                {of(A, B), list(atom(A), atom(B)), "(A B)"},
 
-				{of(A, of(B, C)), list(atom(A), list(atom(B), atom(C))), "(A (B C))"},
+                {of(A, B, C), list(atom(A), atom(B), atom(C)), "(A B C)"},
 
-				{of(A, B, of(C, of(A))), list(atom(A), atom(B), list(atom(C), list(atom(A)))), "(A B (C (A)))"}
+                {of(A, of(B, C)), list(atom(A), list(atom(B), atom(C))), "(A (B C))"},
 
-		});
-	}
+                {of(A, B, of(C, of(A))), list(atom(A), atom(B), list(atom(C), list(atom(A)))),
+                        "(A B (C (A)))"}
 
-	@Test
-	public void testBuild() {
-		final SExpr actSexpr = SExpr.build(object);
-		assertEquals(sexpr, actSexpr);
-	}
+        });
+    }
 
-	@Test
-	public void testParse() {
-		final SExpr actSexpr = SExpr.parse(string);
-		assertEquals(sexpr, actSexpr);
-	}
+    @Test
+    public void testBuild() {
+        final SExpr actSexpr = SExpr.build(object);
+        assertEquals(sexpr, actSexpr);
+    }
 
-	@Test
-	public void testToString() {
-		final String actString = sexpr.toString();
-		assertEquals(string, actString);
-	}
+    @Test
+    public void testParse() {
+        final SExpr actSexpr = SExpr.parse(string);
+        assertEquals(sexpr, actSexpr);
+    }
+
+    @Test
+    public void testToString() {
+        final String actString = sexpr.toString();
+        assertEquals(string, actString);
+    }
 
 }

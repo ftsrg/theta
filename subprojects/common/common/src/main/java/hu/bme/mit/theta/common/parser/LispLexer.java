@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,86 +21,88 @@ import java.io.IOException;
 import java.io.Reader;
 
 public final class LispLexer {
-	private static final int EOF = -1;
 
-	private final Reader reader;
-	private int c;
+    private static final int EOF = -1;
 
-	public LispLexer(final Reader reader) {
-		this.reader = checkNotNull(reader);
-		consume();
-	}
+    private final Reader reader;
+    private int c;
 
-	public Token nextToken() {
-		while (c != EOF) {
-			switch (c) {
-				case ' ':
-				case '\t':
-				case '\n':
-				case '\r':
-					WS();
-					continue;
-				case ';':
-					COMMENT();
-					continue;
-				case '(':
-					return LPAREN();
-				case ')':
-					return RPAREN();
-				default:
-					return ATOM();
-			}
-		}
+    public LispLexer(final Reader reader) {
+        this.reader = checkNotNull(reader);
+        consume();
+    }
 
-		return Token.of("<EOF>", TokenType.EOF);
-	}
+    public Token nextToken() {
+        while (c != EOF) {
+            switch (c) {
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\r':
+                    WS();
+                    continue;
+                case ';':
+                    COMMENT();
+                    continue;
+                case '(':
+                    return LPAREN();
+                case ')':
+                    return RPAREN();
+                default:
+                    return ATOM();
+            }
+        }
 
-	private Token LPAREN() {
-		consume();
-		return Token.of("(", TokenType.LPAREN);
-	}
+        return Token.of("<EOF>", TokenType.EOF);
+    }
 
-	private Token RPAREN() {
-		consume();
-		return Token.of(")", TokenType.RPAREN);
-	}
+    private Token LPAREN() {
+        consume();
+        return Token.of("(", TokenType.LPAREN);
+    }
 
-	private Token ATOM() {
-		final StringBuilder sb = new StringBuilder();
-		while (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != ';' && c != '(' && c != ')' && c != EOF) {
-			sb.append((char) c);
-			consume();
-		}
-		return Token.of(sb.toString(), TokenType.ATOM);
-	}
+    private Token RPAREN() {
+        consume();
+        return Token.of(")", TokenType.RPAREN);
+    }
 
-	private void WS() {
-		while (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
-			consume();
-		}
-	}
+    private Token ATOM() {
+        final StringBuilder sb = new StringBuilder();
+        while (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != ';' && c != '(' && c != ')'
+                && c != EOF) {
+            sb.append((char) c);
+            consume();
+        }
+        return Token.of(sb.toString(), TokenType.ATOM);
+    }
 
-	private void COMMENT() {
-		while (c != '\n' && c != '\r' && c != EOF) {
-			consume();
-		}
-	}
+    private void WS() {
+        while (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
+            consume();
+        }
+    }
 
-	private void consume() {
-		try {
-			c = reader.read();
-		} catch (final IOException e) {
-			throw new LexerException(e);
-		}
-	}
+    private void COMMENT() {
+        while (c != '\n' && c != '\r' && c != EOF) {
+            consume();
+        }
+    }
 
-	@SuppressWarnings("unused")
-	private void match(final char x) {
-		if (c == x) {
-			consume();
-		} else {
-			throw new LexerException("Expecting " + x + ", found " + c);
-		}
-	}
+    private void consume() {
+        try {
+            c = reader.read();
+        } catch (final IOException e) {
+            throw new LexerException(e);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private void match(final char x) {
+        if (c == x) {
+            consume();
+        } else {
+            throw new LexerException("Expecting " + x + ", found " + c);
+        }
+    }
 
 }

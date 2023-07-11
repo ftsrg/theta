@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,49 +38,59 @@ import static hu.bme.mit.theta.xcfa.model.XcfaLabel.Stmt;
 
 public class CallsToHavocs extends ProcedurePass {
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
-			Optional<XcfaLabel> e = edge.getLabels().stream().filter(stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel && FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").get()).findAny();
-			if (e.isPresent()) {
-				XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) e.get();
-				List<XcfaLabel> collect = new ArrayList<>();
-				for (XcfaLabel stmt : edge.getLabels()) {
-					if (stmt == callLabel) {
-						if (callLabel.getProcedure().startsWith("__VERIFIER_nondet")) {
-							for (Expr<?> expr : callLabel.getParams()) {
-								checkState(expr instanceof RefExpr && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
-								VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
-								if (!(CComplexType.getType(var.getRef()) instanceof CVoid)) {
-									final HavocStmt<?> havoc = Havoc(var);
-									FrontendMetadata.lookupMetadata(stmt).forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
-									collect.add(Stmt(havoc));
-								}
-							}
-						} else {
-							if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON)
-								throw new UnsupportedOperationException("Non-nondet function call used as nondet!");
-							collect.add(stmt);
-						}
-					} else {
-						collect.add(stmt);
-					}
-				}
-				XcfaEdge xcfaEdge;
-				xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
-				builder.removeEdge(edge);
-				builder.addEdge(xcfaEdge);
-				FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
-					FrontendMetadata.create(xcfaEdge, s, o);
-				});
-			}
-		}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        for (XcfaEdge edge : new ArrayList<>(builder.getEdges())) {
+            Optional<XcfaLabel> e = edge.getLabels().stream().filter(
+                            stmt -> stmt instanceof XcfaLabel.ProcedureCallXcfaLabel
+                                    && FrontendMetadata.getMetadataValue(
+                                            ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction")
+                                    .isPresent() && !(Boolean) FrontendMetadata.getMetadataValue(
+                                    ((XcfaLabel.ProcedureCallXcfaLabel) stmt).getProcedure(), "ownFunction").get())
+                    .findAny();
+            if (e.isPresent()) {
+                XcfaLabel.ProcedureCallXcfaLabel callLabel = (XcfaLabel.ProcedureCallXcfaLabel) e.get();
+                List<XcfaLabel> collect = new ArrayList<>();
+                for (XcfaLabel stmt : edge.getLabels()) {
+                    if (stmt == callLabel) {
+                        if (callLabel.getProcedure().startsWith("__VERIFIER_nondet")) {
+                            for (Expr<?> expr : callLabel.getParams()) {
+                                checkState(expr instanceof RefExpr
+                                        && ((RefExpr<?>) expr).getDecl() instanceof VarDecl);
+                                VarDecl<?> var = (VarDecl<?>) ((RefExpr<?>) expr).getDecl();
+                                if (!(CComplexType.getType(var.getRef()) instanceof CVoid)) {
+                                    final HavocStmt<?> havoc = Havoc(var);
+                                    FrontendMetadata.lookupMetadata(stmt)
+                                            .forEach((s, o) -> FrontendMetadata.create(havoc, s, o));
+                                    collect.add(Stmt(havoc));
+                                }
+                            }
+                        } else {
+                            if (FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON) {
+                                throw new UnsupportedOperationException(
+                                        "Non-nondet function call used as nondet!");
+                            }
+                            collect.add(stmt);
+                        }
+                    } else {
+                        collect.add(stmt);
+                    }
+                }
+                XcfaEdge xcfaEdge;
+                xcfaEdge = XcfaEdge.of(edge.getSource(), edge.getTarget(), collect);
+                builder.removeEdge(edge);
+                builder.addEdge(xcfaEdge);
+                FrontendMetadata.lookupMetadata(edge).forEach((s, o) -> {
+                    FrontendMetadata.create(xcfaEdge, s, o);
+                });
+            }
+        }
 
-		return builder;
-	}
+        return builder;
+    }
 
-	@Override
-	public boolean isPostInlining() {
-		return true;
-	}
+    @Override
+    public boolean isPostInlining() {
+        return true;
+    }
 }

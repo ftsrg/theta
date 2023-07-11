@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,51 +30,52 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class CfaAction extends StmtAction {
 
-	private final List<Edge> edges;
-	private final List<Stmt> stmts;
-	private final Loc source;
-	private final Loc target;
+    private final List<Edge> edges;
+    private final List<Stmt> stmts;
+    private final Loc source;
+    private final Loc target;
 
-	private CfaAction(final Loc source, final Loc target, final List<Edge> edges) {
-		this.source = checkNotNull(source);
-		this.target = checkNotNull(target);
-		this.edges = Collections.unmodifiableList(checkNotNull(edges));
-		this.stmts = Collections.unmodifiableList(edges.stream().map(Edge::getStmt).collect(Collectors.toList()));
-	}
+    private CfaAction(final Loc source, final Loc target, final List<Edge> edges) {
+        this.source = checkNotNull(source);
+        this.target = checkNotNull(target);
+        this.edges = Collections.unmodifiableList(checkNotNull(edges));
+        this.stmts = Collections.unmodifiableList(
+                edges.stream().map(Edge::getStmt).collect(Collectors.toList()));
+    }
 
-	public static CfaAction create(final Edge edge) {
-		return new CfaAction(edge.getSource(), edge.getTarget(), Collections.singletonList(edge));
-	}
+    public static CfaAction create(final Edge edge) {
+        return new CfaAction(edge.getSource(), edge.getTarget(), Collections.singletonList(edge));
+    }
 
-	public static CfaAction create(final List<Edge> edges) {
-		checkArgument(!edges.isEmpty(), "Empty list of edges");
-		for (int i = 0; i < edges.size() - 1; ++i) {
-			checkArgument(edges.get(i).getTarget().equals(edges.get(i + 1).getSource()));
-		}
-		final Loc source = edges.get(0).getSource();
-		final Loc target = edges.get(edges.size() - 1).getTarget();
-		return new CfaAction(source, target, edges);
-	}
+    public static CfaAction create(final List<Edge> edges) {
+        checkArgument(!edges.isEmpty(), "Empty list of edges");
+        for (int i = 0; i < edges.size() - 1; ++i) {
+            checkArgument(edges.get(i).getTarget().equals(edges.get(i + 1).getSource()));
+        }
+        final Loc source = edges.get(0).getSource();
+        final Loc target = edges.get(edges.size() - 1).getTarget();
+        return new CfaAction(source, target, edges);
+    }
 
-	public Loc getSource() {
-		return source;
-	}
+    public Loc getSource() {
+        return source;
+    }
 
-	public Loc getTarget() {
-		return target;
-	}
+    public Loc getTarget() {
+        return target;
+    }
 
-	@Override
-	public List<Stmt> getStmts() {
-		return stmts;
-	}
+    @Override
+    public List<Stmt> getStmts() {
+        return stmts;
+    }
 
-	public List<Edge> getEdges() {
-		return edges;
-	}
+    public List<Edge> getEdges() {
+        return edges;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
+    }
 }

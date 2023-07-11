@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,18 +24,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CDecls extends CStatement {
-	private final List<Tuple2<CDeclaration, VarDecl<?>>> cDeclarations;
 
-	public CDecls() {
-		this.cDeclarations = new ArrayList<>();
-	}
+    private final List<Tuple2<CDeclaration, VarDecl<?>>> cDeclarations;
 
-	public List<Tuple2<CDeclaration, VarDecl<?>>> getcDeclarations() {
-		return cDeclarations;
-	}
+    public CDecls() {
+        this.cDeclarations = new ArrayList<>();
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public List<Tuple2<CDeclaration, VarDecl<?>>> getcDeclarations() {
+        return cDeclarations;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

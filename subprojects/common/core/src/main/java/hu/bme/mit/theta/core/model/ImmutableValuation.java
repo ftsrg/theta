@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,85 +31,89 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
- * Basic, immutable implementation of a valuation. The inner builder class can
- * be used to create a new instance.
+ * Basic, immutable implementation of a valuation. The inner builder class can be used to create a
+ * new instance.
  */
 public final class ImmutableValuation extends Valuation {
-	private final Map<Decl<?>, LitExpr<?>> declToExpr;
-	private volatile Expr<BoolType> expr = null;
 
-	private static final class LazyHolder {
-		private static final ImmutableValuation EMPTY = new Builder().build();
-	}
+    private final Map<Decl<?>, LitExpr<?>> declToExpr;
+    private volatile Expr<BoolType> expr = null;
 
-	private ImmutableValuation(final Builder builder) {
-		declToExpr = builder.builder.build();
-	}
+    private static final class LazyHolder {
 
-	public static ImmutableValuation copyOf(final Valuation val) {
-		if (val instanceof ImmutableValuation) {
-			return (ImmutableValuation) val;
-		} else {
-			final Builder builder = builder();
-			for (final Decl<?> decl : val.getDecls()) {
-				builder.put(decl, val.eval(decl).get());
-			}
-			return builder.build();
-		}
-	}
+        private static final ImmutableValuation EMPTY = new Builder().build();
+    }
 
-	public static ImmutableValuation empty() {
-		return LazyHolder.EMPTY;
-	}
+    private ImmutableValuation(final Builder builder) {
+        declToExpr = builder.builder.build();
+    }
 
-	@Override
-	public Collection<Decl<?>> getDecls() {
-		return declToExpr.keySet();
-	}
+    public static ImmutableValuation copyOf(final Valuation val) {
+        if (val instanceof ImmutableValuation) {
+            return (ImmutableValuation) val;
+        } else {
+            final Builder builder = builder();
+            for (final Decl<?> decl : val.getDecls()) {
+                builder.put(decl, val.eval(decl).get());
+            }
+            return builder.build();
+        }
+    }
 
-	@Override
-	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-		checkNotNull(decl);
-		@SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
-		return Optional.ofNullable(val);
-	}
+    public static ImmutableValuation empty() {
+        return LazyHolder.EMPTY;
+    }
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		Expr<BoolType> result = expr;
-		if (result == null) {
-			result = super.toExpr();
-			expr = result;
-		}
-		return result;
-	}
+    @Override
+    public Collection<Decl<?>> getDecls() {
+        return declToExpr.keySet();
+    }
 
-	@Override
-	public Map<Decl<?>, LitExpr<?>> toMap() {
-		return declToExpr;
-	}
+    @Override
+    public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+        checkNotNull(decl);
+        @SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(
+                decl);
+        return Optional.ofNullable(val);
+    }
 
-	public static Builder builder() {
-		return new Builder();
-	}
+    @Override
+    public Expr<BoolType> toExpr() {
+        Expr<BoolType> result = expr;
+        if (result == null) {
+            result = super.toExpr();
+            expr = result;
+        }
+        return result;
+    }
 
-	public final static class Builder {
-		private final ImmutableMap.Builder<Decl<?>, LitExpr<?>> builder;
+    @Override
+    public Map<Decl<?>, LitExpr<?>> toMap() {
+        return declToExpr;
+    }
 
-		private Builder() {
-			builder = ImmutableMap.builder();
-		}
+    public static Builder builder() {
+        return new Builder();
+    }
 
-		public Builder put(final Decl<?> decl, final LitExpr<?> value) {
-			checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
-			builder.put(decl, value);
-			return this;
-		}
+    public final static class Builder {
 
-		public ImmutableValuation build() {
-			return new ImmutableValuation(this);
-		}
+        private final ImmutableMap.Builder<Decl<?>, LitExpr<?>> builder;
 
-	}
+        private Builder() {
+            builder = ImmutableMap.builder();
+        }
+
+        public Builder put(final Decl<?> decl, final LitExpr<?> value) {
+            checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
+            builder.put(decl, value);
+            return this;
+        }
+
+        public ImmutableValuation build() {
+            return new ImmutableValuation(this);
+        }
+
+    }
 
 }

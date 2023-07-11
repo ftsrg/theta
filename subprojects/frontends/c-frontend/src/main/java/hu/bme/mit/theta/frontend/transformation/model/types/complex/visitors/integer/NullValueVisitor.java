@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,21 +31,24 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class NullValueVisitor extends CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> {
-	public static final NullValueVisitor instance = new NullValueVisitor();
 
-	@Override
-	public LitExpr<?> visit(CInteger type, Void param) {
-		return Int(0);
-	}
+    public static final NullValueVisitor instance = new NullValueVisitor();
 
-	@Override
-	public LitExpr<?> visit(CArray type, Void param) {
-		return getExpr(type);
-	}
+    @Override
+    public LitExpr<?> visit(CInteger type, Void param) {
+        return Int(0);
+    }
 
-	private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(CArray type) {
-		//noinspection unchecked
-		ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
-		return Array(List.of(), cast(type.getEmbeddedType().getNullValue(), smtType.getElemType()), smtType);
-	}
+    @Override
+    public LitExpr<?> visit(CArray type, Void param) {
+        return getExpr(type);
+    }
+
+    private <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> getExpr(
+            CArray type) {
+        //noinspection unchecked
+        ArrayType<IndexType, ElemType> smtType = (ArrayType<IndexType, ElemType>) type.getSmtType();
+        return Array(List.of(), cast(type.getEmbeddedType().getNullValue(), smtType.getElemType()),
+                smtType);
+    }
 }

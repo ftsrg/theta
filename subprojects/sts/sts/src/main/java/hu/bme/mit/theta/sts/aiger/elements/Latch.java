@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,36 +26,36 @@ import java.util.Collections;
  */
 public class Latch extends AigerNode {
 
-	private final Collection<AigerWire> outWires;
-	private AigerWire inWire;
+    private final Collection<AigerWire> outWires;
+    private AigerWire inWire;
 
-	public Latch(final int nr, final int varId) {
-		super(String.format("LATCH%d_v%d", nr, varId));
-		this.outWires = new ArrayList<>();
-	}
+    public Latch(final int nr, final int varId) {
+        super(String.format("LATCH%d_v%d", nr, varId));
+        this.outWires = new ArrayList<>();
+    }
 
-	@Override
-	public Collection<AigerWire> getInWires() {
-		return Collections.singleton(inWire);
-	}
+    @Override
+    public Collection<AigerWire> getInWires() {
+        return Collections.singleton(inWire);
+    }
 
-	public void setInWire(final AigerWire wire) {
-		checkArgument(wire.getTarget().equals(this));
-		this.inWire = wire;
-	}
+    public void setInWire(final AigerWire wire) {
+        checkArgument(wire.getTarget().equals(this));
+        this.inWire = wire;
+    }
 
-	public AigerWire getInWire() {
-		return inWire;
-	}
+    public AigerWire getInWire() {
+        return inWire;
+    }
 
-	@Override
-	public Collection<AigerWire> getOutWires() {
-		return outWires;
-	}
+    @Override
+    public Collection<AigerWire> getOutWires() {
+        return outWires;
+    }
 
-	@Override
-	public void addOutWire(final AigerWire outWire) {
-		checkArgument(outWire.getSource().equals(this));
-		outWires.add(outWire);
-	}
+    @Override
+    public void addOutWire(final AigerWire outWire) {
+        checkArgument(outWire.getSource().equals(this));
+        outWires.add(outWire);
+    }
 }

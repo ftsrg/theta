@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,32 +27,33 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 public final class LuZoneAnalysis<A extends Action> implements Analysis<LuZoneState, A, ZonePrec> {
 
-	private final InitFunc<LuZoneState, ZonePrec> initFunc;
-	private final TransFunc<LuZoneState, A, ZonePrec> transFunc;
+    private final InitFunc<LuZoneState, ZonePrec> initFunc;
+    private final TransFunc<LuZoneState, A, ZonePrec> transFunc;
 
-	private LuZoneAnalysis(final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
-		checkNotNull(analysis);
-		initFunc = LuZoneInitFunc.create(analysis.getInitFunc());
-		transFunc = LuZoneTransFunc.create(analysis.getTransFunc());
-	}
+    private LuZoneAnalysis(final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
+        checkNotNull(analysis);
+        initFunc = LuZoneInitFunc.create(analysis.getInitFunc());
+        transFunc = LuZoneTransFunc.create(analysis.getTransFunc());
+    }
 
-	public static <A extends Action> LuZoneAnalysis<A> create(final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
-		return new LuZoneAnalysis<>(analysis);
-	}
+    public static <A extends Action> LuZoneAnalysis<A> create(
+            final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
+        return new LuZoneAnalysis<>(analysis);
+    }
 
-	@Override
-	public PartialOrd<LuZoneState> getPartialOrd() {
-		return LuZoneOrd.getInstance();
-	}
+    @Override
+    public PartialOrd<LuZoneState> getPartialOrd() {
+        return LuZoneOrd.getInstance();
+    }
 
-	@Override
-	public InitFunc<LuZoneState, ZonePrec> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<LuZoneState, ZonePrec> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<LuZoneState, A, ZonePrec> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<LuZoneState, A, ZonePrec> getTransFunc() {
+        return transFunc;
+    }
 
 }

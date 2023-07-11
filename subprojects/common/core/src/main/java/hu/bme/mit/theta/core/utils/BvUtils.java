@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,87 +23,88 @@ import java.math.BigInteger;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 
 public final class BvUtils {
-	private BvUtils() {
 
-	}
+    private BvUtils() {
 
-	public static BigInteger neutralBvLitExprToBigInteger(final BvLitExpr expr) {
-		return unsignedBvLitExprToBigInteger(expr);
-	}
+    }
 
-	public static BigInteger unsignedBvLitExprToBigInteger(final BvLitExpr expr) {
-		BigInteger integer = BigInteger.ZERO;
+    public static BigInteger neutralBvLitExprToBigInteger(final BvLitExpr expr) {
+        return unsignedBvLitExprToBigInteger(expr);
+    }
 
-		for (int i = 0; i < expr.getType().getSize(); i++) {
-			if (expr.getValue()[expr.getType().getSize() - 1 - i]) {
-				integer = integer.setBit(i);
-			}
-		}
+    public static BigInteger unsignedBvLitExprToBigInteger(final BvLitExpr expr) {
+        BigInteger integer = BigInteger.ZERO;
 
-		return integer;
-	}
+        for (int i = 0; i < expr.getType().getSize(); i++) {
+            if (expr.getValue()[expr.getType().getSize() - 1 - i]) {
+                integer = integer.setBit(i);
+            }
+        }
 
-	public static BigInteger signedBvLitExprToBigInteger(final BvLitExpr expr) {
-		BigInteger integer = unsignedBvLitExprToBigInteger(expr);
+        return integer;
+    }
 
-		if (expr.getValue()[0]) {
-			integer = integer.subtract(BigInteger.TWO.pow(expr.getType().getSize()));
-		}
+    public static BigInteger signedBvLitExprToBigInteger(final BvLitExpr expr) {
+        BigInteger integer = unsignedBvLitExprToBigInteger(expr);
 
-		return integer;
-	}
+        if (expr.getValue()[0]) {
+            integer = integer.subtract(BigInteger.TWO.pow(expr.getType().getSize()));
+        }
 
-	public static BvLitExpr bigIntegerToNeutralBvLitExpr(BigInteger integer, final int size) {
-		boolean[] values = getBvRepresentation(integer, size);
-		return Bv(values);
-	}
+        return integer;
+    }
 
-	public static BvLitExpr bigIntegerToUnsignedBvLitExpr(BigInteger integer, final int size) {
-		boolean[] values = getBvRepresentation(integer, size);
-		return Bv(values, false);
-	}
+    public static BvLitExpr bigIntegerToNeutralBvLitExpr(BigInteger integer, final int size) {
+        boolean[] values = getBvRepresentation(integer, size);
+        return Bv(values);
+    }
 
-	private static boolean[] getBvRepresentation(BigInteger integer, int size) {
-		boolean[] values = new boolean[size];
-		for (int i = 0; i < size; i++) {
-			values[size - 1 - i] = integer.testBit(i);
-		}
-		return values;
-	}
+    public static BvLitExpr bigIntegerToUnsignedBvLitExpr(BigInteger integer, final int size) {
+        boolean[] values = getBvRepresentation(integer, size);
+        return Bv(values, false);
+    }
 
-	public static BvLitExpr bigIntegerToSignedBvLitExpr(BigInteger integer, final int size) {
-		if (integer.compareTo(BigInteger.ZERO) < 0) {
-			integer = integer.add(BigInteger.TWO.pow(size));
-		}
-		boolean[] values = getBvRepresentation(integer, size);
-		return Bv(values, true);
-	}
+    private static boolean[] getBvRepresentation(BigInteger integer, int size) {
+        boolean[] values = new boolean[size];
+        for (int i = 0; i < size; i++) {
+            values[size - 1 - i] = integer.testBit(i);
+        }
+        return values;
+    }
 
-	public static BigInteger fitBigIntegerIntoNeutralDomain(BigInteger integer, final int size) {
-		return fitBigIntegerIntoUnsignedDomain(integer, size);
-	}
+    public static BvLitExpr bigIntegerToSignedBvLitExpr(BigInteger integer, final int size) {
+        if (integer.compareTo(BigInteger.ZERO) < 0) {
+            integer = integer.add(BigInteger.TWO.pow(size));
+        }
+        boolean[] values = getBvRepresentation(integer, size);
+        return Bv(values, true);
+    }
 
-	public static BigInteger fitBigIntegerIntoSignedDomain(BigInteger integer, final int size) {
-		while (integer.compareTo(BigInteger.TWO.pow(size - 1).negate()) < 0) {
-			integer = integer.add(BigInteger.TWO.pow(size));
-		}
+    public static BigInteger fitBigIntegerIntoNeutralDomain(BigInteger integer, final int size) {
+        return fitBigIntegerIntoUnsignedDomain(integer, size);
+    }
 
-		while (integer.compareTo(BigInteger.TWO.pow(size - 1)) >= 0) {
-			integer = integer.subtract(BigInteger.TWO.pow(size));
-		}
+    public static BigInteger fitBigIntegerIntoSignedDomain(BigInteger integer, final int size) {
+        while (integer.compareTo(BigInteger.TWO.pow(size - 1).negate()) < 0) {
+            integer = integer.add(BigInteger.TWO.pow(size));
+        }
 
-		return integer;
-	}
+        while (integer.compareTo(BigInteger.TWO.pow(size - 1)) >= 0) {
+            integer = integer.subtract(BigInteger.TWO.pow(size));
+        }
 
-	public static BigInteger fitBigIntegerIntoUnsignedDomain(BigInteger integer, final int size) {
-		while (integer.compareTo(BigInteger.ZERO) < 0) {
-			integer = integer.add(BigInteger.TWO.pow(size));
-		}
+        return integer;
+    }
 
-		while (integer.compareTo(BigInteger.TWO.pow(size)) >= 0) {
-			integer = integer.subtract(BigInteger.TWO.pow(size));
-		}
+    public static BigInteger fitBigIntegerIntoUnsignedDomain(BigInteger integer, final int size) {
+        while (integer.compareTo(BigInteger.ZERO) < 0) {
+            integer = integer.add(BigInteger.TWO.pow(size));
+        }
 
-		return integer;
-	}
+        while (integer.compareTo(BigInteger.TWO.pow(size)) >= 0) {
+            integer = integer.subtract(BigInteger.TWO.pow(size));
+        }
+
+        return integer;
+    }
 }

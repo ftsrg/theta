@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcess;
 
 public abstract class ProcessPass {
 
-	public abstract XcfaProcess.Builder run(XcfaProcess.Builder builder);
+    public abstract XcfaProcess.Builder run(XcfaProcess.Builder builder);
 
 
 }

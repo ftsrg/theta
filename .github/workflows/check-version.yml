@@ -1,0 +1,31 @@
+name: Check version
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: New version
+        id: new_version
+        run: |
+          echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        with:
+          ref: master
+      - name: Master version
+        id: master_version
+        run: |
+          echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+      - name: version is correct
+        if: ${{ steps.new_version.outputs.version != steps.master_version.outputs.version }}
+        run: echo "New version ${{ steps.new_version.outputs.version }} is OK"
+      - name: version is inccorrect
+        if: ${{ steps.new_version.outputs.version == steps.master_version.outputs.version }}
+        run: |
+          echo "New version ${{ steps.new_version.outputs.version }} is NOT OK"
+          exit 1

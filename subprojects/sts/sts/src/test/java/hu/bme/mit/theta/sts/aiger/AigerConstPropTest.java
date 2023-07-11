@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.sts.aiger;
 
 import java.io.IOException;
@@ -18,43 +33,43 @@ import hu.bme.mit.theta.sts.aiger.utils.AigerConstProp;
 @RunWith(Parameterized.class)
 public class AigerConstPropTest {
 
-	@Parameter(value = 0)
-	public String path;
+    @Parameter(value = 0)
+    public String path;
 
-	@Parameter(value = 1)
-	public int sizeOld;
+    @Parameter(value = 1)
+    public int sizeOld;
 
-	@Parameter(value = 2)
-	public int sizeNew;
+    @Parameter(value = 2)
+    public int sizeNew;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"coi1.aag", 8, 3},
+                {"coi1.aag", 8, 3},
 
-				{"coi2.aag", 5, 1},
+                {"coi2.aag", 5, 1},
 
-				{"simple.aag", 6, 5},
+                {"simple.aag", 6, 5},
 
-				{"simple2.aag", 6, 5},
+                {"simple2.aag", 6, 5},
 
-				{"simple3.aag", 7, 6},
+                {"simple3.aag", 7, 6},
 
-				{"constprop1.aag", 6, 1},
+                {"constprop1.aag", 6, 1},
 
-				{"constprop2.aag", 6, 4},
+                {"constprop2.aag", 6, 4},
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() throws IOException {
-		final AigerSystem system = AigerParser.parse("src/test/resources/" + path);
-		Assert.assertEquals(sizeOld, system.getNodes().size());
-		AigerConstProp.apply(system);
-		AigerCoi.apply(system);
-		Assert.assertEquals(sizeNew, system.getNodes().size());
-	}
+    @Test
+    public void test() throws IOException {
+        final AigerSystem system = AigerParser.parse("src/test/resources/" + path);
+        Assert.assertEquals(sizeOld, system.getNodes().size());
+        AigerConstProp.apply(system);
+        AigerCoi.apply(system);
+        Assert.assertEquals(sizeNew, system.getNodes().size());
+    }
 
 }

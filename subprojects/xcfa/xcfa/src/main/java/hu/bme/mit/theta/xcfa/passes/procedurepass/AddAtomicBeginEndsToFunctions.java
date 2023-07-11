@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,23 +25,23 @@ import java.util.List;
 
 public class AddAtomicBeginEndsToFunctions extends ProcedurePass {
 
-	@Override
-	public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
-		if (builder.getName().startsWith("__VERIFIER_atomic")) {
-			for (XcfaEdge outgoingEdge : builder.getInitLoc().getOutgoingEdges()) {
-				List<XcfaLabel> labels = new ArrayList<>();
-				labels.add(XcfaLabel.AtomicBegin());
-				labels.addAll(outgoingEdge.getLabels());
-				builder.removeEdge(outgoingEdge);
-				builder.addEdge(outgoingEdge.withLabels(labels));
-			}
-			for (XcfaEdge incomingEdge : builder.getFinalLoc().getIncomingEdges()) {
-				List<XcfaLabel> labels = new ArrayList<>(incomingEdge.getLabels());
-				labels.add(XcfaLabel.AtomicEnd());
-				builder.removeEdge(incomingEdge);
-				builder.addEdge(incomingEdge.withLabels(labels));
-			}
-		}
-		return builder;
-	}
+    @Override
+    public XcfaProcedure.Builder run(XcfaProcedure.Builder builder) {
+        if (builder.getName().startsWith("__VERIFIER_atomic")) {
+            for (XcfaEdge outgoingEdge : builder.getInitLoc().getOutgoingEdges()) {
+                List<XcfaLabel> labels = new ArrayList<>();
+                labels.add(XcfaLabel.AtomicBegin());
+                labels.addAll(outgoingEdge.getLabels());
+                builder.removeEdge(outgoingEdge);
+                builder.addEdge(outgoingEdge.withLabels(labels));
+            }
+            for (XcfaEdge incomingEdge : builder.getFinalLoc().getIncomingEdges()) {
+                List<XcfaLabel> labels = new ArrayList<>(incomingEdge.getLabels());
+                labels.add(XcfaLabel.AtomicEnd());
+                builder.removeEdge(incomingEdge);
+                builder.addEdge(incomingEdge.withLabels(labels));
+            }
+        }
+        return builder;
+    }
 }

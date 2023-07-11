@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 
 public interface Lens<T, E> {
 
-	E get(T t);
+    E get(T t);
 
-	T set(T t, E e);
+    T set(T t, E e);
 
 }

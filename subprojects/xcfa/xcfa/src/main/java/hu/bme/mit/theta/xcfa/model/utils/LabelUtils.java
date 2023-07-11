@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,128 +46,145 @@ import java.util.stream.Stream;
 
 public class LabelUtils {
 
-	public static boolean isGlobal(XcfaLabel label, XCFA xcfa) {
-		return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream().anyMatch(varDecl -> xcfa.getGlobalVars().contains(varDecl));
-	}
+    public static boolean isGlobal(XcfaLabel label, XCFA xcfa) {
+        return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream()
+                .anyMatch(varDecl -> xcfa.getGlobalVars().contains(varDecl));
+    }
 
-	public static Collection<VarDecl<?>> getVars(XcfaLabel xcfaLabel) {
-		return xcfaLabel.accept(new XcfaLabelVisitor<Void, Collection<VarDecl<?>>>() {
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.AtomicBeginXcfaLabel label, Void param) {
-				return Set.of();
-			}
+    public static Collection<VarDecl<?>> getVars(XcfaLabel xcfaLabel) {
+        return xcfaLabel.accept(new XcfaLabelVisitor<Void, Collection<VarDecl<?>>>() {
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.AtomicBeginXcfaLabel label, Void param) {
+                return Set.of();
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.AtomicEndXcfaLabel label, Void param) {
-				return Set.of();
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.AtomicEndXcfaLabel label, Void param) {
+                return Set.of();
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.ProcedureCallXcfaLabel label, Void param) {
-				return label.getParams().stream().map(expr -> ExprUtils.getVars(expr).stream()).reduce(Streams::concat).map(varDeclStream -> varDeclStream.collect(Collectors.toSet())).orElse(Set.of());
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.ProcedureCallXcfaLabel label,
+                                                Void param) {
+                return label.getParams().stream().map(expr -> ExprUtils.getVars(expr).stream())
+                        .reduce(Streams::concat)
+                        .map(varDeclStream -> varDeclStream.collect(Collectors.toSet()))
+                        .orElse(Set.of());
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.StartThreadXcfaLabel label, Void param) {
-				return Streams.concat(ExprUtils.getVars(label.getParam()).stream(), Stream.of(label.getKey())).collect(Collectors.toSet());
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.StartThreadXcfaLabel label, Void param) {
+                return Streams.concat(ExprUtils.getVars(label.getParam()).stream(),
+                        Stream.of(label.getKey())).collect(Collectors.toSet());
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.JoinThreadXcfaLabel label, Void param) {
-				return Set.of(label.getKey());
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.JoinThreadXcfaLabel label, Void param) {
+                return Set.of(label.getKey());
+            }
 
-			@Override
-			public <T extends Type> Collection<VarDecl<?>> visit(XcfaLabel.LoadXcfaLabel<T> label, Void param) {
-				return Set.of(label.getGlobal(), label.getLocal());
-			}
+            @Override
+            public <T extends Type> Collection<VarDecl<?>> visit(XcfaLabel.LoadXcfaLabel<T> label,
+                                                                 Void param) {
+                return Set.of(label.getGlobal(), label.getLocal());
+            }
 
-			@Override
-			public <T extends Type> Collection<VarDecl<?>> visit(XcfaLabel.StoreXcfaLabel<T> label, Void param) {
-				return Set.of(label.getGlobal(), label.getLocal());
-			}
+            @Override
+            public <T extends Type> Collection<VarDecl<?>> visit(XcfaLabel.StoreXcfaLabel<T> label,
+                                                                 Void param) {
+                return Set.of(label.getGlobal(), label.getLocal());
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.FenceXcfaLabel label, Void param) {
-				return Set.of();
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.FenceXcfaLabel label, Void param) {
+                return Set.of();
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.StmtXcfaLabel label, Void param) {
-				return StmtUtils.getVars(label.getStmt());
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.StmtXcfaLabel label, Void param) {
+                return StmtUtils.getVars(label.getStmt());
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.SequenceLabel sequenceLabel, Void param) {
-				return sequenceLabel.getLabels().stream().map(LabelUtils::getVars).reduce((a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet())).orElse(Set.of());
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.SequenceLabel sequenceLabel, Void param) {
+                return sequenceLabel.getLabels().stream().map(LabelUtils::getVars).reduce(
+                                (a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet()))
+                        .orElse(Set.of());
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(XcfaLabel.NondetLabel nondetLabel, Void param) {
-				return nondetLabel.getLabels().stream().map(LabelUtils::getVars).reduce((a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet())).orElse(Set.of());
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(XcfaLabel.NondetLabel nondetLabel, Void param) {
+                return nondetLabel.getLabels().stream().map(LabelUtils::getVars).reduce(
+                                (a, b) -> Streams.concat(a.stream(), b.stream()).collect(Collectors.toSet()))
+                        .orElse(Set.of());
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
-				return Set.of();
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(SkipStmt stmt, Void param) {
+                return Set.of();
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(AssumeStmt stmt, Void param) {
+                return StmtUtils.getVars(stmt);
+            }
 
-			@Override
-			public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt,
+                                                                        Void param) {
+                return StmtUtils.getVars(stmt);
+            }
 
-			@Override
-			public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt,
+                                                                        Void param) {
+                return StmtUtils.getVars(stmt);
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
+                return StmtUtils.getVars(stmt);
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(NonDetStmt stmt, Void param) {
+                return StmtUtils.getVars(stmt);
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(OrtStmt stmt, Void param) {
+                return StmtUtils.getVars(stmt);
+            }
 
-			@Override
-			public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
+            @Override
+            public Collection<VarDecl<?>> visit(LoopStmt stmt, Void param) {
+                return StmtUtils.getVars(stmt);
+            }
 
 
-			@Override
-			public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
-				return StmtUtils.getVars(stmt);
-			}
-		}, null);
-	}
+            @Override
+            public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
+                return StmtUtils.getVars(stmt);
+            }
+        }, null);
+    }
 
-	public static void getAssortedVars(XcfaLabel label, Set<VarDecl<?>> assignedToVars, Set<VarDecl<?>> usedUpVars) {
-		final Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> ret = Tuple2.of(assignedToVars, usedUpVars);
-		label.accept(new XcfaLabelVarCollector(), Tuple2.of(assignedToVars, usedUpVars));
-	}
+    public static void getAssortedVars(XcfaLabel label, Set<VarDecl<?>> assignedToVars,
+                                       Set<VarDecl<?>> usedUpVars) {
+        final Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> ret = Tuple2.of(assignedToVars, usedUpVars);
+        label.accept(new XcfaLabelVarCollector(), Tuple2.of(assignedToVars, usedUpVars));
+    }
 
-	public static Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> getAssortedVars(XcfaLabel label) {
-		Set<VarDecl<?>> assignedToVars = new LinkedHashSet<>();
-		Set<VarDecl<?>> usedUpVars = new LinkedHashSet<>();
-		getAssortedVars(label, assignedToVars, usedUpVars);
-		return Tuple2.of(assignedToVars, usedUpVars);
-	}
+    public static Tuple2<Set<VarDecl<?>>, Set<VarDecl<?>>> getAssortedVars(XcfaLabel label) {
+        Set<VarDecl<?>> assignedToVars = new LinkedHashSet<>();
+        Set<VarDecl<?>> usedUpVars = new LinkedHashSet<>();
+        getAssortedVars(label, assignedToVars, usedUpVars);
+        return Tuple2.of(assignedToVars, usedUpVars);
+    }
 
-	public static boolean isNotLocal(XcfaLabel label, Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
-		return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream().anyMatch(varDecl -> !localVars.containsKey(varDecl));
-	}
+    public static boolean isNotLocal(XcfaLabel label,
+                                     Map<VarDecl<?>, Optional<LitExpr<?>>> localVars) {
+        return label instanceof XcfaLabel.FenceXcfaLabel || getVars(label).stream()
+                .anyMatch(varDecl -> !localVars.containsKey(varDecl));
+    }
 }

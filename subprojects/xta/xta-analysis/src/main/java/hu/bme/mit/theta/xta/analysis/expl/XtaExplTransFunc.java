@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,21 +28,22 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 
 final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec> {
 
-	private XtaExplTransFunc(final XtaSystem system) {
-		// TODO remove parameter 'system'
-		checkNotNull(system);
-	}
+    private XtaExplTransFunc(final XtaSystem system) {
+        // TODO remove parameter 'system'
+        checkNotNull(system);
+    }
 
-	public static XtaExplTransFunc create(final XtaSystem system) {
-		return new XtaExplTransFunc(system);
-	}
+    public static XtaExplTransFunc create(final XtaSystem system) {
+        return new XtaExplTransFunc(system);
+    }
 
-	@Override
-	public Collection<ExplState> getSuccStates(final ExplState state, final XtaAction action, final UnitPrec prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
-		return singleton(XtaExplUtils.post(state, action));
-	}
+    @Override
+    public Collection<ExplState> getSuccStates(final ExplState state, final XtaAction action,
+                                               final UnitPrec prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
+        return singleton(XtaExplUtils.post(state, action));
+    }
 
 }

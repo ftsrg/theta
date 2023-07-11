@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,38 +28,40 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 final class ItpZoneTransFunc<A extends Action> implements TransFunc<ItpZoneState, A, ZonePrec> {
 
-	private final TransFunc<ZoneState, ? super A, ZonePrec> transFunc;
+    private final TransFunc<ZoneState, ? super A, ZonePrec> transFunc;
 
-	private ItpZoneTransFunc(final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
-		this.transFunc = checkNotNull(transFunc);
-	}
+    private ItpZoneTransFunc(final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+        this.transFunc = checkNotNull(transFunc);
+    }
 
-	public static <A extends Action> ItpZoneTransFunc<A> create(
-			final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
-		return new ItpZoneTransFunc<>(transFunc);
-	}
+    public static <A extends Action> ItpZoneTransFunc<A> create(
+            final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+        return new ItpZoneTransFunc<>(transFunc);
+    }
 
-	////
+    ////
 
-	@Override
-	public Collection<ItpZoneState> getSuccStates(final ItpZoneState state, final A action, final ZonePrec prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
+    @Override
+    public Collection<ItpZoneState> getSuccStates(final ItpZoneState state, final A action,
+                                                  final ZonePrec prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
 
-		final ZoneState subState = state.getConcrState();
-		final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState, action, prec);
+        final ZoneState subState = state.getConcrState();
+        final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState,
+                action, prec);
 
-		if (subSuccStates.isEmpty()) {
-			final ItpZoneState succState = ItpZoneState.of(ZoneState.bottom(), ZoneState.top());
-			return Collections.singleton(succState);
-		} else {
-			final Collection<ItpZoneState> result = new ArrayList<>(subSuccStates.size());
-			for (final ZoneState subSuccState : subSuccStates) {
-				final ItpZoneState succState = ItpZoneState.of(subSuccState, ZoneState.top());
-				result.add(succState);
-			}
-			return result;
-		}
-	}
+        if (subSuccStates.isEmpty()) {
+            final ItpZoneState succState = ItpZoneState.of(ZoneState.bottom(), ZoneState.top());
+            return Collections.singleton(succState);
+        } else {
+            final Collection<ItpZoneState> result = new ArrayList<>(subSuccStates.size());
+            for (final ZoneState subSuccState : subSuccStates) {
+                final ItpZoneState succState = ItpZoneState.of(subSuccState, ZoneState.top());
+                result.add(succState);
+            }
+            return result;
+        }
+    }
 }

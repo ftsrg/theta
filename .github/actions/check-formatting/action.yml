@@ -1,0 +1,13 @@
+name: 'Check formatting'
+description: 'Checking formatting'
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - name: Check for formatting
+      uses: leventeBajczi/intellij-idea-format@v1.0
+      with:
+        settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
+        file-mask: "*.java,*.kt"
+        additional-options: "-dry"

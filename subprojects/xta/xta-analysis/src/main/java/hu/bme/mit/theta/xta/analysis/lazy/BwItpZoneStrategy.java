@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,38 +28,38 @@ import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
 final class BwItpZoneStrategy<S extends State> extends ItpZoneStrategy<S> {
 
-	public BwItpZoneStrategy(final XtaSystem system, final Lens<S, ItpZoneState> lens) {
-		super(system, lens);
-	}
+    public BwItpZoneStrategy(final XtaSystem system, final Lens<S, ItpZoneState> lens) {
+        super(system, lens);
+    }
 
-	@Override
-	protected ZoneState blockZone(final ArgNode<S, XtaAction> node, final ZoneState zone,
-								  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
-		final ZoneState abstrState = getLens().get(node.getState()).getAbstrState();
-		if (abstrState.isConsistentWith(zone)) {
-			stats.refineZone();
+    @Override
+    protected ZoneState blockZone(final ArgNode<S, XtaAction> node, final ZoneState zone,
+                                  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+        final ZoneState abstrState = getLens().get(node.getState()).getAbstrState();
+        if (abstrState.isConsistentWith(zone)) {
+            stats.refineZone();
 
-			final ZoneState concrState = getLens().get(node.getState()).getConcrState();
-			final ZoneState interpolant = ZoneState.interpolant(concrState, zone);
+            final ZoneState concrState = getLens().get(node.getState()).getConcrState();
+            final ZoneState interpolant = ZoneState.interpolant(concrState, zone);
 
-			strengthen(node, interpolant);
-			maintainCoverage(node, interpolant, uncoveredNodes);
+            strengthen(node, interpolant);
+            maintainCoverage(node, interpolant, uncoveredNodes);
 
-			if (node.getInEdge().isPresent()) {
-				final ArgEdge<S, XtaAction> inEdge = node.getInEdge().get();
-				final XtaAction action = inEdge.getAction();
-				final ArgNode<S, XtaAction> parent = inEdge.getSource();
-				final Collection<ZoneState> badZones = interpolant.complement();
-				for (final ZoneState badZone : badZones) {
-					final ZoneState preBadZone = pre(badZone, action);
-					blockZone(parent, preBadZone, uncoveredNodes, stats);
-				}
-			}
+            if (node.getInEdge().isPresent()) {
+                final ArgEdge<S, XtaAction> inEdge = node.getInEdge().get();
+                final XtaAction action = inEdge.getAction();
+                final ArgNode<S, XtaAction> parent = inEdge.getSource();
+                final Collection<ZoneState> badZones = interpolant.complement();
+                for (final ZoneState badZone : badZones) {
+                    final ZoneState preBadZone = pre(badZone, action);
+                    blockZone(parent, preBadZone, uncoveredNodes, stats);
+                }
+            }
 
-			return interpolant;
-		} else {
-			return abstrState;
-		}
-	}
+            return interpolant;
+        } else {
+            return abstrState;
+        }
+    }
 
 }

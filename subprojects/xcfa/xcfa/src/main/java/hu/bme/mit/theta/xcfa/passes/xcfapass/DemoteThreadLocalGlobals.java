@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,19 +27,21 @@ import java.util.Map;
 import java.util.Optional;
 
 public class DemoteThreadLocalGlobals extends XcfaPass {
-	@Override
-	public XCFA.Builder run(XCFA.Builder builder) {
-		for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> entry : new ArrayList<>(builder.getGlobalVars().entrySet())) {
-			VarDecl<?> varDecl = entry.getKey();
-			Optional<LitExpr<?>> litExpr = entry.getValue();
 
-			if (CComplexType.getType(varDecl.getRef()).isThreadLocal()) {
-				builder.getGlobalVars().remove(varDecl);
-				for (XcfaProcess.Builder process : builder.getProcesses()) {
-					process.createVar(varDecl, litExpr.orElse(null));
-				}
-			}
-		}
-		return builder;
-	}
+    @Override
+    public XCFA.Builder run(XCFA.Builder builder) {
+        for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> entry : new ArrayList<>(
+                builder.getGlobalVars().entrySet())) {
+            VarDecl<?> varDecl = entry.getKey();
+            Optional<LitExpr<?>> litExpr = entry.getValue();
+
+            if (CComplexType.getType(varDecl.getRef()).isThreadLocal()) {
+                builder.getGlobalVars().remove(varDecl);
+                for (XcfaProcess.Builder process : builder.getProcesses()) {
+                    process.createVar(varDecl, litExpr.orElse(null));
+                }
+            }
+        }
+        return builder;
+    }
 }

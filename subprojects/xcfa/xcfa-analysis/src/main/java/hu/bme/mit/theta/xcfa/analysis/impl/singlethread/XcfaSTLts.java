@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,17 +25,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public final class XcfaSTLts implements LTS<XcfaSTState<?>, XcfaSTAction> {
-	@Override
-	public Collection<XcfaSTAction> getEnabledActionsFor(final XcfaSTState<?> state) {
-		final Collection<XcfaSTAction> xcfaActions = new ArrayList<>();
-		final XcfaLocation loc = state.getCurrentLoc();
-		for (XcfaEdge outgoingEdge : loc.getOutgoingEdges()) {
-			final XcfaSTAction xcfaAction = FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON ?
-					XcfaSTAction.create(outgoingEdge) :
-					XcfaSTAction.createWithVars(outgoingEdge, ((XcfaSTStateStack<?>) state).getCurrentVars());
-			xcfaActions.add(xcfaAction);
-		}
-		return xcfaActions;
-	}
+
+    @Override
+    public Collection<XcfaSTAction> getEnabledActionsFor(final XcfaSTState<?> state) {
+        final Collection<XcfaSTAction> xcfaActions = new ArrayList<>();
+        final XcfaLocation loc = state.getCurrentLoc();
+        for (XcfaEdge outgoingEdge : loc.getOutgoingEdges()) {
+            final XcfaSTAction xcfaAction =
+                    FunctionInlining.inlining == FunctionInlining.InlineFunctions.ON ?
+                            XcfaSTAction.create(outgoingEdge) :
+                            XcfaSTAction.createWithVars(outgoingEdge,
+                                    ((XcfaSTStateStack<?>) state).getCurrentVars());
+            xcfaActions.add(xcfaAction);
+        }
+        return xcfaActions;
+    }
 
 }

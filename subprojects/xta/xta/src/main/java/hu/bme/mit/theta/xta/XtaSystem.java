@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,70 +30,71 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 public final class XtaSystem {
-	private final List<XtaProcess> processes;
-	private final Collection<VarDecl<?>> dataVars;
-	private final Collection<VarDecl<RatType>> clockVars;
-	private final MutableValuation initVal;
 
-	private final List<XtaProcess> unmodProcesses;
-	private final Collection<VarDecl<?>> unmodDataVars;
-	private final Collection<VarDecl<RatType>> unmodClockVars;
+    private final List<XtaProcess> processes;
+    private final Collection<VarDecl<?>> dataVars;
+    private final Collection<VarDecl<RatType>> clockVars;
+    private final MutableValuation initVal;
 
-	private XtaSystem() {
-		processes = new ArrayList<>();
-		dataVars = Containers.createSet();
-		clockVars = Containers.createSet();
-		initVal = new MutableValuation();
+    private final List<XtaProcess> unmodProcesses;
+    private final Collection<VarDecl<?>> unmodDataVars;
+    private final Collection<VarDecl<RatType>> unmodClockVars;
 
-		unmodProcesses = Collections.unmodifiableList(processes);
-		unmodDataVars = Collections.unmodifiableCollection(dataVars);
-		unmodClockVars = Collections.unmodifiableCollection(clockVars);
-	}
+    private XtaSystem() {
+        processes = new ArrayList<>();
+        dataVars = Containers.createSet();
+        clockVars = Containers.createSet();
+        initVal = new MutableValuation();
 
-	public static XtaSystem create() {
-		return new XtaSystem();
-	}
+        unmodProcesses = Collections.unmodifiableList(processes);
+        unmodDataVars = Collections.unmodifiableCollection(dataVars);
+        unmodClockVars = Collections.unmodifiableCollection(clockVars);
+    }
 
-	public List<XtaProcess> getProcesses() {
-		return unmodProcesses;
-	}
+    public static XtaSystem create() {
+        return new XtaSystem();
+    }
 
-	public Collection<VarDecl<?>> getDataVars() {
-		return unmodDataVars;
-	}
+    public List<XtaProcess> getProcesses() {
+        return unmodProcesses;
+    }
 
-	public Collection<VarDecl<RatType>> getClockVars() {
-		return unmodClockVars;
-	}
+    public Collection<VarDecl<?>> getDataVars() {
+        return unmodDataVars;
+    }
 
-	// TODO Return value is not immutable
-	public Valuation getInitVal() {
-		return initVal;
-	}
+    public Collection<VarDecl<RatType>> getClockVars() {
+        return unmodClockVars;
+    }
 
-	public List<Loc> getInitLocs() {
-		return processes.stream().map(XtaProcess::getInitLoc).collect(toImmutableList());
-	}
+    // TODO Return value is not immutable
+    public Valuation getInitVal() {
+        return initVal;
+    }
 
-	////
+    public List<Loc> getInitLocs() {
+        return processes.stream().map(XtaProcess::getInitLoc).collect(toImmutableList());
+    }
 
-	public void addDataVar(final VarDecl<?> varDecl, final LitExpr<?> initValue) {
-		checkNotNull(varDecl);
-		checkNotNull(initValue);
-		checkArgument(!clockVars.contains(varDecl));
-		dataVars.add(varDecl);
-		initVal.put(varDecl, initValue);
-	}
+    ////
 
-	public void addClockVar(final VarDecl<RatType> varDecl) {
-		checkNotNull(varDecl);
-		checkArgument(!dataVars.contains(varDecl));
-		clockVars.add(varDecl);
-	}
+    public void addDataVar(final VarDecl<?> varDecl, final LitExpr<?> initValue) {
+        checkNotNull(varDecl);
+        checkNotNull(initValue);
+        checkArgument(!clockVars.contains(varDecl));
+        dataVars.add(varDecl);
+        initVal.put(varDecl, initValue);
+    }
 
-	public XtaProcess createProcess(final String name) {
-		final XtaProcess process = XtaProcess.create(this, name);
-		processes.add(process);
-		return process;
-	}
+    public void addClockVar(final VarDecl<RatType> varDecl) {
+        checkNotNull(varDecl);
+        checkArgument(!dataVars.contains(varDecl));
+        clockVars.add(varDecl);
+    }
+
+    public XtaProcess createProcess(final String name) {
+        final XtaProcess process = XtaProcess.create(this, name);
+        processes.add(process);
+        return process;
+    }
 }

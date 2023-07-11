@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,14 +22,15 @@ import java.util.Collection;
  */
 @FunctionalInterface
 public interface TransFunc<S extends State, A extends Action, P extends Prec> {
-	/**
-	 * Gets successor states of a state with a given action and precision.
-	 *
-	 * @param state
-	 * @param action
-	 * @param prec
-	 * @return Collection of successor states
-	 */
-	Collection<? extends S> getSuccStates(S state, A action, P prec);
+
+    /**
+     * Gets successor states of a state with a given action and precision.
+     *
+     * @param state
+     * @param action
+     * @param prec
+     * @return Collection of successor states
+     */
+    Collection<? extends S> getSuccStates(S state, A action, P prec);
 
 }

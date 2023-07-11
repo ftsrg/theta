@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,35 +26,36 @@ import hu.bme.mit.theta.core.utils.IndexedVars;
  */
 public final class VarsRefutation implements Refutation {
 
-	private final IndexedVars indexedVars;
-	private final int pruneIndex;
+    private final IndexedVars indexedVars;
+    private final int pruneIndex;
 
-	private VarsRefutation(final IndexedVars indexedVars) {
-		checkNotNull(indexedVars);
-		checkArgument(!indexedVars.isEmpty(), "Trying to create refutation with empty set of variables");
-		this.indexedVars = indexedVars;
-		int i = 0;
-		while (indexedVars.getVars(i).isEmpty()) {
-			++i;
-		}
-		this.pruneIndex = i;
-	}
+    private VarsRefutation(final IndexedVars indexedVars) {
+        checkNotNull(indexedVars);
+        checkArgument(!indexedVars.isEmpty(),
+                "Trying to create refutation with empty set of variables");
+        this.indexedVars = indexedVars;
+        int i = 0;
+        while (indexedVars.getVars(i).isEmpty()) {
+            ++i;
+        }
+        this.pruneIndex = i;
+    }
 
-	public static VarsRefutation create(final IndexedVars indexedVars) {
-		return new VarsRefutation(indexedVars);
-	}
+    public static VarsRefutation create(final IndexedVars indexedVars) {
+        return new VarsRefutation(indexedVars);
+    }
 
-	public IndexedVars getVarSets() {
-		return indexedVars;
-	}
+    public IndexedVars getVarSets() {
+        return indexedVars;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).add(indexedVars).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(indexedVars).toString();
+    }
 
-	@Override
-	public int getPruneIndex() {
-		return pruneIndex;
-	}
+    @Override
+    public int getPruneIndex() {
+        return pruneIndex;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,21 +38,25 @@ public final class Prod2ExplPredAnalysis<A extends ExprAction>
     private final InitFunc<Prod2State<ExplState, PredState>, Prod2Prec<ExplPrec, PredPrec>> initFunc;
     private final TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> transFunc;
 
-    private Prod2ExplPredAnalysis(final Analysis<ExplState, ? super A, ExplPrec> analysis1, final Analysis<PredState, ? super A, PredPrec> analysis2,
-                          final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator,
-                          final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
+    private Prod2ExplPredAnalysis(final Analysis<ExplState, ? super A, ExplPrec> analysis1,
+                                  final Analysis<PredState, ? super A, PredPrec> analysis2,
+                                  final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator,
+                                  final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
         checkNotNull(analysis1);
         checkNotNull(analysis2);
         partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());
-        initFunc = Prod2InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(), strenghteningOperator);
+        initFunc = Prod2InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(),
+                strenghteningOperator);
         transFunc = Prod2ExplPredDedicatedTransFunc.create(prod2ExplPredAbstractor);
     }
 
     public static <A extends ExprAction> Prod2ExplPredAnalysis<A> create(
-            final Analysis<ExplState, ? super A, ExplPrec> analysis1, final Analysis<PredState, ? super A, PredPrec> analysis2,
+            final Analysis<ExplState, ? super A, ExplPrec> analysis1,
+            final Analysis<PredState, ? super A, PredPrec> analysis2,
             final StrengtheningOperator<ExplState, PredState, ExplPrec, PredPrec> strenghteningOperator,
             final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
-        return new Prod2ExplPredAnalysis<A>(analysis1, analysis2, strenghteningOperator, prod2ExplPredAbstractor);
+        return new Prod2ExplPredAnalysis<A>(analysis1, analysis2, strenghteningOperator,
+                prod2ExplPredAbstractor);
     }
 
     @Override

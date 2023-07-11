@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.cvc4;
 
 import hu.bme.mit.theta.common.OsHelper;
@@ -33,17 +48,19 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     }
 
     @Override
-    protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
+    protected void installSolver(final Path installDir, final String version)
+            throws SmtLibSolverInstallerException {
 
-        try(
-            final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
-            final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName()).toAbsolutePath().toString()).getChannel()
+        try (
+                final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
+                final var outputChannel = new FileOutputStream(
+                        installDir.resolve(getSolverBinaryName()).toAbsolutePath().toString()).getChannel()
         ) {
-            logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", getDownloadUrl(version).toString());
+            logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n",
+                    getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
             installDir.resolve(getSolverBinaryName()).toFile().setExecutable(true, true);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
 
@@ -57,17 +74,19 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] {
-            "--lang", "smt2",
-            "--output-lang", "smt2",
-            "--quiet",
-            "--incremental"
+        return new String[]{
+                "--lang", "smt2",
+                "--output-lang", "smt2",
+                "--quiet",
+                "--incremental"
         };
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
+    public SolverFactory getSolverFactory(final Path installDir, final String version,
+                                          final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath =
+                solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
         return CVC4SmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
@@ -76,40 +95,39 @@ public class CVC4SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         return Arrays.asList("1.8", "1.7", "1.6", "1.5", "1.4", "1.3", "1.2", "1.1", "1.0");
     }
 
-    private URL getDownloadUrl(final String version) throws SmtLibSolverInstallerException, MalformedURLException {
+    private URL getDownloadUrl(final String version)
+            throws SmtLibSolverInstallerException, MalformedURLException {
         final var os = OsHelper.getOs();
         final var arch = OsHelper.getArch();
 
         final String archString;
         final String platformExtension;
-        if(arch != X64) {
+        if (arch != X64) {
             throw new SmtLibSolverInstallerException("cvc4 is available only for x64 architecture");
-        }
-        else if(os != LINUX && os != WINDOWS) {
-            throw new SmtLibSolverInstallerException("cvc4 is available only for Windows and Linux");
-        }
-        else if(os == LINUX) {
+        } else if (os != LINUX && os != WINDOWS) {
+            throw new SmtLibSolverInstallerException(
+                    "cvc4 is available only for Windows and Linux");
+        } else if (os == LINUX) {
             archString = "x86_64-linux-opt";
             platformExtension = "";
-        }
-        else /* if(os == WINDOWS) */ {
-            if(SemVer.of(version).compareTo(SemVer.of("1.6")) >= 0) {
+        } else /* if(os == WINDOWS) */ {
+            if (SemVer.of(version).compareTo(SemVer.of("1.6")) >= 0) {
                 archString = "win64-opt";
                 platformExtension = ".exe";
-            }
-            else {
-                throw new SmtLibSolverInstallerException("Windows platform is only supported for version 1.6 and forward");
+            } else {
+                throw new SmtLibSolverInstallerException(
+                        "Windows platform is only supported for version 1.6 and forward");
             }
         }
 
         return URI.create(String.format(
-            "https://cvc4.cs.stanford.edu/downloads/builds/%s/cvc4-%s-%s%s",
-            archString, version, archString, platformExtension
+                "https://cvc4.cs.stanford.edu/downloads/builds/%s/cvc4-%s-%s%s",
+                archString, version, archString, platformExtension
         )).toURL();
     }
 
     private String getSolverBinaryName() {
-        switch(OsHelper.getOs()) {
+        switch (OsHelper.getOs()) {
             case WINDOWS:
                 return "cvc4.exe";
             case LINUX:

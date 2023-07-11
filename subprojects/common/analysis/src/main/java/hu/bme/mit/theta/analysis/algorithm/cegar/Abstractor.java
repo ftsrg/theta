@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,25 +21,25 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 
 /**
- * Common interface for the abstractor component. It can create an initial ARG
- * and check an ARG with a given precision.
+ * Common interface for the abstractor component. It can create an initial ARG and check an ARG with
+ * a given precision.
  */
 public interface Abstractor<S extends State, A extends Action, P extends Prec> {
 
-	/**
-	 * Create initial ARG.
-	 *
-	 * @return
-	 */
-	ARG<S, A> createArg();
+    /**
+     * Create initial ARG.
+     *
+     * @return
+     */
+    ARG<S, A> createArg();
 
-	/**
-	 * Check ARG with given precision.
-	 *
-	 * @param arg
-	 * @param prec
-	 * @return
-	 */
-	AbstractorResult check(ARG<S, A> arg, P prec);
+    /**
+     * Check ARG with given precision.
+     *
+     * @param arg
+     * @param prec
+     * @return
+     */
+    AbstractorResult check(ARG<S, A> arg, P prec);
 
 }

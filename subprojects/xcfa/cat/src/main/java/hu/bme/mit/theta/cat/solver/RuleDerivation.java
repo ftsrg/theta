@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,249 +17,259 @@
 package hu.bme.mit.theta.cat.solver;
 
 public abstract class RuleDerivation {
-	private final String rule;
 
-	public RuleDerivation(final String rule) {
-		this.rule = rule;
-	}
+    private final String rule;
 
-	public String getRule() {
-		return rule;
-	}
+    public RuleDerivation(final String rule) {
+        this.rule = rule;
+    }
 
-	public abstract <P, R> R accept(final RuleDerivationVisitor<P, R> derivationVisitor, P param);
+    public String getRule() {
+        return rule;
+    }
 
-	public abstract int getArity();
+    public abstract <P, R> R accept(final RuleDerivationVisitor<P, R> derivationVisitor, P param);
 
-	public static class Element extends RuleDerivation {
-		private final int arity;
+    public abstract int getArity();
 
-		public Element(String rule, int arity) {
-			super(rule);
-			this.arity = arity;
-		}
+    public static class Element extends RuleDerivation {
 
-		public int getArity() {
-			return arity;
-		}
+        private final int arity;
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
-	}
+        public Element(String rule, int arity) {
+            super(rule);
+            this.arity = arity;
+        }
 
-	public static class Union extends RuleDerivation {
-		private final RuleDerivation lhs;
-		private final RuleDerivation rhs;
+        public int getArity() {
+            return arity;
+        }
 
-		public Union(String rule, RuleDerivation lhs, RuleDerivation rhs) {
-			super(rule);
-			this.lhs = lhs;
-			this.rhs = rhs;
-		}
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
+    }
 
-		public RuleDerivation getLhs() {
-			return lhs;
-		}
+    public static class Union extends RuleDerivation {
 
-		public RuleDerivation getRhs() {
-			return rhs;
-		}
+        private final RuleDerivation lhs;
+        private final RuleDerivation rhs;
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
+        public Union(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+            super(rule);
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
 
-		@Override
-		public int getArity() {
-			return lhs.getArity();
-		}
-	}
+        public RuleDerivation getLhs() {
+            return lhs;
+        }
 
-	public static class Intersection extends RuleDerivation {
-		private final RuleDerivation lhs;
-		private final RuleDerivation rhs;
+        public RuleDerivation getRhs() {
+            return rhs;
+        }
 
-		public Intersection(String rule, RuleDerivation lhs, RuleDerivation rhs) {
-			super(rule);
-			this.lhs = lhs;
-			this.rhs = rhs;
-		}
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
 
-		public RuleDerivation getLhs() {
-			return lhs;
-		}
+        @Override
+        public int getArity() {
+            return lhs.getArity();
+        }
+    }
 
-		public RuleDerivation getRhs() {
-			return rhs;
-		}
+    public static class Intersection extends RuleDerivation {
 
-		@Override
-		public int getArity() {
-			return lhs.getArity();
-		}
+        private final RuleDerivation lhs;
+        private final RuleDerivation rhs;
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
-	}
+        public Intersection(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+            super(rule);
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
 
-	public static class Difference extends RuleDerivation {
-		private final RuleDerivation lhs;
-		private final RuleDerivation rhs;
+        public RuleDerivation getLhs() {
+            return lhs;
+        }
 
-		public Difference(String rule, RuleDerivation lhs, RuleDerivation rhs) {
-			super(rule);
-			this.lhs = lhs;
-			this.rhs = rhs;
-		}
+        public RuleDerivation getRhs() {
+            return rhs;
+        }
 
-		public RuleDerivation getLhs() {
-			return lhs;
-		}
+        @Override
+        public int getArity() {
+            return lhs.getArity();
+        }
 
-		public RuleDerivation getRhs() {
-			return rhs;
-		}
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
+    }
 
-		@Override
-		public int getArity() {
-			return lhs.getArity();
-		}
+    public static class Difference extends RuleDerivation {
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
-	}
+        private final RuleDerivation lhs;
+        private final RuleDerivation rhs;
 
-	public static class Inverse extends RuleDerivation {
-		private final RuleDerivation lhs;
+        public Difference(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+            super(rule);
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
 
-		public Inverse(String rule, RuleDerivation lhs) {
-			super(rule);
-			this.lhs = lhs;
-		}
+        public RuleDerivation getLhs() {
+            return lhs;
+        }
 
-		public RuleDerivation getLhs() {
-			return lhs;
-		}
+        public RuleDerivation getRhs() {
+            return rhs;
+        }
 
-		@Override
-		public int getArity() {
-			return lhs.getArity();
-		}
+        @Override
+        public int getArity() {
+            return lhs.getArity();
+        }
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
-	}
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
+    }
 
-	public static class Transitive extends RuleDerivation {
-		private final Element lhs;
+    public static class Inverse extends RuleDerivation {
 
-		public Transitive(String rule, Element lhs) {
-			super(rule);
-			this.lhs = lhs;
-		}
+        private final RuleDerivation lhs;
 
-		public Element getLhs() {
-			return lhs;
-		}
+        public Inverse(String rule, RuleDerivation lhs) {
+            super(rule);
+            this.lhs = lhs;
+        }
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
+        public RuleDerivation getLhs() {
+            return lhs;
+        }
 
-		@Override
-		public int getArity() {
-			return lhs.getArity();
-		}
-	}
+        @Override
+        public int getArity() {
+            return lhs.getArity();
+        }
 
-	public static class SelfOrTransitive extends RuleDerivation {
-		private final Element lhs;
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
+    }
 
-		public SelfOrTransitive(String rule, Element lhs) {
-			super(rule);
-			this.lhs = lhs;
-		}
+    public static class Transitive extends RuleDerivation {
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
+        private final Element lhs;
 
-		public Element getLhs() {
-			return lhs;
-		}
+        public Transitive(String rule, Element lhs) {
+            super(rule);
+            this.lhs = lhs;
+        }
 
-		@Override
-		public int getArity() {
-			return lhs.getArity();
-		}
-	}
+        public Element getLhs() {
+            return lhs;
+        }
 
-	public static class Consecutive extends RuleDerivation {
-		private final RuleDerivation lhs;
-		private final RuleDerivation rhs;
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
 
-		public Consecutive(String rule, RuleDerivation lhs, RuleDerivation rhs) {
-			super(rule);
-			this.lhs = lhs;
-			this.rhs = rhs;
-		}
+        @Override
+        public int getArity() {
+            return lhs.getArity();
+        }
+    }
 
-		public RuleDerivation getLhs() {
-			return lhs;
-		}
+    public static class SelfOrTransitive extends RuleDerivation {
 
-		public RuleDerivation getRhs() {
-			return rhs;
-		}
+        private final Element lhs;
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
+        public SelfOrTransitive(String rule, Element lhs) {
+            super(rule);
+            this.lhs = lhs;
+        }
 
-		@Override
-		public int getArity() {
-			return lhs.getArity();
-		}
-	}
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
 
-	public static class CartesianProduct extends RuleDerivation {
-		private final RuleDerivation lhs;
-		private final RuleDerivation rhs;
+        public Element getLhs() {
+            return lhs;
+        }
 
-		public CartesianProduct(String rule, RuleDerivation lhs, RuleDerivation rhs) {
-			super(rule);
-			this.lhs = lhs;
-			this.rhs = rhs;
-		}
+        @Override
+        public int getArity() {
+            return lhs.getArity();
+        }
+    }
 
-		public RuleDerivation getLhs() {
-			return lhs;
-		}
+    public static class Consecutive extends RuleDerivation {
 
-		public RuleDerivation getRhs() {
-			return rhs;
-		}
+        private final RuleDerivation lhs;
+        private final RuleDerivation rhs;
 
-		@Override
-		public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
-			return derivationVisitor.visit(this, param);
-		}
+        public Consecutive(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+            super(rule);
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
 
-		@Override
-		public int getArity() {
-			return lhs.getArity() + rhs.getArity();
-		}
-	}
+        public RuleDerivation getLhs() {
+            return lhs;
+        }
+
+        public RuleDerivation getRhs() {
+            return rhs;
+        }
+
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
+
+        @Override
+        public int getArity() {
+            return lhs.getArity();
+        }
+    }
+
+    public static class CartesianProduct extends RuleDerivation {
+
+        private final RuleDerivation lhs;
+        private final RuleDerivation rhs;
+
+        public CartesianProduct(String rule, RuleDerivation lhs, RuleDerivation rhs) {
+            super(rule);
+            this.lhs = lhs;
+            this.rhs = rhs;
+        }
+
+        public RuleDerivation getLhs() {
+            return lhs;
+        }
+
+        public RuleDerivation getRhs() {
+            return rhs;
+        }
+
+        @Override
+        public <P, R> R accept(RuleDerivationVisitor<P, R> derivationVisitor, P param) {
+            return derivationVisitor.visit(this, param);
+        }
+
+        @Override
+        public int getArity() {
+            return lhs.getArity() + rhs.getArity();
+        }
+    }
 }

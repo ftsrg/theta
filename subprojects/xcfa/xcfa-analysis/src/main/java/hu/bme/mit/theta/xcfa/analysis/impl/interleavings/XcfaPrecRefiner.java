@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,35 +28,36 @@ import hu.bme.mit.theta.xcfa.analysis.common.XcfaState;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XcfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
-		implements PrecRefiner<XcfaState<S>, A, XcfaPrec<P>, R> {
+        implements PrecRefiner<XcfaState<S>, A, XcfaPrec<P>, R> {
 
-	private final RefutationToPrec<P, R> refToPrec;
+    private final RefutationToPrec<P, R> refToPrec;
 
-	private XcfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
-		this.refToPrec = checkNotNull(refToPrec);
-	}
+    private XcfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+        this.refToPrec = checkNotNull(refToPrec);
+    }
 
-	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> XcfaPrecRefiner<S, A, P, R> create(
-			final RefutationToPrec<P, R> refToPrec) {
-		return new XcfaPrecRefiner<>(refToPrec);
-	}
+    public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> XcfaPrecRefiner<S, A, P, R> create(
+            final RefutationToPrec<P, R> refToPrec) {
+        return new XcfaPrecRefiner<>(refToPrec);
+    }
 
-	@Override
-	public XcfaPrec<P> refine(final XcfaPrec<P> prec, final Trace<XcfaState<S>, A> trace, final R refutation) {
-		checkNotNull(trace);
-		checkNotNull(prec);
-		checkNotNull(refutation);
-		P runningPrec = prec.getGlobalPrec();
-		for (int i = 0; i < trace.getStates().size(); ++i) {
-			final P precFromRef = refToPrec.toPrec(refutation, i);
-			runningPrec = refToPrec.join(runningPrec, precFromRef);
-		}
-		return prec.refine(runningPrec);
-	}
+    @Override
+    public XcfaPrec<P> refine(final XcfaPrec<P> prec, final Trace<XcfaState<S>, A> trace,
+                              final R refutation) {
+        checkNotNull(trace);
+        checkNotNull(prec);
+        checkNotNull(refutation);
+        P runningPrec = prec.getGlobalPrec();
+        for (int i = 0; i < trace.getStates().size(); ++i) {
+            final P precFromRef = refToPrec.toPrec(refutation, i);
+            runningPrec = refToPrec.join(runningPrec, precFromRef);
+        }
+        return prec.refine(runningPrec);
+    }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 
 }

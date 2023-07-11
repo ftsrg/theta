@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,39 +49,39 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 @RunWith(Parameterized.class)
 public class ExprVarCollectorTest {
 
-	private static final VarDecl<BoolType> VA = Var("a", Bool());
-	private static final VarDecl<IntType> VB = Var("b", Int());
-	private static final VarDecl<RatType> VC = Var("c", Rat());
-	private static final VarDecl<BoolType> VD = Var("d", Bool());
+    private static final VarDecl<BoolType> VA = Var("a", Bool());
+    private static final VarDecl<IntType> VB = Var("b", Int());
+    private static final VarDecl<RatType> VC = Var("c", Rat());
+    private static final VarDecl<BoolType> VD = Var("d", Bool());
 
-	private static final Expr<BoolType> A = VA.getRef();
-	private static final Expr<IntType> B = VB.getRef();
-	private static final Expr<RatType> C = VC.getRef();
-	private static final Expr<BoolType> D = VD.getRef();
+    private static final Expr<BoolType> A = VA.getRef();
+    private static final Expr<IntType> B = VB.getRef();
+    private static final Expr<RatType> C = VC.getRef();
+    private static final Expr<BoolType> D = VD.getRef();
 
-	@Parameter(value = 0)
-	public Expr<Type> expr;
+    @Parameter(value = 0)
+    public Expr<Type> expr;
 
-	@Parameter(value = 1)
-	public Set<VarDecl<?>> expectedVars;
+    @Parameter(value = 1)
+    public Set<VarDecl<?>> expectedVars;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{And(True(), False(), Eq(Int(1), Int(2))), of()},
+                {And(True(), False(), Eq(Int(1), Int(2))), of()},
 
-				{And(A, Not(D)), of(VA, VD)},
+                {And(A, Not(D)), of(VA, VD)},
 
-				{And(A, Eq(Int(1), B)), of(VA, VB)},
+                {And(A, Eq(Int(1), B)), of(VA, VB)},
 
-				{And(Imply(A, D), Eq(C, Rat(2, 3))), of(VA, VC, VD)},});
-	}
+                {And(Imply(A, D), Eq(C, Rat(2, 3))), of(VA, VC, VD)},});
+    }
 
-	@Test
-	public void test() {
-		final Set<VarDecl<?>> vars = ExprUtils.getVars(expr);
-		assertEquals(expectedVars, vars);
-	}
+    @Test
+    public void test() {
+        final Set<VarDecl<?>> vars = ExprUtils.getVars(expr);
+        assertEquals(expectedVars, vars);
+    }
 
 }

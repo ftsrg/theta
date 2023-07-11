@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,26 +25,26 @@ import com.microsoft.z3.Solver;
 
 public final class Z3ModelTest {
 
-	static {
-		Z3SolverFactory.getInstance();
-	}
+    static {
+        Z3SolverFactory.getInstance();
+    }
 
-	@Test
-	public void test() {
-		final Context context = new Context();
-		final Solver solver = context.mkSimpleSolver();
+    @Test
+    public void test() {
+        final Context context = new Context();
+        final Solver solver = context.mkSimpleSolver();
 
-		final BoolExpr a = context.mkBoolConst("a");
-		final BoolExpr b = context.mkBoolConst("b");
-		final BoolExpr expr = context.mkOr(a, b);
+        final BoolExpr a = context.mkBoolConst("a");
+        final BoolExpr b = context.mkBoolConst("b");
+        final BoolExpr expr = context.mkOr(a, b);
 
-		solver.add(expr);
-		solver.check();
-		final Model model = solver.getModel();
+        solver.add(expr);
+        solver.check();
+        final Model model = solver.getModel();
 
-		Assert.assertTrue(model.getConstInterp(a).isTrue());
-		Assert.assertNull(model.getConstInterp(b));
+        Assert.assertTrue(model.getConstInterp(a).isTrue());
+        Assert.assertNull(model.getConstInterp(b));
 
-		context.close();
-	}
+        context.close();
+    }
 }

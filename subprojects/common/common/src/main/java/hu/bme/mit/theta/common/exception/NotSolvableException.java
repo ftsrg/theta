@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package hu.bme.mit.theta.common.exception;
 
 public class NotSolvableException extends RuntimeException {
-	public NotSolvableException() {
-		super("Task is not solvable with this configuration!");
-	}
+
+    public NotSolvableException() {
+        super("Task is not solvable with this configuration!");
+    }
 }

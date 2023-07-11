@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,61 +31,62 @@ import hu.bme.mit.theta.sts.STS;
 
 public final class StsSpec {
 
-	private final StsSpecSymbol stsSpecSymbol;
-	private final Substitution assignment;
+    private final StsSpecSymbol stsSpecSymbol;
+    private final Substitution assignment;
 
-	private StsSpec(final StsSpecSymbol stsSpecSymbol, final Substitution assignment) {
-		this.stsSpecSymbol = checkNotNull(stsSpecSymbol);
-		this.assignment = checkNotNull(assignment);
-	}
+    private StsSpec(final StsSpecSymbol stsSpecSymbol, final Substitution assignment) {
+        this.stsSpecSymbol = checkNotNull(stsSpecSymbol);
+        this.assignment = checkNotNull(assignment);
+    }
 
-	static StsSpec create(final StsSpecSymbol stsSpecSymbol, final Substitution assignment) {
-		return new StsSpec(stsSpecSymbol, assignment);
-	}
+    static StsSpec create(final StsSpecSymbol stsSpecSymbol, final Substitution assignment) {
+        return new StsSpec(stsSpecSymbol, assignment);
+    }
 
-	////
+    ////
 
-	public Collection<STS> getAllSts() {
-		return stsSpecSymbol.getPropDeclSymbols().stream().map(s -> s.instantiate(assignment)).collect(toList());
-	}
+    public Collection<STS> getAllSts() {
+        return stsSpecSymbol.getPropDeclSymbols().stream().map(s -> s.instantiate(assignment))
+                .collect(toList());
+    }
 
-	////
+    ////
 
-	public STS createSts(final String name, final Expr<?>... args) {
-		return createSts(name, Arrays.asList(args));
-	}
+    public STS createSts(final String name, final Expr<?>... args) {
+        return createSts(name, Arrays.asList(args));
+    }
 
-	public STS createSts(final String name, final List<? extends Expr<?>> args) {
-		final StsDeclSymbol stsDeclSymbol = resolveStsDeclSymbol(name);
-		final StsDefScope stsDefScope = stsDeclSymbol.instantiate(assignment, args);
-		final STS sts = stsDefScope.getSts();
-		return sts;
-	}
+    public STS createSts(final String name, final List<? extends Expr<?>> args) {
+        final StsDeclSymbol stsDeclSymbol = resolveStsDeclSymbol(name);
+        final StsDefScope stsDefScope = stsDeclSymbol.instantiate(assignment, args);
+        final STS sts = stsDefScope.getSts();
+        return sts;
+    }
 
-	private StsDeclSymbol resolveStsDeclSymbol(final String name) {
-		final Optional<Symbol> optSymbol = stsSpecSymbol.resolve(name);
-		checkArgument(optSymbol.isPresent());
-		final Symbol symbol = optSymbol.get();
-		checkArgument(symbol instanceof StsDeclSymbol);
-		final StsDeclSymbol stsDeclSymbol = (StsDeclSymbol) symbol;
-		return stsDeclSymbol;
-	}
+    private StsDeclSymbol resolveStsDeclSymbol(final String name) {
+        final Optional<Symbol> optSymbol = stsSpecSymbol.resolve(name);
+        checkArgument(optSymbol.isPresent());
+        final Symbol symbol = optSymbol.get();
+        checkArgument(symbol instanceof StsDeclSymbol);
+        final StsDeclSymbol stsDeclSymbol = (StsDeclSymbol) symbol;
+        return stsDeclSymbol;
+    }
 
-	////
+    ////
 
-	public STS createProp(final String name) {
-		final PropDeclSymbol propDeclSymbol = resolvePropDeclSymbol(name);
-		final STS sts = propDeclSymbol.instantiate(assignment);
-		return sts;
-	}
+    public STS createProp(final String name) {
+        final PropDeclSymbol propDeclSymbol = resolvePropDeclSymbol(name);
+        final STS sts = propDeclSymbol.instantiate(assignment);
+        return sts;
+    }
 
-	private PropDeclSymbol resolvePropDeclSymbol(final String name) {
-		final Optional<Symbol> optSymbol = stsSpecSymbol.resolve(name);
-		checkArgument(optSymbol.isPresent(), "Property not found");
-		final Symbol symbol = optSymbol.get();
-		checkArgument(symbol instanceof PropDeclSymbol);
-		final PropDeclSymbol propDeclSymbol = (PropDeclSymbol) symbol;
-		return propDeclSymbol;
-	}
+    private PropDeclSymbol resolvePropDeclSymbol(final String name) {
+        final Optional<Symbol> optSymbol = stsSpecSymbol.resolve(name);
+        checkArgument(optSymbol.isPresent(), "Property not found");
+        final Symbol symbol = optSymbol.get();
+        checkArgument(symbol instanceof PropDeclSymbol);
+        final PropDeclSymbol propDeclSymbol = (PropDeclSymbol) symbol;
+        return propDeclSymbol;
+    }
 
 }

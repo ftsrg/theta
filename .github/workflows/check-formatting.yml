@@ -1,0 +1,16 @@
+name: Check formatting
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: write-all
+
+jobs:
+  check-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Checking formatting
+        uses: ./.github/actions/check-formatting

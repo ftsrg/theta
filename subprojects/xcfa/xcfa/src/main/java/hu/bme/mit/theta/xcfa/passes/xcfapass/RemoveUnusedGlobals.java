@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,23 +33,27 @@ import java.util.stream.Collectors;
 import static hu.bme.mit.theta.xcfa.passes.procedurepass.Utils.getVars;
 
 public class RemoveUnusedGlobals extends XcfaPass {
-	@Override
-	public XCFA.Builder run(XCFA.Builder builder) {
-		Set<VarDecl<?>> usedGlobals = new LinkedHashSet<>();
-		for (XcfaProcess.Builder process : builder.getProcesses()) {
-			for (XcfaProcedure.Builder procedure : process.getProcedures()) {
-				for (XcfaEdge edge : procedure.getEdges()) {
-					for (XcfaLabel label : edge.getLabels()) {
-						usedGlobals.addAll(getVars(label));
-					}
-				}
-			}
-		}
-		Set<Map.Entry<VarDecl<?>, Optional<LitExpr<?>>>> newGlobals = builder.getGlobalVars().entrySet().stream().filter(varDeclOptionalEntry -> usedGlobals.contains(varDeclOptionalEntry.getKey())).collect(Collectors.toSet());
-		builder.getGlobalVars().clear();
-		for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> newGlobal : newGlobals) {
-			builder.addGlobalVar(newGlobal.getKey(), newGlobal.getValue().orElse(null));
-		}
-		return builder;
-	}
+
+    @Override
+    public XCFA.Builder run(XCFA.Builder builder) {
+        Set<VarDecl<?>> usedGlobals = new LinkedHashSet<>();
+        for (XcfaProcess.Builder process : builder.getProcesses()) {
+            for (XcfaProcedure.Builder procedure : process.getProcedures()) {
+                for (XcfaEdge edge : procedure.getEdges()) {
+                    for (XcfaLabel label : edge.getLabels()) {
+                        usedGlobals.addAll(getVars(label));
+                    }
+                }
+            }
+        }
+        Set<Map.Entry<VarDecl<?>, Optional<LitExpr<?>>>> newGlobals = builder.getGlobalVars()
+                .entrySet().stream()
+                .filter(varDeclOptionalEntry -> usedGlobals.contains(varDeclOptionalEntry.getKey()))
+                .collect(Collectors.toSet());
+        builder.getGlobalVars().clear();
+        for (Map.Entry<VarDecl<?>, Optional<LitExpr<?>>> newGlobal : newGlobals) {
+            builder.addGlobalVar(newGlobal.getKey(), newGlobal.getValue().orElse(null));
+        }
+        return builder;
+    }
 }

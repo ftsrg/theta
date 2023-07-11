@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,105 +43,109 @@ import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.SelectContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TransitionContext;
 
 final class XtaTransition implements Scope {
-	private final XtaProcessSymbol scope;
-	private final SymbolTable symbolTable;
 
-	private final String sourceState;
-	private final String targetState;
-	private final List<XtaIteratorSymbol> selections;
-	private final Optional<XtaExpression> guard;
-	private final Optional<XtaSync> sync;
-	private final List<XtaUpdate> updates;
+    private final XtaProcessSymbol scope;
+    private final SymbolTable symbolTable;
 
-	public XtaTransition(final XtaProcessSymbol scope, final TransitionContext context) {
-		checkNotNull(context);
-		this.scope = checkNotNull(scope);
-		symbolTable = new SymbolTable();
+    private final String sourceState;
+    private final String targetState;
+    private final List<XtaIteratorSymbol> selections;
+    private final Optional<XtaExpression> guard;
+    private final Optional<XtaSync> sync;
+    private final List<XtaUpdate> updates;
 
-		sourceState = context.fSourceId.getText();
-		targetState = context.fTargetId.getText();
+    public XtaTransition(final XtaProcessSymbol scope, final TransitionContext context) {
+        checkNotNull(context);
+        this.scope = checkNotNull(scope);
+        symbolTable = new SymbolTable();
 
-		selections = new ArrayList<>();
-		guard = extractGuard(context);
-		sync = extractSync(context);
-		updates = extractUpdates(context);
+        sourceState = context.fSourceId.getText();
+        targetState = context.fTargetId.getText();
 
-		declareAllSelections(context.fTransitionBody.fSelect);
-	}
+        selections = new ArrayList<>();
+        guard = extractGuard(context);
+        sync = extractSync(context);
+        updates = extractUpdates(context);
 
-	private Optional<XtaSync> extractSync(final TransitionContext context) {
-		return Optional.ofNullable(context.fTransitionBody.fSync).map(s -> new XtaSync(this, s));
-	}
+        declareAllSelections(context.fTransitionBody.fSelect);
+    }
 
-	private Optional<XtaExpression> extractGuard(final TransitionContext context) {
-		return Optional.ofNullable(context.fTransitionBody.fGuard).map(g -> new XtaExpression(this, g.fExpression));
-	}
+    private Optional<XtaSync> extractSync(final TransitionContext context) {
+        return Optional.ofNullable(context.fTransitionBody.fSync).map(s -> new XtaSync(this, s));
+    }
 
-	private List<XtaUpdate> extractUpdates(final TransitionContext context) {
-		if (context.fTransitionBody.fAssign != null) {
-			if (context.fTransitionBody.fAssign.fExpressions != null) {
-				return context.fTransitionBody.fAssign.fExpressions.stream().map(e -> new XtaUpdate(this, e))
-						.collect(toList());
-			}
-		}
-		return emptyList();
-	}
+    private Optional<XtaExpression> extractGuard(final TransitionContext context) {
+        return Optional.ofNullable(context.fTransitionBody.fGuard)
+                .map(g -> new XtaExpression(this, g.fExpression));
+    }
 
-	private void declareAllSelections(final SelectContext context) {
-		if (context != null) {
-			if (context.fIteratorDecls != null) {
-				context.fIteratorDecls.forEach(this::declare);
-			}
-		}
-	}
+    private List<XtaUpdate> extractUpdates(final TransitionContext context) {
+        if (context.fTransitionBody.fAssign != null) {
+            if (context.fTransitionBody.fAssign.fExpressions != null) {
+                return context.fTransitionBody.fAssign.fExpressions.stream()
+                        .map(e -> new XtaUpdate(this, e))
+                        .collect(toList());
+            }
+        }
+        return emptyList();
+    }
 
-	private void declare(final IteratorDeclContext context) {
-		final XtaIteratorSymbol iteratorSymbol = new XtaIteratorSymbol(this, context);
-		selections.add(iteratorSymbol);
-		symbolTable.add(iteratorSymbol);
-	}
+    private void declareAllSelections(final SelectContext context) {
+        if (context != null) {
+            if (context.fIteratorDecls != null) {
+                context.fIteratorDecls.forEach(this::declare);
+            }
+        }
+    }
 
-	////
+    private void declare(final IteratorDeclContext context) {
+        final XtaIteratorSymbol iteratorSymbol = new XtaIteratorSymbol(this, context);
+        selections.add(iteratorSymbol);
+        symbolTable.add(iteratorSymbol);
+    }
 
-	public void instantiate(final XtaProcess process, final Env env) {
-		final XtaStateSymbol sourceSymbol = (XtaStateSymbol) resolve(sourceState).get();
-		final XtaStateSymbol targetSymbol = (XtaStateSymbol) resolve(targetState).get();
+    ////
 
-		final Loc source = (Loc) env.eval(sourceSymbol);
-		final Loc target = (Loc) env.eval(targetSymbol);
+    public void instantiate(final XtaProcess process, final Env env) {
+        final XtaStateSymbol sourceSymbol = (XtaStateSymbol) resolve(sourceState).get();
+        final XtaStateSymbol targetSymbol = (XtaStateSymbol) resolve(targetState).get();
 
-		final Collection<Expr<BoolType>> guards;
-		if (guard.isPresent()) {
-			final Expr<?> expr = guard.get().instantiate(env);
-			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, Bool());
-			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
-			guards = conjuncts.stream().map(e -> e).collect(toList());
-		} else {
-			guards = emptySet();
-		}
+        final Loc source = (Loc) env.eval(sourceSymbol);
+        final Loc target = (Loc) env.eval(targetSymbol);
 
-		final List<Stmt> assignments = updates.stream().map(u -> u.instantiate(env)).collect(toList());
-		final Optional<Sync> label = sync.map(s -> s.instantiate(env));
+        final Collection<Expr<BoolType>> guards;
+        if (guard.isPresent()) {
+            final Expr<?> expr = guard.get().instantiate(env);
+            final Expr<BoolType> guardExpr = TypeUtils.cast(expr, Bool());
+            final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
+            guards = conjuncts.stream().map(e -> e).collect(toList());
+        } else {
+            guards = emptySet();
+        }
 
-		process.createEdge(source, target, guards, label, assignments);
-	}
+        final List<Stmt> assignments = updates.stream().map(u -> u.instantiate(env))
+                .collect(toList());
+        final Optional<Sync> label = sync.map(s -> s.instantiate(env));
 
-	////
+        process.createEdge(source, target, guards, label, assignments);
+    }
 
-	@Override
-	public Optional<? extends Scope> enclosingScope() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
+    ////
 
-	@Override
-	public Optional<Symbol> resolve(final String name) {
-		final Optional<Symbol> symbol = symbolTable.get(name);
-		if (symbol.isPresent()) {
-			return symbol;
-		} else {
-			return scope.resolve(name);
-		}
-	}
+    @Override
+    public Optional<? extends Scope> enclosingScope() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("TODO: auto-generated method stub");
+    }
+
+    @Override
+    public Optional<Symbol> resolve(final String name) {
+        final Optional<Symbol> symbol = symbolTable.get(name);
+        if (symbol.isPresent()) {
+            return symbol;
+        } else {
+            return scope.resolve(name);
+        }
+    }
 
 }

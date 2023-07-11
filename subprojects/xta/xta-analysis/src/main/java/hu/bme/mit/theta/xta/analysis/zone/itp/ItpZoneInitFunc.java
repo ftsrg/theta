@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,28 +26,28 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 final class ItpZoneInitFunc implements InitFunc<ItpZoneState, ZonePrec> {
 
-	private final InitFunc<ZoneState, ZonePrec> initFunc;
+    private final InitFunc<ZoneState, ZonePrec> initFunc;
 
-	private ItpZoneInitFunc(final InitFunc<ZoneState, ZonePrec> initFunc) {
-		this.initFunc = checkNotNull(initFunc);
-	}
+    private ItpZoneInitFunc(final InitFunc<ZoneState, ZonePrec> initFunc) {
+        this.initFunc = checkNotNull(initFunc);
+    }
 
-	public static ItpZoneInitFunc create(final InitFunc<ZoneState, ZonePrec> initFunc) {
-		return new ItpZoneInitFunc(initFunc);
-	}
+    public static ItpZoneInitFunc create(final InitFunc<ZoneState, ZonePrec> initFunc) {
+        return new ItpZoneInitFunc(initFunc);
+    }
 
-	////
+    ////
 
-	@Override
-	public Collection<ItpZoneState> getInitStates(final ZonePrec prec) {
-		checkNotNull(prec);
-		final Collection<ItpZoneState> result = new ArrayList<>();
-		final Collection<? extends ZoneState> subInitStates = initFunc.getInitStates(prec);
-		for (final ZoneState subInitState : subInitStates) {
-			final ItpZoneState initState = ItpZoneState.of(subInitState, ZoneState.top());
-			result.add(initState);
-		}
-		return result;
-	}
+    @Override
+    public Collection<ItpZoneState> getInitStates(final ZonePrec prec) {
+        checkNotNull(prec);
+        final Collection<ItpZoneState> result = new ArrayList<>();
+        final Collection<? extends ZoneState> subInitStates = initFunc.getInitStates(prec);
+        for (final ZoneState subInitState : subInitStates) {
+            final ItpZoneState initState = ItpZoneState.of(subInitState, ZoneState.top());
+            result.add(initState);
+        }
+        return result;
+    }
 
 }

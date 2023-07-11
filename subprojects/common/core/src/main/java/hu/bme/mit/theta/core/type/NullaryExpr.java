@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,21 +24,21 @@ import com.google.common.collect.ImmutableList;
 
 public abstract class NullaryExpr<ExprType extends Type> implements Expr<ExprType> {
 
-	@Override
-	public final List<Expr<?>> getOps() {
-		return ImmutableList.of();
-	}
+    @Override
+    public final List<Expr<?>> getOps() {
+        return ImmutableList.of();
+    }
 
-	@Override
-	public final NullaryExpr<ExprType> withOps(final List<? extends Expr<?>> ops) {
-		checkNotNull(ops);
-		checkArgument(ops.isEmpty());
-		return this;
-	}
+    @Override
+    public final NullaryExpr<ExprType> withOps(final List<? extends Expr<?>> ops) {
+        checkNotNull(ops);
+        checkArgument(ops.isEmpty());
+        return this;
+    }
 
-	@Override
-	public final int getArity() {
-		return 0;
-	}
+    @Override
+    public final int getArity() {
+        return 0;
+    }
 
 }
