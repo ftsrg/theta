@@ -16,12 +16,10 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Analyze
-        env: 
-          secret_workaround: ${{ secrets.SONAR_TOKEN }}
-        if: env.secret_workaround != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        if: env.SONAR_TOKEN != ''
         uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
         with:
           arguments: build jacocoTestReport sonar --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m
