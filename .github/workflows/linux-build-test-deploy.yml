@@ -83,7 +83,7 @@ jobs:
 
   deploy-release:
     needs: test-linux
-    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' }}"
+    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -95,7 +95,7 @@ jobs:
 
   deploy-maven:
     needs: test-linux
-    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}"
+    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -111,7 +111,7 @@ jobs:
   
   deploy-docker:
     needs: test-linux
-    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' }}"
+    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     strategy:
       matrix:
         dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
@@ -134,7 +134,7 @@ jobs:
 
   deploy-docs:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3

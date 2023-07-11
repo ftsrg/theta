@@ -29,7 +29,7 @@ runs:
       if: runner.os == 'Windows'
       uses: GuillaumeFalourd/setup-rsync@2b503a403f7185e6872bbc56f903d7395ddd75a2
     - name: Deploy badges
-      if: github.ref == 'refs/heads/master' && ${{ always() }}
+      if: github.ref == 'refs/heads/master' && always() && github.event_name != 'pull_request'
       uses: leventeBajczi/github-pages-deploy-action-winfix@6d31a3c68a3912555731864c0d5ef4239b02369d # v0.3
       with:
         branch: badges

@@ -16,7 +16,7 @@ runs:
       with:
         arguments: aggregateJavadoc
     - name: Deploy Javadoc
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v3.7.1
       with:
         branch: gh-pages
