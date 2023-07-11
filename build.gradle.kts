@@ -35,8 +35,8 @@ allprojects {
 
 sonar {
   properties {
-    property("sonar.projectKey", "leventeBajczi_theta")
-    property("sonar.organization", "bajczi-levente")
+    property("sonar.projectKey", "ftsrg_theta")
+    property("sonar.organization", "ftsrg-github")
     property("sonar.host.url", "https://sonarcloud.io")
     property("sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml")
   }
