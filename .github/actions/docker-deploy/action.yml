@@ -2,7 +2,9 @@ name: 'Deploy to DockerHub'
 description: 'Deploy to DockerHub'
 inputs:
     project:
-        required: true`
+        required: true
+    version:
+        required: true
 runs: 
   using: "composite"
   steps:
@@ -12,8 +14,8 @@ runs:
       id: meta
       uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
       with:
-        images: ftsrg/theta
-        tags: type:raw, value=theta-xsts-cli
+        images: catshark2013/theta
+        tags: type:raw, value=${{ inputs.project }}-${{ inputs.version }}
     - name: Creating path
       id: 'path'
       shell: bash

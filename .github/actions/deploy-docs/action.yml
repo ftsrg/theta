@@ -16,8 +16,9 @@ runs:
     - run: mkdocs build --site-dir wiki
       shell: bash
       working-directory: doc/wiki
-    - uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v3.7.1
+    - uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v4.4.2
       with:
         branch: gh-pages
         folder: doc/wiki/wiki
-        target_folder: wiki
+        target-folder: wiki
+        single-commit: true
