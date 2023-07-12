@@ -173,7 +173,7 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           user-dockerhub: ftsrg
           user-ghcr: ftsrg
-          push: false
+          push: true
       - name: Docker Hub Description update
         uses: peter-evans/dockerhub-description@dc67fad7001ef9e8e3c124cb7a64e16d0a63d864
         with:
