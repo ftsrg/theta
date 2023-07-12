@@ -137,7 +137,8 @@ jobs:
         with:
           project: ${{ matrix.dockerprojects }}
           version: ${{ steps.version.outputs.version }}
-          user: ftsrg
+          user-dockerhub: ftsrg
+          user-ghcr: ftsrg
           push: false
   
   deploy-docker:
@@ -170,8 +171,9 @@ jobs:
         with:
           project: ${{ matrix.dockerprojects }}
           version: ${{ steps.version.outputs.version }}
-          user: ftsrg
-          push: true
+          user-dockerhub: ftsrg
+          user-ghcr: ftsrg
+          push: false
 
   deploy-docs:
     runs-on: ubuntu-latest
