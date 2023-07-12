@@ -50,3 +50,6 @@ jobs:
       with:
         commit_message: "Version bump"
         file_pattern: "build.gradle.kts"
+        commit_user_name: ThetaBotMaintainer
+        commit_user_email: ThetaBotMaintainer@users.noreply.github.com
+        commit_author: ThetaBotMaintainer <ThetaBotMaintainer@users.noreply.github.com>  
