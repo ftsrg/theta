@@ -18,6 +18,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        token: ${{ secrets.BOT_PAT }}
+        
     - name: Do reformat
       uses: leventeBajczi/intellij-idea-format@v1.0
       with:
@@ -31,6 +34,7 @@ jobs:
         commit-message: "Reformatted code"
         branch: "code-reformat"
         title: '[AutoPR] Reformatted code'
+        token: ${{ secrets.BOT_PAT }}
 
     - name: Commit changes
       if: ${{ inputs.direct-commit }}
