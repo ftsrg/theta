@@ -16,7 +16,7 @@ The `master` branch is protected, meaning direct pushes to the branch are forbid
     * SonarCloud check for code quality succeeds (see job `run-sonar` in [linux-build-test-deploy.yml](https://github.com/ftsrg/theta/actions/workflows/linux-build-test-deploy.yml)), including test coverage criteria (at least 60% of the new code)
     * Building and tests succeed for `ubuntu-latest` ([linux-build-test-deploy.yml](https://github.com/ftsrg/theta/actions/workflows/linux-build-test-deploy.yml)), `windows-latest` ([win-build-test.yml](https://github.com/ftsrg/theta/actions/workflows/win-build-test.yml)) and `macos-latest` ([mac-build-test.yml](https://github.com/ftsrg/theta/actions/workflows/mac-build-test.yml)).
     * Valid javadoc can be generated (`javadoc` in [linux-build-test-deploy.yml](https://github.com/ftsrg/theta/actions/workflows/linux-build-test-deploy.yml))
-    * The version must be different to that of `master` ([check-version.yml](https://github.com/ftsrg/theta/actions/workflows/check-version.yml)). For an automated version bump, see[version-bump.yml](https://github.com/ftsrg/theta/actions/workflows/version-bump.yml).
+    * The version must be different to that of `master` ([check-version.yml](https://github.com/ftsrg/theta/actions/workflows/check-version.yml)). For an automated version bump, see [version-bump.yml](https://github.com/ftsrg/theta/actions/workflows/version-bump.yml).
 
 Administrators are allowed to bypass these rules, but are strongly encouraged _not to do so_.
 
