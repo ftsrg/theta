@@ -5,6 +5,10 @@ inputs:
         required: true
     version:
         required: true
+    user:
+        required: true
+    push:
+        required: true
 runs: 
   using: "composite"
   steps:
@@ -14,7 +18,7 @@ runs:
       id: meta
       uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e
       with:
-        images: catshark2013/${{ inputs.project }}
+        images: ${{ inputs.user }}/${{ inputs.project }}
         tags: type:raw, value=${{ inputs.version }}
     - name: Creating path
       id: 'path'
@@ -26,5 +30,5 @@ runs:
       with:
         context: .
         file: ${{ steps.path.outputs.path }}
-        push: true
+        push: ${{ inputs.push }}
         tags: ${{ steps.meta.outputs.tags }}
