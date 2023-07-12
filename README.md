@@ -38,6 +38,13 @@ Currently, the following tools are available (follow the links for more informat
 * [`theta-xcfa-cli`](subprojects/xcfa/xcfa-cli): Reachability checking of error locations in eXtended Control Flow Automata (XCFA) using CEGAR-based algorithms. The CFA formalism is extended with procedures and processes, able to support multithreaded analysis and also several optimization passes. Right now it is mainly used to check both single and multithreaded C programs.
   * the [`c-frontend`](subprojects/frontends/c-frontend) module of Theta is capable of parsing C programs and transforming them into a formalism independent, in-memory representation. The `xcfa-cli` is able to convert this representation into an XCFA.
 
+To use Theta as a standalone tool, see the following deployments:
+ * [DockerHub](https://hub.docker.com/u/ftsrg) and [ghcr.io](https://github.com/orgs/ftsrg/packages) for Docker images based on the `*-cli` subprojects
+ * Latest [release](https://github.com/ftsrg/theta/releases/latest) for `.jar` files
+
+To use Theta as a library, see [Maven Central](https://central.sonatype.com/namespace/hu.bme.mit.theta).
+
+
 ## Overview of the architecture
 
 Theta can be divided into the following four layers.
