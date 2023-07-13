@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,70 +26,71 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.common.Utils;
 
 /**
- * Priority waitlist. The least item is always removed based on a comparator or
- * on the natural ordering (if no comparator is given).
+ * Priority waitlist. The least item is always removed based on a comparator or on the natural
+ * ordering (if no comparator is given).
  *
  * @see ArgNodeComparators
  */
 public final class PriorityWaitlist<T> implements Waitlist<T> {
 
-	private final PriorityQueue<T> items;
+    private final PriorityQueue<T> items;
 
-	private PriorityWaitlist(final Comparator<? super T> comparator) {
-		items = new PriorityQueue<>(checkNotNull(comparator));
-	}
+    private PriorityWaitlist(final Comparator<? super T> comparator) {
+        items = new PriorityQueue<>(checkNotNull(comparator));
+    }
 
-	private PriorityWaitlist() {
-		items = new PriorityQueue<>();
-	}
+    private PriorityWaitlist() {
+        items = new PriorityQueue<>();
+    }
 
-	public static <T> PriorityWaitlist<T> create(final Comparator<? super T> comparator) {
-		return new PriorityWaitlist<>(comparator);
-	}
+    public static <T> PriorityWaitlist<T> create(final Comparator<? super T> comparator) {
+        return new PriorityWaitlist<>(comparator);
+    }
 
-	public static <T> PriorityWaitlist<T> create() {
-		return new PriorityWaitlist<>();
-	}
+    public static <T> PriorityWaitlist<T> create() {
+        return new PriorityWaitlist<>();
+    }
 
-	@Override
-	public void add(final T item) {
-		items.add(item);
-	}
+    @Override
+    public void add(final T item) {
+        items.add(item);
+    }
 
-	@Override
-	public void addAll(final Collection<? extends T> items) {
-		checkNotNull(items);
-		items.forEach(this::add);
-	}
+    @Override
+    public void addAll(final Collection<? extends T> items) {
+        checkNotNull(items);
+        items.forEach(this::add);
+    }
 
-	@Override
-	public void addAll(final Stream<? extends T> items) {
-		checkNotNull(items);
-		items.forEach(this::add);
-	}
+    @Override
+    public void addAll(final Stream<? extends T> items) {
+        checkNotNull(items);
+        items.forEach(this::add);
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return items.isEmpty();
-	}
+    @Override
+    public boolean isEmpty() {
+        return items.isEmpty();
+    }
 
-	@Override
-	public T remove() {
-		return items.remove();
-	}
+    @Override
+    public T remove() {
+        return items.remove();
+    }
 
-	@Override
-	public int size() {
-		return items.size();
-	}
+    @Override
+    public int size() {
+        return items.size();
+    }
 
-	@Override
-	public void clear() {
-		items.clear();
-	}
+    @Override
+    public void clear() {
+        items.clear();
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).add(items.comparator()).addAll(items).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(items.comparator())
+                .addAll(items).toString();
+    }
 }

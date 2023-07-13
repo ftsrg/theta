@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,12 +18,14 @@ package hu.bme.mit.theta.core.dsl;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class ParseException extends RuntimeException {
-	public ParseException(ParserRuleContext ctx, String message){
-		this(ctx, message, null);
-	}
 
-	public ParseException(ParserRuleContext ctx, String message, Throwable cause) {
-		super("Line " + ctx.getStart().getLine() + " col " + ctx.getStart().getCharPositionInLine() + ": " + message, cause);
-	}
+    public ParseException(ParserRuleContext ctx, String message) {
+        this(ctx, message, null);
+    }
+
+    public ParseException(ParserRuleContext ctx, String message, Throwable cause) {
+        super("Line " + ctx.getStart().getLine() + " col " + ctx.getStart().getCharPositionInLine()
+                + ": " + message, cause);
+    }
 
 }

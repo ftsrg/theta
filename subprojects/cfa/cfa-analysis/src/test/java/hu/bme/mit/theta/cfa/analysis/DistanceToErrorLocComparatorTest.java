@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,32 +29,33 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 
 public class DistanceToErrorLocComparatorTest {
 
-	@Test
-	public void test() {
-		final Builder builder = CFA.builder();
-		final Loc loc0 = builder.createLoc("L0");
-		builder.setInitLoc(loc0);
-		final Loc locErr = builder.createLoc("LE");
-		builder.setErrorLoc(locErr);
-		final Loc loc1 = builder.createLoc("L1");
-		final Loc loc2 = builder.createLoc("L2");
-		final Loc locFinal = builder.createLoc("LF");
-		builder.setFinalLoc(locFinal);
-		final Stmt stmt = Stmts.Assume(BoolExprs.True());
-		builder.createEdge(loc0, loc1, stmt);
-		builder.createEdge(loc0, loc2, stmt);
-		builder.createEdge(loc1, loc2, stmt);
-		builder.createEdge(loc1, locErr, stmt);
-		builder.createEdge(loc2, locErr, stmt);
-		builder.createEdge(loc2, locFinal, stmt);
+    @Test
+    public void test() {
+        final Builder builder = CFA.builder();
+        final Loc loc0 = builder.createLoc("L0");
+        builder.setInitLoc(loc0);
+        final Loc locErr = builder.createLoc("LE");
+        builder.setErrorLoc(locErr);
+        final Loc loc1 = builder.createLoc("L1");
+        final Loc loc2 = builder.createLoc("L2");
+        final Loc locFinal = builder.createLoc("LF");
+        builder.setFinalLoc(locFinal);
+        final Stmt stmt = Stmts.Assume(BoolExprs.True());
+        builder.createEdge(loc0, loc1, stmt);
+        builder.createEdge(loc0, loc2, stmt);
+        builder.createEdge(loc1, loc2, stmt);
+        builder.createEdge(loc1, locErr, stmt);
+        builder.createEdge(loc2, locErr, stmt);
+        builder.createEdge(loc2, locFinal, stmt);
 
-		final CFA cfa = builder.build();
-		final Map<Loc, Integer> distancesToError = DistToErrComparator.calculateDistancesToError(cfa, cfa.getErrorLoc().get());
+        final CFA cfa = builder.build();
+        final Map<Loc, Integer> distancesToError = DistToErrComparator.calculateDistancesToError(
+                cfa, cfa.getErrorLoc().get());
 
-		Assert.assertEquals(0, (int) distancesToError.get(locErr));
-		Assert.assertEquals(2, (int) distancesToError.get(loc0));
-		Assert.assertEquals(1, (int) distancesToError.get(loc1));
-		Assert.assertEquals(1, (int) distancesToError.get(loc2));
-		Assert.assertFalse(distancesToError.containsKey(locFinal));
-	}
+        Assert.assertEquals(0, (int) distancesToError.get(locErr));
+        Assert.assertEquals(2, (int) distancesToError.get(loc0));
+        Assert.assertEquals(1, (int) distancesToError.get(loc1));
+        Assert.assertEquals(1, (int) distancesToError.get(loc2));
+        Assert.assertFalse(distancesToError.containsKey(locFinal));
+    }
 }

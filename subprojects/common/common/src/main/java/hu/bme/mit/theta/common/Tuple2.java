@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,27 +23,27 @@ import com.google.common.collect.ImmutableList;
 
 public final class Tuple2<T1, T2> extends Tuple {
 
-	private Tuple2(final T1 e1, final T2 e2) {
-		super(ImmutableList.of(e1, e2));
-	}
+    private Tuple2(final T1 e1, final T2 e2) {
+        super(ImmutableList.of(e1, e2));
+    }
 
-	public static <T1, T2> Tuple2<T1, T2> of(final T1 e1, final T2 e2) {
-		return new Tuple2<>(e1, e2);
-	}
+    public static <T1, T2> Tuple2<T1, T2> of(final T1 e1, final T2 e2) {
+        return new Tuple2<>(e1, e2);
+    }
 
-	public T1 get1() {
-		@SuppressWarnings("unchecked") final T1 result = (T1) elem(0);
-		return result;
-	}
+    public T1 get1() {
+        @SuppressWarnings("unchecked") final T1 result = (T1) elem(0);
+        return result;
+    }
 
-	public T2 get2() {
-		@SuppressWarnings("unchecked") final T2 result = (T2) elem(1);
-		return result;
-	}
+    public T2 get2() {
+        @SuppressWarnings("unchecked") final T2 result = (T2) elem(1);
+        return result;
+    }
 
-	public <R> R unpackTo(final BiFunction<? super T1, ? super T2, R> function) {
-		checkNotNull(function);
-		return function.apply(get1(), get2());
-	}
+    public <R> R unpackTo(final BiFunction<? super T1, ? super T2, R> function) {
+        checkNotNull(function);
+        return function.apply(get1(), get2());
+    }
 
 }

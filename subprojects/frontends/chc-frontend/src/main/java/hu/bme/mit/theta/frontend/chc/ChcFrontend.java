@@ -23,6 +23,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 public class ChcFrontend {
+
     public enum ChcTransformation {
         FORWARD,
         BACKWARD

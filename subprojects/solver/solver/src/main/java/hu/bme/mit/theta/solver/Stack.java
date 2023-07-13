@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,20 +19,20 @@ import java.util.Collection;
 
 public interface Stack<T> extends Iterable<T> {
 
-	void add(final T elem);
+    void add(final T elem);
 
-	void add(final Collection<? extends T> elems);
+    void add(final Collection<? extends T> elems);
 
-	void push();
+    void push();
 
-	void pop(final int n);
+    void pop(final int n);
 
-	default void pop() {
-		pop(1);
-	}
+    default void pop() {
+        pop(1);
+    }
 
-	Collection<T> toCollection();
+    Collection<T> toCollection();
 
-	void clear();
+    void clear();
 
 }

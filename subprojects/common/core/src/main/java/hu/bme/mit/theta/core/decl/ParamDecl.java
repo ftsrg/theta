@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,14 +19,15 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ParamDecl<DeclType extends Type> extends Decl<DeclType> {
-	private static final String DECL_LABEL = "Param";
 
-	ParamDecl(final String name, final DeclType type) {
-		super(name, type);
-	}
+    private static final String DECL_LABEL = "Param";
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
-	}
+    ParamDecl(final String name, final DeclType type) {
+        super(name, type);
+    }
+
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
+    }
 }

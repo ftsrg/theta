@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,39 +27,40 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 
 final class Z3SymbolTable {
 
-	private final BiMap<ConstDecl<?>, com.microsoft.z3.FuncDecl> constToSymbol;
+    private final BiMap<ConstDecl<?>, com.microsoft.z3.FuncDecl> constToSymbol;
 
-	public Z3SymbolTable() {
-		constToSymbol = Maps.synchronizedBiMap(HashBiMap.create());
-	}
+    public Z3SymbolTable() {
+        constToSymbol = Maps.synchronizedBiMap(HashBiMap.create());
+    }
 
-	public boolean definesConst(final ConstDecl<?> constDecl) {
-		return constToSymbol.containsKey(constDecl);
-	}
+    public boolean definesConst(final ConstDecl<?> constDecl) {
+        return constToSymbol.containsKey(constDecl);
+    }
 
-	public boolean definesSymbol(final com.microsoft.z3.FuncDecl symbol) {
-		return constToSymbol.inverse().containsKey(symbol);
-	}
+    public boolean definesSymbol(final com.microsoft.z3.FuncDecl symbol) {
+        return constToSymbol.inverse().containsKey(symbol);
+    }
 
-	public com.microsoft.z3.FuncDecl getSymbol(final ConstDecl<?> constDecl) {
-		checkArgument(definesConst(constDecl), "Declaration %s not found in symbol table",constDecl);
-		return constToSymbol.get(constDecl);
-	}
+    public com.microsoft.z3.FuncDecl getSymbol(final ConstDecl<?> constDecl) {
+        checkArgument(definesConst(constDecl), "Declaration %s not found in symbol table",
+                constDecl);
+        return constToSymbol.get(constDecl);
+    }
 
-	public ConstDecl<?> getConst(final com.microsoft.z3.FuncDecl symbol) {
-		checkArgument(definesSymbol(symbol), "Symbol %s not found in symbol table",symbol);
-		return constToSymbol.inverse().get(symbol);
-	}
+    public ConstDecl<?> getConst(final com.microsoft.z3.FuncDecl symbol) {
+        checkArgument(definesSymbol(symbol), "Symbol %s not found in symbol table", symbol);
+        return constToSymbol.inverse().get(symbol);
+    }
 
-	public void put(final ConstDecl<?> constDecl, final com.microsoft.z3.FuncDecl symbol) {
-		checkNotNull(constDecl);
-		checkNotNull(symbol);
-		checkState(!constToSymbol.containsKey(constDecl), "Constant %s not found.",constDecl);
-		constToSymbol.put(constDecl, symbol);
-	}
+    public void put(final ConstDecl<?> constDecl, final com.microsoft.z3.FuncDecl symbol) {
+        checkNotNull(constDecl);
+        checkNotNull(symbol);
+        checkState(!constToSymbol.containsKey(constDecl), "Constant %s not found.", constDecl);
+        constToSymbol.put(constDecl, symbol);
+    }
 
-	public void clear() {
-		constToSymbol.clear();
-	}
+    public void clear() {
+        constToSymbol.clear();
+    }
 
 }

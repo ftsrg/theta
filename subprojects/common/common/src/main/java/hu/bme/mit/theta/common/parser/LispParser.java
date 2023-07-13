@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,66 +26,67 @@ import hu.bme.mit.theta.common.parser.SExpr.SList;
 
 public final class LispParser {
 
-	private final LispLexer lexer;
-	private Token lookahead; // use lookahead() to get value
+    private final LispLexer lexer;
+    private Token lookahead; // use lookahead() to get value
 
-	public LispParser(final LispLexer lexer) {
-		this.lexer = checkNotNull(lexer);
-		this.lookahead = null;
-	}
+    public LispParser(final LispLexer lexer) {
+        this.lexer = checkNotNull(lexer);
+        this.lookahead = null;
+    }
 
-	public List<SExpr> sexprs() {
-		final ImmutableList.Builder<SExpr> builder = ImmutableList.builder();
-		while (lookahead().getType() == TokenType.ATOM || lookahead().getType() == TokenType.LPAREN) {
-			final SExpr sexpr = sexpr();
-			builder.add(sexpr);
-		}
-		return builder.build();
-	}
+    public List<SExpr> sexprs() {
+        final ImmutableList.Builder<SExpr> builder = ImmutableList.builder();
+        while (lookahead().getType() == TokenType.ATOM
+                || lookahead().getType() == TokenType.LPAREN) {
+            final SExpr sexpr = sexpr();
+            builder.add(sexpr);
+        }
+        return builder.build();
+    }
 
-	public SExpr sexpr() {
-		if (lookahead().getType() == TokenType.ATOM) {
-			return atom();
-		} else if (lookahead().getType() == TokenType.LPAREN) {
-			return list();
-		} else {
-			throw new ParserException("Expecting atom or list, found " + lookahead.getType());
-		}
-	}
+    public SExpr sexpr() {
+        if (lookahead().getType() == TokenType.ATOM) {
+            return atom();
+        } else if (lookahead().getType() == TokenType.LPAREN) {
+            return list();
+        } else {
+            throw new ParserException("Expecting atom or list, found " + lookahead.getType());
+        }
+    }
 
-	public SAtom atom() {
-		final String atom = lookahead().getString();
-		match(TokenType.ATOM);
-		return SExpr.atom(atom);
-	}
+    public SAtom atom() {
+        final String atom = lookahead().getString();
+        match(TokenType.ATOM);
+        return SExpr.atom(atom);
+    }
 
-	public SList list() {
-		match(TokenType.LPAREN);
-		final List<SExpr> sexprs = sexprs();
-		match(TokenType.RPAREN);
-		return SExpr.list(sexprs);
-	}
+    public SList list() {
+        match(TokenType.LPAREN);
+        final List<SExpr> sexprs = sexprs();
+        match(TokenType.RPAREN);
+        return SExpr.list(sexprs);
+    }
 
-	private Token lookahead() {
-		Token result = lookahead;
-		if (result == null) {
-			result = lexer.nextToken();
-			lookahead = result;
-		}
-		return result;
-	}
+    private Token lookahead() {
+        Token result = lookahead;
+        if (result == null) {
+            result = lexer.nextToken();
+            lookahead = result;
+        }
+        return result;
+    }
 
-	private void match(final TokenType type) {
-		if (lookahead().getType() == type) {
-			consume();
-		} else {
-			throw new ParserException("Expecting " + type + ", found " + lookahead.getType());
-		}
-	}
+    private void match(final TokenType type) {
+        if (lookahead().getType() == type) {
+            consume();
+        } else {
+            throw new ParserException("Expecting " + type + ", found " + lookahead.getType());
+        }
+    }
 
-	private void consume() {
-		lookahead();
-		lookahead = null;
-	}
+    private void consume() {
+        lookahead();
+        lookahead = null;
+    }
 
 }

@@ -1,5 +1,8 @@
 name: 'Deploy javadoc'
 description: 'Deploying javadoc to github-pages'
+
+permissions: write-all
+
 runs:
   using: "composite"
   steps:
@@ -16,10 +19,10 @@ runs:
       with:
         arguments: aggregateJavadoc
     - name: Deploy Javadoc
-      if: github.ref == 'refs/heads/master'
-      uses: JamesIves/github-pages-deploy-action@132898c54c57c7cc6b80eb3a89968de8fc283505 # v3.7.1
+      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+      uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
       with:
         branch: gh-pages
         folder: build/docs/aggregateJavadoc
-        target_folder: javadoc
-        single_commit: true
+        target-folder: javadoc
+        single-commit: true

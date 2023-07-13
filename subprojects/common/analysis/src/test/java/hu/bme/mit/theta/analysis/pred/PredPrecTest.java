@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,35 +32,35 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class PredPrecTest {
 
-	private final VarDecl<IntType> x = Var("x", Int());
-	private final VarDecl<IntType> y = Var("y", Int());
+    private final VarDecl<IntType> x = Var("x", Int());
+    private final VarDecl<IntType> y = Var("y", Int());
 
-	private final Expr<BoolType> pred = Lt(x.getRef(), Int(5));
+    private final Expr<BoolType> pred = Lt(x.getRef(), Int(5));
 
-	@Test
-	public void testRefinement() {
-		final PredPrec p0 = PredPrec.of();
-		final PredPrec p1 = PredPrec.of(Collections.singleton(pred));
-		final PredPrec p2 = PredPrec.of(Collections.singleton(Eq(x.getRef(), y.getRef())));
+    @Test
+    public void testRefinement() {
+        final PredPrec p0 = PredPrec.of();
+        final PredPrec p1 = PredPrec.of(Collections.singleton(pred));
+        final PredPrec p2 = PredPrec.of(Collections.singleton(Eq(x.getRef(), y.getRef())));
 
-		final PredPrec r1 = p1.join(p0);
-		final PredPrec r2 = p1.join(p2);
-		final PredPrec r3 = p1.join(r2);
+        final PredPrec r1 = p1.join(p0);
+        final PredPrec r2 = p1.join(p2);
+        final PredPrec r3 = p1.join(r2);
 
-		Assert.assertSame(p1, r1);
-		Assert.assertNotSame(p1, r2);
-		Assert.assertSame(r2, r3);
+        Assert.assertSame(p1, r1);
+        Assert.assertNotSame(p1, r2);
+        Assert.assertSame(r2, r3);
 
-	}
+    }
 
-	@Test
-	public void testEquals() {
-		final PredPrec p0 = PredPrec.of();
-		final PredPrec p1 = PredPrec.of(Collections.singleton(pred));
-		final PredPrec p2 = PredPrec.of(Collections.singleton(pred));
+    @Test
+    public void testEquals() {
+        final PredPrec p0 = PredPrec.of();
+        final PredPrec p1 = PredPrec.of(Collections.singleton(pred));
+        final PredPrec p2 = PredPrec.of(Collections.singleton(pred));
 
-		Assert.assertNotEquals(p0, p1);
-		Assert.assertNotEquals(p0, p2);
-		Assert.assertEquals(p1, p2);
-	}
+        Assert.assertNotEquals(p0, p1);
+        Assert.assertNotEquals(p0, p2);
+        Assert.assertEquals(p1, p2);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,51 +39,55 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class PredInitFuncTest {
 
-	private final VarDecl<IntType> x = Var("x", Int());
-	private final VarDecl<IntType> y = Var("y", Int());
-	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
-	private final PredAbstractor predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
+    private final VarDecl<IntType> x = Var("x", Int());
+    private final VarDecl<IntType> y = Var("y", Int());
+    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    private final PredAbstractor predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
 
-	@Test
-	public void test1() {
-		// true -> (x>=0, y>=0)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
-		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
-		Assert.assertEquals(4, initFunc.getInitStates(prec).size());
-	}
+    @Test
+    public void test1() {
+        // true -> (x>=0, y>=0)?
+        final PredPrec prec = PredPrec.of(
+                ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
+        final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
+        Assert.assertEquals(4, initFunc.getInitStates(prec).size());
+    }
 
-	@Test
-	public void test2() {
-		// (x>=0) -> (x>=0, y>=0)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
-		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(0)));
-		Assert.assertEquals(2, initFunc.getInitStates(prec).size());
-	}
+    @Test
+    public void test2() {
+        // (x>=0) -> (x>=0, y>=0)?
+        final PredPrec prec = PredPrec.of(
+                ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
+        final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(0)));
+        Assert.assertEquals(2, initFunc.getInitStates(prec).size());
+    }
 
-	@Test
-	public void test3() {
-		// (x>=1) -> (x>=0, y>=0)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
-		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(1)));
-		Assert.assertEquals(2, initFunc.getInitStates(prec).size());
-	}
+    @Test
+    public void test3() {
+        // (x>=1) -> (x>=0, y>=0)?
+        final PredPrec prec = PredPrec.of(
+                ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
+        final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(1)));
+        Assert.assertEquals(2, initFunc.getInitStates(prec).size());
+    }
 
-	@Test
-	public void test4() {
-		// true -> (x>0, x<0)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
-		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
-		Assert.assertEquals(3, initFunc.getInitStates(prec).size());
-	}
+    @Test
+    public void test4() {
+        // true -> (x>0, x<0)?
+        final PredPrec prec = PredPrec.of(
+                ImmutableList.of(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
+        final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
+        Assert.assertEquals(3, initFunc.getInitStates(prec).size());
+    }
 
-	@Test
-	public void testBottom() {
-		// (x<0) and (x>0) -> (x>0)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0))));
-		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor,
-				And(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
-		final Collection<? extends PredState> initStates = initFunc.getInitStates(prec);
-		Assert.assertEquals(1, initStates.size());
-		Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(initStates));
-	}
+    @Test
+    public void testBottom() {
+        // (x<0) and (x>0) -> (x>0)?
+        final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0))));
+        final PredInitFunc initFunc = PredInitFunc.create(predAbstractor,
+                And(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
+        final Collection<? extends PredState> initStates = initFunc.getInitStates(prec);
+        Assert.assertEquals(1, initStates.size());
+        Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(initStates));
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,24 +17,25 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 public class CDoWhile extends CStatement {
-	private final CStatement body;
-	private final CStatement guard;
 
-	public CDoWhile(CStatement body, CStatement guard) {
-		this.body = body;
-		this.guard = guard;
-	}
+    private final CStatement body;
+    private final CStatement guard;
 
-	public CStatement getBody() {
-		return body;
-	}
+    public CDoWhile(CStatement body, CStatement guard) {
+        this.body = body;
+        this.guard = guard;
+    }
 
-	public CStatement getGuard() {
-		return guard;
-	}
+    public CStatement getBody() {
+        return body;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public CStatement getGuard() {
+        return guard;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

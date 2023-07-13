@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -71,59 +71,66 @@ import static org.junit.Assert.assertTrue;
 
 public class StsExplTest {
 
-	@Test
-	public void test() {
+    @Test
+    public void test() {
 
-		final Logger logger = new ConsoleLogger(Level.VERBOSE);
+        final Logger logger = new ConsoleLogger(Level.VERBOSE);
 
-		final VarDecl<IntType> vx = Var("x", Int());
-		final Expr<IntType> x = vx.getRef();
-		final VarDecl<IntType> vy = Var("y", Int());
-		final Expr<IntType> y = vy.getRef();
+        final VarDecl<IntType> vx = Var("x", Int());
+        final Expr<IntType> x = vx.getRef();
+        final VarDecl<IntType> vy = Var("y", Int());
+        final Expr<IntType> y = vy.getRef();
 
-		final int mod = 10;
+        final int mod = 10;
 
-		final Builder builder = STS.builder();
+        final Builder builder = STS.builder();
 
-		builder.addInit(Eq(x, Int(0)));
-		builder.addInit(Eq(y, Int(0)));
-		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
-				Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
-		builder.addTrans(Eq(Prime(y), Int(0)));
-		builder.setProp(Not(Eq(x, Int(mod))));
+        builder.addInit(Eq(x, Int(0)));
+        builder.addInit(Eq(y, Int(0)));
+        builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
+                Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+        builder.addTrans(Eq(Prime(y), Int(0)));
+        builder.setProp(Not(Eq(x, Int(mod))));
 
-		final STS sts = builder.build();
+        final STS sts = builder.build();
 
-		final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
-		final UCSolver refinementSolver = Z3SolverFactory.getInstance().createUCSolver();
+        final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
+        final UCSolver refinementSolver = Z3SolverFactory.getInstance().createUCSolver();
 
-		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(abstractionSolver, sts.getInit());
-		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), abstractionSolver);
+        final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(
+                abstractionSolver, sts.getInit());
+        final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()),
+                abstractionSolver);
 
-		final ExplPrec prec = ExplPrec.of(Collections.singleton(vy));
+        final ExplPrec prec = ExplPrec.of(Collections.singleton(vy));
 
-		final LTS<State, StsAction> lts = StsLts.create(sts);
+        final LTS<State, StsAction> lts = StsLts.create(sts);
 
-		final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
+        final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts,
+                analysis, target);
 
-		final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs())).logger(logger).build();
+        final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(
+                        argBuilder)
+                .waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs())).logger(logger).build();
 
-		final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker.create(sts.getInit(),
-				Not(sts.getProp()), refinementSolver);
+        final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker.create(
+                sts.getInit(),
+                Not(sts.getProp()), refinementSolver);
 
-		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
-				.create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()), PruneStrategy.LAZY, logger);
+        final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
+                .create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()),
+                        PruneStrategy.LAZY, logger);
 
-		final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner, logger);
+        final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(
+                abstractor, refiner, logger);
 
-		final SafetyResult<ExplState, StsAction> safetyStatus = checker.check(prec);
+        final SafetyResult<ExplState, StsAction> safetyStatus = checker.check(prec);
 
-		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
-		assertTrue(isWellLabeled(arg, abstractionSolver));
+        final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
+        assertTrue(isWellLabeled(arg, abstractionSolver));
 
-		// System.out.println(new
-		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
-	}
+        // System.out.println(new
+        // GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
+    }
 
 }

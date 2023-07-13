@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,66 +37,69 @@ import java.util.Set;
 
 public class StmtAtomCollector {
 
-	public static Set<Expr<BoolType>> collectAtoms(final Stmt stmt) {
-		final Set<Expr<BoolType>> atoms = Containers.createSet();
-		stmt.accept(new AllAssumesAndAssignsCollector(), atoms);
-		return atoms;
-	}
+    public static Set<Expr<BoolType>> collectAtoms(final Stmt stmt) {
+        final Set<Expr<BoolType>> atoms = Containers.createSet();
+        stmt.accept(new AllAssumesAndAssignsCollector(), atoms);
+        return atoms;
+    }
 
-	private static class AllAssumesAndAssignsCollector implements StmtVisitor<Set<Expr<BoolType>>, Void> {
+    private static class AllAssumesAndAssignsCollector implements
+            StmtVisitor<Set<Expr<BoolType>>, Void> {
 
-		@Override
-		public Void visit(SkipStmt stmt, Set<Expr<BoolType>> atoms) {
-			return null;
-		}
+        @Override
+        public Void visit(SkipStmt stmt, Set<Expr<BoolType>> atoms) {
+            return null;
+        }
 
-		@Override
-		public Void visit(AssumeStmt stmt, Set<Expr<BoolType>> atoms) {
-			atoms.addAll(ExprUtils.getAtoms(stmt.getCond()));
-			return null;
-		}
+        @Override
+        public Void visit(AssumeStmt stmt, Set<Expr<BoolType>> atoms) {
+            atoms.addAll(ExprUtils.getAtoms(stmt.getCond()));
+            return null;
+        }
 
-		@Override
-		public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt, Set<Expr<BoolType>> atoms) {
-			final Expr<BoolType> eq = EqExpr.create2(stmt.getVarDecl().getRef(), stmt.getExpr());
-			atoms.addAll(ExprUtils.getAtoms(eq));
-			return null;
-		}
+        @Override
+        public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt,
+                                                  Set<Expr<BoolType>> atoms) {
+            final Expr<BoolType> eq = EqExpr.create2(stmt.getVarDecl().getRef(), stmt.getExpr());
+            atoms.addAll(ExprUtils.getAtoms(eq));
+            return null;
+        }
 
-		@Override
-		public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt, Set<Expr<BoolType>> atoms) {
-			return null;
-		}
+        @Override
+        public <DeclType extends Type> Void visit(HavocStmt<DeclType> stmt,
+                                                  Set<Expr<BoolType>> atoms) {
+            return null;
+        }
 
-		@Override
-		public Void visit(SequenceStmt stmt, Set<Expr<BoolType>> atoms) {
-			stmt.getStmts().forEach(s -> s.accept(this, atoms));
-			return null;
-		}
+        @Override
+        public Void visit(SequenceStmt stmt, Set<Expr<BoolType>> atoms) {
+            stmt.getStmts().forEach(s -> s.accept(this, atoms));
+            return null;
+        }
 
-		@Override
-		public Void visit(NonDetStmt stmt, Set<Expr<BoolType>> atoms) {
-			stmt.getStmts().forEach(s -> s.accept(this, atoms));
-			return null;
-		}
+        @Override
+        public Void visit(NonDetStmt stmt, Set<Expr<BoolType>> atoms) {
+            stmt.getStmts().forEach(s -> s.accept(this, atoms));
+            return null;
+        }
 
-		@Override
-		public Void visit(OrtStmt stmt, Set<Expr<BoolType>> atoms) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public Void visit(OrtStmt stmt, Set<Expr<BoolType>> atoms) {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public Void visit(LoopStmt stmt, Set<Expr<BoolType>> atoms) {
-			stmt.getStmt().accept(this, atoms);
-			return null;
-		}
+        @Override
+        public Void visit(LoopStmt stmt, Set<Expr<BoolType>> atoms) {
+            stmt.getStmt().accept(this, atoms);
+            return null;
+        }
 
-		public Void visit(IfStmt stmt, Set<Expr<BoolType>> atoms) {
-			stmt.getThen().accept(this, atoms);
-			stmt.getElze().accept(this, atoms);
-			atoms.addAll(ExprUtils.getAtoms(stmt.getCond()));
-			return null;
-		}
-	}
+        public Void visit(IfStmt stmt, Set<Expr<BoolType>> atoms) {
+            stmt.getThen().accept(this, atoms);
+            stmt.getElze().accept(this, atoms);
+            atoms.addAll(ExprUtils.getAtoms(stmt.getCond()));
+            return null;
+        }
+    }
 
 }

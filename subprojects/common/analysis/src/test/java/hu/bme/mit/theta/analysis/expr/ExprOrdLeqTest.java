@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,39 +42,39 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 @RunWith(Parameterized.class)
 public final class ExprOrdLeqTest {
 
-	private static final Expr<IntType> X = Var("x", Int()).getRef();
+    private static final Expr<IntType> X = Var("x", Int()).getRef();
 
-	@Parameter(value = 0)
-	public ExprState state1;
+    @Parameter(value = 0)
+    public ExprState state1;
 
-	@Parameter(value = 1)
-	public ExprState state2;
+    @Parameter(value = 1)
+    public ExprState state2;
 
-	@Parameter(value = 2)
-	public boolean leq;
+    @Parameter(value = 2)
+    public boolean leq;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{PredState.of(), PredState.of(), true},
+                {PredState.of(), PredState.of(), true},
 
-				{PredState.of(Geq(X, Int(0))), PredState.of(True()), true},
+                {PredState.of(Geq(X, Int(0))), PredState.of(True()), true},
 
-				{PredState.of(False()), PredState.of(Leq(X, Int(1))), true},
+                {PredState.of(False()), PredState.of(Leq(X, Int(1))), true},
 
-				{PredState.of(True()), PredState.of(Geq(X, Int(0))), false},
+                {PredState.of(True()), PredState.of(Geq(X, Int(0))), false},
 
-				{PredState.of(Geq(X, Int(0))), PredState.of(False()), false}
+                {PredState.of(Geq(X, Int(0))), PredState.of(False()), false}
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void testIsTop() {
-		final Solver solver = Z3SolverFactory.getInstance().createSolver();
-		final PartialOrd<ExprState> ord = ExprOrd.create(solver);
-		assertEquals(ord.isLeq(state1, state2), leq);
-	}
+    @Test
+    public void testIsTop() {
+        final Solver solver = Z3SolverFactory.getInstance().createSolver();
+        final PartialOrd<ExprState> ord = ExprOrd.create(solver);
+        assertEquals(ord.isLeq(state1, state2), leq);
+    }
 
 }

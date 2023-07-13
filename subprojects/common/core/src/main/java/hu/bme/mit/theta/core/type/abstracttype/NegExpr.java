@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,16 +20,17 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 
-public abstract class NegExpr<ExprType extends Additive<ExprType>> extends UnaryExpr<ExprType, ExprType> {
+public abstract class NegExpr<ExprType extends Additive<ExprType>> extends
+        UnaryExpr<ExprType, ExprType> {
 
-	protected NegExpr(final Expr<ExprType> op) {
-		super(op);
-	}
+    protected NegExpr(final Expr<ExprType> op) {
+        super(op);
+    }
 
-	public static <ExprType extends Additive<ExprType>> NegExpr<?> create2(final Expr<?> op) {
-		@SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
-		final Expr<ExprType> newOp = cast(op, type);
-		return type.Neg(newOp);
-	}
+    public static <ExprType extends Additive<ExprType>> NegExpr<?> create2(final Expr<?> op) {
+        @SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
+        final Expr<ExprType> newOp = cast(op, type);
+        return type.Neg(newOp);
+    }
 
 }

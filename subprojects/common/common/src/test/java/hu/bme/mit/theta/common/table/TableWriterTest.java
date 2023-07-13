@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,22 +25,24 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 
 public class TableWriterTest {
-	@Test
-	public void test() {
-		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		final PrintStream ps = new PrintStream(baos);
-		final TableWriter tw = new BasicTableWriter(ps, ",", "X", "Y");
 
-		tw.cell(11).cell(12).newRow();
-		tw.cell(2, 2).newRow();
-		tw.cell(31).newRow(32);
-		tw.cells(ImmutableList.of(41, 42)).newRow();
+    @Test
+    public void test() {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final PrintStream ps = new PrintStream(baos);
+        final TableWriter tw = new BasicTableWriter(ps, ",", "X", "Y");
 
-		final String actual = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+        tw.cell(11).cell(12).newRow();
+        tw.cell(2, 2).newRow();
+        tw.cell(31).newRow(32);
+        tw.cells(ImmutableList.of(41, 42)).newRow();
 
-		final String nl = System.lineSeparator();
-		final String expected = "X11Y,X12Y" + nl + "X2Y," + nl + "X31Y,X32Y" + nl + "X41Y,X42Y" + nl;
+        final String actual = new String(baos.toByteArray(), StandardCharsets.UTF_8);
 
-		Assert.assertEquals(expected, actual);
-	}
+        final String nl = System.lineSeparator();
+        final String expected =
+                "X11Y,X12Y" + nl + "X2Y," + nl + "X31Y,X32Y" + nl + "X41Y,X42Y" + nl;
+
+        Assert.assertEquals(expected, actual);
+    }
 }

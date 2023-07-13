@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,4 +20,5 @@ package hu.bme.mit.theta.common.datalog;
  * Every atom used with the Datalog engine must implement this interface
  */
 public interface DatalogArgument {
+
 }

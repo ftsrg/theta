@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,20 +17,21 @@ package hu.bme.mit.theta.common.logging;
 
 public final class NullLogger implements Logger {
 
-	private static final class LazyHolder {
-		private static final NullLogger INSTANCE = new NullLogger();
-	}
+    private static final class LazyHolder {
 
-	private NullLogger() {
-	}
+        private static final NullLogger INSTANCE = new NullLogger();
+    }
 
-	public static NullLogger getInstance() {
-		return LazyHolder.INSTANCE;
-	}
+    private NullLogger() {
+    }
 
-	@Override
-	public Logger write(final Level level, final String pattern, final Object... objects) {
-		return this;
-	}
+    public static NullLogger getInstance() {
+        return LazyHolder.INSTANCE;
+    }
+
+    @Override
+    public Logger write(final Level level, final String pattern, final Object... objects) {
+        return this;
+    }
 
 }

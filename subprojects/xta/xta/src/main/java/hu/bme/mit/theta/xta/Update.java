@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,107 +23,109 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 
 public abstract class Update {
 
-	private Update() {
-	}
+    private Update() {
+    }
 
-	static DataUpdate dataUpdate(final Stmt stmt) {
-		return new DataUpdate(stmt);
-	}
+    static DataUpdate dataUpdate(final Stmt stmt) {
+        return new DataUpdate(stmt);
+    }
 
-	static ClockUpdate clockUpdate(final Stmt stmt) {
-		return new ClockUpdate(ClockOps.fromStmt(stmt));
-	}
+    static ClockUpdate clockUpdate(final Stmt stmt) {
+        return new ClockUpdate(ClockOps.fromStmt(stmt));
+    }
 
-	public abstract Stmt toStmt();
+    public abstract Stmt toStmt();
 
-	public abstract boolean isDataUpdate();
+    public abstract boolean isDataUpdate();
 
-	public abstract boolean isClockUpdate();
+    public abstract boolean isClockUpdate();
 
-	public abstract DataUpdate asDataUpdate();
+    public abstract DataUpdate asDataUpdate();
 
-	public abstract ClockUpdate asClockUpdate();
+    public abstract ClockUpdate asClockUpdate();
 
-	public static final class DataUpdate extends Update {
-		private final Stmt stmt;
+    public static final class DataUpdate extends Update {
 
-		private DataUpdate(final Stmt stmt) {
-			this.stmt = checkNotNull(stmt);
-		}
+        private final Stmt stmt;
 
-		@Override
-		public Stmt toStmt() {
-			return stmt;
-		}
+        private DataUpdate(final Stmt stmt) {
+            this.stmt = checkNotNull(stmt);
+        }
 
-		@Override
-		public boolean isDataUpdate() {
-			return true;
-		}
+        @Override
+        public Stmt toStmt() {
+            return stmt;
+        }
 
-		@Override
-		public boolean isClockUpdate() {
-			return false;
-		}
+        @Override
+        public boolean isDataUpdate() {
+            return true;
+        }
 
-		@Override
-		public DataUpdate asDataUpdate() {
-			return this;
-		}
+        @Override
+        public boolean isClockUpdate() {
+            return false;
+        }
 
-		@Override
-		public ClockUpdate asClockUpdate() {
-			throw new ClassCastException();
-		}
+        @Override
+        public DataUpdate asDataUpdate() {
+            return this;
+        }
 
-		@Override
-		public String toString() {
-			return stmt.toString();
-		}
+        @Override
+        public ClockUpdate asClockUpdate() {
+            throw new ClassCastException();
+        }
 
-	}
+        @Override
+        public String toString() {
+            return stmt.toString();
+        }
 
-	public static final class ClockUpdate extends Update {
-		private final ClockOp clockOp;
+    }
 
-		private ClockUpdate(final ClockOp clockOp) {
-			this.clockOp = checkNotNull(clockOp);
-		}
+    public static final class ClockUpdate extends Update {
 
-		public ClockOp getClockOp() {
-			return clockOp;
-		}
+        private final ClockOp clockOp;
 
-		@Override
-		public Stmt toStmt() {
-			return clockOp.toStmt();
-		}
+        private ClockUpdate(final ClockOp clockOp) {
+            this.clockOp = checkNotNull(clockOp);
+        }
 
-		@Override
-		public boolean isDataUpdate() {
-			return false;
-		}
+        public ClockOp getClockOp() {
+            return clockOp;
+        }
 
-		@Override
-		public boolean isClockUpdate() {
-			return true;
-		}
+        @Override
+        public Stmt toStmt() {
+            return clockOp.toStmt();
+        }
 
-		@Override
-		public DataUpdate asDataUpdate() {
-			throw new ClassCastException();
-		}
+        @Override
+        public boolean isDataUpdate() {
+            return false;
+        }
 
-		@Override
-		public ClockUpdate asClockUpdate() {
-			return this;
-		}
+        @Override
+        public boolean isClockUpdate() {
+            return true;
+        }
 
-		@Override
-		public String toString() {
-			return clockOp.toString();
-		}
+        @Override
+        public DataUpdate asDataUpdate() {
+            throw new ClassCastException();
+        }
 
-	}
+        @Override
+        public ClockUpdate asClockUpdate() {
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return clockOp.toString();
+        }
+
+    }
 
 }

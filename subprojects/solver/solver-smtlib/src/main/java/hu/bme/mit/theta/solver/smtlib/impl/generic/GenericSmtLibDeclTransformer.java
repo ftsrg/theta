@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import com.google.common.collect.ImmutableList;
@@ -15,12 +30,14 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
+
     private final SmtLibTransformationManager transformer;
     private final SmtLibSymbolTable symbolTable;
 
     private int symbolCount;
 
-    public GenericSmtLibDeclTransformer(final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
+    public GenericSmtLibDeclTransformer(final SmtLibTransformationManager transformer,
+                                        final SmtLibSymbolTable symbolTable) {
         this.transformer = transformer;
         this.symbolTable = symbolTable;
 
@@ -31,7 +48,7 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
     public String toSymbol(final Decl<?> decl) {
         if (decl instanceof ConstDecl) {
             final ConstDecl<?> cdecl = (ConstDecl<?>) decl;
-            if(!symbolTable.definesConst(cdecl)) {
+            if (!symbolTable.definesConst(cdecl)) {
                 transformConst(cdecl);
             }
             return symbolTable.getSymbol(cdecl);
@@ -44,7 +61,7 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
     public String toDeclaration(final Decl<?> decl) {
         if (decl instanceof ConstDecl) {
             final ConstDecl<?> cdecl = (ConstDecl<?>) decl;
-            if(!symbolTable.definesConst(cdecl)) {
+            if (!symbolTable.definesConst(cdecl)) {
                 transformConst(cdecl);
             }
             return symbolTable.getDeclaration(cdecl);
@@ -66,8 +83,8 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
 
         final String symbolName = symbolNameFor(decl);
         final String symbolDeclaration = String.format(
-            "(declare-fun %s (%s) %s)",
-            symbolName, String.join(" ", paramSorts), returnSort
+                "(declare-fun %s (%s) %s)",
+                symbolName, String.join(" ", paramSorts), returnSort
         );
         symbolTable.put(decl, symbolName, symbolDeclaration);
     }
@@ -84,7 +101,8 @@ public class GenericSmtLibDeclTransformer implements SmtLibDeclTransformer {
             final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
             final List<Type> paramTypes = subResult.get1();
             final Type newResultType = subResult.get2();
-            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
+            final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType)
+                    .addAll(paramTypes).build();
             final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
             return result;

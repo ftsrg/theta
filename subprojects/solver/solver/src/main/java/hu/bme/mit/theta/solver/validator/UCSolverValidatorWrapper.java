@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,68 +28,69 @@ import java.util.Collection;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class UCSolverValidatorWrapper implements UCSolver {
-	private final UCSolver solver;
 
-	UCSolverValidatorWrapper(String solver) throws Exception {
-		this.solver = SolverManager.resolveSolverFactory(solver).createUCSolver();
-	}
+    private final UCSolver solver;
 
-	@Override
-	public SolverStatus check() {
-		SolverStatus check = solver.check();
-		if (check.isSat()) {
-			final Valuation model = solver.getModel();
-			for (Expr<BoolType> assertion : solver.getAssertions()) {
-				if (!assertion.eval(model).equals(True())) {
-					throw new RuntimeException("Solver problem: " + assertion);
-				}
-			}
-		}
-		return check;
-	}
+    UCSolverValidatorWrapper(String solver) throws Exception {
+        this.solver = SolverManager.resolveSolverFactory(solver).createUCSolver();
+    }
 
-	@Override
-	public void push() {
-		solver.push();
-	}
+    @Override
+    public SolverStatus check() {
+        SolverStatus check = solver.check();
+        if (check.isSat()) {
+            final Valuation model = solver.getModel();
+            for (Expr<BoolType> assertion : solver.getAssertions()) {
+                if (!assertion.eval(model).equals(True())) {
+                    throw new RuntimeException("Solver problem: " + assertion);
+                }
+            }
+        }
+        return check;
+    }
 
-	@Override
-	public void pop(int n) {
-		solver.pop();
-	}
+    @Override
+    public void push() {
+        solver.push();
+    }
 
-	@Override
-	public void reset() {
-		solver.reset();
-	}
+    @Override
+    public void pop(int n) {
+        solver.pop();
+    }
 
-	@Override
-	public SolverStatus getStatus() {
-		return solver.getStatus();
-	}
+    @Override
+    public void reset() {
+        solver.reset();
+    }
 
-	@Override
-	public Valuation getModel() {
-		return solver.getModel();
-	}
+    @Override
+    public SolverStatus getStatus() {
+        return solver.getStatus();
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getAssertions() {
-		return solver.getAssertions();
-	}
+    @Override
+    public Valuation getModel() {
+        return solver.getModel();
+    }
 
-	@Override
-	public void close() throws Exception {
-		solver.close();
-	}
+    @Override
+    public Collection<Expr<BoolType>> getAssertions() {
+        return solver.getAssertions();
+    }
 
-	@Override
-	public void track(Expr<BoolType> assertion) {
-		solver.track(assertion);
-	}
+    @Override
+    public void close() throws Exception {
+        solver.close();
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getUnsatCore() {
-		return solver.getUnsatCore();
-	}
+    @Override
+    public void track(Expr<BoolType> assertion) {
+        solver.track(assertion);
+    }
+
+    @Override
+    public Collection<Expr<BoolType>> getUnsatCore() {
+        return solver.getUnsatCore();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,80 +32,80 @@ import hu.bme.mit.theta.sts.aiger.elements.Latch;
  */
 public final class AigerConstProp {
 
-	private AigerConstProp() {
-	}
+    private AigerConstProp() {
+    }
 
-	/**
-	 * Propagate constants in an AIGER system. The parameter is modified. It is
-	 * assumed that the system contains a single constant.
-	 *
-	 * @param system
-	 */
-	public static void apply(final AigerSystem system) {
-		final Optional<AigerNode> falseOpt = system.getNodes().stream().filter(n -> n instanceof FalseConst)
-				.findFirst();
-		if (!falseOpt.isPresent()) {
-			return;
-		}
-		final FalseConst falseConst = (FalseConst) falseOpt.get();
-		while (propagateAnd(system, falseConst) || propagateLatch(system, falseConst)) {
-		}
-	}
+    /**
+     * Propagate constants in an AIGER system. The parameter is modified. It is assumed that the
+     * system contains a single constant.
+     *
+     * @param system
+     */
+    public static void apply(final AigerSystem system) {
+        final Optional<AigerNode> falseOpt = system.getNodes().stream()
+                .filter(n -> n instanceof FalseConst)
+                .findFirst();
+        if (!falseOpt.isPresent()) {
+            return;
+        }
+        final FalseConst falseConst = (FalseConst) falseOpt.get();
+        while (propagateAnd(system, falseConst) || propagateLatch(system, falseConst)) {
+        }
+    }
 
-	/**
-	 * Propagate a constant through an AND gate using (true AND x == x), (false
-	 * AND x == false).
-	 *
-	 * @return True, if any propagation occurred
-	 */
-	private static boolean propagateAnd(final AigerSystem system, final FalseConst falseConst) {
-		final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
-				.filter(w -> w.getTarget() instanceof AndGate).findFirst();
-		if (wireOpt.isPresent()) {
-			final AigerWire wire = wireOpt.get();
-			final AndGate andGate = (AndGate) wire.getTarget();
-			final AigerWire otherWire = andGate.getInWire1().equals(wire) ? andGate.getInWire2() : andGate.getInWire1();
-			final AigerNode otherSource = otherWire.getSource();
-			otherSource.getOutWires().remove(otherWire);
-			final List<AigerWire> redirectedWires = new ArrayList<>();
-			redirectedWires.addAll(andGate.getOutWires());
-			if (wire.isPonated()) {
-				redirectedWires.forEach(w -> w.modifySource(falseConst));
-			} else {
-				redirectedWires.forEach(w -> w.modifySource(otherSource));
-				if (!otherWire.isPonated()) {
-					redirectedWires.forEach(w -> w.invert());
-				}
-			}
-			system.getNodes().remove(andGate);
-			falseConst.getOutWires().remove(wire);
-			return true;
-		} else {
-			return false;
-		}
-	}
+    /**
+     * Propagate a constant through an AND gate using (true AND x == x), (false AND x == false).
+     *
+     * @return True, if any propagation occurred
+     */
+    private static boolean propagateAnd(final AigerSystem system, final FalseConst falseConst) {
+        final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
+                .filter(w -> w.getTarget() instanceof AndGate).findFirst();
+        if (wireOpt.isPresent()) {
+            final AigerWire wire = wireOpt.get();
+            final AndGate andGate = (AndGate) wire.getTarget();
+            final AigerWire otherWire =
+                    andGate.getInWire1().equals(wire) ? andGate.getInWire2() : andGate.getInWire1();
+            final AigerNode otherSource = otherWire.getSource();
+            otherSource.getOutWires().remove(otherWire);
+            final List<AigerWire> redirectedWires = new ArrayList<>();
+            redirectedWires.addAll(andGate.getOutWires());
+            if (wire.isPonated()) {
+                redirectedWires.forEach(w -> w.modifySource(falseConst));
+            } else {
+                redirectedWires.forEach(w -> w.modifySource(otherSource));
+                if (!otherWire.isPonated()) {
+                    redirectedWires.forEach(w -> w.invert());
+                }
+            }
+            system.getNodes().remove(andGate);
+            falseConst.getOutWires().remove(wire);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-	/**
-	 * Propagate a false constant through a latch. Note, that true constants
-	 * cannot be propagated this way, as the initial state of the latch is
-	 * false.
-	 *
-	 * @return True, if any propagation occurred
-	 */
-	private static boolean propagateLatch(final AigerSystem system, final FalseConst falseConst) {
-		final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
-				.filter(w -> w.getTarget() instanceof Latch && w.isPonated()).findFirst();
-		if (wireOpt.isPresent()) {
-			final AigerWire wire = wireOpt.get();
-			final Latch latch = (Latch) wire.getTarget();
-			final List<AigerWire> redirectedWires = new ArrayList<>();
-			redirectedWires.addAll(latch.getOutWires());
-			redirectedWires.forEach(w -> w.modifySource(falseConst));
-			system.getNodes().remove(latch);
-			falseConst.getOutWires().remove(wire);
-			return true;
-		} else {
-			return false;
-		}
-	}
+    /**
+     * Propagate a false constant through a latch. Note, that true constants cannot be propagated
+     * this way, as the initial state of the latch is false.
+     *
+     * @return True, if any propagation occurred
+     */
+    private static boolean propagateLatch(final AigerSystem system, final FalseConst falseConst) {
+        final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
+                .filter(w -> w.getTarget() instanceof Latch && w.isPonated()).findFirst();
+        if (wireOpt.isPresent()) {
+            final AigerWire wire = wireOpt.get();
+            final Latch latch = (Latch) wire.getTarget();
+            final List<AigerWire> redirectedWires = new ArrayList<>();
+            redirectedWires.addAll(latch.getOutWires());
+            redirectedWires.forEach(w -> w.modifySource(falseConst));
+            system.getNodes().remove(latch);
+            falseConst.getOutWires().remove(wire);
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,37 +25,40 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.xta.XtaSystem;
 
-public final class XtaAnalysis<S extends State, P extends Prec> implements Analysis<XtaState<S>, XtaAction, P> {
-	private final PartialOrd<XtaState<S>> partialOrd;
-	private final InitFunc<XtaState<S>, P> initFunc;
-	private final TransFunc<XtaState<S>, XtaAction, P> transFunc;
+public final class XtaAnalysis<S extends State, P extends Prec> implements
+        Analysis<XtaState<S>, XtaAction, P> {
 
-	private XtaAnalysis(final XtaSystem system, final Analysis<S, ? super XtaAction, ? super P> analysis) {
-		checkNotNull(system);
-		checkNotNull(analysis);
-		partialOrd = XtaOrd.create(analysis.getPartialOrd());
-		initFunc = XtaInitFunc.create(system, analysis.getInitFunc());
-		transFunc = XtaTransFunc.create(analysis.getTransFunc());
-	}
+    private final PartialOrd<XtaState<S>> partialOrd;
+    private final InitFunc<XtaState<S>, P> initFunc;
+    private final TransFunc<XtaState<S>, XtaAction, P> transFunc;
 
-	public static <S extends State, P extends Prec> XtaAnalysis<S, P> create(final XtaSystem system,
-																			 final Analysis<S, ? super XtaAction, ? super P> analysis) {
-		return new XtaAnalysis<>(system, analysis);
-	}
+    private XtaAnalysis(final XtaSystem system,
+                        final Analysis<S, ? super XtaAction, ? super P> analysis) {
+        checkNotNull(system);
+        checkNotNull(analysis);
+        partialOrd = XtaOrd.create(analysis.getPartialOrd());
+        initFunc = XtaInitFunc.create(system, analysis.getInitFunc());
+        transFunc = XtaTransFunc.create(analysis.getTransFunc());
+    }
 
-	@Override
-	public PartialOrd<XtaState<S>> getPartialOrd() {
-		return partialOrd;
-	}
+    public static <S extends State, P extends Prec> XtaAnalysis<S, P> create(final XtaSystem system,
+                                                                             final Analysis<S, ? super XtaAction, ? super P> analysis) {
+        return new XtaAnalysis<>(system, analysis);
+    }
 
-	@Override
-	public InitFunc<XtaState<S>, P> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public PartialOrd<XtaState<S>> getPartialOrd() {
+        return partialOrd;
+    }
 
-	@Override
-	public TransFunc<XtaState<S>, XtaAction, P> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public InitFunc<XtaState<S>, P> getInitFunc() {
+        return initFunc;
+    }
+
+    @Override
+    public TransFunc<XtaState<S>, XtaAction, P> getTransFunc() {
+        return transFunc;
+    }
 
 }

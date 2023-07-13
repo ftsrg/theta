@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,38 +34,40 @@ import hu.bme.mit.theta.solver.SolverFactory;
 
 public final class CfaTraceConcretizer {
 
-	private CfaTraceConcretizer() {
-	}
+    private CfaTraceConcretizer() {
+    }
 
-	public static Trace<CfaState<ExplState>, CfaAction> concretize(
-			final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
-		List<CfaState<?>> sbeStates = new ArrayList<>();
-		List<CfaAction> sbeActions = new ArrayList<>();
+    public static Trace<CfaState<ExplState>, CfaAction> concretize(
+            final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
+        List<CfaState<?>> sbeStates = new ArrayList<>();
+        List<CfaAction> sbeActions = new ArrayList<>();
 
-		sbeStates.add(trace.getState(0));
-		for (int i = 0; i < trace.getActions().size(); ++i) {
-			List<CFA.Edge> edges = trace.getAction(i).getEdges();
-			sbeActions.add(CfaAction.create(edges.get(0)));
-			for (int e = 1; e < edges.size(); ++e) {
-				sbeStates.add(CfaState.of(edges.get(e).getSource(), ExplState.top()));
-				sbeActions.add(CfaAction.create(edges.get(e)));
-			}
-			sbeStates.add(trace.getState(i+1));
-		}
-		Trace<CfaState<?>, CfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
-		final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(BoolExprs.True(),
-				BoolExprs.True(), solverFactory.createItpSolver());
-		final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
-		checkArgument(status.isFeasible(), "Infeasible trace.");
-		final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+        sbeStates.add(trace.getState(0));
+        for (int i = 0; i < trace.getActions().size(); ++i) {
+            List<CFA.Edge> edges = trace.getAction(i).getEdges();
+            sbeActions.add(CfaAction.create(edges.get(0)));
+            for (int e = 1; e < edges.size(); ++e) {
+                sbeStates.add(CfaState.of(edges.get(e).getSource(), ExplState.top()));
+                sbeActions.add(CfaAction.create(edges.get(e)));
+            }
+            sbeStates.add(trace.getState(i + 1));
+        }
+        Trace<CfaState<?>, CfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
+        final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(
+                BoolExprs.True(),
+                BoolExprs.True(), solverFactory.createItpSolver());
+        final ExprTraceStatus<ItpRefutation> status = checker.check(sbeTrace);
+        checkArgument(status.isFeasible(), "Infeasible trace.");
+        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
 
-		assert valuations.getStates().size() == sbeTrace.getStates().size();
+        assert valuations.getStates().size() == sbeTrace.getStates().size();
 
-		final List<CfaState<ExplState>> cfaStates = new ArrayList<>();
-		for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
-			cfaStates.add(CfaState.of(sbeTrace.getState(i).getLoc(), ExplState.of(valuations.getState(i))));
-		}
+        final List<CfaState<ExplState>> cfaStates = new ArrayList<>();
+        for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
+            cfaStates.add(
+                    CfaState.of(sbeTrace.getState(i).getLoc(), ExplState.of(valuations.getState(i))));
+        }
 
-		return Trace.of(cfaStates, sbeTrace.getActions());
-	}
+        return Trace.of(cfaStates, sbeTrace.getActions());
+    }
 }

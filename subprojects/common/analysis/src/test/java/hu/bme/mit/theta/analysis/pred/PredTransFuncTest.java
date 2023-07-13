@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,59 +42,64 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class PredTransFuncTest {
-	private final VarDecl<IntType> x = Var("x", Int());
-	private final VarDecl<IntType> y = Var("y", Int());
-	private final Solver solver = Z3SolverFactory.getInstance().createSolver();
-	private final PredTransFunc transFunc = PredTransFunc.create(PredAbstractors.booleanSplitAbstractor(solver));
 
-	@Test
-	public void test1() {
-		// (x<5) ---[x := x+1]--> (x<5)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
-		final PredState state = PredState.of(Lt(x.getRef(), Int(5)));
-		final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
-		Assert.assertEquals(2, transFunc.getSuccStates(state, action, prec).size());
-	}
+    private final VarDecl<IntType> x = Var("x", Int());
+    private final VarDecl<IntType> y = Var("y", Int());
+    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    private final PredTransFunc transFunc = PredTransFunc.create(
+            PredAbstractors.booleanSplitAbstractor(solver));
 
-	@Test
-	public void test2() {
-		// (x<4) ---[x := x+1]--> (x<5)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
-		final PredState state = PredState.of(Lt(x.getRef(), Int(4)));
-		final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
-		Assert.assertEquals(1, transFunc.getSuccStates(state, action, prec).size());
-	}
+    @Test
+    public void test1() {
+        // (x<5) ---[x := x+1]--> (x<5)?
+        final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
+        final PredState state = PredState.of(Lt(x.getRef(), Int(5)));
+        final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
+        Assert.assertEquals(2, transFunc.getSuccStates(state, action, prec).size());
+    }
 
-	@Test
-	public void test3() {
-		// (x>0) ---[x := x+y]--> (x>0, y>0)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
-		final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
-		final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), y.getRef())));
-		Assert.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
-	}
+    @Test
+    public void test2() {
+        // (x<4) ---[x := x+1]--> (x<5)?
+        final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
+        final PredState state = PredState.of(Lt(x.getRef(), Int(4)));
+        final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
+        Assert.assertEquals(1, transFunc.getSuccStates(state, action, prec).size());
+    }
 
-	@Test
-	public void testBottom() {
-		// (x>0) ---[assume x=0]--> (x>0)?
-		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0))));
-		final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
-		final ExprAction action = new BasicStmtAction(Stmts.Assume(Eq(Int(0), x.getRef())));
-		final Collection<? extends PredState> succStates = transFunc.getSuccStates(state, action, prec);
-		Assert.assertEquals(1, succStates.size());
-		Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(succStates));
-	}
+    @Test
+    public void test3() {
+        // (x>0) ---[x := x+y]--> (x>0, y>0)?
+        final PredPrec prec = PredPrec.of(
+                ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
+        final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
+        final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), y.getRef())));
+        Assert.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
+    }
 
-	private static final class BasicStmtAction extends StmtAction {
-		private final Stmt stmt;
+    @Test
+    public void testBottom() {
+        // (x>0) ---[assume x=0]--> (x>0)?
+        final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0))));
+        final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
+        final ExprAction action = new BasicStmtAction(Stmts.Assume(Eq(Int(0), x.getRef())));
+        final Collection<? extends PredState> succStates = transFunc.getSuccStates(state, action,
+                prec);
+        Assert.assertEquals(1, succStates.size());
+        Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(succStates));
+    }
 
-		public BasicStmtAction(final Stmt stmt) {
-			this.stmt = stmt;
-		}
+    private static final class BasicStmtAction extends StmtAction {
 
-		@Override
-		public List<Stmt> getStmts() {
-			return Collections.singletonList(stmt);
-		}
-	}
+        private final Stmt stmt;
+
+        public BasicStmtAction(final Stmt stmt) {
+            this.stmt = stmt;
+        }
+
+        @Override
+        public List<Stmt> getStmts() {
+            return Collections.singletonList(stmt);
+        }
+    }
 }

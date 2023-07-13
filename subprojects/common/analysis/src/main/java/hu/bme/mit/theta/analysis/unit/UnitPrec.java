@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,22 +23,22 @@ import java.util.Set;
 
 public final class UnitPrec implements Prec {
 
-	private static final UnitPrec INSTANCE = new UnitPrec();
+    private static final UnitPrec INSTANCE = new UnitPrec();
 
-	private UnitPrec() {
-	}
+    private UnitPrec() {
+    }
 
-	public static UnitPrec getInstance() {
-		return INSTANCE;
-	}
+    public static UnitPrec getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 
-	@Override
-	public Collection<VarDecl<?>> getUsedVars() {
-		return Set.of();
-	}
+    @Override
+    public Collection<VarDecl<?>> getUsedVars() {
+        return Set.of();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,31 +33,35 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsSpecContext;
 
 public final class StsDslManager {
 
-	private StsDslManager() {
-	}
+    private StsDslManager() {
+    }
 
-	public static StsSpec createStsSpec(final String inputString, final Expr<?>... params) throws IOException {
-		final InputStream stream = new ByteArrayInputStream(inputString.getBytes(StandardCharsets.UTF_8.name()));
-		return createStsSpec(stream, params);
-	}
+    public static StsSpec createStsSpec(final String inputString, final Expr<?>... params)
+            throws IOException {
+        final InputStream stream = new ByteArrayInputStream(
+                inputString.getBytes(StandardCharsets.UTF_8.name()));
+        return createStsSpec(stream, params);
+    }
 
-	public static StsSpec createStsSpec(final InputStream inputStream, final List<? extends Expr<?>> args)
-			throws IOException {
-		final CharStream input = CharStreams.fromStream(inputStream);
+    public static StsSpec createStsSpec(final InputStream inputStream,
+                                        final List<? extends Expr<?>> args)
+            throws IOException {
+        final CharStream input = CharStreams.fromStream(inputStream);
 
-		final StsDslLexer lexer = new StsDslLexer(input);
-		final CommonTokenStream tokens = new CommonTokenStream(lexer);
-		final StsDslParser parser = new StsDslParser(tokens);
+        final StsDslLexer lexer = new StsDslLexer(input);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final StsDslParser parser = new StsDslParser(tokens);
 
-		final StsSpecContext ctx = parser.stsSpec();
-		final StsSpecSymbol stsSpecSymbol = StsSpecSymbol.create(ctx);
-		final StsSpec stsSpec = stsSpecSymbol.instantiate(args);
+        final StsSpecContext ctx = parser.stsSpec();
+        final StsSpecSymbol stsSpecSymbol = StsSpecSymbol.create(ctx);
+        final StsSpec stsSpec = stsSpecSymbol.instantiate(args);
 
-		return stsSpec;
-	}
+        return stsSpec;
+    }
 
-	public static StsSpec createStsSpec(final InputStream inputStream, final Expr<?>... params) throws IOException {
-		return createStsSpec(inputStream, Arrays.asList(params));
-	}
+    public static StsSpec createStsSpec(final InputStream inputStream, final Expr<?>... params)
+            throws IOException {
+        return createStsSpec(inputStream, Arrays.asList(params));
+    }
 
 }

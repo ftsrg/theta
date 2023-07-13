@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,19 +30,21 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.sts.STS;
 
 public final class StsTraceConcretizer {
-	private StsTraceConcretizer() {
-	}
 
-	public static Trace<Valuation, StsAction> concretize(
-			final STS sts, final Trace<ExprState, StsAction> trace, final SolverFactory solverFactory) {
-		final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(sts.getInit(),
-				BoolExprs.Not(sts.getProp()), solverFactory.createItpSolver());
-		final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
-		checkArgument(status.isFeasible(), "Infeasible trace.");
-		final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
+    private StsTraceConcretizer() {
+    }
 
-		assert valuations.getStates().size() == trace.getStates().size();
+    public static Trace<Valuation, StsAction> concretize(
+            final STS sts, final Trace<ExprState, StsAction> trace, final SolverFactory solverFactory) {
+        final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(
+                sts.getInit(),
+                BoolExprs.Not(sts.getProp()), solverFactory.createItpSolver());
+        final ExprTraceStatus<ItpRefutation> status = checker.check(trace);
+        checkArgument(status.isFeasible(), "Infeasible trace.");
+        final Trace<Valuation, ? extends Action> valuations = status.asFeasible().getValuations();
 
-		return Trace.of(valuations.getStates(), trace.getActions());
-	}
+        assert valuations.getStates().size() == trace.getStates().size();
+
+        return Trace.of(valuations.getStates(), trace.getActions());
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,80 +43,85 @@ import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class CoreDslHelper {
 
-	private CoreDslHelper() {
-	}
+    private CoreDslHelper() {
+    }
 
-	public static ParamDecl<?> createParamDecl(final DeclContext declCtx) {
-		final String name = declCtx.name.getText();
-		final Type type = createType(declCtx.ttype);
-		final ParamDecl<?> paramDecl = Param(name, type);
-		return paramDecl;
-	}
+    public static ParamDecl<?> createParamDecl(final DeclContext declCtx) {
+        final String name = declCtx.name.getText();
+        final Type type = createType(declCtx.ttype);
+        final ParamDecl<?> paramDecl = Param(name, type);
+        return paramDecl;
+    }
 
-	public static List<ParamDecl<?>> createParamList(final DeclListContext declListCtx) {
-		if (declListCtx == null || declListCtx.decls == null) {
-			return Collections.emptyList();
-		} else {
-			return declListCtx.decls.stream().map(CoreDslHelper::createParamDecl).collect(toList());
-		}
-	}
+    public static List<ParamDecl<?>> createParamList(final DeclListContext declListCtx) {
+        if (declListCtx == null || declListCtx.decls == null) {
+            return Collections.emptyList();
+        } else {
+            return declListCtx.decls.stream().map(CoreDslHelper::createParamDecl).collect(toList());
+        }
+    }
 
-	public static Type createType(final TypeContext typeCtx) {
-		final Type type = typeCtx.accept(TypeCreatorVisitor.getInstance());
-		assert type != null;
-		return type;
-	}
+    public static Type createType(final TypeContext typeCtx) {
+        final Type type = typeCtx.accept(TypeCreatorVisitor.getInstance());
+        assert type != null;
+        return type;
+    }
 
-	public static Expr<?> createExpr(final Scope scope, final ExprContext exprCtx) {
-		final Expr<?> expr = exprCtx.accept(new ExprCreatorVisitor(scope));
-		assert expr != null;
-		return expr;
-	}
+    public static Expr<?> createExpr(final Scope scope, final ExprContext exprCtx) {
+        final Expr<?> expr = exprCtx.accept(new ExprCreatorVisitor(scope));
+        assert expr != null;
+        return expr;
+    }
 
-	public static List<Expr<?>> createExprList(final Scope scope, final ExprListContext exprListCtx) {
-		if (exprListCtx == null || exprListCtx.exprs == null) {
-			return Collections.emptyList();
-		} else {
-			final List<Expr<?>> exprs = exprListCtx.exprs.stream().map(ctx -> createExpr(scope, ctx)).collect(toList());
-			return exprs;
-		}
-	}
+    public static List<Expr<?>> createExprList(final Scope scope,
+                                               final ExprListContext exprListCtx) {
+        if (exprListCtx == null || exprListCtx.exprs == null) {
+            return Collections.emptyList();
+        } else {
+            final List<Expr<?>> exprs = exprListCtx.exprs.stream()
+                    .map(ctx -> createExpr(scope, ctx)).collect(toList());
+            return exprs;
+        }
+    }
 
-	public static Expr<BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
-		return TypeUtils.cast(createExpr(scope, exprCtx), Bool());
-	}
+    public static Expr<BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
+        return TypeUtils.cast(createExpr(scope, exprCtx), Bool());
+    }
 
-	public static List<Expr<BoolType>> createBoolExprList(final Scope scope, final ExprListContext exprListCtx) {
-		final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
-		final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool())).collect(toList());
-		return boolExprs;
-	}
+    public static List<Expr<BoolType>> createBoolExprList(final Scope scope,
+                                                          final ExprListContext exprListCtx) {
+        final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
+        final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool()))
+                .collect(toList());
+        return boolExprs;
+    }
 
-	public static Stmt createStmt(final Scope scope, final StmtContext stmtCtx) {
-		final Stmt stmt = stmtCtx.accept(new StmtCreatorVisitor(scope));
-		assert stmt != null;
-		return stmt;
-	}
+    public static Stmt createStmt(final Scope scope, final StmtContext stmtCtx) {
+        final Stmt stmt = stmtCtx.accept(new StmtCreatorVisitor(scope));
+        assert stmt != null;
+        return stmt;
+    }
 
-	public static List<Stmt> createStmtList(final Scope scope, final StmtListContext stmtListCtx) {
-		if (stmtListCtx == null || stmtListCtx.stmts.isEmpty()) {
-			return Collections.emptyList();
-		} else {
-			final List<Stmt> stmts = stmtListCtx.stmts.stream().map(ctx -> createStmt(scope, ctx)).collect(toList());
-			return stmts;
-		}
-	}
+    public static List<Stmt> createStmtList(final Scope scope, final StmtListContext stmtListCtx) {
+        if (stmtListCtx == null || stmtListCtx.stmts.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            final List<Stmt> stmts = stmtListCtx.stmts.stream().map(ctx -> createStmt(scope, ctx))
+                    .collect(toList());
+            return stmts;
+        }
+    }
 
-	public static DeclSymbol resolveDecl(final Scope scope, final String name) {
-		final Optional<? extends Symbol> optSymbol = scope.resolve(name);
+    public static DeclSymbol resolveDecl(final Scope scope, final String name) {
+        final Optional<? extends Symbol> optSymbol = scope.resolve(name);
 
-		checkArgument(optSymbol.isPresent());
-		final Symbol symbol = optSymbol.get();
+        checkArgument(optSymbol.isPresent());
+        final Symbol symbol = optSymbol.get();
 
-		checkArgument(symbol instanceof DeclSymbol);
-		final DeclSymbol declSymbol = (DeclSymbol) symbol;
+        checkArgument(symbol instanceof DeclSymbol);
+        final DeclSymbol declSymbol = (DeclSymbol) symbol;
 
-		return declSymbol;
-	}
+        return declSymbol;
+    }
 
 }

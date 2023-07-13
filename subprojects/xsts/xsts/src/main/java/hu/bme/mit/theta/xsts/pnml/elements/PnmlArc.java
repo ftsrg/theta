@@ -1,30 +1,48 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.xsts.pnml.elements;
 
 public class PnmlArc {
 
-	private final int weight;
-	private final String id;
-	private final PnmlNode sourceNode;
-	private final PnmlNode targetNode;
+    private final int weight;
+    private final String id;
+    private final PnmlNode sourceNode;
+    private final PnmlNode targetNode;
 
-	public PnmlArc(final String id, int weight, final PnmlNode sourceNode, final PnmlNode targetNode) {
-		this.id = id;
-		this.weight = weight;
-		this.sourceNode = sourceNode;
-		this.targetNode = targetNode;
-	}
+    public PnmlArc(final String id, int weight, final PnmlNode sourceNode,
+                   final PnmlNode targetNode) {
+        this.id = id;
+        this.weight = weight;
+        this.sourceNode = sourceNode;
+        this.targetNode = targetNode;
+    }
 
-	public String getId() { return id; }
+    public String getId() {
+        return id;
+    }
 
-	public int getWeight() {
-		return weight;
-	}
+    public int getWeight() {
+        return weight;
+    }
 
-	public PnmlNode getSourceNode() {
-		return sourceNode;
-	}
+    public PnmlNode getSourceNode() {
+        return sourceNode;
+    }
 
-	public PnmlNode getTargetNode() {
-		return targetNode;
-	}
+    public PnmlNode getTargetNode() {
+        return targetNode;
+    }
 }

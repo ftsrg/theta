@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.solver.model;
 
 import com.google.common.collect.ImmutableList;
@@ -22,6 +37,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class SmtLibValuation extends Valuation {
+
     private final SmtLibSymbolTable symbolTable;
     private final SmtLibTransformationManager transformationManager;
     private final SmtLibTermTransformer termTransformer;
@@ -31,8 +47,9 @@ public final class SmtLibValuation extends Valuation {
     private volatile Collection<ConstDecl<?>> constDecls = null;
 
     public SmtLibValuation(
-        final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
-        final SmtLibTermTransformer termTransformer, final SmtLibModel model
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibModel model
     ) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;

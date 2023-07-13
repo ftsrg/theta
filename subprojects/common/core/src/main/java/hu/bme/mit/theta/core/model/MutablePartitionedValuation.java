@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,121 +38,125 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 /**
- * Mutable implementation of a partitioned valuation.
- * A partitioned valuation contains orthogonal valuations, making it possible for a single declaration to have
- * several valuations as per different views of the global state. This is especially useful for multi-threaded
- * programs and distributed systems.
+ * Mutable implementation of a partitioned valuation. A partitioned valuation contains orthogonal
+ * valuations, making it possible for a single declaration to have several valuations as per
+ * different views of the global state. This is especially useful for multi-threaded programs and
+ * distributed systems.
  */
 public final class MutablePartitionedValuation extends Valuation {
 
-	private final List<Map<Decl<?>, LitExpr<?>>> partitions;
+    private final List<Map<Decl<?>, LitExpr<?>>> partitions;
 
-	public MutablePartitionedValuation() {
-		this.partitions = new ArrayList<>();
-	}
+    public MutablePartitionedValuation() {
+        this.partitions = new ArrayList<>();
+    }
 
-	public static MutablePartitionedValuation copyOf(final MutablePartitionedValuation val) {
-		final MutablePartitionedValuation result = new MutablePartitionedValuation();
-		for (int i = 0; i < val.getPartitions().size(); ++i) {
-			int id = result.createPartition();
-			val.getPartitions().get(i).forEach((decl, litExpr) -> result.put(id, decl, litExpr));
-		}
-		return result;
-	}
+    public static MutablePartitionedValuation copyOf(final MutablePartitionedValuation val) {
+        final MutablePartitionedValuation result = new MutablePartitionedValuation();
+        for (int i = 0; i < val.getPartitions().size(); ++i) {
+            int id = result.createPartition();
+            val.getPartitions().get(i).forEach((decl, litExpr) -> result.put(id, decl, litExpr));
+        }
+        return result;
+    }
 
-	public int createPartition() {
-		partitions.add(new LinkedHashMap<>());
-		return partitions.size() - 1;
-	}
+    public int createPartition() {
+        partitions.add(new LinkedHashMap<>());
+        return partitions.size() - 1;
+    }
 
 
-	public List<Map<Decl<?>, LitExpr<?>>> getPartitions() {
-		return Collections.unmodifiableList(partitions);
-	}
+    public List<Map<Decl<?>, LitExpr<?>>> getPartitions() {
+        return Collections.unmodifiableList(partitions);
+    }
 
-	public MutablePartitionedValuation put(final int id, final Decl<?> decl, final LitExpr<?> value) {
-		checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
-		checkArgument(partitions.size() > id, "Index out of bounds");
-		partitions.get(id).put(decl, value);
-		return this;
-	}
+    public MutablePartitionedValuation put(final int id, final Decl<?> decl,
+                                           final LitExpr<?> value) {
+        checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
+        checkArgument(partitions.size() > id, "Index out of bounds");
+        partitions.get(id).put(decl, value);
+        return this;
+    }
 
-	public MutablePartitionedValuation remove(final int id, final Decl<?> decl) {
-		checkArgument(partitions.size() > id, "Index out of bounds");
-		partitions.get(id).remove(decl);
-		return this;
-	}
+    public MutablePartitionedValuation remove(final int id, final Decl<?> decl) {
+        checkArgument(partitions.size() > id, "Index out of bounds");
+        partitions.get(id).remove(decl);
+        return this;
+    }
 
-	public MutablePartitionedValuation remove(final Decl<?> decl) {
-		for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
-			decls.remove(decl);
-		}
-		return this;
-	}
+    public MutablePartitionedValuation remove(final Decl<?> decl) {
+        for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
+            decls.remove(decl);
+        }
+        return this;
+    }
 
-	public MutablePartitionedValuation clear() {
-		partitions.clear();
-		return this;
-	}
+    public MutablePartitionedValuation clear() {
+        partitions.clear();
+        return this;
+    }
 
-	public MutablePartitionedValuation clear(final int id) {
-		checkArgument(partitions.size() > id, "Index out of bounds");
-		partitions.get(id).clear();
-		return this;
-	}
+    public MutablePartitionedValuation clear(final int id) {
+        checkArgument(partitions.size() > id, "Index out of bounds");
+        partitions.get(id).clear();
+        return this;
+    }
 
-	public MutablePartitionedValuation putAll(final int id, final Valuation val) {
-		checkArgument(partitions.size() > id, "Index out of bounds");
-		for (final Decl<?> decl : val.getDecls()) {
-			partitions.get(id).put(decl, val.eval(decl).get());
-		}
-		return this;
-	}
+    public MutablePartitionedValuation putAll(final int id, final Valuation val) {
+        checkArgument(partitions.size() > id, "Index out of bounds");
+        for (final Decl<?> decl : val.getDecls()) {
+            partitions.get(id).put(decl, val.eval(decl).get());
+        }
+        return this;
+    }
 
-	@Override
-	public Collection<Decl<?>> getDecls() {
-		Set<Decl<?>> returnSet = new LinkedHashSet<>();
-		for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
-			returnSet.addAll(decls.keySet());
-		}
-		return Collections.unmodifiableSet(returnSet);
-	}
+    @Override
+    public Collection<Decl<?>> getDecls() {
+        Set<Decl<?>> returnSet = new LinkedHashSet<>();
+        for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
+            returnSet.addAll(decls.keySet());
+        }
+        return Collections.unmodifiableSet(returnSet);
+    }
 
-	public Collection<Decl<?>> getDecls(final int id) {
-		checkArgument(partitions.size() > id, "Index out of bounds");
-		return Collections.unmodifiableSet(partitions.get(id).keySet());
-	}
+    public Collection<Decl<?>> getDecls(final int id) {
+        checkArgument(partitions.size() > id, "Index out of bounds");
+        return Collections.unmodifiableSet(partitions.get(id).keySet());
+    }
 
-	public Valuation getValuation(final int id) {
-		checkArgument(partitions.size() > id, "Index out of bounds");
-		MutableValuation mutableValuation = new MutableValuation();
-		partitions.forEach(declLitExprMap -> declLitExprMap.forEach(mutableValuation::put));
-		return mutableValuation;
-	}
+    public Valuation getValuation(final int id) {
+        checkArgument(partitions.size() > id, "Index out of bounds");
+        MutableValuation mutableValuation = new MutableValuation();
+        partitions.forEach(declLitExprMap -> declLitExprMap.forEach(mutableValuation::put));
+        return mutableValuation;
+    }
 
-	@Override
-	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-		checkNotNull(decl);
-		for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
-			@SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) decls.get(decl);
-			if (val != null) return Optional.of(val);
-		}
-		return Optional.empty();
-	}
+    @Override
+    public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+        checkNotNull(decl);
+        for (Map<Decl<?>, LitExpr<?>> decls : partitions) {
+            @SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) decls.get(
+                    decl);
+            if (val != null) {
+                return Optional.of(val);
+            }
+        }
+        return Optional.empty();
+    }
 
-	@Override
-	public Expr<BoolType> toExpr() {
-		return SmartBoolExprs.And(getDecls().stream().map(e -> Eq(e.getRef(), eval(e).get()))
-				.collect(toImmutableList()));
-	}
+    @Override
+    public Expr<BoolType> toExpr() {
+        return SmartBoolExprs.And(getDecls().stream().map(e -> Eq(e.getRef(), eval(e).get()))
+                .collect(toImmutableList()));
+    }
 
-	@Override
-	public Map<Decl<?>, LitExpr<?>> toMap() {
-		Map<Decl<?>, LitExpr<?>> ret = new LinkedHashMap<>();
-		for (Map<Decl<?>, LitExpr<?>> decl : partitions) {
-			ret.putAll(decl);
-		}
-		return Collections.unmodifiableMap(ret);
-	}
+    @Override
+    public Map<Decl<?>, LitExpr<?>> toMap() {
+        Map<Decl<?>, LitExpr<?>> ret = new LinkedHashMap<>();
+        for (Map<Decl<?>, LitExpr<?>> decl : partitions) {
+            ret.putAll(decl);
+        }
+        return Collections.unmodifiableMap(ret);
+    }
 
 }

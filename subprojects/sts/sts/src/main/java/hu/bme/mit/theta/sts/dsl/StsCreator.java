@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,34 +31,36 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsContext;
 
 final class StsCreator {
 
-	private StsCreator() {
-	}
+    private StsCreator() {
+    }
 
-	public static StsDefScope createSts(final Scope scope, final Substitution assignment, final StsContext stsContext) {
-		return stsContext.accept(new StsCreatorVisitor(scope, assignment));
-	}
+    public static StsDefScope createSts(final Scope scope, final Substitution assignment,
+                                        final StsContext stsContext) {
+        return stsContext.accept(new StsCreatorVisitor(scope, assignment));
+    }
 
-	private static final class StsCreatorVisitor extends StsDslBaseVisitor<StsDefScope> {
-		private final Scope scope;
-		private final Substitution assignment;
+    private static final class StsCreatorVisitor extends StsDslBaseVisitor<StsDefScope> {
 
-		private StsCreatorVisitor(final Scope scope, final Substitution assignment) {
-			this.scope = checkNotNull(scope);
-			this.assignment = checkNotNull(assignment);
-		}
+        private final Scope scope;
+        private final Substitution assignment;
 
-		@Override
-		public StsDefScope visitDefSts(final DefStsContext ctx) {
-			final StsDefScope stsDefScope = StsDefScope.create(scope, assignment, ctx);
-			return stsDefScope;
-		}
+        private StsCreatorVisitor(final Scope scope, final Substitution assignment) {
+            this.scope = checkNotNull(scope);
+            this.assignment = checkNotNull(assignment);
+        }
 
-		@Override
-		public StsDefScope visitRefSts(final RefStsContext ctx) {
-			final StsDeclSymbol symbol = resolveSts(scope, ctx.ref.getText());
-			final List<Expr<?>> args = createExprList(scope, assignment, ctx.params);
-			return symbol.instantiate(assignment, args);
-		}
-	}
+        @Override
+        public StsDefScope visitDefSts(final DefStsContext ctx) {
+            final StsDefScope stsDefScope = StsDefScope.create(scope, assignment, ctx);
+            return stsDefScope;
+        }
+
+        @Override
+        public StsDefScope visitRefSts(final RefStsContext ctx) {
+            final StsDeclSymbol symbol = resolveSts(scope, ctx.ref.getText());
+            final List<Expr<?>> args = createExprList(scope, assignment, ctx.params);
+            return symbol.instantiate(assignment, args);
+        }
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,70 +34,73 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.StsDeclContext;
 
 final class StsDeclSymbol implements ScopedSymbol {
 
-	private final StsDeclContext stsDeclContext;
+    private final StsDeclContext stsDeclContext;
 
-	private final StsSpecSymbol enclosingScope;
-	private final SymbolTable symbolTable;
+    private final StsSpecSymbol enclosingScope;
+    private final SymbolTable symbolTable;
 
-	private final String name;
-	private final List<ParamDecl<?>> params;
+    private final String name;
+    private final List<ParamDecl<?>> params;
 
-	private StsDeclSymbol(final StsSpecSymbol enclosingScope, final StsDeclContext stsDeclContext) {
-		this.enclosingScope = checkNotNull(enclosingScope);
-		this.stsDeclContext = checkNotNull(stsDeclContext);
-		symbolTable = new SymbolTable();
-		name = stsDeclContext.name.getText();
-		params = StsDslHelper.createParamList(stsDeclContext.paramDecls);
+    private StsDeclSymbol(final StsSpecSymbol enclosingScope, final StsDeclContext stsDeclContext) {
+        this.enclosingScope = checkNotNull(enclosingScope);
+        this.stsDeclContext = checkNotNull(stsDeclContext);
+        symbolTable = new SymbolTable();
+        name = stsDeclContext.name.getText();
+        params = StsDslHelper.createParamList(stsDeclContext.paramDecls);
 
-		declareParams();
-	}
+        declareParams();
+    }
 
-	public static StsDeclSymbol create(final StsSpecSymbol enclosingScope, final StsDeclContext tcfaDeclCtx) {
-		return new StsDeclSymbol(enclosingScope, tcfaDeclCtx);
-	}
+    public static StsDeclSymbol create(final StsSpecSymbol enclosingScope,
+                                       final StsDeclContext tcfaDeclCtx) {
+        return new StsDeclSymbol(enclosingScope, tcfaDeclCtx);
+    }
 
-	////
+    ////
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	@Override
-	public Optional<StsSpecSymbol> enclosingScope() {
-		return Optional.of(enclosingScope);
-	}
+    @Override
+    public Optional<StsSpecSymbol> enclosingScope() {
+        return Optional.of(enclosingScope);
+    }
 
-	@Override
-	public Optional<Symbol> resolve(final String name) {
-		final Optional<Symbol> optSymbol = symbolTable.get(name);
-		if (optSymbol.isPresent()) {
-			return optSymbol;
-		} else {
-			return enclosingScope.resolve(name);
-		}
-	}
+    @Override
+    public Optional<Symbol> resolve(final String name) {
+        final Optional<Symbol> optSymbol = symbolTable.get(name);
+        if (optSymbol.isPresent()) {
+            return optSymbol;
+        } else {
+            return enclosingScope.resolve(name);
+        }
+    }
 
-	////
+    ////
 
-	public StsDefScope instantiate(final Substitution assignment, final List<? extends Expr<?>> args) {
-		final List<Expr<?>> simplifiedArgs = ExprUtils.simplifyAll(args);
-		final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
-		final Substitution newAssignment = NestedSubstitution.create(assignment, binding);
-		final StsDefScope stsDefScope = StsCreator.createSts(this, newAssignment, stsDeclContext.def);
-		return stsDefScope;
-	}
+    public StsDefScope instantiate(final Substitution assignment,
+                                   final List<? extends Expr<?>> args) {
+        final List<Expr<?>> simplifiedArgs = ExprUtils.simplifyAll(args);
+        final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
+        final Substitution newAssignment = NestedSubstitution.create(assignment, binding);
+        final StsDefScope stsDefScope = StsCreator.createSts(this, newAssignment,
+                stsDeclContext.def);
+        return stsDefScope;
+    }
 
-	////
+    ////
 
-	// TODO Eliminate copy-paste code
+    // TODO Eliminate copy-paste code
 
-	private void declareParams() {
-		params.forEach(this::declareParam);
-	}
+    private void declareParams() {
+        params.forEach(this::declareParam);
+    }
 
-	private void declareParam(final ParamDecl<?> paramDecl) {
-		final Symbol symbol = DeclSymbol.of(paramDecl);
-		symbolTable.add(symbol);
-	}
+    private void declareParam(final ParamDecl<?> paramDecl) {
+        final Symbol symbol = DeclSymbol.of(paramDecl);
+        symbolTable.add(symbol);
+    }
 }

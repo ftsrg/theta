@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ package hu.bme.mit.theta.analysis.stubs;
 import hu.bme.mit.theta.analysis.Action;
 
 public class ActionStub implements Action {
-	private final String label;
 
-	public ActionStub(final String label) {
-		this.label = label;
-	}
+    private final String label;
 
-	@Override
-	public String toString() {
-		return label;
-	}
+    public ActionStub(final String label) {
+        this.label = label;
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
 }

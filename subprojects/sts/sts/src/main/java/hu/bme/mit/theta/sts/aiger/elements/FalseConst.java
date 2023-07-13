@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,26 +26,26 @@ import java.util.Collections;
  */
 public final class FalseConst extends AigerNode {
 
-	private final Collection<AigerWire> outWires;
+    private final Collection<AigerWire> outWires;
 
-	public FalseConst() {
-		super("F_v0");
-		this.outWires = new ArrayList<>();
-	}
+    public FalseConst() {
+        super("F_v0");
+        this.outWires = new ArrayList<>();
+    }
 
-	@Override
-	public Collection<AigerWire> getInWires() {
-		return Collections.emptyList();
-	}
+    @Override
+    public Collection<AigerWire> getInWires() {
+        return Collections.emptyList();
+    }
 
-	@Override
-	public Collection<AigerWire> getOutWires() {
-		return outWires;
-	}
+    @Override
+    public Collection<AigerWire> getOutWires() {
+        return outWires;
+    }
 
-	@Override
-	public void addOutWire(final AigerWire outWire) {
-		checkArgument(outWire.getSource().equals(this));
-		outWires.add(outWire);
-	}
+    @Override
+    public void addOutWire(final AigerWire outWire) {
+        checkArgument(outWire.getSource().equals(this));
+        outWires.add(outWire);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,39 +28,40 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 
 public final class PrecMappingAnalysis<S extends State, A extends Action, PP extends Prec, PR extends Prec>
-		implements Analysis<S, A, PP> {
+        implements Analysis<S, A, PP> {
 
-	private final PartialOrd<S> partialOrd;
-	private final InitFunc<S, PP> initFunc;
-	private final TransFunc<S, A, PP> transFunc;
+    private final PartialOrd<S> partialOrd;
+    private final InitFunc<S, PP> initFunc;
+    private final TransFunc<S, A, PP> transFunc;
 
-	private PrecMappingAnalysis(final Analysis<S, ? super A, ? super PR> analysis,
-								final Function<? super PP, ? extends PR> mapping) {
-		checkNotNull(analysis);
-		checkNotNull(mapping);
-		this.partialOrd = analysis.getPartialOrd();
-		this.initFunc = PrecMappingInitFunc.create(analysis.getInitFunc(), mapping);
-		this.transFunc = PrecMappingTransFunc.create(analysis.getTransFunc(), mapping);
-	}
+    private PrecMappingAnalysis(final Analysis<S, ? super A, ? super PR> analysis,
+                                final Function<? super PP, ? extends PR> mapping) {
+        checkNotNull(analysis);
+        checkNotNull(mapping);
+        this.partialOrd = analysis.getPartialOrd();
+        this.initFunc = PrecMappingInitFunc.create(analysis.getInitFunc(), mapping);
+        this.transFunc = PrecMappingTransFunc.create(analysis.getTransFunc(), mapping);
+    }
 
-	public static <S extends State, A extends Action, PP extends Prec, PR extends Prec> PrecMappingAnalysis<S, A, PP, PR> create(
-			final Analysis<S, ? super A, ? super PR> analysis, final Function<? super PP, ? extends PR> mapping) {
-		return new PrecMappingAnalysis<>(analysis, mapping);
-	}
+    public static <S extends State, A extends Action, PP extends Prec, PR extends Prec> PrecMappingAnalysis<S, A, PP, PR> create(
+            final Analysis<S, ? super A, ? super PR> analysis,
+            final Function<? super PP, ? extends PR> mapping) {
+        return new PrecMappingAnalysis<>(analysis, mapping);
+    }
 
-	@Override
-	public PartialOrd<S> getPartialOrd() {
-		return partialOrd;
-	}
+    @Override
+    public PartialOrd<S> getPartialOrd() {
+        return partialOrd;
+    }
 
-	@Override
-	public InitFunc<S, PP> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<S, PP> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<S, A, PP> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<S, A, PP> getTransFunc() {
+        return transFunc;
+    }
 
 }

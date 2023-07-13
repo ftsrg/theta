@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import hu.bme.mit.theta.analysis.Trace;
  */
 public interface PrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation> {
 
-	/**
-	 * Refine a precision based on a trace and a refutation.
-	 */
-	P refine(P prec, Trace<S, A> trace, R refutation);
+    /**
+     * Refine a precision based on a trace and a refutation.
+     */
+    P refine(P prec, Trace<S, A> trace, R refutation);
 
 }

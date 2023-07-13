@@ -1,17 +1,16 @@
 # Theta
 
-![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-Linux/badge.svg)
-![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-Windows/badge.svg)
-![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-macOS/badge.svg)
-![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Linux/badge.svg)
-![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Windows/badge.svg)
-![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-macOS/badge.svg)
-
-[![Windows build](https://github.com/ftsrg/theta/actions/workflows/build-win.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-win.yml)
-[![Linux build](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml)
-![Build dockerfiles](https://github.com/ftsrg/theta/workflows/Build%20dockerfiles/badge.svg)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ftsrg/theta&amp;utm_campaign=Badge_Grade)
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/3a36a0f7b4c8475a9907efc1bd811b03)](https://www.codacy.com/gh/ftsrg/theta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ftsrg/theta&utm_campaign=Badge_Coverage)
+![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/build-Linux/badge.svg)
+![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/build-Windows/badge.svg)
+![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/build-macOS/badge.svg)
+![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-Linux/badge.svg)
+![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-Windows/badge.svg)
+![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-macOS/badge.svg)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
+[![Check copyright](https://github.com/ftsrg/theta/actions/workflows/check-copyright.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/check-copyright.yml)
+[![Check formatting](https://github.com/ftsrg/theta/actions/workflows/check-formatting.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/check-formatting.yml)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache--2-brightgreen.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ![Theta logo](doc/theta-logo.png)
@@ -38,6 +37,13 @@ Currently, the following tools are available (follow the links for more informat
   * theta-xsts-cli natively supports Petri net models in the [PNML](http://www.pnml.org/) format (experimental).
 * [`theta-xcfa-cli`](subprojects/xcfa-old/xcfa-cli): Reachability checking of error locations in eXtended Control Flow Automata (XCFA) using CEGAR-based algorithms. The CFA formalism is extended with procedures and processes, able to support multithreaded analysis and also several optimization passes. Right now it is mainly used to check both single and multithreaded C programs.
   * the [`c-frontend`](subprojects/frontends/c-frontend) module of Theta is capable of parsing C programs and transforming them into a formalism independent, in-memory representation. The `xcfa-cli` is able to convert this representation into an XCFA.
+
+To use Theta as a standalone tool, see the following deployments:
+ * [DockerHub](https://hub.docker.com/u/ftsrg) and [ghcr.io](https://github.com/orgs/ftsrg/packages) for Docker images based on the `*-cli` subprojects
+ * Latest [release](https://github.com/ftsrg/theta/releases/latest) for `.jar` files
+
+To use Theta as a library, see [Maven Central](https://central.sonatype.com/namespace/hu.bme.mit.theta).
+
 
 ## Overview of the architecture
 

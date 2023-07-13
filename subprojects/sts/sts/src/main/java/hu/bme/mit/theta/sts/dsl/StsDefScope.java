@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,117 +43,119 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.VarDeclContext;
 
 final class StsDefScope implements Scope {
 
-	private final DefStsContext defStsContext;
+    private final DefStsContext defStsContext;
 
-	private final Scope enclosingScope;
-	private final Substitution assignment;
-	private final SymbolTable symbolTable;
+    private final Scope enclosingScope;
+    private final Substitution assignment;
+    private final SymbolTable symbolTable;
 
-	private final STS.Builder stsBuilder;
-	private final STS sts;
+    private final STS.Builder stsBuilder;
+    private final STS sts;
 
-	private StsDefScope(final Scope enclosingScope, final Substitution assignment, final DefStsContext defTcfaContext) {
-		checkNotNull(assignment);
-		this.enclosingScope = checkNotNull(enclosingScope);
-		this.defStsContext = checkNotNull(defTcfaContext);
-		symbolTable = new SymbolTable();
+    private StsDefScope(final Scope enclosingScope, final Substitution assignment,
+                        final DefStsContext defTcfaContext) {
+        checkNotNull(assignment);
+        this.enclosingScope = checkNotNull(enclosingScope);
+        this.defStsContext = checkNotNull(defTcfaContext);
+        symbolTable = new SymbolTable();
 
-		declareConsts();
-		declareVars();
+        declareConsts();
+        declareVars();
 
-		// TODO Handle recursive constant definitions
-		final Substitution constAssignment = StsDslHelper.createConstDefs(this, assignment, defTcfaContext.constDecls);
-		this.assignment = NestedSubstitution.create(assignment, constAssignment);
+        // TODO Handle recursive constant definitions
+        final Substitution constAssignment = StsDslHelper.createConstDefs(this, assignment,
+                defTcfaContext.constDecls);
+        this.assignment = NestedSubstitution.create(assignment, constAssignment);
 
-		stsBuilder = STS.builder();
+        stsBuilder = STS.builder();
 
-		createInvarConstrs();
-		createInitConstrs();
-		createTransConstrs();
+        createInvarConstrs();
+        createInitConstrs();
+        createTransConstrs();
 
-		// TODO Separate system and property
-		stsBuilder.setProp(True());
+        // TODO Separate system and property
+        stsBuilder.setProp(True());
 
-		sts = stsBuilder.build();
-	}
+        sts = stsBuilder.build();
+    }
 
-	public static StsDefScope create(final Scope enclosingScope, final Substitution assignment,
-									 final DefStsContext defTcfaContext) {
-		return new StsDefScope(enclosingScope, assignment, defTcfaContext);
-	}
+    public static StsDefScope create(final Scope enclosingScope, final Substitution assignment,
+                                     final DefStsContext defTcfaContext) {
+        return new StsDefScope(enclosingScope, assignment, defTcfaContext);
+    }
 
-	////
+    ////
 
-	public STS getSts() {
-		return sts;
-	}
+    public STS getSts() {
+        return sts;
+    }
 
-	////
+    ////
 
-	@Override
-	public Optional<Scope> enclosingScope() {
-		return Optional.of(enclosingScope);
-	}
+    @Override
+    public Optional<Scope> enclosingScope() {
+        return Optional.of(enclosingScope);
+    }
 
-	@Override
-	public Optional<? extends Symbol> resolve(final String name) {
-		final Optional<Symbol> optSymbol = symbolTable.get(name);
-		if (optSymbol.isPresent()) {
-			return optSymbol;
-		} else {
-			return enclosingScope.resolve(name);
-		}
-	}
+    @Override
+    public Optional<? extends Symbol> resolve(final String name) {
+        final Optional<Symbol> optSymbol = symbolTable.get(name);
+        if (optSymbol.isPresent()) {
+            return optSymbol;
+        } else {
+            return enclosingScope.resolve(name);
+        }
+    }
 
-	////
+    ////
 
-	private void createInvarConstrs() {
-		defStsContext.invarConstrs.forEach(this::createInvarConstr);
-	}
+    private void createInvarConstrs() {
+        defStsContext.invarConstrs.forEach(this::createInvarConstr);
+    }
 
-	private void createInvarConstr(final InvarConstrContext invarConstrCtx) {
-		final Expr<BoolType> cond = createBoolExpr(this, assignment, invarConstrCtx.cond);
-		stsBuilder.addInvar(cond);
-	}
+    private void createInvarConstr(final InvarConstrContext invarConstrCtx) {
+        final Expr<BoolType> cond = createBoolExpr(this, assignment, invarConstrCtx.cond);
+        stsBuilder.addInvar(cond);
+    }
 
-	private void createInitConstrs() {
-		defStsContext.initConstrs.forEach(this::createInitConstr);
-	}
+    private void createInitConstrs() {
+        defStsContext.initConstrs.forEach(this::createInitConstr);
+    }
 
-	private void createInitConstr(final InitConstrContext initConstrCtx) {
-		final Expr<BoolType> cond = createBoolExpr(this, assignment, initConstrCtx.cond);
-		stsBuilder.addInit(cond);
-	}
+    private void createInitConstr(final InitConstrContext initConstrCtx) {
+        final Expr<BoolType> cond = createBoolExpr(this, assignment, initConstrCtx.cond);
+        stsBuilder.addInit(cond);
+    }
 
-	private void createTransConstrs() {
-		defStsContext.transConstrs.forEach(this::createTransConstr);
-	}
+    private void createTransConstrs() {
+        defStsContext.transConstrs.forEach(this::createTransConstr);
+    }
 
-	private void createTransConstr(final TransConstrContext transConstrCtx) {
-		final Expr<BoolType> cond = createBoolExpr(this, assignment, transConstrCtx.cond);
-		stsBuilder.addTrans(cond);
-	}
+    private void createTransConstr(final TransConstrContext transConstrCtx) {
+        final Expr<BoolType> cond = createBoolExpr(this, assignment, transConstrCtx.cond);
+        stsBuilder.addTrans(cond);
+    }
 
-	////
+    ////
 
-	private void declareConsts() {
-		defStsContext.constDecls.forEach(this::declareConst);
-	}
+    private void declareConsts() {
+        defStsContext.constDecls.forEach(this::declareConst);
+    }
 
-	private void declareConst(final ConstDeclContext constDeclContext) {
-		final ConstDecl<?> constDecl = createConstDecl(constDeclContext);
-		final Symbol symbol = DeclSymbol.of(constDecl);
-		symbolTable.add(symbol);
-	}
+    private void declareConst(final ConstDeclContext constDeclContext) {
+        final ConstDecl<?> constDecl = createConstDecl(constDeclContext);
+        final Symbol symbol = DeclSymbol.of(constDecl);
+        symbolTable.add(symbol);
+    }
 
-	private void declareVars() {
-		defStsContext.varDecls.forEach(this::declareVar);
-	}
+    private void declareVars() {
+        defStsContext.varDecls.forEach(this::declareVar);
+    }
 
-	private void declareVar(final VarDeclContext varDeclContext) {
-		final VarDecl<?> varDecl = createVarDecl(varDeclContext);
-		final Symbol symbol = DeclSymbol.of(varDecl);
-		symbolTable.add(symbol);
-	}
+    private void declareVar(final VarDeclContext varDeclContext) {
+        final VarDecl<?> varDecl = createVarDecl(varDeclContext);
+        final Symbol symbol = DeclSymbol.of(varDecl);
+        symbolTable.add(symbol);
+    }
 
 }

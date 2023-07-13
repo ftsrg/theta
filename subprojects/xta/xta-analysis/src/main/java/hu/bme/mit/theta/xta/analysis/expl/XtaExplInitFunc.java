@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ import static java.util.Collections.singleton;
 
 final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 
-	private final XtaSystem system;
+    private final XtaSystem system;
 
-	private XtaExplInitFunc(final XtaSystem system) {
-		this.system = checkNotNull(system);
-	}
+    private XtaExplInitFunc(final XtaSystem system) {
+        this.system = checkNotNull(system);
+    }
 
-	public static XtaExplInitFunc create(final XtaSystem system) {
-		return new XtaExplInitFunc(system);
-	}
+    public static XtaExplInitFunc create(final XtaSystem system) {
+        return new XtaExplInitFunc(system);
+    }
 
-	@Override
-	public Collection<ExplState> getInitStates(final UnitPrec prec) {
-		checkNotNull(prec);
-		final ExplState initState = ExplState.of(system.getInitVal());
-		return singleton(initState);
-	}
+    @Override
+    public Collection<ExplState> getInitStates(final UnitPrec prec) {
+        checkNotNull(prec);
+        final ExplState initState = ExplState.of(system.getInitVal());
+        return singleton(initState);
+    }
 
 }

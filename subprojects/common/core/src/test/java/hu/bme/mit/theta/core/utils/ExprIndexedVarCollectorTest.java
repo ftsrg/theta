@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,47 +50,49 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
 public class ExprIndexedVarCollectorTest {
-	private static final VarDecl<BoolType> VA = Var("a", Bool());
-	private static final VarDecl<IntType> VB = Var("b", Int());
 
-	private static final IndexedConstDecl<BoolType> A0 = VA.getConstDecl(0);
-	private static final IndexedConstDecl<BoolType> A1 = VA.getConstDecl(1);
-	private static final IndexedConstDecl<BoolType> A2 = VA.getConstDecl(2);
-	private static final IndexedConstDecl<IntType> B0 = VB.getConstDecl(0);
-	private static final IndexedConstDecl<IntType> B1 = VB.getConstDecl(1);
+    private static final VarDecl<BoolType> VA = Var("a", Bool());
+    private static final VarDecl<IntType> VB = Var("b", Int());
 
-	@Parameter(value = 0)
-	public Expr<Type> expr;
+    private static final IndexedConstDecl<BoolType> A0 = VA.getConstDecl(0);
+    private static final IndexedConstDecl<BoolType> A1 = VA.getConstDecl(1);
+    private static final IndexedConstDecl<BoolType> A2 = VA.getConstDecl(2);
+    private static final IndexedConstDecl<IntType> B0 = VB.getConstDecl(0);
+    private static final IndexedConstDecl<IntType> B1 = VB.getConstDecl(1);
 
-	@Parameter(value = 1)
-	public Map<Integer, Set<VarDecl<?>>> expectedVars;
+    @Parameter(value = 0)
+    public Expr<Type> expr;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameter(value = 1)
+    public Map<Integer, Set<VarDecl<?>>> expectedVars;
 
-				{And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of()},
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA))},
+                {And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of()},
 
-				{And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
-						ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA))},
+                {And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA))},
 
-		});
+                {And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
+                        ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA))},
 
-	}
+        });
 
-	@Test
-	public void test() {
-		final IndexedVars actualVars = ExprUtils.getVarsIndexed(expr);
+    }
 
-		Assert.assertEquals(expectedVars.keySet(), actualVars.getNonEmptyIndexes());
+    @Test
+    public void test() {
+        final IndexedVars actualVars = ExprUtils.getVarsIndexed(expr);
 
-		for (final Entry<Integer, Set<VarDecl<?>>> entry : expectedVars.entrySet()) {
-			Assert.assertEquals(entry.getValue(), actualVars.getVars(entry.getKey()));
-		}
+        Assert.assertEquals(expectedVars.keySet(), actualVars.getNonEmptyIndexes());
 
-		Assert.assertEquals(expectedVars.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
-				actualVars.getAllVars());
-	}
+        for (final Entry<Integer, Set<VarDecl<?>>> entry : expectedVars.entrySet()) {
+            Assert.assertEquals(entry.getValue(), actualVars.getVars(entry.getKey()));
+        }
+
+        Assert.assertEquals(
+                expectedVars.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
+                actualVars.getAllVars());
+    }
 }

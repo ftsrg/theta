@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,37 +29,39 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 final class LuZoneTransFunc<A extends Action> implements TransFunc<LuZoneState, A, ZonePrec> {
 
-	private final TransFunc<ZoneState, ? super A, ZonePrec> transFunc;
+    private final TransFunc<ZoneState, ? super A, ZonePrec> transFunc;
 
-	private LuZoneTransFunc(final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
-		this.transFunc = checkNotNull(transFunc);
-	}
+    private LuZoneTransFunc(final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+        this.transFunc = checkNotNull(transFunc);
+    }
 
-	public static <A extends Action> LuZoneTransFunc<A> create(
-			final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
-		return new LuZoneTransFunc<>(transFunc);
-	}
+    public static <A extends Action> LuZoneTransFunc<A> create(
+            final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+        return new LuZoneTransFunc<>(transFunc);
+    }
 
-	@Override
-	public Collection<LuZoneState> getSuccStates(final LuZoneState state, final A action, final ZonePrec prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
+    @Override
+    public Collection<LuZoneState> getSuccStates(final LuZoneState state, final A action,
+                                                 final ZonePrec prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
 
-		final ZoneState subState = state.getZone();
-		final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState, action, prec);
+        final ZoneState subState = state.getZone();
+        final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState,
+                action, prec);
 
-		if (subSuccStates.isEmpty()) {
-			final LuZoneState succState = LuZoneState.of(ZoneState.bottom(), BoundFunc.top());
-			return Collections.singleton(succState);
-		} else {
-			final Collection<LuZoneState> result = new ArrayList<>(subSuccStates.size());
-			for (final ZoneState subSuccState : subSuccStates) {
-				final LuZoneState succState = LuZoneState.of(subSuccState, BoundFunc.top());
-				result.add(succState);
-			}
-			return result;
-		}
-	}
+        if (subSuccStates.isEmpty()) {
+            final LuZoneState succState = LuZoneState.of(ZoneState.bottom(), BoundFunc.top());
+            return Collections.singleton(succState);
+        } else {
+            final Collection<LuZoneState> result = new ArrayList<>(subSuccStates.size());
+            for (final ZoneState subSuccState : subSuccStates) {
+                final LuZoneState succState = LuZoneState.of(subSuccState, BoundFunc.top());
+                result.add(succState);
+            }
+            return result;
+        }
+    }
 
 }

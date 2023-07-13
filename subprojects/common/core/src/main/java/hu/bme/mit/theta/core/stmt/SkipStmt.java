@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,44 +20,45 @@ package hu.bme.mit.theta.core.stmt;
  */
 public final class SkipStmt implements Stmt {
 
-	private static final int HASH_CODE = 1310147;
-	private static final String STMT_LABEL = "skip";
+    private static final int HASH_CODE = 1310147;
+    private static final String STMT_LABEL = "skip";
 
-	private SkipStmt() {
-	}
+    private SkipStmt() {
+    }
 
-	private static class LazyHolder {
-		static final SkipStmt INSTANCE = new SkipStmt();
-	}
+    private static class LazyHolder {
 
-	public static SkipStmt getInstance() {
-		return LazyHolder.INSTANCE;
-	}
+        static final SkipStmt INSTANCE = new SkipStmt();
+    }
 
-	@Override
-	public <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
+    public static SkipStmt getInstance() {
+        return LazyHolder.INSTANCE;
+    }
 
-	@Override
-	public int hashCode() {
-		return HASH_CODE;
-	}
+    @Override
+    public <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj == null) {
-			return false;
-		} else {
-			return this.getClass() == obj.getClass();
-		}
-	}
+    @Override
+    public int hashCode() {
+        return HASH_CODE;
+    }
 
-	@Override
-	public String toString() {
-		return STMT_LABEL;
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj == null) {
+            return false;
+        } else {
+            return this.getClass() == obj.getClass();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return STMT_LABEL;
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,32 +28,34 @@ import java.util.List;
 
 final class PrimeCounter {
 
-	private PrimeCounter() {
-	}
+    private PrimeCounter() {
+    }
 
-	static VarIndexing countPrimes(final Expr<?> expr) {
-		return collectPrimes(expr, 0).build();
-	}
+    static VarIndexing countPrimes(final Expr<?> expr) {
+        return collectPrimes(expr, 0).build();
+    }
 
-	private static BasicVarIndexing.BasicVarIndexingBuilder collectPrimes(final Expr<?> expr, final int nPrimes) {
-		if (expr instanceof RefExpr) {
-			final RefExpr<?> ref = (RefExpr<?>) expr;
-			final Decl<?> decl = ref.getDecl();
-			if (decl instanceof VarDecl) {
-				final VarDecl<?> varDecl = (VarDecl<?>) decl;
-				return VarIndexingFactory.basicIndexingBuilder(0).inc(varDecl, nPrimes);
-			}
-		}
+    private static BasicVarIndexing.BasicVarIndexingBuilder collectPrimes(final Expr<?> expr,
+                                                                          final int nPrimes) {
+        if (expr instanceof RefExpr) {
+            final RefExpr<?> ref = (RefExpr<?>) expr;
+            final Decl<?> decl = ref.getDecl();
+            if (decl instanceof VarDecl) {
+                final VarDecl<?> varDecl = (VarDecl<?>) decl;
+                return VarIndexingFactory.basicIndexingBuilder(0).inc(varDecl, nPrimes);
+            }
+        }
 
-		if (expr instanceof PrimeExpr<?>) {
-			final PrimeExpr<?> primeExpr = (PrimeExpr<?>) expr;
-			final Expr<?> op = primeExpr.getOp();
-			return collectPrimes(op, nPrimes + 1);
-		}
+        if (expr instanceof PrimeExpr<?>) {
+            final PrimeExpr<?> primeExpr = (PrimeExpr<?>) expr;
+            final Expr<?> op = primeExpr.getOp();
+            return collectPrimes(op, nPrimes + 1);
+        }
 
-		final List<? extends Expr<?>> ops = expr.getOps();
-		return ops.stream().map(op -> collectPrimes(op, nPrimes)).reduce(VarIndexingFactory.basicIndexingBuilder(0),
-				BasicVarIndexing.BasicVarIndexingBuilder::join);
-	}
+        final List<? extends Expr<?>> ops = expr.getOps();
+        return ops.stream().map(op -> collectPrimes(op, nPrimes))
+                .reduce(VarIndexingFactory.basicIndexingBuilder(0),
+                        BasicVarIndexing.BasicVarIndexingBuilder::join);
+    }
 
 }

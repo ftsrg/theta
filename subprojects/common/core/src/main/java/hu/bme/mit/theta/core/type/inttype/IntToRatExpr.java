@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,62 +27,62 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 
-	private static final int HASH_SEED = 1627;
-	private static final String OPERATOR_LABEL = "to_rat";
+    private static final int HASH_SEED = 1627;
+    private static final String OPERATOR_LABEL = "to_rat";
 
-	private IntToRatExpr(final Expr<IntType> op) {
-		super(op);
-	}
+    private IntToRatExpr(final Expr<IntType> op) {
+        super(op);
+    }
 
-	public static IntToRatExpr of(final Expr<IntType> op) {
-		return new IntToRatExpr(op);
-	}
+    public static IntToRatExpr of(final Expr<IntType> op) {
+        return new IntToRatExpr(op);
+    }
 
-	public static IntToRatExpr create(final Expr<?> op) {
-		final Expr<IntType> newOp = cast(op, Int());
-		return IntToRatExpr.of(newOp);
-	}
+    public static IntToRatExpr create(final Expr<?> op) {
+        final Expr<IntType> newOp = cast(op, Int());
+        return IntToRatExpr.of(newOp);
+    }
 
-	@Override
-	public RatType getType() {
-		return Rat();
-	}
+    @Override
+    public RatType getType() {
+        return Rat();
+    }
 
-	@Override
-	public RatLitExpr eval(final Valuation val) {
-		final IntLitExpr opVal = (IntLitExpr) getOp().eval(val);
-		return opVal.toRat();
-	}
+    @Override
+    public RatLitExpr eval(final Valuation val) {
+        final IntLitExpr opVal = (IntLitExpr) getOp().eval(val);
+        return opVal.toRat();
+    }
 
-	@Override
-	public IntToRatExpr with(final Expr<IntType> op) {
-		if (op == getOp()) {
-			return this;
-		} else {
-			return IntToRatExpr.of(op);
-		}
-	}
+    @Override
+    public IntToRatExpr with(final Expr<IntType> op) {
+        if (op == getOp()) {
+            return this;
+        } else {
+            return IntToRatExpr.of(op);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof IntToRatExpr) {
-			final IntToRatExpr that = (IntToRatExpr) obj;
-			return this.getOp().equals(that.getOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof IntToRatExpr) {
+            final IntToRatExpr that = (IntToRatExpr) obj;
+            return this.getOp().equals(that.getOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

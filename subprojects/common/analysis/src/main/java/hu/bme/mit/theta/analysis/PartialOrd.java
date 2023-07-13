@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ package hu.bme.mit.theta.analysis;
 @FunctionalInterface
 public interface PartialOrd<S extends State> {
 
-	/**
-	 * Checks if state1 is less or equal to state2.
-	 *
-	 * @param state1
-	 * @param state2
-	 * @return
-	 */
-	boolean isLeq(S state1, S state2);
+    /**
+     * Checks if state1 is less or equal to state2.
+     *
+     * @param state1
+     * @param state2
+     * @return
+     */
+    boolean isLeq(S state1, S state2);
 
 }

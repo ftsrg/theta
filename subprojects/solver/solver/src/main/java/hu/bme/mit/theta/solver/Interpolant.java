@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  */
 public interface Interpolant {
 
-	/**
-	 * Get the expression in the interpolant corresponding to a given marker.
-	 *
-	 * @param marker Marker
-	 * @return Expression
-	 */
-	Expr<BoolType> eval(final ItpMarker marker);
+    /**
+     * Get the expression in the interpolant corresponding to a given marker.
+     *
+     * @param marker Marker
+     * @return Expression
+     */
+    Expr<BoolType> eval(final ItpMarker marker);
 
 }

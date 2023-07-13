@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,58 +37,58 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.TypeListContext;
 
 final class StsTypeCreatorVisitor extends StsDslBaseVisitor<Type> {
 
-	private static final StsTypeCreatorVisitor INSTANCE = new StsTypeCreatorVisitor();
+    private static final StsTypeCreatorVisitor INSTANCE = new StsTypeCreatorVisitor();
 
-	StsTypeCreatorVisitor() {
-	}
+    StsTypeCreatorVisitor() {
+    }
 
-	public static StsTypeCreatorVisitor getInstance() {
-		return INSTANCE;
-	}
+    public static StsTypeCreatorVisitor getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public Type visitBoolType(final BoolTypeContext ctx) {
-		return Bool();
-	}
+    @Override
+    public Type visitBoolType(final BoolTypeContext ctx) {
+        return Bool();
+    }
 
-	@Override
-	public Type visitIntType(final IntTypeContext ctx) {
-		return Int();
-	}
+    @Override
+    public Type visitIntType(final IntTypeContext ctx) {
+        return Int();
+    }
 
-	@Override
-	public Type visitRatType(final RatTypeContext ctx) {
-		return Rat();
-	}
+    @Override
+    public Type visitRatType(final RatTypeContext ctx) {
+        return Rat();
+    }
 
-	@Override
-	public Type visitFuncType(final FuncTypeContext ctx) {
-		final List<Type> paramTypes = createTypeList(ctx.paramTypes);
+    @Override
+    public Type visitFuncType(final FuncTypeContext ctx) {
+        final List<Type> paramTypes = createTypeList(ctx.paramTypes);
 
-		checkArgument(paramTypes.size() == 1);
-		final Type paramType = paramTypes.get(0);
+        checkArgument(paramTypes.size() == 1);
+        final Type paramType = paramTypes.get(0);
 
-		final Type resultType = ctx.returnType.accept(this);
-		return Func(paramType, resultType);
-	}
+        final Type resultType = ctx.returnType.accept(this);
+        return Func(paramType, resultType);
+    }
 
-	@Override
-	public Type visitArrayType(final ArrayTypeContext ctx) {
-		final List<Type> indexTypes = createTypeList(ctx.indexTypes);
+    @Override
+    public Type visitArrayType(final ArrayTypeContext ctx) {
+        final List<Type> indexTypes = createTypeList(ctx.indexTypes);
 
-		checkArgument(indexTypes.size() == 1);
-		final Type indexType = indexTypes.get(0);
+        checkArgument(indexTypes.size() == 1);
+        final Type indexType = indexTypes.get(0);
 
-		final Type elemType = ctx.elemType.accept(this);
-		return Array(indexType, elemType);
-	}
+        final Type elemType = ctx.elemType.accept(this);
+        return Array(indexType, elemType);
+    }
 
-	private List<Type> createTypeList(final TypeListContext ctx) {
-		if (ctx.types == null) {
-			return Collections.emptyList();
-		} else {
-			final List<Type> types = ctx.types.stream().map(t -> t.accept(this)).collect(toList());
-			return types;
-		}
-	}
+    private List<Type> createTypeList(final TypeListContext ctx) {
+        if (ctx.types == null) {
+            return Collections.emptyList();
+        } else {
+            final List<Type> types = ctx.types.stream().map(t -> t.accept(this)).collect(toList());
+            return types;
+        }
+    }
 }

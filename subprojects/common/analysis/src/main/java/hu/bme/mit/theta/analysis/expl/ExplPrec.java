@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,86 +32,87 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Represents an immutable, simple explicit precision that is a set of
- * variables.
+ * Represents an immutable, simple explicit precision that is a set of variables.
  */
 public final class ExplPrec implements Prec {
 
-	private final Set<VarDecl<?>> vars;
-	private static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
+    private final Set<VarDecl<?>> vars;
+    private static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
 
-	private ExplPrec(final Iterable<? extends VarDecl<?>> vars) {
-		this.vars = ImmutableSet.copyOf(vars);
-	}
+    private ExplPrec(final Iterable<? extends VarDecl<?>> vars) {
+        this.vars = ImmutableSet.copyOf(vars);
+    }
 
-	public static ExplPrec empty() {
-		return of(Collections.emptySet());
-	}
+    public static ExplPrec empty() {
+        return of(Collections.emptySet());
+    }
 
-	public static ExplPrec of(final Iterable<? extends VarDecl<?>> vars) {
-		checkNotNull(vars);
-		if (vars.iterator().hasNext()) {
-			return new ExplPrec(vars);
-		} else {
-			return EMPTY;
-		}
-	}
+    public static ExplPrec of(final Iterable<? extends VarDecl<?>> vars) {
+        checkNotNull(vars);
+        if (vars.iterator().hasNext()) {
+            return new ExplPrec(vars);
+        } else {
+            return EMPTY;
+        }
+    }
 
-	public Set<VarDecl<?>> getVars() {
-		return vars;
-	}
+    public Set<VarDecl<?>> getVars() {
+        return vars;
+    }
 
-	public ExplPrec join(final ExplPrec other) {
-		checkNotNull(other);
-		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars)
-				.build();
-		// If no new variable was added, return same instance (immutable)
-		if (newVars.size() == this.vars.size()) {
-			return this;
-		} else if (newVars.size() == other.vars.size()) {
-			return other;
-		} else {
-			return of(newVars);
-		}
-	}
+    public ExplPrec join(final ExplPrec other) {
+        checkNotNull(other);
+        final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars)
+                .addAll(other.vars)
+                .build();
+        // If no new variable was added, return same instance (immutable)
+        if (newVars.size() == this.vars.size()) {
+            return this;
+        } else if (newVars.size() == other.vars.size()) {
+            return other;
+        } else {
+            return of(newVars);
+        }
+    }
 
-	public ExplState createState(final Valuation valuation) {
-		checkNotNull(valuation);
-		final ImmutableValuation.Builder builder = ImmutableValuation.builder();
-		for (final VarDecl<?> varDecl : vars) {
-			final Optional<? extends LitExpr<?>> eval = valuation.eval(varDecl);
-			if (eval.isPresent()) {
-				builder.put(varDecl, eval.get());
-			}
-		}
-		return ExplState.of(builder.build());
-	}
+    public ExplState createState(final Valuation valuation) {
+        checkNotNull(valuation);
+        final ImmutableValuation.Builder builder = ImmutableValuation.builder();
+        for (final VarDecl<?> varDecl : vars) {
+            final Optional<? extends LitExpr<?>> eval = valuation.eval(varDecl);
+            if (eval.isPresent()) {
+                builder.put(varDecl, eval.get());
+            }
+        }
+        return ExplState.of(builder.build());
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(vars.stream().map(VarDecl::getName))
-				.toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName())
+                .addAll(vars.stream().map(VarDecl::getName))
+                .toString();
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof ExplPrec) {
-			final ExplPrec that = (ExplPrec) obj;
-			return this.getVars().equals(that.getVars());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof ExplPrec) {
+            final ExplPrec that = (ExplPrec) obj;
+            return this.getVars().equals(that.getVars());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public int hashCode() {
-		return 31 * vars.hashCode();
-	}
+    @Override
+    public int hashCode() {
+        return 31 * vars.hashCode();
+    }
 
-	@Override
-	public Collection<VarDecl<?>> getUsedVars() {
-		return vars;
-	}
+    @Override
+    public Collection<VarDecl<?>> getUsedVars() {
+        return vars;
+    }
 }

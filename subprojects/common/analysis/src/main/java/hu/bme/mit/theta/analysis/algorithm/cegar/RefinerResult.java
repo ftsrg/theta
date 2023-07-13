@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,125 +24,133 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.Utils;
 
 /**
- * Represents the result of the Refiner class that can be either spurious or
- * unsafe. In the former case it also contains the refined precision and in the
- * latter case the feasible counterexample.
+ * Represents the result of the Refiner class that can be either spurious or unsafe. In the former
+ * case it also contains the refined precision and in the latter case the feasible counterexample.
  */
 public abstract class RefinerResult<S extends State, A extends Action, P extends Prec> {
 
-	private RefinerResult() {
-	}
+    private RefinerResult() {
+    }
 
-	/**
-	 * Create a new spurious result.
-	 *
-	 * @param refinedPrec Refined precision
-	 * @return
-	 */
-	public static <S extends State, A extends Action, P extends Prec> Spurious<S, A, P> spurious(final P refinedPrec) {
-		return new Spurious<>(refinedPrec);
-	}
+    /**
+     * Create a new spurious result.
+     *
+     * @param refinedPrec Refined precision
+     * @return
+     */
+    public static <S extends State, A extends Action, P extends Prec> Spurious<S, A, P> spurious(
+            final P refinedPrec) {
+        return new Spurious<>(refinedPrec);
+    }
 
-	/**
-	 * Creates a new unsafe result.
-	 *
-	 * @param cex Feasible counterexample
-	 * @return
-	 */
-	public static <S extends State, A extends Action, P extends Prec> Unsafe<S, A, P> unsafe(final Trace<S, A> cex) {
-		return new Unsafe<>(cex);
-	}
+    /**
+     * Creates a new unsafe result.
+     *
+     * @param cex Feasible counterexample
+     * @return
+     */
+    public static <S extends State, A extends Action, P extends Prec> Unsafe<S, A, P> unsafe(
+            final Trace<S, A> cex) {
+        return new Unsafe<>(cex);
+    }
 
-	public abstract boolean isSpurious();
+    public abstract boolean isSpurious();
 
-	public abstract boolean isUnsafe();
+    public abstract boolean isUnsafe();
 
-	public abstract Spurious<S, A, P> asSpurious();
+    public abstract Spurious<S, A, P> asSpurious();
 
-	public abstract Unsafe<S, A, P> asUnsafe();
+    public abstract Unsafe<S, A, P> asUnsafe();
 
-	/**
-	 * Represents the spurious result with a refined precision.
-	 */
-	public static final class Spurious<S extends State, A extends Action, P extends Prec>
-			extends RefinerResult<S, A, P> {
-		private final P refinedPrec;
+    /**
+     * Represents the spurious result with a refined precision.
+     */
+    public static final class Spurious<S extends State, A extends Action, P extends Prec>
+            extends RefinerResult<S, A, P> {
 
-		private Spurious(final P refinedPrec) {
-			this.refinedPrec = checkNotNull(refinedPrec);
-		}
+        private final P refinedPrec;
 
-		public P getRefinedPrec() {
-			return refinedPrec;
-		}
+        private Spurious(final P refinedPrec) {
+            this.refinedPrec = checkNotNull(refinedPrec);
+        }
 
-		@Override
-		public boolean isSpurious() {
-			return true;
-		}
+        public P getRefinedPrec() {
+            return refinedPrec;
+        }
 
-		@Override
-		public boolean isUnsafe() {
-			return false;
-		}
+        @Override
+        public boolean isSpurious() {
+            return true;
+        }
 
-		@Override
-		public Spurious<S, A, P> asSpurious() {
-			return this;
-		}
+        @Override
+        public boolean isUnsafe() {
+            return false;
+        }
 
-		@Override
-		public Unsafe<S, A, P> asUnsafe() {
-			throw new ClassCastException(
-					"Cannot cast " + Spurious.class.getSimpleName() + " to " + Unsafe.class.getSimpleName());
-		}
+        @Override
+        public Spurious<S, A, P> asSpurious() {
+            return this;
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
-					.toString();
-		}
-	}
+        @Override
+        public Unsafe<S, A, P> asUnsafe() {
+            throw new ClassCastException(
+                    "Cannot cast " + Spurious.class.getSimpleName() + " to "
+                            + Unsafe.class.getSimpleName());
+        }
 
-	/**
-	 * Represents the unsafe result with a feasible counterexample.
-	 */
-	public static final class Unsafe<S extends State, A extends Action, P extends Prec> extends RefinerResult<S, A, P> {
-		private final Trace<S, A> cex;
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(RefinerResult.class.getSimpleName())
+                    .add(getClass().getSimpleName())
+                    .toString();
+        }
+    }
 
-		private Unsafe(final Trace<S, A> cex) {
-			this.cex = checkNotNull(cex);
-		}
+    /**
+     * Represents the unsafe result with a feasible counterexample.
+     */
+    public static final class Unsafe<S extends State, A extends Action, P extends Prec> extends
+            RefinerResult<S, A, P> {
 
-		public Trace<S, A> getCex() {
-			return cex;
-		}
+        private final Trace<S, A> cex;
 
-		@Override
-		public boolean isSpurious() {
-			return false;
-		}
+        private Unsafe(final Trace<S, A> cex) {
+            this.cex = checkNotNull(cex);
+        }
 
-		@Override
-		public boolean isUnsafe() {
-			return true;
-		}
+        public Trace<S, A> getCex() {
+            return cex;
+        }
 
-		@Override
-		public Spurious<S, A, P> asSpurious() {
-			throw new ClassCastException(
-					"Cannot cast " + Unsafe.class.getSimpleName() + " to " + Spurious.class.getSimpleName());
-		}
+        @Override
+        public boolean isSpurious() {
+            return false;
+        }
 
-		@Override
-		public Unsafe<S, A, P> asUnsafe() {
-			return this;
-		}
+        @Override
+        public boolean isUnsafe() {
+            return true;
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
-					.toString();
-		}
-	}
+        @Override
+        public Spurious<S, A, P> asSpurious() {
+            throw new ClassCastException(
+                    "Cannot cast " + Unsafe.class.getSimpleName() + " to "
+                            + Spurious.class.getSimpleName());
+        }
+
+        @Override
+        public Unsafe<S, A, P> asUnsafe() {
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(RefinerResult.class.getSimpleName())
+                    .add(getClass().getSimpleName())
+                    .toString();
+        }
+    }
 }
