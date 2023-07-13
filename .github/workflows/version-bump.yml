@@ -1,0 +1,48 @@
+
+name: Version Bump
+on: 
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Specify the type of version bump'
+        required: true
+        type: choice
+        options:
+            - major
+            - minor
+            - patch
+        default: 'patch'
+      message:
+        description: 'Summarize the contents since the last version'
+        required: false
+        default: 'Auto-generated release'
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      
+    - name: Determine new version
+      run: |
+        version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
+        IFS='.' read -r -a array <<< "$version"
+        echo "Previous version: $version"
+        case "${{ github.event.inputs.version_type }}" in
+          "major") new_version="$((array[0]+1)).0.0" ;;
+          "minor") new_version="${array[0]}.$((array[1]+1)).0" ;;
+          "patch") new_version="${array[0]}.${array[1]}.$((array[2]+1))" ;;
+          *) echo "Invalid version type" && exit 1 ;;
+        esac
+        echo "new_version=$new_version" >> $GITHUB_ENV
+
+      
+    - name: Update version
+      run: sed -i "s/version = \".*\"/version = \"${{ env.new_version }}\"/" build.gradle.kts
+      
+    - name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Version bump [${{ inputs.message }}]"
+        file_pattern: "build.gradle.kts"

@@ -1,0 +1,28 @@
+name: 'Deploy to DockerHub'
+description: 'Deploy to DockerHub'
+inputs:
+    project:
+        required: true`
+runs: 
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v4.4.0
+      with:
+        images: ftsrg/theta
+        tags: type:raw, value=theta-xsts-cli
+    - name: Creating path
+      id: 'path'
+      shell: bash
+      run: |
+        echo "path=./docker/${{ inputs.project }}.Dockerfile" >> $GITHUB_OUTPUT
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ${{ steps.path.outputs.path }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}

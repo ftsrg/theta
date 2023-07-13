@@ -1,5 +1,12 @@
 # Theta
 
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-Linux/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-Windows/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/build-macOS/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Linux/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-Windows/badge.svg)
+![](https://raw.githubusercontent.com/leventeBajczi/theta/badges/badges/test-macOS/badge.svg)
+
 [![Windows build](https://github.com/ftsrg/theta/actions/workflows/build-win.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-win.yml)
 [![Linux build](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/build-linux.yml)
 ![Build dockerfiles](https://github.com/ftsrg/theta/workflows/Build%20dockerfiles/badge.svg)

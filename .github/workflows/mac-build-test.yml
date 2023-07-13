@@ -1,0 +1,22 @@
+name: macOS build and test
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: write-all
+
+jobs:
+  test-mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-13, macos-12, macos-11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Build
+        uses: ./.github/actions/build-action
+      - name: Run tests
+        uses: ./.github/actions/test-action

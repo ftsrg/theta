@@ -1,0 +1,28 @@
+name: Windows build and test
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: write-all
+
+jobs:
+  test-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, windows-2019, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Install VC-Redist 2010 and 2012
+        run: |
+          Install-Module -Name VcRedist -Force
+          $VcList = Get-VcList -Export All | Where-Object { $_.Release -eq "2010" -or $_.Release -eq "2012" }
+          Save-VcRedist -VcList $VcList
+          Install-VcRedist -VcList $VcList -Silent
+      - name: Build
+        uses: ./.github/actions/build-action
+      - name: Run tests
+        uses: ./.github/actions/test-action
