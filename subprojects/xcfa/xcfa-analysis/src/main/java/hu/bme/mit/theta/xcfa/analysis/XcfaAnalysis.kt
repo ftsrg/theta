@@ -83,32 +83,32 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                             val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
                             SequenceLabel(listOf(procedure.params.withIndex()
                                 .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
-                                val originalVar = iVal.value.first
-                                val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
-                                    originalVar.type)
-                                lookup[originalVar] = tempVar
-                                StmtLabel(
-                                    Stmts.Assign(
-                                        TypeUtils.cast(tempVar, tempVar.type),
-                                        TypeUtils.cast(label.params[iVal.index], tempVar.type)),
-                                    metadata = label.metadata)
-                            }, listOf(label.copy(tempLookup = lookup))).flatten())
+                                    val originalVar = iVal.value.first
+                                    val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
+                                        originalVar.type)
+                                    lookup[originalVar] = tempVar
+                                    StmtLabel(
+                                        Stmts.Assign(
+                                            TypeUtils.cast(tempVar, tempVar.type),
+                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                        metadata = label.metadata)
+                                }, listOf(label.copy(tempLookup = lookup))).flatten())
                         } else if (label is StartLabel) {
                             val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
                                 ?: error("No such method ${label.name}.")
                             val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
                             SequenceLabel(listOf(procedure.params.withIndex()
                                 .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
-                                val originalVar = iVal.value.first
-                                val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
-                                    originalVar.type)
-                                lookup[originalVar] = tempVar
-                                StmtLabel(
-                                    Stmts.Assign(
-                                        TypeUtils.cast(tempVar, tempVar.type),
-                                        TypeUtils.cast(label.params[iVal.index], tempVar.type)),
-                                    metadata = label.metadata)
-                            }, listOf(label.copy(tempLookup = lookup))).flatten())
+                                    val originalVar = iVal.value.first
+                                    val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
+                                        originalVar.type)
+                                    lookup[originalVar] = tempVar
+                                    StmtLabel(
+                                        Stmts.Assign(
+                                            TypeUtils.cast(tempVar, tempVar.type),
+                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                        metadata = label.metadata)
+                                }, listOf(label.copy(tempLookup = lookup))).flatten())
                         } else label
                     })
                     XcfaAction(proc.key, edge.withLabel(newNewLabel))

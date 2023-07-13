@@ -153,14 +153,17 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
             varLookup = LinkedList(listOf(lookup)),
             returnStmts = LinkedList(listOf(returnStmt)),
             paramStmts = LinkedList(listOf(Pair(
-                /* init */SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
-                StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
-                    cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata = EmptyMetaData)
-            }),
-                /* deinit */SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
-                StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
-                    cast(it.key.changeVars(lookup).ref, it.key.type)), metadata = EmptyMetaData)
-            }),
+                /* init */
+                SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
+                    StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
+                        cast(it.key.changeVars(tempLookup).ref, it.key.type)),
+                        metadata = EmptyMetaData)
+                }),
+                /* deinit */
+                SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
+                    StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
+                        cast(it.key.changeVars(lookup).ref, it.key.type)), metadata = EmptyMetaData)
+                }),
             ))))
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes["$pid"] = pid
@@ -254,14 +257,16 @@ data class XcfaProcessState(
         varLookup.push(lookup)
         returnStmts.push(returnStmt)
         paramStmts.push(Pair(
-            /* init */SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
-            StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
-                cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata = EmptyMetaData)
-        }),
-            /* deinit */SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
-            StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
-                cast(it.key.changeVars(lookup).ref, it.key.type)), metadata = EmptyMetaData)
-        }),
+            /* init */
+            SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
+                StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
+                    cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata = EmptyMetaData)
+            }),
+            /* deinit */
+            SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
+                StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
+                    cast(it.key.changeVars(lookup).ref, it.key.type)), metadata = EmptyMetaData)
+            }),
         ))
         return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts,
             paramStmts = paramStmts, paramsInitialized = false)
