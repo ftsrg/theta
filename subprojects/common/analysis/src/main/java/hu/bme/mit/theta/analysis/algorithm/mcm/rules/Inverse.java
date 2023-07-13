@@ -25,7 +25,7 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 
-public class Inverse extends UnaryMCMRule{
+public class Inverse extends UnaryMCMRule {
     public Inverse(MCMRelation e) {
         super(e);
     }

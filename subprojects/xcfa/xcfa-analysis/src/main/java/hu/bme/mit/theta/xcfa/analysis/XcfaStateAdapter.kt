@@ -24,7 +24,9 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.VarDecl
 import java.lang.reflect.Type
 
-class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -> Type) : TypeAdapter<XcfaState<*>>() {
+class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -> Type) :
+    TypeAdapter<XcfaState<*>>() {
+
     private lateinit var gson: Gson
     private lateinit var stateType: Type
     override fun write(writer: JsonWriter, value: XcfaState<*>) {
@@ -45,29 +47,29 @@ class XcfaStateAdapter(val gsonSupplier: () -> Gson, val stateTypeSupplier: () -
 
     override fun read(reader: JsonReader): XcfaState<*> {
         initGson()
-        if(!this::stateType.isInitialized) stateType = stateTypeSupplier()
+        if (!this::stateType.isInitialized) stateType = stateTypeSupplier()
         reader.beginObject()
         check(reader.nextName() == "processes")
         val processes: Map<Int, XcfaProcessState> = gson.fromJson(reader, Map::class.java)
         check(reader.nextName() == "sGlobal")
         val sGlobal: ExprState = gson.fromJson(reader, stateType)
         check(reader.nextName() == "mutexes")
-        val mutexes:  Map<String, Int> = gson.fromJson(reader, Map::class.java)
+        val mutexes: Map<String, Int> = gson.fromJson(reader, Map::class.java)
         check(reader.nextName() == "threadLookup")
-        val threadLookup:  Map<VarDecl<*>, Int> = gson.fromJson(reader, Map::class.java)
+        val threadLookup: Map<VarDecl<*>, Int> = gson.fromJson(reader, Map::class.java)
         check(reader.nextName() == "bottom")
         val bottom: Boolean = gson.fromJson(reader, Boolean::class.java)
 
         reader.endObject()
         return XcfaState(xcfa = null,
-                processes = processes,
-                sGlobal = sGlobal,
-                mutexes = mutexes,
-                threadLookup = threadLookup,
-                bottom = bottom)
+            processes = processes,
+            sGlobal = sGlobal,
+            mutexes = mutexes,
+            threadLookup = threadLookup,
+            bottom = bottom)
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

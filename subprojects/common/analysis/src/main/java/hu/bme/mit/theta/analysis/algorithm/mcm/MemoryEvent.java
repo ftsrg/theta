@@ -49,12 +49,15 @@ public class MemoryEvent {
     public Read asRead() {
         throw new UnsupportedOperationException("Not a read!");
     }
+
     public Write asWrite() {
         throw new UnsupportedOperationException("Not a write!");
     }
+
     public Fence asFence() {
         throw new UnsupportedOperationException("Not a fence!");
     }
+
     public MemoryIO asMemoryIO() {
         throw new UnsupportedOperationException("Not memory IO!");
     }
@@ -63,6 +66,7 @@ public class MemoryEvent {
         private final int varId;
         private final VarDecl<?> var;
         private final VarDecl<?> localVar;
+
         public MemoryIO(int varId, VarDecl<?> var, VarDecl<?> localVar, MemoryEventType type, String tag) {
             super(type, tag);
             checkArgument(varId <= 0, "Meta event IDs must be negative!");
@@ -99,7 +103,7 @@ public class MemoryEvent {
 
     }
 
-    public static final class Read extends MemoryIO{
+    public static final class Read extends MemoryIO {
         public Read(int varId, VarDecl<?> var, VarDecl<?> localVar, String tag) {
             super(varId, var, localVar, MemoryEventType.READ, tag);
         }
@@ -109,8 +113,10 @@ public class MemoryEvent {
             return this;
         }
     }
-    public static final class Write extends MemoryIO{
+
+    public static final class Write extends MemoryIO {
         private final Set<VarDecl<?>> dependencies;
+
         public Write(int varId, VarDecl<?> var, VarDecl<?> localVar, Set<VarDecl<?>> dependencies, String tag) {
             super(varId, var, localVar, MemoryEventType.WRITE, tag);
             this.dependencies = dependencies;
@@ -125,7 +131,8 @@ public class MemoryEvent {
             return dependencies;
         }
     }
-    public static final class Fence extends MemoryEvent{
+
+    public static final class Fence extends MemoryEvent {
         public Fence(String tag) {
             super(MemoryEventType.FENCE, tag);
         }

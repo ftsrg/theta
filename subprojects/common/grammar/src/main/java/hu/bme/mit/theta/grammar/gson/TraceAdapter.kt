@@ -26,7 +26,9 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
 import java.lang.reflect.Type
 
-class TraceAdapter(val gsonSupplier: () -> Gson, private val stateTypeSupplier: () -> Type, private val actionType: Type)  : TypeAdapter<Trace<*, *>>() {
+class TraceAdapter(val gsonSupplier: () -> Gson, private val stateTypeSupplier: () -> Type,
+    private val actionType: Type) : TypeAdapter<Trace<*, *>>() {
+
     private lateinit var gson: Gson
     private lateinit var stateType: Type
 
@@ -42,17 +44,19 @@ class TraceAdapter(val gsonSupplier: () -> Gson, private val stateTypeSupplier: 
 
     override fun read(reader: JsonReader): Trace<*, *> {
         initGson()
-        if(!this::stateType.isInitialized) stateType = stateTypeSupplier()
+        if (!this::stateType.isInitialized) stateType = stateTypeSupplier()
         reader.beginObject()
         check(reader.nextName() == "states")
-        val stateList: List<State> = gson.fromJson(reader, TypeToken.getParameterized(TypeToken.get(List::class.java).type, stateType).type)
+        val stateList: List<State> = gson.fromJson(reader,
+            TypeToken.getParameterized(TypeToken.get(List::class.java).type, stateType).type)
         check(reader.nextName() == "actions")
-        val actionList: List<Action> = gson.fromJson(reader, TypeToken.getParameterized(TypeToken.get(List::class.java).type, actionType).type)
+        val actionList: List<Action> = gson.fromJson(reader,
+            TypeToken.getParameterized(TypeToken.get(List::class.java).type, actionType).type)
         reader.endObject()
         return Trace.of(stateList, actionList)
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

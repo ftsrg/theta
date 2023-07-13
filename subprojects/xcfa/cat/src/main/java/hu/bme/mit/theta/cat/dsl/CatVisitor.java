@@ -56,11 +56,11 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     }
 
     private MCMRelation getOrCreateRelation(final String name, final int arity) {
-        if(paramAssignment.containsKey(name)) {
+        if (paramAssignment.containsKey(name)) {
             final MCMRelation mcmRelation = paramAssignment.get(name);
             return mcmRelation;
         }
-        if(relations.containsKey(name)) {
+        if (relations.containsKey(name)) {
             final MCMRelation mcmRelation = relations.get(name);
             return mcmRelation;
         }
@@ -80,7 +80,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
     }
 
     private void visitIncludedFile(File file) {
-        if(file.exists() && file.isFile()) {
+        if (file.exists() && file.isFile()) {
             try {
                 final CatParser.McmContext context = setupCatAntlr(file);
                 context.scopeBody().accept(this);
@@ -170,7 +170,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
         }
         final MCMRelation accept = procDefContext.body.accept(this);
         toReset.forEach((s, mcmRelation) -> {
-            if(mcmRelation == null) paramAssignment.remove(s);
+            if (mcmRelation == null) paramAssignment.remove(s);
             else paramAssignment.put(s, mcmRelation);
         });
         return accept;
@@ -197,7 +197,7 @@ public class CatVisitor extends CatBaseVisitor<MCMRelation> {
         }
         final MCMRelation accept = functionDefContext.e.accept(this);
         toReset.forEach((s, mcmRelation) -> {
-            if(mcmRelation == null) paramAssignment.remove(s);
+            if (mcmRelation == null) paramAssignment.remove(s);
             else paramAssignment.put(s, mcmRelation);
         });
         return accept;

@@ -8,7 +8,8 @@ public final class ZoneInterpolator implements Interpolator<ZoneState, ZoneState
 
     private static final ZoneInterpolator INSTANCE = new ZoneInterpolator();
 
-    private ZoneInterpolator() { }
+    private ZoneInterpolator() {
+    }
 
     public static ZoneInterpolator getInstance() {
         return INSTANCE;

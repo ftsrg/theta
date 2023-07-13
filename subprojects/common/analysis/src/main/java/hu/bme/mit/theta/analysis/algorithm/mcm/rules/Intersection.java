@@ -27,7 +27,7 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
-public class Intersection extends BinaryMCMRule{
+public class Intersection extends BinaryMCMRule {
     public Intersection(MCMRelation e1, MCMRelation e2) {
         super(e1, e2);
     }
@@ -38,7 +38,7 @@ public class Intersection extends BinaryMCMRule{
     }
 
     public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
-        if(e1.getArity() == 1) {
+        if (e1.getArity() == 1) {
             final EventConstantLookup e1Events = e1.encodeEvents(idList, encodedRelationWrapper);
             final EventConstantLookup e2Events = e2.encodeEvents(idList, encodedRelationWrapper);
             for (final int i : idList) {

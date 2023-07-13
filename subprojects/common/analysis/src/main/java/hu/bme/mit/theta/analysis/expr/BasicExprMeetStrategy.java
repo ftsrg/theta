@@ -8,8 +8,10 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 public final class BasicExprMeetStrategy implements ExprLattice.MeetStrategy {
 
     private static final BasicExprMeetStrategy INSTANCE = new BasicExprMeetStrategy();
+
     private BasicExprMeetStrategy() {
     }
+
     public static BasicExprMeetStrategy getInstance() {
         return INSTANCE;
     }

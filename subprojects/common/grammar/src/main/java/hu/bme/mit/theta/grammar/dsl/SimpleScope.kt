@@ -22,8 +22,8 @@ import hu.bme.mit.theta.common.dsl.SymbolTable
 import java.util.*
 
 class SimpleScope(
-        private val symbolTable: SymbolTable = SymbolTable(),
-        private val enclosingScope: Scope? = null,
+    private val symbolTable: SymbolTable = SymbolTable(),
+    private val enclosingScope: Scope? = null,
 ) : Scope {
 
     override fun enclosingScope(): Optional<out Scope> {
@@ -32,7 +32,7 @@ class SimpleScope(
 
     override fun resolve(name: String?): Optional<out Symbol> {
         val resolved = symbolTable[name]
-        return  if(resolved.isEmpty)
+        return if (resolved.isEmpty)
             enclosingScope?.resolve(name) ?: Optional.empty()
         else
             resolved

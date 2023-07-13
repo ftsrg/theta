@@ -68,7 +68,7 @@ public final class XcfaTraceToWitness {
         addEntryNode();
 
         for (int i = 0; i < concreteTrace.getActions().size(); i++) {
-            List<XcfaLabel> labelList = ((SequenceLabel)concreteTrace.getAction(i).getLabel()).getLabels();
+            List<XcfaLabel> labelList = ((SequenceLabel) concreteTrace.getAction(i).getLabel()).getLabels();
             List<String> edgesFromAction = new ArrayList<>();
             for (XcfaLabel label : labelList) {
                 Optional<String> optionalLabel = makeEdgeLabelFromStatement(label, concreteTrace.getState(i + 1).getSGlobal().getVal());

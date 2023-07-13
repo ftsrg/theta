@@ -25,16 +25,21 @@ import hu.bme.mit.theta.xcfa.model.*
  * Requires the ProcedureBuilder be `deterministic`.
  */
 class FinalLocationPass(val checkOverflow: Boolean) : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         for (edge in ArrayList(builder.getEdges())) {
             val edges = edge.splitIf(this::predicate)
-            if(edges.size > 1 || (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))) {
+            if (edges.size > 1 || (edges.size == 1 && predicate(
+                    (edges[0].label as SequenceLabel).labels[0]))) {
                 builder.removeEdge(edge)
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         if (builder.finalLoc.isEmpty) builder.createFinalLoc()
-                        builder.addEdge(XcfaEdge(it.source, builder.finalLoc.get(), SequenceLabel(listOf(StmtLabel(Stmts.Assume(BoolExprs.False()), metadata=it.metadata)), metadata=it.metadata)))
+                        builder.addEdge(XcfaEdge(it.source, builder.finalLoc.get(), SequenceLabel(
+                            listOf(
+                                StmtLabel(Stmts.Assume(BoolExprs.False()), metadata = it.metadata)),
+                            metadata = it.metadata)))
                     } else {
                         builder.addEdge(it)
                     }
@@ -46,10 +51,10 @@ class FinalLocationPass(val checkOverflow: Boolean) : ProcedurePass {
 
     private fun predicate(it: XcfaLabel): Boolean {
         val set =
-                if(checkOverflow)
-                    setOf("abort", "exit", "reach_error")
-                else
-                    setOf("abort", "exit")
+            if (checkOverflow)
+                setOf("abort", "exit", "reach_error")
+            else
+                setOf("abort", "exit")
         return it is InvokeLabel && set.contains(it.name)
     }
 }

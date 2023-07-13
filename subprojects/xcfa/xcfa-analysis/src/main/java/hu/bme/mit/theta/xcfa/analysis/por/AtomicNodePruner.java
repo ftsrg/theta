@@ -31,12 +31,12 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState;
  * @param <A> {@link XcfaAction}
  */
 public class AtomicNodePruner<S extends XcfaState<?>, A extends XcfaAction> implements NodePruner<S, A> {
-	@Override
-	public void prune(final ARG<S, A> arg, ArgNode<S, A> node) {
-		while(node.getState().getMutexes().containsKey("")) { // TODO: needs further checks?
-			ArgEdge<S, A> inEdge = node.getInEdge().get();
-			node = inEdge.getSource();
-		}
-		arg.prune(node);
-	}
+    @Override
+    public void prune(final ARG<S, A> arg, ArgNode<S, A> node) {
+        while (node.getState().getMutexes().containsKey("")) { // TODO: needs further checks?
+            ArgEdge<S, A> inEdge = node.getInEdge().get();
+            node = inEdge.getSource();
+        }
+        arg.prune(node);
+    }
 }

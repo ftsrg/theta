@@ -17,7 +17,7 @@ import java.util.Collection;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class FwItpStrategy<SConcr extends State, SAbstr extends ExprState, SItp extends State, S extends State, A extends Action, P extends Prec, PAbstr extends Prec>
-    extends BinItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
+        extends BinItpStrategy<SConcr, SAbstr, SItp, S, A, P> {
 
     private final TransFunc<SAbstr, A, PAbstr> transFunc;
     private final PAbstr abstrPrec;
@@ -29,23 +29,23 @@ public final class FwItpStrategy<SConcr extends State, SAbstr extends ExprState,
                          final InvTransFunc<SItp, A, P> invTransFunc,
                          final P prec,
                          final TransFunc<SAbstr, A, PAbstr> transFunc,
-                         final PAbstr abstrPrec){
+                         final PAbstr abstrPrec) {
         super(lens, abstrLattice, concretizer, interpolator, invTransFunc, prec);
         this.transFunc = checkNotNull(transFunc);
         this.abstrPrec = checkNotNull(abstrPrec);
     }
 
     @Override
-    public final SAbstr block(final ArgNode<S, A> node, final SItp B, final Collection<ArgNode<S, A>> uncoveredNodes){
+    public final SAbstr block(final ArgNode<S, A> node, final SItp B, final Collection<ArgNode<S, A>> uncoveredNodes) {
 
         final SAbstr abstrState = lens.get(node.getState()).getAbstrState();
-        if(interpolator.refutes(abstrState, B)){
+        if (interpolator.refutes(abstrState, B)) {
             return abstrState;
         }
 
         SAbstr interpolant;
 
-        if(node.getInEdge().isPresent()){
+        if (node.getInEdge().isPresent()) {
             final ArgEdge<S, A> inEdge = node.getInEdge().get();
             final A action = inEdge.getAction();
             final ArgNode<S, A> parent = inEdge.getSource();

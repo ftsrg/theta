@@ -33,10 +33,11 @@ import java.io.InputStream;
 public class LitmusInterpreter {
 
     public static XCFA getXcfa(final File from) throws IOException {
-        try(FileInputStream fis = new FileInputStream(from)) {
+        try (FileInputStream fis = new FileInputStream(from)) {
             return getXcfa(fis);
         }
     }
+
     public static XCFA getXcfa(final InputStream from) throws IOException {
         final CharStream input = CharStreams.fromStream(from);
 

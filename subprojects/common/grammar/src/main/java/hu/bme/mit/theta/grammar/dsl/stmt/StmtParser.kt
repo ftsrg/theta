@@ -38,6 +38,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
 class StatementWrapper(val content: String, scope: Scope) {
+
     private val scope: Scope
     private val context: StmtContext
 
@@ -61,6 +62,7 @@ class StatementWrapper(val content: String, scope: Scope) {
     }
 
     private class StmtCreatorVisitor(scope: Scope?, env: Env?) : StmtBaseVisitor<Stmt>() {
+
         private val scope: Scope
         private val env: Env
 

@@ -19,15 +19,15 @@ import java.io.PrintStream;
 
 public final class StderrLogger extends BaseLogger {
 
-	private static final PrintStream CONSOLE = System.err;
+    private static final PrintStream CONSOLE = System.err;
 
-	public StderrLogger(final Level minLevel) {
-		super(minLevel);
-	}
+    public StderrLogger(final Level minLevel) {
+        super(minLevel);
+    }
 
-	@Override
-	protected void writeStr(final String str) {
-		CONSOLE.print(str);
-	}
+    @Override
+    protected void writeStr(final String str) {
+        CONSOLE.print(str);
+    }
 
 }

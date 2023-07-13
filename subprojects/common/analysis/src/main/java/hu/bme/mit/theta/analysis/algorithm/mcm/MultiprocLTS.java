@@ -23,15 +23,16 @@ import java.util.Collection;
 import java.util.Map;
 
 public class MultiprocLTS<S extends State, A extends Action> {
-	private final Map<Integer, LTS<S, A>> ltsMap;
+    private final Map<Integer, LTS<S, A>> ltsMap;
 
-	public MultiprocLTS(final Map<Integer, LTS<S, A>> ltsMap) {
-		this.ltsMap = ltsMap;
-	}
+    public MultiprocLTS(final Map<Integer, LTS<S, A>> ltsMap) {
+        this.ltsMap = ltsMap;
+    }
 
-	public Collection<A> getEnabledActionsFor(final int pid, S state) {
-		if(ltsMap.containsKey(pid)) return ltsMap.get(pid).getEnabledActionsFor(state);
-		else throw new RuntimeException("No such process: " + pid + ". Known processes: " + ltsMap.keySet());
-	}
+    public Collection<A> getEnabledActionsFor(final int pid, S state) {
+        if (ltsMap.containsKey(pid)) return ltsMap.get(pid).getEnabledActionsFor(state);
+        else
+            throw new RuntimeException("No such process: " + pid + ". Known processes: " + ltsMap.keySet());
+    }
 
 }

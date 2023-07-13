@@ -23,16 +23,19 @@ import hu.bme.mit.theta.xcfa.model.*
  * Requires the ProcedureBuilder be `deterministic`.
  */
 class ErrorLocationPass(val checkOverflow: Boolean) : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         for (edge in ArrayList(builder.getEdges())) {
             val edges = edge.splitIf(this::predicate)
-            if(edges.size > 1 || (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))) {
+            if (edges.size > 1 || (edges.size == 1 && predicate(
+                    (edges[0].label as SequenceLabel).labels[0]))) {
                 builder.removeEdge(edge)
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         if (builder.errorLoc.isEmpty) builder.createErrorLoc()
-                        builder.addEdge(XcfaEdge(it.source, builder.errorLoc.get(), SequenceLabel(listOf())))
+                        builder.addEdge(
+                            XcfaEdge(it.source, builder.errorLoc.get(), SequenceLabel(listOf())))
                     } else {
                         builder.addEdge(it)
                     }
@@ -43,6 +46,6 @@ class ErrorLocationPass(val checkOverflow: Boolean) : ProcedurePass {
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && it.name.equals(if(checkOverflow) "overflow" else "reach_error")
+        return it is InvokeLabel && it.name.equals(if (checkOverflow) "overflow" else "reach_error")
     }
 }

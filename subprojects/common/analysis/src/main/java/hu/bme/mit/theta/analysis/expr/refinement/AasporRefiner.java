@@ -32,45 +32,45 @@ import java.util.stream.Collectors;
 
 public final class AasporRefiner<S extends ExprState, A extends ExprAction, P extends Prec> implements Refiner<S, A, P> {
 
-	private final Refiner<S, A, P> refiner;
+    private final Refiner<S, A, P> refiner;
 
-	private final PruneStrategy pruneStrategy;
+    private final PruneStrategy pruneStrategy;
 
-	private final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry;
+    private final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry;
 
-	private AasporRefiner(final Refiner<S, A, P> refiner,
-						  final PruneStrategy pruneStrategy,
-						  final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
-		this.refiner = refiner;
-		this.pruneStrategy = pruneStrategy;
-		this.ignoredVarRegistry = ignoredVarRegistry;
-	}
+    private AasporRefiner(final Refiner<S, A, P> refiner,
+                          final PruneStrategy pruneStrategy,
+                          final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
+        this.refiner = refiner;
+        this.pruneStrategy = pruneStrategy;
+        this.ignoredVarRegistry = ignoredVarRegistry;
+    }
 
-	public static <S extends ExprState, A extends ExprAction, P extends Prec> AasporRefiner<S, A, P> create(
-			final Refiner<S, A, P> refiner, final PruneStrategy pruneStrategy,
-			final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
-		return new AasporRefiner<>(refiner, pruneStrategy, ignoredVarRegistry);
-	}
+    public static <S extends ExprState, A extends ExprAction, P extends Prec> AasporRefiner<S, A, P> create(
+            final Refiner<S, A, P> refiner, final PruneStrategy pruneStrategy,
+            final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
+        return new AasporRefiner<>(refiner, pruneStrategy, ignoredVarRegistry);
+    }
 
-	@Override
-	public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
-		final RefinerResult<S, A, P> result = refiner.refine(arg, prec);
-		if (result.isUnsafe() || pruneStrategy != PruneStrategy.LAZY) return result;
+    @Override
+    public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
+        final RefinerResult<S, A, P> result = refiner.refine(arg, prec);
+        if (result.isUnsafe() || pruneStrategy != PruneStrategy.LAZY) return result;
 
-		final P newPrec = result.asSpurious().getRefinedPrec();
-		final Set<Decl<? extends Type>> newlyAddedVars = new HashSet<>(newPrec.getUsedVars());
-		newlyAddedVars.removeAll(prec.getUsedVars());
+        final P newPrec = result.asSpurious().getRefinedPrec();
+        final Set<Decl<? extends Type>> newlyAddedVars = new HashSet<>(newPrec.getUsedVars());
+        newlyAddedVars.removeAll(prec.getUsedVars());
 
-		newlyAddedVars.forEach(newVar -> {
-			if (ignoredVarRegistry.containsKey(newVar)) {
-				Set<ArgNode<S, A>> nodesToReExpand = ignoredVarRegistry.get(newVar).stream().flatMap(stateToPrune ->
-						arg.getNodes().filter(node -> node.getState().equals(stateToPrune)) // TODO one state can be in one ARG node?
-				).collect(Collectors.toSet());
-				nodesToReExpand.forEach(arg::markForReExpansion);
-				ignoredVarRegistry.remove(newVar);
-			}
-		});
+        newlyAddedVars.forEach(newVar -> {
+            if (ignoredVarRegistry.containsKey(newVar)) {
+                Set<ArgNode<S, A>> nodesToReExpand = ignoredVarRegistry.get(newVar).stream().flatMap(stateToPrune ->
+                        arg.getNodes().filter(node -> node.getState().equals(stateToPrune)) // TODO one state can be in one ARG node?
+                ).collect(Collectors.toSet());
+                nodesToReExpand.forEach(arg::markForReExpansion);
+                ignoredVarRegistry.remove(newVar);
+            }
+        });
 
-		return result;
-	}
+        return result;
+    }
 }

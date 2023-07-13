@@ -40,34 +40,34 @@ enum class ExitCodes(val code: Int) {
 data class ErrorCodeException(val code: Int) : Exception()
 
 fun <T> exitOnError(stacktrace: Boolean, body: () -> T): T {
-    try{
+    try {
         return body();
-    } catch(e: SmtLibSolverException) {
-        if(stacktrace) e.printStackTrace();
+    } catch (e: SmtLibSolverException) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
-    } catch(e: SolverValidationException) {
-        if(stacktrace) e.printStackTrace();
+    } catch (e: SolverValidationException) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
-    } catch(e: Z3Exception) {
-        if(stacktrace) e.printStackTrace();
+    } catch (e: Z3Exception) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
-    } catch(e: ClassCastException) {
-        if(stacktrace) e.printStackTrace();
+    } catch (e: ClassCastException) {
+        if (stacktrace) e.printStackTrace();
         if (e.message?.contains("com.microsoft.z3") == true)
             exitProcess(ExitCodes.SOLVER_ERROR.code);
         else
             exitProcess(ExitCodes.GENERIC_ERROR.code);
-    } catch(e: NotSolvableException) {
-        if(stacktrace) e.printStackTrace();
+    } catch (e: NotSolvableException) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.VERIFICATION_STUCK.code);
-    } catch(e: OutOfMemoryError) {
-        if(stacktrace) e.printStackTrace();
+    } catch (e: OutOfMemoryError) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.OUT_OF_MEMORY.code);
     } catch (e: RuntimeException) {
-        if(stacktrace) e.printStackTrace();
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SERVER_ERROR.code);
-    } catch(e: Exception) {
-        if(stacktrace) e.printStackTrace();
+    } catch (e: Exception) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.GENERIC_ERROR.code);
     }
 }

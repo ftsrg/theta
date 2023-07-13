@@ -29,7 +29,7 @@ import java.util.List;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 
-public class Range extends UnaryMCMRule{
+public class Range extends UnaryMCMRule {
     public Range(MCMRelation e) {
         super(e);
     }

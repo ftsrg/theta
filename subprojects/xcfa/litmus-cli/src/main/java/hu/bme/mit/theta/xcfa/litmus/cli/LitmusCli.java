@@ -34,82 +34,82 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class LitmusCli {
-	private static final String JAR_NAME = "theta-litmus-cli.jar";
-	private final String[] args;
+    private static final String JAR_NAME = "theta-litmus-cli.jar";
+    private final String[] args;
 
-	//////////// CONFIGURATION OPTIONS BEGIN ////////////
+    //////////// CONFIGURATION OPTIONS BEGIN ////////////
 
-	//////////// input task ////////////
+    //////////// input task ////////////
 
-	@Parameter(names = "--litmus", description = "Path of the litmus test", required = true)
-	File litmus;
+    @Parameter(names = "--litmus", description = "Path of the litmus test", required = true)
+    File litmus;
 
-	@Parameter(names = "--cat", description = "Path of the cat model", required = true)
-	File cat;
+    @Parameter(names = "--cat", description = "Path of the cat model", required = true)
+    File cat;
 
-	//////////// output data and statistics ////////////
+    //////////// output data and statistics ////////////
 
-	@Parameter(names = "--version", description = "Display version", help = true)
-	boolean versionInfo = false;
+    @Parameter(names = "--version", description = "Display version", help = true)
+    boolean versionInfo = false;
 
-	@Parameter(names = "--loglevel", description = "Detailedness of logging")
-	Logger.Level logLevel = Logger.Level.MAINSTEP;
+    @Parameter(names = "--loglevel", description = "Detailedness of logging")
+    Logger.Level logLevel = Logger.Level.MAINSTEP;
 
-	@Parameter(names = "--visualize", description = "Visualize solutions")
-	boolean visualize;
-	@Parameter(names = "--print-xcfa", description = "Print xcfa as a DOT file")
-	boolean printxcfa;
+    @Parameter(names = "--visualize", description = "Visualize solutions")
+    boolean visualize;
+    @Parameter(names = "--print-xcfa", description = "Print xcfa as a DOT file")
+    boolean printxcfa;
 
-	//////////// SMTLib options ////////////
+    //////////// SMTLib options ////////////
 
-	@Parameter(names = "--smt-home", description = "The path of the solver registry")
-	String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
+    @Parameter(names = "--smt-home", description = "The path of the solver registry")
+    String home = SmtLibSolverManager.HOME.toAbsolutePath().toString();
 
-	@Parameter(names = "--solver", description = "Sets the underlying SMT solver to use. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
-	String solver = "Z3";
+    @Parameter(names = "--solver", description = "Sets the underlying SMT solver to use. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+    String solver = "Z3";
 
-	//////////// CONFIGURATION OPTIONS END ////////////
+    //////////// CONFIGURATION OPTIONS END ////////////
 
-	private Logger logger;
+    private Logger logger;
 
-	public LitmusCli(final String[] args) {
-		this.args = args;
-	}
+    public LitmusCli(final String[] args) {
+        this.args = args;
+    }
 
-	public static void main(final String[] args) {
-		final LitmusCli mainApp = new LitmusCli(args);
-		mainApp.run();
-	}
+    public static void main(final String[] args) {
+        final LitmusCli mainApp = new LitmusCli(args);
+        mainApp.run();
+    }
 
-	private void run() {
-		/// Checking flags
-		try {
-			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
-		} catch (final ParameterException ex) {
-			System.out.println("Invalid parameters, details:");
-			System.out.println(ex.getMessage());
-			ex.usage();
-			return;
-		}
+    private void run() {
+        /// Checking flags
+        try {
+            JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+        } catch (final ParameterException ex) {
+            System.out.println("Invalid parameters, details:");
+            System.out.println(ex.getMessage());
+            ex.usage();
+            return;
+        }
 
-		logger = new ConsoleLogger(logLevel);
+        logger = new ConsoleLogger(logLevel);
 
-		/// version
-		if (versionInfo) {
-			CliUtils.printVersion(System.out);
-			return;
-		}
+        /// version
+        if (versionInfo) {
+            CliUtils.printVersion(System.out);
+            return;
+        }
 
-		try {
-			registerAllSolverManagers(home, logger);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
+        try {
+            registerAllSolverManagers(home, logger);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
 
 
-		final Stopwatch sw = Stopwatch.createStarted();
-		try {
+        final Stopwatch sw = Stopwatch.createStarted();
+        try {
 //			final Solver solver = SolverManager.resolveSolverFactory(this.solver).createSolver();
 //
 //			final MCM mcm = CatDslManager.createMCM(cat);
@@ -150,33 +150,33 @@ public class LitmusCli {
 //					mcmSafetyResult.visualize();
 //				}
 //			}
-		} catch (final Throwable t) {
-			t.printStackTrace();
-			System.exit(-1);
-		}
-		long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
-		sw.stop();
-		System.out.println("walltime: " + elapsed + " ms");
-	}
+        } catch (final Throwable t) {
+            t.printStackTrace();
+            System.exit(-1);
+        }
+        long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
+        sw.stop();
+        System.out.println("walltime: " + elapsed + " ms");
+    }
 
-	private <T> List<Integer> listToRange(List<T> list, int start, int d) {
-		final List<Integer> elements = new ArrayList<>();
-		for (int i = 0; i < list.size(); i++) {
-			elements.add(i*d + start);
-		}
-		return elements;
-	}
+    private <T> List<Integer> listToRange(List<T> list, int start, int d) {
+        final List<Integer> elements = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            elements.add(i * d + start);
+        }
+        return elements;
+    }
 
-	public static void registerAllSolverManagers(String home, Logger logger) throws Exception {
+    public static void registerAllSolverManagers(String home, Logger logger) throws Exception {
 //		CpuTimeKeeper.saveSolverTimes();
-		SolverManager.closeAll();
-		// register solver managers
-		SolverManager.registerSolverManager(Z3SolverManager.create());
-		if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-			final var homePath = Path.of(home);
-			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
-			SolverManager.registerSolverManager(smtLibSolverManager);
-		}
-	}
+        SolverManager.closeAll();
+        // register solver managers
+        SolverManager.registerSolverManager(Z3SolverManager.create());
+        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+            final var homePath = Path.of(home);
+            final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+            SolverManager.registerSolverManager(smtLibSolverManager);
+        }
+    }
 
 }

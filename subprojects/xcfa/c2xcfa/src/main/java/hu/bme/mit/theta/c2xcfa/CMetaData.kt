@@ -21,17 +21,17 @@ import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 data class CMetaData(
-        val lineNumberStart: Int?,
-        val colNumberStart: Int?,
-        val lineNumberStop: Int?,
-        val colNumberStop: Int?,
-        val offsetStart: Int?,
-        val offsetEnd: Int?,
-        val sourceText: String?
+    val lineNumberStart: Int?,
+    val colNumberStart: Int?,
+    val lineNumberStop: Int?,
+    val colNumberStop: Int?,
+    val offsetStart: Int?,
+    val offsetEnd: Int?,
+    val sourceText: String?
 ) : MetaData()
 
 fun XcfaLabel.getCMetaData(): CMetaData? {
-    return if(this.metadata is CMetaData) {
+    return if (this.metadata is CMetaData) {
         this.metadata as CMetaData
     } else {
         null
@@ -39,7 +39,7 @@ fun XcfaLabel.getCMetaData(): CMetaData? {
 }
 
 fun XcfaLocation.getCMetaData(): CMetaData? {
-    return if(this.metadata is CMetaData) {
+    return if (this.metadata is CMetaData) {
         this.metadata as CMetaData
     } else {
         null
@@ -47,7 +47,7 @@ fun XcfaLocation.getCMetaData(): CMetaData? {
 }
 
 fun XcfaEdge.getCMetaData(): CMetaData? {
-    return if(this.metadata is CMetaData) {
+    return if (this.metadata is CMetaData) {
         this.metadata as CMetaData
     } else {
         null

@@ -23,9 +23,12 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 
 class EmptyEdgeRemovalPass : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        while(true) {
-            val edge = builder.getEdges().find { it.label.isNop() && !it.target.error && !it.target.final && !it.source.initial } ?: return builder
+        while (true) {
+            val edge = builder.getEdges()
+                .find { it.label.isNop() && !it.target.error && !it.target.final && !it.source.initial }
+                ?: return builder
             builder.removeEdge(edge)
             if (edge.source != edge.target) {
                 val incomingEdges = ArrayList(edge.source.incomingEdges)
@@ -35,7 +38,7 @@ class EmptyEdgeRemovalPass : ProcedurePass {
         }
     }
 
-    private fun XcfaLabel.isNop() : Boolean =
+    private fun XcfaLabel.isNop(): Boolean =
         when (this) {
             is NondetLabel -> labels.all { it.isNop() }
             is SequenceLabel -> labels.all { it.isNop() }

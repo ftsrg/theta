@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.common.dsl;
 
-public interface MutableScope extends Scope{
+public interface MutableScope extends Scope {
 
-	void add(final Symbol symbol);
+    void add(final Symbol symbol);
 
-	void addAll(final Iterable<? extends Symbol> symbols);
+    void addAll(final Iterable<? extends Symbol> symbols);
 
 }

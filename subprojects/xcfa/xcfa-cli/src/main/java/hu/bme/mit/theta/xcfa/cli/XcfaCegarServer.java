@@ -117,7 +117,7 @@ class XcfaCegarServer {
 
                         SafetyResult<ExprState, ExprAction> check = xcfaCegarConfig.check(xcfa, logger);
                         logger.write(Logger.Level.INFO, "Safety check done.\n");
-                        if(returnSafetyResult) {
+                        if (returnSafetyResult) {
                             String s = gson.toJson(check);
                             out.println(s);
                         } else {

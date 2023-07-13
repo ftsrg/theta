@@ -43,6 +43,7 @@ import javax.xml.transform.stream.StreamSource
 
 
 class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: File) {
+
     private val attributes: MutableList<WitnessAttribute> = ArrayList()
     private val data: MutableList<Pair<String, String>> = ArrayList()
 
@@ -58,7 +59,8 @@ class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: F
 
         attributes.add(WitnessAttribute("assumption", "string", "edge", "assumption"))
         attributes.add(WitnessAttribute("assumption.scope", "string", "edge", "assumption.scope"))
-        attributes.add(WitnessAttribute("assumption.resultfunction", "string", "edge", "assumption.resultfunction"))
+        attributes.add(WitnessAttribute("assumption.resultfunction", "string", "edge",
+            "assumption.resultfunction"))
         attributes.add(WitnessAttribute("control", "string", "edge", "control"))
         attributes.add(WitnessAttribute("startline", "string", "edge", "startline"))
         attributes.add(WitnessAttribute("endline", "string", "edge", "endline"))
@@ -66,7 +68,8 @@ class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: F
         attributes.add(WitnessAttribute("endoffset", "string", "edge", "endoffset"))
         attributes.add(WitnessAttribute("enterLoopHead", "string", "edge", "enterLoopHead"))
         attributes.add(WitnessAttribute("enterFunction", "string", "edge", "enterFunction"))
-        attributes.add(WitnessAttribute("returnFromFunction", "string", "edge", "returnFromFunction"))
+        attributes.add(
+            WitnessAttribute("returnFromFunction", "string", "edge", "returnFromFunction"))
         attributes.add(WitnessAttribute("threadId", "string", "edge", "threadId"))
         attributes.add(WitnessAttribute("stmt", "string", "edge", "stmt"))
         attributes.add(WitnessAttribute("cSource", "string", "edge", "cSource"))
@@ -94,11 +97,11 @@ class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: F
 <?xml version="1.0" encoding="UTF-8"?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-${attributes.map(WitnessAttribute::toXml).reduce{a, b -> "$a\n$b"}}
+${attributes.map(WitnessAttribute::toXml).reduce { a, b -> "$a\n$b" }}
         
 <graph edgedefault="directed">
 
-${data.map{"<data key=\"${it.first}\">${it.second}</data>"}.reduce { a, b -> "$a\n$b" }}
+${data.map { "<data key=\"${it.first}\">${it.second}</data>" }.reduce { a, b -> "$a\n$b" }}
 
 ${trace.states.map(WitnessNode::toXml).reduce { a, b -> "$a\n$b" }}   
      
@@ -111,85 +114,109 @@ ${trace.actions.map(WitnessEdge::toXml).reduce { a, b -> "$a\n$b" }}
 }
 
 data class WitnessAttribute(
-        val name: String,
-        val type: String,
-        val `for`: String,
-        val id: String,
-        val defaultValue: String? = null
+    val name: String,
+    val type: String,
+    val `for`: String,
+    val id: String,
+    val defaultValue: String? = null
 ) {
+
     fun toXml(): String = """
-<key attr.name="${escapeXml(name)}" attr.type="${escapeXml(type)}" for="${escapeXml(`for`)}" id="${escapeXml(id)}" ${if(defaultValue == null) "/>" else """
+<key attr.name="${escapeXml(name)}" attr.type="${escapeXml(type)}" for="${
+        escapeXml(`for`)
+    }" id="${escapeXml(id)}" ${
+        if (defaultValue == null) "/>" else """
 >
 <default>$defaultValue</default>
 </key>
-""".trimIndent()}
+""".trimIndent()
+    }
 """.trimIndent()
 }
 
 data class WitnessNode(
-     val id: String,
-     val entry: Boolean = false,
-     val sink: Boolean = false,
-     val violation: Boolean = false,
+    val id: String,
+    val entry: Boolean = false,
+    val sink: Boolean = false,
+    val violation: Boolean = false,
 
-     val xcfaLocations: Map<Int, List<XcfaLocation>> = emptyMap(),
-     val cSources: Map<Int, List<String>> = emptyMap(),
-     val globalState: ExplState? = null
-): State {
+    val xcfaLocations: Map<Int, List<XcfaLocation>> = emptyMap(),
+    val cSources: Map<Int, List<String>> = emptyMap(),
+    val globalState: ExplState? = null
+) : State {
+
     override fun isBottom(): Boolean {
         error("Not applicable for witness states.")
     }
+
     fun toXml(): String = """
 <node id="$id">
-    ${if(entry) "<data key=\"entry\">true</data>" else ""}
-    ${if(sink) "<data key=\"sink\">true</data>" else ""}
-    ${if(violation) "<data key=\"violation\">true</data>" else ""}
+    ${if (entry) "<data key=\"entry\">true</data>" else ""}
+    ${if (sink) "<data key=\"sink\">true</data>" else ""}
+    ${if (violation) "<data key=\"violation\">true</data>" else ""}
     
-    ${if (xcfaLocations.isNotEmpty()) "<data key=\"locationStacks\">${escapeXml(xcfaLocations.toString())}</data>" else ""}
-    ${if (cSources.isNotEmpty()) "<data key=\"sourceLines\">${escapeXml(cSources.toString())}</data>" else ""}
-    ${if (globalState != null) "<data key=\"state\">${escapeXml(globalState.toString())}</data>" else ""}
+    ${
+        if (xcfaLocations.isNotEmpty()) "<data key=\"locationStacks\">${
+            escapeXml(xcfaLocations.toString())
+        }</data>" else ""
+    }
+    ${
+        if (cSources.isNotEmpty()) "<data key=\"sourceLines\">${
+            escapeXml(cSources.toString())
+        }</data>" else ""
+    }
+    ${
+        if (globalState != null) "<data key=\"state\">${
+            escapeXml(globalState.toString())
+        }</data>" else ""
+    }
 </node>
     """.trimIndent()
 }
 
 data class WitnessEdge(
-        val sourceId: String,
-        val targetId: String,
-        val assumption: String? = null,
-        val assumption_scope: String? = null,
-        val assumption_resultfunction: String? = null,
-        val control: Boolean? = null,
-        val startline: Int? = null,
-        val endline: Int? = null,
-        val startoffset: Int? = null,
-        val endoffset: Int? = null,
-        val enterLoopHead: Boolean = false,
-        val enterFunction: String? = null,
-        val returnFromFunction: String? = null,
-        val threadId: String? = null,
-        val createThread: String? = null,
+    val sourceId: String,
+    val targetId: String,
+    val assumption: String? = null,
+    val assumption_scope: String? = null,
+    val assumption_resultfunction: String? = null,
+    val control: Boolean? = null,
+    val startline: Int? = null,
+    val endline: Int? = null,
+    val startoffset: Int? = null,
+    val endoffset: Int? = null,
+    val enterLoopHead: Boolean = false,
+    val enterFunction: String? = null,
+    val returnFromFunction: String? = null,
+    val threadId: String? = null,
+    val createThread: String? = null,
 
-        val stmt: String? = null,
-        val cSource: String? = null,
-): Action{
+    val stmt: String? = null,
+    val cSource: String? = null,
+) : Action {
+
     fun toXml(): String = """
         <edge source="$sourceId" target="$targetId">
-            ${if(assumption != null) "<data key=\"assumption\">$assumption</data>" else ""}
-            ${if(assumption_scope != null) "<data key=\"assumption.scope\">$assumption_scope</data>" else ""}
-            ${if(assumption_resultfunction != null) "<data key=\"assumption.resultfunction\">$assumption_resultfunction</data>" else ""}
-            ${if(control != null) "<data key=\"control\">condition-$control</data>" else ""}
-            ${if(startline != null && startline != -1) "<data key=\"startline\">$startline</data>" else ""}
-            ${if(endline != null && endline != -1) "<data key=\"endline\">$endline</data>" else ""}
-            ${if(startoffset != null && startoffset != -1) "<data key=\"startoffset\">$startoffset</data>" else ""}
-            ${if(endoffset != null && endoffset != -1) "<data key=\"endoffset\">$endoffset</data>" else ""}
-            ${if(enterLoopHead) "<data key=\"enterLoopHead\">true</data>" else ""}
-            ${if(enterFunction != null) "<data key=\"enterFunction\">$enterFunction</data>" else ""}
-            ${if(returnFromFunction != null) "<data key=\"returnFromFunction\">$returnFromFunction</data>" else ""}
-            ${if(threadId != null) "<data key=\"threadId\">$threadId</data>" else ""}
-            ${if(createThread != null) "<data key=\"createThread\">$createThread</data>" else ""}
+            ${if (assumption != null) "<data key=\"assumption\">$assumption</data>" else ""}
+            ${if (assumption_scope != null) "<data key=\"assumption.scope\">$assumption_scope</data>" else ""}
+            ${if (assumption_resultfunction != null) "<data key=\"assumption.resultfunction\">$assumption_resultfunction</data>" else ""}
+            ${if (control != null) "<data key=\"control\">condition-$control</data>" else ""}
+            ${if (startline != null && startline != -1) "<data key=\"startline\">$startline</data>" else ""}
+            ${if (endline != null && endline != -1) "<data key=\"endline\">$endline</data>" else ""}
+            ${if (startoffset != null && startoffset != -1) "<data key=\"startoffset\">$startoffset</data>" else ""}
+            ${if (endoffset != null && endoffset != -1) "<data key=\"endoffset\">$endoffset</data>" else ""}
+            ${if (enterLoopHead) "<data key=\"enterLoopHead\">true</data>" else ""}
+            ${if (enterFunction != null) "<data key=\"enterFunction\">$enterFunction</data>" else ""}
+            ${if (returnFromFunction != null) "<data key=\"returnFromFunction\">$returnFromFunction</data>" else ""}
+            ${if (threadId != null) "<data key=\"threadId\">$threadId</data>" else ""}
+            ${if (createThread != null) "<data key=\"createThread\">$createThread</data>" else ""}
 
-            ${if(stmt != null) "<data key=\"stmt\">${escapeXml(stmt)}</data>" else ""}
-            ${if(cSource != null && cSource != "") "<data key=\"cSource\">${escapeXml(cSource)}</data>" else ""}
+            ${if (stmt != null) "<data key=\"stmt\">${escapeXml(stmt)}</data>" else ""}
+            ${
+        if (cSource != null && cSource != "") "<data key=\"cSource\">${
+            escapeXml(cSource)
+        }</data>" else ""
+    }
 
         </edge>
     """.trimIndent()
@@ -240,9 +267,10 @@ private fun bytesToHex(hash: ByteArray): String {
     return hexString.toString()
 }
 
-private fun getIsoDate() : String {
+private fun getIsoDate(): String {
     val tz: TimeZone = TimeZone.getTimeZone("UTC")
-    val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'") // Quoted "Z" to indicate UTC, no timezone offset
+    val df: DateFormat = SimpleDateFormat(
+        "yyyy-MM-dd'T'HH:mm:ss'Z'") // Quoted "Z" to indicate UTC, no timezone offset
 
     df.timeZone = tz
     return df.format(Date())
@@ -251,7 +279,8 @@ private fun getIsoDate() : String {
 // from https://stackoverflow.com/a/1264912
 private fun prettyFormat(input: String, indent: Int): String {
     return try {
-        val xmlInput: Source = StreamSource(StringReader(input.replace(Regex("(  )|[\\t\\n\\r]"), "")))
+        val xmlInput: Source = StreamSource(
+            StringReader(input.replace(Regex("(  )|[\\t\\n\\r]"), "")))
         val stringWriter = StringWriter()
         val xmlOutput = StreamResult(stringWriter)
         val transformerFactory: TransformerFactory = TransformerFactory.newInstance()

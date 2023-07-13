@@ -23,15 +23,16 @@ import java.util.Collection;
 import java.util.Map;
 
 public class MultiprocInitFunc<S extends State, P extends Prec> {
-	private final Map<Integer, InitFunc<S, P>> initFuncMap;
+    private final Map<Integer, InitFunc<S, P>> initFuncMap;
 
-	public MultiprocInitFunc(final Map<Integer, InitFunc<S, P>> initFuncMap) {
-		this.initFuncMap = initFuncMap;
-	}
+    public MultiprocInitFunc(final Map<Integer, InitFunc<S, P>> initFuncMap) {
+        this.initFuncMap = initFuncMap;
+    }
 
-	public Collection<? extends S> getInitStates(final int pid, final P prec) {
-		if(initFuncMap.containsKey(pid)) return initFuncMap.get(pid).getInitStates(prec);
-		else throw new RuntimeException("No such process: " + pid + ". Known processes: " + initFuncMap.keySet());
-	}
+    public Collection<? extends S> getInitStates(final int pid, final P prec) {
+        if (initFuncMap.containsKey(pid)) return initFuncMap.get(pid).getInitStates(prec);
+        else
+            throw new RuntimeException("No such process: " + pid + ". Known processes: " + initFuncMap.keySet());
+    }
 
 }

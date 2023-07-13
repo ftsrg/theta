@@ -33,32 +33,32 @@ import hu.bme.mit.theta.sts.STS;
 @RunWith(Parameterized.class)
 public class StsDslTest {
 
-	@Parameter(0)
-	public String filepath;
+    @Parameter(0)
+    public String filepath;
 
-	@Parameter(1)
-	public String propertyName;
+    @Parameter(1)
+    public String propertyName;
 
-	@Parameter(2)
-	public int varCount;
+    @Parameter(2)
+    public int varCount;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"/readerswriters.system", "safe", 3},
+                {"/readerswriters.system", "safe", 3},
 
-				{"/simple1.system", "safe", 2}
+                {"/simple1.system", "safe", 2}
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() throws FileNotFoundException, IOException {
-		final InputStream inputStream = StsDslTest.class.getResourceAsStream(filepath);
-		final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-		final STS sts = spec.createProp(propertyName);
-		Assert.assertEquals(varCount, sts.getVars().size());
-	}
+    @Test
+    public void test() throws FileNotFoundException, IOException {
+        final InputStream inputStream = StsDslTest.class.getResourceAsStream(filepath);
+        final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+        final STS sts = spec.createProp(propertyName);
+        Assert.assertEquals(varCount, sts.getVars().size());
+    }
 
 }

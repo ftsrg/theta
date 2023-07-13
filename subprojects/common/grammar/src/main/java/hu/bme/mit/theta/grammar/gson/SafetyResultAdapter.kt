@@ -31,10 +31,11 @@ import java.lang.reflect.Type
 import java.util.*
 
 class SafetyResultAdapter(
-        val gsonSupplier: () -> Gson,
-        private val argTypeSupplier: () -> Type,
-        private val traceTypeSupplier: () -> Type,
-)  : TypeAdapter<SafetyResult<out State, out Action>>() {
+    val gsonSupplier: () -> Gson,
+    private val argTypeSupplier: () -> Type,
+    private val traceTypeSupplier: () -> Type,
+) : TypeAdapter<SafetyResult<out State, out Action>>() {
+
     private lateinit var gson: Gson
     private lateinit var argType: Type
     private lateinit var traceType: Type
@@ -47,7 +48,7 @@ class SafetyResultAdapter(
         writer.name("stats")
 //        gson.toJson(gson.toJsonTree(value.stats), writer)
         gson.toJson(gson.toJsonTree(Optional.empty<Statistics>()), writer)
-        if(value.isSafe) {
+        if (value.isSafe) {
             writer.name("safe").value(true)
         } else {
             val unsafe = value.asUnsafe()
@@ -66,8 +67,8 @@ class SafetyResultAdapter(
         var safe: Boolean? = null
         lateinit var trace: Trace<State, Action>
         reader.beginObject()
-        while(reader.peek() != JsonToken.END_OBJECT) {
-            when(reader.nextName()) {
+        while (reader.peek() != JsonToken.END_OBJECT) {
+            when (reader.nextName()) {
                 "arg" -> arg = gson.fromJson(reader, argType)
                 "stats" -> stats = gson.fromJson(reader, Optional::class.java)
                 "safe" -> safe = reader.nextBoolean()
@@ -78,14 +79,16 @@ class SafetyResultAdapter(
         return if (stats.isEmpty)
             if (safe == true) SafetyResult.safe(arg) else SafetyResult.unsafe(trace, arg)
         else
-            if (safe == false) SafetyResult.safe(arg, stats.get()) else SafetyResult.unsafe(trace, arg, stats.get())
+            if (safe == false) SafetyResult.safe(arg, stats.get()) else SafetyResult.unsafe(trace,
+                arg, stats.get())
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
+
     private fun initTypes() {
-        if(!this::traceType.isInitialized) traceType = traceTypeSupplier()
-        if(!this::argType.isInitialized) argType = argTypeSupplier()
+        if (!this::traceType.isInitialized) traceType = traceTypeSupplier()
+        if (!this::argType.isInitialized) argType = argTypeSupplier()
     }
 }

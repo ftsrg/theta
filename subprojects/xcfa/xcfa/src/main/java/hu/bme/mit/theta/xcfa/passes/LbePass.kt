@@ -38,6 +38,7 @@ import kotlin.collections.set
 class LbePass : ProcedurePass {
 
     companion object {
+
         /**
          * The level of LBE that specifies which type of graph transformations to apply.
          */
@@ -48,6 +49,7 @@ class LbePass : ProcedurePass {
      * LBE modes.
      */
     enum class LbeLevel {
+
         /**
          * The pass returns the builder without applying any changes.
          */
@@ -143,7 +145,8 @@ class LbePass : ProcedurePass {
      * @param strict           If true, cascade collapsing is limited to locations in locationsToVisit.
      * @return Returns the list of removed locations.
      */
-    private fun collapseParallelsAndSnakes(locationsToVisit: List<XcfaLocation>, strict: Boolean): List<XcfaLocation> {
+    private fun collapseParallelsAndSnakes(locationsToVisit: List<XcfaLocation>,
+        strict: Boolean): List<XcfaLocation> {
         val editedLocationsToVisit = locationsToVisit.toMutableList()
         val removedLocations = mutableListOf<XcfaLocation>()
         while (editedLocationsToVisit.isNotEmpty()) {
@@ -197,7 +200,8 @@ class LbePass : ProcedurePass {
      * @param locationsToVisit Adds the targets of parallel edges to this list (new parallel edges and snakes
      * can appear in these locations)
      */
-    private fun collapseParallelEdges(location: XcfaLocation, locationsToVisit: MutableList<XcfaLocation>) {
+    private fun collapseParallelEdges(location: XcfaLocation,
+        locationsToVisit: MutableList<XcfaLocation>) {
         val edgesByTarget = mutableMapOf<XcfaLocation, MutableList<XcfaEdge>>()
         for (edge in location.outgoingEdges) {
             val edgesToTarget = edgesByTarget.getOrDefault(edge.target, ArrayList())
@@ -231,7 +235,8 @@ class LbePass : ProcedurePass {
      * added to this list
      * @param removedLocations The list of removed locations: the collapsed location is added to this list
      */
-    private fun collapsePartOfSnake(location: XcfaLocation, locationsToVisit: MutableList<XcfaLocation>, removedLocations: MutableList<XcfaLocation>) {
+    private fun collapsePartOfSnake(location: XcfaLocation,
+        locationsToVisit: MutableList<XcfaLocation>, removedLocations: MutableList<XcfaLocation>) {
         if (location.incomingEdges.size == 1 && location.outgoingEdges.size == 1) {
             val previousLocation = location.incomingEdges.first().source
             val removed = removeMiddleLocation(location)
@@ -299,7 +304,8 @@ class LbePass : ProcedurePass {
      */
     private fun isNotLocal(edge: XcfaEdge): Boolean {
         return !edge.getFlatLabels().all { label ->
-            !(label is StartLabel || label is JoinLabel) && label.collectVars().all(builder.getVars()::contains)
+            !(label is StartLabel || label is JoinLabel) && label.collectVars()
+                .all(builder.getVars()::contains)
         }
     }
 }

@@ -137,7 +137,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
 
     private VarDecl<?> getOutParam(XcfaProcedureBuilder procedure) {
         Optional<Pair<VarDecl<?>, ParamDirection>> param = procedure.getParams()
-                        .stream().filter(entry -> entry.getSecond() == ParamDirection.OUT).findAny();
+                .stream().filter(entry -> entry.getSecond() == ParamDirection.OUT).findAny();
         return param.map(Pair::getFirst).orElse(null);
     }
 

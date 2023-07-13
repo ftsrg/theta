@@ -183,20 +183,20 @@ public final class TypeUtils {
         checkArgument(op1.getType().equals(op2.getType()), "All types must equal");
     }
 
-	public static <T extends Type> LitExpr<T> getDefaultValue(final T type) {
-		if(type instanceof BoolType) {
-			return (LitExpr<T>) cast(BoolExprs.False(), type);
-		} else if(type instanceof IntType) {
-			return (LitExpr<T>) cast(IntExprs.Int(0), type);
-		} else if(type instanceof RatType) {
-			return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
-		} else if(type instanceof BvType) {
-			return (LitExpr<T>) cast(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize()), type);
-		} else if(type instanceof FpType) {
-			return (LitExpr<T>) cast(FpUtils.bigFloatToFpLitExpr(BigFloat.zero(((FpType) type).getSignificand()), (FpType) type), type);
-		} else {
-			throw new AssertionError();
-		}
-	}
+    public static <T extends Type> LitExpr<T> getDefaultValue(final T type) {
+        if (type instanceof BoolType) {
+            return (LitExpr<T>) cast(BoolExprs.False(), type);
+        } else if (type instanceof IntType) {
+            return (LitExpr<T>) cast(IntExprs.Int(0), type);
+        } else if (type instanceof RatType) {
+            return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
+        } else if (type instanceof BvType) {
+            return (LitExpr<T>) cast(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize()), type);
+        } else if (type instanceof FpType) {
+            return (LitExpr<T>) cast(FpUtils.bigFloatToFpLitExpr(BigFloat.zero(((FpType) type).getSignificand()), (FpType) type), type);
+        } else {
+            throw new AssertionError();
+        }
+    }
 
 }

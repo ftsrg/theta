@@ -22,7 +22,8 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-class MetaDataAdapter: TypeAdapter<MetaData>() {
+class MetaDataAdapter : TypeAdapter<MetaData>() {
+
     private val gson = GsonBuilder().create()
 
     override fun write(writer: JsonWriter, value: MetaData) {

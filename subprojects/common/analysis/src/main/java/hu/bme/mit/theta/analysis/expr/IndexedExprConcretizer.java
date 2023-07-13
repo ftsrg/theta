@@ -40,8 +40,8 @@ public final class IndexedExprConcretizer implements Concretizer<IndexedExprStat
         return BasicExprState.of(unindexedExpr);
     }
 
-    private  <T extends Type> Expr<T> removeHighestIndex(Expr<T> expr, VarIndexing indexing) {
-        if (expr instanceof RefExpr){
+    private <T extends Type> Expr<T> removeHighestIndex(Expr<T> expr, VarIndexing indexing) {
+        if (expr instanceof RefExpr) {
             final RefExpr<T> refExpr = (RefExpr<T>) expr;
             final Decl<T> decl = refExpr.getDecl();
             if (decl instanceof IndexedConstDecl) {

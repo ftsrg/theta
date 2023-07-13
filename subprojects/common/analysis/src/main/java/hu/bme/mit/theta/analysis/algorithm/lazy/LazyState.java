@@ -12,7 +12,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public abstract class LazyState<SConcr extends State, SAbstr extends ExprState> implements ExprState {
 
-    private LazyState(){
+    private LazyState() {
     }
 
     public static <SConcr extends State, SAbstr extends ExprState> LazyState<SConcr, SAbstr> of(final SConcr state, final InitAbstractor<SConcr, SAbstr> initAbstractor) {

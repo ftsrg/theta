@@ -35,15 +35,17 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class XcfaWitnessWriter {
+
     fun writeWitness(
-            safetyResult: SafetyResult<*, *>,
-            inputFile: File,
-            cexSolverFactory: SolverFactory
+        safetyResult: SafetyResult<*, *>,
+        inputFile: File,
+        cexSolverFactory: SolverFactory
     ) {
-        if(safetyResult.isUnsafe) {
+        if (safetyResult.isUnsafe) {
             val workdir: Path = FileSystems.getDefault().getPath("").toAbsolutePath()
             val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")
-            val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
+            val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
+                safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
 
             val witnessTrace = traceToWitness(trace = concrTrace)
             val witness = Witness(witnessTrace, inputFile)
@@ -63,51 +65,68 @@ class XcfaWitnessWriter {
 
             val taskHash = WitnessWriter.createTaskHash(inputFile.absolutePath)
             val dummyWitness = StringBuilder()
-            dummyWitness.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">").append(System.lineSeparator()).append(
-                    "<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>").append(System.lineSeparator()).append(
-                    "<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>").append(System.lineSeparator()).append(
-                    "<key id=\"entry\" attr.name=\"entry\" for=\"node\">").append(System.lineSeparator()).append(
-                    "<default>false</default>").append(System.lineSeparator()).append(
-                    "</key>").append(System.lineSeparator()).append(
-                    "<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">").append(System.lineSeparator()).append(
-                    "<default>false</default>").append(System.lineSeparator()).append(
-                    "</key>").append(System.lineSeparator()).append(
-                    "<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>").append(System.lineSeparator()).append(
-                    "<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>").append(System.lineSeparator()).append(
-                    "<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>").append(System.lineSeparator()).append(
-                    "<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>").append(System.lineSeparator()).append(
-                    "<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>").append(System.lineSeparator()).append(
-                    "<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>").append(System.lineSeparator()).append(
-                    "<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
-                    "<data key=\"witness-type\">correctness_witness</data>").append(System.lineSeparator()).append(
-                    "<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
-                    "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>").append(System.lineSeparator()).append(
-                    "<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
-                    "<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
-                    "<data key=\"programhash\">")
+            dummyWitness.append(
+                "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">")
+                .append(System.lineSeparator()).append(
+                "<key id=\"sourcecodelang\" attr.name=\"sourcecodelang\" for=\"graph\"/>")
+                .append(System.lineSeparator()).append(
+                "<key id=\"witness-type\" attr.name=\"witness-type\" for=\"graph\"/>")
+                .append(System.lineSeparator()).append(
+                "<key id=\"entry\" attr.name=\"entry\" for=\"node\">")
+                .append(System.lineSeparator()).append(
+                "<default>false</default>").append(System.lineSeparator()).append(
+                "</key>").append(System.lineSeparator()).append(
+                "<key id=\"invariant\" attr.name=\"invariant\" for=\"node\">")
+                .append(System.lineSeparator()).append(
+                "<default>false</default>").append(System.lineSeparator()).append(
+                "</key>").append(System.lineSeparator()).append(
+                "<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>")
+                .append(System.lineSeparator()).append(
+                "<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>")
+                .append(System.lineSeparator()).append(
+                "<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>")
+                .append(System.lineSeparator()).append(
+                "<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>")
+                .append(System.lineSeparator()).append(
+                "<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>")
+                .append(System.lineSeparator()).append(
+                "<key attr.name=\"creationtime\" attr.type=\"string\" for=\"graph\" id=\"creationtime\"/>")
+                .append(System.lineSeparator()).append(
+                "<graph edgedefault=\"directed\">").append(System.lineSeparator()).append(
+                "<data key=\"witness-type\">correctness_witness</data>")
+                .append(System.lineSeparator()).append(
+                "<data key=\"producer\">theta</data>").append(System.lineSeparator()).append(
+                "<data key=\"specification\">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>")
+                .append(System.lineSeparator()).append(
+                "<data key=\"sourcecodelang\">C</data>").append(System.lineSeparator()).append(
+                "<data key=\"architecture\">32bit</data>").append(System.lineSeparator()).append(
+                "<data key=\"programhash\">")
             dummyWitness.append(taskHash)
             dummyWitness.append("</data>").append(System.lineSeparator()).append(
-                    "<data key=\"creationtime\">")
+                "<data key=\"creationtime\">")
 
             val tz: TimeZone = TimeZone.getTimeZone("UTC")
-            val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'") // Quoted "Z" to indicate UTC, no timezone offset
+            val df: DateFormat = SimpleDateFormat(
+                "yyyy-MM-dd'T'HH:mm:ss'Z'") // Quoted "Z" to indicate UTC, no timezone offset
 
             df.timeZone = tz
             val isoDate: String = df.format(Date())
 
             dummyWitness.append(isoDate)
             dummyWitness.append("</data>").append(System.lineSeparator()).append(
-                    "<data key=\"programfile\">")
+                "<data key=\"programfile\">")
             dummyWitness.append(inputFile.name)
             dummyWitness.append("</data>").append(System.lineSeparator()).append(
-                    "<node id=\"N0\">").append(System.lineSeparator()).append(
-                    "<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
-                    "</node>").append(System.lineSeparator()).append(
-                    "</graph>").append(System.lineSeparator()).append(
-                    "</graphml>")
+                "<node id=\"N0\">").append(System.lineSeparator()).append(
+                "<data key=\"entry\">true</data>").append(System.lineSeparator()).append(
+                "</node>").append(System.lineSeparator()).append(
+                "</graph>").append(System.lineSeparator()).append(
+                "</graphml>")
 
             try {
-                BufferedWriter(FileWriter(witnessfile)).use { bw -> bw.write(dummyWitness.toString()) }
+                BufferedWriter(FileWriter(witnessfile)).use { bw ->
+                    bw.write(dummyWitness.toString())
+                }
             } catch (ioe: IOException) {
                 ioe.printStackTrace()
             }

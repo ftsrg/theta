@@ -26,16 +26,23 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  * Requires the ProcedureBuilder to be `deterministic` (@see DeterministicPass)
  */
 class UnusedVarPass : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
 
         val usedVars = LinkedHashSet<VarDecl<*>>()
         builder.getEdges().forEach { usedVars.addAll(it.label.collectVars()) }
 
-        val allVars = Sets.union(builder.getVars(), builder.parent.getVars().map { it.wrappedVar }.toSet())
+        val allVars = Sets.union(builder.getVars(),
+            builder.parent.getVars().map { it.wrappedVar }.toSet())
         val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
-        if(!varsAndParams.containsAll(usedVars)) {
-            System.err.println("Warning: There are some used variables not present as declarations: \n${usedVars.filter { !varsAndParams.contains(it) }}")
+        if (!varsAndParams.containsAll(usedVars)) {
+            System.err.println(
+                "Warning: There are some used variables not present as declarations: \n${
+                    usedVars.filter {
+                        !varsAndParams.contains(it)
+                    }
+                }")
         }
 
         val list = builder.getVars().filter { !usedVars.contains(it) }.toList()

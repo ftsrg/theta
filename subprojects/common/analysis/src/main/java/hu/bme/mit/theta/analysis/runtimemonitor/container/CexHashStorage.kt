@@ -6,6 +6,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace
 
 class CexHashStorage<S : State?, A : Action?> :
     RuntimeDataCollection<ArgTrace<S, A>?> {
+
     private val counterexamples: MutableSet<Int> = LinkedHashSet()
     override fun addData(newData: ArgTrace<S, A>?) {
         counterexamples.add(newData.hashCode())

@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.gson
 
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
-val xcfaLocationAdapter : (String) -> XcfaLocation = {
+val xcfaLocationAdapter: (String) -> XcfaLocation = {
     val matchResult = Regex("^([^{ }]*) (\\{.*})?$").matchEntire(it)
     check(matchResult != null)
     val (name, modifier) = matchResult.destructured

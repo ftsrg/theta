@@ -29,7 +29,7 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
-public class Sequence extends BinaryMCMRule{
+public class Sequence extends BinaryMCMRule {
     public Sequence(MCMRelation e1, MCMRelation e2) {
         super(e1, e2);
     }

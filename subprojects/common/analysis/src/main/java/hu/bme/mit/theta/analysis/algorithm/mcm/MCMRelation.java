@@ -40,6 +40,7 @@ public class MCMRelation {
         this(arity, name);
         this.rule = rule;
     }
+
     public int getArity() {
         return arity;
     }
@@ -58,11 +59,12 @@ public class MCMRelation {
     }
 
     public void collectRelations(final Map<String, MCMRelation> relations) {
-        if(!relations.containsKey(name)) {
+        if (!relations.containsKey(name)) {
             relations.put(name, this);
-            if(rule != null) rule.collectRelations(relations);
+            if (rule != null) rule.collectRelations(relations);
         } else {
-            if(!relations.get(name).equals(this)) throw new RuntimeException("Different definitions for the relation " + name);
+            if (!relations.get(name).equals(this))
+                throw new RuntimeException("Different definitions for the relation " + name);
         }
     }
 
@@ -76,18 +78,19 @@ public class MCMRelation {
     }
 
     public EventConstantLookup encodeEvents(final List<Integer> idList, final EncodedRelationWrapper encodedRelationWrapper) {
-        if(encodedRelationWrapper.getEventLookup(name) != null) return encodedRelationWrapper.getEventLookup(name);
+        if (encodedRelationWrapper.getEventLookup(name) != null)
+            return encodedRelationWrapper.getEventLookup(name);
 
         final EventConstantLookup eventConstantLookup = new EventConstantLookup();
         encodedRelationWrapper.addEvent(name, eventConstantLookup);
         createConstants(idList, eventConstantLookup);
 
-        if(rule != null) rule.encodeEvents(idList, eventConstantLookup, encodedRelationWrapper);
+        if (rule != null) rule.encodeEvents(idList, eventConstantLookup, encodedRelationWrapper);
         return eventConstantLookup;
     }
 
     private void createConstants(List<Integer> idList, EventConstantLookup eventConstantLookup) {
-        if(arity == 1) {
+        if (arity == 1) {
             for (final int i : idList) {
                 eventConstantLookup.add(TupleN.of(i), Const(name + "_" + i, Bool()));
             }
@@ -97,6 +100,7 @@ public class MCMRelation {
                     eventConstantLookup.add(TupleN.of(i, j), Const(name + "_" + i + "_" + j, Bool()));
                 }
             }
-        } else throw new UnsupportedOperationException("Relations with arity " + arity + " not supported.");
+        } else
+            throw new UnsupportedOperationException("Relations with arity " + arity + " not supported.");
     }
 }

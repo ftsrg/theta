@@ -66,7 +66,7 @@ public final class Prod2LazyStrategy<SConcr1 extends State, SConcr2 extends Stat
     public void cover(ArgNode<S, A> coveree, ArgNode<S, A> coverer, Collection<ArgNode<S, A>> uncoveredNodes) {
         assert coveree.getCoveringNode().isPresent() && coveree.getCoveringNode().get().equals(coverer);
         strategy1.cover(coveree, coverer, uncoveredNodes);
-        if (coveree.isCovered()){
+        if (coveree.isCovered()) {
             assert (!uncoveredNodes.contains(coveree));
             strategy2.cover(coveree, coverer, uncoveredNodes);
         }

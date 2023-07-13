@@ -23,7 +23,8 @@ public final class ExplExprInterpolator implements Interpolator<ExplState, Basic
     private static final ExprSimplifier exprSimplifier = ExprSimplifier.create(SimplifierLevel.LITERAL_ONLY);
     private static final ExplExprInterpolator INSTANCE = new ExplExprInterpolator();
 
-    private ExplExprInterpolator() { }
+    private ExplExprInterpolator() {
+    }
 
     public static ExplExprInterpolator getInstance() {
         return INSTANCE;
@@ -48,7 +49,7 @@ public final class ExplExprInterpolator implements Interpolator<ExplState, Basic
 
         for (final VarDecl<?> var : vars) {
             valI.remove(var);
-            if(!refutes(valI, exprB)) {
+            if (!refutes(valI, exprB)) {
                 final LitExpr<?> val = valA.eval(var).get();
                 valI.put(var, val);
             }
@@ -67,7 +68,7 @@ public final class ExplExprInterpolator implements Interpolator<ExplState, Basic
         return refutes(explState, exprState.toExpr());
     }
 
-    private boolean refutes(final Valuation val, final Expr<BoolType> expr){
+    private boolean refutes(final Valuation val, final Expr<BoolType> expr) {
         final Expr<BoolType> simplifiedExpr = exprSimplifier.simplify(expr, val);
         return simplifiedExpr.equals(BoolExprs.False());
     }

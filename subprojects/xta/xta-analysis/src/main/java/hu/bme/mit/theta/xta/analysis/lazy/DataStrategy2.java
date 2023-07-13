@@ -10,14 +10,16 @@ public final class DataStrategy2 {
     public enum ConcrDom {
         EXPL, EXPR
     }
+
     public enum AbstrDom {
         NONE, EXPL, EXPR
     }
+
     public enum ItpStrategy {
         NONE, BIN_BW, BIN_FW, SEQ
     }
 
-    private static final Collection<DataStrategy2> VALID_DATA_STRATEGIES = List.of (
+    private static final Collection<DataStrategy2> VALID_DATA_STRATEGIES = List.of(
             new DataStrategy2(ConcrDom.EXPL, AbstrDom.NONE, ItpStrategy.NONE),
             new DataStrategy2(ConcrDom.EXPL, AbstrDom.EXPL, ItpStrategy.BIN_BW),
             new DataStrategy2(ConcrDom.EXPL, AbstrDom.EXPL, ItpStrategy.BIN_FW),
@@ -40,9 +42,11 @@ public final class DataStrategy2 {
     public ConcrDom getConcrDom() {
         return concrDom;
     }
+
     public AbstrDom getAbstrDom() {
         return abstrDom;
     }
+
     public ItpStrategy getItpStrategy() {
         return itpStrategy;
     }

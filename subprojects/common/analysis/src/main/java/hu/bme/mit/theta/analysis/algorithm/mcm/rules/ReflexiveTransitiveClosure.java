@@ -28,7 +28,7 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
-public class ReflexiveTransitiveClosure extends UnaryMCMRule{
+public class ReflexiveTransitiveClosure extends UnaryMCMRule {
     public ReflexiveTransitiveClosure(MCMRelation e) {
         super(e);
     }
@@ -42,7 +42,8 @@ public class ReflexiveTransitiveClosure extends UnaryMCMRule{
     public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
         final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
         resultEvents.getAll().forEach((tuple, constDecl) -> {
-            if(tuple.get(0) == tuple.get(1)) encodedRelationWrapper.getSolver().add(constDecl.getRef());
+            if (tuple.get(0) == tuple.get(1))
+                encodedRelationWrapper.getSolver().add(constDecl.getRef());
             else {
                 int i = tuple.get(0);
                 int j = tuple.get(1);

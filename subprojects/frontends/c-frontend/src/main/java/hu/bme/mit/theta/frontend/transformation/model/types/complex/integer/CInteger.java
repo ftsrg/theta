@@ -49,9 +49,9 @@ public abstract class CInteger extends CComplexType {
         }
     }
 
-	public boolean isSsigned() {
-		return !unsigned;
-	}
+    public boolean isSsigned() {
+        return !unsigned;
+    }
 
     public abstract CInteger getSignedVersion();
 

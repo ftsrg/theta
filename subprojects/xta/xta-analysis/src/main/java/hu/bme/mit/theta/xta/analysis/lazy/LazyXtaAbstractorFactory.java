@@ -73,7 +73,7 @@ public final class LazyXtaAbstractorFactory {
         private final SolverFactory solverFactory;
 
         public Factory(final XtaSystem system, final DataStrategy2 dataStrategy, final ClockStrategy clockStrategy,
-                       final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy){
+                       final SearchStrategy searchStrategy, final ExprMeetStrategy meetStrategy) {
             this.system = system;
             this.dataStrategy = dataStrategy;
             this.clockStrategy = clockStrategy;
@@ -349,7 +349,7 @@ public final class LazyXtaAbstractorFactory {
             final InvTransFunc<ZoneState, XtaAction, ZonePrec> zoneInvTransFunc = XtaZoneInvTransFunc.getInstance();
             final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
-            switch (clockStrategy){
+            switch (clockStrategy) {
                 case BWITP:
                     return new BwItpStrategy<>(lens, lattice, interpolator, concretizer, zoneInvTransFunc, prec);
                 case FWITP:

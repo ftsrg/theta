@@ -16,7 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.model
 
-fun XCFA.toDot() : String {
+fun XCFA.toDot(): String {
     val builder = StringBuilder()
     builder.appendLine("digraph G {")
     builder.appendLine("label=\"$name\";")
@@ -32,10 +32,13 @@ fun XCFA.toDot() : String {
     return builder.toString()
 }
 
-fun XcfaProcedure.toDot() : String {
+fun XcfaProcedure.toDot(): String {
     val builder = StringBuilder()
     builder.appendLine("label=\"$name\";")
     locs.forEach { builder.appendLine(it.name + "[];") }
-    edges.forEach { builder.appendLine(it.source.name + " -> " + it.target.name + "[label=\"" + it.label.toString() + "\"];") }
+    edges.forEach {
+        builder.appendLine(
+            it.source.name + " -> " + it.target.name + "[label=\"" + it.label.toString() + "\"];")
+    }
     return builder.toString()
 }

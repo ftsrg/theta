@@ -44,46 +44,46 @@ import static java.util.Collections.emptySet;
 
 public final class PredImpactChecker implements SafetyChecker<CfaState<PredState>, CfaAction, UnitPrec> {
 
-	private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
+    private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
 
-	private PredImpactChecker(final LTS<? super CfaState<PredState>, CfaAction> lts, final Loc initLoc,
-							  final Predicate<? super Loc> targetLocs,
-							  final Solver abstractionSolver, final ItpSolver refinementSolver) {
-		checkNotNull(lts);
-		checkNotNull(initLoc);
-		checkNotNull(abstractionSolver);
-		checkNotNull(refinementSolver);
+    private PredImpactChecker(final LTS<? super CfaState<PredState>, CfaAction> lts, final Loc initLoc,
+                              final Predicate<? super Loc> targetLocs,
+                              final Solver abstractionSolver, final ItpSolver refinementSolver) {
+        checkNotNull(lts);
+        checkNotNull(initLoc);
+        checkNotNull(abstractionSolver);
+        checkNotNull(refinementSolver);
 
-		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(abstractionSolver,
-				PredAbstractors.booleanSplitAbstractor(abstractionSolver), True());
+        final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(abstractionSolver,
+                PredAbstractors.booleanSplitAbstractor(abstractionSolver), True());
 
-		final CfaPrec<PredPrec> fixedPrec = GlobalCfaPrec.create(PredPrec.of(emptySet()));
+        final CfaPrec<PredPrec> fixedPrec = GlobalCfaPrec.create(PredPrec.of(emptySet()));
 
-		final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> cfaAnalysis = CfaAnalysis.create(initLoc,
-				predAnalysis);
+        final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> cfaAnalysis = CfaAnalysis.create(initLoc,
+                predAnalysis);
 
-		final Analysis<CfaState<PredState>, CfaAction, UnitPrec> analysis = PrecMappingAnalysis.create(cfaAnalysis,
-				np -> fixedPrec);
+        final Analysis<CfaState<PredState>, CfaAction, UnitPrec> analysis = PrecMappingAnalysis.create(cfaAnalysis,
+                np -> fixedPrec);
 
-		final Predicate<CfaState<?>> target = s -> targetLocs.test(s.getLoc());
+        final Predicate<CfaState<?>> target = s -> targetLocs.test(s.getLoc());
 
-		final ArgBuilder<CfaState<PredState>, CfaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
-				target);
+        final ArgBuilder<CfaState<PredState>, CfaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
+                target);
 
-		final ImpactRefiner<CfaState<PredState>, CfaAction> refiner = PredImpactRefiner.create(refinementSolver);
+        final ImpactRefiner<CfaState<PredState>, CfaAction> refiner = PredImpactRefiner.create(refinementSolver);
 
-		checker = ImpactChecker.create(argBuilder, refiner, CfaState::getLoc);
-	}
+        checker = ImpactChecker.create(argBuilder, refiner, CfaState::getLoc);
+    }
 
-	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, CfaAction> lts,
-										   final Loc initLoc, final Predicate<? super Loc> targetLocs,
-										   final Solver abstractionSolver, final ItpSolver refinementSolver) {
-		return new PredImpactChecker(lts, initLoc, targetLocs, abstractionSolver, refinementSolver);
-	}
+    public static PredImpactChecker create(final LTS<? super CfaState<PredState>, CfaAction> lts,
+                                           final Loc initLoc, final Predicate<? super Loc> targetLocs,
+                                           final Solver abstractionSolver, final ItpSolver refinementSolver) {
+        return new PredImpactChecker(lts, initLoc, targetLocs, abstractionSolver, refinementSolver);
+    }
 
-	@Override
-	public SafetyResult<CfaState<PredState>, CfaAction> check(final UnitPrec prec) {
-		return checker.check(prec);
-	}
+    @Override
+    public SafetyResult<CfaState<PredState>, CfaAction> check(final UnitPrec prec) {
+        return checker.check(prec);
+    }
 
 }

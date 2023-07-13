@@ -16,6 +16,6 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.cegar;
 
-public class MCMCegar{
+public class MCMCegar {
 
 }

@@ -15,7 +15,8 @@ public final class XtaExprInvTransFunc implements InvTransFunc<BasicExprState, X
 
     private final static XtaExprInvTransFunc INSTANCE = new XtaExprInvTransFunc();
 
-    private XtaExprInvTransFunc() { }
+    private XtaExprInvTransFunc() {
+    }
 
     public static XtaExprInvTransFunc getInstance() {
         return INSTANCE;

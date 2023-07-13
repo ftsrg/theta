@@ -23,7 +23,8 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import kotlin.reflect.KClass
 
-class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pair<A, B>>() {
+class PairAdapter<A : Any, B : Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pair<A, B>>() {
+
     private lateinit var gson: Gson
     override fun write(writer: JsonWriter, value: Pair<A, B>) {
         initGson()
@@ -58,13 +59,13 @@ class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pa
             lateinit var clazz: KClass<*>
             lateinit var value: Any
             while (reader.peek() != JsonToken.END_OBJECT) {
-                when(reader.nextName()) {
+                when (reader.nextName()) {
                     "type" -> clazz = Class.forName(reader.nextString()).kotlin
                     "value" -> value = gson.fromJson(reader, clazz.java)
                 }
             }
             reader.endObject()
-            when(nextName) {
+            when (nextName) {
                 "first" -> a = value as A
                 "second" -> b = value as B
             }
@@ -75,6 +76,6 @@ class PairAdapter<A: Any, B: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Pa
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

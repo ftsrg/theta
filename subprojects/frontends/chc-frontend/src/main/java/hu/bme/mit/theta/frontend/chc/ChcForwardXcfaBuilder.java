@@ -52,7 +52,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
 
         locations.put(initLocation.getName(), new UPred(initLocation, new ArrayList<>()));
         locations.put(errorLocation.getName(), new UPred(initLocation, new ArrayList<>()));
-        
+
         visit(parser.benchmark());
 
         xcfaBuilder.addProcedure(builder);
@@ -126,7 +126,10 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
         UPred from = locations.get(getTailFrom(tail).getName());
         tail.u_pred_atom().forEach(u_pred -> {
             List<? extends VarDecl<?>> params = u_pred.symbol().stream().map(symbol -> localVars.get(symbol.getText())).toList();
-            localVars.values().forEach(var -> { if (!params.contains(var)) labels.add(new StmtLabel(HavocStmt.of(var), EmptyMetaData.INSTANCE)); });
+            localVars.values().forEach(var -> {
+                if (!params.contains(var))
+                    labels.add(new StmtLabel(HavocStmt.of(var), EmptyMetaData.INSTANCE));
+            });
             labels.addAll(getParamAssignments(params, from.vars));
         });
         return labels;

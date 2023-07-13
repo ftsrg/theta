@@ -31,7 +31,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
 import java.math.BigInteger
 
-enum class Verbosity{
+enum class Verbosity {
     NECESSARY,
     SOURCE_EXISTS,
     STMT_EXISTS,
@@ -39,30 +39,34 @@ enum class Verbosity{
 }
 
 fun traceToWitness(
-        verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
-        trace: Trace<XcfaState<ExplState>, XcfaAction>
+    verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
+    trace: Trace<XcfaState<ExplState>, XcfaAction>
 ): Trace<WitnessNode, WitnessEdge> {
     val newStates = ArrayList<WitnessNode>()
     val newActions = ArrayList<WitnessEdge>()
 
-    var lastNode = WitnessNode(id = "N${newStates.size}", entry = true, sink = false, violation = false)
+    var lastNode = WitnessNode(id = "N${newStates.size}", entry = true, sink = false,
+        violation = false)
     newStates.add(lastNode)
 
-    for(i in 0 until trace.length()) {
+    for (i in 0 until trace.length()) {
         val state = trace.states[i]
-        val nextState = trace.states[i+1]
+        val nextState = trace.states[i + 1]
         val node = WitnessNode(
-                id = "N${newStates.size}",
-                entry = false,
-                sink = false,
-                violation = state.processes.any { it.value.locs.any(XcfaLocation::error) },
-                xcfaLocations = state.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-                cSources = state.processes.map { Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" }) }.toMap(),
-                globalState = state.sGlobal
+            id = "N${newStates.size}",
+            entry = false,
+            sink = false,
+            violation = state.processes.any { it.value.locs.any(XcfaLocation::error) },
+            xcfaLocations = state.processes.map { Pair(it.key, it.value.locs) }.toMap(),
+            cSources = state.processes.map {
+                Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+            }.toMap(),
+            globalState = state.sGlobal
         )
-        if(node != WitnessNode(id = "N${newStates.size}")) {
+        if (node != WitnessNode(id = "N${newStates.size}")) {
             newStates.add(node)
-            val edge = WitnessEdge(sourceId = lastNode.id, targetId = node.id, threadId = trace.actions[i].pid.toString())
+            val edge = WitnessEdge(sourceId = lastNode.id, targetId = node.id,
+                threadId = trace.actions[i].pid.toString())
             newActions.add(edge)
             lastNode = node
         }
@@ -70,9 +74,11 @@ fun traceToWitness(
         val action = trace.actions[i]
         val flattenedSequence = flattenSequence(action.edge.label)
         for (xcfaLabel in flattenedSequence) {
-            val node = WitnessNode(id = "N${newStates.size}", entry = false, sink = false, violation = false)
-            val edge = labelToEdge(lastNode, node, xcfaLabel, action.pid, nextState.sGlobal.getVal())
-            if(node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
+            val node = WitnessNode(id = "N${newStates.size}", entry = false, sink = false,
+                violation = false)
+            val edge = labelToEdge(lastNode, node, xcfaLabel, action.pid,
+                nextState.sGlobal.getVal())
+            if (node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
                 newStates.add(node)
                 newActions.add(edge)
                 lastNode = node
@@ -82,13 +88,15 @@ fun traceToWitness(
 
     val lastState = trace.states[trace.length()]
     val node = WitnessNode(
-            id = "N${newStates.size}",
-            entry = false,
-            sink = false,
-            violation = lastState.processes.any { it.value.locs.any(XcfaLocation::error) },
-            xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
-            cSources = lastState.processes.map { Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" }) }.toMap(),
-            globalState = lastState.sGlobal
+        id = "N${newStates.size}",
+        entry = false,
+        sink = false,
+        violation = lastState.processes.any { it.value.locs.any(XcfaLocation::error) },
+        xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
+        cSources = lastState.processes.map {
+            Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+        }.toMap(),
+        globalState = lastState.sGlobal
     )
     newStates.add(node)
     val edge = WitnessEdge(sourceId = lastNode.id, targetId = node.id)
@@ -99,7 +107,7 @@ fun traceToWitness(
 }
 
 fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
-    when(verbosity) {
+    when (verbosity) {
         Verbosity.NECESSARY -> edge.control != null || edge.assumption != null || edge.createThread != null
         Verbosity.SOURCE_EXISTS -> shouldInclude(edge, Verbosity.NECESSARY) || edge.cSource != null
         Verbosity.STMT_EXISTS -> shouldInclude(edge, Verbosity.NECESSARY) || edge.stmt != null
@@ -107,38 +115,41 @@ fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
     }
 
 
-private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: XcfaLabel, pid: Int, valuation: Valuation): WitnessEdge =
-        WitnessEdge(
-                sourceId = lastNode.id,
-                targetId = node.id,
+private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: XcfaLabel, pid: Int,
+    valuation: Valuation): WitnessEdge =
+    WitnessEdge(
+        sourceId = lastNode.id,
+        targetId = node.id,
 
-                assumption = if(xcfaLabel is StmtLabel && xcfaLabel.stmt is HavocStmt<*>) {
-                    val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl
-                    val eval = valuation.eval(varDecl)
-                    if(FrontendMetadata.getMetadataValue(varDecl, "cName").isPresent && eval.isPresent)
-                        "${FrontendMetadata.getMetadataValue(varDecl, "cName").get()} == ${printLit(eval.get())}"
-                    else null
-                } else null,
+        assumption = if (xcfaLabel is StmtLabel && xcfaLabel.stmt is HavocStmt<*>) {
+            val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl
+            val eval = valuation.eval(varDecl)
+            if (FrontendMetadata.getMetadataValue(varDecl, "cName").isPresent && eval.isPresent)
+                "${FrontendMetadata.getMetadataValue(varDecl, "cName").get()} == ${
+                    printLit(eval.get())
+                }"
+            else null
+        } else null,
 
-                control = if(xcfaLabel is StmtLabel && xcfaLabel.choiceType != ChoiceType.NONE) {
-                    xcfaLabel.choiceType == ChoiceType.MAIN_PATH
-                } else null,
+        control = if (xcfaLabel is StmtLabel && xcfaLabel.choiceType != ChoiceType.NONE) {
+            xcfaLabel.choiceType == ChoiceType.MAIN_PATH
+        } else null,
 
-                startline = xcfaLabel.getCMetaData()?.lineNumberStart,
-                endline = xcfaLabel.getCMetaData()?.lineNumberStop,
-                startoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
-                endoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
+        startline = xcfaLabel.getCMetaData()?.lineNumberStart,
+        endline = xcfaLabel.getCMetaData()?.lineNumberStop,
+        startoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
+        endoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
 
-                threadId = if(pid != null) "$pid" else null,
+        threadId = if (pid != null) "$pid" else null,
 
-                stmt = if(xcfaLabel is StmtLabel) xcfaLabel.stmt.toString() else null,
-                cSource = xcfaLabel.getCMetaData()?.sourceText
-        )
+        stmt = if (xcfaLabel is StmtLabel) xcfaLabel.stmt.toString() else null,
+        cSource = xcfaLabel.getCMetaData()?.sourceText
+    )
 
-private fun flattenSequence(label: XcfaLabel) : List<XcfaLabel> =
-    when(label) {
+private fun flattenSequence(label: XcfaLabel): List<XcfaLabel> =
+    when (label) {
         is NondetLabel -> error("Cannot handle nondet labels in witnesses")
-        is SequenceLabel -> label.labels.map{ flattenSequence(it) }.flatten()
+        is SequenceLabel -> label.labels.map { flattenSequence(it) }.flatten()
         else -> listOf(label)
     }
 
@@ -170,12 +181,15 @@ private fun printLit(litExpr: LitExpr<*>): String? {
         val hexDigits: MutableList<Char> = java.util.ArrayList()
         for (i in boolList.indices) {
             if (i % 4 == 0 && i > 0) {
-                if (aggregate < 10) hexDigits.add(('0'.code + aggregate).toChar()) else hexDigits.add(('A'.code - 10 + aggregate).toChar())
+                if (aggregate < 10) hexDigits.add(
+                    ('0'.code + aggregate).toChar()) else hexDigits.add(
+                    ('A'.code - 10 + aggregate).toChar())
                 aggregate = 0
             }
             if (boolList[i]) aggregate += 1 shl i % 4
         }
-        if (aggregate < 10) hexDigits.add(('0'.code + aggregate).toChar()) else hexDigits.add(('A'.code - 10 + aggregate).toChar())
+        if (aggregate < 10) hexDigits.add(('0'.code + aggregate).toChar()) else hexDigits.add(
+            ('A'.code - 10 + aggregate).toChar())
         val stringBuilder = StringBuilder("0x")
         for (character in Lists.reverse(hexDigits)) {
             stringBuilder.append(character)

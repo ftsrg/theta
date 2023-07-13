@@ -37,6 +37,7 @@ public interface MemoryEventProvider<S extends State, A extends Action> {
      * @return
      */
     Collection<ResultElement<A>> getPiecewiseAction(S state, A action);
+
     int getVarId(VarDecl<?> var);
 
     A createAction(S s, List<Stmt> stmt);
@@ -49,6 +50,7 @@ public interface MemoryEventProvider<S extends State, A extends Action> {
             this.memoryEvent = Optional.of(checkNotNull(memoryEvent));
             this.action = Optional.empty();
         }
+
         public ResultElement(final A action) {
             this.memoryEvent = Optional.empty();
             this.action = Optional.of(checkNotNull(action));
@@ -72,7 +74,7 @@ public interface MemoryEventProvider<S extends State, A extends Action> {
 
         @Override
         public String toString() {
-            if(memoryEvent.isPresent()) return memoryEvent.get().toString();
+            if (memoryEvent.isPresent()) return memoryEvent.get().toString();
             else return action.toString();
         }
     }

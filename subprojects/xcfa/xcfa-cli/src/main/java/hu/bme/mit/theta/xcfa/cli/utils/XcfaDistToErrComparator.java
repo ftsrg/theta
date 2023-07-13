@@ -40,83 +40,83 @@ import static com.google.common.base.Preconditions.*;
  * location.
  */
 public class XcfaDistToErrComparator implements ArgNodeComparator {
-	private Map<XcfaLocation, Integer> distancesToError;
-	private final int errorWeight;
-	private final int depthWeight;
-	private final XCFA xcfa;
-	private final XcfaLocation errLoc;
+    private Map<XcfaLocation, Integer> distancesToError;
+    private final int errorWeight;
+    private final int depthWeight;
+    private final XCFA xcfa;
+    private final XcfaLocation errLoc;
 
-	public XcfaDistToErrComparator(final XCFA xcfa) {
-		this(xcfa, 1, 0);
-	}
+    public XcfaDistToErrComparator(final XCFA xcfa) {
+        this(xcfa, 1, 0);
+    }
 
-	public XcfaDistToErrComparator(final XCFA xcfa, final int errorWeight, final int depthWeight) {
-		this.xcfa = xcfa;
-		Pair<XcfaProcedure, List<Expr<?>>> initProc = checkNotNull(xcfa.getInitProcedures().get(0));
-		Optional<XcfaLocation> errorLocOpt = initProc.component1().getErrorLoc();
+    public XcfaDistToErrComparator(final XCFA xcfa, final int errorWeight, final int depthWeight) {
+        this.xcfa = xcfa;
+        Pair<XcfaProcedure, List<Expr<?>>> initProc = checkNotNull(xcfa.getInitProcedures().get(0));
+        Optional<XcfaLocation> errorLocOpt = initProc.component1().getErrorLoc();
 //		checkState(errorLocOpt.isPresent());
-		this.errLoc = errorLocOpt.orElse(null);
-		this.errorWeight = errorWeight;
-		this.depthWeight = depthWeight;
-		distancesToError = null;
-	}
+        this.errLoc = errorLocOpt.orElse(null);
+        this.errorWeight = errorWeight;
+        this.depthWeight = depthWeight;
+        distancesToError = null;
+    }
 
-	@Override
-	public int compare(final ArgNode<? extends State, ? extends Action> n1,
-					   final ArgNode<? extends State, ? extends Action> n2) {
-		final int dist1 = getWeightedDistance(n1);
-		final int dist2 = getWeightedDistance(n2);
+    @Override
+    public int compare(final ArgNode<? extends State, ? extends Action> n1,
+                       final ArgNode<? extends State, ? extends Action> n2) {
+        final int dist1 = getWeightedDistance(n1);
+        final int dist2 = getWeightedDistance(n2);
 
-		return Integer.compare(dist1, dist2);
-	}
+        return Integer.compare(dist1, dist2);
+    }
 
-	private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
-		checkArgument(node.getState() instanceof XcfaState && ((XcfaState) node.getState()).getProcesses().size() <= 1, "XcfaState expected with a single process.");
-		if(((XcfaState) node.getState()).getProcesses().size() == 0) return Integer.MAX_VALUE;
-		final XcfaState<?> state = (XcfaState<?>) node.getState();
-		final int distanceToError = getDistanceToError(state.getProcesses().get(0).component1().peek());
-		if (distanceToError == Integer.MAX_VALUE) {
-			return distanceToError;
-		}
-		return errorWeight * distanceToError + depthWeight * node.getDepth();
-	}
+    private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
+        checkArgument(node.getState() instanceof XcfaState && ((XcfaState) node.getState()).getProcesses().size() <= 1, "XcfaState expected with a single process.");
+        if (((XcfaState) node.getState()).getProcesses().size() == 0) return Integer.MAX_VALUE;
+        final XcfaState<?> state = (XcfaState<?>) node.getState();
+        final int distanceToError = getDistanceToError(state.getProcesses().get(0).component1().peek());
+        if (distanceToError == Integer.MAX_VALUE) {
+            return distanceToError;
+        }
+        return errorWeight * distanceToError + depthWeight * node.getDepth();
+    }
 
-	private int getDistanceToError(final XcfaLocation loc) {
-		if (distancesToError == null && errLoc != null) {
-			distancesToError = calculateDistancesToError(xcfa, errLoc);
-		} else if (errLoc == null) {
-			return Integer.MAX_VALUE;
-		}
-		return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
-	}
+    private int getDistanceToError(final XcfaLocation loc) {
+        if (distancesToError == null && errLoc != null) {
+            distancesToError = calculateDistancesToError(xcfa, errLoc);
+        } else if (errLoc == null) {
+            return Integer.MAX_VALUE;
+        }
+        return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
+    }
 
-	static Map<XcfaLocation, Integer> calculateDistancesToError(final XCFA cfa, final XcfaLocation errLoc) {
-		List<XcfaLocation> queue = new LinkedList<>();
-		final Map<XcfaLocation, Integer> distancesToError = Containers.createMap();
-		queue.add(errLoc);
-		distancesToError.put(errLoc, 0);
-		int distance = 1;
+    static Map<XcfaLocation, Integer> calculateDistancesToError(final XCFA cfa, final XcfaLocation errLoc) {
+        List<XcfaLocation> queue = new LinkedList<>();
+        final Map<XcfaLocation, Integer> distancesToError = Containers.createMap();
+        queue.add(errLoc);
+        distancesToError.put(errLoc, 0);
+        int distance = 1;
 
-		while (!queue.isEmpty()) {
-			final List<XcfaLocation> predecessors = new LinkedList<>();
-			for (final XcfaLocation loc : queue) {
-				for (final XcfaEdge inEdge : loc.getIncomingEdges()) {
-					final XcfaLocation predecessor = inEdge.getSource();
-					if (!distancesToError.containsKey(predecessor)) {
-						distancesToError.put(predecessor, distance);
-						predecessors.add(predecessor);
-					}
-				}
-			}
-			queue = predecessors;
-			++distance;
-		}
+        while (!queue.isEmpty()) {
+            final List<XcfaLocation> predecessors = new LinkedList<>();
+            for (final XcfaLocation loc : queue) {
+                for (final XcfaEdge inEdge : loc.getIncomingEdges()) {
+                    final XcfaLocation predecessor = inEdge.getSource();
+                    if (!distancesToError.containsKey(predecessor)) {
+                        distancesToError.put(predecessor, distance);
+                        predecessors.add(predecessor);
+                    }
+                }
+            }
+            queue = predecessors;
+            ++distance;
+        }
 
-		return distancesToError;
-	}
+        return distancesToError;
+    }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

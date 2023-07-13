@@ -12,7 +12,8 @@ public final class XtaZoneInvTransFunc implements InvTransFunc<ZoneState, XtaAct
 
     private final static XtaZoneInvTransFunc INSTANCE = new XtaZoneInvTransFunc();
 
-    private XtaZoneInvTransFunc() { }
+    private XtaZoneInvTransFunc() {
+    }
 
     public static XtaZoneInvTransFunc getInstance() {
         return INSTANCE;

@@ -137,8 +137,8 @@ public final class LazyXtaAbstractor<SConcr extends State, SAbstr extends State,
         }
 
         private AbstractorResult expand(final ArgNode<LazyState<XtaState<SConcr>, XtaState<SAbstr>>, XtaAction> node,
-                            final ARG<LazyState<XtaState<SConcr>, XtaState<SAbstr>>, XtaAction> arg,
-                            final LazyXtaStatistics.Builder stats) {
+                                        final ARG<LazyState<XtaState<SConcr>, XtaState<SAbstr>>, XtaAction> arg,
+                                        final LazyXtaStatistics.Builder stats) {
             stats.startExpanding();
             final LazyState<XtaState<SConcr>, XtaState<SAbstr>> state = node.getState();
 

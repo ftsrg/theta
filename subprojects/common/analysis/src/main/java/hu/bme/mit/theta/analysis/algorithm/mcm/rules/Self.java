@@ -24,7 +24,7 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 
-public class Self extends UnaryMCMRule{
+public class Self extends UnaryMCMRule {
     public Self(MCMRelation e) {
         super(e);
     }

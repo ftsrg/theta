@@ -31,6 +31,7 @@ import hu.bme.mit.theta.common.logging.NullLogger;
 
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
+
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,52 +44,52 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class CegarChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
 
-	private final Abstractor<S, A, P> abstractor;
-	private final Refiner<S, A, P> refiner;
-	private final Logger logger;
+    private final Abstractor<S, A, P> abstractor;
+    private final Refiner<S, A, P> refiner;
+    private final Logger logger;
     private final ARG<S, A> arg; // TODO I don't think putting the ARG up here from check below causes any issues, but keep it in mind, that it might
 
-	private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
-		this.abstractor = checkNotNull(abstractor);
-		this.refiner = checkNotNull(refiner);
-		this.logger = checkNotNull(logger);
+    private CegarChecker(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
+        this.abstractor = checkNotNull(abstractor);
+        this.refiner = checkNotNull(refiner);
+        this.logger = checkNotNull(logger);
         arg = abstractor.createArg();
-	}
+    }
 
-	public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
-			final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner) {
-		return new CegarChecker<>(abstractor, refiner, NullLogger.getInstance());
-	}
+    public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
+            final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner) {
+        return new CegarChecker<>(abstractor, refiner, NullLogger.getInstance());
+    }
 
-	public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
-			final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
-		return new CegarChecker<>(abstractor, refiner, logger);
-	}
+    public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
+            final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
+        return new CegarChecker<>(abstractor, refiner, logger);
+    }
 
     public ARG<S, A> getArg() {
         return arg;
     }
 
     @Override
-	public SafetyResult<S, A> check(final P initPrec) {
-		logger.write(Level.INFO, "Configuration: %s%n", this);
-		final Stopwatch stopwatch = Stopwatch.createStarted();
-		long abstractorTime = 0;
-		long refinerTime = 0;
-		RefinerResult<S, A, P> refinerResult = null;
-		AbstractorResult abstractorResult = null;
-		P prec = initPrec;
-		int iteration = 0;
+    public SafetyResult<S, A> check(final P initPrec) {
+        logger.write(Level.INFO, "Configuration: %s%n", this);
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        long abstractorTime = 0;
+        long refinerTime = 0;
+        RefinerResult<S, A, P> refinerResult = null;
+        AbstractorResult abstractorResult = null;
+        P prec = initPrec;
+        int iteration = 0;
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
-			++iteration;
+            ++iteration;
 
-			logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
-			logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
-			final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-			abstractorResult = abstractor.check(arg, prec);
-			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
-			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
+            logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
+            logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
+            final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+            abstractorResult = abstractor.check(arg, prec);
+            abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
+            logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
             String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
             String precString = prec.toString();
@@ -98,48 +99,48 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             if (abstractorResult.isUnsafe()) {
                 MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
 
-				P lastPrec = prec;
-				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
-				final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-				refinerResult = refiner.refine(arg, prec);
-				refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
-				logger.write(Level.MAINSTEP, "Refining abstraction done, result: %s%n", refinerResult);
+                P lastPrec = prec;
+                logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
+                final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+                refinerResult = refiner.refine(arg, prec);
+                refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
+                logger.write(Level.MAINSTEP, "Refining abstraction done, result: %s%n", refinerResult);
 
-				if (refinerResult.isSpurious()) {
-					prec = refinerResult.asSpurious().getRefinedPrec();
-				}
+                if (refinerResult.isSpurious()) {
+                    prec = refinerResult.asSpurious().getRefinedPrec();
+                }
 
-				if (lastPrec.equals(prec)) {
-					logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration" + System.lineSeparator());
-				} else {
-					logger.write(Level.MAINSTEP, "! Precision DID change in this iteration" + System.lineSeparator());
-				}
+                if (lastPrec.equals(prec)) {
+                    logger.write(Level.MAINSTEP, "! Precision did NOT change in this iteration" + System.lineSeparator());
+                } else {
+                    logger.write(Level.MAINSTEP, "! Precision DID change in this iteration" + System.lineSeparator());
+                }
 
-			}
+            }
 
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
         stopwatch.stop();
-		SafetyResult<S, A> cegarResult = null;
-		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
-				refinerTime, iteration);
+        SafetyResult<S, A> cegarResult = null;
+        final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
+                refinerTime, iteration);
 
-		assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
+        assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
 
-		if (abstractorResult.isSafe()) {
-			cegarResult = SafetyResult.safe(arg, stats);
-		} else if (refinerResult.isUnsafe()) {
-			cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), arg, stats);
-		}
+        if (abstractorResult.isSafe()) {
+            cegarResult = SafetyResult.safe(arg, stats);
+        } else if (refinerResult.isUnsafe()) {
+            cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), arg, stats);
+        }
 
-		assert cegarResult != null;
-		logger.write(Level.RESULT, "%s%n", cegarResult);
-		logger.write(Level.INFO, "%s%n", stats);
-		return cegarResult;
-	}
+        assert cegarResult != null;
+        logger.write(Level.RESULT, "%s%n", cegarResult);
+        logger.write(Level.INFO, "%s%n", stats);
+        return cegarResult;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
+    }
 }

@@ -43,18 +43,17 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
     val newLabels = ArrayList<SequenceLabel>()
     var current = ArrayList<XcfaLabel>()
     for (label in label.labels) {
-        if(function(label)) {
-            if(current.size > 0) {
+        if (function(label)) {
+            if (current.size > 0) {
                 newLabels.add(SequenceLabel(current))
                 current = ArrayList()
             }
             newLabels.add(SequenceLabel(listOf(label)))
-        }
-        else {
+        } else {
             current.add(label)
         }
     }
-    if(current.size > 0) newLabels.add(SequenceLabel(current))
+    if (current.size > 0) newLabels.add(SequenceLabel(current))
 
     val locations = ArrayList<XcfaLocation>()
     locations.add(source)
@@ -65,37 +64,51 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
 
     val newEdges = ArrayList<XcfaEdge>()
     for ((i, label) in newLabels.withIndex()) {
-        newEdges.add(XcfaEdge(locations[i], locations[i+1], label))
+        newEdges.add(XcfaEdge(locations[i], locations[i + 1], label))
     }
     return newEdges
 }
 
 fun Stmt.flatten(): List<Stmt> {
     return when (this) {
-        is SequenceStmt -> stmts.map {it.flatten()}.flatten()
+        is SequenceStmt -> stmts.map { it.flatten() }.flatten()
         is NonDetStmt -> error("Not possible")
         else -> listOf(this)
     }
 }
 
 fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): XcfaLabel =
-        if(varLut.isNotEmpty())
-            when(this) {
-                is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) }, metadata = metadata)
-                is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
-                is NondetLabel -> NondetLabel(labels.map {it.changeVars(varLut)}.toSet(), metadata = metadata)
-                is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
-                is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) }, metadata = metadata)
-                is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) }, pidVar.changeVars(varLut), metadata = metadata)
-                is StmtLabel -> StmtLabel(stmt.changeVars(varLut), metadata = metadata)
-                is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels, metadata = metadata)
-                else -> this
-            }
-        else this
+    if (varLut.isNotEmpty())
+        when (this) {
+            is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) },
+                metadata = metadata)
+
+            is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
+            is NondetLabel -> NondetLabel(labels.map { it.changeVars(varLut) }.toSet(),
+                metadata = metadata)
+
+            is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
+                metadata = metadata)
+
+            is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) },
+                metadata = metadata)
+
+            is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) },
+                pidVar.changeVars(varLut), metadata = metadata)
+
+            is StmtLabel -> StmtLabel(stmt.changeVars(varLut), metadata = metadata)
+            is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
+                metadata = metadata)
+
+            else -> this
+        }
+    else this
 
 fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Stmt {
     val stmt = when (this) {
-        is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type), cast(expr.changeVars(varLut), varDecl.type))
+        is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type),
+            cast(expr.changeVars(varLut), varDecl.type))
+
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
         is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut))
         is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut) })
@@ -103,36 +116,37 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Stmt {
         else -> TODO("Not yet implemented")
     }
     val metadataValue = FrontendMetadata.getMetadataValue(this, "sourceStatement")
-    if(metadataValue.isPresent) FrontendMetadata.create(stmt, "sourceStatement", metadataValue.get())
+    if (metadataValue.isPresent) FrontendMetadata.create(stmt, "sourceStatement",
+        metadataValue.get())
     return stmt
 }
 
 fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Expr<T> =
-        if (this is RefExpr<T>) (decl as Decl<T>).changeVars(varLut).ref
-        else {
-            val ret = this.withOps(this.ops.map { it.changeVars(varLut) })
-            if(FrontendMetadata.getMetadataValue(this, "cType").isPresent) {
-                FrontendMetadata.create(ret, "cType", CComplexType.getType(this))
-            }
-            ret
+    if (this is RefExpr<T>) (decl as Decl<T>).changeVars(varLut).ref
+    else {
+        val ret = this.withOps(this.ops.map { it.changeVars(varLut) })
+        if (FrontendMetadata.getMetadataValue(this, "cType").isPresent) {
+            FrontendMetadata.create(ret, "cType", CComplexType.getType(this))
         }
+        ret
+    }
 
 fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
-        (varLut[this] ?: this) as VarDecl<T>
+    (varLut[this] ?: this) as VarDecl<T>
 
 fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
 private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
-    if(metaData["recursive"] != null) return false
-    if(metaData["canInline"] != null) return true
+    if (metaData["recursive"] != null) return false
+    if (metaData["canInline"] != null) return true
 
     tally.push(name)
     val recursive = getEdges()
-            .asSequence()
-            .map { it.getFlatLabels() }.flatten()
-            .filterIsInstance<InvokeLabel>()
-            .mapNotNull { parent.getProcedures().find { proc -> proc.name == it.name } }
-            .any {tally.contains(it.name) || !it.canInline(tally) }
+        .asSequence()
+        .map { it.getFlatLabels() }.flatten()
+        .filterIsInstance<InvokeLabel>()
+        .mapNotNull { parent.getProcedures().find { proc -> proc.name == it.name } }
+        .any { tally.contains(it.name) || !it.canInline(tally) }
     tally.pop()
-    metaData[if(recursive) "recursive" else "canInline"] = Unit
+    metaData[if (recursive) "recursive" else "canInline"] = Unit
     return !recursive
 }

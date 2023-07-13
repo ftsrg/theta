@@ -57,89 +57,104 @@ import kotlin.system.exitProcess
 
 
 data class XcfaCegarConfig(
-    @Parameter(names = ["--error-detection"], description = "What kinds of errors to check for (ERROR_LOCATION or DATA_RACE)")
-        var errorDetectionType: ErrorDetection = ErrorDetection.ERROR_LOCATION,
+    @Parameter(names = ["--error-detection"],
+        description = "What kinds of errors to check for (ERROR_LOCATION or DATA_RACE)")
+    var errorDetectionType: ErrorDetection = ErrorDetection.ERROR_LOCATION,
     @Parameter(names = ["--abstraction-solver"], description = "Abstraction solver name")
-        var abstractionSolver: String = "Z3",
-    @Parameter(names = ["--validate-abstraction-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
-        var validateAbstractionSolver: Boolean = false,
+    var abstractionSolver: String = "Z3",
+    @Parameter(names = ["--validate-abstraction-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+    var validateAbstractionSolver: Boolean = false,
     @Parameter(names = ["--domain"], description = "Abstraction domain")
-        var domain: Domain = Domain.EXPL,
-    @Parameter(names = ["--maxenum"], description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
-        var maxEnum: Int = 0,
+    var domain: Domain = Domain.EXPL,
+    @Parameter(names = ["--maxenum"],
+        description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
+    var maxEnum: Int = 0,
     @Parameter(names = ["--search"], description = "Search strategy")
-        var search: Search = Search.ERR,
+    var search: Search = Search.ERR,
     @Parameter(names = ["--initprec"], description = "Initial precision")
-        var initPrec: InitPrec = InitPrec.EMPTY,
+    var initPrec: InitPrec = InitPrec.EMPTY,
     @Parameter(names = ["--por-level"], description = "POR dependency level")
-        var porLevel: POR = POR.NOPOR,
+    var porLevel: POR = POR.NOPOR,
     @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
-        var refinementSolver: String = "Z3",
-    @Parameter(names = ["--validate-refinement-solver"], description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
-        var validateRefinementSolver: Boolean = false,
+    var refinementSolver: String = "Z3",
+    @Parameter(names = ["--validate-refinement-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+    var validateRefinementSolver: Boolean = false,
     @Parameter(names = ["--refinement"], description = "Refinement strategy")
-        var refinement: Refinement = Refinement.SEQ_ITP,
-    @Parameter(names = ["--predsplit"], description = "Predicate splitting (for predicate abstraction)")
-        var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
-    @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
-        var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
+    var refinement: Refinement = Refinement.SEQ_ITP,
+    @Parameter(names = ["--predsplit"],
+        description = "Predicate splitting (for predicate abstraction)")
+    var exprSplitter: ExprSplitterOptions = ExprSplitterOptions.WHOLE,
+    @Parameter(names = ["--prunestrategy"],
+        description = "Strategy for pruning the ARG after refinement")
+    var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
     @Parameter(names = ["--cex-monitor"])
-        var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
-    @Parameter(names = ["--timeout-ms"], description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
-        var timeoutMs: Long = 0,
+    var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
+    @Parameter(names = ["--timeout-ms"],
+        description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
+    var timeoutMs: Long = 0,
     @Parameter(names = ["--arg-to-file"])
-        var argToFile: Boolean = false
+    var argToFile: Boolean = false
 ) {
+
     @Suppress("UNCHECKED_CAST")
-    private fun getCegarChecker(xcfa: XCFA, logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
-        val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver, validateAbstractionSolver)
-        val refinementSolverFactory: SolverFactory = getSolver(refinementSolver, validateRefinementSolver)
+    private fun getCegarChecker(xcfa: XCFA,
+        logger: Logger): CegarChecker<ExprState, ExprAction, Prec> {
+        val abstractionSolverFactory: SolverFactory = getSolver(abstractionSolver,
+            validateAbstractionSolver)
+        val refinementSolverFactory: SolverFactory = getSolver(refinementSolver,
+            validateRefinementSolver)
 
         val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
 
         val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
-        val waitlist = if(porLevel.isDynamic) {
+        val waitlist = if (porLevel.isDynamic) {
             (lts as XcfaDporLts).waitlist
         } else {
-            PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(search.getComp(xcfa))
+            PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(
+                search.getComp(xcfa))
         }
 
         val abstractionSolverInstance = abstractionSolverFactory.createSolver()
-        val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> = domain.partialOrd(abstractionSolverInstance)
+        val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> = domain.partialOrd(
+            abstractionSolverInstance)
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
-                xcfa,
-                abstractionSolverInstance,
-                maxEnum,
-                waitlist,
-                refinement.stopCriterion,
-                logger,
-                lts,
-                errorDetectionType,
-                if(porLevel.isDynamic) {
-                    XcfaDporLts.getPartialOrder(corePartialOrd)
-                } else {
-                    corePartialOrd
-                }
+            xcfa,
+            abstractionSolverInstance,
+            maxEnum,
+            waitlist,
+            refinement.stopCriterion,
+            logger,
+            lts,
+            errorDetectionType,
+            if (porLevel.isDynamic) {
+                XcfaDporLts.getPartialOrder(corePartialOrd)
+            } else {
+                corePartialOrd
+            }
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =
-                refinement.refiner(refinementSolverFactory)
-                        as ExprTraceChecker<Refutation>
+            refinement.refiner(refinementSolverFactory)
+                as ExprTraceChecker<Refutation>
         val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
-                domain.itpPrecRefiner(exprSplitter.exprSplitter)
-                        as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
+            domain.itpPrecRefiner(exprSplitter.exprSplitter)
+                as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
         val atomicNodePruner: NodePruner<ExprState, ExprAction> = domain.nodePruner as NodePruner<ExprState, ExprAction>
         val refiner: Refiner<ExprState, ExprAction, Prec> =
-                if (refinement == Refinement.MULTI_SEQ)
-                    if(porLevel == POR.AASPOR)
-                        MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
-                    else
-                        MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+            if (refinement == Refinement.MULTI_SEQ)
+                if (porLevel == POR.AASPOR)
+                    MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger,
+                        atomicNodePruner)
                 else
-                    if(porLevel == POR.AASPOR)
-                        SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger, atomicNodePruner)
-                    else
-                        SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+                    MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+            else
+                if (porLevel == POR.AASPOR)
+                    SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger,
+                        atomicNodePruner)
+                else
+                    SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
         /*
         // set up stopping analysis if it is stuck on same ARGs and precisions
@@ -169,9 +184,10 @@ data class XcfaCegarConfig(
     }
 
     private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
-        if(cexMonitor!=CexMonitorOptions.DISABLE) {
-            val cm = if(cexMonitor==CexMonitorOptions.MITIGATE) {
-                throw RuntimeException("Mitigation is temporarily unusable, use DISABLE or CHECK instead")
+        if (cexMonitor != CexMonitorOptions.DISABLE) {
+            val cm = if (cexMonitor == CexMonitorOptions.MITIGATE) {
+                throw RuntimeException(
+                    "Mitigation is temporarily unusable, use DISABLE or CHECK instead")
                 // CexMonitor(true, logger, cc.arg)
             } else { // CHECK
                 CexMonitor(false, logger, cc.arg)
@@ -183,52 +199,56 @@ data class XcfaCegarConfig(
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
         try {
             val check = getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
-            if(argToFile) {
+            if (argToFile) {
                 val fileName = "wdl-output.json"
                 WebDebuggerLogger.getInstance().writeToFile(fileName)
             }
             check
         } catch (e: Exception) {
-            if(argToFile) {
+            if (argToFile) {
                 val fileName = "wdl-output.json"
                 WebDebuggerLogger.getInstance().writeToFile(fileName)
             }
             throw e
         }
 
-    fun checkInProcessDebug(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
-        val gson = getGson(xcfa, {domain}, {getSolver(abstractionSolver, validateAbstractionSolver).createSolver()})
+    fun checkInProcessDebug(xcfa: XCFA, smtHome: String, writeWitness: Boolean,
+        sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
+        val gson = getGson(xcfa, { domain },
+            { getSolver(abstractionSolver, validateAbstractionSolver).createSolver() })
         XcfaCegarServer.main(arrayOf("--smt-home",
-                smtHome,
-                "--return-safety-result",
-                "" + !writeWitness,
-                "--input",
-                sourceFileName,
-                "--config",
-                gson.toJson(this),
-                "--xcfa",
-                gson.toJson(xcfa),
-                "--debug"
+            smtHome,
+            "--return-safety-result",
+            "" + !writeWitness,
+            "--input",
+            sourceFileName,
+            "--config",
+            gson.toJson(this),
+            "--xcfa",
+            gson.toJson(xcfa),
+            "--debug"
         ))
         error("Done debugging")
     }
 
-    private fun getJavaExecutable() : String =
+    private fun getJavaExecutable(): String =
         ProcessHandle.current().info().command().orElse("java")
 
-    fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
+    fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String,
+        logger: Logger): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
-                getJavaExecutable(),
-                "-cp",
-                File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
-                XcfaCegarServer::class.qualifiedName,
-                "--smt-home",
-                smtHome,
-                "--return-safety-result",
-                "" + !writeWitness,
-                "--input",
-                sourceFileName
-                ))
+            getJavaExecutable(),
+            "-cp",
+            File(
+                XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
+            XcfaCegarServer::class.qualifiedName,
+            "--smt-home",
+            smtHome,
+            "--return-safety-result",
+            "" + !writeWitness,
+            "--input",
+            sourceFileName
+        ))
         val processHandler = ProcessHandler(logger)
         pb.setProcessListener(processHandler)
         val process: NuProcess = pb.start()
@@ -236,33 +256,36 @@ data class XcfaCegarConfig(
         return {
             var connected = false
             var clientSocket: Socket? = null
-            while(!connected) {
+            while (!connected) {
                 try {
                     clientSocket = Socket("127.0.0.1", processHandler.port)
                     connected = true
                     logger.write(Logger.Level.VERBOSE, "Connected!\n")
                 } catch (e: Exception) {
                     Thread.sleep(100)
-                    logger.write(Logger.Level.VERBOSE, "Connection failed (using port ${processHandler.port}), retrying...\n")
+                    logger.write(Logger.Level.VERBOSE,
+                        "Connection failed (using port ${processHandler.port}), retrying...\n")
                 }
             }
             checkNotNull(clientSocket)
 
             var safetyString: String?
 
-            val gson = getGson(xcfa, {domain}, {getSolver(abstractionSolver, validateAbstractionSolver).createSolver()})
+            val gson = getGson(xcfa, { domain },
+                { getSolver(abstractionSolver, validateAbstractionSolver).createSolver() })
             clientSocket.use {
                 val writer = PrintWriter(clientSocket.getOutputStream(), true)
                 val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
                 writer.println(gson.toJson(this))
                 writer.println(gson.toJson(xcfa))
                 val retCode = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
-                if(retCode == Int.MIN_VALUE) {
-                    if(!processHandler.writingSafetyResult) {
+                if (retCode == Int.MIN_VALUE) {
+                    if (!processHandler.writingSafetyResult) {
                         process.destroy(true)
                         throw ErrorCodeException(ExitCodes.TIMEOUT.code)
                     } else {
-                        logger.write(Logger.Level.RESULT, "Config timed out but started writing result: $this")
+                        logger.write(Logger.Level.RESULT,
+                            "Config timed out but started writing result: $this")
                         val retCode = process.waitFor(0, TimeUnit.MILLISECONDS)
                         if (retCode != 0) {
                             throw ErrorCodeException(retCode)
@@ -272,24 +295,25 @@ data class XcfaCegarConfig(
                     throw ErrorCodeException(retCode)
                 }
 
-                if(writeWitness) {
+                if (writeWitness) {
                     logger.write(Logger.Level.RESULT, "Config successful, exiting: $this")
                     exitProcess(0)
                 } else {
-                    logger.write(Logger.Level.RESULT, "Config successful, reading back result: $this")
+                    logger.write(Logger.Level.RESULT,
+                        "Config successful, reading back result: $this")
                     safetyString = reader.readLine()
                 }
             }
             val type =
-                    if(domain == Domain.EXPL)
-                        object: TypeToken<SafetyResult<XcfaState<ExplState>, XcfaAction>>() {}.type
-                    else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT)
-                        object: TypeToken<SafetyResult<XcfaState<PredState>, XcfaAction>>() {}.type
-                    else
-                        error("Domain $domain is not implemented in the GSON parser.")
-            try{
+                if (domain == Domain.EXPL)
+                    object : TypeToken<SafetyResult<XcfaState<ExplState>, XcfaAction>>() {}.type
+                else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT)
+                    object : TypeToken<SafetyResult<XcfaState<PredState>, XcfaAction>>() {}.type
+                else
+                    error("Domain $domain is not implemented in the GSON parser.")
+            try {
                 gson.fromJson(safetyString, type)
-            } catch(e: Exception) {
+            } catch (e: Exception) {
                 val tempFile = File.createTempFile("safetyresult", ".json")
                 tempFile.writeText(safetyString!!)
                 e.printStackTrace()
@@ -300,8 +324,9 @@ data class XcfaCegarConfig(
 }
 
 private class ProcessHandler(
-        private val logger: Logger,
+    private val logger: Logger,
 ) : NuAbstractProcessHandler() {
+
     private var stdoutBuffer = ""
     internal var writingSafetyResult = false
     var port: Int = -1
@@ -310,10 +335,10 @@ private class ProcessHandler(
             val bytes = ByteArray(buffer.remaining())
             buffer[bytes]
             val str = bytes.decodeToString()
-            if(port == -1) {
+            if (port == -1) {
                 val portMatch = Regex("Port=\\(([0-9]*)\\)").find(str)
-                if(portMatch != null) {
-                    if(portMatch.groupValues.size == 2) {
+                if (portMatch != null) {
+                    if (portMatch.groupValues.size == 2) {
                         port = Integer.parseInt(portMatch.groupValues[1])
                     }
                 }
@@ -321,12 +346,16 @@ private class ProcessHandler(
             stdoutBuffer += str
             val matchResults = Regex("([a-zA-Z]*)\t\\{([^}]*)}").findAll(stdoutBuffer)
             var length = 0
-            for(matchResult in matchResults) {
+            for (matchResult in matchResults) {
                 val (level, message) = matchResult.destructured
-                val logLevel = try{ Logger.Level.valueOf(level) } catch (_: Exception) { Logger.Level.VERBOSE }
+                val logLevel = try {
+                    Logger.Level.valueOf(level)
+                } catch (_: Exception) {
+                    Logger.Level.VERBOSE
+                }
                 logger.write(logLevel, message)
-                if(message.contains("(SafetyResult")) writingSafetyResult = true
-                length+=matchResult.range.count()
+                if (message.contains("(SafetyResult")) writingSafetyResult = true
+                length += matchResult.range.count()
             }
             stdoutBuffer = stdoutBuffer.substring(length)
         }

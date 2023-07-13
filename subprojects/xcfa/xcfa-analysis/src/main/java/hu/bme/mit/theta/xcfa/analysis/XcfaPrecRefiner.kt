@@ -29,19 +29,30 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
-class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation> (refToPrec: RefutationToPrec<P, R>) :
-        PrecRefiner<XcfaState<S>, XcfaAction, XcfaPrec<P>, R> {
+class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: RefutationToPrec<P, R>) :
+    PrecRefiner<XcfaState<S>, XcfaAction, XcfaPrec<P>, R> {
+
     private val refToPrec: RefutationToPrec<P, R> = Preconditions.checkNotNull(refToPrec)
 
-    override fun refine(prec: XcfaPrec<P>, trace: Trace<XcfaState<S>, XcfaAction>, refutation: R): XcfaPrec<P> {
+    override fun refine(prec: XcfaPrec<P>, trace: Trace<XcfaState<S>, XcfaAction>,
+        refutation: R): XcfaPrec<P> {
         Preconditions.checkNotNull(trace)
         Preconditions.checkNotNull<Any>(prec)
         Preconditions.checkNotNull<R>(refutation)
         var runningPrec: P = prec.p
         for (i in trace.states.indices) {
-            val reverseLookup = trace.states[i].processes.values.map { it.varLookup.map { it.map { Pair(it.value, it.key) } }.flatten() }.flatten().toMap()
-            val additionalLookup = if(i > 0) getTempLookup(trace.actions[i - 1].edge.label).entries.associateBy({ it.value }) { it.key } else emptyMap()
-            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(reverseLookup + additionalLookup)
+            val reverseLookup = trace.states[i].processes.values.map {
+                it.varLookup.map {
+                    it.map {
+                        Pair(it.value, it.key)
+                    }
+                }.flatten()
+            }.flatten().toMap()
+            val additionalLookup = if (i > 0) getTempLookup(
+                trace.actions[i - 1].edge.label).entries.associateBy(
+                { it.value }) { it.key } else emptyMap()
+            val precFromRef = refToPrec.toPrec(refutation, i)
+                .changeVars(reverseLookup + additionalLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
         }
         return prec.refine(runningPrec)
@@ -52,20 +63,24 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation> (refToPrec: Refut
     }
 }
 
-fun <P: Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
-    if(lookup.isEmpty()) this
+fun <P : Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
+    if (lookup.isEmpty()) this
     else
-        when(this) {
+        when (this) {
             is ExplPrec -> ExplPrec.of(vars.map { it.changeVars(lookup) }) as P
             is PredPrec -> PredPrec.of(preds.map { it.changeVars(lookup) }) as P
             else -> error("Precision type ${this.javaClass} not supported.")
         }
 
-fun <P: Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
-        if(lookups.isEmpty()) this
-        else
-            when(this) {
-                is ExplPrec -> ExplPrec.of(vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
-                is PredPrec -> PredPrec.of(preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
-                else -> error("Precision type ${this.javaClass} not supported.")
-            }
+fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
+    if (lookups.isEmpty()) this
+    else
+        when (this) {
+            is ExplPrec -> ExplPrec.of(
+                vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+
+            is PredPrec -> PredPrec.of(
+                preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+
+            else -> error("Precision type ${this.javaClass} not supported.")
+        }

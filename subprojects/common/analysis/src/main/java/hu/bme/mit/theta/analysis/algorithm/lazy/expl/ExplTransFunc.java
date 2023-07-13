@@ -27,23 +27,23 @@ import static java.util.Collections.singleton;
 
 public final class ExplTransFunc<A extends Action> implements TransFunc<ExplState, A, UnitPrec> {
 
-	private final ExplActionPost<A> explActionPost;
+    private final ExplActionPost<A> explActionPost;
 
-	private ExplTransFunc(final ExplActionPost<A> explActionPost) {
-		checkNotNull(explActionPost);
-		this.explActionPost = explActionPost;
-	}
+    private ExplTransFunc(final ExplActionPost<A> explActionPost) {
+        checkNotNull(explActionPost);
+        this.explActionPost = explActionPost;
+    }
 
-	public static <A extends Action> ExplTransFunc<A> create(final ExplActionPost<A> explActionPost) {
-		return new ExplTransFunc<>(explActionPost);
-	}
+    public static <A extends Action> ExplTransFunc<A> create(final ExplActionPost<A> explActionPost) {
+        return new ExplTransFunc<>(explActionPost);
+    }
 
-	@Override
-	public Collection<ExplState> getSuccStates(final ExplState state, final A action, final UnitPrec prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
-		return singleton(explActionPost.post(state, action));
-	}
+    @Override
+    public Collection<ExplState> getSuccStates(final ExplState state, final A action, final UnitPrec prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
+        return singleton(explActionPost.post(state, action));
+    }
 
 }

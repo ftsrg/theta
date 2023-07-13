@@ -29,29 +29,37 @@ import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import java.util.*
 
 sealed class XcfaLabel(open val metadata: MetaData) {
+
     open fun toStmt(): Stmt = Skip()
 }
 
 data class InvokeLabel @JvmOverloads constructor(
-        val name: String,
-        val params: List<Expr<*>>,
-        override val metadata: MetaData,
-        val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()
+    val name: String,
+    val params: List<Expr<*>>,
+    override val metadata: MetaData,
+    val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()
 ) : XcfaLabel(metadata) {
+
     override fun toString(): String {
         val sj = StringJoiner(", ", "(", ")")
         params.forEach { sj.add(it.toString()) }
         return "$name$sj"
     }
+
     companion object {
-         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+
+        fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (name, params) = Regex("(.*)\\((.*)\\)").matchEntire(s)!!.destructured
-            return InvokeLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, metadata=metadata)
+            return InvokeLabel(name,
+                params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) },
+                metadata = metadata)
         }
     }
 }
 
-data class ReturnLabel(val enclosedLabel: XcfaLabel): XcfaLabel(metadata = enclosedLabel.metadata){
+data class ReturnLabel(val enclosedLabel: XcfaLabel) :
+    XcfaLabel(metadata = enclosedLabel.metadata) {
+
     override fun toStmt(): Stmt {
         return enclosedLabel.toStmt()
     }
@@ -62,107 +70,128 @@ data class ReturnLabel(val enclosedLabel: XcfaLabel): XcfaLabel(metadata = enclo
 }
 
 data class StartLabel(
-        val name: String,
-        val params: List<Expr<*>>,
-        val pidVar: VarDecl<*>,
-        override val metadata: MetaData,
-        val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()
-) : XcfaLabel(metadata=metadata){
+    val name: String,
+    val params: List<Expr<*>>,
+    val pidVar: VarDecl<*>,
+    override val metadata: MetaData,
+    val tempLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()
+) : XcfaLabel(metadata = metadata) {
+
     override fun toString(): String {
         val sj = StringJoiner(", ", "(", ")")
         params.forEach { sj.add(it.toString()) }
         return "$pidVar = start $name$sj"
     }
+
     companion object {
-         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-            val (pidVarName, pidVarType, name, params) = Regex("\\(var (.*) (.*)\\) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
+
+        fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+            val (pidVarName, pidVarType, name, params) = Regex(
+                "\\(var (.*) (.*)\\) = start (.*)\\((.*)\\)").matchEntire(s)!!.destructured
             val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
-            return StartLabel(name, params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, pidVar, metadata=metadata)
+            return StartLabel(name,
+                params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) }, pidVar,
+                metadata = metadata)
         }
     }
 }
 
 data class JoinLabel(
-        val pidVar: VarDecl<*>,
-        override val metadata: MetaData
-) : XcfaLabel(metadata=metadata){
+    val pidVar: VarDecl<*>,
+    override val metadata: MetaData
+) : XcfaLabel(metadata = metadata) {
+
     override fun toString(): String {
         return "join $pidVar"
     }
+
     companion object {
-         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-            val (pidVarName, pidVarType) = Regex("join \\(var (.*) (.*)\\)").matchEntire(s)!!.destructured
+
+        fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
+            val (pidVarName, pidVarType) = Regex("join \\(var (.*) (.*)\\)").matchEntire(
+                s)!!.destructured
             val pidVar = env.eval(scope.resolve(pidVarName).orElseThrow()) as VarDecl<*>
-            return JoinLabel(pidVar, metadata=metadata)
+            return JoinLabel(pidVar, metadata = metadata)
         }
     }
 }
 
-enum class ChoiceType{
+enum class ChoiceType {
     NONE,
     MAIN_PATH,
     ALTERNATIVE_PATH
 }
 
 data class StmtLabel @JvmOverloads constructor(
-        val stmt: Stmt,
-        val choiceType: ChoiceType = ChoiceType.NONE,
-        override val metadata: MetaData
-) : XcfaLabel(metadata=metadata){
+    val stmt: Stmt,
+    val choiceType: ChoiceType = ChoiceType.NONE,
+    override val metadata: MetaData
+) : XcfaLabel(metadata = metadata) {
+
     init {
-        check(stmt !is NonDetStmt && stmt !is SequenceStmt) { "NonDetStmt and SequenceStmt are not supported in XCFA. Use the corresponding labels instead." }
+        check(
+            stmt !is NonDetStmt && stmt !is SequenceStmt) { "NonDetStmt and SequenceStmt are not supported in XCFA. Use the corresponding labels instead." }
     }
-    override fun toStmt() : Stmt = stmt
+
+    override fun toStmt(): Stmt = stmt
     override fun toString(): String {
-        if(choiceType != ChoiceType.NONE)
+        if (choiceType != ChoiceType.NONE)
             return "($stmt)[choiceType=$choiceType]"
         else
             return stmt.toString()
     }
+
     companion object {
+
         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val matchResult = Regex("\\((.*)\\)\\[choiceType=(.*)]").matchEntire(s)
-            if(matchResult != null) {
+            if (matchResult != null) {
                 val (stmt, choiceTypeStr) = matchResult.destructured
-                return StmtLabel(StatementWrapper(stmt, scope).instantiate(env), choiceType = ChoiceType.valueOf(choiceTypeStr), metadata = metadata)
+                return StmtLabel(StatementWrapper(stmt, scope).instantiate(env),
+                    choiceType = ChoiceType.valueOf(choiceTypeStr), metadata = metadata)
             } else {
-                return StmtLabel(StatementWrapper(s, scope).instantiate(env), choiceType = ChoiceType.NONE, metadata = metadata)
+                return StmtLabel(StatementWrapper(s, scope).instantiate(env),
+                    choiceType = ChoiceType.NONE, metadata = metadata)
             }
         }
     }
 }
 
 data class ReadLabel(
-        val local: VarDecl<*>,
-        val global: VarDecl<*>,
-        val labels: Set<String>,
-        override val metadata: MetaData
-) : XcfaLabel(metadata=metadata){
+    val local: VarDecl<*>,
+    val global: VarDecl<*>,
+    val labels: Set<String>,
+    override val metadata: MetaData
+) : XcfaLabel(metadata = metadata) {
+
     override fun toString(): String {
         return "R[$local <- $global] @$labels"
     }
 }
 
 data class WriteLabel constructor(
-        val local: VarDecl<*>,
-        val global: VarDecl<*>,
-        val labels: Set<String>,
-        override val metadata: MetaData
-) : XcfaLabel(metadata=metadata){
+    val local: VarDecl<*>,
+    val global: VarDecl<*>,
+    val labels: Set<String>,
+    override val metadata: MetaData
+) : XcfaLabel(metadata = metadata) {
+
     override fun toString(): String {
         return "W[$global <- $local] @$labels"
     }
 }
 
 data class FenceLabel(
-        val labels: Set<String>,
-        override val metadata: MetaData
-) : XcfaLabel(metadata=metadata){
+    val labels: Set<String>,
+    override val metadata: MetaData
+) : XcfaLabel(metadata = metadata) {
+
     override fun toString(): String {
         return "F[${labels.joinToString(";")}]"
     }
 
     companion object {
+
         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
             val (labelList) = Regex("F\\[(.*)]").matchEntire(s)!!.destructured
             return FenceLabel(labelList.split(";").toSet(), metadata = metadata)
@@ -171,33 +200,37 @@ data class FenceLabel(
 }
 
 data class SequenceLabel @JvmOverloads constructor(
-        val labels: List<XcfaLabel>,
-        override val metadata: MetaData = EmptyMetaData
-) : XcfaLabel(metadata=metadata){
+    val labels: List<XcfaLabel>,
+    override val metadata: MetaData = EmptyMetaData
+) : XcfaLabel(metadata = metadata) {
+
     override fun toStmt(): Stmt {
         return SequenceStmt(labels.map { it.toStmt() })
     }
 
     override fun toString(): String {
-        val sj = StringJoiner(",","[","]")
+        val sj = StringJoiner(",", "[", "]")
         labels.forEach { sj.add(it.toString()) }
         return sj.toString()
     }
 }
 
 data class NondetLabel @JvmOverloads constructor(
-        val labels: Set<XcfaLabel>,
-        override val metadata: MetaData = EmptyMetaData
-) : XcfaLabel(metadata=metadata){
+    val labels: Set<XcfaLabel>,
+    override val metadata: MetaData = EmptyMetaData
+) : XcfaLabel(metadata = metadata) {
+
     override fun toStmt(): Stmt {
         return NonDetStmt(labels.map { it.toStmt() })
     }
+
     override fun toString(): String {
         return "NonDet($labels)"
     }
 }
 
-object NopLabel : XcfaLabel(metadata=EmptyMetaData) {
+object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
+
     override fun toStmt(): Stmt {
         return Skip()
     }
@@ -212,13 +245,14 @@ fun getTempLookup(label: XcfaLabel): Map<VarDecl<*>, VarDecl<*>> {
         is InvokeLabel -> {
             label.tempLookup
         }
+
         is StartLabel -> {
             label.tempLookup
         }
 
         is SequenceLabel -> {
             val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-            for(sublabel in label.labels) {
+            for (sublabel in label.labels) {
                 lookup.putAll(getTempLookup(sublabel))
             }
             lookup
@@ -226,7 +260,7 @@ fun getTempLookup(label: XcfaLabel): Map<VarDecl<*>, VarDecl<*>> {
 
         is NondetLabel -> {
             val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-            for(sublabel in label.labels) {
+            for (sublabel in label.labels) {
                 lookup.putAll(getTempLookup(sublabel))
             }
             lookup

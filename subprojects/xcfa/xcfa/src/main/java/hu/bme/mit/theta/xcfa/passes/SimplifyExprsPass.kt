@@ -36,28 +36,36 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  */
 
 class SimplifyExprsPass : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
-            val newLabels = (edge.label as SequenceLabel).labels.map { if(it is StmtLabel) when(it.stmt) {
-                is AssignStmt<*> -> {
+            val newLabels = (edge.label as SequenceLabel).labels.map {
+                if (it is StmtLabel) when (it.stmt) {
+                    is AssignStmt<*> -> {
                         val simplified = simplify(it.stmt.expr)
-                        if(FrontendMetadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
-                            FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.expr))
-                        StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type), cast(simplified, it.stmt.varDecl.type)),  metadata = it.metadata)
+                        if (FrontendMetadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
+                            FrontendMetadata.create(simplified, "cType",
+                                CComplexType.getType(it.stmt.expr))
+                        StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type),
+                            cast(simplified, it.stmt.varDecl.type)), metadata = it.metadata)
                     }
-                is AssumeStmt -> {
-                    val simplified = simplify(it.stmt.cond)
-                    if(FrontendMetadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
-                        FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.cond))
+
+                    is AssumeStmt -> {
+                        val simplified = simplify(it.stmt.cond)
+                        if (FrontendMetadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
+                            FrontendMetadata.create(simplified, "cType",
+                                CComplexType.getType(it.stmt.cond))
+                        }
+                        FrontendMetadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
+                        StmtLabel(Assume(simplified), metadata = it.metadata)
                     }
-                    FrontendMetadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
-                    StmtLabel(Assume(simplified), metadata = it.metadata)
-                }
-                else -> it
-            } else it  }
-            if(newLabels != edge.label.labels) {
+
+                    else -> it
+                } else it
+            }
+            if (newLabels != edge.label.labels) {
                 builder.removeEdge(edge)
                 builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
             }

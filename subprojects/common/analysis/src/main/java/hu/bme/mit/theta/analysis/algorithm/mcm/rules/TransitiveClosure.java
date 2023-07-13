@@ -28,7 +28,7 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
-public class TransitiveClosure extends UnaryMCMRule{
+public class TransitiveClosure extends UnaryMCMRule {
     public TransitiveClosure(MCMRelation e) {
         super(e);
     }
@@ -45,7 +45,7 @@ public class TransitiveClosure extends UnaryMCMRule{
             int i = tuple.get(0);
             int j = tuple.get(1);
             final List<Expr<BoolType>> subexprs = new ArrayList<>();
-            for (final int k: idList) {
+            for (final int k : idList) {
                 subexprs.add(And(resultEvents.get(TupleN.of(i, k)).getRef(), events.get(TupleN.of(k, j)).getRef()));
                 subexprs.add(And(resultEvents.get(TupleN.of(k, j)).getRef(), events.get(TupleN.of(i, k)).getRef()));
             }

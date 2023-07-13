@@ -41,250 +41,250 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
  */
 public class PathUtils {
 
-	private PathUtils() {
-	}
+    private PathUtils() {
+    }
 
-	////
+    ////
 
-	public static VarIndexing countPrimes(final Expr<?> expr) {
-		return PrimeCounter.countPrimes(expr);
-	}
+    public static VarIndexing countPrimes(final Expr<?> expr) {
+        return PrimeCounter.countPrimes(expr);
+    }
 
-	////
+    ////
 
-	/**
-	 * Transform an expression by substituting variables with indexed constants.
-	 *
-	 * @param expr     Original expression
-	 * @param indexing Indexing for the variables
-	 * @return Transformed expression
-	 */
-	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final VarIndexing indexing) {
-		checkNotNull(expr);
-		checkNotNull(indexing);
-		final UnfoldHelper helper = new UnfoldHelper(indexing);
-		return helper.unfold(expr, 0);
-	}
+    /**
+     * Transform an expression by substituting variables with indexed constants.
+     *
+     * @param expr     Original expression
+     * @param indexing Indexing for the variables
+     * @return Transformed expression
+     */
+    public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final VarIndexing indexing) {
+        checkNotNull(expr);
+        checkNotNull(indexing);
+        final UnfoldHelper helper = new UnfoldHelper(indexing);
+        return helper.unfold(expr, 0);
+    }
 
-	public static <T extends Type> Expr<T> unfoldReverse(final Expr<T> expr, final VarIndexing indexing) {
-		checkNotNull(expr);
-		checkNotNull(indexing);
-		final VarIndexing primes = countPrimes(expr);
-		final ReverseUnfoldHelper helper = new ReverseUnfoldHelper(indexing, primes);
-		return helper.unfold(expr, 0);
-	}
+    public static <T extends Type> Expr<T> unfoldReverse(final Expr<T> expr, final VarIndexing indexing) {
+        checkNotNull(expr);
+        checkNotNull(indexing);
+        final VarIndexing primes = countPrimes(expr);
+        final ReverseUnfoldHelper helper = new ReverseUnfoldHelper(indexing, primes);
+        return helper.unfold(expr, 0);
+    }
 
-	/**
-	 * Transform an expression by substituting variables with indexed constants.
-	 *
-	 * @param expr Original expression
-	 * @param i    Index
-	 * @return Transformed expression
-	 */
-	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
-		checkArgument(i >= 0);
-		return unfold(expr, VarIndexingFactory.indexing(i));
-	}
+    /**
+     * Transform an expression by substituting variables with indexed constants.
+     *
+     * @param expr Original expression
+     * @param i    Index
+     * @return Transformed expression
+     */
+    public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
+        checkArgument(i >= 0);
+        return unfold(expr, VarIndexingFactory.indexing(i));
+    }
 
-	/**
-	 * Transform an expression by substituting indexed constants with variables.
-	 *
-	 * @param expr     Original expression
-	 * @param indexing Indexing for the variables
-	 * @return Transformed expression
-	 */
-	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexing indexing) {
-		checkNotNull(expr);
-		checkNotNull(indexing);
-		final FoldinHelper helper = new FoldinHelper(indexing);
-		return helper.foldin(expr);
-	}
+    /**
+     * Transform an expression by substituting indexed constants with variables.
+     *
+     * @param expr     Original expression
+     * @param indexing Indexing for the variables
+     * @return Transformed expression
+     */
+    public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexing indexing) {
+        checkNotNull(expr);
+        checkNotNull(indexing);
+        final FoldinHelper helper = new FoldinHelper(indexing);
+        return helper.foldin(expr);
+    }
 
-	/**
-	 * Transform an expression by substituting indexed constants with variables.
-	 *
-	 * @param expr Original expression
-	 * @param i    Index
-	 * @return Transformed expression
-	 */
-	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
-		checkArgument(i >= 0);
-		return foldin(expr, VarIndexingFactory.indexing(i));
-	}
+    /**
+     * Transform an expression by substituting indexed constants with variables.
+     *
+     * @param expr Original expression
+     * @param i    Index
+     * @return Transformed expression
+     */
+    public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
+        checkArgument(i >= 0);
+        return foldin(expr, VarIndexingFactory.indexing(i));
+    }
 
-	/**
-	 * Extract values from a model for a given indexing. If you know the set of
-	 * variables to be extracted, use that overload because it is more
-	 * efficient.
-	 *
-	 * @param model    Model
-	 * @param indexing Indexing
-	 * @return Values
-	 */
-	public static Valuation extractValuation(final Valuation model, final VarIndexing indexing) {
-		final ImmutableValuation.Builder builder = ImmutableValuation.builder();
-		for (final Decl<?> decl : model.getDecls()) {
-			if (decl instanceof IndexedConstDecl) {
-				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) decl;
-				final VarDecl<?> varDecl = indexedConstDecl.getVarDecl();
-				if (indexedConstDecl.getIndex() == indexing.get(varDecl)) {
-					final LitExpr<?> value = model.eval(indexedConstDecl).get();
-					builder.put(varDecl, value);
-				}
-			}
-		}
-		return builder.build();
-	}
+    /**
+     * Extract values from a model for a given indexing. If you know the set of
+     * variables to be extracted, use that overload because it is more
+     * efficient.
+     *
+     * @param model    Model
+     * @param indexing Indexing
+     * @return Values
+     */
+    public static Valuation extractValuation(final Valuation model, final VarIndexing indexing) {
+        final ImmutableValuation.Builder builder = ImmutableValuation.builder();
+        for (final Decl<?> decl : model.getDecls()) {
+            if (decl instanceof IndexedConstDecl) {
+                final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) decl;
+                final VarDecl<?> varDecl = indexedConstDecl.getVarDecl();
+                if (indexedConstDecl.getIndex() == indexing.get(varDecl)) {
+                    final LitExpr<?> value = model.eval(indexedConstDecl).get();
+                    builder.put(varDecl, value);
+                }
+            }
+        }
+        return builder.build();
+    }
 
-	/**
-	 * Extract values from a model for a given index. If you know the set of
-	 * variables to be extracted, use that overload because it is more
-	 * efficient.
-	 *
-	 * @param model Model
-	 * @param i     Index
-	 * @return Values
-	 */
-	public static Valuation extractValuation(final Valuation model, final int i) {
-		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexingFactory.indexing(i));
-	}
+    /**
+     * Extract values from a model for a given index. If you know the set of
+     * variables to be extracted, use that overload because it is more
+     * efficient.
+     *
+     * @param model Model
+     * @param i     Index
+     * @return Values
+     */
+    public static Valuation extractValuation(final Valuation model, final int i) {
+        checkArgument(i >= 0);
+        return extractValuation(model, VarIndexingFactory.indexing(i));
+    }
 
-	/**
-	 * Extract values from a model for a given indexing and given variables. If
-	 * a variable has no value in the model, it will not be included in the
-	 * return value.
-	 *
-	 * @param model    Model
-	 * @param indexing Indexing
-	 * @return Values
-	 */
-	public static Valuation extractValuation(final Valuation model, final VarIndexing indexing,
-											 final Collection<? extends VarDecl<?>> varDecls) {
-		final ImmutableValuation.Builder builder = ImmutableValuation.builder();
-		for (final VarDecl<?> varDecl : varDecls) {
-			final int index = indexing.get(varDecl);
-			final IndexedConstDecl<?> constDecl = varDecl.getConstDecl(index);
-			final Optional<? extends LitExpr<?>> eval = model.eval(constDecl);
-			if (eval.isPresent()) {
-				builder.put(varDecl, eval.get());
-			}
-		}
-		return builder.build();
-	}
+    /**
+     * Extract values from a model for a given indexing and given variables. If
+     * a variable has no value in the model, it will not be included in the
+     * return value.
+     *
+     * @param model    Model
+     * @param indexing Indexing
+     * @return Values
+     */
+    public static Valuation extractValuation(final Valuation model, final VarIndexing indexing,
+                                             final Collection<? extends VarDecl<?>> varDecls) {
+        final ImmutableValuation.Builder builder = ImmutableValuation.builder();
+        for (final VarDecl<?> varDecl : varDecls) {
+            final int index = indexing.get(varDecl);
+            final IndexedConstDecl<?> constDecl = varDecl.getConstDecl(index);
+            final Optional<? extends LitExpr<?>> eval = model.eval(constDecl);
+            if (eval.isPresent()) {
+                builder.put(varDecl, eval.get());
+            }
+        }
+        return builder.build();
+    }
 
-	/**
-	 * Extract values from a model for a given index and given variables. If a
-	 * variable has no value in the model, it will not be included in the return
-	 * value.
-	 *
-	 * @param model Model
-	 * @param i     Index
-	 * @return Values
-	 */
-	public static Valuation extractValuation(final Valuation model, final int i,
-											 final Collection<? extends VarDecl<?>> varDecls) {
-		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexingFactory.indexing(i), varDecls);
-	}
+    /**
+     * Extract values from a model for a given index and given variables. If a
+     * variable has no value in the model, it will not be included in the return
+     * value.
+     *
+     * @param model Model
+     * @param i     Index
+     * @return Values
+     */
+    public static Valuation extractValuation(final Valuation model, final int i,
+                                             final Collection<? extends VarDecl<?>> varDecls) {
+        checkArgument(i >= 0);
+        return extractValuation(model, VarIndexingFactory.indexing(i), varDecls);
+    }
 
-	////
+    ////
 
-	private static final class UnfoldHelper {
+    private static final class UnfoldHelper {
 
-		private final VarIndexing indexing;
+        private final VarIndexing indexing;
 
-		private UnfoldHelper(final VarIndexing indexing) {
-			this.indexing = indexing;
-		}
+        private UnfoldHelper(final VarIndexing indexing) {
+            this.indexing = indexing;
+        }
 
-		public <T extends Type> Expr<T> unfold(final Expr<T> expr, final int offset) {
-			if (expr instanceof RefExpr) {
-				final RefExpr<T> ref = (RefExpr<T>) expr;
-				final Decl<T> decl = ref.getDecl();
-				if (decl instanceof VarDecl) {
-					final VarDecl<T> varDecl = (VarDecl<T>) decl;
-					final int index = indexing.get(varDecl) + offset;
-					final ConstDecl<T> constDecl = varDecl.getConstDecl(index);
-					final RefExpr<T> refExpr = constDecl.getRef();
-					return refExpr;
-				}
-			}
+        public <T extends Type> Expr<T> unfold(final Expr<T> expr, final int offset) {
+            if (expr instanceof RefExpr) {
+                final RefExpr<T> ref = (RefExpr<T>) expr;
+                final Decl<T> decl = ref.getDecl();
+                if (decl instanceof VarDecl) {
+                    final VarDecl<T> varDecl = (VarDecl<T>) decl;
+                    final int index = indexing.get(varDecl) + offset;
+                    final ConstDecl<T> constDecl = varDecl.getConstDecl(index);
+                    final RefExpr<T> refExpr = constDecl.getRef();
+                    return refExpr;
+                }
+            }
 
-			if (expr instanceof PrimeExpr) {
-				final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
-				final Expr<T> op = prime.getOp();
-				return unfold(op, offset + 1);
-			}
+            if (expr instanceof PrimeExpr) {
+                final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
+                final Expr<T> op = prime.getOp();
+                return unfold(op, offset + 1);
+            }
 
-			return expr.map(op -> unfold(op, offset));
-		}
-	}
+            return expr.map(op -> unfold(op, offset));
+        }
+    }
 
-	private static final class ReverseUnfoldHelper {
+    private static final class ReverseUnfoldHelper {
 
-		private final VarIndexing indexing;
-		private final VarIndexing primes;
+        private final VarIndexing indexing;
+        private final VarIndexing primes;
 
-		private <T extends Type> ReverseUnfoldHelper(final VarIndexing indexing, final VarIndexing primes) {
-			this.indexing = indexing;
-			this.primes = primes;
-		}
+        private <T extends Type> ReverseUnfoldHelper(final VarIndexing indexing, final VarIndexing primes) {
+            this.indexing = indexing;
+            this.primes = primes;
+        }
 
-		public <T extends Type> Expr<T> unfold(final Expr<T> expr, final int offset) {
-			if (expr instanceof RefExpr) {
-				final RefExpr<T> ref = (RefExpr<T>) expr;
-				final Decl<T> decl = ref.getDecl();
-				if (decl instanceof VarDecl) {
-					final VarDecl<T> varDecl = (VarDecl<T>) decl;
-					final int index = indexing.get(varDecl) + offset + primes.get(varDecl);
-					final ConstDecl<T> constDecl = varDecl.getConstDecl(index);
-					final RefExpr<T> refExpr = constDecl.getRef();
-					return refExpr;
-				}
-			}
+        public <T extends Type> Expr<T> unfold(final Expr<T> expr, final int offset) {
+            if (expr instanceof RefExpr) {
+                final RefExpr<T> ref = (RefExpr<T>) expr;
+                final Decl<T> decl = ref.getDecl();
+                if (decl instanceof VarDecl) {
+                    final VarDecl<T> varDecl = (VarDecl<T>) decl;
+                    final int index = indexing.get(varDecl) + offset + primes.get(varDecl);
+                    final ConstDecl<T> constDecl = varDecl.getConstDecl(index);
+                    final RefExpr<T> refExpr = constDecl.getRef();
+                    return refExpr;
+                }
+            }
 
-			if (expr instanceof PrimeExpr) {
-				final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
-				final Expr<T> op = prime.getOp();
-				return unfold(op, offset - 1);
-			}
+            if (expr instanceof PrimeExpr) {
+                final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
+                final Expr<T> op = prime.getOp();
+                return unfold(op, offset - 1);
+            }
 
-			return expr.map(op -> unfold(op, offset));
-		}
-	}
+            return expr.map(op -> unfold(op, offset));
+        }
+    }
 
-	////
+    ////
 
-	private static final class FoldinHelper {
+    private static final class FoldinHelper {
 
-		private final VarIndexing indexing;
+        private final VarIndexing indexing;
 
-		private FoldinHelper(final VarIndexing indexing) {
-			this.indexing = indexing;
-		}
+        private FoldinHelper(final VarIndexing indexing) {
+            this.indexing = indexing;
+        }
 
-		public <T extends Type> Expr<T> foldin(final Expr<T> expr) {
-			if (expr instanceof RefExpr) {
-				final RefExpr<T> ref = (RefExpr<T>) expr;
-				final Decl<T> decl = ref.getDecl();
-				if (decl instanceof IndexedConstDecl) {
-					final IndexedConstDecl<T> constDecl = (IndexedConstDecl<T>) decl;
-					final VarDecl<T> varDecl = constDecl.getVarDecl();
-					final int index = constDecl.getIndex();
-					final int nPrimes = index - indexing.get(varDecl);
-					checkArgument(nPrimes >= 0, "Indexing mismatch on declaration");
-					final Expr<T> varRef = varDecl.getRef();
-					if (nPrimes == 0) {
-						return varRef;
-					} else {
-						return Prime(varRef, nPrimes);
-					}
-				}
-			}
+        public <T extends Type> Expr<T> foldin(final Expr<T> expr) {
+            if (expr instanceof RefExpr) {
+                final RefExpr<T> ref = (RefExpr<T>) expr;
+                final Decl<T> decl = ref.getDecl();
+                if (decl instanceof IndexedConstDecl) {
+                    final IndexedConstDecl<T> constDecl = (IndexedConstDecl<T>) decl;
+                    final VarDecl<T> varDecl = constDecl.getVarDecl();
+                    final int index = constDecl.getIndex();
+                    final int nPrimes = index - indexing.get(varDecl);
+                    checkArgument(nPrimes >= 0, "Indexing mismatch on declaration");
+                    final Expr<T> varRef = varDecl.getRef();
+                    if (nPrimes == 0) {
+                        return varRef;
+                    } else {
+                        return Prime(varRef, nPrimes);
+                    }
+                }
+            }
 
-			return expr.map(this::foldin);
-		}
-	}
+            return expr.map(this::foldin);
+        }
+    }
 
 }

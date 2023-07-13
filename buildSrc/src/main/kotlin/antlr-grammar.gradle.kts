@@ -26,6 +26,7 @@ dependencies {
 }
 
 open class GenerateGrammarExtension(project: Project) {
+
     var packageName: String = "hu.bme.mit.${project.name.replace("-", ".")}.dsl.gen"
 }
 

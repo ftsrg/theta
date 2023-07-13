@@ -22,12 +22,15 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import java.util.stream.Collectors
 
 class EliminateSelfLoops : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val selfLoops: Set<XcfaEdge> = builder.getEdges().stream().filter { xcfaEdge -> xcfaEdge.source === xcfaEdge.target }.collect(Collectors.toSet())
+        val selfLoops: Set<XcfaEdge> = builder.getEdges().stream()
+            .filter { xcfaEdge -> xcfaEdge.source === xcfaEdge.target }.collect(Collectors.toSet())
         for (selfLoop in selfLoops) {
             builder.removeEdge(selfLoop)
             val source = selfLoop.source
-            val target: XcfaLocation = XcfaLocation(source.name + "_" + XcfaLocation.uniqueCounter())
+            val target: XcfaLocation = XcfaLocation(
+                source.name + "_" + XcfaLocation.uniqueCounter())
             builder.addLoc(target)
             for (outgoingEdge in LinkedHashSet(source.outgoingEdges)) {
                 builder.removeEdge(outgoingEdge)

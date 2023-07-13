@@ -23,12 +23,13 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 
 class UnusedLocRemovalPass : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         builder.removeLocs {
             !it.final &&
-            !it.error &&
-            !it.initial &&
-            it.incomingEdges.size == 0
+                !it.error &&
+                !it.initial &&
+                it.incomingEdges.size == 0
         }
         return builder
     }

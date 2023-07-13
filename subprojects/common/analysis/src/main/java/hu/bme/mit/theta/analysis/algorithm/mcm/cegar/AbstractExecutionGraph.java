@@ -144,18 +144,18 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         for (final int i : idList) {
             for (final Relation<TruthValue> unaryRelation : unaryRelations) {
                 TruthValue truthValue = currentModel.get(unaryRelation, Tuple.of(i));
-                if(truthValue.must()) {
+                if (truthValue.must()) {
                     solver.add(getOrCreate(encodedRelationWrapper, idList, unaryRelation.getName(), true).get(TupleN.of(i)).getRef());
-                } else if(!truthValue.may()) {
+                } else if (!truthValue.may()) {
                     solver.add(Not(getOrCreate(encodedRelationWrapper, idList, unaryRelation.getName(), true).get(TupleN.of(i)).getRef()));
                 }
             }
             for (final int j : idList) {
                 for (final Relation<TruthValue> binaryRelation : binaryRelations) {
                     TruthValue truthValue = currentModel.get(binaryRelation, Tuple.of(i, j));
-                    if(truthValue.must()) {
+                    if (truthValue.must()) {
                         solver.add(getOrCreate(encodedRelationWrapper, idList, binaryRelation.getName(), false).get(TupleN.of(i, j)).getRef());
-                    } else if(!truthValue.may()) {
+                    } else if (!truthValue.may()) {
                         solver.add(Not(getOrCreate(encodedRelationWrapper, idList, binaryRelation.getName(), false).get(TupleN.of(i, j)).getRef()));
                     }
                 }
@@ -166,19 +166,20 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         EventConstantLookup t = getOrCreate(encodedRelationWrapper, idList, "T", true);
         for (final int i : idList) {
             List<List<Integer>> partitions = new ArrayList<>();
-            if(currentModel.get(rel("IW"), Tuple.of(i)).must()) solver.add(t.get(TupleN.of(i)).getRef());
+            if (currentModel.get(rel("IW"), Tuple.of(i)).must())
+                solver.add(t.get(TupleN.of(i)).getRef());
 
             for (final int j : idList) {
-                if(currentModel.get(rel("po-raw"), Tuple.of(i, j)).must()) {
+                if (currentModel.get(rel("po-raw"), Tuple.of(i, j)).must()) {
                     boolean found = false;
                     for (List<Integer> partition : partitions) {
-                        if(currentModel.get(rel("int"), Tuple.of(partition.get(0), j)).must()) {
+                        if (currentModel.get(rel("int"), Tuple.of(partition.get(0), j)).must()) {
                             found = true;
                             partition.add(j);
                             break;
                         }
                     }
-                    if(!found) {
+                    if (!found) {
                         List<Integer> list = new ArrayList<>();
                         list.add(j);
                         partitions.add(list);
@@ -189,7 +190,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
                 solver.add(Imply(t.get(TupleN.of(i)).getRef(), Or(partition.stream().map(j -> t.get(TupleN.of(j)).getRef()).collect(Collectors.toList()))));
                 for (final int j : partition) {
                     solver.add(Imply(t.get(TupleN.of(j)).getRef(), t.get(TupleN.of(i)).getRef()));
-                    solver.add(Imply(t.get(TupleN.of(j)).getRef(), Not(Or(partition.stream().filter(k -> k!=j).map(k -> t.get(TupleN.of(k)).getRef()).collect(Collectors.toList())))));
+                    solver.add(Imply(t.get(TupleN.of(j)).getRef(), Not(Or(partition.stream().filter(k -> k != j).map(k -> t.get(TupleN.of(k)).getRef()).collect(Collectors.toList())))));
                 }
             }
         }
@@ -222,10 +223,11 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     }
 
     Long commit = null;
+
     public boolean nextSolution(Collection<Map<Decl<?>, LitExpr<?>>> solutions) {
-        if(commit != null) currentModel = modelStore.createModel(commit);
+        if (commit != null) currentModel = modelStore.createModel(commit);
         else commit = currentModel.commit();
-        if(encodedRelationWrapper.getSolver().check().isSat()) {
+        if (encodedRelationWrapper.getSolver().check().isSat()) {
             solutions.add(Map.copyOf(encodedRelationWrapper.getSolver().getModel().toMap()));
             final EventConstantLookup rf = encodedRelationWrapper.getEventLookup("rf");
 
@@ -233,11 +235,10 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
             final List<Expr<BoolType>> subexprs = new ArrayList<>();
 
             rf.getAll().forEach((tuple, constDecl) -> {
-                if(lut.get(constDecl).equals(True())) {
+                if (lut.get(constDecl).equals(True())) {
                     subexprs.add(constDecl.getRef());
                     setTrue("rf", tuple.get(0), tuple.get(1));
-                }
-                else subexprs.add(Not(constDecl.getRef()));
+                } else subexprs.add(Not(constDecl.getRef()));
             });
 
 
@@ -259,7 +260,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         checkState(threadArgs.containsKey(pid));
         final ArgNode<S, ActionUnion<A>> node = argNodeLookup.get(id);
         final Optional<ArgNode<S, ActionUnion<A>>> covering = potentialCoveringNodes.get(pid).stream().filter(argNode -> argNode.mayCover(node)).findFirst();
-        if(covering.isEmpty()) return false;
+        if (covering.isEmpty()) return false;
         else {
             node.cover(covering.get());
             return true;
@@ -286,8 +287,10 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         checkState(threadArgs.containsKey(pid));
         final int actualLastId = getActualLastId(lastId);
         int id = switch (memoryEvent.type()) {
-            case READ -> addRead(pid, memoryEvent.asRead().varId(), actualLastId, Set.of(memoryEvent.tag()));
-            case WRITE -> addWrite(pid, memoryEvent.asWrite().varId(), actualLastId, Set.of(memoryEvent.tag()));
+            case READ ->
+                    addRead(pid, memoryEvent.asRead().varId(), actualLastId, Set.of(memoryEvent.tag()));
+            case WRITE ->
+                    addWrite(pid, memoryEvent.asWrite().varId(), actualLastId, Set.of(memoryEvent.tag()));
             case FENCE -> addFence(pid, actualLastId, Set.of(memoryEvent.tag()));
             case META -> addNormalEvent(pid, actualLastId, Set.of(memoryEvent.tag()));
         };
@@ -299,7 +302,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     }
 
     private int getActualLastId(int lastId) {
-        if(lastMemEventLookup.containsKey(lastId)) {
+        if (lastMemEventLookup.containsKey(lastId)) {
             return getActualLastId(lastMemEventLookup.get(lastId));
         } else return lastId;
     }
@@ -336,7 +339,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     }
 
     public int addInitialState(final int pid, final S state, final boolean target) {
-        if(!threadArgs.containsKey(pid)) {
+        if (!threadArgs.containsKey(pid)) {
             threadArgs.put(pid, ARG.create(partialOrd));
         }
         final int id = lastCnt++;
@@ -351,7 +354,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         final int id = lastCnt++;
         lastMemEventLookup.put(id, lastNode);
         ArgNode<S, ActionUnion<A>> succNode = threadArgs.get(pid).createSuccNode(argNodeLookup.get(lastNode), new ActionUnion.ActionWrapper<>(action), state, target);
-        if(isLastPiece) {
+        if (isLastPiece) {
             potentialCoveringNodes.putIfAbsent(pid, new LinkedHashSet<>());
             potentialCoveringNodes.get(pid).add(succNode);
         }
@@ -369,7 +372,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
 
     private int addNormalEvent(int processId, int lastNode, Collection<String> tags) {
         final int id = addAnyEvent(tags);
-        if(lastNode == 0) {
+        if (lastNode == 0) {
             for (final Tuple iw : getMustValues(rel("IW"))) {
                 setTrue("po-raw", unbox(iw), id);
             }
@@ -391,7 +394,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     // HELPER METHODS
 
     public Relation<TruthValue> rel(final String s) {
-        if(tags.containsKey(s)) return tags.get(s);
+        if (tags.containsKey(s)) return tags.get(s);
         return preDefinedRelations.get(s);
     }
 
@@ -404,8 +407,8 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         final Cursor<Tuple, TruthValue> cursor = currentModel.getAll(rel);
         cursor.move();
         final Collection<Tuple> ret = new LinkedHashSet<>();
-        while(!cursor.isTerminated()) {
-            if(cursor.getValue().must()) ret.add(cursor.getKey());
+        while (!cursor.isTerminated()) {
+            if (cursor.getValue().must()) ret.add(cursor.getKey());
             cursor.move();
         }
         return ret;
@@ -430,7 +433,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
             final String name,
             final boolean isUnary) {
         EventConstantLookup lookup = encodedRelationWrapper.getEventLookup(name);
-        if(lookup == null) {
+        if (lookup == null) {
             lookup = createDummyRelation(idList, name, isUnary);
             encodedRelationWrapper.addEvent(name, lookup);
         }
@@ -440,10 +443,9 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     private EventConstantLookup createDummyRelation(List<Integer> idList, String name, boolean isUnary) {
         EventConstantLookup eventConstantLookup = new EventConstantLookup();
         for (final int i : idList) {
-            if(isUnary) {
+            if (isUnary) {
                 eventConstantLookup.add(TupleN.of(i), Const(name + "_" + i, Bool()));
-            }
-            else {
+            } else {
                 for (final int j : idList) {
                     eventConstantLookup.add(TupleN.of(i, j), Const(name + "_" + i + "_" + j, Bool()));
                 }
@@ -481,25 +483,29 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     }
 
     private Tuple tup(TupleN<DatalogArgument> t) {
-        if(t.arity() == 1) return Tuple.of(((GenericDatalogArgument<Integer>)t.get(0)).getContent());
-        if(t.arity() == 2) return Tuple.of(((GenericDatalogArgument<Integer>)t.get(0)).getContent(), ((GenericDatalogArgument<Integer>)t.get(1)).getContent());
+        if (t.arity() == 1)
+            return Tuple.of(((GenericDatalogArgument<Integer>) t.get(0)).getContent());
+        if (t.arity() == 2)
+            return Tuple.of(((GenericDatalogArgument<Integer>) t.get(0)).getContent(), ((GenericDatalogArgument<Integer>) t.get(1)).getContent());
         throw new UnsupportedOperationException("Relations with higher arities not supported");
     }
+
     private Tuple itup(TupleN<Integer> t) {
-        if(t.arity() == 1) return Tuple.of(t.get(0));
-        if(t.arity() == 2) return Tuple.of(t.get(0), t.get(1));
+        if (t.arity() == 1) return Tuple.of(t.get(0));
+        if (t.arity() == 2) return Tuple.of(t.get(0), t.get(1));
         throw new UnsupportedOperationException("Relations with higher arities not supported");
     }
 
     private TupleN<DatalogArgument> tup(Tuple t) {
-        if(t.getSize() == 1) return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)));
-        if(t.getSize() == 2) return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)), GenericDatalogArgument.createArgument(t.get(1)));
+        if (t.getSize() == 1) return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)));
+        if (t.getSize() == 2)
+            return TupleN.of(GenericDatalogArgument.createArgument(t.get(0)), GenericDatalogArgument.createArgument(t.get(1)));
         throw new UnsupportedOperationException("Relations with higher arities not supported");
     }
 
     private void printUC(Solver solver) {
-        if(solver.check().isUnsat()) {
-            try(final UCSolver ucSolver = SolverManager.resolveSolverFactory("Z3").createUCSolver()) {
+        if (solver.check().isUnsat()) {
+            try (final UCSolver ucSolver = SolverManager.resolveSolverFactory("Z3").createUCSolver()) {
                 ucSolver.track(solver.getAssertions());
                 ucSolver.check();
                 for (Expr<BoolType> boolTypeExpr : ucSolver.getUnsatCore()) {
@@ -515,7 +521,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
         final Collection<Tuple2<ArgNode<S, ActionUnion<A>>, VarIndexing>> waitSet = new LinkedHashSet<>();
         arg.getInitNodes().forEach(node -> waitSet.add(Tuple2.of(node, VarIndexingFactory.indexing(0))));
         VarIndexing lhsIndexing = VarIndexingFactory.indexing(0);
-        while(!waitSet.isEmpty()) {
+        while (!waitSet.isEmpty()) {
             final Tuple2<ArgNode<S, ActionUnion<A>>, VarIndexing> nextElement = waitSet.stream().findAny().get();
             waitSet.remove(nextElement);
             final ArgNode<S, ActionUnion<A>> node = nextElement.get1();
@@ -523,21 +529,23 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
 
             for (ArgEdge<S, ActionUnion<A>> argEdge : node.getOutEdges().toList()) {
                 final ActionUnion<A> actionOrMemEvent = argEdge.getAction();
-                if(actionOrMemEvent.isMemoryEvent()) {
+                if (actionOrMemEvent.isMemoryEvent()) {
                     VarIndexing localIndexing = rhsIndexing;
                     MemoryEvent memoryEvent = actionOrMemEvent.asMemoryEventAction().getMemoryEvent();
-                    switch(memoryEvent.type()) {
+                    switch (memoryEvent.type()) {
                         case READ -> {
                             lhsIndexing = lhsIndexing.inc(memoryEvent.asRead().localVar());
                             localIndexing = localIndexing.inc(memoryEvent.asRead().localVar(), lhsIndexing.get(memoryEvent.asRead().localVar()) - localIndexing.get(memoryEvent.asRead().localVar()));
                             readVarIndexingMap.put(actionOrMemEvent.asMemoryEventAction().getId(), PathUtils.unfold(memoryEvent.asRead().localVar().getRef(), localIndexing));
                         }
-                        case WRITE -> writeVarIndexingMap.put(actionOrMemEvent.asMemoryEventAction().getId(), PathUtils.unfold(memoryEvent.asWrite().localVar().getRef(), localIndexing));
-                        default -> {}
+                        case WRITE ->
+                                writeVarIndexingMap.put(actionOrMemEvent.asMemoryEventAction().getId(), PathUtils.unfold(memoryEvent.asWrite().localVar().getRef(), localIndexing));
+                        default -> {
+                        }
                     }
                     waitSet.add(Tuple2.of(argEdge.getTarget(), localIndexing));
                 }
-                if(!actionOrMemEvent.isMemoryEvent()) {
+                if (!actionOrMemEvent.isMemoryEvent()) {
                     final A action = actionOrMemEvent.asActionWrapper().getAction();
                     VarIndexing localIndexing = rhsIndexing;
                     for (Stmt stmt : action.getStmts()) {
@@ -554,7 +562,7 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     }
 
     private Set<Integer> collectImmediateSuccessors(final ArgEdge<S, ActionUnion<A>> edge) {
-        if(edge.getAction().isMemoryEvent) {
+        if (edge.getAction().isMemoryEvent) {
             return Set.of(edge.getAction().asMemoryEventAction().getId());
         } else {
             final Set<Integer> ret = new LinkedHashSet<>();
@@ -566,18 +574,19 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
     }
 
     private static abstract class ActionUnion<A> implements Action {
-       private final boolean isMemoryEvent;
+        private final boolean isMemoryEvent;
 
-       protected ActionWrapper<A> asActionWrapper() {
-           throw new ClassCastException("Cannot be cast to ActionWrapper");
-       }
-       protected MemoryEventAction<A> asMemoryEventAction() {
-           throw new ClassCastException("Cannot be cast to MemoryEventAction");
-       }
+        protected ActionWrapper<A> asActionWrapper() {
+            throw new ClassCastException("Cannot be cast to ActionWrapper");
+        }
 
-       protected ActionUnion(boolean isMemoryEvent) {
+        protected MemoryEventAction<A> asMemoryEventAction() {
+            throw new ClassCastException("Cannot be cast to MemoryEventAction");
+        }
+
+        protected ActionUnion(boolean isMemoryEvent) {
             this.isMemoryEvent = isMemoryEvent;
-       }
+        }
 
         public boolean isMemoryEvent() {
             return isMemoryEvent;
@@ -597,10 +606,10 @@ public class AbstractExecutionGraph<S extends State, A extends StmtAction> {
                 return memoryEvent;
             }
 
-           @Override
+            @Override
             protected MemoryEventAction<A> asMemoryEventAction() {
-               return this;
-           }
+                return this;
+            }
 
             public int getId() {
                 return id;

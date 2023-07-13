@@ -19,5 +19,6 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 interface ProcedurePass {
+
     fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder
 }

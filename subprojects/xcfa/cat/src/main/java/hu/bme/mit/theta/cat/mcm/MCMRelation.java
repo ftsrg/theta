@@ -61,13 +61,14 @@ public class MCMRelation {
     }
 
     public void collectRelations(final Map<String, MCMRelation> relations) {
-        if(!relations.containsKey(name)) {
+        if (!relations.containsKey(name)) {
             relations.put(name, this);
             for (MCMRule rule : getRules()) {
                 rule.collectRelations(relations);
             }
         } else {
-            if(!relations.get(name).equals(this)) throw new RuntimeException("Different definitions for the relation " + name);
+            if (!relations.get(name).equals(this))
+                throw new RuntimeException("Different definitions for the relation " + name);
         }
     }
 

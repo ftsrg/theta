@@ -28,34 +28,41 @@ import kotlin.jvm.optionals.getOrNull
  */
 @OptIn(ExperimentalStdlibApi::class)
 class SvCompIntrinsicsPass : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
-        if(builder.name.startsWith("__VERIFIER_atomic")) {
+        if (builder.name.startsWith("__VERIFIER_atomic")) {
             for (outgoingEdge in ArrayList(builder.initLoc.outgoingEdges)) {
                 builder.removeEdge(outgoingEdge)
                 val labels: MutableList<XcfaLabel> = ArrayList()
-                labels.add(FenceLabel(setOf("ATOMIC_BEGIN"),  metadata = outgoingEdge.metadata))
+                labels.add(FenceLabel(setOf("ATOMIC_BEGIN"), metadata = outgoingEdge.metadata))
                 labels.addAll((outgoingEdge.label as SequenceLabel).labels)
                 builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels)))
             }
-            for (incomingEdge in ArrayList(builder.finalLoc.getOrNull()?.incomingEdges ?: listOf())) {
+            for (incomingEdge in ArrayList(
+                builder.finalLoc.getOrNull()?.incomingEdges ?: listOf())) {
                 builder.removeEdge(incomingEdge)
                 val labels = ArrayList((incomingEdge.label as SequenceLabel).labels)
-                labels.add(FenceLabel(setOf("ATOMIC_END"),  metadata = incomingEdge.metadata))
+                labels.add(FenceLabel(setOf("ATOMIC_END"), metadata = incomingEdge.metadata))
                 builder.addEdge(incomingEdge.withLabel(SequenceLabel(labels)))
             }
         }
         for (edge in ArrayList(builder.getEdges())) {
             val edges = edge.splitIf(this::predicate)
-            if(edges.size > 1 || (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))) {
+            if (edges.size > 1 || (edges.size == 1 && predicate(
+                    (edges[0].label as SequenceLabel).labels[0]))) {
                 builder.removeEdge(edge)
                 val labels: MutableList<XcfaLabel> = ArrayList()
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
-                        val fence = when(invokeLabel.name) {
-                            "__VERIFIER_atomic_begin" -> FenceLabel(setOf("ATOMIC_BEGIN"),  metadata = invokeLabel.metadata)
-                            "__VERIFIER_atomic_end" -> FenceLabel(setOf("ATOMIC_END"),  metadata = invokeLabel.metadata)
+                        val fence = when (invokeLabel.name) {
+                            "__VERIFIER_atomic_begin" -> FenceLabel(setOf("ATOMIC_BEGIN"),
+                                metadata = invokeLabel.metadata)
+
+                            "__VERIFIER_atomic_end" -> FenceLabel(setOf("ATOMIC_END"),
+                                metadata = invokeLabel.metadata)
+
                             else -> invokeLabel
                         }
                         labels.add(fence)

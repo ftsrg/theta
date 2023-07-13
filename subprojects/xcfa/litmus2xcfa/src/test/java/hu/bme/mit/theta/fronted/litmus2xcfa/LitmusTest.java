@@ -68,7 +68,7 @@ public class LitmusTest {
         final List<Pair<XcfaProcedure, List<Expr<?>>>> processes = xcfa.getInitProcedures();
         for (int i = 0; i < processes.size(); i++) {
             XcfaProcedure procedure = processes.get(i).getFirst();
-            Assert.assertEquals((int)instructionPerThread.get(i), procedure.getEdges().size());
+            Assert.assertEquals((int) instructionPerThread.get(i), procedure.getEdges().size());
         }
     }
 

@@ -19,32 +19,32 @@ package hu.bme.mit.theta.xcfa.passes
 open class ProcedurePassManager(val passes: List<ProcedurePass>)
 
 class CPasses(checkOverflow: Boolean) : ProcedurePassManager(listOf(
-        // formatting
-        NormalizePass(),
-        DeterministicPass(),
-        // removing redundant elements
-        EmptyEdgeRemovalPass(),
-        UnusedLocRemovalPass(),
-        // optimizing
-        SimplifyExprsPass(),
-        // handling intrinsics
-        ErrorLocationPass(checkOverflow),
-        FinalLocationPass(checkOverflow),
-        SvCompIntrinsicsPass(),
-        FpFunctionsToExprsPass(),
-        PthreadFunctionsPass(),
-        // trying to inline procedures
-        InlineProceduresPass(),
-        RemoveDeadEnds(),
-        EliminateSelfLoops(),
-        // handling remaining function calls
-        NondetFunctionPass(),
-        LbePass(),
-        NormalizePass(), // needed after lbe, TODO
-        DeterministicPass(), // needed after lbe, TODO
-        HavocPromotionAndRange(),
-        // Final cleanup
-        UnusedVarPass(),
+    // formatting
+    NormalizePass(),
+    DeterministicPass(),
+    // removing redundant elements
+    EmptyEdgeRemovalPass(),
+    UnusedLocRemovalPass(),
+    // optimizing
+    SimplifyExprsPass(),
+    // handling intrinsics
+    ErrorLocationPass(checkOverflow),
+    FinalLocationPass(checkOverflow),
+    SvCompIntrinsicsPass(),
+    FpFunctionsToExprsPass(),
+    PthreadFunctionsPass(),
+    // trying to inline procedures
+    InlineProceduresPass(),
+    RemoveDeadEnds(),
+    EliminateSelfLoops(),
+    // handling remaining function calls
+    NondetFunctionPass(),
+    LbePass(),
+    NormalizePass(), // needed after lbe, TODO
+    DeterministicPass(), // needed after lbe, TODO
+    HavocPromotionAndRange(),
+    // Final cleanup
+    UnusedVarPass(),
 ))
 
 class ChcPasses : ProcedurePassManager(/*listOf(

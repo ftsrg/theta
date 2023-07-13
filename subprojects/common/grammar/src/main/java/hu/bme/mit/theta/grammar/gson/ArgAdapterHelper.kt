@@ -22,31 +22,43 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ARG
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 
-data class ArgAdapterHelper<S: State, A: Action>(
-        val initNodes: Map<Int, Triple<S, Boolean, Boolean>>,
-        val nodes: Map<Int, ArgNodeAdapter<S>>,
-        val edges: Map<Int, ArgEdgeAdapter<A>>,
-        val coveringEdges: Map<Int, Int>
+data class ArgAdapterHelper<S : State, A : Action>(
+    val initNodes: Map<Int, Triple<S, Boolean, Boolean>>,
+    val nodes: Map<Int, ArgNodeAdapter<S>>,
+    val edges: Map<Int, ArgEdgeAdapter<A>>,
+    val coveringEdges: Map<Int, Int>
 ) {
+
     constructor(arg: ARG<S, A>) : this(
-            initNodes=arg.initNodes.map { Pair(it.id, Triple(it.state, it.isTarget, it.isExpanded)) }.toList().associate { it.first to it.second },
-            nodes=arg.nodes.map { Pair(it.id, ArgNodeAdapter(it.isTarget, it.state, it.isExpanded)) }.toList().associate { it.first to it.second },
-            edges=arg.nodes.filter { it.inEdge.isPresent}.map { Pair(it.id, ArgEdgeAdapter(it.inEdge.get().source.id, it.inEdge.get().action)) }.toList().associate { it.first to it.second },
-            coveringEdges=arg.nodes.filter {it.coveringNode.isPresent}.map { Pair(it.id, it.coveringNode.get().id) }.toList().associate {it.first to it.second }
+        initNodes = arg.initNodes.map { Pair(it.id, Triple(it.state, it.isTarget, it.isExpanded)) }
+            .toList().associate { it.first to it.second },
+        nodes = arg.nodes.map { Pair(it.id, ArgNodeAdapter(it.isTarget, it.state, it.isExpanded)) }
+            .toList().associate { it.first to it.second },
+        edges = arg.nodes.filter { it.inEdge.isPresent }
+            .map { Pair(it.id, ArgEdgeAdapter(it.inEdge.get().source.id, it.inEdge.get().action)) }
+            .toList().associate { it.first to it.second },
+        coveringEdges = arg.nodes.filter { it.coveringNode.isPresent }
+            .map { Pair(it.id, it.coveringNode.get().id) }.toList()
+            .associate { it.first to it.second }
     )
 
     fun instantiate(partialOrd: PartialOrd<S>): ARG<S, A> {
         val arg = ARG.create<S, A>(partialOrd)
         val lut = HashMap<Int, ArgNode<S, A>>()
-        initNodes.forEach { lut[it.key] = arg.createInitNode(it.value.first, it.value.second).also { n -> if(it.value.third) n.expanded = true } }
+        initNodes.forEach {
+            lut[it.key] = arg.createInitNode(it.value.first, it.value.second)
+                .also { n -> if (it.value.third) n.expanded = true }
+        }
         arg.initialized = true
         val waitSet = HashSet<Int>(edges.keys)
-        while(waitSet.isNotEmpty()) {
+        while (waitSet.isNotEmpty()) {
             val entry = waitSet.firstOrNull { lut.keys.contains(edges[it]!!.source) }
-            check(entry != null) { "Unreachable node(s) present: $waitSet\nedges: $edges\nlut: $lut" }
+            check(
+                entry != null) { "Unreachable node(s) present: $waitSet\nedges: $edges\nlut: $lut" }
             waitSet.remove(entry)
             val edge = edges[entry]!!
-            lut[entry] = arg.createSuccNode(lut[edge.source], edge.action, nodes[entry]!!.state, nodes[entry]!!.target).also { n -> if(nodes[entry]!!.expanded) n.expanded = true }
+            lut[entry] = arg.createSuccNode(lut[edge.source], edge.action, nodes[entry]!!.state,
+                nodes[entry]!!.target).also { n -> if (nodes[entry]!!.expanded) n.expanded = true }
         }
         coveringEdges.forEach { lut[it.key]!!.cover(lut[it.value]) }
         return arg
@@ -54,15 +66,15 @@ data class ArgAdapterHelper<S: State, A: Action>(
 }
 
 
-data class ArgNodeAdapter<S: State>(
-        val target: Boolean,
-        val state: S,
-        val expanded: Boolean
+data class ArgNodeAdapter<S : State>(
+    val target: Boolean,
+    val state: S,
+    val expanded: Boolean
 )
 
-data class ArgEdgeAdapter<A: Action>(
-        val source: Int,
-        val action: A,
+data class ArgEdgeAdapter<A : Action>(
+    val source: Int,
+    val action: A,
 ) {
 
 }

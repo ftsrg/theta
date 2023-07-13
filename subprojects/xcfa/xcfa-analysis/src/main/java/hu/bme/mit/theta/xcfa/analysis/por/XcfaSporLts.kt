@@ -30,6 +30,7 @@ import kotlin.random.Random
 open class XcfaSporLts(protected val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAction, XcfaEdge>() {
 
     companion object {
+
         private val random: Random = Random.Default
         private val simpleXcfaLts = getXcfaLts()
     }
@@ -41,13 +42,15 @@ open class XcfaSporLts(protected val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAct
     override fun getAllEnabledActionsFor(state: XcfaState<*>): Collection<XcfaAction> =
         simpleXcfaLts.getEnabledActionsFor(state)
 
-    override fun getPersistentSetFirstActions(allEnabledActions: Collection<XcfaAction>): Collection<Collection<XcfaAction>> {
+    override fun getPersistentSetFirstActions(
+        allEnabledActions: Collection<XcfaAction>): Collection<Collection<XcfaAction>> {
         val enabledActionsByProcess = allEnabledActions.groupBy(XcfaAction::pid)
         val enabledProcesses = enabledActionsByProcess.keys.toList().shuffled(random)
         return enabledProcesses.map { enabledActionsByProcess[it]!! }
     }
 
-    override fun isSameProcess(action1: XcfaAction, action2: XcfaAction) = action1.pid == action2.pid
+    override fun isSameProcess(action1: XcfaAction,
+        action2: XcfaAction) = action1.pid == action2.pid
 
     override fun getTransitionOf(action: XcfaAction) = action.edge
 
@@ -56,7 +59,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAct
         val startThreads = edge.getFlatLabels().filterIsInstance<StartLabel>().toList()
         if (startThreads.isNotEmpty()) { // for start thread labels, the thread procedure must be explored, too!
             startThreads.forEach { startThread ->
-                outgoingEdges.addAll(xcfa.procedures.first { it.name == startThread.name }.initLoc.outgoingEdges)
+                outgoingEdges.addAll(
+                    xcfa.procedures.first { it.name == startThread.name }.initLoc.outgoingEdges)
             }
         }
         return outgoingEdges
@@ -84,7 +88,9 @@ open class XcfaSporLts(protected val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAct
      */
     override fun getUsedSharedObjects(edge: XcfaEdge): Set<Decl<out Type?>?> =
         if (edge.getFlatLabels().any(XcfaLabel::isAtomicBegin)) {
-            getSharedObjectsWithBFS(edge) { it.getFlatLabels().none(XcfaLabel::isAtomicEnd) }.toSet()
+            getSharedObjectsWithBFS(edge) {
+                it.getFlatLabels().none(XcfaLabel::isAtomicEnd)
+            }.toSet()
         } else {
             getDirectlyUsedSharedObjects(edge)
         }

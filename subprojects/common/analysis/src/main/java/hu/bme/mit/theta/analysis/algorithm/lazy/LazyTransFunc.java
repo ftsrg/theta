@@ -17,7 +17,7 @@ public final class LazyTransFunc<SConcr extends State, SAbstr extends ExprState,
     private final TransFunc<SConcr, A, P> concrTransFunc;
     private final InitAbstractor<SConcr, SAbstr> initAbstractor;
 
-    private LazyTransFunc(final TransFunc<SConcr, A, P> concrTransFunc, final InitAbstractor<SConcr, SAbstr> initAbstractor){
+    private LazyTransFunc(final TransFunc<SConcr, A, P> concrTransFunc, final InitAbstractor<SConcr, SAbstr> initAbstractor) {
         this.concrTransFunc = checkNotNull(concrTransFunc);
         this.initAbstractor = checkNotNull(initAbstractor);
     }

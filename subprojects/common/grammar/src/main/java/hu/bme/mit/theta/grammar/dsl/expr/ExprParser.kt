@@ -73,6 +73,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 class ExpressionWrapper(scope: Scope, content: String) {
+
     private val scope: Scope
     private val context: ExprContext
 
@@ -92,6 +93,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
     }
 
     private class ExprCreatorVisitor(scope: Scope, env: Env) : ExprBaseVisitor<Expr<out Type>>() {
+
         private var currentScope: Scope
         private val env: Env
 
@@ -113,7 +115,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         private fun pop() {
-            Preconditions.checkState(currentScope.enclosingScope().isPresent, "Enclosing scope is not present.")
+            Preconditions.checkState(currentScope.enclosingScope().isPresent,
+                "Enclosing scope is not present.")
             currentScope = currentScope.enclosingScope().get()
             env.pop()
         }
@@ -121,7 +124,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitFuncLitExpr(ctx: FuncLitExprContext): Expr<out Type> {
             return if (ctx.result != null) {
-                val param = Decls.Param(ctx.param.name.text, TypeWrapper(ctx.param.type().textWithWS()).instantiate())
+                val param = Decls.Param(ctx.param.name.text,
+                    TypeWrapper(ctx.param.type().textWithWS()).instantiate())
                 push(listOf(param))
                 val result = ctx.result.accept<Expr<*>>(this) as Expr<Type>
                 pop()
@@ -136,14 +140,18 @@ class ExpressionWrapper(scope: Scope, content: String) {
                 emptyList()
             } else {
                 ctx.decls.stream()
-                        .map { d: DeclContext -> Decls.Param(d.name.getText(), TypeWrapper(d.ttype.textWithWS()).instantiate()) }.collect(Collectors.toList())
+                    .map { d: DeclContext ->
+                        Decls.Param(d.name.getText(),
+                            TypeWrapper(d.ttype.textWithWS()).instantiate())
+                    }.collect(Collectors.toList())
             }
         }
 
         ////
         override fun visitIteExpr(ctx: IteExprContext): Expr<out Type> {
             return if (ctx.cond != null) {
-                val cond: Expr<BoolType> = TypeUtils.cast(ctx.cond.accept<Expr<*>>(this), BoolExprs.Bool())
+                val cond: Expr<BoolType> = TypeUtils.cast(ctx.cond.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
                 val then: Expr<*> = ctx.then.accept<Expr<*>>(this)
                 val elze: Expr<*> = ctx.elze.accept<Expr<*>>(this)
                 AbstractExprs.Ite<Type>(cond, then, elze)
@@ -154,8 +162,10 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         override fun visitIffExpr(ctx: IffExprContext): Expr<out Type> {
             return if (ctx.rightOp != null) {
-                val leftOp: Expr<BoolType> = TypeUtils.cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
-                val rightOp: Expr<BoolType> = TypeUtils.cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
+                val leftOp: Expr<BoolType> = TypeUtils.cast(ctx.leftOp.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
+                val rightOp: Expr<BoolType> = TypeUtils.cast(ctx.rightOp.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
                 BoolExprs.Iff(leftOp, rightOp)
             } else {
                 visitChildren(ctx)
@@ -164,8 +174,10 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         override fun visitImplyExpr(ctx: ImplyExprContext): Expr<out Type> {
             return if (ctx.rightOp != null) {
-                val leftOp: Expr<BoolType> = TypeUtils.cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
-                val rightOp: Expr<BoolType> = TypeUtils.cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
+                val leftOp: Expr<BoolType> = TypeUtils.cast(ctx.leftOp.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
+                val rightOp: Expr<BoolType> = TypeUtils.cast(ctx.rightOp.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
                 BoolExprs.Imply(leftOp, rightOp)
             } else {
                 visitChildren(ctx)
@@ -176,7 +188,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
             return if (ctx.paramDecls != null) {
                 val paramDecls = createParamList(ctx.paramDecls)
                 push(paramDecls)
-                val op: Expr<BoolType> = TypeUtils.cast(ctx.op.accept<Expr<*>>(this), BoolExprs.Bool())
+                val op: Expr<BoolType> = TypeUtils.cast(ctx.op.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
                 pop()
                 BoolExprs.Forall(paramDecls, op)
             } else {
@@ -188,7 +201,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
             return if (ctx.paramDecls != null) {
                 val paramDecls = createParamList(ctx.paramDecls)
                 push(paramDecls)
-                val op: Expr<BoolType> = TypeUtils.cast(ctx.op.accept<Expr<*>>(this), BoolExprs.Bool())
+                val op: Expr<BoolType> = TypeUtils.cast(ctx.op.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
                 pop()
                 BoolExprs.Exists(paramDecls, op)
             } else {
@@ -199,7 +213,9 @@ class ExpressionWrapper(scope: Scope, content: String) {
         override fun visitOrExpr(ctx: OrExprContext): Expr<out Type> {
             return if (ctx.ops.size >= 1) {
                 val opStream: Stream<Expr<BoolType>> = ctx.ops.stream()
-                        .map({ op: ExprContext -> TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) })
+                    .map({ op: ExprContext ->
+                        TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool())
+                    })
                 val ops: Collection<Expr<BoolType>> = opStream.collect(Collectors.toList())
                 BoolExprs.Or(ops)
             } else {
@@ -209,8 +225,10 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         override fun visitXorExpr(ctx: XorExprContext): Expr<out Type> {
             return if (ctx.rightOp != null) {
-                val leftOp: Expr<BoolType> = TypeUtils.cast(ctx.leftOp.accept<Expr<*>>(this), BoolExprs.Bool())
-                val rightOp: Expr<BoolType> = TypeUtils.cast(ctx.rightOp.accept<Expr<*>>(this), BoolExprs.Bool())
+                val leftOp: Expr<BoolType> = TypeUtils.cast(ctx.leftOp.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
+                val rightOp: Expr<BoolType> = TypeUtils.cast(ctx.rightOp.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
                 BoolExprs.Xor(leftOp, rightOp)
             } else {
                 visitChildren(ctx)
@@ -220,7 +238,9 @@ class ExpressionWrapper(scope: Scope, content: String) {
         override fun visitAndExpr(ctx: AndExprContext): Expr<out Type> {
             return if (ctx.ops.size >= 1) {
                 val opStream: Stream<Expr<BoolType>> = ctx.ops.stream()
-                        .map( { op: ExprContext -> TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool()) })
+                    .map({ op: ExprContext ->
+                        TypeUtils.cast(op.accept<Expr<*>>(this), BoolExprs.Bool())
+                    })
                 val ops: Collection<Expr<BoolType>> = opStream.collect(Collectors.toList())
                 BoolExprs.And(ops)
             } else {
@@ -230,7 +250,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         override fun visitNotExpr(ctx: NotExprContext): Expr<out Type> {
             return if (ctx.op != null) {
-                val op: Expr<BoolType> = TypeUtils.cast(ctx.op.accept<Expr<*>>(this), BoolExprs.Bool())
+                val op: Expr<BoolType> = TypeUtils.cast(ctx.op.accept<Expr<*>>(this),
+                    BoolExprs.Bool())
                 BoolExprs.Not(op)
             } else {
                 visitChildren(ctx)
@@ -293,7 +314,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         override fun visitBitwiseOrExpr(ctx: BitwiseOrExprContext): Expr<out Type> {
             return if (ctx.oper != null) {
                 val opStream: Stream<Expr<(BvType)>> = ctx.ops.stream()
-                        .map { op: ExprContext -> op.accept<Expr<*>>(this) as Expr<BvType> }
+                    .map { op: ExprContext -> op.accept<Expr<*>>(this) as Expr<BvType> }
                 val ops: MutableList<Expr<BvType>> = opStream.collect(Collectors.toList())
                 when (ctx.oper.type) {
                     BV_OR -> BvExprs.Or(ops)
@@ -320,7 +341,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         override fun visitBitwiseAndExpr(ctx: BitwiseAndExprContext): Expr<out Type> {
             return if (ctx.oper != null) {
                 val opStream: Stream<Expr<(BvType)>> = ctx.ops.stream()
-                        .map { op: ExprContext -> op.accept<Expr<*>>(this) as Expr<BvType> }
+                    .map { op: ExprContext -> op.accept<Expr<*>>(this) as Expr<BvType> }
                 val ops: MutableList<Expr<BvType>> = opStream.collect(Collectors.toList())
                 when (ctx.oper.type) {
                     BV_AND -> BvExprs.And(ops)
@@ -351,7 +372,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitAdditiveExpr(ctx: AdditiveExprContext): Expr<out Type> {
             return if (ctx.ops.size >= 1) {
-                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
+                val opStream: Stream<Expr<*>> = ctx.ops.stream()
+                    .map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
                 val ops = opStream.collect(Collectors.toList())
                 val opsHead = ops[0]
                 val opsTail = ops.subList(1, ops.size)
@@ -362,7 +384,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         private fun createAdditiveExpr(opsHead: Expr<*>, opsTail: List<Expr<*>>,
-                                       oper: Token, ctx: AdditiveExprContext): Expr<out Type> {
+            oper: Token, ctx: AdditiveExprContext): Expr<out Type> {
             return if (opsTail.isEmpty()) {
                 opsHead
             } else {
@@ -374,22 +396,27 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         private fun createAdditiveSubExpr(leftOp: Expr<*>, rightOp: Expr<*>, oper: Token,
-                                          ctx: AdditiveExprContext): Expr<out Type> {
+            ctx: AdditiveExprContext): Expr<out Type> {
             return when (oper.type) {
                 PLUS -> createAddExpr(leftOp, rightOp)
                 MINUS -> createSubExpr(leftOp, rightOp)
                 BV_ADD -> createBvAddExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
                 BV_SUB -> createBvSubExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
-                FPADD -> FpExprs.Add(getRoundingMode(ctx.oper.text), java.util.List.of(TypeUtils.castFp(leftOp), TypeUtils.castFp(rightOp)))
-                FPSUB -> FpExprs.Sub(getRoundingMode(ctx.oper.text), TypeUtils.castFp(leftOp), TypeUtils.castFp(rightOp))
+                FPADD -> FpExprs.Add(getRoundingMode(ctx.oper.text),
+                    java.util.List.of(TypeUtils.castFp(leftOp), TypeUtils.castFp(rightOp)))
+
+                FPSUB -> FpExprs.Sub(getRoundingMode(ctx.oper.text), TypeUtils.castFp(leftOp),
+                    TypeUtils.castFp(rightOp))
+
                 else -> throw ParseException(ctx, "Unknown operator '" + oper.text + "'")
             }
         }
 
         private fun createAddExpr(leftOp: Expr<*>, rightOp: Expr<*>): AddExpr<*> {
             return if (leftOp is AddExpr<*>) {
-                val ops: List<Expr<*>> = ImmutableList.builder<Expr<*>>().addAll(leftOp.ops).add(rightOp)
-                        .build()
+                val ops: List<Expr<*>> = ImmutableList.builder<Expr<*>>().addAll(leftOp.ops)
+                    .add(rightOp)
+                    .build()
                 AbstractExprs.Add(ops)
             } else {
                 AbstractExprs.Add(leftOp, rightOp)
@@ -402,8 +429,9 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         private fun createBvAddExpr(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvAddExpr {
             return if (leftOp is BvAddExpr) {
-                val ops: List<Expr<BvType>> = ImmutableList.builder<Expr<BvType>>().addAll(leftOp.ops).add(rightOp)
-                        .build()
+                val ops: List<Expr<BvType>> = ImmutableList.builder<Expr<BvType>>()
+                    .addAll(leftOp.ops).add(rightOp)
+                    .build()
                 BvExprs.Add(ops)
             } else {
                 BvExprs.Add(Arrays.asList(leftOp, rightOp))
@@ -417,7 +445,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitMultiplicativeExpr(ctx: MultiplicativeExprContext): Expr<out Type> {
             return if (ctx.ops.size >= 1) {
-                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
+                val opStream: Stream<Expr<*>> = ctx.ops.stream()
+                    .map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
                 val ops = opStream.collect(Collectors.toList())
                 val opsHead = ops[0]
                 val opsTail = ops.subList(1, ops.size)
@@ -428,7 +457,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         private fun createMutliplicativeExpr(opsHead: Expr<*>, opsTail: List<Expr<*>>,
-                                             oper: Token, ctx: MultiplicativeExprContext): Expr<out Type> {
+            oper: Token, ctx: MultiplicativeExprContext): Expr<out Type> {
             return if (opsTail.isEmpty()) {
                 opsHead
             } else {
@@ -440,7 +469,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         private fun createMultiplicativeSubExpr(leftOp: Expr<*>, rightOp: Expr<*>, oper: Token,
-                                                ctx: MultiplicativeExprContext): Expr<out Type> {
+            ctx: MultiplicativeExprContext): Expr<out Type> {
             return when (oper.type) {
                 MUL -> createMulExpr(leftOp, rightOp)
                 BV_MUL -> createBvMulExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
@@ -453,16 +482,21 @@ class ExpressionWrapper(scope: Scope, content: String) {
                 BV_UREM -> createBvURemExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
                 BV_SREM -> createBvSRemExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
                 FPREM -> FpExprs.Rem(leftOp as Expr<FpType?>, rightOp as Expr<FpType?>)
-                FPMUL -> FpExprs.Mul(getRoundingMode(ctx.oper.text), java.util.List.of(leftOp as Expr<FpType>, rightOp as Expr<FpType>))
-                FPDIV -> FpExprs.Div(getRoundingMode(ctx.oper.text), leftOp as Expr<FpType?>, rightOp as Expr<FpType?>)
+                FPMUL -> FpExprs.Mul(getRoundingMode(ctx.oper.text),
+                    java.util.List.of(leftOp as Expr<FpType>, rightOp as Expr<FpType>))
+
+                FPDIV -> FpExprs.Div(getRoundingMode(ctx.oper.text), leftOp as Expr<FpType?>,
+                    rightOp as Expr<FpType?>)
+
                 else -> throw ParseException(ctx, "Unknown operator '" + oper.text + "'")
             }
         }
 
         private fun createMulExpr(leftOp: Expr<*>, rightOp: Expr<*>): MulExpr<*> {
             return if (leftOp is MulExpr<*>) {
-                val ops: List<Expr<*>> = ImmutableList.builder<Expr<*>>().addAll(leftOp.ops).add(rightOp)
-                        .build()
+                val ops: List<Expr<*>> = ImmutableList.builder<Expr<*>>().addAll(leftOp.ops)
+                    .add(rightOp)
+                    .build()
                 AbstractExprs.Mul(ops)
             } else {
                 AbstractExprs.Mul(leftOp, rightOp)
@@ -471,8 +505,9 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         private fun createBvMulExpr(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvMulExpr {
             return if (leftOp is BvMulExpr) {
-                val ops: List<Expr<BvType>> = ImmutableList.builder<Expr<BvType>>().addAll(leftOp.ops).add(rightOp)
-                        .build()
+                val ops: List<Expr<BvType>> = ImmutableList.builder<Expr<BvType>>()
+                    .addAll(leftOp.ops).add(rightOp)
+                    .build()
                 BvExprs.Mul(ops)
             } else {
                 BvExprs.Mul(Arrays.asList(leftOp, rightOp))
@@ -514,7 +549,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
         ////
         override fun visitBvConcatExpr(ctx: BvConcatExprContext): Expr<out Type> {
             return if (ctx.ops.size >= 1) {
-                val opStream: Stream<Expr<*>> = ctx.ops.stream().map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
+                val opStream: Stream<Expr<*>> = ctx.ops.stream()
+                    .map(Function { op: ExprContext -> op.accept<Expr<*>>(this) })
                 val ops = opStream.collect(Collectors.toList())
                 val opsHead = ops[0]
                 val opsTail = ops.subList(1, ops.size)
@@ -525,7 +561,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         private fun createConcatExpr(opsHead: Expr<*>, opsTail: List<Expr<*>>,
-                                     oper: Token): Expr<out Type> {
+            oper: Token): Expr<out Type> {
             return if (opsTail.isEmpty()) {
                 opsHead
             } else {
@@ -536,7 +572,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
             }
         }
 
-        private fun createConcatSubExpr(leftOp: Expr<*>, rightOp: Expr<*>, oper: Token): Expr<out Type> {
+        private fun createConcatSubExpr(leftOp: Expr<*>, rightOp: Expr<*>,
+            oper: Token): Expr<out Type> {
             return when (oper.type) {
                 BV_CONCAT -> createBvConcatExpr(TypeUtils.castBv(leftOp), TypeUtils.castBv(rightOp))
                 else -> throw AssertionError()
@@ -545,8 +582,9 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         private fun createBvConcatExpr(leftOp: Expr<BvType>, rightOp: Expr<BvType>): BvConcatExpr {
             return if (leftOp is BvConcatExpr) {
-                val ops: List<Expr<BvType>> = ImmutableList.builder<Expr<BvType>>().addAll(leftOp.ops).add(rightOp)
-                        .build()
+                val ops: List<Expr<BvType>> = ImmutableList.builder<Expr<BvType>>()
+                    .addAll(leftOp.ops).add(rightOp)
+                    .build()
                 BvExprs.Concat(ops)
             } else {
                 BvExprs.Concat(Arrays.asList(leftOp, rightOp))
@@ -557,8 +595,12 @@ class ExpressionWrapper(scope: Scope, content: String) {
             return if (ctx.rightOp != null) {
                 val extendType = BvExprs.BvType(ctx.rightOp.size.getText().toInt())
                 when (ctx.oper.getType()) {
-                    BV_ZERO_EXTEND -> BvExprs.ZExt(TypeUtils.castBv(ctx.leftOp.accept<Expr<*>>(this)), extendType)
-                    BV_SIGN_EXTEND -> BvExprs.SExt(TypeUtils.castBv(ctx.leftOp.accept<Expr<*>>(this)), extendType)
+                    BV_ZERO_EXTEND -> BvExprs.ZExt(
+                        TypeUtils.castBv(ctx.leftOp.accept<Expr<*>>(this)), extendType)
+
+                    BV_SIGN_EXTEND -> BvExprs.SExt(
+                        TypeUtils.castBv(ctx.leftOp.accept<Expr<*>>(this)), extendType)
+
                     else -> throw AssertionError()
                 }
             } else {
@@ -575,11 +617,21 @@ class ExpressionWrapper(scope: Scope, content: String) {
                     MINUS -> AbstractExprs.Neg(op)
                     FP_ABS -> FpExprs.Abs(op as Expr<FpType?>)
                     FP_IS_NAN -> FpExprs.IsNan(op as Expr<FpType?>)
-                    FPROUNDTOINT -> FpExprs.RoundToIntegral(getRoundingMode(ctx.oper.text), op as Expr<FpType?>)
+                    FPROUNDTOINT -> FpExprs.RoundToIntegral(getRoundingMode(ctx.oper.text),
+                        op as Expr<FpType?>)
+
                     FPSQRT -> FpExprs.Sqrt(getRoundingMode(ctx.oper.text), op as Expr<FpType?>)
-                    FPTOFP -> FpExprs.ToFp(getRoundingMode(ctx.oper.text), op as Expr<FpType?>, getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText()))
-                    FPTOBV -> FpExprs.ToBv(getRoundingMode(ctx.oper.text), op as Expr<FpType?>, getBvSize(ctx.oper.getText()), isSignedBv(ctx.oper.getText()))
-                    FP_FROM_BV -> FpExprs.FromBv(getRoundingMode(ctx.oper.text), op as Expr<BvType?>, FpType.of(getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText())), isSignedFp(ctx.oper.getText()))
+                    FPTOFP -> FpExprs.ToFp(getRoundingMode(ctx.oper.text), op as Expr<FpType?>,
+                        getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText()))
+
+                    FPTOBV -> FpExprs.ToBv(getRoundingMode(ctx.oper.text), op as Expr<FpType?>,
+                        getBvSize(ctx.oper.getText()), isSignedBv(ctx.oper.getText()))
+
+                    FP_FROM_BV -> FpExprs.FromBv(getRoundingMode(ctx.oper.text),
+                        op as Expr<BvType?>,
+                        FpType.of(getExp(ctx.oper.getText()), getSignificand(ctx.oper.getText())),
+                        isSignedFp(ctx.oper.getText()))
+
                     FPNEG -> FpExprs.Neg(op as Expr<FpType?>)
                     FPPOS -> FpExprs.Pos(op as Expr<FpType?>)
                     BV_POS -> BvExprs.Pos(op as Expr<BvType>)
@@ -649,7 +701,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         override fun visitFunctionCall(ctx: FunctionCallContext): Expr<out Type> {
-            return if(ctx.op != null) {
+            return if (ctx.op != null) {
                 throw UnsupportedOperationException("Function application not yet supported.")
             } else {
                 visitChildren(ctx)
@@ -657,28 +709,28 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         override fun visitArrayRead(ctx: ArrayReadContext): Expr<out Type> {
-            return if(ctx.array != null) {
+            return if (ctx.array != null) {
                 ArrayReadExpr.create<Type, Type>(
-                        ctx.array.accept(this),
-                        ctx.index.accept(this))
+                    ctx.array.accept(this),
+                    ctx.index.accept(this))
             } else {
                 visitChildren(ctx)
             }
         }
 
         override fun visitArrayWrite(ctx: ArrayWriteContext): Expr<out Type> {
-            return if(ctx.array != null) {
+            return if (ctx.array != null) {
                 ArrayWriteExpr.create<Type, Type>(
-                        ctx.array.accept(this),
-                        ctx.index.accept(this),
-                        ctx.elem.accept(this))
+                    ctx.array.accept(this),
+                    ctx.index.accept(this),
+                    ctx.elem.accept(this))
             } else {
                 visitChildren(ctx)
             }
         }
 
         override fun visitPrimeExpr(ctx: PrimeExprContext): Expr<out Type> {
-            return if(ctx.op != null) {
+            return if (ctx.op != null) {
                 Exprs.Prime(ctx.op.accept(this))
             } else {
                 visitChildren(ctx)
@@ -686,10 +738,11 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         override fun visitBvExtract(ctx: BvExtractContext): Expr<out Type> {
-            return if(ctx.op != null) {
+            return if (ctx.op != null) {
                 val op = ctx.op.accept(this)
                 val bitvec = TypeUtils.castBv(op)
-                return BvExprs.Extract(bitvec, Int(ctx.from.getText()), IntExprs.Int(ctx.until.getText()))
+                return BvExprs.Extract(bitvec, Int(ctx.from.getText()),
+                    IntExprs.Int(ctx.until.getText()))
             } else {
                 visitChildren(ctx)
             }
@@ -724,22 +777,26 @@ class ExpressionWrapper(scope: Scope, content: String) {
 
         override fun visitArrLitExpr(ctx: ArrLitExprContext): Expr<out Type> {
             Preconditions.checkNotNull<ExprContext>(ctx.elseExpr)
-            val indexType = if(ctx.indexExpr.size > 0) ctx.indexExpr[0].accept(this).type else Int()
+            val indexType = if (ctx.indexExpr.size > 0) ctx.indexExpr[0].accept(
+                this).type else Int()
             val elseElem = ctx.elseExpr.accept(this)
             val valueType = elseElem.type
             val elems = ctx.indexExpr.mapIndexed { idx, it ->
                 Tuple2.of(it.accept(this), ctx.valueExpr[idx].accept(this))
             }
-            return ExprUtils.simplify(ArrayInitExpr.create<Type, Type>(elems, elseElem, ArrayType.of(indexType, valueType)))
+            return ExprUtils.simplify(ArrayInitExpr.create<Type, Type>(elems, elseElem,
+                ArrayType.of(indexType, valueType)))
         }
 
         override fun visitBvLitExpr(ctx: BvLitExprContext): Expr<out Type> {
-            val sizeAndContent: Array<String> = ctx.bv.getText().split("['#]".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            val content = if(sizeAndContent.size == 2) sizeAndContent[1] else sizeAndContent[0]
+            val sizeAndContent: Array<String> = ctx.bv.getText().split("['#]".toRegex())
+                .dropLastWhile { it.isEmpty() }.toTypedArray()
+            val content = if (sizeAndContent.size == 2) sizeAndContent[1] else sizeAndContent[0]
             val value: BooleanArray = if (content.startsWith("b")) {
                 decodeBinaryBvContent(content.substring(1))
             } else if (content.startsWith("d")) {
-                check(sizeAndContent.size == 2) { "Decimal value is only parseable if size is given." }
+                check(
+                    sizeAndContent.size == 2) { "Decimal value is only parseable if size is given." }
                 decodeDecimalBvContent(content.substring(1), sizeAndContent[0].toInt())
             } else if (content.startsWith("x")) {
                 decodeHexadecimalBvContent(content.substring(1))
@@ -759,7 +816,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
                 when (lit.toCharArray()[i]) {
                     '0' -> value[i] = false
                     '1' -> value[i] = true
-                    else -> throw IllegalArgumentException("Binary literal can contain only 0 and 1")
+                    else -> throw IllegalArgumentException(
+                        "Binary literal can contain only 0 and 1")
                 }
             }
             return value
@@ -768,9 +826,10 @@ class ExpressionWrapper(scope: Scope, content: String) {
         private fun decodeDecimalBvContent(lit: String, size: Int): BooleanArray {
             var value = BigInteger(lit)
             Preconditions.checkArgument(
-                    value.compareTo(BigInteger.TWO.pow(size - 1).multiply(BigInteger.valueOf(-1))) >= 0 &&
-                            value.compareTo(BigInteger.TWO.pow(size)) < 0,
-                    "Decimal literal is not in range"
+                value.compareTo(
+                    BigInteger.TWO.pow(size - 1).multiply(BigInteger.valueOf(-1))) >= 0 &&
+                    value.compareTo(BigInteger.TWO.pow(size)) < 0,
+                "Decimal literal is not in range"
             )
             if (value.compareTo(BigInteger.ZERO) < 0) {
                 value = value.add(BigInteger.TWO.pow(size))
@@ -807,7 +866,8 @@ class ExpressionWrapper(scope: Scope, content: String) {
         override fun visitIdExpr(ctx: IdExprContext): RefExpr<*> {
             val optSymbol = currentScope.resolve(ctx.id.getText())
             if (optSymbol.isEmpty) {
-                throw ParseException(ctx, "Identifier '" + ctx.id.getText() + "' cannot be resolved")
+                throw ParseException(ctx,
+                    "Identifier '" + ctx.id.getText() + "' cannot be resolved")
             }
             val symbol = optSymbol.get()
             val decl = env.eval(symbol) as Decl<*>

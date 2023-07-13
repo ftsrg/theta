@@ -25,11 +25,12 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 
 class DeterministicPass : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["normal"])
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
-            if(edge.label is NondetLabel) {
+            if (edge.label is NondetLabel) {
                 builder.removeEdge(edge)
                 for (label in edge.label.labels) {
                     builder.addEdge(edge.withLabel(label))

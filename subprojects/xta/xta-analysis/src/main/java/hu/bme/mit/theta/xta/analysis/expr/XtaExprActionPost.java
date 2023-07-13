@@ -7,7 +7,9 @@ import hu.bme.mit.theta.xta.analysis.XtaDataAction;
 
 public class XtaExprActionPost implements ExprActionPost<XtaAction> {
     private final QuantifiedExprActionPost<XtaDataAction> exprActionPost = new QuantifiedExprActionPost<>();
-    private XtaExprActionPost() {}
+
+    private XtaExprActionPost() {
+    }
 
     public static XtaExprActionPost create() {
         return new XtaExprActionPost();

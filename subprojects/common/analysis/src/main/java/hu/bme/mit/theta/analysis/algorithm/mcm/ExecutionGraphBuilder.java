@@ -27,7 +27,8 @@ import java.util.Map;
 
 public class ExecutionGraphBuilder {
     private final Datalog program;
-    private final Datalog.Relation initWrite, poRaw, /*TODO: remove */poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data, addr, ctrl, rmw, amo;
+    private final Datalog.Relation initWrite, poRaw, /*TODO: remove */
+            poCalculated, intRaw, intCalculated, locRaw, locCalculated, R, W, F, U, data, addr, ctrl, rmw, amo;
     private final Map<String, Datalog.Relation> tags;
     private int lastCnt = 1;
 
@@ -43,7 +44,7 @@ public class ExecutionGraphBuilder {
         U = program.createRelation("U", 1);
         data = program.createRelation("data", 2);
         addr = program.createRelation("addr", 2);
-        ctrl  = program.createRelation("ctrl", 2);
+        ctrl = program.createRelation("ctrl", 2);
         rmw = program.createRelation("rmw", 2);
         amo = program.createRelation("amo", 2);
         this.tags = new LinkedHashMap<>();
@@ -56,13 +57,14 @@ public class ExecutionGraphBuilder {
     private static TupleN<DatalogArgument> arg(int i, int j) {
         return TupleN.of(GenericDatalogArgument.createArgument(i), GenericDatalogArgument.createArgument(j));
     }
+
     private static TupleN<DatalogArgument> arg(int i) {
         return TupleN.of(GenericDatalogArgument.createArgument(i));
     }
 
     private int addEvent(int processId, int lastNode, final Collection<String> tags) {
         final int id = lastCnt++;
-        if(lastNode > 0) {
+        if (lastNode > 0) {
             poRaw.addFact(arg(lastNode, id));
         } else {
             for (TupleN<DatalogArgument> element : initWrite.getElements()) {

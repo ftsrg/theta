@@ -40,11 +40,11 @@ public final class ExplLattice implements Lattice<ExplState> {
 
         declToExpr1.forEach(valBuilder::put);
 
-        for(Decl<?> decl : declToExpr2.keySet()){
+        for (Decl<?> decl : declToExpr2.keySet()) {
             LitExpr<?> value = declToExpr2.get(decl);
-            if(!declToExpr1.containsKey(decl)){
+            if (!declToExpr1.containsKey(decl)) {
                 valBuilder.put(decl, value);
-            } else if(!declToExpr1.get(decl).equals(value)){
+            } else if (!declToExpr1.get(decl).equals(value)) {
                 return ExplState.bottom();
             }
         }
@@ -57,9 +57,9 @@ public final class ExplLattice implements Lattice<ExplState> {
         final Map<Decl<?>, LitExpr<?>> declToExpr1 = state1.toMap();
         final Map<Decl<?>, LitExpr<?>> declToExpr2 = state2.toMap();
 
-        for(Decl<?> decl : declToExpr1.keySet()){
+        for (Decl<?> decl : declToExpr1.keySet()) {
             LitExpr<?> value = declToExpr1.get(decl);
-            if(declToExpr2.containsKey(decl) && declToExpr2.get(decl).equals(value)){
+            if (declToExpr2.containsKey(decl) && declToExpr2.get(decl).equals(value)) {
                 valBuilder.put(decl, value);
             }
         }

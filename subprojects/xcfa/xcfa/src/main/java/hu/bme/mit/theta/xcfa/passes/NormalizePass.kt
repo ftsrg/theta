@@ -25,6 +25,7 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 
 class NormalizePass : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
@@ -43,13 +44,13 @@ class NormalizePass : ProcedurePass {
     }
 
     private fun normalize(label: XcfaLabel, collector: MutableList<MutableList<XcfaLabel>>) {
-        when(label) {
-            is SequenceLabel -> label.labels.forEach {normalize(it, collector)}
+        when (label) {
+            is SequenceLabel -> label.labels.forEach { normalize(it, collector) }
             is NondetLabel -> {
                 val labelList = label.labels.toList()
-                ArrayList(collector).forEach {list ->
+                ArrayList(collector).forEach { list ->
                     for ((i, xcfaLabel) in labelList.withIndex()) {
-                        if(i == labelList.size - 1) {
+                        if (i == labelList.size - 1) {
                             list.add(xcfaLabel)
                         } else {
                             val newList = ArrayList(list)
@@ -59,8 +60,9 @@ class NormalizePass : ProcedurePass {
                     }
                 }
             }
-            is NopLabel -> { }
-            else -> collector.forEach {it.add(label)}
+
+            is NopLabel -> {}
+            else -> collector.forEach { it.add(label) }
         }
     }
 }

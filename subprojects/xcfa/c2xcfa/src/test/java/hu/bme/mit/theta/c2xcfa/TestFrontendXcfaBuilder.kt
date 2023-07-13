@@ -24,41 +24,42 @@ import java.io.IOException
 
 @RunWith(Parameterized::class)
 class TestFrontendXcfaBuilder {
+
     @Parameterized.Parameter(0)
     lateinit var filepath: String
 
     companion object {
+
         @JvmStatic
         @Parameterized.Parameters
         fun data(): Collection<Array<Any>> {
             return listOf(
-                    arrayOf("/00assignment.c"),
-                    arrayOf("/01cast.c"),
-                    arrayOf("/02types.c"),
-                    arrayOf("/03bitwise.c"),
-                    arrayOf("/04real.c"),
-                    arrayOf("/05math.c"),
-                    arrayOf("/06arrays.c"),
-                    arrayOf("/07arrayinit.c"),
-                    arrayOf("/08vararray.c"),
-                    arrayOf("/09struct.c"),
-                    arrayOf("/10ptr.c"),
-                    arrayOf("/11ptrs.c"),
-                    arrayOf("/12ptrtypes.c"),
-                    arrayOf("/13typedef.c"),
-                    arrayOf("/14ushort.c"),
-                    arrayOf("/15addition.c"),
-                    arrayOf("/16loop.c"),
+                arrayOf("/00assignment.c"),
+                arrayOf("/01cast.c"),
+                arrayOf("/02types.c"),
+                arrayOf("/03bitwise.c"),
+                arrayOf("/04real.c"),
+                arrayOf("/05math.c"),
+                arrayOf("/06arrays.c"),
+                arrayOf("/07arrayinit.c"),
+                arrayOf("/08vararray.c"),
+                arrayOf("/09struct.c"),
+                arrayOf("/10ptr.c"),
+                arrayOf("/11ptrs.c"),
+                arrayOf("/12ptrtypes.c"),
+                arrayOf("/13typedef.c"),
+                arrayOf("/14ushort.c"),
+                arrayOf("/15addition.c"),
+                arrayOf("/16loop.c"),
 //                    arrayOf("/17recursive.c"),
-                    arrayOf("/18multithread.c"),
-                    arrayOf("/19dportest.c"),
-                    arrayOf("/20testinline.c"),
-                    arrayOf("/21namecollision.c"),
-                    arrayOf("/22nondet.c"),
+                arrayOf("/18multithread.c"),
+                arrayOf("/19dportest.c"),
+                arrayOf("/20testinline.c"),
+                arrayOf("/21namecollision.c"),
+                arrayOf("/22nondet.c"),
             )
         }
     }
-
 
     @Test
     @Throws(IOException::class)

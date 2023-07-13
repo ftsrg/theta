@@ -47,11 +47,12 @@ import hu.bme.mit.theta.xcfa.startsAtomic
 import java.util.*
 import java.util.function.Predicate
 
-open class XcfaAnalysis<S: ExprState, P: Prec> (
-        private val corePartialOrd: PartialOrd<XcfaState<S>>,
-        private val coreInitFunc: InitFunc<XcfaState<S>, XcfaPrec<P>>,
-        private val coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
+open class XcfaAnalysis<S : ExprState, P : Prec>(
+    private val corePartialOrd: PartialOrd<XcfaState<S>>,
+    private val coreInitFunc: InitFunc<XcfaState<S>, XcfaPrec<P>>,
+    private val coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
 ) : Analysis<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
+
     override fun getPartialOrd(): PartialOrd<XcfaState<S>> = corePartialOrd
     override fun getInitFunc(): InitFunc<XcfaState<S>, XcfaPrec<P>> = coreInitFunc
     override fun getTransFunc(): TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>> = coreTransFunc
@@ -59,54 +60,62 @@ open class XcfaAnalysis<S: ExprState, P: Prec> (
 
 /// Common
 private var tempCnt: Int = 0
-fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> {
-    s -> s.processes.map {
-            proc -> if (proc.value.locs.peek().final) {
-                        listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), SequenceLabel(listOf(
-                            proc.value.paramStmts.peek().second,
-                            ReturnLabel(proc.value.returnStmts.peek()),
-                        )))))
-                    } else if (!proc.value.paramsInitialized) {
-                        listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), proc.value.paramStmts.peek().first)))
-                    } else {
-                        proc.value.locs.peek().outgoingEdges.map { edge ->
-                            val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
-                            val flatLabels = newLabel.getFlatLabels()
-                            if(flatLabels.any {it is InvokeLabel || it is StartLabel}) {
-                                val newNewLabel = SequenceLabel(flatLabels.map { label ->
-                                    if (label is InvokeLabel) {
-                                        val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
-                                            ?: error("No such method ${label.name}.")
-                                        val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-                                        SequenceLabel(listOf(procedure.params.withIndex().filter { it.value.second != ParamDirection.OUT }.map { iVal ->
-                                            val originalVar = iVal.value.first
-                                            val tempVar = Var("tmp${tempCnt++}_" + originalVar.name, originalVar.type)
-                                            lookup[originalVar] = tempVar
-                                            StmtLabel(
-                                                Stmts.Assign(
-                                                    TypeUtils.cast(tempVar, tempVar.type),
-                                                    TypeUtils.cast(label.params[iVal.index], tempVar.type)), metadata = label.metadata)
-                                        }, listOf(label.copy(tempLookup = lookup))).flatten())
-                                    } else if (label is StartLabel){
-                                        val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
-                                                ?: error("No such method ${label.name}.")
-                                        val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-                                        SequenceLabel(listOf(procedure.params.withIndex().filter { it.value.second != ParamDirection.OUT }.map { iVal ->
-                                            val originalVar = iVal.value.first
-                                            val tempVar = Var("tmp${tempCnt++}_" + originalVar.name, originalVar.type)
-                                            lookup[originalVar] = tempVar
-                                            StmtLabel(
-                                                    Stmts.Assign(
-                                                            TypeUtils.cast(tempVar, tempVar.type),
-                                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)), metadata = label.metadata)
-                                        }, listOf(label.copy(tempLookup = lookup))).flatten())
-                                    } else label
-                                })
-                                XcfaAction(proc.key, edge.withLabel(newNewLabel))
-                            } else
-                                XcfaAction(proc.key, edge.withLabel(newLabel))
-                        }
-                    }
+fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
+    s.processes.map { proc ->
+        if (proc.value.locs.peek().final) {
+            listOf(XcfaAction(proc.key,
+                XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), SequenceLabel(listOf(
+                    proc.value.paramStmts.peek().second,
+                    ReturnLabel(proc.value.returnStmts.peek()),
+                )))))
+        } else if (!proc.value.paramsInitialized) {
+            listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(),
+                proc.value.paramStmts.peek().first)))
+        } else {
+            proc.value.locs.peek().outgoingEdges.map { edge ->
+                val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
+                val flatLabels = newLabel.getFlatLabels()
+                if (flatLabels.any { it is InvokeLabel || it is StartLabel }) {
+                    val newNewLabel = SequenceLabel(flatLabels.map { label ->
+                        if (label is InvokeLabel) {
+                            val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                                ?: error("No such method ${label.name}.")
+                            val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+                            SequenceLabel(listOf(procedure.params.withIndex()
+                                .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                                val originalVar = iVal.value.first
+                                val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
+                                    originalVar.type)
+                                lookup[originalVar] = tempVar
+                                StmtLabel(
+                                    Stmts.Assign(
+                                        TypeUtils.cast(tempVar, tempVar.type),
+                                        TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                    metadata = label.metadata)
+                            }, listOf(label.copy(tempLookup = lookup))).flatten())
+                        } else if (label is StartLabel) {
+                            val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                                ?: error("No such method ${label.name}.")
+                            val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+                            SequenceLabel(listOf(procedure.params.withIndex()
+                                .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                                val originalVar = iVal.value.first
+                                val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
+                                    originalVar.type)
+                                lookup[originalVar] = tempVar
+                                StmtLabel(
+                                    Stmts.Assign(
+                                        TypeUtils.cast(tempVar, tempVar.type),
+                                        TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                    metadata = label.metadata)
+                            }, listOf(label.copy(tempLookup = lookup))).flatten())
+                        } else label
+                    })
+                    XcfaAction(proc.key, edge.withLabel(newNewLabel))
+                } else
+                    XcfaAction(proc.key, edge.withLabel(newLabel))
+            }
+        }
     }.flatten().toSet()
 }
 
@@ -124,9 +133,11 @@ enum class ErrorDetection {
     NO_ERROR
 }
 
-fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<out ExprState>> = when(errorDetection) {
+fun getXcfaErrorPredicate(
+    errorDetection: ErrorDetection): Predicate<XcfaState<out ExprState>> = when (errorDetection) {
     ErrorDetection.ERROR_LOCATION ->
-        Predicate<XcfaState<out ExprState>>{ s -> s.processes.any { it.value.locs.peek().error }}
+        Predicate<XcfaState<out ExprState>> { s -> s.processes.any { it.value.locs.peek().error } }
+
     ErrorDetection.DATA_RACE -> {
         Predicate<XcfaState<out ExprState>> { s ->
             val xcfa = s.xcfa!!
@@ -149,81 +160,104 @@ fun getXcfaErrorPredicate(errorDetection: ErrorDetection): Predicate<XcfaState<o
             false
         }
     }
-    ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out ExprState>>{ false }
+
+    ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out ExprState>> { false }
 }
 
-fun <S: ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
-        PartialOrd<XcfaState<S>>{s1, s2 -> s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)}
+fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
+    PartialOrd<XcfaState<S>> { s1, s2 ->
+        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(
+            s1.sGlobal, s2.sGlobal)
+    }
 
-private fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaArgBuilder(
-        analysis: Analysis<S, XcfaAction, P>,
-        lts: LTS<XcfaState<out ExprState>, XcfaAction>,
-        errorDetection: ErrorDetection)
-: ArgBuilder<S, XcfaAction, P> =
-        ArgBuilder.create(
-                lts,
-                analysis,
-                getXcfaErrorPredicate(errorDetection)
-        )
+private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
+    analysis: Analysis<S, XcfaAction, P>,
+    lts: LTS<XcfaState<out ExprState>, XcfaAction>,
+    errorDetection: ErrorDetection)
+    : ArgBuilder<S, XcfaAction, P> =
+    ArgBuilder.create(
+        lts,
+        analysis,
+        getXcfaErrorPredicate(errorDetection)
+    )
 
-fun <S: XcfaState<out ExprState>, P: XcfaPrec<out Prec>> getXcfaAbstractor(
-        analysis: Analysis<S, XcfaAction, P>,
-        waitlist: Waitlist<*>,
-        stopCriterion: StopCriterion<*, *>,
-        logger: Logger,
-        lts: LTS<XcfaState<out ExprState>, XcfaAction>,
-        errorDetection: ErrorDetection
+fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
+    analysis: Analysis<S, XcfaAction, P>,
+    waitlist: Waitlist<*>,
+    stopCriterion: StopCriterion<*, *>,
+    logger: Logger,
+    lts: LTS<XcfaState<out ExprState>, XcfaAction>,
+    errorDetection: ErrorDetection
 ): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
-        BasicAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
-                .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
-                .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger).build() // TODO: can we do this nicely?
-
-
+    BasicAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
+        .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
+        .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
+        .build() // TODO: can we do this nicely?
 
 /// EXPL
 
-private fun getExplXcfaInitFunc(xcfa: XCFA, solver: Solver): (XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
+private fun getExplXcfaInitFunc(xcfa: XCFA,
+    solver: Solver): (XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
-        Pair(i, XcfaProcessState(initLocStack, prefix = "T$i", varLookup = LinkedList(listOf(createLookup(it.first, "T$i", "")))))
+        Pair(i, XcfaProcessState(initLocStack, prefix = "T$i",
+            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", "")))))
     }.toMap()
-    return { p -> ExplInitFunc.create(solver, True()).getInitStates(p.p).map { XcfaState(xcfa, processInitState, it) } }
-}
-private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
-    val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
-    return { s, a, p ->
-        val (newSt, newAct) = s.apply(a)
-        explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(listOf(s.processes.map { it.value.varLookup }.flatten(), listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
+    return { p ->
+        ExplInitFunc.create(solver, True()).getInitStates(p.p)
+            .map { XcfaState(xcfa, processInitState, it) }
     }
 }
 
-class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int, partialOrd: PartialOrd<XcfaState<ExplState>>) : XcfaAnalysis<ExplState, ExplPrec>(
-        corePartialOrd = partialOrd,
-        coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
-        coreTransFunc = getExplXcfaTransFunc(solver, maxEnum)
+private fun getExplXcfaTransFunc(solver: Solver,
+    maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
+    val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
+    return { s, a, p ->
+        val (newSt, newAct) = s.apply(a)
+        explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
+            listOf(s.processes.map { it.value.varLookup }.flatten(),
+                listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
+    }
+}
+
+class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int,
+    partialOrd: PartialOrd<XcfaState<ExplState>>) : XcfaAnalysis<ExplState, ExplPrec>(
+    corePartialOrd = partialOrd,
+    coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
+    coreTransFunc = getExplXcfaTransFunc(solver, maxEnum)
 )
 
 /// PRED
 
-private fun getPredXcfaInitFunc(xcfa: XCFA, predAbstractor: PredAbstractor): (XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
+private fun getPredXcfaInitFunc(xcfa: XCFA,
+    predAbstractor: PredAbstractor): (XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
-        Pair(i, XcfaProcessState(initLocStack, prefix = "T$i", varLookup = LinkedList(listOf(createLookup(it.first, "T$i", "")))))
+        Pair(i, XcfaProcessState(initLocStack, prefix = "T$i",
+            varLookup = LinkedList(listOf(createLookup(it.first, "T$i", "")))))
     }.toMap()
-    return { p -> PredInitFunc.create(predAbstractor, True()).getInitStates(p.p).map { XcfaState(xcfa, processInitState, it) } }
-}
-private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor): (XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
-    val predTransFunc = PredTransFunc.create<XcfaAction>(predAbstractor)
-    return { s, a, p ->
-        val (newSt, newAct) = s.apply(a)
-        predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(listOf(s.processes.map { it.value.varLookup }.flatten(), listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
+    return { p ->
+        PredInitFunc.create(predAbstractor, True()).getInitStates(p.p)
+            .map { XcfaState(xcfa, processInitState, it) }
     }
 }
 
-class PredXcfaAnalaysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor, partialOrd: PartialOrd<XcfaState<PredState>>) : XcfaAnalysis<PredState, PredPrec>(
-        corePartialOrd = partialOrd,
-        coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
-        coreTransFunc = getPredXcfaTransFunc(predAbstractor)
+private fun getPredXcfaTransFunc(
+    predAbstractor: PredAbstractors.PredAbstractor): (XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
+    val predTransFunc = PredTransFunc.create<XcfaAction>(predAbstractor)
+    return { s, a, p ->
+        val (newSt, newAct) = s.apply(a)
+        predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
+            listOf(s.processes.map { it.value.varLookup }.flatten(),
+                listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
+    }
+}
+
+class PredXcfaAnalaysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor,
+    partialOrd: PartialOrd<XcfaState<PredState>>) : XcfaAnalysis<PredState, PredPrec>(
+    corePartialOrd = partialOrd,
+    coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
+    coreTransFunc = getPredXcfaTransFunc(predAbstractor)
 )

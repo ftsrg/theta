@@ -19,11 +19,11 @@ import java.io.PrintStream;
 
 public final class ConsoleLabelledLogger implements Logger {
 
-	private static final PrintStream CONSOLE = System.out;
+    private static final PrintStream CONSOLE = System.out;
 
-	@Override
-	public Logger write(Level level, String pattern, Object... objects) {
-		CONSOLE.printf(level + "\t{" + pattern.replace("}", "]") + "}", objects);
-		return this;
-	}
+    @Override
+    public Logger write(Level level, String pattern, Object... objects) {
+        CONSOLE.printf(level + "\t{" + pattern.replace("}", "]") + "}", objects);
+        return this;
+    }
 }

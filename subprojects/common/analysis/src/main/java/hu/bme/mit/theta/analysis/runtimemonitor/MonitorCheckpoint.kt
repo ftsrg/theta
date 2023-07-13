@@ -9,7 +9,8 @@ package hu.bme.mit.theta.analysis.runtimemonitor
  * 3, Register your monitors to it so they are executed when the checkpoint is executed: (MonitorCheckpoint.register)
  */
 class MonitorCheckpoint internal constructor(private val name: String) {
-    private val registeredMonitors : HashSet<Monitor> = HashSet()
+
+    private val registeredMonitors: HashSet<Monitor> = HashSet()
 
     fun registerMonitor(m: Monitor) {
         registeredMonitors.add(m)
@@ -20,12 +21,13 @@ class MonitorCheckpoint internal constructor(private val name: String) {
     }
 
     companion object Checkpoints {
+
         // Add any new checkpoints here
         private val checkpointNames = setOf(
             "CegarChecker.unsafeARG",
         )
 
-        private val registeredCheckpoints : HashMap<String, MonitorCheckpoint> = HashMap()
+        private val registeredCheckpoints: HashMap<String, MonitorCheckpoint> = HashMap()
 
         init {
             checkpointNames.forEach { registeredCheckpoints.put(it, MonitorCheckpoint(it)) }
@@ -39,7 +41,7 @@ class MonitorCheckpoint internal constructor(private val name: String) {
 
         fun execute(name: String) {
             assert(registeredCheckpoints.contains(name))
-                { "Checkpoint name $name was not registered (add it in MonitorCheckpoint.kt)" } // see checkpointNames above
+            { "Checkpoint name $name was not registered (add it in MonitorCheckpoint.kt)" } // see checkpointNames above
             registeredCheckpoints[name]!!.executeCheckpoint()
         }
     }

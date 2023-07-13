@@ -96,7 +96,7 @@ public class ExecutionGraph {
             builder.getU().getElements().forEach(elem2 -> {
                 TupleN<Integer> tuple = tupleN(elem.get(0), elem2.get(0));
                 TupleN<DatalogArgument> tupleDA = TupleN.of(GenericDatalogArgument.createArgument(elem.get(0)), GenericDatalogArgument.createArgument(elem2.get(0)));
-                if(!intElements.contains(tupleDA)) {
+                if (!intElements.contains(tupleDA)) {
                     model.put(ext, tup(tuple), true);
                 }
             });
@@ -120,7 +120,7 @@ public class ExecutionGraph {
 
     public boolean nextSolution(final Collection<Map<Decl<?>, LitExpr<?>>> solutions) {
         model = store.createModel(staticOnlyCommit);
-        if(encodedRelationWrapper.getSolver().check().isSat()) {
+        if (encodedRelationWrapper.getSolver().check().isSat()) {
             solutions.add(Map.copyOf(encodedRelationWrapper.getSolver().getModel().toMap()));
             final EventConstantLookup rf = encodedRelationWrapper.getEventLookup("rf");
             final EventConstantLookup co = encodedRelationWrapper.getEventLookup("co");
@@ -129,13 +129,14 @@ public class ExecutionGraph {
             final List<Expr<BoolType>> subexprs = new ArrayList<>();
 
             rf.getAll().forEach((tuple, constDecl) -> {
-                if(lut.get(constDecl).equals(True())) {
+                if (lut.get(constDecl).equals(True())) {
                     model.put(this.rf, tup(tuple), TruthValue.TRUE);
                     subexprs.add(constDecl.getRef());
                 } else subexprs.add(Not(constDecl.getRef()));
             });
             co.getAll().forEach((tuple, constDecl) -> {
-                if(lut.get(constDecl).equals(True())) model.put(this.co, tup(tuple), TruthValue.TRUE);
+                if (lut.get(constDecl).equals(True()))
+                    model.put(this.co, tup(tuple), TruthValue.TRUE);
             });
 
             encodedRelationWrapper.getSolver().add(Not(And(subexprs)));
@@ -153,14 +154,14 @@ public class ExecutionGraph {
 
     private Tuple datalog2tup(final TupleN<DatalogArgument> from) {
         final int i = ((GenericDatalogArgument<Integer>) from.get(0)).getContent();
-        if(from.arity() == 1) return Tuple.of(i);
+        if (from.arity() == 1) return Tuple.of(i);
         final int j = ((GenericDatalogArgument<Integer>) from.get(1)).getContent();
         return Tuple.of(i, j);
     }
 
     private Tuple tup(final TupleN<Integer> from) {
         final int i = from.get(0);
-        if(from.arity() == 1) return Tuple.of(i);
+        if (from.arity() == 1) return Tuple.of(i);
         final int j = from.get(1);
         return Tuple.of(i, j);
     }
@@ -168,8 +169,8 @@ public class ExecutionGraph {
     private void encode() {
         final Cursor<Tuple, Boolean> allEvents = model.getAll(U);
         final List<Integer> idList = new ArrayList<>();
-        for(allEvents.move(); !allEvents.isTerminated(); allEvents.move()) {
-            if(allEvents.getValue()) idList.add(allEvents.getKey().get(0));
+        for (allEvents.move(); !allEvents.isTerminated(); allEvents.move()) {
+            if (allEvents.getValue()) idList.add(allEvents.getKey().get(0));
         }
 
         for (final MCMConstraint constraint : mcm.getConstraints()) {
@@ -226,7 +227,7 @@ public class ExecutionGraph {
         // encode missing relations
         encodedRelationWrapper.getNonEncoded().forEach((key, value) -> {
             final MCMRelation mcmRelation = mcm.getRelations().get(key);
-            if(mcmRelation != null && mcmRelation.getRule() == null) {
+            if (mcmRelation != null && mcmRelation.getRule() == null) {
                 final int arity = mcmRelation.getArity();
                 EventConstantLookup ecl = getOrCreate(encodedRelationWrapper, idList, key, arity == 1);
                 encodedRelationWrapper.setEncoded(ecl);
@@ -249,16 +250,16 @@ public class ExecutionGraph {
         for (final int i : idList) {
             List<Set<Integer>> collectors = new ArrayList<>();
             for (final int j : idList) {
-                if(model.get(rel, Tuple.of(i, j))) {
+                if (model.get(rel, Tuple.of(i, j))) {
                     boolean foundSet = false;
                     for (Set<Integer> integers : collectors) {
-                        if(model.get(_int, Tuple.of(j, integers.stream().findAny().get()))) {
+                        if (model.get(_int, Tuple.of(j, integers.stream().findAny().get()))) {
                             integers.add(j);
                             foundSet = true;
                             break;
                         }
                     }
-                    if(!foundSet) {
+                    if (!foundSet) {
                         Set<Integer> set = new LinkedHashSet<>();
                         set.add(j);
                         collectors.add(set);
@@ -268,7 +269,7 @@ public class ExecutionGraph {
                 }
             }
             for (Set<Integer> collector : collectors) {
-                if(collector.size() > 1) {
+                if (collector.size() > 1) {
                     encodedRelationWrapper.getSolver().add(Or(collector.stream().map(j -> enc.get(TupleN.of(i, j)).getRef()).collect(Collectors.toList())));
                 } else if (collector.size() > 0) {
                     encodedRelationWrapper.getSolver().add(enc.get(TupleN.of(i, collector.stream().findAny().get())).getRef());
@@ -283,7 +284,7 @@ public class ExecutionGraph {
             final String name,
             final boolean isUnary) {
         EventConstantLookup lookup = encodedRelationWrapper.getEventLookup(name);
-        if(lookup == null) {
+        if (lookup == null) {
             lookup = createDummyRelation(idList, name, isUnary);
             encodedRelationWrapper.addEvent(name, lookup);
         }
@@ -292,7 +293,7 @@ public class ExecutionGraph {
 
     private void encodeUnaryRelation(Relation<Boolean> rel, EncodedRelationWrapper encodedRelationWrapper, EventConstantLookup enc, int i) {
         encodedRelationWrapper.setEncoded(enc);
-        if(model.get(rel, Tuple.of(i))) {
+        if (model.get(rel, Tuple.of(i))) {
             encodedRelationWrapper.getSolver().add(enc.get(TupleN.of(i)).getRef());
         } else {
             encodedRelationWrapper.getSolver().add(Not(enc.get(TupleN.of(i)).getRef()));
@@ -303,7 +304,7 @@ public class ExecutionGraph {
         encodedRelationWrapper.setEncoded(enc);
         for (final int i : idList) {
             for (final int j : idList) {
-                if(model.get(rel, Tuple.of(i, j))) {
+                if (model.get(rel, Tuple.of(i, j))) {
                     encodedRelationWrapper.getSolver().add(enc.get(TupleN.of(i, j)).getRef());
                 } else {
                     encodedRelationWrapper.getSolver().add(Not(enc.get(TupleN.of(i, j)).getRef()));
@@ -315,10 +316,9 @@ public class ExecutionGraph {
     private EventConstantLookup createDummyRelation(List<Integer> idList, String name, boolean isUnary) {
         EventConstantLookup eventConstantLookup = new EventConstantLookup();
         for (final int i : idList) {
-            if(isUnary) {
+            if (isUnary) {
                 eventConstantLookup.add(TupleN.of(i), Const(name + "_" + i, Bool()));
-            }
-            else {
+            } else {
                 for (final int j : idList) {
                     eventConstantLookup.add(TupleN.of(i, j), Const(name + "_" + i + "_" + j, Bool()));
                 }
@@ -329,11 +329,11 @@ public class ExecutionGraph {
 
     private void addCoConstraints(EncodedRelationWrapper encodedRelationWrapper, List<Integer> idList, EventConstantLookup co, int i) {
         encodedRelationWrapper.setEncoded(co);
-        if(model.get(W, Tuple.of(i))) {
+        if (model.get(W, Tuple.of(i))) {
             final List<Expr<BoolType>> subexprs = new ArrayList<>();
             for (final int j : idList) {
-                if(model.get(W, Tuple.of(j)) && model.get(loc, Tuple.of(i, j))) {
-                    if(i == j) subexprs.add(Not(co.get(TupleN.of(i, j)).getRef()));
+                if (model.get(W, Tuple.of(j)) && model.get(loc, Tuple.of(i, j))) {
+                    if (i == j) subexprs.add(Not(co.get(TupleN.of(i, j)).getRef()));
                     else {
                         subexprs.add(Xor(co.get(TupleN.of(i, j)).getRef(), co.get(TupleN.of(j, i)).getRef()));
                         for (final int k : idList) {
@@ -359,13 +359,13 @@ public class ExecutionGraph {
 
     private void addRfConstraints(EncodedRelationWrapper encodedRelationWrapper, List<Integer> idList, EventConstantLookup rf, int i) {
         encodedRelationWrapper.setEncoded(rf);
-        if(model.get(R, Tuple.of(i))) {
+        if (model.get(R, Tuple.of(i))) {
             final List<Expr<BoolType>> subexprs = new ArrayList<>();
             for (final int j : idList) {
-                if(model.get(W, Tuple.of(j)) && model.get(loc, Tuple.of(i, j))) {
+                if (model.get(W, Tuple.of(j)) && model.get(loc, Tuple.of(i, j))) {
                     final List<Expr<BoolType>> innerSubexprs = new ArrayList<>();
                     for (final int k : idList) {
-                        if(model.get(W, Tuple.of(k)) && j != k) {
+                        if (model.get(W, Tuple.of(k)) && j != k) {
                             innerSubexprs.add(Not(rf.get(TupleN.of(k, i)).getRef()));
                         }
                     }
@@ -397,8 +397,8 @@ public class ExecutionGraph {
     private void printEvents(Map<Integer, VarDecl<?>> vars) {
         Cursor<Tuple, Boolean> all = model.getAll(U);
         all.move();
-        while(!all.isTerminated()) {
-            if(all.getValue()) {
+        while (!all.isTerminated()) {
+            if (all.getValue()) {
                 final int key = all.getKey().get(0);
                 final String name = whichEvent(all.getKey());
                 final String tags = collectTags(all.getKey());
@@ -412,27 +412,27 @@ public class ExecutionGraph {
     private String collectTags(Tuple key) {
         final List<String> ret = new ArrayList<>();
         tags.forEach((s, booleanRelation) -> {
-            if(model.get(booleanRelation, key)) ret.add(s);
+            if (model.get(booleanRelation, key)) ret.add(s);
         });
         final StringJoiner sj = new StringJoiner(", ", "[", "]");
         return sj.toString();
     }
 
     private String whichEvent(Tuple key) {
-        if(model.get(R, key)) return "R";
-        if(model.get(W, key)) return "W";
-        if(model.get(F, key)) return "F";
+        if (model.get(R, key)) return "R";
+        if (model.get(W, key)) return "W";
+        if (model.get(F, key)) return "F";
         throw new RuntimeException("Unsupported event type");
     }
 
     private void printBinaryRelation(Relation<Boolean> r, boolean constraint) {
         Cursor<Tuple, Boolean> all = model.getAll(r);
         all.move();
-        while(!all.isTerminated()) {
-            if(all.getValue()) {
+        while (!all.isTerminated()) {
+            if (all.getValue()) {
                 int source = all.getKey().get(0);
                 int target = all.getKey().get(1);
-                System.out.println(source + " -> " + target + "[label=\"" + r.getName() + "\"" + (constraint ? "" : ",constraint=false") +  "];");
+                System.out.println(source + " -> " + target + "[label=\"" + r.getName() + "\"" + (constraint ? "" : ",constraint=false") + "];");
             }
             all.move();
         }
@@ -441,11 +441,11 @@ public class ExecutionGraph {
     private void printBinaryCalculatedRelation(Relation<TruthValue> r, String color) {
         Cursor<Tuple, TruthValue> all = model.getAll(r);
         all.move();
-        while(!all.isTerminated()) {
+        while (!all.isTerminated()) {
             int source = all.getKey().get(0);
             int target = all.getKey().get(1);
             String name = "\"" + r.getName() + "\"";
-            if(all.getValue() == TruthValue.FALSE) name = "<s>\"" + r.getName() + "\"</s>";
+            if (all.getValue() == TruthValue.FALSE) name = "<s>\"" + r.getName() + "\"</s>";
             System.out.println(source + " -> " + target + "[label=" + name + ",constraint=false,color=" + color + "];");
             all.move();
         }
@@ -455,8 +455,8 @@ public class ExecutionGraph {
         final Cursor<Tuple, TruthValue> cursor = model.getAll(rf);
         cursor.move();
         final Collection<Tuple> ret = new ArrayList<>();
-        while(!cursor.isTerminated()) {
-            if(cursor.getValue().must()) {
+        while (!cursor.isTerminated()) {
+            if (cursor.getValue().must()) {
                 ret.add(cursor.getKey());
             }
             cursor.move();

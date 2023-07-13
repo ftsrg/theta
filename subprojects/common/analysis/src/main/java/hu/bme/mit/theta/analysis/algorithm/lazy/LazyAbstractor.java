@@ -137,8 +137,8 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
         }
 
         private AbstractorResult expand(final ArgNode<LazyState<FSConcr, FSAbstr>, A> node,
-                            final ARG<LazyState<FSConcr, FSAbstr>, A> arg,
-                            final LazyStatistics.Builder stats) {
+                                        final ARG<LazyState<FSConcr, FSAbstr>, A> arg,
+                                        final LazyStatistics.Builder stats) {
             stats.startExpanding();
             final LazyState<FSConcr, FSAbstr> state = node.getState();
 

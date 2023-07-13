@@ -9,9 +9,11 @@ public final class SyntacticExprMeetStrategy implements ExprLattice.MeetStrategy
     private final BasicExprMeetStrategy basicMeetStrategy;
 
     private static final SyntacticExprMeetStrategy INSTANCE = new SyntacticExprMeetStrategy();
+
     private SyntacticExprMeetStrategy() {
         basicMeetStrategy = BasicExprMeetStrategy.getInstance();
     }
+
     public static SyntacticExprMeetStrategy getInstance() {
         return INSTANCE;
     }

@@ -28,7 +28,7 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 
-public class Domain extends UnaryMCMRule{
+public class Domain extends UnaryMCMRule {
     public Domain(MCMRelation e) {
         super(e);
     }

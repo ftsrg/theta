@@ -19,17 +19,17 @@ package hu.bme.mit.theta.core.utils.indexings;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
 public interface VarIndexing {
-	VarIndexingBuilder transform();
+    VarIndexingBuilder transform();
 
-	VarIndexing inc(VarDecl<?> varDecl);
+    VarIndexing inc(VarDecl<?> varDecl);
 
-	VarIndexing inc(VarDecl<?> varDecl, int n);
+    VarIndexing inc(VarDecl<?> varDecl, int n);
 
-	VarIndexing add(VarIndexing indexing);
+    VarIndexing add(VarIndexing indexing);
 
-	VarIndexing sub(VarIndexing indexing);
+    VarIndexing sub(VarIndexing indexing);
 
-	VarIndexing join(VarIndexing indexing);
+    VarIndexing join(VarIndexing indexing);
 
-	int get(VarDecl<?> varDecl);
+    int get(VarDecl<?> varDecl);
 }
