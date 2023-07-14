@@ -310,7 +310,9 @@ data class XcfaProcessState(
             listOf(proc.params.map { it.first }, proc.vars).flatten().associateWith {
                 val sj = StringJoiner("::")
                 if (threadPrefix != "") sj.add(threadPrefix)
+                else sj.add("_")
                 if (procPrefix != "") sj.add(procPrefix)
+                else sj.add("_")
                 sj.add(it.name)
                 val name = sj.toString()
                 if (name != it.name) Var(sj.toString(), it.type)

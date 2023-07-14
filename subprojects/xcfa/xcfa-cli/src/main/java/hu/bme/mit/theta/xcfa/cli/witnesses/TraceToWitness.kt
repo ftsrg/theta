@@ -124,8 +124,10 @@ private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: Xcf
         assumption = if (xcfaLabel is StmtLabel && xcfaLabel.stmt is HavocStmt<*>) {
             val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl
             val eval = valuation.eval(varDecl)
-            if (FrontendMetadata.getMetadataValue(varDecl, "cName").isPresent && eval.isPresent)
-                "${FrontendMetadata.getMetadataValue(varDecl, "cName").get()} == ${
+            val splitName = varDecl.name.split("::")
+            val rootName = splitName.subList(2, splitName.size).joinToString("::")
+            if (FrontendMetadata.getMetadataValue(rootName, "cName").isPresent && eval.isPresent)
+                "${FrontendMetadata.getMetadataValue(rootName, "cName").get()} == ${
                     printLit(eval.get())
                 }"
             else null
