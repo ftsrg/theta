@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.utils.ExprUtils.simplify
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
@@ -35,7 +35,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  * Sets the `simplifiedExprs` flag on the ProcedureBuilder
  */
 
-class SimplifyExprsPass : ProcedurePass {
+class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -45,20 +45,20 @@ class SimplifyExprsPass : ProcedurePass {
                 if (it is StmtLabel) when (it.stmt) {
                     is AssignStmt<*> -> {
                         val simplified = simplify(it.stmt.expr)
-                        if (FrontendMetadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
-                            FrontendMetadata.create(simplified, "cType",
-                                CComplexType.getType(it.stmt.expr))
+                        if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
+                            parseContext.metadata.create(simplified, "cType",
+                                CComplexType.getType(it.stmt.expr, parseContext))
                         StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type),
                             cast(simplified, it.stmt.varDecl.type)), metadata = it.metadata)
                     }
 
                     is AssumeStmt -> {
                         val simplified = simplify(it.stmt.cond)
-                        if (FrontendMetadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
-                            FrontendMetadata.create(simplified, "cType",
-                                CComplexType.getType(it.stmt.cond))
+                        if (parseContext.metadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
+                            parseContext.metadata.create(simplified, "cType",
+                                CComplexType.getType(it.stmt.cond, parseContext))
                         }
-                        FrontendMetadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
+                        parseContext.metadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
                         StmtLabel(Assume(simplified), metadata = it.metadata)
                     }
 

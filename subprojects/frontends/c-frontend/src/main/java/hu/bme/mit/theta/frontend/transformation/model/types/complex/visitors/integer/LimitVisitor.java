@@ -18,7 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.in
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
@@ -42,12 +42,16 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> {
+    private final ParseContext parseContext;
 
-    public static final LimitVisitor instance = new LimitVisitor();
+    public LimitVisitor(ParseContext parseContext) {
+        this.parseContext = parseContext;
+    }
+
 
     @Override
     public AssumeStmt visit(CSignedShort type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("short");
+        int width = parseContext.getArchitecture().getBitWidth("short");
         return Assume(And(
                 Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
                 Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
@@ -55,7 +59,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CUnsignedShort type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("short");
+        int width = parseContext.getArchitecture().getBitWidth("short");
         return Assume(And(
                 Geq(param, Int(0)),
                 Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
@@ -63,7 +67,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(Fitsall type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("fitsall");
+        int width = parseContext.getArchitecture().getBitWidth("fitsall");
         return Assume(And(
                 Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
                 Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
@@ -71,7 +75,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CSignedLongLong type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("longlong");
+        int width = parseContext.getArchitecture().getBitWidth("longlong");
         return Assume(And(
                 Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
                 Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
@@ -79,7 +83,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CUnsignedLongLong type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("longlong");
+        int width = parseContext.getArchitecture().getBitWidth("longlong");
         return Assume(And(
                 Geq(param, Int(0)),
                 Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
@@ -87,7 +91,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CUnsignedLong type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("long");
+        int width = parseContext.getArchitecture().getBitWidth("long");
         return Assume(And(
                 Geq(param, Int(0)),
                 Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
@@ -95,7 +99,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CSignedLong type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("long");
+        int width = parseContext.getArchitecture().getBitWidth("long");
         return Assume(And(
                 Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
                 Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
@@ -103,7 +107,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CSignedInt type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("int");
+        int width = parseContext.getArchitecture().getBitWidth("int");
         return Assume(And(
                 Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
                 Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
@@ -111,7 +115,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CUnsignedInt type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("int");
+        int width = parseContext.getArchitecture().getBitWidth("int");
         return Assume(And(
                 Geq(param, Int(0)),
                 Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
@@ -119,7 +123,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CSignedChar type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("char");
+        int width = parseContext.getArchitecture().getBitWidth("char");
         return Assume(And(
                 Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
                 Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
@@ -127,7 +131,7 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
 
     @Override
     public AssumeStmt visit(CUnsignedChar type, Expr<?> param) {
-        int width = ArchitectureConfig.architecture.getBitWidth("char");
+        int width = parseContext.getArchitecture().getBitWidth("char");
         return Assume(And(
                 Geq(param, Int(0)),
                 Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));

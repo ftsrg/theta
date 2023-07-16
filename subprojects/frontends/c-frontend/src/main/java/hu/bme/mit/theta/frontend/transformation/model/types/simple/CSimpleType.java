@@ -26,7 +26,6 @@ import java.util.List;
  * signedness, atomicity, etc. of the type.
  */
 public abstract class CSimpleType {
-
     private int pointerLevel = 0;
     private Boolean signed = null;
     private boolean bool = false;

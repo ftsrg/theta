@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -23,8 +24,8 @@ public abstract class CShort extends CInteger {
 
     private static final int RANK = 20;
 
-    protected CShort(CSimpleType origin) {
-        super(origin);
+    protected CShort(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
         rank = RANK;
     }
 
@@ -39,11 +40,11 @@ public abstract class CShort extends CInteger {
 
     @Override
     public CInteger getSignedVersion() {
-        return new CSignedShort(null);
+        return new CSignedShort(null, parseContext);
     }
 
     @Override
     public CInteger getUnsignedVersion() {
-        return new CUnsignedShort(null);
+        return new CUnsignedShort(null, parseContext);
     }
 }

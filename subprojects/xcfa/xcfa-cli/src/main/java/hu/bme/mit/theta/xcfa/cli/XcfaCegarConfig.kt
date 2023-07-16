@@ -33,13 +33,14 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.PredState
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
+import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -235,7 +236,7 @@ data class XcfaCegarConfig(
         ProcessHandle.current().info().command().orElse("java")
 
     fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String,
-        logger: Logger): () -> SafetyResult<*, *> {
+        logger: Logger, parseContext: ParseContext): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
             getJavaExecutable(),
             "-cp",
@@ -278,6 +279,7 @@ data class XcfaCegarConfig(
                 val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
                 writer.println(gson.toJson(this))
                 writer.println(gson.toJson(xcfa))
+                writer.println(gson.toJson(parseContext))
                 val retCode = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
                 if (retCode == Int.MIN_VALUE) {
                     if (!processHandler.writingSafetyResult) {

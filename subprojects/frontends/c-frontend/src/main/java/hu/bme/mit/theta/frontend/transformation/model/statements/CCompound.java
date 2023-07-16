@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.frontend.ParseContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,8 @@ public class CCompound extends CStatement {
 
     private final List<CStatement> cStatementList;
 
-    public CCompound() {
+    public CCompound(ParseContext parseContext) {
+        super(parseContext);
         cStatementList = new ArrayList<>();
     }
 

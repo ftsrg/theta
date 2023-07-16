@@ -25,11 +25,19 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLabelledLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -59,6 +67,9 @@ class XcfaCegarServer {
     @Parameter(names = "--xcfa", description = "XCFA string (will try to read from stdin when not given)")
     String xcfaStr;
 
+    @Parameter(names = "--parse-context", description = "Parsing context string (will try to read from stdin when not given)")
+    String parseContext;
+
     @Parameter(names = "--debug", description = "Debug mode (will not create a socket)")
     Boolean debug = false;
 
@@ -86,6 +97,7 @@ class XcfaCegarServer {
 
                         final String configStr = this.configStr == null ? in.readLine() : this.configStr;
                         final String xcfaStr = this.xcfaStr == null ? in.readLine() : this.xcfaStr;
+                        final String parseStr = this.parseContext == null ? in.readLine() : this.parseContext;
                         final Gson gson = getGson();
 
                         XCFA xcfa;
@@ -114,6 +126,19 @@ class XcfaCegarServer {
                         }
 
                         logger.write(Logger.Level.INFO, "Parsed config.\n");
+                        ParseContext parseContext;
+                        try {
+                            parseContext = gson.fromJson(parseStr, ParseContext.class);
+                        } catch (Exception e) {
+                            File tempFile = File.createTempFile("parsecontext", ".json");
+                            try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+                                bw.write(configStr);
+                            }
+                            System.err.println("Erroneous parsecontext, see file " + tempFile.getAbsolutePath());
+                            throw e;
+                        }
+
+                        logger.write(Logger.Level.INFO, "Parsed parsecontext.\n");
 
                         SafetyResult<ExprState, ExprAction> check = xcfaCegarConfig.check(xcfa, logger);
                         logger.write(Logger.Level.INFO, "Safety check done.\n");
@@ -121,7 +146,7 @@ class XcfaCegarServer {
                             String s = gson.toJson(check);
                             out.println(s);
                         } else {
-                            new XcfaWitnessWriter().writeWitness(check, new File(inputFileName), getSolver(xcfaCegarConfig.getRefinementSolver(), xcfaCegarConfig.getValidateRefinementSolver()));
+                            new XcfaWitnessWriter().writeWitness(check, new File(inputFileName), getSolver(xcfaCegarConfig.getRefinementSolver(), xcfaCegarConfig.getValidateRefinementSolver()), parseContext);
                         }
                         logger.write(Logger.Level.INFO, "Server exiting.\n");
                     }

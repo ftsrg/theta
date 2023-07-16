@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.real;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -23,8 +24,8 @@ public abstract class CReal extends CComplexType {
 
     protected int rank;
 
-    protected CReal(CSimpleType origin) {
-        super(origin);
+    protected CReal(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
     }
 
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {

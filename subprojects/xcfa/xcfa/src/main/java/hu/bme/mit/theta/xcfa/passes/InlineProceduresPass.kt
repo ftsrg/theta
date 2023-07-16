@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -28,7 +29,7 @@ import hu.bme.mit.theta.xcfa.model.*
  * Requires the ProcedureBuilder to be `deterministic`.
  * Sets the `inlined` flag on the ProcedureBuilder if successful.
  */
-class InlineProceduresPass : ProcedurePass {
+class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (!builder.canInline()) return builder
@@ -72,7 +73,7 @@ class InlineProceduresPass : ProcedurePass {
                             for ((i, param) in procedure.getParams().withIndex()) {
                                 if (param.second != ParamDirection.OUT) {
                                     val stmt = AssignStmt.of(cast(param.first, param.first.type),
-                                        cast(CComplexType.getType(param.first.ref)
+                                        cast(CComplexType.getType(param.first.ref, parseContext)
                                             .castTo(invokeLabel.params[i]), param.first.type))
                                     inStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
                                 }
@@ -80,7 +81,7 @@ class InlineProceduresPass : ProcedurePass {
                                 if (param.second != ParamDirection.IN) {
                                     val varDecl = (invokeLabel.params[i] as RefExpr<*>).decl as VarDecl<*>
                                     val stmt = AssignStmt.of(cast(varDecl, param.first.type), cast(
-                                        CComplexType.getType(varDecl.ref).castTo(param.first.ref),
+                                        CComplexType.getType(varDecl.ref, parseContext).castTo(param.first.ref),
                                         param.first.type))
                                     outStmts.add(StmtLabel(stmt, metadata = invokeLabel.metadata))
                                 }

@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Havoc
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.xcfa.collectVars
@@ -33,7 +34,7 @@ import java.util.*
  * Requires the ProcedureBuilder to be `deterministic` and `seqLbe` (@see DeterministicPass, @see LbePass)
  */
 
-class HavocPromotionAndRange : ProcedurePass {
+class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -79,7 +80,7 @@ class HavocPromotionAndRange : ProcedurePass {
                         if (indices.size <= offset || index < indices[offset]) newLabels.add(label)
                         else if (index == indices[offset]) {
                             val varDecl = ((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).varDecl
-//                            val type = CComplexType.getType(((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).expr)
+//                            val type = CComplexType.getType(((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).expr, parseContext)
                             val havoc = Havoc(varDecl)
                             newLabels.add(
                                 StmtLabel(havoc, metadata = edge.label.labels[index].metadata))
@@ -104,8 +105,8 @@ class HavocPromotionAndRange : ProcedurePass {
                     .reversed()
                 for ((index, value) in reversed) {
                     val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
-                    val type = CComplexType.getType(
-                        varDecl.ref) // TODO: what to do when no info is available?
+                    val type = CComplexType.getType(varDecl.ref,
+                        parseContext) // TODO: what to do when no info is available?
                     if (type !is CVoid) {
                         list.add(index + 1,
                             StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))

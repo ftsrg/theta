@@ -28,7 +28,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
-    public static final TypedefVisitor instance = new TypedefVisitor();
+    private final DeclarationVisitor declarationVisitor;
+
+    public TypedefVisitor(DeclarationVisitor declarationVisitor) {
+        this.declarationVisitor = declarationVisitor;
+    }
 
     public void clear() {
         declarations.clear();
@@ -44,7 +48,7 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
     public List<CDeclaration> visitDeclaration(CParser.DeclarationContext ctx) {
         List<CDeclaration> ret = new ArrayList<>();
         if (ctx.declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
-            List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
+            List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
             ret.addAll(declarations);
             return ret;
         } else return null;
@@ -74,7 +78,7 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
     public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
         List<CDeclaration> ret = new ArrayList<>();
         if (ctx.declaration().declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
-            List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+            List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
             ret.addAll(declarations);
             return ret;
         }

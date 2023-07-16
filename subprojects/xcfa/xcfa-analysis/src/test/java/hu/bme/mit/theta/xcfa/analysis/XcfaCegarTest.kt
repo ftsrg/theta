@@ -70,7 +70,7 @@ class XcfaCegarTest {
     @Test
     fun check() {
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, false)
+        val xcfa = getXcfaFromC(stream!!, parseContext, false)
 
 //        System.err.println(xcfa.toDot())
 

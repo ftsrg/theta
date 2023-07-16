@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
@@ -77,26 +77,27 @@ fun Stmt.flatten(): List<Stmt> {
     }
 }
 
-fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): XcfaLabel =
+@JvmOverloads
+fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): XcfaLabel =
     if (varLut.isNotEmpty())
         when (this) {
-            is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut) },
+            is InvokeLabel -> InvokeLabel(name, params.map { it.changeVars(varLut, parseContext) },
                 metadata = metadata)
 
             is JoinLabel -> JoinLabel(pidVar.changeVars(varLut), metadata = metadata)
-            is NondetLabel -> NondetLabel(labels.map { it.changeVars(varLut) }.toSet(),
+            is NondetLabel -> NondetLabel(labels.map { it.changeVars(varLut, parseContext) }.toSet(),
                 metadata = metadata)
 
             is ReadLabel -> ReadLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
                 metadata = metadata)
 
-            is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut) },
+            is SequenceLabel -> SequenceLabel(labels.map { it.changeVars(varLut, parseContext) },
                 metadata = metadata)
 
-            is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut) },
+            is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut, parseContext) },
                 pidVar.changeVars(varLut), metadata = metadata)
 
-            is StmtLabel -> StmtLabel(stmt.changeVars(varLut), metadata = metadata)
+            is StmtLabel -> StmtLabel(stmt.changeVars(varLut, parseContext), metadata = metadata)
             is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
                 metadata = metadata)
 
@@ -104,29 +105,31 @@ fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): XcfaLabel =
         }
     else this
 
-fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Stmt {
+@JvmOverloads
+fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
     val stmt = when (this) {
         is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type),
-            cast(expr.changeVars(varLut), varDecl.type))
+            cast(expr.changeVars(varLut, parseContext), varDecl.type))
 
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
-        is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut))
-        is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut) })
+        is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut, parseContext))
+        is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut, parseContext) })
         is SkipStmt -> this
         else -> TODO("Not yet implemented")
     }
-    val metadataValue = FrontendMetadata.getMetadataValue(this, "sourceStatement")
-    if (metadataValue.isPresent) FrontendMetadata.create(stmt, "sourceStatement",
-        metadataValue.get())
+    val metadataValue = parseContext?.getMetadata()?.getMetadataValue(this, "sourceStatement")
+    if (metadataValue?.isPresent == true)
+        parseContext.getMetadata().create(stmt, "sourceStatement", metadataValue.get())
     return stmt
 }
 
-fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Expr<T> =
+@JvmOverloads
+fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): Expr<T> =
     if (this is RefExpr<T>) (decl as Decl<T>).changeVars(varLut).ref
     else {
-        val ret = this.withOps(this.ops.map { it.changeVars(varLut) })
-        if (FrontendMetadata.getMetadataValue(this, "cType").isPresent) {
-            FrontendMetadata.create(ret, "cType", CComplexType.getType(this))
+        val ret = this.withOps(this.ops.map { it.changeVars(varLut, parseContext) })
+        if (parseContext?.metadata?.getMetadataValue(this, "cType")?.isPresent == true) {
+            parseContext.metadata?.create(ret, "cType", CComplexType.getType(this, parseContext))
         }
         ret
     }

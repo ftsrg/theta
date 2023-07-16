@@ -16,12 +16,15 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CDoWhile extends CStatement {
 
     private final CStatement body;
     private final CStatement guard;
 
-    public CDoWhile(CStatement body, CStatement guard) {
+    public CDoWhile(CStatement body, CStatement guard, ParseContext parseContext) {
+        super(parseContext);
         this.body = body;
         this.guard = guard;
     }

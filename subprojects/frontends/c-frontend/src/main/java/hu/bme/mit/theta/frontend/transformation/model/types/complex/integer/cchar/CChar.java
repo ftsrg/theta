@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -23,8 +24,8 @@ public abstract class CChar extends CInteger {
 
     private static final int RANK = 10;
 
-    protected CChar(CSimpleType origin) {
-        super(origin);
+    protected CChar(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
         rank = RANK;
     }
 
@@ -39,12 +40,12 @@ public abstract class CChar extends CInteger {
 
     @Override
     public CInteger getSignedVersion() {
-        return new CSignedChar(null);
+        return new CSignedChar(null, parseContext);
     }
 
     @Override
     public CInteger getUnsignedVersion() {
-        return new CUnsignedChar(null);
+        return new CUnsignedChar(null, parseContext);
     }
 
 }

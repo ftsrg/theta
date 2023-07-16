@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -23,8 +24,8 @@ public abstract class CLongLong extends CInteger {
 
     private static final int RANK = 50;
 
-    protected CLongLong(CSimpleType origin) {
-        super(origin);
+    protected CLongLong(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
         rank = RANK;
     }
 
@@ -39,11 +40,11 @@ public abstract class CLongLong extends CInteger {
 
     @Override
     public CInteger getSignedVersion() {
-        return new CSignedLongLong(null);
+        return new CSignedLongLong(null, parseContext);
     }
 
     @Override
     public CInteger getUnsignedVersion() {
-        return new CUnsignedLongLong(null);
+        return new CUnsignedLongLong(null, parseContext);
     }
 }

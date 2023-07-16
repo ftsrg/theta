@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
-import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
@@ -40,7 +40,8 @@ enum class Verbosity {
 
 fun traceToWitness(
     verbosity: Verbosity = Verbosity.SOURCE_EXISTS,
-    trace: Trace<XcfaState<ExplState>, XcfaAction>
+    trace: Trace<XcfaState<ExplState>, XcfaAction>,
+    parseContext: ParseContext
 ): Trace<WitnessNode, WitnessEdge> {
     val newStates = ArrayList<WitnessNode>()
     val newActions = ArrayList<WitnessEdge>()
@@ -77,7 +78,7 @@ fun traceToWitness(
             val node = WitnessNode(id = "N${newStates.size}", entry = false, sink = false,
                 violation = false)
             val edge = labelToEdge(lastNode, node, xcfaLabel, action.pid,
-                nextState.sGlobal.getVal())
+                nextState.sGlobal.getVal(), parseContext)
             if (node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
                 newStates.add(node)
                 newActions.add(edge)
@@ -116,7 +117,7 @@ fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
 
 
 private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: XcfaLabel, pid: Int,
-    valuation: Valuation): WitnessEdge =
+    valuation: Valuation, parseContext: ParseContext): WitnessEdge =
     WitnessEdge(
         sourceId = lastNode.id,
         targetId = node.id,
@@ -126,8 +127,8 @@ private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: Xcf
             val eval = valuation.eval(varDecl)
             val splitName = varDecl.name.split("::")
             val rootName = splitName.subList(2, splitName.size).joinToString("::")
-            if (FrontendMetadata.getMetadataValue(rootName, "cName").isPresent && eval.isPresent)
-                "${FrontendMetadata.getMetadataValue(rootName, "cName").get()} == ${
+            if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent && eval.isPresent)
+                "${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
                     printLit(eval.get())
                 }"
             else null

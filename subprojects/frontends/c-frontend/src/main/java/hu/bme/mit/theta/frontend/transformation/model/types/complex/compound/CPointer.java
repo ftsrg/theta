@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -23,8 +24,8 @@ public class CPointer extends CCompound {
 
     private final CComplexType embeddedType;
 
-    public CPointer(CSimpleType origin, CComplexType embeddedType) {
-        super(origin);
+    public CPointer(CSimpleType origin, CComplexType embeddedType, ParseContext parseContext) {
+        super(origin, parseContext);
         this.embeddedType = embeddedType;
     }
 

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 
 import java.util.ArrayList;
@@ -27,7 +28,8 @@ public class CDecls extends CStatement {
 
     private final List<Tuple2<CDeclaration, VarDecl<?>>> cDeclarations;
 
-    public CDecls() {
+    public CDecls(ParseContext parseContext) {
+        super(parseContext);
         this.cDeclarations = new ArrayList<>();
     }
 

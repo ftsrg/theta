@@ -18,7 +18,9 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
@@ -30,8 +32,25 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkState;
 
 public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
+    private final ParseContext parseContext;
+    private final FunctionVisitor functionVisitor;
+    private final TypedefVisitor typedefVisitor;
+    private final TypeVisitor typeVisitor;
 
-    public static final DeclarationVisitor instance = new DeclarationVisitor();
+    public DeclarationVisitor(ParseContext parseContext, FunctionVisitor functionVisitor) {
+        this.parseContext = parseContext;
+        this.functionVisitor = functionVisitor;
+        this.typedefVisitor = new TypedefVisitor(this);
+        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext);
+    }
+
+    public TypedefVisitor getTypedefVisitor() {
+        return typedefVisitor;
+    }
+
+    public TypeVisitor getTypeVisitor() {
+        return typeVisitor;
+    }
 
     /**
      * From a single declaration context and initialization list this function produces the
@@ -44,7 +63,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext,
                                               CParser.InitDeclaratorListContext initDeclContext) {
         List<CDeclaration> ret = new ArrayList<>();
-        CSimpleType cSimpleType = declSpecContext.accept(TypeVisitor.instance);
+        CSimpleType cSimpleType = declSpecContext.accept(typeVisitor);
         if (cSimpleType.getAssociatedName() != null) {
             CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
             cDeclaration.setType(cSimpleType);
@@ -61,17 +80,17 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                                 context.initializer().initializerList().designation().size() == 0,
                                 "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList = new CInitializerList(
-                                cSimpleType.getActualType());
+                                cSimpleType.getActualType(), parseContext);
                         for (CParser.InitializerContext initializer : context.initializer()
                                 .initializerList().initializers) {
                             CStatement expr = initializer.assignmentExpression()
-                                    .accept(FunctionVisitor.instance);
+                                    .accept(functionVisitor);
                             cInitializerList.addStatement(null /* TODO: add designator */, expr);
                         }
                         initializerExpression = cInitializerList;
                     } else {
                         initializerExpression = context.initializer().assignmentExpression()
-                                .accept(FunctionVisitor.instance);
+                                .accept(functionVisitor);
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
@@ -89,7 +108,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     @Override
     public CDeclaration visitOrdinaryParameterDeclaration(
             CParser.OrdinaryParameterDeclarationContext ctx) {
-        CSimpleType cSimpleType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
+        CSimpleType cSimpleType = ctx.declarationSpecifiers().accept(typeVisitor);
         CDeclaration declaration = ctx.declarator().accept(this);
         declaration.setType(cSimpleType);
         return declaration;
@@ -108,7 +127,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     @Override
     public CDeclaration visitAbstractParameterDeclaration(
             CParser.AbstractParameterDeclarationContext ctx) {
-        CSimpleType cSimpleType = ctx.declarationSpecifiers2().accept(TypeVisitor.instance);
+        CSimpleType cSimpleType = ctx.declarationSpecifiers2().accept(typeVisitor);
         checkState(ctx.abstractDeclarator() == null, "Abstract declarators not yet supported!");
         return new CDeclaration(cSimpleType);
     }
@@ -144,7 +163,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (ctx.assignmentExpression() != null) {
-            decl.addArrayDimension(ctx.assignmentExpression().accept(FunctionVisitor.instance));
+            decl.addArrayDimension(ctx.assignmentExpression().accept(functionVisitor));
         } else {
             decl.addArrayDimension(null);
         }

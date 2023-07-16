@@ -34,7 +34,12 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkState;
 
 public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
-    public static final GlobalDeclUsageVisitor instance = new GlobalDeclUsageVisitor();
+    private final DeclarationVisitor declarationVisitor;
+
+    public GlobalDeclUsageVisitor(DeclarationVisitor declarationVisitor) {
+        this.declarationVisitor = declarationVisitor;
+    }
+
 
     public void clear() {
         globalUsages.clear();
@@ -48,7 +53,7 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
 
     @Override
     public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
-        List<CDeclaration> declarations = DeclarationVisitor.instance.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+        List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
                 globalUsages.put(declaration.getName(), new LinkedHashSet<>());
@@ -63,7 +68,7 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
 
     @Override
     public List<CDeclaration> visitExternalFunctionDefinition(CParser.ExternalFunctionDefinitionContext ctx) {
-        CDeclaration funcDecl = ctx.functionDefinition().declarator().accept(DeclarationVisitor.instance);
+        CDeclaration funcDecl = ctx.functionDefinition().declarator().accept(declarationVisitor);
         globalUsages.put(funcDecl.getName(), new LinkedHashSet<>());
         usedContexts.add(Tuple2.of(funcDecl.getName(), ctx));
         current = funcDecl.getName();

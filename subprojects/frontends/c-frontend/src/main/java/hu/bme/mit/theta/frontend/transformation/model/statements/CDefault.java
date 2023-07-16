@@ -16,11 +16,14 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CDefault extends CStatement {
 
     private final CStatement statement;
 
-    public CDefault(CStatement statement) {
+    public CDefault(CStatement statement, ParseContext parseContext) {
+        super(parseContext);
         this.statement = statement;
     }
 

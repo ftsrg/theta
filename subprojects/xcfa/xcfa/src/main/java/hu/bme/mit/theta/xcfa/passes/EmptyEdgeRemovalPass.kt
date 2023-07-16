@@ -16,13 +16,14 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
  * Removes edges that only contain NopLabels (possibly nested)
  */
 
-class EmptyEdgeRemovalPass : ProcedurePass {
+class EmptyEdgeRemovalPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         while (true) {

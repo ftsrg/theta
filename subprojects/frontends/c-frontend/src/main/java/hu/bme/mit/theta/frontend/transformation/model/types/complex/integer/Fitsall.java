@@ -16,14 +16,15 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class Fitsall extends CInteger implements Unsigned {
 
     private static final int RANK = 100;
 
-    public Fitsall(CSimpleType origin) {
-        super(origin);
+    public Fitsall(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
         rank = RANK;
         unsigned = false;
     }

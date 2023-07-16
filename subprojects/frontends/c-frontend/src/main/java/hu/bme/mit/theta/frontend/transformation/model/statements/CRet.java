@@ -16,11 +16,14 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CRet extends CStatement {
 
     private final CStatement expr;
 
-    public CRet(CStatement expr) {
+    public CRet(CStatement expr, ParseContext parseContext) {
+        super(parseContext);
         this.expr = expr;
     }
 

@@ -16,13 +16,14 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 /**
  * Removes unused locations
  */
 
-class UnusedLocRemovalPass : ProcedurePass {
+class UnusedLocRemovalPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         builder.removeLocs {

@@ -16,14 +16,15 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.real;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CFloat extends CReal {
 
     private static final int RANK = 0;
 
-    public CFloat(CSimpleType origin) {
-        super(origin);
+    public CFloat(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
         rank = RANK;
     }
 

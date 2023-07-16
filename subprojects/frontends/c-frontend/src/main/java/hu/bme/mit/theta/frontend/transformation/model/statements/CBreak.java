@@ -16,7 +16,13 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CBreak extends CStatement {
+
+    public CBreak(ParseContext parseContext) {
+        super(parseContext);
+    }
 
     @Override
     public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {

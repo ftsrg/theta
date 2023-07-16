@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.frontend.ParseContext;
 
 /**
  * Every Program, Function and Statement is a subclass of this base class.
@@ -24,6 +25,7 @@ import hu.bme.mit.theta.core.type.Expr;
  * an XcfaLocation, which can be used when jumping to this named location via a _goto_ instruction
  */
 public abstract class CStatement {
+    protected final ParseContext parseContext;
     private String id;
     protected static int counter = 0;
     protected CStatement preStatements;
@@ -36,6 +38,10 @@ public abstract class CStatement {
     private int offsetStart = -1;
     private int offsetEnd = -1;
     private String sourceText = "";
+
+    protected CStatement(ParseContext parseContext) {
+        this.parseContext = parseContext;
+    }
 
     public String getId() {
         return id;

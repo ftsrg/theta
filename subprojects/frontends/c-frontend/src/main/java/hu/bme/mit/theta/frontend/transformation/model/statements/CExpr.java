@@ -17,12 +17,14 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.frontend.ParseContext;
 
 public class CExpr extends CStatement {
 
     private final Expr<?> expr;
 
-    public CExpr(Expr<?> expr) {
+    public CExpr(Expr<?> expr, ParseContext parseContext) {
+        super(parseContext);
         this.expr = expr;
     }
 

@@ -16,12 +16,11 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import com.google.common.base.Preconditions
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import java.util.*
 import kotlin.collections.set
 
 /**
@@ -35,7 +34,7 @@ import kotlin.collections.set
  *  * Middle location: a location whose incoming degree is 1
  *
  */
-class LbePass : ProcedurePass {
+class LbePass(val parseContext: ParseContext) : ProcedurePass {
 
     companion object {
 
@@ -97,7 +96,7 @@ class LbePass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (level == LbeLevel.NO_LBE || builder.errorLoc.isEmpty) return builder
 
-        if (level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL && ArchitectureConfig.multiThreading) {
+        if (level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL && parseContext.multiThreading) {
             level = LbeLevel.LBE_LOCAL
         }
 

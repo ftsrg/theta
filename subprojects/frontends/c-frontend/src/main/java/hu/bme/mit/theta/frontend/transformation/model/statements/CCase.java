@@ -16,12 +16,15 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CCase extends CStatement {
 
     private final CStatement expr;
     private final CStatement statement;
 
-    public CCase(CStatement expr, CStatement statement) {
+    public CCase(CStatement expr, CStatement statement, ParseContext parseContext) {
+        super(parseContext);
         this.expr = expr;
         this.statement = statement;
     }

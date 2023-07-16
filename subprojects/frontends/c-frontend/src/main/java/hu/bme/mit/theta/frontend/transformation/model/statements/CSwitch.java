@@ -16,12 +16,15 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CSwitch extends CStatement {
 
     private final CStatement testValue;
     private final CStatement body;
 
-    public CSwitch(CStatement testValue, CStatement body) {
+    public CSwitch(CStatement testValue, CStatement body, ParseContext parseContext) {
+        super(parseContext);
         this.testValue = testValue;
         this.body = body;
     }

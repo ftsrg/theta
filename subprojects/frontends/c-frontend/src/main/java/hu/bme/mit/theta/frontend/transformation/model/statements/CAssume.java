@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.frontend.ParseContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -25,7 +26,8 @@ public class CAssume extends CStatement {
 
     private final AssumeStmt assumeStmt;
 
-    public CAssume(AssumeStmt assumeStmt) {
+    public CAssume(AssumeStmt assumeStmt, ParseContext parseContext) {
+        super(parseContext);
         checkNotNull(assumeStmt);
         this.assumeStmt = assumeStmt;
     }

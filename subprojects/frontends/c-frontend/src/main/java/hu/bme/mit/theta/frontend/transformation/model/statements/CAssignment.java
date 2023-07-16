@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.LinkedHashMap;
@@ -36,7 +36,8 @@ public class CAssignment extends CStatement {
     private final String operator;
     private static final Map<Type, VarDecl<ArrayType<?, ?>>> memoryMaps = new LinkedHashMap<>();
 
-    public CAssignment(Expr<?> lValue, CStatement rValue, String operator) {
+    public CAssignment(Expr<?> lValue, CStatement rValue, String operator, ParseContext parseContext) {
+        super(parseContext);
         checkNotNull(rValue.getExpression());
         this.lValue = lValue;
         this.rValue = rValue;
@@ -92,9 +93,9 @@ public class CAssignment extends CStatement {
             default:
                 throw new RuntimeException("Bad operator!");
         }
-        FrontendMetadata.create(ret, "cType", CComplexType.getType(lValue));
-        ret = CComplexType.getType(lValue).castTo(ret);
-        FrontendMetadata.create(ret, "cType", CComplexType.getType(lValue));
+        parseContext.getMetadata().create(ret, "cType", CComplexType.getType(lValue, parseContext));
+        ret = CComplexType.getType(lValue, parseContext).castTo(ret);
+        parseContext.getMetadata().create(ret, "cType", CComplexType.getType(lValue, parseContext));
         return ret;
     }
 }

@@ -20,8 +20,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CCompound;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CFunction;
@@ -66,8 +65,15 @@ public abstract class CComplexType {
     private boolean threadLocal = false;
     private boolean atomic = false;
 
-    protected CComplexType(CSimpleType origin) {
+    protected final ParseContext parseContext;
+
+    protected CComplexType(CSimpleType origin, ParseContext parseContext) {
         this.origin = origin;
+        this.parseContext = parseContext;
+    }
+
+    public ParseContext getParseContext() {
+        return parseContext;
     }
 
     public CSimpleType getOrigin() {
@@ -75,35 +81,35 @@ public abstract class CComplexType {
     }
 
     public LitExpr<?> getNullValue() {
-        LitExpr<?> accept = this.accept(getNullValueVisitor(), null);
-        FrontendMetadata.create(accept, "cType", this);
+        LitExpr<?> accept = this.accept(getNullValueVisitor(parseContext), null);
+        parseContext.getMetadata().create(accept, "cType", this);
         return accept;
     }
 
     public LitExpr<?> getUnitValue() {
-        LitExpr<?> accept = this.accept(getUnitValueVisitor(), null);
-        FrontendMetadata.create(accept, "cType", this);
+        LitExpr<?> accept = this.accept(getUnitValueVisitor(parseContext), null);
+        parseContext.getMetadata().create(accept, "cType", this);
         return accept;
     }
 
     public LitExpr<?> getValue(String value) {
-        LitExpr<?> accept = this.accept(getValueVisitor(), value);
-        FrontendMetadata.create(accept, "cType", this);
+        LitExpr<?> accept = this.accept(getValueVisitor(parseContext), value);
+        parseContext.getMetadata().create(accept, "cType", this);
         return accept;
     }
 
     public AssumeStmt limit(Expr<?> expr) {
-        return this.accept(getLimitVisitor(), expr);
+        return this.accept(getLimitVisitor(parseContext), expr);
     }
 
     public Expr<?> castTo(Expr<?> expr) {
-        Expr<?> accept = this.accept(getCastVisitor(), expr);
-        FrontendMetadata.create(accept, "cType", this);
+        Expr<?> accept = this.accept(getCastVisitor(parseContext), expr);
+        parseContext.getMetadata().create(accept, "cType", this);
         return accept;
     }
 
     public Type getSmtType() {
-        return this.accept(getTypeVisitor(), null);
+        return this.accept(getTypeVisitor(parseContext), null);
     }
 
     public CComplexType getSmallestCommonType(CComplexType type) {
@@ -115,19 +121,19 @@ public abstract class CComplexType {
     }
 
     public int width() {
-        return ArchitectureConfig.architecture.getBitWidth(getTypeName());
+        return parseContext.getArchitecture().getBitWidth(getTypeName());
     }
 
-    public static CComplexType getSmallestCommonType(List<CComplexType> types) {
-        CComplexType ret = getSignedInt();
+    public static CComplexType getSmallestCommonType(List<CComplexType> types, ParseContext parseContext) {
+        CComplexType ret = getSignedInt(parseContext);
         for (int i = 0; i < types.size(); i++) {
             ret = ret.getSmallestCommonType(types.get(i));
         }
         return ret;
     }
 
-    public static CComplexType getType(Expr<?> expr) {
-        Optional<Object> cTypeOptional = FrontendMetadata.getMetadataValue(expr, "cType");
+    public static CComplexType getType(Expr<?> expr, ParseContext parseContext) {
+        Optional<Object> cTypeOptional = parseContext.getMetadata().getMetadataValue(expr, "cType");
         if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CComplexType) {
             return (CComplexType) cTypeOptional.get();
         } else if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CSimpleType) {
@@ -145,51 +151,51 @@ public abstract class CComplexType {
     }
 
     public void setAtomic() {
-        threadLocal = true;
+        atomic = true;
     }
 
     public boolean isAtomic() {
         return atomic;
     }
 
-    public static CComplexType getSignedInt() {
-        return new CSignedInt(null);
+    public static CComplexType getSignedInt(ParseContext parseContext) {
+        return new CSignedInt(null, parseContext);
     }
 
-    public static CComplexType getUnsignedLongLong() {
-        return new CUnsignedLongLong(null);
+    public static CComplexType getUnsignedLongLong(ParseContext parseContext) {
+        return new CUnsignedLongLong(null, parseContext);
     }
 
-    public static CComplexType getUnsignedLong() {
-        return new CUnsignedLong(null);
+    public static CComplexType getUnsignedLong(ParseContext parseContext) {
+        return new CUnsignedLong(null, parseContext);
     }
 
-    public static CComplexType getUnsignedInt() {
-        return new CUnsignedInt(null);
+    public static CComplexType getUnsignedInt(ParseContext parseContext) {
+        return new CUnsignedInt(null, parseContext);
     }
 
-    public static CComplexType getSignedLongLong() {
-        return new CSignedLongLong(null);
+    public static CComplexType getSignedLongLong(ParseContext parseContext) {
+        return new CSignedLongLong(null, parseContext);
     }
 
-    public static CComplexType getSignedLong() {
-        return new CSignedLong(null);
+    public static CComplexType getSignedLong(ParseContext parseContext) {
+        return new CSignedLong(null, parseContext);
     }
 
-    public static CComplexType getFloat() {
-        return new CFloat(null);
+    public static CComplexType getFloat(ParseContext parseContext) {
+        return new CFloat(null, parseContext);
     }
 
-    public static CComplexType getDouble() {
-        return new CDouble(null);
+    public static CComplexType getDouble(ParseContext parseContext) {
+        return new CDouble(null, parseContext);
     }
 
-    public static CComplexType getLongDouble() {
-        return new CLongDouble(null);
+    public static CComplexType getLongDouble(ParseContext parseContext) {
+        return new CLongDouble(null, parseContext);
     }
 
-    public static CComplexType getFitsall() {
-        return new Fitsall(null);
+    public static CComplexType getFitsall(ParseContext parseContext) {
+        return new Fitsall(null, parseContext);
     }
 
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
@@ -310,7 +316,7 @@ public abstract class CComplexType {
         }
 
         public R visit(CPointer type, T param) {
-            return CComplexType.getUnsignedLong().accept(this, param);
+            return CComplexType.getUnsignedLong(type.getParseContext()).accept(this, param);
         }
     }
 

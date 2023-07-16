@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 import kotlin.jvm.optionals.getOrNull
 
@@ -27,7 +28,7 @@ import kotlin.jvm.optionals.getOrNull
  * Requires the ProcedureBuilder be `deterministic`.
  */
 @OptIn(ExperimentalStdlibApi::class)
-class SvCompIntrinsicsPass : ProcedurePass {
+class SvCompIntrinsicsPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])

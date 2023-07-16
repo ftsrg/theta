@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -48,16 +49,21 @@ import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpl
 import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Volatile;
 
 public class TypeVisitor extends CBaseVisitor<CSimpleType> {
+    private final DeclarationVisitor declarationVisitor;
+    private final TypedefVisitor typedefVisitor;
+    private final ParseContext parseContext;
 
-    public static final TypeVisitor instance = new TypeVisitor();
-
-    private TypeVisitor() {
-    }
 
     private static final List<String> standardTypes =
             List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
     private static final List<String> shorthandTypes =
             List.of("long", "short", "unsigned", "_Bool");
+
+    public TypeVisitor(DeclarationVisitor declarationVisitor, TypedefVisitor typedefVisitor, ParseContext parseContext) {
+        this.declarationVisitor = declarationVisitor;
+        this.typedefVisitor = typedefVisitor;
+        this.parseContext = parseContext;
+    }
 
 
     @Override
@@ -76,17 +82,17 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
                 .collect(Collectors.toList());
         if (enums.size() > 0) {
             System.err.println("WARNING: enums are not yet supported! Using int instead.");
-            cSimpleTypes.add(NamedType("int"));
+            cSimpleTypes.add(NamedType("int", parseContext));
             cSimpleTypes.removeAll(enums);
         }
         List<CSimpleType> namedElements = cSimpleTypes.stream()
                 .filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
         if (namedElements.size() == 0) {
-            namedElements.add(NamedType("int"));
+            namedElements.add(NamedType("int", parseContext));
         }
         NamedType mainType = (NamedType) namedElements.get(namedElements.size() - 1);
         if (shorthandTypes.contains(mainType.getNamedType())) {
-            mainType = NamedType("int");
+            mainType = NamedType("int", parseContext);
         } else {
             cSimpleTypes.remove(mainType);
         }
@@ -185,7 +191,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             if (ctx.Identifier() != null) {
                 name = ctx.Identifier().getText();
             }
-            Struct struct = CSimpleTypeFactory.Struct(name);
+            Struct struct = CSimpleTypeFactory.Struct(name, parseContext);
             for (CParser.StructDeclarationContext structDeclarationContext : ctx.structDeclarationList()
                     .structDeclaration()) {
                 CParser.SpecifierQualifierListContext specifierQualifierListContext = structDeclarationContext.specifierQualifierList();
@@ -196,7 +202,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
                     for (CParser.StructDeclaratorContext structDeclaratorContext : structDeclarationContext.structDeclaratorList()
                             .structDeclarator()) {
                         CDeclaration declaration = structDeclaratorContext.accept(
-                                DeclarationVisitor.instance);
+                                declarationVisitor);
                         struct.addField(declaration.getName(), cSimpleType);
                     }
                 }
@@ -204,7 +210,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             return struct;
         } else {
             System.err.println("Warning: CompoundDefinitions are not yet implemented!");
-            return NamedType("int");
+            return NamedType("int", parseContext);
         }
     }
 
@@ -214,7 +220,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
         if (ctx.structOrUnion().Struct() != null) {
             return Struct.getByName(text);
         } else {
-            return NamedType(ctx.structOrUnion().getText() + " " + text);
+            return NamedType(ctx.structOrUnion().getText() + " " + text, parseContext);
         }
     }
 
@@ -239,7 +245,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitEnumUsage(CParser.EnumUsageContext ctx) {
-        return NamedType("enum " + ctx.Identifier().getText());
+        return NamedType("enum " + ctx.Identifier().getText(), parseContext);
     }
 
     @Override
@@ -267,9 +273,9 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             case "unsigned":
                 return Unsigned();
             case "_Bool":
-                return NamedType("_Bool");
+                return NamedType("_Bool", parseContext);
             default:
-                return NamedType(ctx.getText());
+                return NamedType(ctx.getText(), parseContext);
         }
     }
 
@@ -280,24 +286,24 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitTypeSpecifierFloat(CParser.TypeSpecifierFloatContext ctx) {
-        return NamedType("float");
+        return NamedType("float", parseContext);
     }
 
     @Override
     public CSimpleType visitTypeSpecifierDouble(CParser.TypeSpecifierDoubleContext ctx) {
-        return NamedType("double");
+        return NamedType("double", parseContext);
     }
 
     @Override
     public CSimpleType visitTypeSpecifierTypedefName(CParser.TypeSpecifierTypedefNameContext ctx) {
-        Optional<CComplexType> type = TypedefVisitor.instance.getType(ctx.getText());
+        Optional<CComplexType> type = typedefVisitor.getType(ctx.getText());
         if (type.isPresent()) {
             CSimpleType origin = type.get().getOrigin().copyOf();
             origin.setTypedef(false);
             return origin;
         } else {
             if (standardTypes.contains(ctx.getText())) {
-                return NamedType(ctx.getText());
+                return NamedType(ctx.getText(), parseContext);
             } else {
                 return DeclaredName(ctx.getText());
             }

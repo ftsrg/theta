@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.frontend.ParseContext;
 
 import java.util.List;
 
@@ -27,13 +28,14 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
     private BitwiseOption bitwiseOption = null;
 
     // checks only once, returns the result of the first check after
-    public static BitwiseOption checkIfBitwise(List<CParser.ExternalDeclarationContext> contexts) {
+    public static BitwiseOption checkIfBitwise(ParseContext parseContext, List<CParser.ExternalDeclarationContext> contexts) {
         BitwiseChecker instance = new BitwiseChecker();
         instance.bitwiseOption = BitwiseOption.INTEGER;
         for (CParser.ExternalDeclarationContext ctx : contexts) {
             ctx.accept(instance);
         }
         checkState(instance.bitwiseOption != null);
+        parseContext.setBitwiseOption(instance.bitwiseOption);
         return instance.bitwiseOption;
     }
 

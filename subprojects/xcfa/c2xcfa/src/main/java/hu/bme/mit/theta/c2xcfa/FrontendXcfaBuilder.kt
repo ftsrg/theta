@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
@@ -48,19 +48,9 @@ import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.util.*
 import java.util.Set
 import java.util.stream.Collectors
-import kotlin.collections.ArrayList
-import kotlin.collections.Collection
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.LinkedHashSet
-import kotlin.collections.List
-import kotlin.collections.MutableCollection
-import kotlin.collections.MutableList
-import kotlin.collections.MutableMap
-import kotlin.collections.emptyList
-import kotlin.collections.listOf
 import kotlin.collections.set
 
-class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
+class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false) :
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
@@ -91,7 +81,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         val builder = XcfaBuilder(cProgram.id ?: "")
         val initStmtList: MutableList<XcfaLabel> = ArrayList()
         for (globalDeclaration in cProgram.globalDeclarations) {
-            val type = CComplexType.getType(globalDeclaration.get2().ref)
+            val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
             if (type is CVoid || type is CStruct) {
                 System.err.println(
                     "WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable")
@@ -126,7 +116,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         val flatVariables = function.flatVariables
         val funcDecl = function.funcDecl
         val compound = function.compound
-        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow))
+        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext))
         xcfaBuilder.addProcedure(builder)
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
@@ -134,14 +124,14 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
 //        builder.setRetType(if (funcDecl.actualType is CVoid) null else funcDecl.actualType.smtType) TODO: we never need the ret type, do we?
         if (funcDecl.actualType !is CVoid) {
             val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
-            FrontendMetadata.create(toAdd.ref, "cType", funcDecl.actualType)
+            parseContext.metadata.create(toAdd.ref, "cType", funcDecl.actualType)
             builder.addParam(toAdd, ParamDirection.OUT)
         } else {
             // TODO we assume later that there is always a ret var, but this should change
             val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
-            val signedIntType = CSimpleTypeFactory.NamedType("int")
+            val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext)
             signedIntType.setSigned(true)
-            FrontendMetadata.create(toAdd.ref, "cType", signedIntType)
+            parseContext.metadata.create(toAdd.ref, "cType", signedIntType)
             builder.addParam(toAdd, ParamDirection.OUT)
         }
         for (functionParam in funcDecl.functionParams) {
@@ -200,43 +190,44 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         } else if (lValue is Dereference<*, *>) {
             val op = lValue.op
             val type = op.type
-            val ptrType = CComplexType.getUnsignedLong().smtType
+            val ptrType = CComplexType.getUnsignedLong(parseContext).smtType
             if (!memoryMaps.containsKey(type)) {
                 val toAdd = Decls.Var<ArrayType<*, *>>("memory_$type", ArrayType.of(ptrType, type))
                 builder.parent.addVar(XcfaGlobalVar(toAdd,
-                    ArrayLitExpr.of(emptyList(), cast(CComplexType.getType(op).nullValue, type),
+                    ArrayLitExpr.of(emptyList(), cast(CComplexType.getType(op, parseContext).nullValue, type),
                         ArrayType.of(ptrType, type))))
                 memoryMaps[type] = toAdd
-                FrontendMetadata.create(toAdd, "defaultElement", CComplexType.getType(op).nullValue)
+                parseContext.metadata.create(toAdd, "defaultElement", CComplexType.getType(op, parseContext).nullValue)
             }
             val memoryMap = memoryMaps[type]!!
-            FrontendMetadata.create(op, "dereferenced", true)
-            FrontendMetadata.create(op, "refSubstitute", memoryMap)
+            parseContext.metadata.create(op, "dereferenced", true)
+            parseContext.metadata.create(op, "refSubstitute", memoryMap)
             val write = ArrayExprs.Write(cast(memoryMap.ref, ArrayType.of(ptrType, type)),
                 cast(lValue.op, ptrType),
                 cast(rExpression, type))
-            FrontendMetadata.create(write, "cType", CArray(null, CComplexType.getType(lValue.op)))
+            parseContext.metadata.create(write, "cType",
+                CArray(null, CComplexType.getType(lValue.op, parseContext), parseContext))
             StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write),
                 metadata = getMetadata(statement))
         } else {
             val label = StmtLabel(Stmts.Assign(
                 cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
-                cast(CComplexType.getType(lValue).castTo(rExpression), lValue.type)),
+                cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type)),
                 metadata = getMetadata(statement))
-            if (CComplexType.getType(lValue) is CPointer && CComplexType.getType(
-                    rExpression) is CPointer) {
+            if (CComplexType.getType(lValue, parseContext) is CPointer && CComplexType.getType(
+                    rExpression, parseContext) is CPointer) {
                 Preconditions.checkState(
                     rExpression is RefExpr<*> || rExpression is Reference<*, *>)
                 if (rExpression is RefExpr<*>) {
-                    var pointsTo = FrontendMetadata.getMetadataValue(lValue, "pointsTo")
+                    var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
                     if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
                         (pointsTo.get() as MutableCollection<Expr<*>?>).add(rExpression)
                     } else {
                         pointsTo = Optional.of(LinkedHashSet<Expr<*>>(Set.of(rExpression)))
                     }
-                    FrontendMetadata.create(lValue, "pointsTo", pointsTo.get())
+                    parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
                 } else {
-                    var pointsTo = FrontendMetadata.getMetadataValue(lValue, "pointsTo")
+                    var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
                     if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
                         (pointsTo.get() as MutableCollection<Expr<*>?>).add(
                             (rExpression as Reference<*, *>).op)
@@ -244,7 +235,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
                         pointsTo = Optional.of(
                             LinkedHashSet(Set.of((rExpression as Reference<*, *>).op)))
                     }
-                    FrontendMetadata.create(lValue, "pointsTo", pointsTo.get())
+                    parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
                 }
             }
             label
@@ -252,7 +243,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
 
         val lhs = (label.stmt as AssignStmt<*>).varDecl
         val type: CComplexType? = try {
-            CComplexType.getType(lhs.ref)
+            CComplexType.getType(lhs.ref, parseContext)
         } catch (_: Exception) {
             null
         }
@@ -286,11 +277,11 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         rExpression: Expr<*>, exprs: Stack<Expr<*>>): VarDecl<*> {
         val array = lValue.array
         val index = lValue.index
-        val arrType = CComplexType.getType(array)
+        val arrType = CComplexType.getType(array, parseContext)
         check(arrType is CArray)
         val castExpr = arrType.embeddedType.castTo(rExpression)
         val arrayWriteExpr = ArrayWriteExpr.of(array, index, cast(castExpr, array.type.elemType))
-        FrontendMetadata.create(arrayWriteExpr, "cType", arrType)
+        parseContext.metadata.create(arrayWriteExpr, "cType", arrType)
         return if (array is RefExpr<*> && (array as RefExpr<ArrayType<P, T>>).decl is VarDecl<*>) {
             exprs.push(arrayWriteExpr)
             array.decl as VarDecl<*>
@@ -456,12 +447,12 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         val lastPre = buildWithoutPostStatement(guard,
             ParamPack(builder, innerEndLoc, null, null, returnLoc))
         val assume = StmtLabel(Stmts.Assume(
-            AbstractExprs.Neq(guard.expression, CComplexType.getType(guard.expression).nullValue)),
+            AbstractExprs.Neq(guard.expression, CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.MAIN_PATH, metadata = getMetadata(guard))
         xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(statement))
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(Stmts.Assume(
-            AbstractExprs.Eq(guard.expression, CComplexType.getType(guard.expression).nullValue)),
+            AbstractExprs.Eq(guard.expression, CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.ALTERNATIVE_PATH, metadata = getMetadata(guard))
         xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(statement))
         builder.addEdge(xcfaEdge)
@@ -513,7 +504,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
             ParamPack(builder, lastInit!!, null, null, returnLoc))
         val assume = StmtLabel(
             Stmts.Assume(if (guard == null) True() else AbstractExprs.Neq(guard.expression,
-                CComplexType.getType(guard.expression).nullValue)),
+                CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.MAIN_PATH,
             metadata = if (guard == null) getMetadata(statement) else getMetadata(guard)
         )
@@ -522,7 +513,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(
             Stmts.Assume(if (guard == null) False() else AbstractExprs.Eq(guard.expression,
-                CComplexType.getType(guard.expression).nullValue)),
+                CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.ALTERNATIVE_PATH,
             metadata = if (guard == null) getMetadata(statement) else getMetadata(guard)
         )
@@ -593,7 +584,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
             ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
         val assume = StmtLabel(
             Stmts.Assume(AbstractExprs.Neq(guard.expression,
-                CComplexType.getType(guard.expression).nullValue)),
+                CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.MAIN_PATH,
             metadata = getMetadata(guard)
         )
@@ -601,7 +592,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(
             Stmts.Assume(AbstractExprs.Eq(guard.expression,
-                CComplexType.getType(guard.expression).nullValue)),
+                CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.ALTERNATIVE_PATH,
             metadata = getMetadata(guard)
         )
@@ -658,7 +649,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
         val key: VarDecl<*> = builder.getParams()[0].first
         check(returnLoc != null)
         val edge = XcfaEdge(endExpr, returnLoc, StmtLabel(Stmts.Assign(cast(key, key.type),
-            cast(CComplexType.getType(key.ref).castTo(expr.expression), key.type)),
+            cast(CComplexType.getType(key.ref, parseContext).castTo(expr.expression), key.type)),
             metadata = getMetadata(statement)), metadata = getMetadata(statement))
         builder.addEdge(edge)
         return endLoc
@@ -758,7 +749,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
             }
             val assume = StmtLabel(
                 Stmts.Assume(AbstractExprs.Neq(guard.expression,
-                    CComplexType.getType(guard.expression).nullValue)),
+                    CComplexType.getType(guard.expression, parseContext).nullValue)),
                 choiceType = ChoiceType.MAIN_PATH,
                 metadata = getMetadata(guard)
             )
@@ -766,7 +757,7 @@ class FrontendXcfaBuilder(val checkOverflow: Boolean = false) :
             builder.addEdge(xcfaEdge)
             val assume1 = StmtLabel(
                 Stmts.Assume(AbstractExprs.Eq(guard.expression,
-                    CComplexType.getType(guard.expression).nullValue)),
+                    CComplexType.getType(guard.expression, parseContext).nullValue)),
                 choiceType = ChoiceType.ALTERNATIVE_PATH,
                 metadata = getMetadata(statement)
             )

@@ -16,35 +16,37 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.frontend.ParseContext
+
 open class ProcedurePassManager(val passes: List<ProcedurePass>)
 
-class CPasses(checkOverflow: Boolean) : ProcedurePassManager(listOf(
+class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePassManager(listOf(
     // formatting
-    NormalizePass(),
-    DeterministicPass(),
+    NormalizePass(parseContext),
+    DeterministicPass(parseContext),
     // removing redundant elements
-    EmptyEdgeRemovalPass(),
-    UnusedLocRemovalPass(),
+    EmptyEdgeRemovalPass(parseContext),
+    UnusedLocRemovalPass(parseContext),
     // optimizing
-    SimplifyExprsPass(),
+    SimplifyExprsPass(parseContext),
     // handling intrinsics
-    ErrorLocationPass(checkOverflow),
-    FinalLocationPass(checkOverflow),
-    SvCompIntrinsicsPass(),
-    FpFunctionsToExprsPass(),
-    PthreadFunctionsPass(),
+    ErrorLocationPass(checkOverflow, parseContext),
+    FinalLocationPass(checkOverflow, parseContext),
+    SvCompIntrinsicsPass(parseContext),
+    FpFunctionsToExprsPass(parseContext),
+    PthreadFunctionsPass(parseContext),
     // trying to inline procedures
-    InlineProceduresPass(),
-    RemoveDeadEnds(),
-    EliminateSelfLoops(),
+    InlineProceduresPass(parseContext),
+    RemoveDeadEnds(parseContext),
+    EliminateSelfLoops(parseContext),
     // handling remaining function calls
-    NondetFunctionPass(),
-    LbePass(),
-    NormalizePass(), // needed after lbe, TODO
-    DeterministicPass(), // needed after lbe, TODO
-    HavocPromotionAndRange(),
+    NondetFunctionPass(parseContext),
+    LbePass(parseContext),
+    NormalizePass(parseContext), // needed after lbe, TODO
+    DeterministicPass(parseContext), // needed after lbe, TODO
+    HavocPromotionAndRange(parseContext),
     // Final cleanup
-    UnusedVarPass(),
+    UnusedVarPass(parseContext),
 ))
 
 class ChcPasses : ProcedurePassManager(/*listOf(

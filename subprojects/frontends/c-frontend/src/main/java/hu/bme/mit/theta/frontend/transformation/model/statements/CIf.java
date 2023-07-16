@@ -16,13 +16,16 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CIf extends CStatement {
 
     private final CStatement guard;
     private final CStatement body;
     private final CStatement elseStatement;
 
-    public CIf(CStatement guard, CStatement body, CStatement elseStatement) {
+    public CIf(CStatement guard, CStatement body, CStatement elseStatement, ParseContext parseContext) {
+        super(parseContext);
         this.guard = guard;
         this.body = body;
         this.elseStatement = elseStatement;

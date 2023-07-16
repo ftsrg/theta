@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -24,8 +25,8 @@ public abstract class CInteger extends CComplexType {
     protected int rank;
     protected boolean unsigned = false;
 
-    protected CInteger(CSimpleType origin) {
-        super(origin);
+    protected CInteger(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
     }
 
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {

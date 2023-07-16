@@ -16,12 +16,13 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CFunction extends CCompound {
 
-    public CFunction(CSimpleType origin) {
-        super(origin);
+    public CFunction(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
     }
 
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {

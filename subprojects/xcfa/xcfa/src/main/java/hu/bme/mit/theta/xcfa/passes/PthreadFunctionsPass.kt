@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -28,7 +29,7 @@ import hu.bme.mit.theta.xcfa.model.*
  *      - pthread_join()
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class PthreadFunctionsPass : ProcedurePass {
+class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])

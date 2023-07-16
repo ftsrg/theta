@@ -34,10 +34,8 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
-import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -170,7 +168,8 @@ class XcfaCli(private val args: Array<String>) {
 
 
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
-        val xcfa = getXcfa(logger, explicitProperty)
+        val parseContext = ParseContext()
+        val xcfa = getXcfa(logger, explicitProperty, parseContext)
         logger.write(Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
         } ms)\n")
@@ -192,12 +191,12 @@ class XcfaCli(private val args: Array<String>) {
         val safetyResult: SafetyResult<*, *> =
             when (strategy) {
                 Strategy.DIRECT -> runDirect(xcfa, config, logger)
-                Strategy.SERVER -> runServer(xcfa, config, logger)
+                Strategy.SERVER -> runServer(xcfa, config, logger, parseContext)
                 Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger)
-                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger)
+                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext)
             }
         // post verification
-        postVerificationLogging(safetyResult)
+        postVerificationLogging(safetyResult, parseContext)
         logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
     }
 
@@ -205,9 +204,9 @@ class XcfaCli(private val args: Array<String>) {
         exitOnError(stacktrace) { config.check(xcfa, logger) }
 
     private fun runServer(xcfa: XCFA, config: XcfaCegarConfig,
-        logger: ConsoleLogger): SafetyResult<*, *> {
+        logger: ConsoleLogger, parseContext: ParseContext): SafetyResult<*, *> {
         val safetyResultSupplier = config.checkInProcess(xcfa, solverHome, true,
-            input!!.absolutePath, logger)
+            input!!.absolutePath, logger, parseContext)
         return try {
             safetyResultSupplier()
         } catch (e: ErrorCodeException) {
@@ -227,7 +226,8 @@ class XcfaCli(private val args: Array<String>) {
     }
 
     private fun runPortfolio(xcfa: XCFA, explicitProperty: ErrorDetection,
-        logger: ConsoleLogger): SafetyResult<*, *> {
+        logger: ConsoleLogger,
+        parseContext: ParseContext): SafetyResult<*, *> {
         var portfolioDescriptor = File(portfolio.name.lowercase() + ".kts")
         if (!portfolioDescriptor.exists()) {
             portfolioDescriptor = File(
@@ -248,8 +248,8 @@ class XcfaCli(private val args: Array<String>) {
             bindings["logger"] = logger
             bindings["smtHome"] = solverHome
             bindings["traits"] = VerificationTraits(
-                multithreaded = ArchitectureConfig.multiThreading,
-                arithmetic = BitwiseChecker.getBitwiseOption(),
+                multithreaded = parseContext.multiThreading,
+                arithmetic = parseContext.bitwiseOption,
             )
             val portfolioResult = kotlinEngine.eval(FileReader(portfolioDescriptor),
                 bindings) as Pair<XcfaCegarConfig, SafetyResult<*, *>>
@@ -287,7 +287,7 @@ class XcfaCli(private val args: Array<String>) {
         }
     }
 
-    private fun postVerificationLogging(safetyResult: SafetyResult<*, *>) {
+    private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, parseContext: ParseContext) {
         if (svcomp || outputResults) {
             if (!svcomp) {
                 resultFolder.mkdirs()
@@ -308,40 +308,24 @@ class XcfaCli(private val args: Array<String>) {
 
             } else {
                 XcfaWitnessWriter().writeWitness(safetyResult, input!!,
-                    getSolver(concretizerSolver, validateConcretizerSolver))
+                    getSolver(concretizerSolver, validateConcretizerSolver), parseContext)
             }
         }
     }
 
-    private fun getXcfa(logger: ConsoleLogger, explicitProperty: ErrorDetection) =
+    private fun getXcfa(logger: ConsoleLogger, explicitProperty: ErrorDetection, parseContext: ParseContext) =
         try {
             when (inputType) {
                 InputType.CHC -> {
-                    var chcFrontend: ChcFrontend
-                    val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.FORWARD) { // try forward, fallback to backward
-                        chcFrontend = ChcFrontend(chcTransformation)
-                        try {
-                            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
-                        } catch (e: UnsupportedOperationException) {
-                            logger.write(Logger.Level.INFO,
-                                "Non-linear CHC found, retrying using backward transformation...")
-                            chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
-                            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
-                        }
-                    } else {
-                        chcFrontend = ChcFrontend(chcTransformation)
-                        chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
-                    }
-                    xcfaBuilder.build()
+                    parseChc(logger)
                 }
 
                 InputType.C -> {
-                    val parseContext = FrontendMetadata()
                     val stream = FileInputStream(input!!)
-                    val xcfaFromC = getXcfaFromC(stream,
+                    val xcfaFromC = getXcfaFromC(stream, parseContext,
                         explicitProperty == ErrorDetection.OVERFLOW)
                     logger.write(Logger.Level.RESULT,
-                        "Arithmetic: ${BitwiseChecker.getBitwiseOption()}\n")
+                        "Arithmetic: ${parseContext.arithmetic}\n")
                     xcfaFromC
                 }
 
@@ -361,6 +345,25 @@ class XcfaCli(private val args: Array<String>) {
             logger.write(Logger.Level.RESULT, "Frontend failed!\n")
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
+
+    private fun parseChc(logger: ConsoleLogger): XCFA {
+        var chcFrontend: ChcFrontend
+        val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.FORWARD) { // try forward, fallback to backward
+            chcFrontend = ChcFrontend(chcTransformation)
+            try {
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+            } catch (e: UnsupportedOperationException) {
+                logger.write(Logger.Level.INFO,
+                    "Non-linear CHC found, retrying using backward transformation...")
+                chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+            }
+        } else {
+            chcFrontend = ChcFrontend(chcTransformation)
+            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+        }
+        return xcfaBuilder.build()
+    }
 
     private fun getExplicitProperty() = if (property != null) {
         remainingFlags.add("--error-detection")
