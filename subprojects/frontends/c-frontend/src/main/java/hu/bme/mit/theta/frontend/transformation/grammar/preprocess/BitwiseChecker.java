@@ -24,23 +24,17 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkState;
 
 public class BitwiseChecker extends CBaseVisitor<Void> {
-
-    public static final BitwiseChecker instance = new BitwiseChecker();
-    private static BitwiseOption bitwiseOption = null;
+    private BitwiseOption bitwiseOption = null;
 
     // checks only once, returns the result of the first check after
-    public BitwiseOption checkIfBitwise(List<CParser.ExternalDeclarationContext> contexts) {
-        bitwiseOption = BitwiseOption.INTEGER;
+    public static BitwiseOption checkIfBitwise(List<CParser.ExternalDeclarationContext> contexts) {
+        BitwiseChecker instance = new BitwiseChecker();
+        instance.bitwiseOption = BitwiseOption.INTEGER;
         for (CParser.ExternalDeclarationContext ctx : contexts) {
             ctx.accept(instance);
         }
-        checkState(bitwiseOption != null);
-        return bitwiseOption;
-    }
-
-    // will return null, if not checked with checkIfBitwise() first!
-    public static BitwiseOption getBitwiseOption() {
-        return bitwiseOption;
+        checkState(instance.bitwiseOption != null);
+        return instance.bitwiseOption;
     }
 
     @Override

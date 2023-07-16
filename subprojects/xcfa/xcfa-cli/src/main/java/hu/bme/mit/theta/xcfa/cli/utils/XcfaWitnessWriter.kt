@@ -51,14 +51,6 @@ class XcfaWitnessWriter {
             val witness = Witness(witnessTrace, inputFile)
             val xml = witness.toPrettyXml()
             witnessfile.writeText(xml)
-
-//            val witnessGraph: Graph = XcfaTraceToWitness.buildWitness(concrTrace)
-//            val ww = WitnessWriter.createViolationWitnessWriter(inputFile.absolutePath, "CHECK( init(main()), LTL(G ! call(reach_error())) )", false)
-//            try {
-//                ww.writeFile(witnessGraph, witnessfile.absolutePath)
-//            } catch (e: FileNotFoundException) {
-//                e.printStackTrace()
-//            }
         } else if (safetyResult.isSafe) {
             val workdir = FileSystems.getDefault().getPath("").toAbsolutePath()
             val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")

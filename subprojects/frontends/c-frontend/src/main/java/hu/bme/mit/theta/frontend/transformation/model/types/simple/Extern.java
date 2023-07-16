@@ -18,7 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Extern extends CSimpleType {
 
-    public static Extern instance = new Extern();
+    public final static Extern instance = new Extern();
 
     private Extern() {
     }

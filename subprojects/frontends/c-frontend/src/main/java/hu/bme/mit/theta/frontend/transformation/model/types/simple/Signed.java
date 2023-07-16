@@ -18,7 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Signed extends CSimpleType {
 
-    public static Signed instance = new Signed();
+    public final static Signed instance = new Signed();
 
     private Signed() {
     }

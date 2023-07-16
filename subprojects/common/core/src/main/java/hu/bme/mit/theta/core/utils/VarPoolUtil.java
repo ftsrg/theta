@@ -28,7 +28,7 @@ public class VarPoolUtil {
     private VarPoolUtil() {
     }
 
-    private static ArrayDeque<VarDecl<IntType>> intPool = new ArrayDeque<VarDecl<IntType>>();
+    private final static ArrayDeque<VarDecl<IntType>> intPool = new ArrayDeque<VarDecl<IntType>>();
     private static int counter = 0;
 
     public static VarDecl<IntType> requestInt() {

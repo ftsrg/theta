@@ -34,6 +34,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
+import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
@@ -101,7 +102,7 @@ class XcfaCli(private val args: Array<String>) {
         description = "Print full stack trace in case of exception")
     var stacktrace: Boolean = false
 
-    @Parameter(names = ["--no-analysis"],
+    @Parameter(names = ["--no-analysis", "--parse-only"],
         description = "Executes the model transformation to XCFA and CFA, and then exits; use with --output-results to get data about the (X)CFA")
     var noAnalysis = false
 
@@ -335,6 +336,7 @@ class XcfaCli(private val args: Array<String>) {
                 }
 
                 InputType.C -> {
+                    val parseContext = FrontendMetadata()
                     val stream = FileInputStream(input!!)
                     val xcfaFromC = getXcfaFromC(stream,
                         explicitProperty == ErrorDetection.OVERFLOW)

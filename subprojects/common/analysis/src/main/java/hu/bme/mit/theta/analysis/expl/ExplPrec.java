@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -37,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class ExplPrec implements Prec {
 
     private final Set<VarDecl<?>> vars;
-    private static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
+    private final static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
 
     private ExplPrec(final Iterable<? extends VarDecl<?>> vars) {
         this.vars = ImmutableSet.copyOf(vars);

@@ -18,33 +18,31 @@ package hu.bme.mit.theta.frontend.transformation;
 
 public class CStmtCounter {
 
-    CStmtCounter instance = new CStmtCounter();
+    private int forLoops = 0;
+    private int whileLoops = 0;
+    private int branches = 0;
 
-    private static int forLoops = 0;
-    private static int whileLoops = 0;
-    private static int branches = 0;
-
-    public static void incrementBranches() {
+    public void incrementBranches() {
         branches++;
     }
 
-    public static void incrementForLoops() {
+    public void incrementForLoops() {
         forLoops++;
     }
 
-    public static void incrementWhileLoops() {
+    public void incrementWhileLoops() {
         whileLoops++;
     }
 
-    public static int getWhileLoops() {
+    public int getWhileLoops() {
         return whileLoops;
     }
 
-    public static int getForLoops() {
+    public int getForLoops() {
         return forLoops;
     }
 
-    public static int getBranches() {
+    public int getBranches() {
         return branches;
     }
 }

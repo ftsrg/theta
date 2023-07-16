@@ -32,10 +32,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ArchitectureConfig {
-
-    public static final ArchitectureType architecture = ArchitectureType.ILP32;
-    public static Boolean multiThreading = false;
-    public static ArithmeticType arithmetic = ArithmeticType.efficient;
+// TODO move these to context object
+//    public static final ArchitectureType architecture = ArchitectureType.ILP32;
+//    public static Boolean multiThreading = false;
+//    public static ArithmeticType arithmetic = ArithmeticType.efficient;
 
     private ArchitectureConfig() {
     }

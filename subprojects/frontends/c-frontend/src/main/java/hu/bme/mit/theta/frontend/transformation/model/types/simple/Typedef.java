@@ -18,7 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Typedef extends CSimpleType {
 
-    public static Typedef instance = new Typedef();
+    public final static Typedef instance = new Typedef();
 
     private Typedef() {
     }

@@ -18,7 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 public class Volatile extends CSimpleType {
 
-    public static Volatile instance = new Volatile();
+    public final static Volatile instance = new Volatile();
 
     private Volatile() {
     }

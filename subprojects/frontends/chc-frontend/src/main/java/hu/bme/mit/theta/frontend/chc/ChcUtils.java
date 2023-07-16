@@ -34,7 +34,10 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTypeTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
-import hu.bme.mit.theta.xcfa.model.*;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -52,6 +55,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.xcfa.passes.UtilsKt.changeVars;
 
 public class ChcUtils {
+    // TODO eliminate static fields (re-runs?)
     private static GenericSmtLibSymbolTable initialSymbolTable = new GenericSmtLibSymbolTable();
     private static GenericSmtLibSymbolTable symbolTable;
     private static SmtLibTypeTransformer typeTransformer = new GenericSmtLibTypeTransformer(null);
