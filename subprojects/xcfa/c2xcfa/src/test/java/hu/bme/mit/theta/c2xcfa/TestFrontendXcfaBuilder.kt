@@ -16,7 +16,7 @@
 
 package hu.bme.mit.theta.c2xcfa
 
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.ParseContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -64,10 +64,9 @@ class TestFrontendXcfaBuilder {
     @Test
     @Throws(IOException::class)
     fun parse() {
-        ArchitectureConfig.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, parseContext, false)
+        getXcfaFromC(stream!!, ParseContext(), false)
     }
 }

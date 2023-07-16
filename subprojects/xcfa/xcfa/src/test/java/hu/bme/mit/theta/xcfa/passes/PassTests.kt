@@ -16,11 +16,12 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.params.provider.MethodSource
 
 class PassTests {
 
@@ -42,6 +43,7 @@ class PassTests {
     companion object {
 
         private val dummyXcfa = xcfa("") {}
+        private val parseContext = ParseContext()
 
         @JvmStatic
         val data: List<Arguments> = listOf(
@@ -59,8 +61,8 @@ class PassTests {
                     }
                 },
                 passes = listOf(
-                    NormalizePass(),
-                    DeterministicPass()
+                    NormalizePass(parseContext),
+                    DeterministicPass(parseContext)
                 ),
                 output = {
                     (init to final) {

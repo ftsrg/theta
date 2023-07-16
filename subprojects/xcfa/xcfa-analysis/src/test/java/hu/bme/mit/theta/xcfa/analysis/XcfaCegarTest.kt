@@ -34,6 +34,7 @@ import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import org.junit.Assert
@@ -70,7 +71,7 @@ class XcfaCegarTest {
     @Test
     fun check() {
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, parseContext, false)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
 
 //        System.err.println(xcfa.toDot())
 
