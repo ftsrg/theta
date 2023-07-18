@@ -23,6 +23,10 @@ FPTYPE
     :   'fp' | 'Fp' | 'FP'
     ;
 
+ARRAYINIT
+    :   'arrayinit'
+    ;
+
 FUNC:   'func' | 'Func' | 'FUNC'
     ;
 

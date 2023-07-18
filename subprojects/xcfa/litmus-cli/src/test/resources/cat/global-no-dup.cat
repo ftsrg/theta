@@ -1,0 +1,5 @@
+GLOBALNODUP
+
+procedure nodup(rf, id) =
+    empty (rf^-1; rf) \ id as noDup
+end

@@ -50,8 +50,8 @@ import java.lang.reflect.Type
 
 enum class InputType {
     C,
-    XCFA_JSON,
-    XCFA_DSL,
+    JSON,
+    DSL,
     CHC
 }
 

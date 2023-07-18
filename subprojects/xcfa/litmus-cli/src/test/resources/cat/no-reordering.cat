@@ -1,0 +1,6 @@
+NOREORDER
+
+procedure sc(rf, co, id, po) =
+    let fr = (rf^-1 ; co) \id
+    acyclic (po | co | rf | fr) as sc
+end

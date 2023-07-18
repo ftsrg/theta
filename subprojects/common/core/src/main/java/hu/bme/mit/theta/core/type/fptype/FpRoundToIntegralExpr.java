@@ -30,7 +30,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round to integral
 
     private static final int HASH_SEED = 6671;
-    private static final String OPERATOR_LABEL = "fpround";
+    private static final String OPERATOR_LABEL = "fproundtoint";
 
     private final FpRoundingMode roundingMode;
 

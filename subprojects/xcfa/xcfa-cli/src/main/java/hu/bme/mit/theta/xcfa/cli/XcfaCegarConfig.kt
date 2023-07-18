@@ -70,7 +70,7 @@ data class XcfaCegarConfig(
     var domain: Domain = Domain.EXPL,
     @Parameter(names = ["--maxenum"],
         description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
-    var maxEnum: Int = 0,
+    var maxEnum: Int = 1,
     @Parameter(names = ["--search"], description = "Search strategy")
     var search: Search = Search.ERR,
     @Parameter(names = ["--initprec"], description = "Initial precision")

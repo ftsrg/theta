@@ -135,14 +135,16 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val paramList = procedure.params.toMap()
         val tempLookup = startLabel.tempLookup
         val returnStmt = SequenceLabel(
-            procedure.params.withIndex().filter { it.value.second != ParamDirection.IN }
-                .map { iVal ->
-                    StmtLabel(Assign(
-                        cast((startLabel.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>,
-                            iVal.value.first.type),
-                        cast(iVal.value.first.ref, iVal.value.first.type)),
-                        metadata = startLabel.metadata)
-                })
+            emptyList() // TODO: return values are handled in JoinLabel instead -- how to solve this?
+//            procedure.params.withIndex().filter { it.value.second != ParamDirection.IN }
+//                .map { iVal ->
+//                    StmtLabel(Assign(
+//                        cast((startLabel.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>,
+//                            iVal.value.first.type),
+//                        cast(iVal.value.first.ref, iVal.value.first.type)),
+//                        metadata = startLabel.metadata)
+//                }
+        )
 
         val pid = nameCnt++
         val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")

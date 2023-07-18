@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTypeTransformer;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
@@ -42,10 +43,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
@@ -74,8 +72,8 @@ public class ChcUtils {
 
     public static List<XcfaLabel> getTailConditionLabels(CHCParser.Chc_tailContext tail, Map<String, VarDecl<?>> localVars) {
         List<XcfaLabel> labels = new ArrayList<>();
-        tail.i_formula().forEach(i_formula -> {
-            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), Bool(), null); // null as SmtLibModel, because it is unused
+        tail.i_formula().forEach(i_formula -> {  // null as SmtLibModel, because it is unused
+            Expr<BoolType> expr = termTransformer.toExpr(getOriginalText(i_formula), Bool(), new SmtLibModel(Collections.emptyMap()));
             List<ConstDecl<?>> exprVars = new ArrayList<>();
             ExprUtils.collectConstants(expr, exprVars);
             Map<Decl<?>, VarDecl<?>> varsToLocal = new HashMap<>();

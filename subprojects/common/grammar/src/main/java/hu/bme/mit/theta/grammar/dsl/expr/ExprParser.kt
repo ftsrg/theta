@@ -684,11 +684,12 @@ class ExpressionWrapper(scope: Scope, content: String) {
         }
 
         private fun getRoundingMode(text: String): FpRoundingMode {
-            val pattern = Pattern.compile("\\[([a-zA-Z]*)]")
+            val pattern = Pattern.compile("\\[((RNA)|(RNE)|(RTP)|(RTN)|(RTZ))]")
             val matcher = pattern.matcher(text)
-            return if (matcher.find()) {
-                FpRoundingMode.valueOf(matcher.group(1).uppercase())
-            } else FpRoundingMode.getDefaultRoundingMode()
+            if (matcher.find()) {
+                return FpRoundingMode.valueOf(matcher.group(1).uppercase())
+            }
+            return FpRoundingMode.getDefaultRoundingMode()
         }
 
         override fun visitBitwiseNotExpr(ctx: BitwiseNotExprContext): Expr<out Type> {

@@ -183,6 +183,7 @@ ratLitExpr
 
 arrLitExpr
     :   LPAREN ARRAY (LPAREN indexExpr+=expr valueExpr+=expr RPAREN)* LPAREN DEFAULT elseExpr=expr RPAREN RPAREN
+    |   LPAREN ARRAYINIT (indexExpr+=expr valueExpr+=expr)* elseExpr=expr RPAREN
     ;
 
 bvLitExpr

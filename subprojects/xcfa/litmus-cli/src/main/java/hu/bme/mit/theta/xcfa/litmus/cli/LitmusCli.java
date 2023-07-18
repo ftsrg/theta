@@ -19,19 +19,26 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
+import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
+import hu.bme.mit.theta.cat.dsl.CatDslManager;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.xcfa.model.XCFA;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static hu.bme.mit.theta.xcfa.model.VisualizerKt.toDot;
 
 public class LitmusCli {
     private static final String JAR_NAME = "theta-litmus-cli.jar";
@@ -110,46 +117,40 @@ public class LitmusCli {
 
         final Stopwatch sw = Stopwatch.createStarted();
         try {
-//			final Solver solver = SolverManager.resolveSolverFactory(this.solver).createSolver();
-//
-//			final MCM mcm = CatDslManager.createMCM(cat);
-//			logger.write(Logger.Level.MAINSTEP, "CAT model parsed successfully\n");
-//			final XCFA xcfa = LitmusInterpreter.getXcfa(litmus);
-//			logger.write(Logger.Level.MAINSTEP, "Litmus test parsed successfully\n");
+            final Solver solver = SolverManager.resolveSolverFactory(this.solver).createSolver();
 
-//			if(printxcfa) {
-//				System.out.println("digraph G{");
-//				for (XcfaProcess process : xcfa.getProcesses()) {
-//					String s = process.toDot(List.of(), List.of());
-//					System.out.println(s);
-//				}
-//				System.out.println("}");
-//			}
+            final MCM mcm = CatDslManager.createMCM(cat);
+            logger.write(Logger.Level.MAINSTEP, "CAT model parsed successfully\n");
+            final XCFA xcfa = LitmusInterpreter.getXcfa(litmus);
+            logger.write(Logger.Level.MAINSTEP, "Litmus test parsed successfully\n");
+
+            if (printxcfa) {
+                System.out.println(toDot(xcfa));
+            }
+
+//            final List<Integer> processIds = listToRange(processes, -1, -1);
 //
-//			final List<XcfaProcess> processes = xcfa.getProcesses();
-//			final List<Integer> processIds = listToRange(processes, -1, -1);
+//            final XcfaProcessMemEventProvider<ExplState> memEventProvider = new XcfaProcessMemEventProvider<>(processes.size());
+//            final MultiprocLTS<XcfaProcessState<ExplState>, XcfaProcessAction> multiprocLTS = new MultiprocLTS<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessLTS<ExplState>())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+//            final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id * -1 - 1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+//            final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplStmtTransFunc.create(solver, 10)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+//            final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null, Set.of(), null)).collect(Collectors.toList());
+//            final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>(ExplOrd.getInstance());
 //
-//			final XcfaProcessMemEventProvider<ExplState> memEventProvider = new XcfaProcessMemEventProvider<>(processes.size());
-//			final MultiprocLTS<XcfaProcessState<ExplState>, XcfaProcessAction> multiprocLTS = new MultiprocLTS<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessLTS<ExplState>())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-//			final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id*-1-1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-//			final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplStmtTransFunc.create(solver, 10)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-//			final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null, Set.of(), null)).collect(Collectors.toList());
-//			final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>(ExplOrd.getInstance());
+//            final MutableValuation val = new MutableValuation();
+//            for (VarDecl<? extends Type> var : xcfa.getvars()) {
+//                val.put(var, BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64));
+//            }
 //
-//			final MutableValuation val = new MutableValuation();
-//			for (VarDecl<? extends Type> var : xcfa.getvars()) {
-//				val.put(var, BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64));
-//			}
-//
-//			final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, ExplState.of(val), solver, mcm, logger);
-//			final MCMChecker.MCMSafetyResult mcmSafetyResult = mcmChecker.check(ExplPrec.of(xcfa.getvars().stream().filter(e -> e.getName().equals("crit")).toList()));
-//			if(visualize) {
-//				if(mcmSafetyResult.getSolutions().size() == 0) {
-//					logger.write(Logger.Level.RESULT, "No solutions found, nothing to visualize\n");
-//				} else {
-//					mcmSafetyResult.visualize();
-//				}
-//			}
+//            final MCMChecker<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> mcmChecker = new MCMChecker<>(memEventProvider, multiprocLTS, multiprocInitFunc, multiprocTransFunc, processIds, initialWrites, partialOrd, ExplState.of(val), solver, mcm, logger);
+//            final MCMChecker.MCMSafetyResult mcmSafetyResult = mcmChecker.check(ExplPrec.of(xcfa.getvars().stream().filter(e -> e.getName().equals("crit")).toList()));
+//            if (visualize) {
+//                if (mcmSafetyResult.getSolutions().size() == 0) {
+//                    logger.write(Logger.Level.RESULT, "No solutions found, nothing to visualize\n");
+//                } else {
+//                    mcmSafetyResult.visualize();
+//                }
+//            }
         } catch (final Throwable t) {
             t.printStackTrace();
             System.exit(-1);
@@ -168,7 +169,7 @@ public class LitmusCli {
     }
 
     public static void registerAllSolverManagers(String home, Logger logger) throws Exception {
-//		CpuTimeKeeper.saveSolverTimes();
+//        CpuTimeKeeper.saveSolverTimes();
         SolverManager.closeAll();
         // register solver managers
         SolverManager.registerSolverManager(Z3SolverManager.create());

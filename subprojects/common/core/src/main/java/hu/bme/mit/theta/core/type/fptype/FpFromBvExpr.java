@@ -105,7 +105,7 @@ public class FpFromBvExpr extends UnaryExpr<BvType, FpType> {
     }
 
     public String getOperatorLabel() {
-        return OPERATOR_LABEL;
+        return OPERATOR_LABEL + "[" + fpType.getExponent() + "," + fpType.getSignificand() + "][" + (isSigned() ? "s" : "u") + "]";
     }
 }
  
