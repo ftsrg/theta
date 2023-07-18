@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.xcfa.model.*
@@ -65,7 +66,8 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                                 val param = invokeLabel.params[4]
 
-                                StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param),
+                                StartLabel((funcptr as RefExpr<out Type>).decl.name,
+                                    listOf(Int(0), param), // int(0) to solve StartLabel not handling return params
                                     (handle as RefExpr<out Type>).decl as VarDecl<*>,
                                     metadata = invokeLabel.metadata)
                             }

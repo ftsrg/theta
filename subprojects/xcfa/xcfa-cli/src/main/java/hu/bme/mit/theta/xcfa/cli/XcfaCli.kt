@@ -77,9 +77,8 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C
 
-    @Parameter(names = ["--chc-transformation"],
-        description = "Direction of transformation from CHC to XCFA")
-    var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.FORWARD
+    @Parameter(names = ["--chc-transformation"], description = "Direction of transformation from CHC to XCFA")
+    var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.PORTFOLIO
 
     //////////// backend options ////////////
     @Parameter(names = ["--backend"], description = "Backend analysis to use")
@@ -346,13 +345,12 @@ class XcfaCli(private val args: Array<String>) {
 
     private fun parseChc(logger: ConsoleLogger): XCFA {
         var chcFrontend: ChcFrontend
-        val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.FORWARD) { // try forward, fallback to backward
-            chcFrontend = ChcFrontend(chcTransformation)
+        val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.PORTFOLIO) { // try forward, fallback to backward
+            chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.FORWARD)
             try {
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
             } catch (e: UnsupportedOperationException) {
-                logger.write(Logger.Level.INFO,
-                    "Non-linear CHC found, retrying using backward transformation...")
+                logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...")
                 chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
             }

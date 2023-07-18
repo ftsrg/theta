@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -23,7 +24,7 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.io.path.createTempDirectory
 
-class XcfaCliTest {
+class XcfaCliParseTest {
     companion object {
 
         @JvmStatic
@@ -60,7 +61,23 @@ class XcfaCliTest {
         @JvmStatic
         fun chcFiles(): Stream<Arguments> {
             return Stream.of(
-                Arguments.of("/chc/chc-LIA-Lin_000.smt2"),
+                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
+                Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
+                Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
+                Arguments.of("/chc/chc-LIA-nonlin-Arrays-nonrecADT_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
+                Arguments.of("/chc/chc-LIA_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
+
+//                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.FORWARD), // nonlin
+                Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
+                Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
+                Arguments.of("/chc/chc-LIA-nonlin-Arrays-nonrecADT_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
+//                Arguments.of("/chc/chc-LIA_000.smt2", ChcFrontend.ChcTransformation.FORWARD), // nonlin
+
+                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
+                Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
+                Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
+                Arguments.of("/chc/chc-LIA-nonlin-Arrays-nonrecADT_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
+                Arguments.of("/chc/chc-LIA_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
             )
         }
 
@@ -109,17 +126,19 @@ class XcfaCliTest {
         main(arrayOf(
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only"
+            "--parse-only", "--stacktrace"
         ))
     }
 
     @ParameterizedTest
     @MethodSource("chcFiles")
-    fun testCHCParse(filePath: String) {
+    fun testCHCParse(filePath: String, chcTransformation: ChcFrontend.ChcTransformation) {
         main(arrayOf(
             "--input-type", "CHC",
+            "--chc-transformation", chcTransformation.toString(),
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only"
+            "--parse-only",
+            "--stacktrace",
         ))
     }
 
@@ -129,7 +148,8 @@ class XcfaCliTest {
         main(arrayOf(
             "--input-type", "DSL",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only"
+            "--parse-only",
+            "--stacktrace",
         ))
     }
 
@@ -139,7 +159,8 @@ class XcfaCliTest {
         main(arrayOf(
             "--input-type", "JSON",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only", "--stacktrace"
+            "--parse-only",
+            "--stacktrace",
         ))
     }
 
@@ -151,16 +172,16 @@ class XcfaCliTest {
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--parse-only",
+            "--stacktrace",
             "--output-results",
-            "--output-directory", temp.toAbsolutePath().toString()
+            "--output-directory", temp.toAbsolutePath().toString(),
         ))
         val xcfaJson = temp.resolve("xcfa.json").toFile()
-//        val target = File("/home/levente/Documents/University/theta-fresh/subprojects/xcfa/xcfa-cli/src/test/resources/json/${filePath.split("/").last()}.json")
-//        xcfaJson.copyTo(target, true)
         main(arrayOf(
             "--input-type", "JSON",
             "--input", xcfaJson.absolutePath.toString(),
-            "--parse-only"
+            "--parse-only",
+            "--stacktrace",
         ))
         temp.toFile().deleteRecursively()
     }
