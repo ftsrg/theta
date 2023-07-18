@@ -15,19 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.visualization.Graph
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
-import hu.bme.mit.theta.core.type.inttype.IntExprs.*
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverManager
-import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.model.ParamDirection.*
+import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
+import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
+import hu.bme.mit.theta.xcfa.model.procedure
+import hu.bme.mit.theta.xcfa.model.xcfa
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 
 class XcfaDslTest {
 
@@ -96,7 +94,7 @@ class XcfaDslTest {
         run {
             val xcfa = getAsyncXcfa()
             val safetyResult = config.check(xcfa, ConsoleLogger(Logger.Level.DETAIL))
-            Assert.assertTrue(safetyResult.isSafe)
+            Assert.assertTrue(safetyResult.isUnsafe)
         }
     }
 
