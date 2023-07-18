@@ -1,0 +1,28 @@
+name: 'Deploy javadoc'
+description: 'Deploying javadoc to github-pages'
+
+permissions: write-all
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - name: Setup java 17
+      uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
+      with:
+        distribution: temurin
+        java-version: 17
+    - name: Generate Javadoc
+      uses: ./.github/actions/cache-build
+      id: build
+      with:
+        arguments: aggregateJavadoc
+    - name: Deploy Javadoc
+      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+      uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+      with:
+        branch: gh-pages
+        folder: build/docs/aggregateJavadoc
+        target-folder: javadoc
+        single-commit: true

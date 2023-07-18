@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,61 +45,67 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public final class LazyXtaCheckerTest {
-	private static final String MODEL_CSMA = "/csma-2.xta";
-	private static final String MODEL_FDDI = "/fddi-2.xta";
-	private static final String MODEL_FISCHER = "/fischer-2-32-64.xta";
-	private static final String MODEL_LYNCH = "/lynch-2-16.xta";
-	private static final String MODEL_ENGINE = "/engine-classic.xta";
-	private static final String MODEL_BROADCAST = "/broadcast.xta";
 
-	private static final Collection<String> MODELS = ImmutableList.of(MODEL_CSMA, MODEL_FDDI, MODEL_FISCHER,
-			MODEL_LYNCH, MODEL_ENGINE, MODEL_BROADCAST);
+    private static final String MODEL_CSMA = "/csma-2.xta";
+    private static final String MODEL_FDDI = "/fddi-2.xta";
+    private static final String MODEL_FISCHER = "/fischer-2-32-64.xta";
+    private static final String MODEL_LYNCH = "/lynch-2-16.xta";
+    private static final String MODEL_ENGINE = "/engine-classic.xta";
+    private static final String MODEL_BROADCAST = "/broadcast.xta";
 
-	private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS = ImmutableSet.of(MODEL_FDDI,
-			MODEL_ENGINE, MODEL_BROADCAST);
+    private static final Collection<String> MODELS = ImmutableList.of(MODEL_CSMA, MODEL_FDDI,
+            MODEL_FISCHER,
+            MODEL_LYNCH, MODEL_ENGINE, MODEL_BROADCAST);
 
-	@Parameter(0)
-	public String filepath;
+    private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS = ImmutableSet.of(
+            MODEL_FDDI,
+            MODEL_ENGINE, MODEL_BROADCAST);
 
-	@Parameter(1)
-	public DataStrategy dataStrategy;
+    @Parameter(0)
+    public String filepath;
 
-	@Parameter(2)
-	public ClockStrategy clockStrategy;
+    @Parameter(1)
+    public DataStrategy dataStrategy;
 
-	private SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> checker;
+    @Parameter(2)
+    public ClockStrategy clockStrategy;
 
-	@Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
-	public static Collection<Object[]> data() {
-		final Collection<Object[]> result = new ArrayList<>();
-		for (final String model : MODELS) {
-			for (final DataStrategy dataStrategy : DataStrategy.values()) {
-				for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
-					if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy != LU)) {
-						result.add(new Object[]{model, dataStrategy, clockStrategy});
-					}
-				}
-			}
-		}
-		return result;
-	}
+    private SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> checker;
 
-	@Before
-	public void initialize() throws IOException {
-		final InputStream inputStream = getClass().getResourceAsStream(filepath);
-		final XtaSystem system = XtaDslManager.createSystem(inputStream);
-		checker = LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, BFS);
-	}
+    @Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
+    public static Collection<Object[]> data() {
+        final Collection<Object[]> result = new ArrayList<>();
+        for (final String model : MODELS) {
+            for (final DataStrategy dataStrategy : DataStrategy.values()) {
+                for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
+                    if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy
+                            != LU)) {
+                        result.add(new Object[]{model, dataStrategy, clockStrategy});
+                    }
+                }
+            }
+        }
+        return result;
+    }
 
-	@Test
-	public void test() {
-		// Act
-		final SafetyResult<? extends XtaState<?>, XtaAction> status = checker.check(UnitPrec.getInstance());
+    @Before
+    public void initialize() throws IOException {
+        final InputStream inputStream = getClass().getResourceAsStream(filepath);
+        final XtaSystem system = XtaDslManager.createSystem(inputStream);
+        checker = LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, BFS);
+    }
 
-		// Assert
-		final ArgChecker argChecker = ArgChecker.create(Z3SolverFactory.getInstance().createSolver());
-		final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
-		assertTrue(argCheckResult);
-	}
+    @Test
+    public void test() {
+        // Act
+        final SafetyResult<? extends XtaState<?>, XtaAction> status = checker.check(
+                UnitPrec.getInstance());
+
+        // Assert
+        final ArgChecker argChecker = ArgChecker.create(
+                Z3SolverFactory.getInstance().createSolver());
+        final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
+        assertTrue(argCheckResult);
+    }
 
 }

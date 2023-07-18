@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 
-class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: MutableScope, val env: Env, val throwIfNotInScope: Boolean = false) : TypeAdapter<VarDecl<*>>() {
+class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: MutableScope, val env: Env,
+    val throwIfNotInScope: Boolean = false) : TypeAdapter<VarDecl<*>>() {
+
     private lateinit var gson: Gson
 
     override fun write(writer: JsonWriter, value: VarDecl<*>) {
@@ -46,20 +48,20 @@ class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: MutableScope, val 
         reader.beginObject()
         lateinit var name: String
         lateinit var type: Type
-        while(reader.peek() != JsonToken.END_OBJECT) {
+        while (reader.peek() != JsonToken.END_OBJECT) {
             val key = reader.nextName()
-            if(key == "name") {
+            if (key == "name") {
                 name = reader.nextString()
             } else if (key == "type") {
-                val jsonType = object: TypeToken<Type>() {}.type
+                val jsonType = object : TypeToken<Type>() {}.type
                 type = gson.fromJson(reader, jsonType)
             }
         }
         reader.endObject()
         val symbol = scope.resolve(name)
-        if(symbol.isPresent) {
+        if (symbol.isPresent) {
             val ret: VarDecl<*> = env.eval(symbol.get()) as VarDecl<*>
-            check(ret.type==type)
+            check(ret.type == type)
             return ret
         }
         check(!throwIfNotInScope) { "Variable $name is not known." }
@@ -71,6 +73,6 @@ class VarDeclAdapter(val gsonSupplier: () -> Gson, val scope: MutableScope, val 
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

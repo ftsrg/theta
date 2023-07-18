@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,46 +44,50 @@ import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 @RunWith(Parameterized.class)
 public final class XtaAnalysisTest {
 
-	@Parameters(name = "{0}")
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"/critical-2-25-50.xta"},
+                {"/critical-2-25-50.xta"},
 
-				{"/csma-2.xta"},
+                {"/csma-2.xta"},
 
-				{"/fddi-2.xta"},
+                {"/fddi-2.xta"},
 
-				{"/fischer-2-32-64.xta"},
+                {"/fischer-2-32-64.xta"},
 
-				{"/lynch-2-16.xta"},
+                {"/lynch-2-16.xta"},
 
-				{"/broadcast.xta"},
+                {"/broadcast.xta"},
 
-		});
-	}
+        });
+    }
 
-	@Parameter(0)
-	public String filepath;
+    @Parameter(0)
+    public String filepath;
 
-	@Test
-	public void test() throws FileNotFoundException, IOException {
-		final InputStream inputStream = getClass().getResourceAsStream(filepath);
-		final XtaSystem system = XtaDslManager.createSystem(inputStream);
+    @Test
+    public void test() throws FileNotFoundException, IOException {
+        final InputStream inputStream = getClass().getResourceAsStream(filepath);
+        final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
-		final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
-		final Analysis<XtaState<UnitState>, XtaAction, UnitPrec> analysis = XtaAnalysis.create(system,
-				UnitAnalysis.getInstance());
-		final ArgBuilder<XtaState<UnitState>, XtaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
-				s -> false);
+        final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
+        final Analysis<XtaState<UnitState>, XtaAction, UnitPrec> analysis = XtaAnalysis.create(
+                system,
+                UnitAnalysis.getInstance());
+        final ArgBuilder<XtaState<UnitState>, XtaAction, UnitPrec> argBuilder = ArgBuilder.create(
+                lts, analysis,
+                s -> false);
 
-		final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.projection(s -> s.getLocs()).build();
+        final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor.builder(
+                        argBuilder)
+                .projection(s -> s.getLocs()).build();
 
-		final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
-		abstractor.check(arg, UnitPrec.getInstance());
+        final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
+        abstractor.check(arg, UnitPrec.getInstance());
 
-		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
-	}
+        System.out.println(
+                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+    }
 
 }

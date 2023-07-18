@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.common.dsl;
 
-public interface MutableScope extends Scope{
+public interface MutableScope extends Scope {
 
-	void add(final Symbol symbol);
+    void add(final Symbol symbol);
 
-	void addAll(final Iterable<? extends Symbol> symbols);
+    void addAll(final Iterable<? extends Symbol> symbols);
 
 }

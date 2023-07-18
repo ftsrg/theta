@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,25 +24,26 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 
-final class PrecMappingInitFunc<S extends State, PP extends Prec, PR extends Prec> implements InitFunc<S, PP> {
+final class PrecMappingInitFunc<S extends State, PP extends Prec, PR extends Prec> implements
+        InitFunc<S, PP> {
 
-	private final InitFunc<S, ? super PR> initFunc;
-	private final Function<? super PP, ? extends PR> mapping;
+    private final InitFunc<S, ? super PR> initFunc;
+    private final Function<? super PP, ? extends PR> mapping;
 
-	private PrecMappingInitFunc(final InitFunc<S, ? super PR> initFunc,
-								final Function<? super PP, ? extends PR> mapping) {
-		this.initFunc = checkNotNull(initFunc);
-		this.mapping = checkNotNull(mapping);
-	}
+    private PrecMappingInitFunc(final InitFunc<S, ? super PR> initFunc,
+                                final Function<? super PP, ? extends PR> mapping) {
+        this.initFunc = checkNotNull(initFunc);
+        this.mapping = checkNotNull(mapping);
+    }
 
-	public static <S extends State, PP extends Prec, PR extends Prec> PrecMappingInitFunc<S, PP, PR> create(
-			final InitFunc<S, ? super PR> initFunc, final Function<? super PP, ? extends PR> mapping) {
-		return new PrecMappingInitFunc<>(initFunc, mapping);
-	}
+    public static <S extends State, PP extends Prec, PR extends Prec> PrecMappingInitFunc<S, PP, PR> create(
+            final InitFunc<S, ? super PR> initFunc, final Function<? super PP, ? extends PR> mapping) {
+        return new PrecMappingInitFunc<>(initFunc, mapping);
+    }
 
-	@Override
-	public Collection<? extends S> getInitStates(final PP prec) {
-		return initFunc.getInitStates(mapping.apply(prec));
-	}
+    @Override
+    public Collection<? extends S> getInitStates(final PP prec) {
+        return initFunc.getInitStates(mapping.apply(prec));
+    }
 
 }

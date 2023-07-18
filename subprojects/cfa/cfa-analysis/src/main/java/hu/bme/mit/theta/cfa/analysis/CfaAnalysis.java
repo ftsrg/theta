@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,38 +26,39 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 
 public final class CfaAnalysis<S extends ExprState, P extends Prec>
-		implements Analysis<CfaState<S>, CfaAction, CfaPrec<P>> {
+        implements Analysis<CfaState<S>, CfaAction, CfaPrec<P>> {
 
-	private final PartialOrd<CfaState<S>> partialOrd;
-	private final InitFunc<CfaState<S>, CfaPrec<P>> initFunc;
-	private final TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> transFunc;
+    private final PartialOrd<CfaState<S>> partialOrd;
+    private final InitFunc<CfaState<S>, CfaPrec<P>> initFunc;
+    private final TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> transFunc;
 
-	private CfaAnalysis(final Loc initLoc, final Analysis<S, ? super CfaAction, ? super P> analysis) {
-		checkNotNull(initLoc);
-		checkNotNull(analysis);
-		partialOrd = CfaOrd.create(analysis.getPartialOrd());
-		initFunc = CfaInitFunc.create(initLoc, analysis.getInitFunc());
-		transFunc = CfaTransFunc.create(analysis.getTransFunc());
-	}
+    private CfaAnalysis(final Loc initLoc,
+                        final Analysis<S, ? super CfaAction, ? super P> analysis) {
+        checkNotNull(initLoc);
+        checkNotNull(analysis);
+        partialOrd = CfaOrd.create(analysis.getPartialOrd());
+        initFunc = CfaInitFunc.create(initLoc, analysis.getInitFunc());
+        transFunc = CfaTransFunc.create(analysis.getTransFunc());
+    }
 
-	public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
-																				 final Analysis<S, ? super CfaAction, ? super P> analysis) {
-		return new CfaAnalysis<>(initLoc, analysis);
-	}
+    public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
+                                                                                 final Analysis<S, ? super CfaAction, ? super P> analysis) {
+        return new CfaAnalysis<>(initLoc, analysis);
+    }
 
-	@Override
-	public PartialOrd<CfaState<S>> getPartialOrd() {
-		return partialOrd;
-	}
+    @Override
+    public PartialOrd<CfaState<S>> getPartialOrd() {
+        return partialOrd;
+    }
 
-	@Override
-	public InitFunc<CfaState<S>, CfaPrec<P>> getInitFunc() {
-		return initFunc;
-	}
+    @Override
+    public InitFunc<CfaState<S>, CfaPrec<P>> getInitFunc() {
+        return initFunc;
+    }
 
-	@Override
-	public TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> getTransFunc() {
-		return transFunc;
-	}
+    @Override
+    public TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> getTransFunc() {
+        return transFunc;
+    }
 
 }

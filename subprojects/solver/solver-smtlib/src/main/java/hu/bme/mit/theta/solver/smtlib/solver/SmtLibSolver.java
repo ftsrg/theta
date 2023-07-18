@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.solver;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -35,245 +50,250 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkState;
 
 public class SmtLibSolver implements UCSolver, Solver {
-	protected final SmtLibSymbolTable symbolTable;
-	protected final SmtLibTransformationManager transformationManager;
-	protected final SmtLibTermTransformer termTransformer;
 
-	protected final SmtLibSolverBinary solverBinary;
-	private final boolean unsatCoreEnabled;
+    protected final SmtLibSymbolTable symbolTable;
+    protected final SmtLibTransformationManager transformationManager;
+    protected final SmtLibTermTransformer termTransformer;
 
-	protected final Stack<Expr<BoolType>> assertions;
-	protected final Map<String, Expr<BoolType>> assumptions;
-	protected final Stack<ConstDecl<?>> declarationStack;
+    protected final SmtLibSolverBinary solverBinary;
+    private final boolean unsatCoreEnabled;
 
-	private static final String ASSUMPTION_LABEL = "_LABEL_%d";
-	private int labelNum = 0;
+    protected final Stack<Expr<BoolType>> assertions;
+    protected final Map<String, Expr<BoolType>> assumptions;
+    protected final Stack<ConstDecl<?>> declarationStack;
 
-	private Valuation model;
-	private Collection<Expr<BoolType>> unsatCore;
-	private SolverStatus status;
+    private static final String ASSUMPTION_LABEL = "_LABEL_%d";
+    private int labelNum = 0;
 
-	public SmtLibSolver(
-			final SmtLibSymbolTable symbolTable, final SmtLibTransformationManager transformationManager,
-			final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary, boolean unsatCoreEnabled
-	) {
-		this.solverBinary = solverBinary;
-		this.symbolTable = symbolTable;
-		this.transformationManager = transformationManager;
-		this.termTransformer = termTransformer;
+    private Valuation model;
+    private Collection<Expr<BoolType>> unsatCore;
+    private SolverStatus status;
 
-		this.unsatCoreEnabled = unsatCoreEnabled;
+    public SmtLibSolver(
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+            boolean unsatCoreEnabled
+    ) {
+        this.solverBinary = solverBinary;
+        this.symbolTable = symbolTable;
+        this.transformationManager = transformationManager;
+        this.termTransformer = termTransformer;
 
-		assertions = new StackImpl<>();
-		assumptions = new HashMap<>();
-		declarationStack = new StackImpl<>();
+        this.unsatCoreEnabled = unsatCoreEnabled;
 
-		init();
-	}
+        assertions = new StackImpl<>();
+        assumptions = new HashMap<>();
+        declarationStack = new StackImpl<>();
 
-	@Override
-	public void add(Expr<BoolType> assertion) {
-		final var consts = ExprUtils.getConstants(assertion);
-		consts.removeAll(declarationStack.toCollection());
-		declarationStack.add(consts);
+        init();
+    }
 
-		final var term = transformationManager.toTerm(assertion);
+    @Override
+    public void add(Expr<BoolType> assertion) {
+        final var consts = ExprUtils.getConstants(assertion);
+        consts.removeAll(declarationStack.toCollection());
+        declarationStack.add(consts);
 
-		assertions.add(assertion);
-		consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-		issueGeneralCommand(String.format("(assert %s)", term));
+        final var term = transformationManager.toTerm(assertion);
 
-		clearState();
-	}
+        assertions.add(assertion);
+        consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
+        issueGeneralCommand(String.format("(assert %s)", term));
 
-	public void add(final Expr<BoolType> assertion, final String term) {
-		final var consts = ExprUtils.getConstants(assertion);
-		consts.removeAll(declarationStack.toCollection());
-		declarationStack.add(consts);
+        clearState();
+    }
 
-		assertions.add(assertion);
-		consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-		issueGeneralCommand(String.format("(assert %s)", term));
+    public void add(final Expr<BoolType> assertion, final String term) {
+        final var consts = ExprUtils.getConstants(assertion);
+        consts.removeAll(declarationStack.toCollection());
+        declarationStack.add(consts);
 
-		clearState();
-	}
+        assertions.add(assertion);
+        consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
+        issueGeneralCommand(String.format("(assert %s)", term));
 
-	@Override
-	public void track(Expr<BoolType> assertion) {
-		final var consts = ExprUtils.getConstants(assertion);
-		consts.removeAll(declarationStack.toCollection());
-		declarationStack.add(consts);
+        clearState();
+    }
 
-		final var term = transformationManager.toTerm(assertion);
-		final var label = String.format(ASSUMPTION_LABEL, labelNum++);
-		assumptions.put(label, assertion);
-		assertions.add(assertion);
+    @Override
+    public void track(Expr<BoolType> assertion) {
+        final var consts = ExprUtils.getConstants(assertion);
+        consts.removeAll(declarationStack.toCollection());
+        declarationStack.add(consts);
 
-		consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-		issueGeneralCommand(String.format("(assert (! %s :named %s))", term, label));
+        final var term = transformationManager.toTerm(assertion);
+        final var label = String.format(ASSUMPTION_LABEL, labelNum++);
+        assumptions.put(label, assertion);
+        assertions.add(assertion);
 
-		clearState();
-	}
+        consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
+        issueGeneralCommand(String.format("(assert (! %s :named %s))", term, label));
 
-	@Override
-	public SolverStatus check() {
-		solverBinary.issueCommand("(check-sat)");
-		var res = parseResponse(solverBinary.readResponse());
-		if (res.isError()) {
-			throw new SmtLibSolverException(res.getReason());
-		} else if (res.isSpecific()) {
-			final CheckSatResponse checkSatResponse = res.asSpecific().asCheckSatResponse();
-			if (checkSatResponse.isSat()) {
-				status = SolverStatus.SAT;
-			} else if (checkSatResponse.isUnsat()) {
-				status = SolverStatus.UNSAT;
-			} else {
-				throw new UnknownSolverStatusException();
-			}
-		} else {
-			throw new AssertionError();
-		}
+        clearState();
+    }
 
-		return status;
-	}
+    @Override
+    public SolverStatus check() {
+        solverBinary.issueCommand("(check-sat)");
+        var res = parseResponse(solverBinary.readResponse());
+        if (res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        } else if (res.isSpecific()) {
+            final CheckSatResponse checkSatResponse = res.asSpecific().asCheckSatResponse();
+            if (checkSatResponse.isSat()) {
+                status = SolverStatus.SAT;
+            } else if (checkSatResponse.isUnsat()) {
+                status = SolverStatus.UNSAT;
+            } else {
+                throw new UnknownSolverStatusException();
+            }
+        } else {
+            throw new AssertionError();
+        }
 
-	@Override
-	public void push() {
-		assertions.push();
-		declarationStack.push();
-		issueGeneralCommand("(push 1)");
-	}
+        return status;
+    }
 
-	@Override
-	public void pop(int n) {
-		assertions.pop(n);
-		declarationStack.pop(n);
-		issueGeneralCommand("(pop 1)");
-		clearState();
-	}
+    @Override
+    public void push() {
+        assertions.push();
+        declarationStack.push();
+        issueGeneralCommand("(push 1)");
+    }
 
-	@Override
-	public void reset() {
-		issueGeneralCommand("(reset)");
-		clearState();
-		init();
-	}
+    @Override
+    public void pop(int n) {
+        assertions.pop(n);
+        declarationStack.pop(n);
+        issueGeneralCommand("(pop 1)");
+        clearState();
+    }
 
-	@Override
-	public SolverStatus getStatus() {
-		checkState(status != null, "Solver status is unknown.");
-		return status;
-	}
+    @Override
+    public void reset() {
+        issueGeneralCommand("(reset)");
+        clearState();
+        init();
+    }
 
-	@Override
-	public Valuation getModel() {
-		checkState(status == SolverStatus.SAT, "Cannot get model if status is not SAT.");
+    @Override
+    public SolverStatus getStatus() {
+        checkState(status != null, "Solver status is unknown.");
+        return status;
+    }
 
-		if (model == null) {
-			model = extractModel();
-		}
+    @Override
+    public Valuation getModel() {
+        checkState(status == SolverStatus.SAT, "Cannot get model if status is not SAT.");
 
-		return model;
-	}
+        if (model == null) {
+            model = extractModel();
+        }
 
-	private Valuation extractModel() {
-		assert status == SolverStatus.SAT;
-		assert model == null;
+        return model;
+    }
 
-		solverBinary.issueCommand("(get-model)");
-		final var res = parseResponse(solverBinary.readResponse());
-		if (res.isError()) {
-			throw new SmtLibSolverException(res.getReason());
-		} else if (res.isSpecific()) {
-			final GetModelResponse getModelResponse = res.asSpecific().asGetModelResponse();
-			return new SmtLibValuation(symbolTable, transformationManager, termTransformer, getModelResponse.getModel());
-		} else {
-			throw new AssertionError();
-		}
-	}
+    private Valuation extractModel() {
+        assert status == SolverStatus.SAT;
+        assert model == null;
 
-	@Override
-	public Collection<Expr<BoolType>> getUnsatCore() {
-		checkState(status == SolverStatus.UNSAT, "Cannot get unsat core if status is not UNSAT");
+        solverBinary.issueCommand("(get-model)");
+        final var res = parseResponse(solverBinary.readResponse());
+        if (res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        } else if (res.isSpecific()) {
+            final GetModelResponse getModelResponse = res.asSpecific().asGetModelResponse();
+            return new SmtLibValuation(symbolTable, transformationManager, termTransformer,
+                    getModelResponse.getModel());
+        } else {
+            throw new AssertionError();
+        }
+    }
 
-		if (unsatCore == null) {
-			unsatCore = extractUnsatCore();
-		}
+    @Override
+    public Collection<Expr<BoolType>> getUnsatCore() {
+        checkState(status == SolverStatus.UNSAT, "Cannot get unsat core if status is not UNSAT");
 
-		return Collections.unmodifiableCollection(unsatCore);
-	}
+        if (unsatCore == null) {
+            unsatCore = extractUnsatCore();
+        }
 
-	private Collection<Expr<BoolType>> extractUnsatCore() {
-		assert status == SolverStatus.UNSAT;
-		assert unsatCore == null;
+        return Collections.unmodifiableCollection(unsatCore);
+    }
 
-		final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
-		final Collection<String> unsatCoreLabels;
+    private Collection<Expr<BoolType>> extractUnsatCore() {
+        assert status == SolverStatus.UNSAT;
+        assert unsatCore == null;
 
-		solverBinary.issueCommand("(get-unsat-core)");
-		final var res = parseResponse(solverBinary.readResponse());
-		if (res.isError()) {
-			throw new SmtLibSolverException(res.getReason());
-		} else if (res.isSpecific()) {
-			final GetUnsatCoreResponse getUnsatCoreResponse = res.asSpecific().asGetUnsatCoreResponse();
-			unsatCoreLabels = getUnsatCoreResponse.getLabels();
-		} else {
-			throw new AssertionError();
-		}
+        final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
+        final Collection<String> unsatCoreLabels;
 
-		for (final var label : unsatCoreLabels) {
-			final Expr<BoolType> assumption = assumptions.get(label);
-			assert assumption != null;
-			unsatCore.add(assumption);
-		}
+        solverBinary.issueCommand("(get-unsat-core)");
+        final var res = parseResponse(solverBinary.readResponse());
+        if (res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        } else if (res.isSpecific()) {
+            final GetUnsatCoreResponse getUnsatCoreResponse = res.asSpecific()
+                    .asGetUnsatCoreResponse();
+            unsatCoreLabels = getUnsatCoreResponse.getLabels();
+        } else {
+            throw new AssertionError();
+        }
 
-		return unsatCore;
-	}
+        for (final var label : unsatCoreLabels) {
+            final Expr<BoolType> assumption = assumptions.get(label);
+            assert assumption != null;
+            unsatCore.add(assumption);
+        }
 
-	@Override
-	public Collection<Expr<BoolType>> getAssertions() {
-		return assertions.toCollection();
-	}
+        return unsatCore;
+    }
 
-	@Override
-	public void close() throws Exception {
-		solverBinary.close();
-	}
+    @Override
+    public Collection<Expr<BoolType>> getAssertions() {
+        return assertions.toCollection();
+    }
 
-	private void init() {
-		issueGeneralCommand("(set-option :print-success true)");
-		issueGeneralCommand("(set-option :produce-models true)");
-		if (unsatCoreEnabled) {
-			issueGeneralCommand("(set-option :produce-unsat-cores true)");
-		}
-		issueGeneralCommand("(set-logic ALL)");
-	}
+    @Override
+    public void close() throws Exception {
+        solverBinary.close();
+    }
 
-	protected void clearState() {
-		status = null;
-		model = null;
-		unsatCore = null;
-	}
+    private void init() {
+        issueGeneralCommand("(set-option :print-success true)");
+        issueGeneralCommand("(set-option :produce-models true)");
+        if (unsatCoreEnabled) {
+            issueGeneralCommand("(set-option :produce-unsat-cores true)");
+        }
+        issueGeneralCommand("(set-logic ALL)");
+    }
 
-	protected final void issueGeneralCommand(String command) {
-		solverBinary.issueCommand(command);
-		var res = parseResponse(solverBinary.readResponse());
-		if (res.isError()) {
-			throw new SmtLibSolverException(res.getReason());
-		}
-	}
+    protected void clearState() {
+        status = null;
+        model = null;
+        unsatCore = null;
+    }
 
-	protected final GeneralResponse parseResponse(final String response) {
-		try {
-			final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
-			final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
-			lexer.removeErrorListeners();
-			lexer.addErrorListener(new ThrowExceptionErrorListener());
-			parser.removeErrorListeners();
-			parser.addErrorListener(new ThrowExceptionErrorListener());
-			return GeneralResponse.fromContext(parser.response());
-		} catch (Exception e) {
-			throw new SmtLibSolverException("Could not parse solver output: " + response, e);
-		}
-	}
+    protected final void issueGeneralCommand(String command) {
+        solverBinary.issueCommand(command);
+        var res = parseResponse(solverBinary.readResponse());
+        if (res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        }
+    }
+
+    protected final GeneralResponse parseResponse(final String response) {
+        try {
+            final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
+            final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(new ThrowExceptionErrorListener());
+            parser.removeErrorListeners();
+            parser.addErrorListener(new ThrowExceptionErrorListener());
+            return GeneralResponse.fromContext(parser.response());
+        } catch (Exception e) {
+            throw new SmtLibSolverException("Could not parse solver output: " + response, e);
+        }
+    }
 }

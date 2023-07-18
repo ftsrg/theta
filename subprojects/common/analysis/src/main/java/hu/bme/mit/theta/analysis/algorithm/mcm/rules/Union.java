@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.List;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 
-public class Union extends BinaryMCMRule{
+public class Union extends BinaryMCMRule {
     public Union(MCMRelation e1, MCMRelation e2) {
         super(e1, e2);
     }
@@ -39,7 +39,7 @@ public class Union extends BinaryMCMRule{
     }
 
     public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
-        if(e1.getArity() == 1) {
+        if (e1.getArity() == 1) {
             final EventConstantLookup e1Events = e1.encodeEvents(idList, encodedRelationWrapper);
             final EventConstantLookup e2Events = e2.encodeEvents(idList, encodedRelationWrapper);
             for (final int i : idList) {

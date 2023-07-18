@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.*
 import kotlin.reflect.KClass
 
 class XcfaActionAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaAction>() {
+
     private lateinit var gson: Gson
     override fun write(writer: JsonWriter, value: XcfaAction) {
         initGson()
@@ -41,8 +42,8 @@ class XcfaActionAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaAction>(
         var pid: Int? = null
         lateinit var edge: XcfaEdge
         reader.beginObject()
-        while(reader.peek() != JsonToken.END_OBJECT) {
-            when(reader.nextName()) {
+        while (reader.peek() != JsonToken.END_OBJECT) {
+            when (reader.nextName()) {
                 "pid" -> pid = reader.nextInt()
                 "edge" -> edge = gson.fromJson(reader, XcfaEdge::class.java)
             }
@@ -52,6 +53,6 @@ class XcfaActionAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaAction>(
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

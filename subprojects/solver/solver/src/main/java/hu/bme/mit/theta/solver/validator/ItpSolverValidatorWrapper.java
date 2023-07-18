@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,83 +32,84 @@ import java.util.Collection;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class ItpSolverValidatorWrapper implements ItpSolver {
-	private final ItpSolver solver;
 
-	ItpSolverValidatorWrapper(String solver) throws Exception {
-		this.solver = SolverManager.resolveSolverFactory(solver).createItpSolver();
-	}
+    private final ItpSolver solver;
 
-	@Override
-	public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
-		return solver.createTreePattern(root);
-	}
+    ItpSolverValidatorWrapper(String solver) throws Exception {
+        this.solver = SolverManager.resolveSolverFactory(solver).createItpSolver();
+    }
 
-	@Override
-	public ItpMarker createMarker() {
-		return solver.createMarker();
-	}
+    @Override
+    public ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root) {
+        return solver.createTreePattern(root);
+    }
 
-	@Override
-	public void add(ItpMarker marker, Expr<BoolType> assertion) {
-		solver.add(marker, assertion);
-	}
+    @Override
+    public ItpMarker createMarker() {
+        return solver.createMarker();
+    }
 
-	@Override
-	public Interpolant getInterpolant(ItpPattern pattern) {
-		return solver.getInterpolant(pattern);
-	}
+    @Override
+    public void add(ItpMarker marker, Expr<BoolType> assertion) {
+        solver.add(marker, assertion);
+    }
 
-	@Override
-	public Collection<? extends ItpMarker> getMarkers() {
-		return solver.getMarkers();
-	}
+    @Override
+    public Interpolant getInterpolant(ItpPattern pattern) {
+        return solver.getInterpolant(pattern);
+    }
 
-	@Override
-	public SolverStatus check() {
-		SolverStatus check = solver.check();
-		if (check.isSat()) {
-			final Valuation model = solver.getModel();
-			for (Expr<BoolType> assertion : solver.getAssertions()) {
-				if (!assertion.eval(model).equals(True())) {
-					throw new RuntimeException("Solver problem: " + assertion);
-				}
-			}
-		}
-		return check;
-	}
+    @Override
+    public Collection<? extends ItpMarker> getMarkers() {
+        return solver.getMarkers();
+    }
 
-	@Override
-	public void push() {
-		solver.push();
-	}
+    @Override
+    public SolverStatus check() {
+        SolverStatus check = solver.check();
+        if (check.isSat()) {
+            final Valuation model = solver.getModel();
+            for (Expr<BoolType> assertion : solver.getAssertions()) {
+                if (!assertion.eval(model).equals(True())) {
+                    throw new RuntimeException("Solver problem: " + assertion);
+                }
+            }
+        }
+        return check;
+    }
 
-	@Override
-	public void pop(int n) {
-		solver.pop();
-	}
+    @Override
+    public void push() {
+        solver.push();
+    }
 
-	@Override
-	public void reset() {
-		solver.reset();
-	}
+    @Override
+    public void pop(int n) {
+        solver.pop();
+    }
 
-	@Override
-	public SolverStatus getStatus() {
-		return solver.getStatus();
-	}
+    @Override
+    public void reset() {
+        solver.reset();
+    }
 
-	@Override
-	public Valuation getModel() {
-		return solver.getModel();
-	}
+    @Override
+    public SolverStatus getStatus() {
+        return solver.getStatus();
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getAssertions() {
-		return solver.getAssertions();
-	}
+    @Override
+    public Valuation getModel() {
+        return solver.getModel();
+    }
 
-	@Override
-	public void close() throws Exception {
-		solver.close();
-	}
+    @Override
+    public Collection<Expr<BoolType>> getAssertions() {
+        return solver.getAssertions();
+    }
+
+    @Override
+    public void close() throws Exception {
+        solver.close();
+    }
 }

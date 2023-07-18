@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
-class ExplStateAdapter(val scope: Scope, val env: Env): TypeAdapter<ExplState>() {
+
+class ExplStateAdapter(val scope: Scope, val env: Env) : TypeAdapter<ExplState>() {
+
     override fun write(writer: JsonWriter, value: ExplState) {
         writer.beginObject()
         writer.name("bottom").value(value.isBottom)
@@ -47,11 +49,11 @@ class ExplStateAdapter(val scope: Scope, val env: Env): TypeAdapter<ExplState>()
         var ret: ExplState? = null
         reader.beginObject()
         check(reader.nextName() == "bottom")
-        if(reader.nextBoolean()) ret = ExplState.bottom()
+        if (reader.nextBoolean()) ret = ExplState.bottom()
         check(reader.nextName() == "decls")
         reader.beginArray()
         val mutableValuation = MutableValuation()
-        while(reader.peek() != JsonToken.END_ARRAY) {
+        while (reader.peek() != JsonToken.END_ARRAY) {
             reader.beginObject()
             val name = reader.nextName()
             val variable: VarDecl<*> = env.eval(scope.resolve(name).orElseThrow()) as VarDecl<*>
@@ -59,14 +61,17 @@ class ExplStateAdapter(val scope: Scope, val env: Env): TypeAdapter<ExplState>()
             mutableValuation.put(variable, value)
             reader.endObject()
         }
-        if(ret == null) ret = ExplState.of(mutableValuation)
+        if (ret == null) ret = ExplState.of(mutableValuation)
         reader.endArray()
         reader.endObject()
         return ret!!
     }
 
 }
-class PredStateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: Env): TypeAdapter<PredState>() {
+
+class PredStateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: Env) :
+    TypeAdapter<PredState>() {
+
     lateinit var gson: Gson
     override fun write(writer: JsonWriter, value: PredState) {
         initGson()
@@ -82,16 +87,17 @@ class PredStateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: 
         var ret: PredState? = null
         reader.beginObject()
         check(reader.nextName() == "bottom")
-        if(reader.nextBoolean()) ret = PredState.bottom()
+        if (reader.nextBoolean()) ret = PredState.bottom()
         check(reader.nextName() == "preds")
-        val preds = gson.fromJson<Set<Expr<BoolType>>>(reader, object: TypeToken<Set<Expr<BoolType>>>(){}.type)
-        if(ret == null) ret = PredState.of(preds)
+        val preds = gson.fromJson<Set<Expr<BoolType>>>(reader,
+            object : TypeToken<Set<Expr<BoolType>>>() {}.type)
+        if (ret == null) ret = PredState.of(preds)
         reader.endObject()
         return ret!!
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 
 }

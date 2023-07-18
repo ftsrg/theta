@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,67 +30,69 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class ExplPrecTest {
-	private final VarDecl<IntType> x = Var("x", Int());
-	private final VarDecl<IntType> y = Var("y", Int());
 
-	@Test
-	public void testInstances() {
-		final ExplPrec p1 = ExplPrec.empty();
-		final ExplPrec p2 = ExplPrec.empty();
-		final ExplPrec p3 = ExplPrec.of(Collections.emptySet());
-		final ExplPrec p4 = ExplPrec.of(Collections.singleton(x));
+    private final VarDecl<IntType> x = Var("x", Int());
+    private final VarDecl<IntType> y = Var("y", Int());
 
-		Assert.assertSame(p1, p2);
-		Assert.assertSame(p1, p3);
-		Assert.assertNotSame(p1, p4);
-		Assert.assertSame(p2, p3);
-		Assert.assertNotSame(p2, p4);
-		Assert.assertNotSame(p3, p4);
-	}
+    @Test
+    public void testInstances() {
+        final ExplPrec p1 = ExplPrec.empty();
+        final ExplPrec p2 = ExplPrec.empty();
+        final ExplPrec p3 = ExplPrec.of(Collections.emptySet());
+        final ExplPrec p4 = ExplPrec.of(Collections.singleton(x));
 
-	@Test
-	public void testMapping() {
-		final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
-		final ExplState s1 = prec.createState(ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
-		final ExplState s2 = prec.createState(ImmutableValuation.builder().put(y, Int(2)).build());
+        Assert.assertSame(p1, p2);
+        Assert.assertSame(p1, p3);
+        Assert.assertNotSame(p1, p4);
+        Assert.assertSame(p2, p3);
+        Assert.assertNotSame(p2, p4);
+        Assert.assertNotSame(p3, p4);
+    }
 
-		Assert.assertEquals(1, s1.getDecls().size());
-		Assert.assertEquals(Int(1), s1.eval(x).get());
-		Assert.assertEquals(0, s2.getDecls().size());
-	}
+    @Test
+    public void testMapping() {
+        final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
+        final ExplState s1 = prec.createState(
+                ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
+        final ExplState s2 = prec.createState(ImmutableValuation.builder().put(y, Int(2)).build());
 
-	@Test
-	public void testRefinement() {
-		final ExplPrec px = ExplPrec.of(Collections.singleton(x));
-		final ExplPrec py = ExplPrec.of(Collections.singleton(y));
-		final ExplPrec pxy = ExplPrec.of(ImmutableSet.of(x, y));
+        Assert.assertEquals(1, s1.getDecls().size());
+        Assert.assertEquals(Int(1), s1.eval(x).get());
+        Assert.assertEquals(0, s2.getDecls().size());
+    }
 
-		final ExplPrec r1 = px.join(px);
-		final ExplPrec r2 = px.join(py);
-		final ExplPrec r3 = px.join(pxy);
+    @Test
+    public void testRefinement() {
+        final ExplPrec px = ExplPrec.of(Collections.singleton(x));
+        final ExplPrec py = ExplPrec.of(Collections.singleton(y));
+        final ExplPrec pxy = ExplPrec.of(ImmutableSet.of(x, y));
 
-		Assert.assertSame(r1, px);
-		Assert.assertNotSame(r2, px);
-		Assert.assertSame(r3, pxy);
-	}
+        final ExplPrec r1 = px.join(px);
+        final ExplPrec r2 = px.join(py);
+        final ExplPrec r3 = px.join(pxy);
 
-	@Test
-	public void testEquals() {
-		final ExplPrec p1 = ExplPrec.empty();
-		final ExplPrec p2 = ExplPrec.empty();
-		final ExplPrec p3 = ExplPrec.of(Collections.emptySet());
-		final ExplPrec p4 = ExplPrec.of(Collections.singleton(x));
-		final ExplPrec p5 = ExplPrec.of(Collections.singleton(x));
-		final ExplPrec p6 = ExplPrec.of(ImmutableSet.of(x, y));
-		final ExplPrec p7 = ExplPrec.of(ImmutableSet.of(x, y));
+        Assert.assertSame(r1, px);
+        Assert.assertNotSame(r2, px);
+        Assert.assertSame(r3, pxy);
+    }
 
-		Assert.assertEquals(p1, p2);
-		Assert.assertEquals(p1, p3);
-		Assert.assertEquals(p2, p3);
-		Assert.assertEquals(p4, p5);
-		Assert.assertEquals(p6, p7);
+    @Test
+    public void testEquals() {
+        final ExplPrec p1 = ExplPrec.empty();
+        final ExplPrec p2 = ExplPrec.empty();
+        final ExplPrec p3 = ExplPrec.of(Collections.emptySet());
+        final ExplPrec p4 = ExplPrec.of(Collections.singleton(x));
+        final ExplPrec p5 = ExplPrec.of(Collections.singleton(x));
+        final ExplPrec p6 = ExplPrec.of(ImmutableSet.of(x, y));
+        final ExplPrec p7 = ExplPrec.of(ImmutableSet.of(x, y));
 
-		Assert.assertNotEquals(p1, p4);
-		Assert.assertNotEquals(p5, p7);
-	}
+        Assert.assertEquals(p1, p2);
+        Assert.assertEquals(p1, p3);
+        Assert.assertEquals(p2, p3);
+        Assert.assertEquals(p4, p5);
+        Assert.assertEquals(p6, p7);
+
+        Assert.assertNotEquals(p1, p4);
+        Assert.assertNotEquals(p5, p7);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,15 +19,15 @@ import java.io.PrintStream;
 
 public final class StderrLogger extends BaseLogger {
 
-	private static final PrintStream CONSOLE = System.err;
+    private static final PrintStream CONSOLE = System.err;
 
-	public StderrLogger(final Level minLevel) {
-		super(minLevel);
-	}
+    public StderrLogger(final Level minLevel) {
+        super(minLevel);
+    }
 
-	@Override
-	protected void writeStr(final String str) {
-		CONSOLE.print(str);
-	}
+    @Override
+    protected void writeStr(final String str) {
+        CONSOLE.print(str);
+    }
 
 }

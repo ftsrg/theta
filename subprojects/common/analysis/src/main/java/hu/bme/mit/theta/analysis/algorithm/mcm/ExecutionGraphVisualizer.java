@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.*;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-public class ExecutionGraphVisualizer implements Runnable{
+public class ExecutionGraphVisualizer implements Runnable {
     private final List<Map<Decl<?>, LitExpr<?>>> solutions;
     private int currentSolution = 0;
     private final Map<Integer, Tuple2<Double, Double>> events;
@@ -56,21 +56,21 @@ public class ExecutionGraphVisualizer implements Runnable{
         separatorY = dY + 5.0 + eventHeight;
         for (int i = 1; i <= threadEvents.size(); i++) {
             double x = i * dX + 5.0;
-            for (int j = 1; j <= threadEvents.get(i-1).size(); j++) {
+            for (int j = 1; j <= threadEvents.get(i - 1).size(); j++) {
                 double y = (j + 1) * dY + 5.0;
-                events.put(threadEvents.get(i-1).get(j-1), Tuple2.of(x, y));
+                events.put(threadEvents.get(i - 1).get(j - 1), Tuple2.of(x, y));
             }
         }
         for (int i = 1; i <= initialWrites.size(); i++) {
             double x = i * dX + 5.0;
             double y = 1 * dY + 5.0;
-            events.put(initialWrites.get(i-1), Tuple2.of(x, y));
+            events.put(initialWrites.get(i - 1), Tuple2.of(x, y));
         }
         possibleRelations = new LinkedHashMap<>();
         for (Map<Decl<?>, LitExpr<?>> solution : solutions) {
             for (Decl<?> decl : solution.keySet()) {
                 String[] s = decl.getName().split("_");
-                possibleRelations.put(s[0], s.length-1);
+                possibleRelations.put(s[0], s.length - 1);
             }
         }
         relations = new LinkedHashMap<>();
@@ -109,7 +109,7 @@ public class ExecutionGraphVisualizer implements Runnable{
             int arity = entry.getValue();
             String s = entry.getKey();
             JCheckBox jCheckBox = new JCheckBox(s);
-            if(alwaysShow.contains(s)) {
+            if (alwaysShow.contains(s)) {
                 jCheckBox.setSelected(true);
                 relations.put(s, getColor(s));
             }
@@ -130,7 +130,7 @@ public class ExecutionGraphVisualizer implements Runnable{
 
     private Color getColor(String relation) {
         Random random = new Random(relation.hashCode());
-        return switch(relation) {
+        return switch (relation) {
             case "po" -> Color.BLACK;
             case "rf" -> Color.RED;
             case "co" -> Color.MAGENTA;
@@ -139,30 +139,30 @@ public class ExecutionGraphVisualizer implements Runnable{
     }
 
     private Color getRandomColor(Random random) {
-        while(true) {
+        while (true) {
             int r = random.nextInt(256);
             int g = random.nextInt(256);
             int b = random.nextInt(256);
-            if(r+g+b <= 256*2) {
+            if (r + g + b <= 256 * 2) {
                 return new Color(r, g, b);
             }
         }
     }
 
-    private class ExecutionGraphPanel extends JPanel{
+    private class ExecutionGraphPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             float strokeSize = Float.min(getWidth() / 100.0f / 4, getHeight() / 100.0f / 4);
-            ((Graphics2D)g).setStroke(new BasicStroke(strokeSize));
-            ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+            ((Graphics2D) g).setStroke(new BasicStroke(strokeSize));
+            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
             double separatorY = ExecutionGraphVisualizer.this.separatorY * getHeight() / 100.0f;
             int width = getWidth();
             Path2D.Double myPath = new Path2D.Double();
             boolean drawing = false;
-            for(int i = 0; i < width; i+=width/50) {
-                if(drawing) {
+            for (int i = 0; i < width; i += width / 50) {
+                if (drawing) {
                     myPath.lineTo(i, separatorY);
                 } else {
                     myPath.moveTo(i, separatorY);
@@ -174,7 +174,7 @@ public class ExecutionGraphVisualizer implements Runnable{
             double eventWidth = ExecutionGraphVisualizer.this.eventWidth * getWidth() / 100.0f;
             double eventHeight = ExecutionGraphVisualizer.this.eventHeight * getHeight() / 100.0f;
             solutions.get(currentSolution).forEach((decl, lit) -> {
-                if(lit.equals(True())) {
+                if (lit.equals(True())) {
                     String[] s = decl.getName().split("_");
                     if (relations.containsKey(s[0]) && s.length == 3 && isChosen(Integer.valueOf(s[1])) && isChosen(Integer.valueOf(s[2]))) {
                         Tuple2<Double, Double> a = events.get(Integer.valueOf(s[1]));
@@ -187,27 +187,27 @@ public class ExecutionGraphVisualizer implements Runnable{
                         double offset = 25 * (0.8 + 0.4 * new Random(decl.hashCode()).nextDouble());
 //                        double offset = Double.min(Math.abs(a.get1() - b.get1()),  Math.abs(a.get2() - b.get2())) * 0.1 * (0.8 + 0.4 * new Random(decl.hashCode()).nextDouble());
                         Tuple2<Double, Double> normal = Tuple2.of(a.get2() - b.get2(), b.get1() - a.get1());
-                        double norm = Math.sqrt(normal.get1()*normal.get1() + normal.get2()*normal.get2());
+                        double norm = Math.sqrt(normal.get1() * normal.get1() + normal.get2() * normal.get2());
                         normal = Tuple2.of(normal.get1() / norm, normal.get2() / norm);
                         Tuple2<Double, Double> dir = Tuple2.of(b.get1() - a.get1(), b.get2() - a.get2());
-                        double dirnorm = Math.sqrt(dir.get1()*dir.get1() + dir.get2()*dir.get2());
+                        double dirnorm = Math.sqrt(dir.get1() * dir.get1() + dir.get2() * dir.get2());
                         dir = Tuple2.of(dir.get1() / dirnorm, dir.get2() / dirnorm);
 
 
-                        a = Tuple2.of(a.get1() + dir.get1()*eventWidth/1.8, a.get2() + dir.get2()*eventHeight/1.8);
-                        b = Tuple2.of(b.get1() - dir.get1()*eventWidth/1.8, b.get2() - dir.get2()*eventHeight/1.8);
+                        a = Tuple2.of(a.get1() + dir.get1() * eventWidth / 1.8, a.get2() + dir.get2() * eventHeight / 1.8);
+                        b = Tuple2.of(b.get1() - dir.get1() * eventWidth / 1.8, b.get2() - dir.get2() * eventHeight / 1.8);
                         Tuple2<Double, Double> midpoint = Tuple2.of(
-                                (b.get1() + a.get1())/2 + offset * normal.get1(),
-                                (b.get2() + a.get2())/2 + offset * normal.get2());
+                                (b.get1() + a.get1()) / 2 + offset * normal.get1(),
+                                (b.get2() + a.get2()) / 2 + offset * normal.get2());
 
                         path.moveTo(a.get1(), a.get2());
                         path.curveTo(
                                 a.get1(), a.get2(),
                                 midpoint.get1(), midpoint.get2(),
                                 b.get1(), b.get2()
-                                );
-                        Tuple2<Double, Double> derivative = Tuple2.of(2*b.get1() - 2*midpoint.get1(), 2*b.get2() - 2*midpoint.get2());
-                        double derivativenorm = Math.sqrt(derivative.get1()*derivative.get1() + derivative.get2()*derivative.get2());
+                        );
+                        Tuple2<Double, Double> derivative = Tuple2.of(2 * b.get1() - 2 * midpoint.get1(), 2 * b.get2() - 2 * midpoint.get2());
+                        double derivativenorm = Math.sqrt(derivative.get1() * derivative.get1() + derivative.get2() * derivative.get2());
                         double arrowSize = strokeSize * 4;
                         derivative = Tuple2.of(derivative.get1() / derivativenorm * arrowSize, derivative.get2() / derivativenorm * arrowSize);
 
@@ -217,7 +217,7 @@ public class ExecutionGraphVisualizer implements Runnable{
                         path.lineTo((b.get1() - arrow1vec.get1()), (b.get2() - arrow1vec.get2()));
                         path.moveTo(b.get1(), b.get2());
                         path.lineTo((b.get1() - arrow2vec.get1()), (b.get2() - arrow2vec.get2()));
-                        
+
 
                         ((Graphics2D) g).draw(path);
                         g.setColor(color);
@@ -226,9 +226,9 @@ public class ExecutionGraphVisualizer implements Runnable{
             });
             eventLabels.clear();
             solutions.get(currentSolution).forEach((decl, lit) -> {
-                if(lit.equals(True())) {
+                if (lit.equals(True())) {
                     String[] s = decl.getName().split("_");
-                    if(relations.containsKey(s[0]) && s.length == 2) {
+                    if (relations.containsKey(s[0]) && s.length == 2) {
                         eventLabels.putIfAbsent(Integer.valueOf(s[1]), new ArrayList<>());
                         eventLabels.get(Integer.valueOf(s[1])).add(s[0]);
                         Collections.sort(eventLabels.get(Integer.valueOf(s[1])));
@@ -237,12 +237,13 @@ public class ExecutionGraphVisualizer implements Runnable{
             });
             events.forEach((integer, tuple) -> {
                 boolean chosen = isChosen(integer);
-                if(chosen) {
+                if (chosen) {
                     drawEvent((int) (getWidth() / 100.0f * tuple.get1()), (int) (getHeight() / 100.0f * tuple.get2()), g);
                     StringJoiner stringJoiner = new StringJoiner(", ", "{", "}");
-                    if(eventLabels.containsKey(integer)) eventLabels.get(integer).forEach(i -> stringJoiner.add(i));
+                    if (eventLabels.containsKey(integer))
+                        eventLabels.get(integer).forEach(i -> stringJoiner.add(i));
                     stringJoiner.add("" + integer);
-                    if(varLookup.containsKey(integer)) stringJoiner.add(varLookup.get(integer));
+                    if (varLookup.containsKey(integer)) stringJoiner.add(varLookup.get(integer));
                     drawLabelForEvent(stringJoiner.toString(), (int) (getWidth() / 100.0f * tuple.get1()), (int) (getHeight() / 100.0f * tuple.get2()), g);
                 }
             });
@@ -259,26 +260,26 @@ public class ExecutionGraphVisualizer implements Runnable{
 
         private Tuple2<Double, Double> vecRotated(Tuple2<Double, Double> dir, double v) {
             return Tuple2.of(
-                    dir.get1()*Math.cos(v)-dir.get2()*Math.sin(v),
-                    dir.get1()*Math.sin(v)+dir.get2()*Math.cos(v));
+                    dir.get1() * Math.cos(v) - dir.get2() * Math.sin(v),
+                    dir.get1() * Math.sin(v) + dir.get2() * Math.cos(v));
         }
 
         private void drawLabelForEvent(String s, int x, int y, Graphics g) {
             g.setColor(Color.BLACK);
-            g.setFont(g.getFont().deriveFont((float) (0.25 * Double.min(eventHeight*getWidth() / 100.0f, eventWidth*getWidth() / 100.0f))));
+            g.setFont(g.getFont().deriveFont((float) (0.25 * Double.min(eventHeight * getWidth() / 100.0f, eventWidth * getWidth() / 100.0f))));
             FontMetrics fontMetrics = g.getFontMetrics();
-            ((Graphics2D)g).setStroke(new BasicStroke(getWidth()/100.0f/4));
-            g.drawString(s, x - fontMetrics.stringWidth(s) / 2, y + fontMetrics.getHeight()/4);
+            ((Graphics2D) g).setStroke(new BasicStroke(getWidth() / 100.0f / 4));
+            g.drawString(s, x - fontMetrics.stringWidth(s) / 2, y + fontMetrics.getHeight() / 4);
         }
 
         private void drawEvent(int x, int y, Graphics g) {
             double eventWidth = ExecutionGraphVisualizer.this.eventWidth * getWidth() / 100.0f;
             double eventHeight = ExecutionGraphVisualizer.this.eventHeight * getHeight() / 100.0f;
             g.setColor(Color.WHITE);
-            ((Graphics2D)g).setStroke(new BasicStroke(Float.min(getWidth()/100.0f/2, getHeight()/100.0f/2)));
-            g.fillOval((int) (x - eventWidth/2), (int) (y - eventHeight / 2), (int) eventWidth, (int) eventHeight);
+            ((Graphics2D) g).setStroke(new BasicStroke(Float.min(getWidth() / 100.0f / 2, getHeight() / 100.0f / 2)));
+            g.fillOval((int) (x - eventWidth / 2), (int) (y - eventHeight / 2), (int) eventWidth, (int) eventHeight);
             g.setColor(Color.BLACK);
-            g.drawOval((int) (x - eventWidth/2), (int) (y - eventHeight / 2), (int) eventWidth, (int) eventHeight);
+            g.drawOval((int) (x - eventWidth / 2), (int) (y - eventHeight / 2), (int) eventWidth, (int) eventHeight);
         }
     }
 }

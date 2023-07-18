@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.analysis.algorithm.lazy.itp;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -40,12 +55,12 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
     }
 
     @Override
-    public final Function<S, Unit> getProjection(){
+    public final Function<S, Unit> getProjection() {
         return projection;
     }
 
     @Override
-    public final InitAbstractor<SConcr, SAbstr> getInitAbstractor(){
+    public final InitAbstractor<SConcr, SAbstr> getInitAbstractor() {
         return initAbstractor;
     }
 
@@ -60,13 +75,13 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
     }
 
     @Override
-    public final boolean mightCover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer){
+    public final boolean mightCover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer) {
         final SConcr covereeState = lens.get(coveree.getState()).getConcrState();
         final SAbstr covererState = lens.get(coverer.getState()).getAbstrState();
         return concretizer.proves(covereeState, covererState);
     }
 
-    protected final void strengthen(final ArgNode<S, A> node, final SAbstr interpolant){
+    protected final void strengthen(final ArgNode<S, A> node, final SAbstr interpolant) {
         final S state = node.getState();
         final LazyState<SConcr, SAbstr> lazyState = lens.get(state);
         final SAbstr abstrState = lazyState.getAbstrState();
@@ -76,14 +91,14 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
         node.setState(newState);
     }
 
-    protected final void maintainCoverage(final ArgNode<S, A> node, final SAbstr interpolant, final Collection<ArgNode<S, A>> uncoveredNodes){
+    protected final void maintainCoverage(final ArgNode<S, A> node, final SAbstr interpolant, final Collection<ArgNode<S, A>> uncoveredNodes) {
         final Collection<ArgNode<S, A>> uncovered =
                 node.getCoveredNodes().filter(covered -> shouldUncover(covered, interpolant)).collect(toList());
         uncoveredNodes.addAll(uncovered);
         uncovered.forEach(ArgNode::unsetCoveringNode);
     }
 
-    private boolean shouldUncover(final ArgNode<S, A> coveredNode, final SAbstr interpolant){
+    private boolean shouldUncover(final ArgNode<S, A> coveredNode, final SAbstr interpolant) {
         final SAbstr coveredState = lens.get(coveredNode.getState()).getAbstrState();
         return !abstrLattice.isLeq(coveredState, interpolant);
     }

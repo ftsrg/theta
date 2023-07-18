@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,18 +26,18 @@ import hu.bme.mit.theta.solver.ItpMarker;
 
 final class Z3Interpolant implements Interpolant {
 
-	private final Map<ItpMarker, Expr<BoolType>> itpMap;
+    private final Map<ItpMarker, Expr<BoolType>> itpMap;
 
-	Z3Interpolant(final Map<ItpMarker, Expr<BoolType>> itpMap) {
-		this.itpMap = itpMap;
-	}
+    Z3Interpolant(final Map<ItpMarker, Expr<BoolType>> itpMap) {
+        this.itpMap = itpMap;
+    }
 
-	@Override
-	public Expr<BoolType> eval(final ItpMarker marker) {
-		checkNotNull(marker);
-		final Expr<BoolType> itpExpr = itpMap.get(marker);
-		checkNotNull(itpExpr);
-		return itpExpr;
-	}
+    @Override
+    public Expr<BoolType> eval(final ItpMarker marker) {
+        checkNotNull(marker);
+        final Expr<BoolType> itpExpr = itpMap.get(marker);
+        checkNotNull(itpExpr);
+        return itpExpr;
+    }
 
 }

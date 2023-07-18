@@ -1,0 +1,55 @@
+
+name: Version Bump
+on: 
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Specify the type of version bump'
+        required: true
+        type: choice
+        options:
+            - major
+            - minor
+            - patch
+        default: 'patch'
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+      id: generate-token
+      with:
+        app_id: ${{ secrets.APP_ID }}
+        private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+    - name: Checkout
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        token: ${{ steps.generate-token.outputs.token }}
+      
+    - name: Determine new version
+      run: |
+        version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
+        IFS='.' read -r -a array <<< "$version"
+        echo "Previous version: $version"
+        case "${{ github.event.inputs.version_type }}" in
+          "major") new_version="$((array[0]+1)).0.0" ;;
+          "minor") new_version="${array[0]}.$((array[1]+1)).0" ;;
+          "patch") new_version="${array[0]}.${array[1]}.$((array[2]+1))" ;;
+          *) echo "Invalid version type" && exit 1 ;;
+        esac
+        echo "new_version=$new_version" >> $GITHUB_ENV
+
+      
+    - name: Update version
+      run: sed -i "s/version = \".*\"/version = \"${{ env.new_version }}\"/" build.gradle.kts
+      
+    - name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a
+      with:
+        commit_message: "Version bump"
+        file_pattern: "build.gradle.kts"
+        commit_user_name: ThetaBotMaintainer[bot]
+        commit_user_email: 139346997+ThetaBotMaintainer[bot]@users.noreply.github.com
+        commit_author: ThetaBotMaintainer[bot] <139346997+ThetaBotMaintainer[bot]@users.noreply.github.com>  

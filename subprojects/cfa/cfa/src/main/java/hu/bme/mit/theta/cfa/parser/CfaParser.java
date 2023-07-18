@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ import hu.bme.mit.theta.core.parser.Env;
 
 public final class CfaParser {
 
-	private final LispParser parser;
-	private final CfaInterpreter interpreter;
+    private final LispParser parser;
+    private final CfaInterpreter interpreter;
 
-	public CfaParser(final Reader reader) {
-		checkNotNull(reader);
-		final LispLexer lexer = new LispLexer(reader);
-		parser = new LispParser(lexer);
-		final Env env = new Env();
-		interpreter = new CfaInterpreter(env);
-	}
+    public CfaParser(final Reader reader) {
+        checkNotNull(reader);
+        final LispLexer lexer = new LispLexer(reader);
+        parser = new LispParser(lexer);
+        final Env env = new Env();
+        interpreter = new CfaInterpreter(env);
+    }
 
-	public CFA cfa() {
-		final SExpr sexpr = parser.sexpr();
-		final CFA cfa = interpreter.cfa(sexpr);
-		return cfa;
-	}
+    public CFA cfa() {
+        final SExpr sexpr = parser.sexpr();
+        final CFA cfa = interpreter.cfa(sexpr);
+        return cfa;
+    }
 
 }

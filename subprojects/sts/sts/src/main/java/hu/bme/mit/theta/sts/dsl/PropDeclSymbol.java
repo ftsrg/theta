@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,42 +27,44 @@ import hu.bme.mit.theta.sts.dsl.gen.StsDslParser.PropDeclContext;
 
 final class PropDeclSymbol implements Symbol {
 
-	private final PropDeclContext propDeclContext;
+    private final PropDeclContext propDeclContext;
 
-	private final StsSpecSymbol scope;
+    private final StsSpecSymbol scope;
 
-	private final String name;
+    private final String name;
 
-	private PropDeclSymbol(final StsSpecSymbol scope, final PropDeclContext propDeclContext) {
-		this.scope = checkNotNull(scope);
-		this.propDeclContext = checkNotNull(propDeclContext);
-		name = propDeclContext.name.getText();
-	}
+    private PropDeclSymbol(final StsSpecSymbol scope, final PropDeclContext propDeclContext) {
+        this.scope = checkNotNull(scope);
+        this.propDeclContext = checkNotNull(propDeclContext);
+        name = propDeclContext.name.getText();
+    }
 
-	public static PropDeclSymbol create(final StsSpecSymbol scope, final PropDeclContext propDeclContext) {
-		return new PropDeclSymbol(scope, propDeclContext);
-	}
+    public static PropDeclSymbol create(final StsSpecSymbol scope,
+                                        final PropDeclContext propDeclContext) {
+        return new PropDeclSymbol(scope, propDeclContext);
+    }
 
-	////
+    ////
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	////
+    ////
 
-	public STS instantiate(final Substitution assignment) {
-		final StsDefScope stsDefScope = StsCreator.createSts(scope, assignment, propDeclContext.system);
-		final Expr<BoolType> prop = createBoolExpr(stsDefScope, assignment, propDeclContext.cond);
+    public STS instantiate(final Substitution assignment) {
+        final StsDefScope stsDefScope = StsCreator.createSts(scope, assignment,
+                propDeclContext.system);
+        final Expr<BoolType> prop = createBoolExpr(stsDefScope, assignment, propDeclContext.cond);
 
-		final STS sts = stsDefScope.getSts();
+        final STS sts = stsDefScope.getSts();
 
-		final STS.Builder builder = STS.builder();
-		builder.addInit(sts.getInit());
-		builder.addTrans(sts.getTrans());
-		builder.setProp(prop);
-		return builder.build();
-	}
+        final STS.Builder builder = STS.builder();
+        builder.addInit(sts.getInit());
+        builder.addTrans(sts.getTrans());
+        builder.setProp(prop);
+        return builder.build();
+    }
 
 }

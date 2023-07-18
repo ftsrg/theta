@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,19 +16,23 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CRet extends CStatement {
-	private final CStatement expr;
 
-	public CRet(CStatement expr) {
-		this.expr = expr;
-	}
+    private final CStatement expr;
 
-	public CStatement getExpr() {
-		return expr;
-	}
+    public CRet(CStatement expr, ParseContext parseContext) {
+        super(parseContext);
+        this.expr = expr;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public CStatement getExpr() {
+        return expr;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

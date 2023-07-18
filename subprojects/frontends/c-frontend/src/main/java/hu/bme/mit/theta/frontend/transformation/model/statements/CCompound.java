@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,39 +17,42 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.frontend.ParseContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CCompound extends CStatement {
-	private final List<CStatement> cStatementList;
 
-	public CCompound() {
-		cStatementList = new ArrayList<>();
-	}
+    private final List<CStatement> cStatementList;
 
-	public List<CStatement> getcStatementList() {
-		return cStatementList;
-	}
+    public CCompound(ParseContext parseContext) {
+        super(parseContext);
+        cStatementList = new ArrayList<>();
+    }
 
-	@Override
-	public Expr<?> getExpression() {
-		return cStatementList.get(cStatementList.size() - 1).getExpression();
-	}
+    public List<CStatement> getcStatementList() {
+        return cStatementList;
+    }
 
-	@Override
-	public void setPostStatements(CStatement postStatements) {
-		this.postStatements = postStatements;
-	}
+    @Override
+    public Expr<?> getExpression() {
+        return cStatementList.get(cStatementList.size() - 1).getExpression();
+    }
 
-	@Override
-	public void setPreStatements(CStatement preStatements) {
-		this.preStatements = preStatements;
-	}
+    @Override
+    public void setPostStatements(CStatement postStatements) {
+        this.postStatements = postStatements;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    @Override
+    public void setPreStatements(CStatement preStatements) {
+        this.preStatements = preStatements;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 
 }

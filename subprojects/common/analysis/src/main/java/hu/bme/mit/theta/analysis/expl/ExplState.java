@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,153 +35,159 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class ExplState extends Valuation implements ExprState {
 
-	private ExplState() {
-	}
+    private ExplState() {
+    }
 
-	public static ExplState of(final Valuation val) {
-		if (val.getDecls().isEmpty()) {
-			return top();
-		}
-		return new NonBottom(val);
-	}
+    public static ExplState of(final Valuation val) {
+        if (val.getDecls().isEmpty()) {
+            return top();
+        }
+        return new NonBottom(val);
+    }
 
-	public static ExplState bottom() {
-		return BottomLazyHolder.INSTANCE;
-	}
+    public static ExplState bottom() {
+        return BottomLazyHolder.INSTANCE;
+    }
 
-	public static ExplState top() {
-		return TopLazyHolder.INSTANCE;
-	}
+    public static ExplState top() {
+        return TopLazyHolder.INSTANCE;
+    }
 
-	public abstract Valuation getVal();
+    public abstract Valuation getVal();
 
-	public abstract boolean isLeq(final ExplState that);
+    public abstract boolean isLeq(final ExplState that);
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof ExplState) {
-			final ExplState that = (ExplState) obj;
-			return this.toMap().equals(that.toMap()) && this.isBottom() == that.isBottom();
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof ExplState) {
+            final ExplState that = (ExplState) obj;
+            return this.toMap().equals(that.toMap()) && this.isBottom() == that.isBottom();
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public int hashCode() {
-		return super.hashCode() + (isBottom() ? 0 : 1);
-	}
+    @Override
+    public int hashCode() {
+        return super.hashCode() + (isBottom() ? 0 : 1);
+    }
 
-	////
+    ////
 
-	private static final class NonBottom extends ExplState {
-		private final Valuation val;
+    private static final class NonBottom extends ExplState {
 
-		private NonBottom(final Valuation val) {
-			this.val = ImmutableValuation.copyOf(checkNotNull(val));
-		}
+        private final Valuation val;
 
-		@Override
-		public Collection<? extends Decl<?>> getDecls() {
-			return val.getDecls();
-		}
+        private NonBottom(final Valuation val) {
+            this.val = ImmutableValuation.copyOf(checkNotNull(val));
+        }
 
-		@Override
-		public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-			return val.eval(decl);
-		}
+        @Override
+        public Collection<? extends Decl<?>> getDecls() {
+            return val.getDecls();
+        }
 
-		@Override
-		public Expr<BoolType> toExpr() {
-			return val.toExpr();
-		}
+        @Override
+        public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+            return val.eval(decl);
+        }
 
-		@Override
-		public Map<Decl<?>, LitExpr<?>> toMap() {
-			return val.toMap();
-		}
+        @Override
+        public Expr<BoolType> toExpr() {
+            return val.toExpr();
+        }
 
-		////
+        @Override
+        public Map<Decl<?>, LitExpr<?>> toMap() {
+            return val.toMap();
+        }
 
-		@Override
-		public Valuation getVal() {
-			return val;
-		}
+        ////
 
-		@Override
-		public boolean isLeq(final ExplState that) {
-			if (that.isBottom()) {
-				return false;
-			} else {
-				return this.getVal().isLeq(that.getVal());
-			}
-		}
+        @Override
+        public Valuation getVal() {
+            return val;
+        }
 
-		@Override
-		public boolean isBottom() {
-			return false;
-		}
+        @Override
+        public boolean isLeq(final ExplState that) {
+            if (that.isBottom()) {
+                return false;
+            } else {
+                return this.getVal().isLeq(that.getVal());
+            }
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(ExplState.class.getSimpleName()).aligned()
-					.addAll(val.getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
-					.toString();
-		}
-	}
+        @Override
+        public boolean isBottom() {
+            return false;
+        }
 
-	private static final class Bottom extends ExplState {
-		@Override
-		public Collection<? extends Decl<?>> getDecls() {
-			return Collections.emptySet();
-		}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(ExplState.class.getSimpleName()).aligned()
+                    .addAll(val.getDecls().stream()
+                            .map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
+                    .toString();
+        }
+    }
 
-		@Override
-		public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-			return Optional.empty();
-		}
+    private static final class Bottom extends ExplState {
 
-		@Override
-		public Expr<BoolType> toExpr() {
-			return BoolExprs.False();
-		}
+        @Override
+        public Collection<? extends Decl<?>> getDecls() {
+            return Collections.emptySet();
+        }
 
-		@Override
-		public Map<Decl<?>, LitExpr<?>> toMap() {
-			return Collections.emptyMap();
-		}
+        @Override
+        public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+            return Optional.empty();
+        }
 
-		////
+        @Override
+        public Expr<BoolType> toExpr() {
+            return BoolExprs.False();
+        }
 
-		@Override
-		public Valuation getVal() {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public Map<Decl<?>, LitExpr<?>> toMap() {
+            return Collections.emptyMap();
+        }
 
-		@Override
-		public boolean isLeq(final ExplState that) {
-			return true;
-		}
+        ////
 
-		@Override
-		public boolean isBottom() {
-			return true;
-		}
+        @Override
+        public Valuation getVal() {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(ExplState.class.getSimpleName()).add("Bottom").toString();
-		}
-	}
+        @Override
+        public boolean isLeq(final ExplState that) {
+            return true;
+        }
 
-	private static class BottomLazyHolder {
-		static final ExplState INSTANCE = new Bottom();
-	}
+        @Override
+        public boolean isBottom() {
+            return true;
+        }
 
-	private static class TopLazyHolder {
-		static final ExplState INSTANCE = new NonBottom(ImmutableValuation.empty());
-	}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(ExplState.class.getSimpleName()).add("Bottom")
+                    .toString();
+        }
+    }
+
+    private static class BottomLazyHolder {
+
+        static final ExplState INSTANCE = new Bottom();
+    }
+
+    private static class TopLazyHolder {
+
+        static final ExplState INSTANCE = new NonBottom(ImmutableValuation.empty());
+    }
 
 }

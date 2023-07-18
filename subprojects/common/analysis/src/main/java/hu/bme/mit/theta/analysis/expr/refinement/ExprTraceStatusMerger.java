@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableList;
 
 public interface ExprTraceStatusMerger<R extends Refutation> {
-	default ExprTraceStatus<R> merge(final ExprTraceStatus<R> status1, final ExprTraceStatus<R> status2) {
-		return merge(ImmutableList.of(status1, status2));
-	}
 
-	ExprTraceStatus<R> merge(Collection<ExprTraceStatus<R>> statuses);
+    default ExprTraceStatus<R> merge(final ExprTraceStatus<R> status1,
+                                     final ExprTraceStatus<R> status2) {
+        return merge(ImmutableList.of(status1, status2));
+    }
+
+    ExprTraceStatus<R> merge(Collection<ExprTraceStatus<R>> statuses);
 }

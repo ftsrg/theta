@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,74 +37,80 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * An ExprTraceChecker that generates an unsat core by checking the trace at
- * once.
+ * An ExprTraceChecker that generates an unsat core by checking the trace at once.
  */
 public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRefutation> {
 
-	private final UCSolver solver;
-	private final Expr<BoolType> init;
-	private final Expr<BoolType> target;
+    private final UCSolver solver;
+    private final Expr<BoolType> init;
+    private final Expr<BoolType> target;
 
-	private ExprTraceUnsatCoreChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
-		this.solver = checkNotNull(solver);
-		this.init = checkNotNull(init);
-		this.target = checkNotNull(target);
-	}
+    private ExprTraceUnsatCoreChecker(final Expr<BoolType> init, final Expr<BoolType> target,
+                                      final UCSolver solver) {
+        this.solver = checkNotNull(solver);
+        this.init = checkNotNull(init);
+        this.target = checkNotNull(target);
+    }
 
-	public static ExprTraceUnsatCoreChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
-												   final UCSolver solver) {
-		return new ExprTraceUnsatCoreChecker(init, target, solver);
-	}
+    public static ExprTraceUnsatCoreChecker create(final Expr<BoolType> init,
+                                                   final Expr<BoolType> target,
+                                                   final UCSolver solver) {
+        return new ExprTraceUnsatCoreChecker(init, target, solver);
+    }
 
-	@Override
-	public ExprTraceStatus<VarsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
-		checkNotNull(trace);
-		final int stateCount = trace.getStates().size();
+    @Override
+    public ExprTraceStatus<VarsRefutation> check(
+            final Trace<? extends ExprState, ? extends ExprAction> trace) {
+        checkNotNull(trace);
+        final int stateCount = trace.getStates().size();
 
-		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-		indexings.add(VarIndexingFactory.indexing(0));
+        final List<VarIndexing> indexings = new ArrayList<>(stateCount);
+        indexings.add(VarIndexingFactory.indexing(0));
 
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
-			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
-			assert solver.check().isSat() : "Initial state of the trace is not feasible";
-			boolean concretizable = true;
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
+            solver.track(ExprUtils.getConjuncts(
+                    PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
+            assert solver.check().isSat() : "Initial state of the trace is not feasible";
+            boolean concretizable = true;
 
-			for (int i = 1; i < stateCount; ++i) {
-				indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
-				solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
-				solver.track(ExprUtils
-						.getConjuncts(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
+            for (int i = 1; i < stateCount; ++i) {
+                indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
+                solver.track(ExprUtils.getConjuncts(
+                        PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
+                solver.track(ExprUtils
+                        .getConjuncts(
+                                PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
 
-				if (!solver.check().isSat()) {
-					concretizable = false;
-					break;
-				}
-			}
+                if (!solver.check().isSat()) {
+                    concretizable = false;
+                    break;
+                }
+            }
 
-			if (concretizable) {
-				solver.track(ExprUtils.getConjuncts(PathUtils.unfold(target, indexings.get(stateCount - 1))));
-				concretizable = solver.check().isSat();
-			}
+            if (concretizable) {
+                solver.track(ExprUtils.getConjuncts(
+                        PathUtils.unfold(target, indexings.get(stateCount - 1))));
+                concretizable = solver.check().isSat();
+            }
 
-			if (concretizable) {
-				final Valuation model = solver.getModel();
-				final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
-				for (final VarIndexing indexing : indexings) {
-					builder.add(PathUtils.extractValuation(model, indexing));
-				}
-				return ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
-			} else {
-				final Collection<Expr<BoolType>> unsatCore = solver.getUnsatCore();
-				final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
-				return ExprTraceStatus.infeasible(VarsRefutation.create(indexedVars));
-			}
-		}
-	}
+            if (concretizable) {
+                final Valuation model = solver.getModel();
+                final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
+                for (final VarIndexing indexing : indexings) {
+                    builder.add(PathUtils.extractValuation(model, indexing));
+                }
+                return ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
+            } else {
+                final Collection<Expr<BoolType>> unsatCore = solver.getUnsatCore();
+                final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
+                return ExprTraceStatus.infeasible(VarsRefutation.create(indexedVars));
+            }
+        }
+    }
 
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

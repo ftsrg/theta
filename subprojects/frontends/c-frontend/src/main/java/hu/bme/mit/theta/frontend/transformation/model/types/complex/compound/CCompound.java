@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,16 +16,18 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public abstract class CCompound extends CComplexType {
-	protected CCompound(CSimpleType origin) {
-		super(origin);
-	}
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    protected CCompound(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
+    }
+
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 
 }

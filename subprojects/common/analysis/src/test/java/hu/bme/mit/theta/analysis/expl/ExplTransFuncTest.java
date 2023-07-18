@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,32 +38,36 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ExplTransFuncTest {
-	private final VarDecl<IntType> x = Var("x", Int());
-	private final ExplPrec prec = ExplPrec.of(ImmutableList.of(x));
-	private final ExplState state = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
 
-	ExplTransFunc transFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver());
+    private final VarDecl<IntType> x = Var("x", Int());
+    private final ExplPrec prec = ExplPrec.of(ImmutableList.of(x));
+    private final ExplState state = ExplState.of(
+            ImmutableValuation.builder().put(x, Int(1)).build());
 
-	@Test
-	public void testNormal() {
-		final ExprAction action = mock(ExprAction.class);
-		doReturn(Eq(Prime(x.getRef()), Add(x.getRef(), Int(1)))).when(action).toExpr();
-		when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
+    ExplTransFunc transFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver());
 
-		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action, prec);
-		Assert.assertEquals(1, succStates.size());
-		Assert.assertEquals(ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build()),
-				succStates.iterator().next());
-	}
+    @Test
+    public void testNormal() {
+        final ExprAction action = mock(ExprAction.class);
+        doReturn(Eq(Prime(x.getRef()), Add(x.getRef(), Int(1)))).when(action).toExpr();
+        when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
 
-	@Test
-	public void testBottom() {
-		final ExprAction action = mock(ExprAction.class);
-		doReturn(Eq(x.getRef(), Int(2))).when(action).toExpr();
-		when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
+        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action,
+                prec);
+        Assert.assertEquals(1, succStates.size());
+        Assert.assertEquals(ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build()),
+                succStates.iterator().next());
+    }
 
-		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action, prec);
-		Assert.assertEquals(1, succStates.size());
-		Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(succStates));
-	}
+    @Test
+    public void testBottom() {
+        final ExprAction action = mock(ExprAction.class);
+        doReturn(Eq(x.getRef(), Int(2))).when(action).toExpr();
+        when(action.nextIndexing()).thenReturn(VarIndexingFactory.indexing(1));
+
+        final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action,
+                prec);
+        Assert.assertEquals(1, succStates.size());
+        Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(succStates));
+    }
 }

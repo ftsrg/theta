@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,29 +40,33 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public final class CfaPredImpactCheckerTest {
 
-	@Test
-	public void test() throws FileNotFoundException, IOException {
-		// Arrange
-		final CFA cfa = CfaDslManager.createCfa(new FileInputStream("src/test/resources/counter5_true.cfa"));
+    @Test
+    public void test() throws FileNotFoundException, IOException {
+        // Arrange
+        final CFA cfa = CfaDslManager.createCfa(
+                new FileInputStream("src/test/resources/counter5_true.cfa"));
 
-		final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
-		final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
+        final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
+        final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
 
-		final PredImpactChecker checker = PredImpactChecker.create(CfaLbeLts.of(cfa.getErrorLoc().get()), cfa.getInitLoc(),
-			l -> l.equals(cfa.getErrorLoc().get()), abstractionSolver, refinementSolver);
+        final PredImpactChecker checker = PredImpactChecker.create(
+                CfaLbeLts.of(cfa.getErrorLoc().get()), cfa.getInitLoc(),
+                l -> l.equals(cfa.getErrorLoc().get()), abstractionSolver, refinementSolver);
 
-		// Act
-		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(UnitPrec.getInstance());
+        // Act
+        final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(
+                UnitPrec.getInstance());
 
-		// Assert
-		assertTrue(status.isSafe());
+        // Assert
+        assertTrue(status.isSafe());
 
-		final ARG<? extends ExprState, ? extends ExprAction> arg = status.getArg();
-		arg.minimize();
+        final ARG<? extends ExprState, ? extends ExprAction> arg = status.getArg();
+        arg.minimize();
 
-		final ArgChecker argChecker = ArgChecker.create(abstractionSolver);
-		assertTrue(argChecker.isWellLabeled(arg));
+        final ArgChecker argChecker = ArgChecker.create(abstractionSolver);
+        assertTrue(argChecker.isWellLabeled(arg));
 
-		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
-	}
+        System.out.println(
+                GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
+    }
 }

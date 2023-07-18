@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.List;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
-public class Complement extends UnaryMCMRule{
+public class Complement extends UnaryMCMRule {
     public Complement(MCMRelation e) {
         super(e);
     }
@@ -36,7 +36,7 @@ public class Complement extends UnaryMCMRule{
     }
 
     @Override
-    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper){
+    public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
         final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
         resultEvents.getAll().forEach((tuple, constDecl) -> {
             encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), Not(events.get(tuple).getRef())));

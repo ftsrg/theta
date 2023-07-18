@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@ import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.flatten
 
-data class XcfaAction (val pid: Int, val edge: XcfaEdge) : StmtAction() {
+data class XcfaAction(val pid: Int, val edge: XcfaEdge) : StmtAction() {
+
     val source: XcfaLocation = edge.source
     val target: XcfaLocation = edge.target
     val label: XcfaLabel = edge.label
     private val stmts: List<Stmt> = label.toStmt().flatten()
 
-    constructor(pid: Int, source: XcfaLocation, target: XcfaLocation, label: XcfaLabel = NopLabel) : this(pid, XcfaEdge(source, target, label))
+    constructor(pid: Int, source: XcfaLocation, target: XcfaLocation,
+        label: XcfaLabel = NopLabel) : this(pid, XcfaEdge(source, target, label))
 
     override fun getStmts(): List<Stmt> {
         return stmts

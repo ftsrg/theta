@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,16 +16,20 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
  * Removes edges that only contain NopLabels (possibly nested)
  */
 
-class EmptyEdgeRemovalPass : ProcedurePass {
+class EmptyEdgeRemovalPass(val parseContext: ParseContext) : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        while(true) {
-            val edge = builder.getEdges().find { it.label.isNop() && !it.target.error && !it.target.final && !it.source.initial } ?: return builder
+        while (true) {
+            val edge = builder.getEdges()
+                .find { it.label.isNop() && !it.target.error && !it.target.final && !it.source.initial }
+                ?: return builder
             builder.removeEdge(edge)
             if (edge.source != edge.target) {
                 val incomingEdges = ArrayList(edge.source.incomingEdges)
@@ -35,7 +39,7 @@ class EmptyEdgeRemovalPass : ProcedurePass {
         }
     }
 
-    private fun XcfaLabel.isNop() : Boolean =
+    private fun XcfaLabel.isNop(): Boolean =
         when (this) {
             is NondetLabel -> labels.all { it.isNop() }
             is SequenceLabel -> labels.all { it.isNop() }

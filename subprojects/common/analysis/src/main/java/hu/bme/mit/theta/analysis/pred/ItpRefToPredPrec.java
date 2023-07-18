@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,29 +31,30 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  */
 public class ItpRefToPredPrec implements RefutationToPrec<PredPrec, ItpRefutation> {
 
-	private final ExprSplitter exprSplitter;
+    private final ExprSplitter exprSplitter;
 
-	public ItpRefToPredPrec(final ExprSplitter exprSplitter) {
-		this.exprSplitter = checkNotNull(exprSplitter);
-	}
+    public ItpRefToPredPrec(final ExprSplitter exprSplitter) {
+        this.exprSplitter = checkNotNull(exprSplitter);
+    }
 
-	@Override
-	public PredPrec toPrec(final ItpRefutation refutation, final int index) {
-		final Expr<BoolType> expr = refutation.get(index);
-		final Collection<Expr<BoolType>> exprs = exprSplitter.apply(expr);
-		final PredPrec prec = PredPrec.of(exprs);
-		return prec;
-	}
+    @Override
+    public PredPrec toPrec(final ItpRefutation refutation, final int index) {
+        final Expr<BoolType> expr = refutation.get(index);
+        final Collection<Expr<BoolType>> exprs = exprSplitter.apply(expr);
+        final PredPrec prec = PredPrec.of(exprs);
+        return prec;
+    }
 
-	@Override
-	public PredPrec join(final PredPrec prec1, final PredPrec prec2) {
-		checkNotNull(prec1);
-		checkNotNull(prec2);
-		return prec1.join(prec2);
-	}
+    @Override
+    public PredPrec join(final PredPrec prec1, final PredPrec prec2) {
+        checkNotNull(prec1);
+        checkNotNull(prec2);
+        return prec1.join(prec2);
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().add(exprSplitter).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().add(exprSplitter)
+                .toString();
+    }
 }

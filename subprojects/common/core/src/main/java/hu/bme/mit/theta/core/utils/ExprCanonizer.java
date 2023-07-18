@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.common.DispatchTable;
@@ -206,7 +221,8 @@ public final class ExprCanonizer {
 
     // TODO Eliminate helper method once the Java compiler is able to handle
     // this kind of type inference
-    private static <ExprType extends Type> Expr<ExprType> canonizeGenericIte(final IteExpr<ExprType> expr) {
+    private static <ExprType extends Type> Expr<ExprType> canonizeGenericIte(
+            final IteExpr<ExprType> expr) {
         final Expr<BoolType> cond = canonize(expr.getCond());
         final Expr<ExprType> then = canonize(expr.getThen());
         final Expr<ExprType> elze = canonize(expr.getElse());
@@ -257,15 +273,15 @@ public final class ExprCanonizer {
     }
 
     private static <OpType extends Type, ExprType extends Type> Expr<ExprType>
-    canonizeGenericCommutativeBinaryExpr(final BinaryExpr<OpType, ExprType> expr){
+    canonizeGenericCommutativeBinaryExpr(final BinaryExpr<OpType, ExprType> expr) {
         final Expr<OpType> leftOp = canonize(expr.getLeftOp());
         final Expr<OpType> rightOp = canonize(expr.getRightOp());
 
         final int leftHashCode = leftOp.hashCode();
         final int rightHashCode = rightOp.hashCode();
 
-        if(rightHashCode < leftHashCode){
-            return expr.with(rightOp,leftOp);
+        if (rightHashCode < leftHashCode) {
+            return expr.with(rightOp, leftOp);
         } else {
             return expr.with(leftOp, rightOp);
         }
@@ -280,7 +296,7 @@ public final class ExprCanonizer {
     }
 
     private static <OpType extends Type, ExprType extends Type> Expr<ExprType>
-    canonizeGenericCommutativeMultiaryExpr(final MultiaryExpr<OpType, ExprType> expr){
+    canonizeGenericCommutativeMultiaryExpr(final MultiaryExpr<OpType, ExprType> expr) {
         final List<Expr<OpType>> orderedCanonizedOps = expr.getOps().stream()
                 .map(ExprCanonizer::canonize)
                 .sorted(Comparator.comparingInt(Object::hashCode))
@@ -351,11 +367,11 @@ public final class ExprCanonizer {
         final Expr<RatType> leftOp = canonize(expr.getLeftOp());
         final Expr<RatType> rightOp = canonize(expr.getRightOp());
 
-        return RatLtExpr.of(rightOp,leftOp);
+        return RatLtExpr.of(rightOp, leftOp);
     }
 
     private static Expr<BoolType> canonizeRatLeq(final RatLeqExpr expr) {
-        final Expr<BoolType> notGt = Not(RatExprs.Gt(expr.getLeftOp(),expr.getRightOp()));
+        final Expr<BoolType> notGt = Not(RatExprs.Gt(expr.getLeftOp(), expr.getRightOp()));
         return canonize(notGt);
     }
 
@@ -363,7 +379,7 @@ public final class ExprCanonizer {
         final Expr<RatType> leftOp = canonize(expr.getLeftOp());
         final Expr<RatType> rightOp = canonize(expr.getRightOp());
 
-        return expr.with(leftOp,rightOp);
+        return expr.with(leftOp, rightOp);
     }
 
     private static Expr<IntType> canonizeRatToInt(final RatToIntExpr expr) {
@@ -439,7 +455,7 @@ public final class ExprCanonizer {
         final Expr<IntType> leftOp = canonize(expr.getLeftOp());
         final Expr<IntType> rightOp = canonize(expr.getRightOp());
 
-        return IntLtExpr.of(rightOp,leftOp);
+        return IntLtExpr.of(rightOp, leftOp);
     }
 
     private static Expr<BoolType> canonizeIntLeq(final IntLeqExpr expr) {
@@ -451,7 +467,7 @@ public final class ExprCanonizer {
         final Expr<IntType> leftOp = canonize(expr.getLeftOp());
         final Expr<IntType> rightOp = canonize(expr.getRightOp());
 
-        return expr.with(leftOp,rightOp);
+        return expr.with(leftOp, rightOp);
     }
 
     /*
@@ -589,5 +605,5 @@ public final class ExprCanonizer {
     private static Expr<BoolType> canonizeBvSLt(final BvSLtExpr expr) {
         throw new UnsupportedOperationException();
     }
-    
+
 }

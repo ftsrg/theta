@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 
 import hu.bme.mit.theta.common.OsHelper;
@@ -29,10 +44,10 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
         versions = new ArrayList<>();
         versions.add(SemVer.VersionDecoder.create(SemVer.of("1.0.0"))
-            .addString(LINUX, X64, "Linux")
-            .addString(MAC, X64, "macOS")
-            .addString(WINDOWS, X64, "Win64")
-            .build()
+                .addString(LINUX, X64, "Linux")
+                .addString(MAC, X64, "macOS")
+                .addString(WINDOWS, X64, "Win64")
+                .build()
         );
     }
 
@@ -43,15 +58,14 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
-        try(
-            final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
-            final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
+        try (
+                final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
+                final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
         ) {
             logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
             installDir.resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
 
@@ -65,12 +79,12 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] {
-            "--lang", "smt2",
-            "--output-lang", "smt2",
-            "--quiet",
-            "--incremental",
-            "--fp-exp"
+        return new String[]{
+                "--lang", "smt2",
+                "--output-lang", "smt2",
+                "--quiet",
+                "--incremental",
+                "--fp-exp"
         };
     }
 
@@ -87,8 +101,8 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     private URL getDownloadUrl(final String version) throws SmtLibSolverInstallerException, MalformedURLException {
         return URI.create(String.format(
-            "https://github.com/cvc5/cvc5/releases/download/cvc5-%s/cvc5-%s",
-            version, getArchString(version)
+                "https://github.com/cvc5/cvc5/releases/download/cvc5-%s/cvc5-%s",
+                version, getArchString(version)
         )).toURL();
     }
 

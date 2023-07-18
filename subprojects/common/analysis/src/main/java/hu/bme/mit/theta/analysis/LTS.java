@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,23 +24,23 @@ import java.util.Collection;
 @FunctionalInterface
 public interface LTS<S extends State, A extends Action> {
 
-	/**
-	 * Gets the enabled actions for a given state.
-	 *
-	 * @param state the state whose enabled actions we would like to know
-	 * @return the enabled actions
-	 */
-	Collection<A> getEnabledActionsFor(S state);
+    /**
+     * Gets the enabled actions for a given state.
+     *
+     * @param state the state whose enabled actions we would like to know
+     * @return the enabled actions
+     */
+    Collection<A> getEnabledActionsFor(S state);
 
-	/**
-	 * Gets the enabled actions for a given state using the current precision.
-	 *
-	 * @param state the state whose enabled actions we would like to know
-	 * @param exploredActions the actions already explored from the given state
-	 * @param prec  the current precision
-	 * @return the enabled actions
-	 */
-	default <P extends Prec> Collection<A> getEnabledActionsFor(S state, Collection<A> exploredActions, P prec) {
-		return getEnabledActionsFor(state);
-	}
+    /**
+     * Gets the enabled actions for a given state using the current precision.
+     *
+     * @param state           the state whose enabled actions we would like to know
+     * @param exploredActions the actions already explored from the given state
+     * @param prec            the current precision
+     * @return the enabled actions
+     */
+    default <P extends Prec> Collection<A> getEnabledActionsFor(S state, Collection<A> exploredActions, P prec) {
+        return getEnabledActionsFor(state);
+    }
 }

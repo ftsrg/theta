@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -124,9 +124,9 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         }
 
 
-        while(true) {
+        while (true) {
             Optional<DelayedEvent> delayedEvent = delayedEvents.stream().findAny();
-            if(delayedEvent.isEmpty()) break;
+            if (delayedEvent.isEmpty()) break;
             delayedEvents.remove(delayedEvent.get());
 
             final int lastId = delayedEvent.get().getId();
@@ -135,10 +135,9 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             final Map<MemoryEvent.Read, Integer> reads = readsMap.get(pid);
             final List<Integer> eventList = eventListMap.get(pid);
 
-            if(delayedEvent.get() instanceof final DelayedRead delayedRead) {
+            if (delayedEvent.get() instanceof final DelayedRead delayedRead) {
                 handleDelayedRead(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList, delayedRead, eventVarLookup);
-            }
-            else {
+            } else {
                 handleEvent(prec, usedVars, executionGraph, delayedEvents, delayedReads, writes, lastId, state, pid, reads, eventList, eventVarLookup);
             }
         }
@@ -147,7 +146,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         EventConstantLookup rf = executionGraph.encode();
 
         logger.write(Logger.Level.SUBSTEP, "|-- Successfully built execution graph\n");
-        while(executionGraph.nextSolution(solutions)) {
+        while (executionGraph.nextSolution(solutions)) {
             logger.write(Logger.Level.SUBSTEP, "|-- Found new solution: " + executionGraph.getRf() + "\n");
         }
 
@@ -173,7 +172,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
                 nextStates = new ArrayList<>();
             }
             for (DelayedEvent delayedEvent : states) {
-                if(!executionGraph.tryCover(delayedEvent.getPid(), delayedEvent.getId())) {
+                if (!executionGraph.tryCover(delayedEvent.getPid(), delayedEvent.getId())) {
                     delayedEvents.add(delayedEvent);
                 }
             }
@@ -204,7 +203,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             nextStates = new ArrayList<>();
         }
         for (DelayedEvent delayedEvent : states) {
-            if(!executionGraph.tryCover(delayedEvent.getPid(), delayedEvent.getId())) {
+            if (!executionGraph.tryCover(delayedEvent.getPid(), delayedEvent.getId())) {
                 delayedEvents.add(delayedEvent);
             }
         }
@@ -217,7 +216,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
                 int nextId = executionGraph.addMemoryEvent(memoryEvent, pid, s.getId());
                 logger.write(Logger.Level.SUBSTEP, "|------ Adding memory event #" + nextId + ": " + piece + "\n");
 
-                if(memoryEvent.type == READ || memoryEvent.type == WRITE) {
+                if (memoryEvent.type == READ || memoryEvent.type == WRITE) {
                     MemoryEvent.MemoryIO memoryIO = memoryEvent.asMemoryIO();
                     eventVarLookup.put(nextId, memoryIO.var().getName());
                 }
@@ -271,11 +270,13 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
         protected final int pid;
         protected final int id;
         protected final S s;
+
         public DelayedEvent(int pid, int id, S state) {
             this.pid = pid;
             this.id = id;
             this.s = state;
         }
+
         public int getPid() {
             return pid;
         }
@@ -288,6 +289,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             return s;
         }
     }
+
     private class DelayedRead extends DelayedEvent {
         private final A a;
         private final int pieceNo;
@@ -299,6 +301,7 @@ public class MCMChecker<S extends ExprState, A extends StmtAction, P extends Pre
             this.pieceNo = pieceNo;
             this.readsFrom = readsFrom;
         }
+
         public A getA() {
             return a;
         }

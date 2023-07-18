@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,15 +23,16 @@ import java.util.Collection;
 import java.util.Map;
 
 public class MultiprocLTS<S extends State, A extends Action> {
-	private final Map<Integer, LTS<S, A>> ltsMap;
+    private final Map<Integer, LTS<S, A>> ltsMap;
 
-	public MultiprocLTS(final Map<Integer, LTS<S, A>> ltsMap) {
-		this.ltsMap = ltsMap;
-	}
+    public MultiprocLTS(final Map<Integer, LTS<S, A>> ltsMap) {
+        this.ltsMap = ltsMap;
+    }
 
-	public Collection<A> getEnabledActionsFor(final int pid, S state) {
-		if(ltsMap.containsKey(pid)) return ltsMap.get(pid).getEnabledActionsFor(state);
-		else throw new RuntimeException("No such process: " + pid + ". Known processes: " + ltsMap.keySet());
-	}
+    public Collection<A> getEnabledActionsFor(final int pid, S state) {
+        if (ltsMap.containsKey(pid)) return ltsMap.get(pid).getEnabledActionsFor(state);
+        else
+            throw new RuntimeException("No such process: " + pid + ". Known processes: " + ltsMap.keySet());
+    }
 
 }

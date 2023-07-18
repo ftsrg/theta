@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,32 +30,34 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class ExprTraceUtils {
 
-	private ExprTraceUtils() {
-	}
+    private ExprTraceUtils() {
+    }
 
-	public static <A extends ExprAction> Trace<ExprState, A> traceFrom(final List<? extends A> actions) {
-		checkNotNull(actions);
-		final List<ExprState> states = new ArrayList<>(actions.size() + 1);
-		for (int i = 0; i < actions.size() + 1; i++) {
-			states.add(BasicExprState.of(True()));
-		}
-		return Trace.of(states, actions);
-	}
+    public static <A extends ExprAction> Trace<ExprState, A> traceFrom(
+            final List<? extends A> actions) {
+        checkNotNull(actions);
+        final List<ExprState> states = new ArrayList<>(actions.size() + 1);
+        for (int i = 0; i < actions.size() + 1; i++) {
+            states.add(BasicExprState.of(True()));
+        }
+        return Trace.of(states, actions);
+    }
 
-	public static boolean isInductive(final Trace<? extends ExprState, ? extends ExprAction> trace,
-									  final Solver solver) {
-		for (int i = 0; i < trace.length(); i++) {
-			final ExprState sourceState = trace.getState(i);
-			final ExprAction action = trace.getAction(i);
-			final ExprState targetState = trace.getState(i + 1);
+    public static boolean isInductive(final Trace<? extends ExprState, ? extends ExprAction> trace,
+                                      final Solver solver) {
+        for (int i = 0; i < trace.length(); i++) {
+            final ExprState sourceState = trace.getState(i);
+            final ExprAction action = trace.getAction(i);
+            final ExprState targetState = trace.getState(i + 1);
 
-			final Optional<Valuation> uncoveredSuccessor = anyUncoveredSuccessor(sourceState, action,
-					singleton(targetState), solver);
-			if (uncoveredSuccessor.isPresent()) {
-				return false;
-			}
-		}
-		return true;
-	}
+            final Optional<Valuation> uncoveredSuccessor = anyUncoveredSuccessor(sourceState,
+                    action,
+                    singleton(targetState), solver);
+            if (uncoveredSuccessor.isPresent()) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 }

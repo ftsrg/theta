@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,18 +24,18 @@ import hu.bme.mit.theta.core.model.Valuation;
 
 public interface Expr<ExprType extends Type> {
 
-	int getArity();
+    int getArity();
 
-	ExprType getType();
+    ExprType getType();
 
-	LitExpr<ExprType> eval(Valuation val);
+    LitExpr<ExprType> eval(Valuation val);
 
-	List<? extends Expr<?>> getOps();
+    List<? extends Expr<?>> getOps();
 
-	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
+    Expr<ExprType> withOps(List<? extends Expr<?>> ops);
 
-	default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
-		return withOps(getOps().stream().map(function::apply).collect(toImmutableList()));
-	}
+    default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
+        return withOps(getOps().stream().map(function::apply).collect(toImmutableList()));
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.Objects;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
-public class Toid extends UnaryMCMRule{
+public class Toid extends UnaryMCMRule {
     public Toid(MCMRelation e) {
         super(e);
     }
@@ -41,7 +41,8 @@ public class Toid extends UnaryMCMRule{
     public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
         final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
         resultEvents.getAll().forEach((tuple, constDecl) -> {
-            if(Objects.equals(tuple.get(0), tuple.get(1))) encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), events.get(TupleN.of(tuple.get(0))).getRef()));
+            if (Objects.equals(tuple.get(0), tuple.get(1)))
+                encodedRelationWrapper.getSolver().add(Iff(constDecl.getRef(), events.get(TupleN.of(tuple.get(0))).getRef()));
             else encodedRelationWrapper.getSolver().add(Not(constDecl.getRef()));
         });
     }

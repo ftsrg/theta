@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,43 +36,43 @@ import hu.bme.mit.theta.sts.STS;
 @RunWith(Parameterized.class)
 public final class StsParserTest {
 
-	@Parameter(0)
-	public String filepath;
+    @Parameter(0)
+    public String filepath;
 
-	@Parameter(1)
-	public int vars;
+    @Parameter(1)
+    public int vars;
 
-	private Reader reader;
-	private StsParser parser;
+    private Reader reader;
+    private StsParser parser;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 
-				{"src/test/resources/simple1.lisp.sts", 2},
+                {"src/test/resources/simple1.lisp.sts", 2},
 
-				{"src/test/resources/readerswriters.lisp.sts", 3},
+                {"src/test/resources/readerswriters.lisp.sts", 3},
 
-		});
-	}
+        });
+    }
 
-	@Before
-	public void before() throws FileNotFoundException {
-		reader = new FileReader(filepath);
-		parser = new StsParser(reader);
-	}
+    @Before
+    public void before() throws FileNotFoundException {
+        reader = new FileReader(filepath);
+        parser = new StsParser(reader);
+    }
 
-	@After
-	public void after() throws IOException {
-		reader.close();
-	}
+    @After
+    public void after() throws IOException {
+        reader.close();
+    }
 
-	@Test
-	public void test() {
-		// Act
-		final STS sts = parser.sts();
-		System.out.println(sts);
-		Assert.assertEquals(vars, sts.getVars().size());
-	}
+    @Test
+    public void test() {
+        // Act
+        final STS sts = parser.sts();
+        System.out.println(sts);
+        Assert.assertEquals(vars, sts.getVars().size());
+    }
 
 }

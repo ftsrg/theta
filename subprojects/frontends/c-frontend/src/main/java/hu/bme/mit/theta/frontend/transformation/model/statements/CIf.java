@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,31 +16,35 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CIf extends CStatement {
-	private final CStatement guard;
-	private final CStatement body;
-	private final CStatement elseStatement;
 
-	public CIf(CStatement guard, CStatement body, CStatement elseStatement) {
-		this.guard = guard;
-		this.body = body;
-		this.elseStatement = elseStatement;
-	}
+    private final CStatement guard;
+    private final CStatement body;
+    private final CStatement elseStatement;
 
-	public CStatement getElseStatement() {
-		return elseStatement;
-	}
+    public CIf(CStatement guard, CStatement body, CStatement elseStatement, ParseContext parseContext) {
+        super(parseContext);
+        this.guard = guard;
+        this.body = body;
+        this.elseStatement = elseStatement;
+    }
 
-	public CStatement getBody() {
-		return body;
-	}
+    public CStatement getElseStatement() {
+        return elseStatement;
+    }
 
-	public CStatement getGuard() {
-		return guard;
-	}
+    public CStatement getBody() {
+        return body;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public CStatement getGuard() {
+        return guard;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

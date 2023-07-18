@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,28 +26,32 @@ import java.util.Collections;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
-public final class PredTransFunc<A extends ExprAction> implements TransFunc<PredState, A, PredPrec> {
+public final class PredTransFunc<A extends ExprAction> implements
+        TransFunc<PredState, A, PredPrec> {
 
-	private final PredAbstractor predAbstractor;
+    private final PredAbstractor predAbstractor;
 
-	private PredTransFunc(final PredAbstractor predAbstractor) {
-		this.predAbstractor = checkNotNull(predAbstractor);
-	}
+    private PredTransFunc(final PredAbstractor predAbstractor) {
+        this.predAbstractor = checkNotNull(predAbstractor);
+    }
 
-	public static <A extends ExprAction> PredTransFunc<A> create(final PredAbstractor predAbstractor) {
-		return new PredTransFunc<A>(predAbstractor);
-	}
+    public static <A extends ExprAction> PredTransFunc<A> create(
+            final PredAbstractor predAbstractor) {
+        return new PredTransFunc<A>(predAbstractor);
+    }
 
-	@Override
-	public Collection<? extends PredState> getSuccStates(final PredState state, final ExprAction action,
-														 final PredPrec prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
+    @Override
+    public Collection<? extends PredState> getSuccStates(final PredState state,
+                                                         final ExprAction action,
+                                                         final PredPrec prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
 
-		final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
-				And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec, action.nextIndexing());
-		return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
-	}
+        final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
+                And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
+                action.nextIndexing());
+        return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
+    }
 
 }

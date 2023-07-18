@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,17 +19,18 @@ package hu.bme.mit.theta.core.utils.indexings;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
 public interface VarIndexingBuilder {
-	VarIndexingBuilder inc(VarDecl<?> varDecl);
 
-	VarIndexingBuilder incAll();
+    VarIndexingBuilder inc(VarDecl<?> varDecl);
 
-	VarIndexingBuilder add(VarIndexingBuilder that);
+    VarIndexingBuilder incAll();
 
-	VarIndexingBuilder sub(VarIndexingBuilder that);
+    VarIndexingBuilder add(VarIndexingBuilder that);
 
-	VarIndexingBuilder join(VarIndexingBuilder that);
+    VarIndexingBuilder sub(VarIndexingBuilder that);
 
-	int get(VarDecl<?> varDecl);
+    VarIndexingBuilder join(VarIndexingBuilder that);
 
-	VarIndexing build();
+    int get(VarDecl<?> varDecl);
+
+    VarIndexing build();
 }

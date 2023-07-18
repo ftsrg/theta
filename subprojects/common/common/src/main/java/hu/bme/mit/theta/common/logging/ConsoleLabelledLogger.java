@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import java.io.PrintStream;
 
 public final class ConsoleLabelledLogger implements Logger {
 
-	private static final PrintStream CONSOLE = System.out;
+    private static final PrintStream CONSOLE = System.out;
 
-	@Override
-	public Logger write(Level level, String pattern, Object... objects) {
-		CONSOLE.printf(level + "\t{" + pattern.replace("}", "]") + "}", objects);
-		return this;
-	}
+    @Override
+    public Logger write(Level level, String pattern, Object... objects) {
+        CONSOLE.printf(level + "\t{" + pattern.replace("}", "]") + "}", objects);
+        return this;
+    }
 }

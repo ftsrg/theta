@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class ArgUtils {
 
-	private ArgUtils() {
-	}
+    private ArgUtils() {
+    }
 
-	public static <S extends ExprState, A extends ExprAction> boolean isWellLabeled(final ARG<S, A> arg,
-																					final Solver solver) {
-		return ArgChecker.create(solver).isWellLabeled(arg);
-	}
+    public static <S extends ExprState, A extends ExprAction> boolean isWellLabeled(
+            final ARG<S, A> arg,
+            final Solver solver) {
+        return ArgChecker.create(solver).isWellLabeled(arg);
+    }
 
 }

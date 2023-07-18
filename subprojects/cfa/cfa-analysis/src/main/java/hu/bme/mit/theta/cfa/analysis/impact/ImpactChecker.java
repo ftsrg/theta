@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,137 +34,140 @@ import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
-public final class ImpactChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
+public final class ImpactChecker<S extends State, A extends Action, P extends Prec> implements
+        SafetyChecker<S, A, P> {
 
-	private final ArgBuilder<S, A, P> argBuilder;
-	private final ImpactRefiner<S, A> refiner;
-	private final Function<? super S, ?> partitioning;
+    private final ArgBuilder<S, A, P> argBuilder;
+    private final ImpactRefiner<S, A> refiner;
+    private final Function<? super S, ?> partitioning;
 
-	private ImpactChecker(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
-						  final Function<? super S, ?> partitioning) {
-		this.argBuilder = checkNotNull(argBuilder);
-		this.refiner = checkNotNull(refiner);
-		this.partitioning = checkNotNull(partitioning);
-	}
+    private ImpactChecker(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
+                          final Function<? super S, ?> partitioning) {
+        this.argBuilder = checkNotNull(argBuilder);
+        this.refiner = checkNotNull(refiner);
+        this.partitioning = checkNotNull(partitioning);
+    }
 
-	public static <S extends State, A extends Action, P extends Prec> ImpactChecker<S, A, P> create(
-			final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
-			final Function<? super S, ?> partitioning) {
-		return new ImpactChecker<>(argBuilder, refiner, partitioning);
-	}
+    public static <S extends State, A extends Action, P extends Prec> ImpactChecker<S, A, P> create(
+            final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
+            final Function<? super S, ?> partitioning) {
+        return new ImpactChecker<>(argBuilder, refiner, partitioning);
+    }
 
-	////
+    ////
 
-	@Override
-	public SafetyResult<S, A> check(final P prec) {
-		return new CheckMethod(prec).run();
-	}
+    @Override
+    public SafetyResult<S, A> check(final P prec) {
+        return new CheckMethod(prec).run();
+    }
 
-	////
+    ////
 
-	private final class CheckMethod {
-		private final P prec;
+    private final class CheckMethod {
 
-		private final ARG<S, A> arg;
-		private final ReachedSet<S, A> reachedSet;
+        private final P prec;
 
-		private CheckMethod(final P prec) {
-			this.prec = checkNotNull(prec);
-			arg = argBuilder.createArg();
-			reachedSet = ImpactReachedSet.create(partitioning);
-		}
+        private final ARG<S, A> arg;
+        private final ReachedSet<S, A> reachedSet;
 
-		private SafetyResult<S, A> run() {
-			final Optional<ArgNode<S, A>> unsafeNode = unwind();
+        private CheckMethod(final P prec) {
+            this.prec = checkNotNull(prec);
+            arg = argBuilder.createArg();
+            reachedSet = ImpactReachedSet.create(partitioning);
+        }
 
-			if (unsafeNode.isPresent()) {
-				return SafetyResult.unsafe(ArgTrace.to(unsafeNode.get()).toTrace(), arg);
-			} else {
-				return SafetyResult.safe(arg);
-			}
-		}
+        private SafetyResult<S, A> run() {
+            final Optional<ArgNode<S, A>> unsafeNode = unwind();
 
-		////
+            if (unsafeNode.isPresent()) {
+                return SafetyResult.unsafe(ArgTrace.to(unsafeNode.get()).toTrace(), arg);
+            } else {
+                return SafetyResult.safe(arg);
+            }
+        }
 
-		private Optional<ArgNode<S, A>> searchForUnsafeNode(final ArgNode<S, A> node) {
-			final Waitlist<ArgNode<S, A>> waitlist = FifoWaitlist.create();
-			waitlist.add(node);
+        ////
 
-			while (!waitlist.isEmpty()) {
-				final ArgNode<S, A> v = waitlist.remove();
-				close(v);
-				if (!v.isExcluded()) {
-					if (v.isTarget()) {
-						refine(v);
-						if (v.isFeasible()) {
-							return Optional.of(v);
-						} else {
-							closeProperAncestorsOf(v);
-						}
-					} else {
-						expand(v);
-						reachedSet.addAll(v.getSuccNodes());
-						waitlist.addAll(v.getSuccNodes());
-					}
-				}
-			}
+        private Optional<ArgNode<S, A>> searchForUnsafeNode(final ArgNode<S, A> node) {
+            final Waitlist<ArgNode<S, A>> waitlist = FifoWaitlist.create();
+            waitlist.add(node);
 
-			return Optional.empty();
-		}
+            while (!waitlist.isEmpty()) {
+                final ArgNode<S, A> v = waitlist.remove();
+                close(v);
+                if (!v.isExcluded()) {
+                    if (v.isTarget()) {
+                        refine(v);
+                        if (v.isFeasible()) {
+                            return Optional.of(v);
+                        } else {
+                            closeProperAncestorsOf(v);
+                        }
+                    } else {
+                        expand(v);
+                        reachedSet.addAll(v.getSuccNodes());
+                        waitlist.addAll(v.getSuccNodes());
+                    }
+                }
+            }
 
-		private Optional<ArgNode<S, A>> unwind() {
-			argBuilder.init(arg, prec);
-			reachedSet.addAll(arg.getInitNodes());
+            return Optional.empty();
+        }
 
-			while (true) {
-				final Optional<ArgNode<S, A>> anyIncompleteNode = arg.getIncompleteNodes().findAny();
+        private Optional<ArgNode<S, A>> unwind() {
+            argBuilder.init(arg, prec);
+            reachedSet.addAll(arg.getInitNodes());
 
-				if (anyIncompleteNode.isPresent()) {
-					final ArgNode<S, A> v = anyIncompleteNode.get();
+            while (true) {
+                final Optional<ArgNode<S, A>> anyIncompleteNode = arg.getIncompleteNodes()
+                        .findAny();
 
-					assert v.isLeaf();
+                if (anyIncompleteNode.isPresent()) {
+                    final ArgNode<S, A> v = anyIncompleteNode.get();
 
-					closeProperAncestorsOf(v);
+                    assert v.isLeaf();
 
-					final Optional<ArgNode<S, A>> unsafeDescendant = searchForUnsafeNode(v);
-					if (unsafeDescendant.isPresent()) {
-						return unsafeDescendant;
-					}
-				} else {
-					return Optional.empty();
-				}
-			}
-		}
+                    closeProperAncestorsOf(v);
 
-		////
+                    final Optional<ArgNode<S, A>> unsafeDescendant = searchForUnsafeNode(v);
+                    if (unsafeDescendant.isPresent()) {
+                        return unsafeDescendant;
+                    }
+                } else {
+                    return Optional.empty();
+                }
+            }
+        }
 
-		private void close(final ArgNode<S, A> node) {
-			reachedSet.tryToCover(node);
-		}
+        ////
 
-		private void closeProperAncestorsOf(final ArgNode<S, A> v) {
-			v.properAncestors().forEach(this::close);
-		}
+        private void close(final ArgNode<S, A> node) {
+            reachedSet.tryToCover(node);
+        }
 
-		private void expand(final ArgNode<S, A> v) {
-			argBuilder.expand(v, prec);
-		}
+        private void closeProperAncestorsOf(final ArgNode<S, A> v) {
+            v.properAncestors().forEach(this::close);
+        }
 
-		private void refine(final ArgNode<S, A> v) {
-			final ArgTrace<S, A> argTrace = ArgTrace.to(v);
+        private void expand(final ArgNode<S, A> v) {
+            argBuilder.expand(v, prec);
+        }
 
-			final Trace<S, A> trace = argTrace.toTrace();
-			final ImpactRefiner.RefinementResult<S, A> refinementResult = refiner.refine(trace);
+        private void refine(final ArgNode<S, A> v) {
+            final ArgTrace<S, A> argTrace = ArgTrace.to(v);
 
-			if (refinementResult.isSuccesful()) {
-				final Trace<S, A> refinedTrace = refinementResult.asSuccesful().getTrace();
-				for (int i = 0; i < argTrace.nodes().size(); i++) {
-					final ArgNode<S, A> vi = argTrace.node(i);
-					vi.clearCoveredNodes();
-					vi.setState(refinedTrace.getState(i));
-				}
-			}
-		}
+            final Trace<S, A> trace = argTrace.toTrace();
+            final ImpactRefiner.RefinementResult<S, A> refinementResult = refiner.refine(trace);
 
-	}
+            if (refinementResult.isSuccesful()) {
+                final Trace<S, A> refinedTrace = refinementResult.asSuccesful().getTrace();
+                for (int i = 0; i < argTrace.nodes().size(); i++) {
+                    final ArgNode<S, A> vi = argTrace.node(i);
+                    vi.clearCoveredNodes();
+                    vi.setState(refinedTrace.getState(i));
+                }
+            }
+        }
+
+    }
 }

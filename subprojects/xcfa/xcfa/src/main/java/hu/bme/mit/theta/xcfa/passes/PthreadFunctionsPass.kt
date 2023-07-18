@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -28,51 +29,67 @@ import hu.bme.mit.theta.xcfa.model.*
  *      - pthread_join()
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class PthreadFunctionsPass : ProcedurePass {
+class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         for (edge in ArrayList(builder.getEdges())) {
             val edges = edge.splitIf(this::predicate)
-            if(edges.size > 1 || (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))) {
+            if (edges.size > 1 || (edges.size == 1 && predicate(
+                    (edges[0].label as SequenceLabel).labels[0]))) {
                 builder.removeEdge(edge)
                 val labels: MutableList<XcfaLabel> = ArrayList()
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
-                        val fence = when(invokeLabel.name) {
+                        val fence = when (invokeLabel.name) {
                             "pthread_join" -> {
                                 var handle = invokeLabel.params[1]
-                                while(handle is Reference<*, *>) handle = handle.op
-                                check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+                                while (handle is Reference<*, *>) handle = handle.op
+                                check(
+                                    handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>, metadata = invokeLabel.metadata)
+                                JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>,
+                                    metadata = invokeLabel.metadata)
                             }
+
                             "pthread_create" -> {
                                 var handle = invokeLabel.params[1]
-                                while(handle is Reference<*, *>) handle = handle.op
-                                check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+                                while (handle is Reference<*, *>) handle = handle.op
+                                check(
+                                    handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 val funcptr = invokeLabel.params[3]
-                                check(funcptr is RefExpr && (funcptr as RefExpr<out Type>).decl is VarDecl)
+                                check(
+                                    funcptr is RefExpr && (funcptr as RefExpr<out Type>).decl is VarDecl)
 
                                 val param = invokeLabel.params[4]
 
-                                StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param), (handle as RefExpr<out Type>).decl as VarDecl<*>,  metadata = invokeLabel.metadata)
+                                StartLabel((funcptr as RefExpr<out Type>).decl.name, listOf(param),
+                                    (handle as RefExpr<out Type>).decl as VarDecl<*>,
+                                    metadata = invokeLabel.metadata)
                             }
+
                             "pthread_mutex_lock" -> {
                                 var handle = invokeLabel.params[1]
-                                while(handle is Reference<*, *>) handle = handle.op
-                                check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+                                while (handle is Reference<*, *>) handle = handle.op
+                                check(
+                                    handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                FenceLabel(setOf("mutex_lock(${handle.decl.name})"), metadata = invokeLabel.metadata)
+                                FenceLabel(setOf("mutex_lock(${handle.decl.name})"),
+                                    metadata = invokeLabel.metadata)
                             }
+
                             "pthread_mutex_unlock" -> {
                                 var handle = invokeLabel.params[1]
-                                while(handle is Reference<*, *>) handle = handle.op
-                                check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
+                                while (handle is Reference<*, *>) handle = handle.op
+                                check(
+                                    handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                FenceLabel(setOf("mutex_unlock(${handle.decl.name})"), metadata = invokeLabel.metadata)
+                                FenceLabel(setOf("mutex_unlock(${handle.decl.name})"),
+                                    metadata = invokeLabel.metadata)
                             }
+
                             else -> error("Unknown pthread function ${invokeLabel.name}")
                         }
                         labels.add(fence)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.utils.ExprUtils.simplify
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
-import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
@@ -35,28 +35,37 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  * Sets the `simplifiedExprs` flag on the ProcedureBuilder
  */
 
-class SimplifyExprsPass : ProcedurePass {
+class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
-            val newLabels = (edge.label as SequenceLabel).labels.map { if(it is StmtLabel) when(it.stmt) {
-                is AssignStmt<*> -> {
+            val newLabels = (edge.label as SequenceLabel).labels.map {
+                if (it is StmtLabel) when (it.stmt) {
+                    is AssignStmt<*> -> {
                         val simplified = simplify(it.stmt.expr)
-                        FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.expr))
-                        StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type), cast(simplified, it.stmt.varDecl.type)),  metadata = it.metadata)
+                        if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
+                            parseContext.metadata.create(simplified, "cType",
+                                CComplexType.getType(it.stmt.expr, parseContext))
+                        StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type),
+                            cast(simplified, it.stmt.varDecl.type)), metadata = it.metadata)
                     }
-                is AssumeStmt -> {
-                    val simplified = simplify(it.stmt.cond)
-                    if(FrontendMetadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
-                        FrontendMetadata.create(simplified, "cType", CComplexType.getType(it.stmt.cond))
+
+                    is AssumeStmt -> {
+                        val simplified = simplify(it.stmt.cond)
+                        if (parseContext.metadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
+                            parseContext.metadata.create(simplified, "cType",
+                                CComplexType.getType(it.stmt.cond, parseContext))
+                        }
+                        parseContext.metadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
+                        StmtLabel(Assume(simplified), metadata = it.metadata)
                     }
-                    FrontendMetadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
-                    StmtLabel(Assume(simplified), metadata = it.metadata)
-                }
-                else -> it
-            } else it  }
-            if(newLabels != edge.label.labels) {
+
+                    else -> it
+                } else it
+            }
+            if (newLabels != edge.label.labels) {
                 builder.removeEdge(edge)
                 builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
             }

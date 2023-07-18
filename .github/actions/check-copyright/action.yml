@@ -1,0 +1,32 @@
+name: 'Check copyright'
+description: 'Checking for missing copyright headers'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - name: Check copyright header in every .java, .kts and .kt file
+      shell: bash {0}
+      run: |
+        set +x
+
+        tempfile=$(mktemp)
+
+        for file in $(find . -type f \( -name "*.java" -o -name "*.kt" -o -name "*.kts" \)); do
+            last_modified_year=$(git log -1 --format=%ad --date=format:%Y "$file")
+            
+            header_exists=$(head -n 2 "$file" | tail -n 1 | grep -c "Budapest University of Technology")
+
+            if [[ $header_exists -eq 0 ]]; then
+                echo "$file has no copyright header"
+            fi
+
+            header_year=$(head -n 2 "$file" | tail -n 1 | grep -o -E '[0-9]{4}')
+
+            if [[ "$header_year" != "$last_modified_year" ]]; then
+                echo "$file has mismatched copyright year: should be $last_modified_year (instead of $header_year)"
+            fi
+        done | tee $tempfile
+
+        if [ -s "$tempfile" ]; then
+            exit 1
+        fi

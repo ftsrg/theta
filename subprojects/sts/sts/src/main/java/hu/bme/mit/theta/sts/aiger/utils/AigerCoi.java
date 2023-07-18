@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.sts.aiger.utils;
 
 import java.util.ArrayDeque;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -30,46 +32,48 @@ import hu.bme.mit.theta.sts.aiger.elements.AigerWire;
  */
 public final class AigerCoi {
 
-	private AigerCoi() {
-	}
+    private AigerCoi() {
+    }
 
-	/**
-	 * Apply COI reduction to the system by removing nodes that are not backward
-	 * reachable from the output. The parameter is modified.
-	 *
-	 * @param system
-	 */
-	public static void apply(final AigerSystem system) {
-		final Set<AigerNode> reachable = getReachableNodes(system);
-		pruneUnreachableNodes(system, reachable);
-	}
+    /**
+     * Apply COI reduction to the system by removing nodes that are not backward reachable from the
+     * output. The parameter is modified.
+     *
+     * @param system
+     */
+    public static void apply(final AigerSystem system) {
+        final Set<AigerNode> reachable = getReachableNodes(system);
+        pruneUnreachableNodes(system, reachable);
+    }
 
-	private static Set<AigerNode> getReachableNodes(final AigerSystem system) {
-		final Set<AigerNode> reached = Containers.createSet();
-		final Queue<AigerNode> queue = new ArrayDeque<>();
-		queue.add(system.getOutput());
+    private static Set<AigerNode> getReachableNodes(final AigerSystem system) {
+        final Set<AigerNode> reached = Containers.createSet();
+        final Queue<AigerNode> queue = new ArrayDeque<>();
+        queue.add(system.getOutput());
 
-		while (!queue.isEmpty()) {
-			final AigerNode node = queue.remove();
-			if (!reached.contains(node)) {
-				reached.add(node);
-				node.getInWires().forEach(w -> queue.add(w.getSource()));
-			}
-		}
-		reached.remove(system.getOutput());
-		return reached;
-	}
+        while (!queue.isEmpty()) {
+            final AigerNode node = queue.remove();
+            if (!reached.contains(node)) {
+                reached.add(node);
+                node.getInWires().forEach(w -> queue.add(w.getSource()));
+            }
+        }
+        reached.remove(system.getOutput());
+        return reached;
+    }
 
-	private static void pruneUnreachableNodes(final AigerSystem system, final Set<AigerNode> reachable) {
-		system.getNodes().clear();
-		system.getNodes().addAll(reachable);
-		for (final AigerNode node : system.getNodes()) {
-			for (final Iterator<AigerWire> iterator = node.getOutWires().iterator(); iterator.hasNext(); ) {
-				final AigerWire wire = iterator.next();
-				if (!reachable.contains(wire.getTarget())) {
-					iterator.remove();
-				}
-			}
-		}
-	}
+    private static void pruneUnreachableNodes(final AigerSystem system,
+                                              final Set<AigerNode> reachable) {
+        system.getNodes().clear();
+        system.getNodes().addAll(reachable);
+        for (final AigerNode node : system.getNodes()) {
+            for (final Iterator<AigerWire> iterator = node.getOutWires().iterator();
+                 iterator.hasNext(); ) {
+                final AigerWire wire = iterator.next();
+                if (!reachable.contains(wire.getTarget())) {
+                    iterator.remove();
+                }
+            }
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,25 +16,29 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CCase extends CStatement {
-	private final CStatement expr;
-	private final CStatement statement;
 
-	public CCase(CStatement expr, CStatement statement) {
-		this.expr = expr;
-		this.statement = statement;
-	}
+    private final CStatement expr;
+    private final CStatement statement;
 
-	public CStatement getExpr() {
-		return expr;
-	}
+    public CCase(CStatement expr, CStatement statement, ParseContext parseContext) {
+        super(parseContext);
+        this.expr = expr;
+        this.statement = statement;
+    }
 
-	public CStatement getStatement() {
-		return statement;
-	}
+    public CStatement getExpr() {
+        return expr;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public CStatement getStatement() {
+        return statement;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,91 +20,94 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.awt.Color;
 
 public final class EdgeAttributes {
-	private final String label;
-	private final Color color;
-	private final LineStyle lineStyle;
-	private final String font;
-	private final int weight;
-	private final Alignment alignment;
 
-	private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle, final String font,
-						   final int weight, final Alignment alignment) {
-		this.label = label;
-		this.color = color;
-		this.lineStyle = lineStyle;
-		this.font = font;
-		this.weight = weight;
-		this.alignment = alignment;
-	}
+    private final String label;
+    private final Color color;
+    private final LineStyle lineStyle;
+    private final String font;
+    private final int weight;
+    private final Alignment alignment;
 
-	public String getLabel() {
-		return label;
-	}
+    private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle,
+                           final String font,
+                           final int weight, final Alignment alignment) {
+        this.label = label;
+        this.color = color;
+        this.lineStyle = lineStyle;
+        this.font = font;
+        this.weight = weight;
+        this.alignment = alignment;
+    }
 
-	public Color getColor() {
-		return color;
-	}
+    public String getLabel() {
+        return label;
+    }
 
-	public LineStyle getLineStyle() {
-		return lineStyle;
-	}
+    public Color getColor() {
+        return color;
+    }
 
-	public String getFont() {
-		return font;
-	}
+    public LineStyle getLineStyle() {
+        return lineStyle;
+    }
 
-	public int getWeight() {
-		return weight;
-	}
+    public String getFont() {
+        return font;
+    }
 
-	public Alignment getAlignment() {
-		return alignment;
-	}
+    public int getWeight() {
+        return weight;
+    }
 
-	public static Builder builder() {
-		return new Builder();
-	}
+    public Alignment getAlignment() {
+        return alignment;
+    }
 
-	public static class Builder {
-		private String label = "";
-		private Color color = Color.BLACK;
-		private LineStyle lineStyle = LineStyle.NORMAL;
-		private String font = "";
-		private int weight = 1;
-		private Alignment alignment = Alignment.CENTER;
+    public static Builder builder() {
+        return new Builder();
+    }
 
-		public Builder label(final String label) {
-			this.label = checkNotNull(label);
-			return this;
-		}
+    public static class Builder {
 
-		public Builder color(final Color color) {
-			this.color = checkNotNull(color);
-			return this;
-		}
+        private String label = "";
+        private Color color = Color.BLACK;
+        private LineStyle lineStyle = LineStyle.NORMAL;
+        private String font = "";
+        private int weight = 1;
+        private Alignment alignment = Alignment.CENTER;
 
-		public Builder lineStyle(final LineStyle lineStyle) {
-			this.lineStyle = checkNotNull(lineStyle);
-			return this;
-		}
+        public Builder label(final String label) {
+            this.label = checkNotNull(label);
+            return this;
+        }
 
-		public Builder font(final String font) {
-			this.font = checkNotNull(font);
-			return this;
-		}
+        public Builder color(final Color color) {
+            this.color = checkNotNull(color);
+            return this;
+        }
 
-		public Builder weight(final int weight) {
-			this.weight = weight;
-			return this;
-		}
+        public Builder lineStyle(final LineStyle lineStyle) {
+            this.lineStyle = checkNotNull(lineStyle);
+            return this;
+        }
 
-		public Builder alignment(final Alignment alignment) {
-			this.alignment = alignment;
-			return this;
-		}
+        public Builder font(final String font) {
+            this.font = checkNotNull(font);
+            return this;
+        }
 
-		public EdgeAttributes build() {
-			return new EdgeAttributes(label, color, lineStyle, font, weight, alignment);
-		}
-	}
+        public Builder weight(final int weight) {
+            this.weight = weight;
+            return this;
+        }
+
+        public Builder alignment(final Alignment alignment) {
+            this.alignment = alignment;
+            return this;
+        }
+
+        public EdgeAttributes build() {
+            return new EdgeAttributes(label, color, lineStyle, font, weight, alignment);
+        }
+    }
 }

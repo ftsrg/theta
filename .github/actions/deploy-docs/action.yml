@@ -1,0 +1,24 @@
+name: 'Deploy docs'
+description: 'Deploying docs to /wiki'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e
+      with:
+        python-version: 3.x
+    - run: pip install mkdocs-material==8.3.9
+      shell: bash
+    - run: pip install python-markdown-math==0.8
+      shell: bash
+    - run: pip install mkdocs==1.3.0
+      shell: bash
+    - run: mkdocs build --site-dir wiki
+      shell: bash
+      working-directory: doc/wiki
+    - uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+      with:
+        branch: gh-pages
+        folder: doc/wiki/wiki
+        target-folder: wiki
+        single-commit: true

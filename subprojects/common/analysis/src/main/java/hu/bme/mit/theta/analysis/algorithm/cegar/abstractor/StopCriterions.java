@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,94 +30,94 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public final class StopCriterions {
 
-	private StopCriterions() {
-	}
+    private StopCriterions() {
+    }
 
-	/**
-	 * @return Criterion that stops at the first counterexample
-	 */
-	public static <S extends State, A extends Action> StopCriterion<S, A> firstCex() {
-		return new FirstCex<>();
-	}
+    /**
+     * @return Criterion that stops at the first counterexample
+     */
+    public static <S extends State, A extends Action> StopCriterion<S, A> firstCex() {
+        return new FirstCex<>();
+    }
 
-	/**
-	 * @return Criterion that explores the whole state space
-	 */
-	public static <S extends State, A extends Action> StopCriterion<S, A> fullExploration() {
-		return new FullExploration<>();
-	}
+    /**
+     * @return Criterion that explores the whole state space
+     */
+    public static <S extends State, A extends Action> StopCriterion<S, A> fullExploration() {
+        return new FullExploration<>();
+    }
 
-	/**
-	 * @param n Number of counterexamples to collect
-	 * @return Criterion that stops after a given number of counterexamples
-	 */
-	public static <S extends State, A extends Action> StopCriterion<S, A> atLeastNCexs(final int n) {
-		return new AtLeastNCexs<>(n);
-	}
+    /**
+     * @param n Number of counterexamples to collect
+     * @return Criterion that stops after a given number of counterexamples
+     */
+    public static <S extends State, A extends Action> StopCriterion<S, A> atLeastNCexs(final int n) {
+        return new AtLeastNCexs<>(n);
+    }
 
-	private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
-		@Override
-		public boolean canStop(final ARG<S, A> arg) {
+    private static final class FirstCex<S extends State, A extends Action> implements StopCriterion<S, A> {
+        @Override
+        public boolean canStop(final ARG<S, A> arg) {
             // TODO Move runtime check out to CegarChecker? (CexMonitor)
-			return arg.getUnsafeNodes().findAny().isPresent(); // && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
-		}
+            return arg.getUnsafeNodes().findAny().isPresent(); // && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex));
+        }
 
-		@Override
-		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
+        @Override
+        public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
             // TODO Move runtime check out to CegarChecker? (CexMonitor)
             return (newNodes.stream().anyMatch(n -> n.isTarget() && !n.isExcluded()));
-					// && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
-		}
+            // && arg.getCexs().anyMatch(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)));
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
-					.toString();
-		}
-	}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
+                    .toString();
+        }
+    }
 
-	private static final class FullExploration<S extends State, A extends Action> implements StopCriterion<S, A> {
-		@Override
-		public boolean canStop(final ARG<S, A> arg) {
-			return false;
-		}
+    private static final class FullExploration<S extends State, A extends Action> implements StopCriterion<S, A> {
+        @Override
+        public boolean canStop(final ARG<S, A> arg) {
+            return false;
+        }
 
-		@Override
-		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
-			return false;
-		}
+        @Override
+        public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
+            return false;
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
-					.toString();
-		}
-	}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
+                    .toString();
+        }
+    }
 
-	private static final class AtLeastNCexs<S extends State, A extends Action> implements StopCriterion<S, A> {
-		private final int n;
+    private static final class AtLeastNCexs<S extends State, A extends Action> implements StopCriterion<S, A> {
+        private final int n;
 
-		private AtLeastNCexs(final int n) {
-			checkArgument(n > 0, "n must be positive.");
-			this.n = n;
-		}
+        private AtLeastNCexs(final int n) {
+            checkArgument(n > 0, "n must be positive.");
+            this.n = n;
+        }
 
-		@Override
-		public boolean canStop(final ARG<S, A> arg) {
-			// TODO: this could be optimized: we don't need to count it,
-			// we just need to know if there are >= n elements
-			return arg.getUnsafeNodes().count() >= n;
-		}
+        @Override
+        public boolean canStop(final ARG<S, A> arg) {
+            // TODO: this could be optimized: we don't need to count it,
+            // we just need to know if there are >= n elements
+            return arg.getUnsafeNodes().count() >= n;
+        }
 
-		@Override
-		public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
-			return canStop(arg);
-		}
+        @Override
+        public boolean canStop(ARG<S, A> arg, Collection<ArgNode<S, A>> newNodes) {
+            return canStop(arg);
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
-					.add("N = " + n).toString();
-		}
-	}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
+                    .add("N = " + n).toString();
+        }
+    }
 }

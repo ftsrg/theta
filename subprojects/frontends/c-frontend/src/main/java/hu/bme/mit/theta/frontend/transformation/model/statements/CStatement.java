@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.frontend.ParseContext;
 
 /**
  * Every Program, Function and Statement is a subclass of this base class.
@@ -24,110 +25,115 @@ import hu.bme.mit.theta.core.type.Expr;
  * an XcfaLocation, which can be used when jumping to this named location via a _goto_ instruction
  */
 public abstract class CStatement {
-	private String id;
-	protected static int counter = 0;
-	protected CStatement preStatements;
-	protected CStatement postStatements;
+    protected final ParseContext parseContext;
+    private String id;
+    protected static int counter = 0;
+    protected CStatement preStatements;
+    protected CStatement postStatements;
 
-	private int lineNumberStart = -1;
-	private int colNumberStart = -1;
-	private int lineNumberStop = -1;
-	private int colNumberStop = -1;
-	private int offsetStart = -1;
-	private int offsetEnd = -1;
-	private String sourceText = "";
+    private int lineNumberStart = -1;
+    private int colNumberStart = -1;
+    private int lineNumberStop = -1;
+    private int colNumberStop = -1;
+    private int offsetStart = -1;
+    private int offsetEnd = -1;
+    private String sourceText = "";
 
-	public String getId() {
-		return id;
-	}
+    protected CStatement(ParseContext parseContext) {
+        this.parseContext = parseContext;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public String getId() {
+        return id;
+    }
 
-	/**
-	 * Returns the expression associated with a CStatement, which by default throws an exception, as not all subtypes
-	 * will return one. For example, the C language statement `int a = (b = 0, 2)` will create a CCompound statement as
-	 * the right-hand side of the assignment, whose associated expression will be 2, but the assignment to b has to come
-	 * beforehand.
-	 *
-	 * @return The expression associated with the statement.
-	 */
-	public Expr<?> getExpression() {
-		throw new RuntimeException("Cannot get expression!");
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public CStatement getPostStatements() {
-		return postStatements;
-	}
+    /**
+     * Returns the expression associated with a CStatement, which by default throws an exception, as not all subtypes
+     * will return one. For example, the C language statement `int a = (b = 0, 2)` will create a CCompound statement as
+     * the right-hand side of the assignment, whose associated expression will be 2, but the assignment to b has to come
+     * beforehand.
+     *
+     * @return The expression associated with the statement.
+     */
+    public Expr<?> getExpression() {
+        throw new RuntimeException("Cannot get expression!");
+    }
 
-	public void setPostStatements(CStatement postStatements) {
-		throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
-	}
+    public CStatement getPostStatements() {
+        return postStatements;
+    }
 
-	public CStatement getPreStatements() {
-		return preStatements;
-	}
+    public void setPostStatements(CStatement postStatements) {
+        throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
+    }
 
-	public void setPreStatements(CStatement preStatements) {
-		throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
-	}
+    public CStatement getPreStatements() {
+        return preStatements;
+    }
 
-	public abstract <P, R> R accept(CStatementVisitor<P, R> visitor, P param);
+    public void setPreStatements(CStatement preStatements) {
+        throw new UnsupportedOperationException("Only CCompounds shall currently have pre- and post statements!");
+    }
 
-	public int getLineNumberStart() {
-		return lineNumberStart;
-	}
+    public abstract <P, R> R accept(CStatementVisitor<P, R> visitor, P param);
 
-	public void setLineNumberStart(int lineNumberStart) {
-		this.lineNumberStart = lineNumberStart;
-	}
+    public int getLineNumberStart() {
+        return lineNumberStart;
+    }
 
-	public int getColNumberStart() {
-		return colNumberStart;
-	}
+    public void setLineNumberStart(int lineNumberStart) {
+        this.lineNumberStart = lineNumberStart;
+    }
 
-	public void setColNumberStart(int colNumberStart) {
-		this.colNumberStart = colNumberStart;
-	}
+    public int getColNumberStart() {
+        return colNumberStart;
+    }
 
-	public int getLineNumberStop() {
-		return lineNumberStop;
-	}
+    public void setColNumberStart(int colNumberStart) {
+        this.colNumberStart = colNumberStart;
+    }
 
-	public void setLineNumberStop(int lineNumberStop) {
-		this.lineNumberStop = lineNumberStop;
-	}
+    public int getLineNumberStop() {
+        return lineNumberStop;
+    }
 
-	public int getColNumberStop() {
-		return colNumberStop;
-	}
+    public void setLineNumberStop(int lineNumberStop) {
+        this.lineNumberStop = lineNumberStop;
+    }
 
-	public void setColNumberStop(int colNumberStop) {
-		this.colNumberStop = colNumberStop;
-	}
+    public int getColNumberStop() {
+        return colNumberStop;
+    }
 
-	public int getOffsetStart() {
-		return offsetStart;
-	}
+    public void setColNumberStop(int colNumberStop) {
+        this.colNumberStop = colNumberStop;
+    }
 
-	public void setOffsetStart(int offsetStart) {
-		this.offsetStart = offsetStart;
-	}
+    public int getOffsetStart() {
+        return offsetStart;
+    }
 
-	public int getOffsetEnd() {
-		return offsetEnd;
-	}
+    public void setOffsetStart(int offsetStart) {
+        this.offsetStart = offsetStart;
+    }
 
-	public void setOffsetEnd(int offsetEnd) {
-		this.offsetEnd = offsetEnd;
-	}
+    public int getOffsetEnd() {
+        return offsetEnd;
+    }
 
-	public String getSourceText() {
-		return sourceText;
-	}
+    public void setOffsetEnd(int offsetEnd) {
+        this.offsetEnd = offsetEnd;
+    }
 
-	public void setSourceText(String sourceText) {
-		this.sourceText = sourceText;
-	}
+    public String getSourceText() {
+        return sourceText;
+    }
+
+    public void setSourceText(String sourceText) {
+        this.sourceText = sourceText;
+    }
 }

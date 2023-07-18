@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,36 +22,36 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class Edge {
 
-	private final Node source;
-	private final Node target;
-	private final EdgeAttributes attributes;
+    private final Node source;
+    private final Node target;
+    private final EdgeAttributes attributes;
 
-	/**
-	 * Create a new edge. The edge adds itself to the outgoing/incoming edges of
-	 * the source/target node.
-	 *
-	 * @param source
-	 * @param target
-	 * @param attributes
-	 */
-	Edge(final Node source, final Node target, final EdgeAttributes attributes) {
-		this.source = checkNotNull(source);
-		this.target = checkNotNull(target);
-		this.attributes = checkNotNull(attributes);
-		source.addOutEdge(this);
-		target.addInEdge(this);
-	}
+    /**
+     * Create a new edge. The edge adds itself to the outgoing/incoming edges of the source/target
+     * node.
+     *
+     * @param source
+     * @param target
+     * @param attributes
+     */
+    Edge(final Node source, final Node target, final EdgeAttributes attributes) {
+        this.source = checkNotNull(source);
+        this.target = checkNotNull(target);
+        this.attributes = checkNotNull(attributes);
+        source.addOutEdge(this);
+        target.addInEdge(this);
+    }
 
-	public Node getSource() {
-		return source;
-	}
+    public Node getSource() {
+        return source;
+    }
 
-	public Node getTarget() {
-		return target;
-	}
+    public Node getTarget() {
+        return target;
+    }
 
-	public EdgeAttributes getAttributes() {
-		return attributes;
-	}
+    public EdgeAttributes getAttributes() {
+        return attributes;
+    }
 
 }

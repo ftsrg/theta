@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,9 +16,40 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.frontend.ParseContext
+
 open class ProcedurePassManager(val passes: List<ProcedurePass>)
 
-class CPasses(checkOverflow: Boolean) : ProcedurePassManager(listOf(
+class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePassManager(listOf(
+    // formatting
+    NormalizePass(parseContext),
+    DeterministicPass(parseContext),
+    // removing redundant elements
+    EmptyEdgeRemovalPass(parseContext),
+    UnusedLocRemovalPass(parseContext),
+    // optimizing
+    SimplifyExprsPass(parseContext),
+    // handling intrinsics
+    ErrorLocationPass(checkOverflow, parseContext),
+    FinalLocationPass(checkOverflow, parseContext),
+    SvCompIntrinsicsPass(parseContext),
+    FpFunctionsToExprsPass(parseContext),
+    PthreadFunctionsPass(parseContext),
+    // trying to inline procedures
+    InlineProceduresPass(parseContext),
+    RemoveDeadEnds(parseContext),
+    EliminateSelfLoops(parseContext),
+    // handling remaining function calls
+    NondetFunctionPass(parseContext),
+    LbePass(parseContext),
+    NormalizePass(parseContext), // needed after lbe, TODO
+    DeterministicPass(parseContext), // needed after lbe, TODO
+    HavocPromotionAndRange(parseContext),
+    // Final cleanup
+    UnusedVarPass(parseContext),
+))
+
+class ChcPasses : ProcedurePassManager(/*listOf(
         // formatting
         NormalizePass(),
         DeterministicPass(),
@@ -28,23 +59,23 @@ class CPasses(checkOverflow: Boolean) : ProcedurePassManager(listOf(
         // optimizing
         SimplifyExprsPass(),
         // handling intrinsics
-        ErrorLocationPass(checkOverflow),
-        FinalLocationPass(checkOverflow),
-        SvCompIntrinsicsPass(),
-        FpFunctionsToExprsPass(),
-        PthreadFunctionsPass(),
+//        ErrorLocationPass(false),
+//        FinalLocationPass(false),
+//        SvCompIntrinsicsPass(),
+//        FpFunctionsToExprsPass(),
+//        PthreadFunctionsPass(),
         // trying to inline procedures
         InlineProceduresPass(),
         RemoveDeadEnds(),
         EliminateSelfLoops(),
         // handling remaining function calls
-        NondetFunctionPass(),
+//        NondetFunctionPass(),
         LbePass(),
         NormalizePass(), // needed after lbe, TODO
         DeterministicPass(), // needed after lbe, TODO
-        HavocPromotionAndRange(),
+//        HavocPromotionAndRange(),
         // Final cleanup
         UnusedVarPass(),
-))
+))*/emptyList())
 
 class LitmusPasses : ProcedurePassManager(emptyList())

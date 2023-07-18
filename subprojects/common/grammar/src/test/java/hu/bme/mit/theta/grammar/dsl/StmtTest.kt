@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
 class StmtTest {
+
     @Parameterized.Parameter(0)
     lateinit var memory: Stmt
 
@@ -43,19 +44,21 @@ class StmtTest {
     lateinit var decls: Map<Symbol, Decl<*>>
 
     companion object {
+
         @JvmStatic
         @Parameterized.Parameters
         fun data(): Collection<Array<Any>> {
             val x = Var("x", Int())
 
             return listOf(
-                    arrayOf(Assign(x, Int(1)), "(assign x 1)", mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
-                    arrayOf(Assume(Eq(x.ref, Int(1))), "(assume (= x 1))", mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
-                    arrayOf(Havoc(x), "(havoc x)", mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
+                arrayOf(Assign(x, Int(1)), "(assign x 1)",
+                    mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
+                arrayOf(Assume(Eq(x.ref, Int(1))), "(assume (= x 1))",
+                    mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
+                arrayOf(Havoc(x), "(havoc x)", mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
             )
         }
     }
-
 
     @Test
     fun testSerialize() {
@@ -64,7 +67,7 @@ class StmtTest {
 
     @Test
     fun testDeserialize() {
-        if(decls.any { it.value is ParamDecl }) return
+        if (decls.any { it.value is ParamDecl }) return
         val symbolTable = SymbolTable()
         decls.forEach { symbolTable.add(it.key) }
         val env = Env()
@@ -75,7 +78,7 @@ class StmtTest {
 
     @Test
     fun testRoundTrip() {
-        if(decls.any { it.value is ParamDecl }) return
+        if (decls.any { it.value is ParamDecl }) return
         val symbolTable = SymbolTable()
         decls.forEach { symbolTable.add(it.key) }
         val env = Env()
@@ -85,6 +88,7 @@ class StmtTest {
     }
 
     data class NamedSymbol(val _name: String) : Symbol {
+
         override fun getName(): String {
             return _name
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
 class StatementWrapper(val content: String, scope: Scope) {
+
     private val scope: Scope
     private val context: StmtContext
 
@@ -61,6 +62,7 @@ class StatementWrapper(val content: String, scope: Scope) {
     }
 
     private class StmtCreatorVisitor(scope: Scope?, env: Env?) : StmtBaseVisitor<Stmt>() {
+
         private val scope: Scope
         private val env: Env
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import org.junit.Test;
 
 public class ExprTest {
 
-	@Test
-	public void testPrime() {
-		Assert.assertEquals(Prime(Int(1)), Prime(Int(1), 1));
-		Assert.assertEquals(Prime(Prime(Int(1))), Prime(Int(1), 2));
-		Assert.assertEquals(Prime(Prime(Prime(Int(1)))), Prime(Int(1), 3));
-	}
+    @Test
+    public void testPrime() {
+        Assert.assertEquals(Prime(Int(1)), Prime(Int(1), 1));
+        Assert.assertEquals(Prime(Prime(Int(1))), Prime(Int(1), 2));
+        Assert.assertEquals(Prime(Prime(Prime(Int(1)))), Prime(Int(1), 3));
+    }
 
 }

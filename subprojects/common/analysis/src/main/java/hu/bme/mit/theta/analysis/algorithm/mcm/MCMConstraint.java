@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,13 +46,19 @@ public class MCMConstraint {
 
     public void encodeEvents(final List<Integer> idList, final EncodedRelationWrapper encodedRelationWrapper) {
         final EventConstantLookup baseRelation = relation.encodeEvents(idList, encodedRelationWrapper);
-        final Expr<BoolType> expr = switch(constraintType) {
-            case NOTEMPTY -> Or(baseRelation.getConstants().stream().map(i -> i.getRef()).collect(Collectors.toList()));
-            case EMPTY -> Not(Or(baseRelation.getConstants().stream().map(i -> i.getRef()).collect(Collectors.toList())));
-            case CYCLIC -> Or(new MCMRelation(2, relation.getName() + "-acyclic", new TransitiveClosure(relation)).encodeEvents(idList, encodedRelationWrapper).getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList()));
-            case ACYCLIC -> Not(Or(new MCMRelation(2, relation.getName() + "-acyclic", new TransitiveClosure(relation)).encodeEvents(idList, encodedRelationWrapper).getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList())));
-            case REFLEXIVE -> Or(baseRelation.getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList()));
-            case IRREFLEXIVE -> Not(Or(baseRelation.getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList())));
+        final Expr<BoolType> expr = switch (constraintType) {
+            case NOTEMPTY ->
+                    Or(baseRelation.getConstants().stream().map(i -> i.getRef()).collect(Collectors.toList()));
+            case EMPTY ->
+                    Not(Or(baseRelation.getConstants().stream().map(i -> i.getRef()).collect(Collectors.toList())));
+            case CYCLIC ->
+                    Or(new MCMRelation(2, relation.getName() + "-acyclic", new TransitiveClosure(relation)).encodeEvents(idList, encodedRelationWrapper).getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList()));
+            case ACYCLIC ->
+                    Not(Or(new MCMRelation(2, relation.getName() + "-acyclic", new TransitiveClosure(relation)).encodeEvents(idList, encodedRelationWrapper).getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList())));
+            case REFLEXIVE ->
+                    Or(baseRelation.getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList()));
+            case IRREFLEXIVE ->
+                    Not(Or(baseRelation.getAll().entrySet().stream().filter(a -> Objects.equals(a.getKey().get(0), a.getKey().get(1))).map(i -> i.getValue().getRef()).collect(Collectors.toList())));
         };
         encodedRelationWrapper.getSolver().add(expr);
     }

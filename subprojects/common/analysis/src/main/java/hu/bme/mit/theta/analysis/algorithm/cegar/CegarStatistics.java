@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,36 +21,38 @@ import hu.bme.mit.theta.analysis.algorithm.Statistics;
  * Represents statistics collected by the CegarChecker algorithm.
  */
 public final class CegarStatistics extends Statistics {
-	private final long algorithmTimeMs;
-	private final long abstractorTimeMs;
-	private final long refinerTimeMs;
-	private final int iterations;
 
-	public CegarStatistics(final long algorithmTimeMs, final long abstractorTimeMs, final long refinerTimeMs,
-						   final int iterations) {
-		this.algorithmTimeMs = algorithmTimeMs;
-		this.abstractorTimeMs = abstractorTimeMs;
-		this.refinerTimeMs = refinerTimeMs;
-		this.iterations = iterations;
+    private final long algorithmTimeMs;
+    private final long abstractorTimeMs;
+    private final long refinerTimeMs;
+    private final int iterations;
 
-		addStat("AlgorithmTimeMs", this::getAlgorithmTimeMs);
-		addStat("Iterations", this::getIterations);
-	}
+    public CegarStatistics(final long algorithmTimeMs, final long abstractorTimeMs,
+                           final long refinerTimeMs,
+                           final int iterations) {
+        this.algorithmTimeMs = algorithmTimeMs;
+        this.abstractorTimeMs = abstractorTimeMs;
+        this.refinerTimeMs = refinerTimeMs;
+        this.iterations = iterations;
 
-	public long getAlgorithmTimeMs() {
-		return algorithmTimeMs;
-	}
+        addStat("AlgorithmTimeMs", this::getAlgorithmTimeMs);
+        addStat("Iterations", this::getIterations);
+    }
 
-	public long getAbstractorTimeMs() {
-		return abstractorTimeMs;
-	}
+    public long getAlgorithmTimeMs() {
+        return algorithmTimeMs;
+    }
 
-	public long getRefinerTimeMs() {
-		return refinerTimeMs;
-	}
+    public long getAbstractorTimeMs() {
+        return abstractorTimeMs;
+    }
 
-	public int getIterations() {
-		return iterations;
-	}
+    public long getRefinerTimeMs() {
+        return refinerTimeMs;
+    }
+
+    public int getIterations() {
+        return iterations;
+    }
 
 }

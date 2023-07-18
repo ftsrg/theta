@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,33 +29,33 @@ import static hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory.indexing;
 
 public abstract class StmtAction implements ExprAction {
 
-	private volatile Expr<BoolType> expr = null;
-	private volatile VarIndexing nextIndexing = null;
+    private volatile Expr<BoolType> expr = null;
+    private volatile VarIndexing nextIndexing = null;
 
-	public abstract List<Stmt> getStmts();
+    public abstract List<Stmt> getStmts();
 
-	@Override
-	public final Expr<BoolType> toExpr() {
-		Expr<BoolType> result = expr;
-		if (result == null) {
-			final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), indexing(0));
-			expr = And(toExprResult.getExprs());
-			nextIndexing = toExprResult.getIndexing();
-			result = expr;
-		}
-		return result;
-	}
+    @Override
+    public final Expr<BoolType> toExpr() {
+        Expr<BoolType> result = expr;
+        if (result == null) {
+            final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), indexing(0));
+            expr = And(toExprResult.getExprs());
+            nextIndexing = toExprResult.getIndexing();
+            result = expr;
+        }
+        return result;
+    }
 
-	@Override
-	public final VarIndexing nextIndexing() {
-		VarIndexing result = nextIndexing;
-		if (result == null) {
-			final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), indexing(0));
-			expr = And(toExprResult.getExprs());
-			nextIndexing = toExprResult.getIndexing();
-			result = nextIndexing;
-		}
-		return result;
-	}
+    @Override
+    public final VarIndexing nextIndexing() {
+        VarIndexing result = nextIndexing;
+        if (result == null) {
+            final StmtUnfoldResult toExprResult = StmtUtils.toExpr(getStmts(), indexing(0));
+            expr = And(toExprResult.getExprs());
+            nextIndexing = toExprResult.getIndexing();
+            result = nextIndexing;
+        }
+        return result;
+    }
 
 }

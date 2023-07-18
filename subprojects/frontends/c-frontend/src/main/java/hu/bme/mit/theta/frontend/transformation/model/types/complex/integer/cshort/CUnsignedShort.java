@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,16 +16,18 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CUnsignedShort extends CShort implements Unsigned {
-	public CUnsignedShort(CSimpleType origin) {
-		super(origin);
-		unsigned = true;
-	}
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    public CUnsignedShort(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
+        unsigned = true;
+    }
+
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 }

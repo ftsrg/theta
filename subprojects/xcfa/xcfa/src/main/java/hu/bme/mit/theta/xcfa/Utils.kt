@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,40 +31,50 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xcfa.model.*
 
 
-fun XCFA.collectVars(): Iterable<VarDecl<*>> = vars.map { it.wrappedVar }.union(procedures.map { it.vars }.flatten())
+fun XCFA.collectVars(): Iterable<VarDecl<*>> = vars.map { it.wrappedVar }
+    .union(procedures.map { it.vars }.flatten())
 
-fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> = procedures.map { it.edges.map { it.label.collectAssumes() }.flatten() }.flatten()
-fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when(this) {
-    is StmtLabel -> when(stmt) {
+fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> = procedures.map {
+    it.edges.map { it.label.collectAssumes() }.flatten()
+}.flatten()
+
+fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when (this) {
+    is StmtLabel -> when (stmt) {
         is AssumeStmt -> setOf(stmt.cond)
         else -> setOf()
     }
+
     is NondetLabel -> labels.map { it.collectAssumes() }.flatten()
     is SequenceLabel -> labels.map { it.collectAssumes() }.flatten()
     else -> setOf()
 }
-fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when(this) {
+
+fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when (this) {
     is StmtLabel -> StmtUtils.getVars(stmt)
     is NondetLabel -> labels.map { it.collectVars() }.flatten()
     is SequenceLabel -> labels.map { it.collectVars() }.flatten()
     is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten()
     is JoinLabel -> setOf(pidVar)
     is ReadLabel -> setOf(global, local)
-    is StartLabel ->  Sets.union(params.map { ExprUtils.getVars(it) }.flatten().toSet(), setOf(pidVar))
+    is StartLabel -> Sets.union(params.map { ExprUtils.getVars(it) }.flatten().toSet(),
+        setOf(pidVar))
+
     is WriteLabel -> setOf(global, local)
     else -> emptySet()
 }
 
-
 typealias AccessType = Pair<Boolean, Boolean>
+
 val AccessType?.isRead get() = this?.first == true
 val AccessType?.isWritten get() = this?.second == true
 fun AccessType?.merge(other: AccessType?) =
     Pair(this?.first == true || other?.first == true, this?.second == true || other?.second == true)
+
 val WRITE: AccessType get() = Pair(false, true)
 val READ: AccessType get() = Pair(true, false)
 
 private typealias VarAccessMap = Map<VarDecl<*>, AccessType>
+
 private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf()) { acc, next ->
     (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
 }
@@ -73,24 +83,31 @@ private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf
  * Returns the list of accessed variables by the label.
  * The variable is associated with true if the variable is written and false otherwise.
  */
-private fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when(this) {
+private fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is StmtLabel -> {
-        when(stmt) {
+        when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
-            is AssignStmt<*> -> StmtUtils.getVars(stmt).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
+            is AssignStmt<*> -> StmtUtils.getVars(stmt).associateWith { READ } + mapOf(
+                stmt.varDecl to WRITE)
+
             else -> StmtUtils.getVars(stmt).associateWith { READ }
         }
     }
+
     is NondetLabel -> {
         labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     }
+
     is SequenceLabel -> {
         labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     }
+
     is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ }
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
-    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
+    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(
+        pidVar to READ)
+
     is WriteLabel -> mapOf(global to WRITE, local to WRITE)
     else -> emptyMap()
 }
@@ -101,7 +118,8 @@ private fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when(this) {
 private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>) =
     collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
 
-inline val XcfaLabel.isAtomicBegin get() = this is FenceLabel && this.labels.contains("ATOMIC_BEGIN")
+inline val XcfaLabel.isAtomicBegin
+    get() = this is FenceLabel && this.labels.contains("ATOMIC_BEGIN")
 inline val XcfaLabel.isAtomicEnd get() = this is FenceLabel && this.labels.contains("ATOMIC_END")
 
 /**
@@ -170,7 +188,8 @@ fun getAtomicBlockInnerLocations(xcfaProcedure: XcfaProcedure): List<XcfaLocatio
     if (atomicBlockInnerLocationsCache.containsKey(xcfaProcedure)) {
         return atomicBlockInnerLocationsCache[xcfaProcedure]
     }
-    val atomicBlockInnerLocations: List<XcfaLocation> = getAtomicBlockInnerLocations(xcfaProcedure.initLoc)
+    val atomicBlockInnerLocations: List<XcfaLocation> = getAtomicBlockInnerLocations(
+        xcfaProcedure.initLoc)
     atomicBlockInnerLocationsCache[xcfaProcedure] = atomicBlockInnerLocations
     return atomicBlockInnerLocations
 }
@@ -192,12 +211,13 @@ fun getAtomicBlockInnerLocations(builder: XcfaProcedureBuilder): List<XcfaLocati
  */
 fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
 
-fun XcfaLabel.getFlatLabels(): List<XcfaLabel> = when(this) {
+fun XcfaLabel.getFlatLabels(): List<XcfaLabel> = when (this) {
     is SequenceLabel -> {
         val ret = ArrayList<XcfaLabel>()
         labels.forEach { ret.addAll(it.getFlatLabels()) }
         ret
     }
+
     is NondetLabel -> error("Nondet labels are not supported by flattening")
     else -> listOf(this)
 }
@@ -216,10 +236,14 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
         visitedLocations.add(visiting)
         for (outEdge in visiting.outgoingEdges) {
             var isNextAtomic = isAtomic[visiting]!!
-            if (outEdge.getFlatLabels().stream().anyMatch { label -> label is FenceLabel && label.labels.contains("ATOMIC_BEGIN") }) {
+            if (outEdge.getFlatLabels().stream().anyMatch { label ->
+                    label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")
+                }) {
                 isNextAtomic = true
             }
-            if (outEdge.getFlatLabels().stream().anyMatch { label -> label is FenceLabel && label.labels.contains("ATOMIC_END") }) {
+            if (outEdge.getFlatLabels().stream().anyMatch { label ->
+                    label is FenceLabel && label.labels.contains("ATOMIC_END")
+                }) {
                 isNextAtomic = false
             }
             val target = outEdge.target

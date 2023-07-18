@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import com.google.common.base.Preconditions
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import java.util.*
 import kotlin.collections.set
 
 /**
@@ -35,9 +34,10 @@ import kotlin.collections.set
  *  * Middle location: a location whose incoming degree is 1
  *
  */
-class LbePass : ProcedurePass {
+class LbePass(val parseContext: ParseContext) : ProcedurePass {
 
     companion object {
+
         /**
          * The level of LBE that specifies which type of graph transformations to apply.
          */
@@ -48,6 +48,7 @@ class LbePass : ProcedurePass {
      * LBE modes.
      */
     enum class LbeLevel {
+
         /**
          * The pass returns the builder without applying any changes.
          */
@@ -95,7 +96,7 @@ class LbePass : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (level == LbeLevel.NO_LBE || builder.errorLoc.isEmpty) return builder
 
-        if (level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL && ArchitectureConfig.multiThreading) {
+        if (level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL && parseContext.multiThreading) {
             level = LbeLevel.LBE_LOCAL
         }
 
@@ -143,7 +144,8 @@ class LbePass : ProcedurePass {
      * @param strict           If true, cascade collapsing is limited to locations in locationsToVisit.
      * @return Returns the list of removed locations.
      */
-    private fun collapseParallelsAndSnakes(locationsToVisit: List<XcfaLocation>, strict: Boolean): List<XcfaLocation> {
+    private fun collapseParallelsAndSnakes(locationsToVisit: List<XcfaLocation>,
+        strict: Boolean): List<XcfaLocation> {
         val editedLocationsToVisit = locationsToVisit.toMutableList()
         val removedLocations = mutableListOf<XcfaLocation>()
         while (editedLocationsToVisit.isNotEmpty()) {
@@ -197,7 +199,8 @@ class LbePass : ProcedurePass {
      * @param locationsToVisit Adds the targets of parallel edges to this list (new parallel edges and snakes
      * can appear in these locations)
      */
-    private fun collapseParallelEdges(location: XcfaLocation, locationsToVisit: MutableList<XcfaLocation>) {
+    private fun collapseParallelEdges(location: XcfaLocation,
+        locationsToVisit: MutableList<XcfaLocation>) {
         val edgesByTarget = mutableMapOf<XcfaLocation, MutableList<XcfaEdge>>()
         for (edge in location.outgoingEdges) {
             val edgesToTarget = edgesByTarget.getOrDefault(edge.target, ArrayList())
@@ -231,7 +234,8 @@ class LbePass : ProcedurePass {
      * added to this list
      * @param removedLocations The list of removed locations: the collapsed location is added to this list
      */
-    private fun collapsePartOfSnake(location: XcfaLocation, locationsToVisit: MutableList<XcfaLocation>, removedLocations: MutableList<XcfaLocation>) {
+    private fun collapsePartOfSnake(location: XcfaLocation,
+        locationsToVisit: MutableList<XcfaLocation>, removedLocations: MutableList<XcfaLocation>) {
         if (location.incomingEdges.size == 1 && location.outgoingEdges.size == 1) {
             val previousLocation = location.incomingEdges.first().source
             val removed = removeMiddleLocation(location)
@@ -299,7 +303,8 @@ class LbePass : ProcedurePass {
      */
     private fun isNotLocal(edge: XcfaEdge): Boolean {
         return !edge.getFlatLabels().all { label ->
-            !(label is StartLabel || label is JoinLabel) && label.collectVars().all(builder.getVars()::contains)
+            !(label is StartLabel || label is JoinLabel) && label.collectVars()
+                .all(builder.getVars()::contains)
         }
     }
 }

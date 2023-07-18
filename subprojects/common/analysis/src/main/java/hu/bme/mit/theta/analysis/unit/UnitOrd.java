@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,20 +21,20 @@ import hu.bme.mit.theta.analysis.PartialOrd;
 
 final class UnitOrd implements PartialOrd<UnitState> {
 
-	private static final UnitOrd INSTANCE = new UnitOrd();
+    private static final UnitOrd INSTANCE = new UnitOrd();
 
-	private UnitOrd() {
-	}
+    private UnitOrd() {
+    }
 
-	public static UnitOrd getInstance() {
-		return INSTANCE;
-	}
+    public static UnitOrd getInstance() {
+        return INSTANCE;
+    }
 
-	@Override
-	public boolean isLeq(final UnitState state1, final UnitState state2) {
-		checkNotNull(state1);
-		checkNotNull(state2);
-		return true;
-	}
+    @Override
+    public boolean isLeq(final UnitState state1, final UnitState state2) {
+        checkNotNull(state1);
+        checkNotNull(state2);
+        return true;
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
 class TypeWrapper(content: String) {
+
     private val context: TypeContext
 
     init {
@@ -48,6 +49,7 @@ class TypeWrapper(content: String) {
     }
 
     private class TypeCreatorVisitor private constructor() : TypeBaseVisitor<Type>() {
+
         override fun visitBoolType(ctx: BoolTypeContext): Type {
             return BoolExprs.Bool()
         }
@@ -82,6 +84,7 @@ class TypeWrapper(content: String) {
         }
 
         companion object {
+
             val INSTANCE = TypeCreatorVisitor()
         }
     }

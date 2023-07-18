@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,28 +29,29 @@ val traitsTyped = traits as VerificationTraits
 val propertyTyped = property as ErrorDetection
 
 var baseConfig = XcfaCegarConfig(
-        errorDetectionType = propertyTyped,
-        abstractionSolver = "Z3",
-        validateAbstractionSolver = false,
-        domain = Domain.EXPL,
-        maxEnum = 1,
-        search = Search.ERR,
-        initPrec = InitPrec.EMPTY,
-        porLevel = POR.NOPOR,
-        refinementSolver = "Z3",
-        validateRefinementSolver = false,
-        refinement = Refinement.SEQ_ITP,
-        exprSplitter = ExprSplitterOptions.WHOLE,
-        pruneStrategy = PruneStrategy.FULL,
-        noCexCheck = false,
-        timeoutMs = 120_000
+    errorDetectionType = propertyTyped,
+    abstractionSolver = "Z3",
+    validateAbstractionSolver = false,
+    domain = Domain.EXPL,
+    maxEnum = 1,
+    search = Search.ERR,
+    initPrec = InitPrec.EMPTY,
+    porLevel = POR.NOPOR,
+    refinementSolver = "Z3",
+    validateRefinementSolver = false,
+    refinement = Refinement.SEQ_ITP,
+    exprSplitter = ExprSplitterOptions.WHOLE,
+    pruneStrategy = PruneStrategy.FULL,
+    noCexCheck = false,
+    timeoutMs = 120_000
 )
 
-if(traitsTyped.multithreaded) {
-    baseConfig = baseConfig.copy(search=Search.BFS, porLevel=POR.AAPOR, pruneStrategy = PruneStrategy.LAZY)
+if (traitsTyped.multithreaded) {
+    baseConfig = baseConfig.copy(search = Search.BFS, porLevel = POR.AAPOR,
+        pruneStrategy = PruneStrategy.LAZY)
 
-    if(propertyTyped == ErrorDetection.DATA_RACE) {
-        baseConfig = baseConfig.copy(porLevel=POR.BASIC)
+    if (propertyTyped == ErrorDetection.DATA_RACE) {
+        baseConfig = baseConfig.copy(porLevel = POR.BASIC)
     }
 }
 

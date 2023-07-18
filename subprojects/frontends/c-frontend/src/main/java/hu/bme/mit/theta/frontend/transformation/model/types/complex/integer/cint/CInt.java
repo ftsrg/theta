@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,34 +16,36 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public abstract class CInt extends CInteger {
-	private static final int RANK = 30;
 
-	protected CInt(CSimpleType origin) {
-		super(origin);
-		rank = RANK;
-	}
+    private static final int RANK = 30;
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    protected CInt(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
+        rank = RANK;
+    }
+
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 
 
-	@Override
-	public String getTypeName() {
-		return "int";
-	}
+    @Override
+    public String getTypeName() {
+        return "int";
+    }
 
-	@Override
-	public CInteger getSignedVersion() {
-		return new CSignedInt(null);
-	}
+    @Override
+    public CInteger getSignedVersion() {
+        return new CSignedInt(null, parseContext);
+    }
 
-	@Override
-	public CInteger getUnsignedVersion() {
-		return new CUnsignedInt(null);
-	}
+    @Override
+    public CInteger getUnsignedVersion() {
+        return new CUnsignedInt(null, parseContext);
+    }
 }

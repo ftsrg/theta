@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@ package hu.bme.mit.theta.core.clock.constr;
 
 public abstract class AtomicConstr implements ClockConstr {
 
-	private final int bound;
+    private final int bound;
 
-	public AtomicConstr(final int bound) {
-		this.bound = bound;
-	}
+    public AtomicConstr(final int bound) {
+        this.bound = bound;
+    }
 
-	public final int getBound() {
-		return bound;
-	}
+    public final int getBound() {
+        return bound;
+    }
 
 }

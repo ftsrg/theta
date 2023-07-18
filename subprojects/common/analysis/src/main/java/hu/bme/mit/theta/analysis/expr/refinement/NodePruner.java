@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
  */
 public interface NodePruner<S extends ExprState, A extends ExprAction> {
 
-	/**
-	 * Prunes the given node or one of its ancestors in the ARG from the given ARG.
-	 *
-	 * @param arg  the ARG
-	 * @param node the node which or whose ancestor will be pruned from the ARG
-	 */
-	void prune(final ARG<S, A> arg, ArgNode<S, A> node);
+    /**
+     * Prunes the given node or one of its ancestors in the ARG from the given ARG.
+     *
+     * @param arg  the ARG
+     * @param node the node which or whose ancestor will be pruned from the ARG
+     */
+    void prune(final ARG<S, A> arg, ArgNode<S, A> node);
 }

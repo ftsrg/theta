@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,62 +39,66 @@ import static java.util.Collections.singleton;
 
 public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction, ExplPrec> {
 
-	private final Solver solver;
-	// 0 means arbitrarily many
-	private final int maxSuccToEnumerate;
+    private final Solver solver;
+    // 0 means arbitrarily many
+    private final int maxSuccToEnumerate;
 
-	private ExplStmtTransFunc(final Solver solver, final int maxSuccToEnumerate) {
-		this.solver = checkNotNull(solver);
-		this.maxSuccToEnumerate = maxSuccToEnumerate;
-	}
+    private ExplStmtTransFunc(final Solver solver, final int maxSuccToEnumerate) {
+        this.solver = checkNotNull(solver);
+        this.maxSuccToEnumerate = maxSuccToEnumerate;
+    }
 
-	public static ExplStmtTransFunc create(final Solver solver, final int maxSuccToEnumerate) {
-		checkArgument(maxSuccToEnumerate >= 0, "Max. succ. to enumerate must be non-negative.");
-		return new ExplStmtTransFunc(solver, maxSuccToEnumerate);
-	}
+    public static ExplStmtTransFunc create(final Solver solver, final int maxSuccToEnumerate) {
+        checkArgument(maxSuccToEnumerate >= 0, "Max. succ. to enumerate must be non-negative.");
+        return new ExplStmtTransFunc(solver, maxSuccToEnumerate);
+    }
 
-	@Override
-	public Collection<ExplState> getSuccStates(final ExplState state, final StmtAction action, final ExplPrec prec) {
-		return getSuccStates(state, action.getStmts(), prec);
-	}
+    @Override
+    public Collection<ExplState> getSuccStates(final ExplState state, final StmtAction action,
+                                               final ExplPrec prec) {
+        return getSuccStates(state, action.getStmts(), prec);
+    }
 
-	Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts, final ExplPrec prec) {
-		final MutableValuation val = MutableValuation.copyOf(state);
-		boolean triedSolver = false;
+    Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts,
+                                        final ExplPrec prec) {
+        final MutableValuation val = MutableValuation.copyOf(state);
+        boolean triedSolver = false;
 
-		for (int i = 0; i < stmts.size(); i++) {
-			final Stmt stmt = stmts.get(i);
-			final ApplyResult applyResult = StmtApplier.apply(stmt, val, triedSolver);
+        for (int i = 0; i < stmts.size(); i++) {
+            final Stmt stmt = stmts.get(i);
+            final ApplyResult applyResult = StmtApplier.apply(stmt, val, triedSolver);
 
-			assert !triedSolver || applyResult != ApplyResult.BOTTOM;
+            assert !triedSolver || applyResult != ApplyResult.BOTTOM;
 
-			if (applyResult == ApplyResult.BOTTOM) {
-				return singleton(ExplState.bottom());
-			} else if (applyResult == ApplyResult.FAILURE) {
-				triedSolver = true;
-				final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
-				final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts, VarIndexingFactory.indexing(0));
-				final Expr<BoolType> expr = And(val.toExpr(), And(toExprResult.getExprs()));
-				final VarIndexing nextIdx = toExprResult.getIndexing();
-				// We query (max + 1) states from the solver to see if there
-				// would be more than max
-				final int maxToQuery = maxSuccToEnumerate == 0 ? 0 : maxSuccToEnumerate + 1;
-				final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver, expr, 0,
-						prec::createState, nextIdx, maxToQuery);
+            if (applyResult == ApplyResult.BOTTOM) {
+                return singleton(ExplState.bottom());
+            } else if (applyResult == ApplyResult.FAILURE) {
+                triedSolver = true;
+                final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
+                final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts,
+                        VarIndexingFactory.indexing(0));
+                final Expr<BoolType> expr = And(val.toExpr(), And(toExprResult.getExprs()));
+                final VarIndexing nextIdx = toExprResult.getIndexing();
+                // We query (max + 1) states from the solver to see if there
+                // would be more than max
+                final int maxToQuery = maxSuccToEnumerate == 0 ? 0 : maxSuccToEnumerate + 1;
+                final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver,
+                        expr, 0,
+                        prec::createState, nextIdx, maxToQuery);
 
-				if (succStates.isEmpty()) {
-					return singleton(ExplState.bottom());
-				} else if (maxSuccToEnumerate == 0 || succStates.size() <= maxSuccToEnumerate) {
-					return succStates;
-				} else {
-					final ApplyResult reapplyResult = StmtApplier.apply(stmt, val, true);
-					assert reapplyResult == ApplyResult.SUCCESS;
-				}
-			}
-		}
+                if (succStates.isEmpty()) {
+                    return singleton(ExplState.bottom());
+                } else if (maxSuccToEnumerate == 0 || succStates.size() <= maxSuccToEnumerate) {
+                    return succStates;
+                } else {
+                    final ApplyResult reapplyResult = StmtApplier.apply(stmt, val, true);
+                    assert reapplyResult == ApplyResult.SUCCESS;
+                }
+            }
+        }
 
-		final ExplState abstracted = prec.createState(val);
-		return singleton(abstracted);
-	}
+        final ExplState abstracted = prec.createState(val);
+        return singleton(abstracted);
+    }
 
 }

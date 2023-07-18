@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,33 +16,35 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clonglong;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public abstract class CLongLong extends CInteger {
-	private static final int RANK = 50;
 
-	protected CLongLong(CSimpleType origin) {
-		super(origin);
-		rank = RANK;
-	}
+    private static final int RANK = 50;
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    protected CLongLong(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
+        rank = RANK;
+    }
 
-	@Override
-	public String getTypeName() {
-		return "longlong";
-	}
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 
-	@Override
-	public CInteger getSignedVersion() {
-		return new CSignedLongLong(null);
-	}
+    @Override
+    public String getTypeName() {
+        return "longlong";
+    }
 
-	@Override
-	public CInteger getUnsignedVersion() {
-		return new CUnsignedLongLong(null);
-	}
+    @Override
+    public CInteger getSignedVersion() {
+        return new CSignedLongLong(null, parseContext);
+    }
+
+    @Override
+    public CInteger getUnsignedVersion() {
+        return new CUnsignedLongLong(null, parseContext);
+    }
 }

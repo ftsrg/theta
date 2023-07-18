@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,24 +16,26 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 import java.util.Map;
 
 public class CStruct extends CCompound {
-	private final Map<String, CComplexType> fields;
 
-	public CStruct(CSimpleType origin, Map<String, CComplexType> fields) {
-		super(origin);
-		this.fields = fields;
-	}
+    private final Map<String, CComplexType> fields;
 
-	public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
-		return visitor.visit(this, param);
-	}
+    public CStruct(CSimpleType origin, Map<String, CComplexType> fields, ParseContext parseContext) {
+        super(origin, parseContext);
+        this.fields = fields;
+    }
 
-	public Map<String, CComplexType> getFields() {
-		return fields;
-	}
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
+
+    public Map<String, CComplexType> getFields() {
+        return fields;
+    }
 }

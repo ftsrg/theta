@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class LitmusTest {
         final List<Pair<XcfaProcedure, List<Expr<?>>>> processes = xcfa.getInitProcedures();
         for (int i = 0; i < processes.size(); i++) {
             XcfaProcedure procedure = processes.get(i).getFirst();
-            Assert.assertEquals((int)instructionPerThread.get(i), procedure.getEdges().size());
+            Assert.assertEquals((int) instructionPerThread.get(i), procedure.getEdges().size());
         }
     }
 

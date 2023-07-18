@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.xcfa.cli.XcfaCegarConfig
 
 abstract class Node(val name: String) {
+
     val outEdges: MutableSet<Edge> = LinkedHashSet()
     var parent: STM? = null
 
@@ -27,26 +28,32 @@ abstract class Node(val name: String) {
     abstract fun visualize(): String
 }
 
-class HierarchicalNode(name: String, private val innerSTM: STM): Node(name) {
+class HierarchicalNode(name: String, private val innerSTM: STM) : Node(name) {
+
     override fun execute(): Pair<Any, Any> = innerSTM.execute()
     override fun visualize(): String = """state $name {
 ${innerSTM.visualize()}
 }""".trimIndent()
 }
 
-class ConfigNode(name: String, private val config: XcfaCegarConfig, private val check: (inProcess: Boolean, config: XcfaCegarConfig) -> SafetyResult<*, *>, private val inProcess: Boolean) : Node(name) {
+class ConfigNode(name: String, private val config: XcfaCegarConfig,
+    private val check: (inProcess: Boolean, config: XcfaCegarConfig) -> SafetyResult<*, *>,
+    private val inProcess: Boolean) : Node(name) {
+
     override fun execute(): Pair<Any, Any> {
         println("Current configuration: $config (inProcess=$inProcess)")
         return Pair(config, check(inProcess, config))
     }
 
-    override fun visualize(): String = config.visualize(inProcess).lines().map { "state $name: $it" }.reduce {a, b -> "$a\n$b"}
+    override fun visualize(): String = config.visualize(inProcess).lines()
+        .map { "state $name: $it" }.reduce { a, b -> "$a\n$b" }
 }
 
 data class Edge(val source: Node,
-                val target: Node,
-                val trigger: (Exception) -> Boolean,
-                val guard: (Node, Edge) -> Boolean = {_, _ -> true}) {
+    val target: Node,
+    val trigger: (Exception) -> Boolean,
+    val guard: (Node, Edge) -> Boolean = { _, _ -> true }) {
+
     init {
         source.outEdges.add(this)
     }
@@ -54,45 +61,51 @@ data class Edge(val source: Node,
     fun visualize(): String = """${source.name} --> ${target.name} : $trigger """
 
 }
+
 // if the exceptions set is empty, it catches all exceptions
 class ExceptionTrigger(
-        val exceptions: Set<Exception> = emptySet(),
-        val fallthroughExceptions: Set<Exception> = emptySet(),
-        val label: String? = null
-): (Exception) -> Boolean {
-    constructor(vararg exceptions: Exception, label: String? = null) : this(exceptions.toSet(), label=label)
+    val exceptions: Set<Exception> = emptySet(),
+    val fallthroughExceptions: Set<Exception> = emptySet(),
+    val label: String? = null
+) : (Exception) -> Boolean {
+
+    constructor(vararg exceptions: Exception, label: String? = null) : this(exceptions.toSet(),
+        label = label)
+
     override fun invoke(e: Exception): Boolean =
-            if(exceptions.isNotEmpty())
-                exceptions.contains(e) && !fallthroughExceptions.contains(e)
-            else
-                !fallthroughExceptions.contains(e)
+        if (exceptions.isNotEmpty())
+            exceptions.contains(e) && !fallthroughExceptions.contains(e)
+        else
+            !fallthroughExceptions.contains(e)
 
     override fun toString(): String =
-            label ?: ((if (exceptions.isNotEmpty()) exceptions.toString() else "*") +
-                      (if (fallthroughExceptions.isNotEmpty()) ", not $fallthroughExceptions" else ""))
+        label ?: ((if (exceptions.isNotEmpty()) exceptions.toString() else "*") +
+            (if (fallthroughExceptions.isNotEmpty()) ", not $fallthroughExceptions" else ""))
 }
 
 data class STM(val initNode: Node, val edges: Set<Edge>) {
-    init{
+    init {
         val nodes = edges.map { listOf(it.source, it.target) }.flatten().toSet()
         nodes.forEach {
-            check(it.parent == null || it.parent === this) {"Edges to behave encapsulated (offender: $it)"}
+            check(
+                it.parent == null || it.parent === this) { "Edges to behave encapsulated (offender: $it)" }
             it.parent = this
         }
     }
 
-    private fun visualizeNodes(): String = edges.map { listOf(it.source, it.target) }.flatten().toSet().map { it.visualize() }.reduce { a, b -> "$a\n$b"}
+    private fun visualizeNodes(): String = edges.map { listOf(it.source, it.target) }.flatten()
+        .toSet().map { it.visualize() }.reduce { a, b -> "$a\n$b" }
 
-    fun visualize() : String = """
+    fun visualize(): String = """
 ${visualizeNodes()}
 
 [*] --> ${initNode.name}
-${edges.map { it.visualize() }.reduce {a, b -> "$a\n$b"}}
+${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
 """.trimMargin()
 
     fun execute(): Pair<Any, Any> {
         var currentNode: Node = initNode
-        while(true) {
+        while (true) {
             try {
                 return currentNode.execute()
             } catch (e: Exception) {
@@ -101,7 +114,9 @@ ${edges.map { it.visualize() }.reduce {a, b -> "$a\n$b"}}
                 if (edge != null) {
                     currentNode = edge.target
                 } else {
-                    println("Could not handle trigger $e (Available triggers: ${currentNode.outEdges.map { it.trigger }.toList()})")
+                    println("Could not handle trigger $e (Available triggers: ${
+                        currentNode.outEdges.map { it.trigger }.toList()
+                    })")
                     throw e
                 }
             }
@@ -110,7 +125,7 @@ ${edges.map { it.visualize() }.reduce {a, b -> "$a\n$b"}}
 }
 
 fun XcfaCegarConfig.visualize(inProcess: Boolean): String =
-  """solvers: $abstractionSolver, $refinementSolver
+    """solvers: $abstractionSolver, $refinementSolver
     |domain: $domain, search: $search, initprec: $initPrec, por: $porLevel
     |refinement: $refinement, pruneStrategy: $pruneStrategy
     |timeout: $timeoutMs ms, inProcess: $inProcess""".trimMargin()

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,37 +16,41 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
+import hu.bme.mit.theta.frontend.ParseContext;
+
 public class CFor extends CStatement {
-	private final CStatement body;
-	private final CStatement init;
-	private final CStatement guard;
-	private final CStatement increment;
 
-	public CFor(CStatement body, CStatement init, CStatement guard, CStatement increment) {
-		this.body = body;
-		this.init = init;
-		this.guard = guard;
-		this.increment = increment;
-	}
+    private final CStatement body;
+    private final CStatement init;
+    private final CStatement guard;
+    private final CStatement increment;
 
-	public CStatement getIncrement() {
-		return increment;
-	}
+    public CFor(CStatement body, CStatement init, CStatement guard, CStatement increment, ParseContext parseContext) {
+        super(parseContext);
+        this.body = body;
+        this.init = init;
+        this.guard = guard;
+        this.increment = increment;
+    }
 
-	public CStatement getGuard() {
-		return guard;
-	}
+    public CStatement getIncrement() {
+        return increment;
+    }
 
-	public CStatement getInit() {
-		return init;
-	}
+    public CStatement getGuard() {
+        return guard;
+    }
 
-	public CStatement getBody() {
-		return body;
-	}
+    public CStatement getInit() {
+        return init;
+    }
 
-	@Override
-	public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
+    public CStatement getBody() {
+        return body;
+    }
+
+    @Override
+    public <P, R> R accept(CStatementVisitor<P, R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
 }

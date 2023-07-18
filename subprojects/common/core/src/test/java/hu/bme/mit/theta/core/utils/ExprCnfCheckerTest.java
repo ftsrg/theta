@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,50 +39,51 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 @RunWith(Parameterized.class)
 public class ExprCnfCheckerTest {
-	private static final Expr<BoolType> A = Const("a", Bool()).getRef();
-	private static final Expr<BoolType> B = Const("b", Bool()).getRef();
-	private static final Expr<BoolType> C = Const("c", Bool()).getRef();
 
-	@Parameter(value = 0)
-	public Expr<BoolType> expr;
+    private static final Expr<BoolType> A = Const("a", Bool()).getRef();
+    private static final Expr<BoolType> B = Const("b", Bool()).getRef();
+    private static final Expr<BoolType> C = Const("c", Bool()).getRef();
 
-	@Parameter(value = 1)
-	public boolean expectedResult;
+    @Parameter(value = 0)
+    public Expr<BoolType> expr;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
-				// A
-				{A, true},
-				// !A
-				{Not(A), true},
-				// !A or B or !C
-				{Or(Not(A), B, Not(C)), true},
-				// !A and B and !C
-				{And(Not(A), B, Not(C)), true},
-				// !A and (B and !C)
-				{And(Not(A), And(B, Not(C))), true},
-				// !A and (B or !C)
-				{And(Not(A), Or(B, Not(C))), true},
-				// !!A
-				{Not(Not(A)), false},
-				// !A and B and !C
-				{And(Not(A), B, Not(C)), true},
-				// !A or (B and !C)
-				{Or(Not(A), And(B, Not(C))), false},
-				// !(A and B)
-				{Not(And(A, B)), false},
-				// !(A or B)
-				{Not(Or(A, B)), false},
-				// A -> B
-				{Imply(A, B), false},
-				// A <-> B
-				{Iff(A, B), false},});
+    @Parameter(value = 1)
+    public boolean expectedResult;
 
-	}
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                // A
+                {A, true},
+                // !A
+                {Not(A), true},
+                // !A or B or !C
+                {Or(Not(A), B, Not(C)), true},
+                // !A and B and !C
+                {And(Not(A), B, Not(C)), true},
+                // !A and (B and !C)
+                {And(Not(A), And(B, Not(C))), true},
+                // !A and (B or !C)
+                {And(Not(A), Or(B, Not(C))), true},
+                // !!A
+                {Not(Not(A)), false},
+                // !A and B and !C
+                {And(Not(A), B, Not(C)), true},
+                // !A or (B and !C)
+                {Or(Not(A), And(B, Not(C))), false},
+                // !(A and B)
+                {Not(And(A, B)), false},
+                // !(A or B)
+                {Not(Or(A, B)), false},
+                // A -> B
+                {Imply(A, B), false},
+                // A <-> B
+                {Iff(A, B), false},});
 
-	@Test
-	public void test() {
-		Assert.assertEquals(expectedResult, isExprCnf(expr));
-	}
+    }
+
+    @Test
+    public void test() {
+        Assert.assertEquals(expectedResult, isExprCnf(expr));
+    }
 }

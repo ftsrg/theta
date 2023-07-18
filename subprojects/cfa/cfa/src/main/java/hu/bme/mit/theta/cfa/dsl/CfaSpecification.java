@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,84 +35,85 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 
 final class CfaSpecification implements Scope {
 
-	private final SymbolTable symbolTable;
+    private final SymbolTable symbolTable;
 
-	private final List<CfaVariableSymbol> variables;
-	private final List<CfaProcessSymbol> processes;
+    private final List<CfaVariableSymbol> variables;
+    private final List<CfaProcessSymbol> processes;
 
-	private CfaSpecification(final SpecContext context) {
-		checkNotNull(context);
-		symbolTable = new SymbolTable();
+    private CfaSpecification(final SpecContext context) {
+        checkNotNull(context);
+        symbolTable = new SymbolTable();
 
-		variables = createVariables(context.varDecls);
-		processes = createProcesses(context.procDecls);
+        variables = createVariables(context.varDecls);
+        processes = createProcesses(context.procDecls);
 
-		declareAll(variables);
-		declareAll(processes);
-	}
+        declareAll(variables);
+        declareAll(processes);
+    }
 
-	public static CfaSpecification fromContext(final SpecContext context) {
-		return new CfaSpecification(context);
-	}
+    public static CfaSpecification fromContext(final SpecContext context) {
+        return new CfaSpecification(context);
+    }
 
-	////
+    ////
 
-	public CFA instantiate() {
-		final Env env = new Env();
+    public CFA instantiate() {
+        final Env env = new Env();
 
-		for (final CfaVariableSymbol variable : variables) {
-			final VarDecl<?> var = variable.instantiate();
-			env.define(variable, var);
-		}
+        for (final CfaVariableSymbol variable : variables) {
+            final VarDecl<?> var = variable.instantiate();
+            env.define(variable, var);
+        }
 
-		final List<CfaProcessSymbol> mainProcesses = processes.stream().filter(CfaProcessSymbol::isMain)
-				.collect(toList());
+        final List<CfaProcessSymbol> mainProcesses = processes.stream()
+                .filter(CfaProcessSymbol::isMain)
+                .collect(toList());
 
-		if (mainProcesses.isEmpty()) {
-			throw new IllegalArgumentException("No main process defined");
-		} else if (mainProcesses.size() > 1) {
-			throw new IllegalArgumentException("More than one main process is defined");
-		} else {
-			final CfaProcessSymbol process = Utils.singleElementOf(mainProcesses);
-			final CFA cfa = process.instantiate(env);
-			return cfa;
-		}
-	}
+        if (mainProcesses.isEmpty()) {
+            throw new IllegalArgumentException("No main process defined");
+        } else if (mainProcesses.size() > 1) {
+            throw new IllegalArgumentException("More than one main process is defined");
+        } else {
+            final CfaProcessSymbol process = Utils.singleElementOf(mainProcesses);
+            final CFA cfa = process.instantiate(env);
+            return cfa;
+        }
+    }
 
-	////
+    ////
 
-	@Override
-	public Optional<Scope> enclosingScope() {
-		return Optional.empty();
-	}
+    @Override
+    public Optional<Scope> enclosingScope() {
+        return Optional.empty();
+    }
 
-	@Override
-	public Optional<Symbol> resolve(final String name) {
-		return symbolTable.get(name);
-	}
+    @Override
+    public Optional<Symbol> resolve(final String name) {
+        return symbolTable.get(name);
+    }
 
-	////
+    ////
 
-	private void declareAll(final Iterable<? extends Symbol> symbols) {
-		symbolTable.addAll(symbols);
-	}
+    private void declareAll(final Iterable<? extends Symbol> symbols) {
+        symbolTable.addAll(symbols);
+    }
 
-	private List<CfaVariableSymbol> createVariables(final List<VarDeclContext> varDeclContexts) {
-		final List<CfaVariableSymbol> result = new ArrayList<>();
-		for (final VarDeclContext varDeclContext : varDeclContexts) {
-			final CfaVariableSymbol symbol = new CfaVariableSymbol(varDeclContext);
-			result.add(symbol);
-		}
-		return result;
-	}
+    private List<CfaVariableSymbol> createVariables(final List<VarDeclContext> varDeclContexts) {
+        final List<CfaVariableSymbol> result = new ArrayList<>();
+        for (final VarDeclContext varDeclContext : varDeclContexts) {
+            final CfaVariableSymbol symbol = new CfaVariableSymbol(varDeclContext);
+            result.add(symbol);
+        }
+        return result;
+    }
 
-	private List<CfaProcessSymbol> createProcesses(final List<ProcDeclContext> procDeclContexts) {
-		final List<CfaProcessSymbol> result = new ArrayList<>();
-		for (final ProcDeclContext procDeclContext : procDeclContexts) {
-			final CfaProcessSymbol symbol = new CfaProcessSymbol(this, procDeclContext);
-			result.add(symbol);
-		}
-		return result;
-	}
+    private List<CfaProcessSymbol> createProcesses(final List<ProcDeclContext> procDeclContexts) {
+        final List<CfaProcessSymbol> result = new ArrayList<>();
+        for (final ProcDeclContext procDeclContext : procDeclContexts) {
+            final CfaProcessSymbol symbol = new CfaProcessSymbol(this, procDeclContext);
+            result.add(symbol);
+        }
+        return result;
+    }
 
 }

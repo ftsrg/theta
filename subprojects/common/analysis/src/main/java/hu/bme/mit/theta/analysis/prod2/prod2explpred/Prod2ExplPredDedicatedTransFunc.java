@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,27 +33,32 @@ import java.util.Collections;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
-public class Prod2ExplPredDedicatedTransFunc<A extends ExprAction> implements TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
+public class Prod2ExplPredDedicatedTransFunc<A extends ExprAction> implements
+        TransFunc<Prod2State<ExplState, PredState>, A, Prod2Prec<ExplPrec, PredPrec>> {
 
-	private final Prod2ExplPredAbstractor prod2ExplPredAbstractor;
+    private final Prod2ExplPredAbstractor prod2ExplPredAbstractor;
 
-	private Prod2ExplPredDedicatedTransFunc(final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
-		this.prod2ExplPredAbstractor = prod2ExplPredAbstractor;
-	}
+    private Prod2ExplPredDedicatedTransFunc(final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
+        this.prod2ExplPredAbstractor = prod2ExplPredAbstractor;
+    }
 
-	public static <A extends ExprAction> Prod2ExplPredDedicatedTransFunc<A> create(final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
-		return new Prod2ExplPredDedicatedTransFunc<A>(prod2ExplPredAbstractor);
-	}
+    public static <A extends ExprAction> Prod2ExplPredDedicatedTransFunc<A> create(
+            final Prod2ExplPredAbstractor prod2ExplPredAbstractor) {
+        return new Prod2ExplPredDedicatedTransFunc<A>(prod2ExplPredAbstractor);
+    }
 
-	@Override
-	public Collection<? extends Prod2State<ExplState, PredState>> getSuccStates(Prod2State<ExplState, PredState> state,
-																				A action, Prod2Prec<ExplPrec, PredPrec> prec) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(prec);
+    @Override
+    public Collection<? extends Prod2State<ExplState, PredState>> getSuccStates(
+            Prod2State<ExplState, PredState> state,
+            A action, Prod2Prec<ExplPrec, PredPrec> prec) {
+        checkNotNull(state);
+        checkNotNull(action);
+        checkNotNull(prec);
 
-		final Collection<Prod2State<ExplState, PredState>> succStates = prod2ExplPredAbstractor.createStatesForExpr(
-				And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec, action.nextIndexing(), prec.getPrec1()::createState, 0);
-		return succStates.isEmpty() ? Collections.singleton(Prod2State.of(ExplState.bottom(), PredState.bottom())) : succStates;
-	}
+        final Collection<Prod2State<ExplState, PredState>> succStates = prod2ExplPredAbstractor.createStatesForExpr(
+                And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
+                action.nextIndexing(), prec.getPrec1()::createState, 0);
+        return succStates.isEmpty() ? Collections.singleton(
+                Prod2State.of(ExplState.bottom(), PredState.bottom())) : succStates;
+    }
 }

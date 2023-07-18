@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.LinkedHashSet
 
-class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
+class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
+
     private lateinit var gson: Gson
     override fun write(writer: JsonWriter, value: XCFA) {
         initGson()
@@ -52,14 +53,16 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
             writer.name("locs")
             gson.toJson(gson.toJsonTree(xcfaProcedure.locs), writer)
             writer.name("edges")
-            writer.beginArray().also { xcfaProcedure.edges.forEach {
-                writer.beginObject()
+            writer.beginArray().also {
+                xcfaProcedure.edges.forEach {
+                    writer.beginObject()
                         .name("source").value(it.source.name)
                         .name("target").value(it.target.name)
                         .name("label")
-                gson.toJson(gson.toJsonTree(it.label), writer)
-                writer.endObject()
-            } }.endArray()
+                    gson.toJson(gson.toJsonTree(it.label), writer)
+                    writer.endObject()
+                }
+            }.endArray()
 
             writer.endObject()
         }
@@ -88,18 +91,19 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
         lateinit var xcfaProcedures: Map<String, XcfaProcedure>
         lateinit var initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>
 
-        val varsType = object: TypeToken<Set<XcfaGlobalVar>>() {}.type
+        val varsType = object : TypeToken<Set<XcfaGlobalVar>>() {}.type
 
         lateinit var xcfa: XCFA
-        while(reader.peek() != JsonToken.END_OBJECT) {
+        while (reader.peek() != JsonToken.END_OBJECT) {
             val nextName = reader.nextName()
-            when(nextName) {
+            when (nextName) {
                 "name" -> name = reader.nextString()
                 "vars" -> vars = gson.fromJson(reader, varsType)
                 "procedures" -> {
                     xcfa = XCFA(name, vars)
                     xcfaProcedures = parseProcedures(reader, xcfa)
                 }
+
                 "initProcedures" -> initProcedures = parseInitProcedures(reader, xcfaProcedures)
             }
         }
@@ -109,12 +113,12 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
     }
 
     private fun parseInitProcedures(
-            reader: JsonReader,
-            procedures: Map<String, XcfaProcedure>): List<Pair<XcfaProcedure, List<Expr<*>>>> {
+        reader: JsonReader,
+        procedures: Map<String, XcfaProcedure>): List<Pair<XcfaProcedure, List<Expr<*>>>> {
         reader.beginArray()
         val ret = ArrayList<Pair<XcfaProcedure, List<Expr<*>>>>()
-        val paramsType = object: TypeToken<List<Expr<*>>>() {}.type
-        while(reader.peek() != JsonToken.END_ARRAY) {
+        val paramsType = object : TypeToken<List<Expr<*>>>() {}.type
+        while (reader.peek() != JsonToken.END_ARRAY) {
             reader.beginObject()
             lateinit var params: List<Expr<*>>
             lateinit var procedure: XcfaProcedure
@@ -134,12 +138,12 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
     private fun parseProcedures(reader: JsonReader, xcfa: XCFA): Map<String, XcfaProcedure> {
         reader.beginArray()
         val ret = LinkedHashMap<String, XcfaProcedure>()
-        val paramsType = object: TypeToken<List<Pair<VarDecl<*>, ParamDirection>>>() {}.type
-        val varsType = object: TypeToken<Set<VarDecl<*>>>() {}.type
-        val locsType = object: TypeToken<Set<XcfaLocation>>() {}.type
-        val labelType = object: TypeToken<XcfaLabel>() {}.type
+        val paramsType = object : TypeToken<List<Pair<VarDecl<*>, ParamDirection>>>() {}.type
+        val varsType = object : TypeToken<Set<VarDecl<*>>>() {}.type
+        val locsType = object : TypeToken<Set<XcfaLocation>>() {}.type
+        val labelType = object : TypeToken<XcfaLabel>() {}.type
 
-        while(reader.peek() != JsonToken.END_ARRAY) {
+        while (reader.peek() != JsonToken.END_ARRAY) {
             reader.beginObject()
             lateinit var name: String
             lateinit var params: List<Pair<VarDecl<*>, ParamDirection>>
@@ -158,15 +162,16 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
                     "locs" -> {
                         val locations: Set<XcfaLocation> = gson.fromJson(reader, locsType)
                         locations.forEach {
-                            if(it.error) errorLoc = it
-                            if(it.initial) initLoc = it
-                            if(it.final) finalLoc = it
+                            if (it.error) errorLoc = it
+                            if (it.initial) initLoc = it
+                            if (it.final) finalLoc = it
                         }
                         locs = locations.associateBy { it.name }
                     }
+
                     "edges" -> {
                         reader.beginArray()
-                        while(reader.peek() != JsonToken.END_ARRAY) {
+                        while (reader.peek() != JsonToken.END_ARRAY) {
                             reader.beginObject()
                             lateinit var source: XcfaLocation
                             lateinit var target: XcfaLocation
@@ -188,7 +193,9 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
                     }
                 }
             }
-            ret[name] = XcfaProcedure(name, params, vars, locs.values.toSet(), edges, initLoc, Optional.ofNullable(finalLoc), Optional.ofNullable(errorLoc)).also { it.parent = xcfa }
+            ret[name] = XcfaProcedure(name, params, vars, locs.values.toSet(), edges, initLoc,
+                Optional.ofNullable(finalLoc),
+                Optional.ofNullable(errorLoc)).also { it.parent = xcfa }
             reader.endObject()
         }
         reader.endArray()
@@ -196,7 +203,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson): TypeAdapter<XCFA>() {
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 
 }

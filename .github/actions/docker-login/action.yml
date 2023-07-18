@@ -1,0 +1,24 @@
+name: 'Login to a docker registry'
+description: 'Login to a docker registry by using the secrets, and use it in reusable-workflow'
+inputs:
+    token:
+        required: true
+    username:
+        required: true
+    registry:
+        required: false
+runs: 
+  using: "composite"
+  steps:
+     - name: Checkout
+       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+     - name: Login to the Registry
+       if: inputs.username != ''
+       uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+       with:
+          registry: ${{ inputs.registry }}
+          username: ${{ inputs.username }}
+          password: ${{ inputs.token }}
+          
+     - name: Set up Docker Buildx
+       uses: docker/setup-buildx-action@2a1a44ac4aa01993040736bd95bb470da1a38365

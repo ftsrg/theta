@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,16 +27,16 @@ import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 interface AlgorithmStrategy<S1 extends State, S2 extends State> {
 
-	Analysis<S2, XtaAction, UnitPrec> getAnalysis();
+    Analysis<S2, XtaAction, UnitPrec> getAnalysis();
 
-	Function<S2, ?> getProjection();
+    Function<S2, ?> getProjection();
 
-	boolean mightCover(final ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer);
+    boolean mightCover(final ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer);
 
-	void cover(ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer,
-			   Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
+    void cover(ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer,
+               Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
 
-	void block(ArgNode<S1, XtaAction> node, final XtaAction action, final S1 succState,
-			   Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
+    void block(ArgNode<S1, XtaAction> node, final XtaAction action, final S1 succState,
+               Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
 
 }

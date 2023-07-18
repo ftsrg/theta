@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,52 +30,54 @@ import static hu.bme.mit.theta.core.utils.PathUtils.unfold;
 
 public final class ExprStateUtils {
 
-	private ExprStateUtils() {
-	}
+    private ExprStateUtils() {
+    }
 
-	public static Optional<Valuation> anyUncoveredSuccessor(final ExprState state, final ExprAction action,
-															final Collection<? extends ExprState> succStates, final Solver solver) {
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			final VarIndexing indexing = action.nextIndexing();
-			solver.add(unfold(state.toExpr(), 0));
-			solver.add(unfold(action.toExpr(), 0));
-			for (final ExprState succState : succStates) {
-				solver.add(Not(unfold(succState.toExpr(), indexing)));
-			}
-			final SolverStatus status = solver.check();
+    public static Optional<Valuation> anyUncoveredSuccessor(final ExprState state,
+                                                            final ExprAction action,
+                                                            final Collection<? extends ExprState> succStates, final Solver solver) {
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            final VarIndexing indexing = action.nextIndexing();
+            solver.add(unfold(state.toExpr(), 0));
+            solver.add(unfold(action.toExpr(), 0));
+            for (final ExprState succState : succStates) {
+                solver.add(Not(unfold(succState.toExpr(), indexing)));
+            }
+            final SolverStatus status = solver.check();
 
-			if (status.isUnsat()) {
-				return Optional.empty();
-			} else if (status.isSat()) {
-				final Valuation model = solver.getModel();
-				final Valuation valuation = extractValuation(model, indexing);
-				return Optional.of(valuation);
-			} else {
-				throw new AssertionError();
-			}
-		}
-	}
+            if (status.isUnsat()) {
+                return Optional.empty();
+            } else if (status.isSat()) {
+                final Valuation model = solver.getModel();
+                final Valuation valuation = extractValuation(model, indexing);
+                return Optional.of(valuation);
+            } else {
+                throw new AssertionError();
+            }
+        }
+    }
 
-	public static Optional<Valuation> anyUncoveredPredecessor(final Collection<? extends ExprState> predStates,
-															  final ExprAction action, final ExprState state, final Solver solver) {
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			final VarIndexing indexing = action.nextIndexing();
-			for (final ExprState predState : predStates) {
-				solver.add(Not(unfold(predState.toExpr(), 0)));
-			}
-			solver.add(unfold(action.toExpr(), 0));
-			solver.add(unfold(state.toExpr(), indexing));
-			final SolverStatus status = solver.check();
+    public static Optional<Valuation> anyUncoveredPredecessor(
+            final Collection<? extends ExprState> predStates,
+            final ExprAction action, final ExprState state, final Solver solver) {
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            final VarIndexing indexing = action.nextIndexing();
+            for (final ExprState predState : predStates) {
+                solver.add(Not(unfold(predState.toExpr(), 0)));
+            }
+            solver.add(unfold(action.toExpr(), 0));
+            solver.add(unfold(state.toExpr(), indexing));
+            final SolverStatus status = solver.check();
 
-			if (status.isUnsat()) {
-				return Optional.empty();
-			} else if (status.isSat()) {
-				final Valuation model = solver.getModel();
-				final Valuation valuation = extractValuation(model, 0);
-				return Optional.of(valuation);
-			} else {
-				throw new AssertionError();
-			}
-		}
-	}
+            if (status.isUnsat()) {
+                return Optional.empty();
+            } else if (status.isSat()) {
+                final Valuation model = solver.getModel();
+                final Valuation valuation = extractValuation(model, 0);
+                return Optional.of(valuation);
+            } else {
+                throw new AssertionError();
+            }
+        }
+    }
 }

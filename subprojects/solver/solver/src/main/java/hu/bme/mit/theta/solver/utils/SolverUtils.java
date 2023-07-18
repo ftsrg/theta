@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,69 +32,73 @@ import hu.bme.mit.theta.solver.SolverFactory;
 
 public final class SolverUtils {
 
-	private SolverUtils() {
-	}
+    private SolverUtils() {
+    }
 
-	public static boolean entails(final Solver solver, final Expr<BoolType> antecedent,
-								  final Expr<BoolType> consequent) {
-		checkNotNull(solver);
-		checkNotNull(antecedent);
-		checkNotNull(consequent);
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			solver.add(antecedent);
-			solver.add(Not(consequent));
-			return solver.check().isUnsat();
-		}
-	}
+    public static boolean entails(final Solver solver, final Expr<BoolType> antecedent,
+                                  final Expr<BoolType> consequent) {
+        checkNotNull(solver);
+        checkNotNull(antecedent);
+        checkNotNull(consequent);
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            solver.add(antecedent);
+            solver.add(Not(consequent));
+            return solver.check().isUnsat();
+        }
+    }
 
-	public static boolean entails(final Solver solver, final Iterable<? extends Expr<BoolType>> antecedents,
-								  final Iterable<? extends Expr<BoolType>> consequents) {
-		checkNotNull(solver);
-		checkNotNull(antecedents);
-		checkNotNull(consequents);
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			antecedents.forEach(antecedent -> solver.add(antecedent));
-			consequents.forEach(consequent -> solver.add(Not(consequent)));
-			return solver.check().isUnsat();
-		}
-	}
+    public static boolean entails(final Solver solver,
+                                  final Iterable<? extends Expr<BoolType>> antecedents,
+                                  final Iterable<? extends Expr<BoolType>> consequents) {
+        checkNotNull(solver);
+        checkNotNull(antecedents);
+        checkNotNull(consequents);
+        try (WithPushPop wpp = new WithPushPop(solver)) {
+            antecedents.forEach(antecedent -> solver.add(antecedent));
+            consequents.forEach(consequent -> solver.add(Not(consequent)));
+            return solver.check().isUnsat();
+        }
+    }
 
-	public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr) {
-		return models(factory, expr, m -> Not(m.toExpr()));
-	}
+    public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr) {
+        return models(factory, expr, m -> Not(m.toExpr()));
+    }
 
-	public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr,
-										   final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
-		final Iterable<Valuation> iterable = () -> new ModelIterator(factory, expr, feedback);
-		return StreamSupport.stream(iterable.spliterator(), false);
-	}
+    public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr,
+                                           final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
+        final Iterable<Valuation> iterable = () -> new ModelIterator(factory, expr, feedback);
+        return StreamSupport.stream(iterable.spliterator(), false);
+    }
 
-	private static final class ModelIterator implements Iterator<Valuation> {
-		private final Solver solver;
-		private final Function<? super Valuation, ? extends Expr<BoolType>> feedback;
+    private static final class ModelIterator implements Iterator<Valuation> {
 
-		private ModelIterator(final SolverFactory factory, final Expr<BoolType> expr,
-							  final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
-			checkNotNull(expr);
-			checkNotNull(factory);
-			this.feedback = checkNotNull(feedback);
+        private final Solver solver;
+        private final Function<? super Valuation, ? extends Expr<BoolType>> feedback;
 
-			solver = factory.createSolver();
-			solver.add(expr);
-		}
+        private ModelIterator(final SolverFactory factory, final Expr<BoolType> expr,
+                              final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
+            checkNotNull(expr);
+            checkNotNull(factory);
+            this.feedback = checkNotNull(feedback);
 
-		@Override
-		public boolean hasNext() {
-			return solver.check().isSat();
-		}
+            solver = factory.createSolver();
+            solver.add(expr);
+        }
 
-		@Override
-		public Valuation next() {
-			if (!hasNext()) throw new NoSuchElementException("Formula is UNSAT");
-			final Valuation model = solver.getModel();
-			solver.add(feedback.apply(model));
-			return model;
-		}
-	}
+        @Override
+        public boolean hasNext() {
+            return solver.check().isSat();
+        }
+
+        @Override
+        public Valuation next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException("Formula is UNSAT");
+            }
+            final Valuation model = solver.getModel();
+            solver.add(feedback.apply(model));
+            return model;
+        }
+    }
 
 }

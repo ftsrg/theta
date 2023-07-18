@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,39 +24,39 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.Utils;
 
 /**
- * A basic implementation of PrecRefiner that simply converts each element of
- * the Refutation into a Precision and joins them.
+ * A basic implementation of PrecRefiner that simply converts each element of the Refutation into a
+ * Precision and joins them.
  */
 public final class JoiningPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
-		implements PrecRefiner<S, A, P, R> {
+        implements PrecRefiner<S, A, P, R> {
 
-	private final RefutationToPrec<P, R> refToPrec;
+    private final RefutationToPrec<P, R> refToPrec;
 
-	private JoiningPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
-		this.refToPrec = checkNotNull(refToPrec);
-	}
+    private JoiningPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+        this.refToPrec = checkNotNull(refToPrec);
+    }
 
-	public static <S extends State, A extends Action, P extends Prec, R extends Refutation> JoiningPrecRefiner<S, A, P, R> create(
-			final RefutationToPrec<P, R> refToPrec) {
-		return new JoiningPrecRefiner<>(refToPrec);
-	}
+    public static <S extends State, A extends Action, P extends Prec, R extends Refutation> JoiningPrecRefiner<S, A, P, R> create(
+            final RefutationToPrec<P, R> refToPrec) {
+        return new JoiningPrecRefiner<>(refToPrec);
+    }
 
-	@Override
-	public P refine(final P prec, final Trace<S, A> trace, final R refutation) {
-		checkNotNull(trace);
-		checkNotNull(prec);
-		checkNotNull(refutation);
+    @Override
+    public P refine(final P prec, final Trace<S, A> trace, final R refutation) {
+        checkNotNull(trace);
+        checkNotNull(prec);
+        checkNotNull(refutation);
 
-		P runningPrec = prec;
-		for (int i = 0; i < trace.getStates().size(); ++i) {
-			final P precFromRef = refToPrec.toPrec(refutation, i);
-			runningPrec = refToPrec.join(runningPrec, precFromRef);
-		}
-		return runningPrec;
-	}
+        P runningPrec = prec;
+        for (int i = 0; i < trace.getStates().size(); ++i) {
+            final P precFromRef = refToPrec.toPrec(refutation, i);
+            runningPrec = refToPrec.join(runningPrec, precFromRef);
+        }
+        return runningPrec;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).add(refToPrec).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(refToPrec).toString();
+    }
 }

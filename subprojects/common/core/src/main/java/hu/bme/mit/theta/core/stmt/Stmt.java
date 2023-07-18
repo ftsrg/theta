@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,6 @@ package hu.bme.mit.theta.core.stmt;
 
 public interface Stmt {
 
-	<P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param);
+    <P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param);
 
 }

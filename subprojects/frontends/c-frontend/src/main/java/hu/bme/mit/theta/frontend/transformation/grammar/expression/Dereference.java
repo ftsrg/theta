@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,41 +26,43 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
  * TODO: should this really inherit from expr?
  */
 public class Dereference<R extends Type, T extends Type> extends UnaryExpr<R, T> {
-	private static final int HASH_SEED = 6988;
-	private static final String label = "*";
-	private final T type;
 
-	private Dereference(Expr<R> op, T type) {
-		super(op);
-		this.type = type;
-	}
+    private static final int HASH_SEED = 6988;
+    private static final String label = "*";
+    private final T type;
 
-	public static <R extends Type, T extends Type> Dereference<R, T> of(Expr<R> op, T type) {
-		return new Dereference<>(op, type);
-	}
+    private Dereference(Expr<R> op, T type) {
+        super(op);
+        this.type = type;
+    }
 
-	@Override
-	public T getType() {
-		return type;
-	}
+    public static <R extends Type, T extends Type> Dereference<R, T> of(Expr<R> op, T type) {
+        return new Dereference<>(op, type);
+    }
 
-	@Override
-	public LitExpr<T> eval(Valuation val) {
-		throw new IllegalStateException("Reference/Dereference expressions are not meant to be evaluated!");
-	}
+    @Override
+    public T getType() {
+        return type;
+    }
 
-	@Override
-	public UnaryExpr<R, T> with(Expr<R> op) {
-		return of(op, type);
-	}
+    @Override
+    public LitExpr<T> eval(Valuation val) {
+        throw new IllegalStateException(
+                "Reference/Dereference expressions are not meant to be evaluated!");
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    public UnaryExpr<R, T> with(Expr<R> op) {
+        return of(op, type);
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return label;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
+
+    @Override
+    public String getOperatorLabel() {
+        return label;
+    }
 }

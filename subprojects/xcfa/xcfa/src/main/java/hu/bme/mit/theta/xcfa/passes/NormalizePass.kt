@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -24,7 +25,8 @@ import hu.bme.mit.theta.xcfa.model.*
  * Sets the `normal` flag on the ProcedureBuilder
  */
 
-class NormalizePass : ProcedurePass {
+class NormalizePass(val parseContext: ParseContext) : ProcedurePass {
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
@@ -43,11 +45,25 @@ class NormalizePass : ProcedurePass {
     }
 
     private fun normalize(label: XcfaLabel, collector: MutableList<MutableList<XcfaLabel>>) {
-        when(label) {
-            is SequenceLabel -> label.labels.forEach {normalize(it, collector)}
-            is NondetLabel -> TODO("Not yet implemented")
-            is NopLabel -> { }
-            else -> collector.forEach {it.add(label)}
+        when (label) {
+            is SequenceLabel -> label.labels.forEach { normalize(it, collector) }
+            is NondetLabel -> {
+                val labelList = label.labels.toList()
+                ArrayList(collector).forEach { list ->
+                    for ((i, xcfaLabel) in labelList.withIndex()) {
+                        if (i == labelList.size - 1) {
+                            list.add(xcfaLabel)
+                        } else {
+                            val newList = ArrayList(list)
+                            newList.add(xcfaLabel)
+                            collector.add(newList)
+                        }
+                    }
+                }
+            }
+
+            is NopLabel -> {}
+            else -> collector.forEach { it.add(label) }
         }
     }
 }

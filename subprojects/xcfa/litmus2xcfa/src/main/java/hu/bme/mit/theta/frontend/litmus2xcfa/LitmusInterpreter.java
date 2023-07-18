@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,10 +33,11 @@ import java.io.InputStream;
 public class LitmusInterpreter {
 
     public static XCFA getXcfa(final File from) throws IOException {
-        try(FileInputStream fis = new FileInputStream(from)) {
+        try (FileInputStream fis = new FileInputStream(from)) {
             return getXcfa(fis);
         }
     }
+
     public static XCFA getXcfa(final InputStream from) throws IOException {
         final CharStream input = CharStreams.fromStream(from);
 

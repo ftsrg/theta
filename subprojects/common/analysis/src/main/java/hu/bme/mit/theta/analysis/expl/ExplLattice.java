@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.analysis.expl;
 
 import hu.bme.mit.theta.analysis.Lattice;
@@ -40,11 +55,11 @@ public final class ExplLattice implements Lattice<ExplState> {
 
         declToExpr1.forEach(valBuilder::put);
 
-        for(Decl<?> decl : declToExpr2.keySet()){
+        for (Decl<?> decl : declToExpr2.keySet()) {
             LitExpr<?> value = declToExpr2.get(decl);
-            if(!declToExpr1.containsKey(decl)){
+            if (!declToExpr1.containsKey(decl)) {
                 valBuilder.put(decl, value);
-            } else if(!declToExpr1.get(decl).equals(value)){
+            } else if (!declToExpr1.get(decl).equals(value)) {
                 return ExplState.bottom();
             }
         }
@@ -57,9 +72,9 @@ public final class ExplLattice implements Lattice<ExplState> {
         final Map<Decl<?>, LitExpr<?>> declToExpr1 = state1.toMap();
         final Map<Decl<?>, LitExpr<?>> declToExpr2 = state2.toMap();
 
-        for(Decl<?> decl : declToExpr1.keySet()){
+        for (Decl<?> decl : declToExpr1.keySet()) {
             LitExpr<?> value = declToExpr1.get(decl);
-            if(declToExpr2.containsKey(decl) && declToExpr2.get(decl).equals(value)){
+            if (declToExpr2.containsKey(decl) && declToExpr2.get(decl).equals(value)) {
                 valBuilder.put(decl, value);
             }
         }

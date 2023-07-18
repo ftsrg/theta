@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState;
  * @param <A> {@link XcfaAction}
  */
 public class AtomicNodePruner<S extends XcfaState<?>, A extends XcfaAction> implements NodePruner<S, A> {
-	@Override
-	public void prune(final ARG<S, A> arg, ArgNode<S, A> node) {
-		while(node.getState().getMutexes().containsKey("")) { // TODO: needs further checks?
-			ArgEdge<S, A> inEdge = node.getInEdge().get();
-			node = inEdge.getSource();
-		}
-		arg.prune(node);
-	}
+    @Override
+    public void prune(final ARG<S, A> arg, ArgNode<S, A> node) {
+        while (node.getState().getMutexes().containsKey("")) { // TODO: needs further checks?
+            ArgEdge<S, A> inEdge = node.getInEdge().get();
+            node = inEdge.getSource();
+        }
+        arg.prune(node);
+    }
 }

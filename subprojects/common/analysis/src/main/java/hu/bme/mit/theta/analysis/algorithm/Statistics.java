@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,45 +24,45 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * Base class for storing statistics as key-value pairs. Derived classes can add
- * new statistics which can then be queried.
+ * Base class for storing statistics as key-value pairs. Derived classes can add new statistics
+ * which can then be queried.
  */
 public abstract class Statistics {
 
-	private final Map<String, Supplier<Object>> stats;
+    private final Map<String, Supplier<Object>> stats;
 
-	protected Statistics() {
-		stats = new LinkedHashMap<>();
-	}
+    protected Statistics() {
+        stats = new LinkedHashMap<>();
+    }
 
-	/**
-	 * Add a new statistic.
-	 */
-	protected void addStat(final String key, final Supplier<Object> value) {
-		stats.put(key, value);
-	}
+    /**
+     * Add a new statistic.
+     */
+    protected void addStat(final String key, final Supplier<Object> value) {
+        stats.put(key, value);
+    }
 
-	/**
-	 * Gets the set of keys.
-	 */
-	public final Set<String> keySet() {
-		return Collections.unmodifiableSet(stats.keySet());
-	}
+    /**
+     * Gets the set of keys.
+     */
+    public final Set<String> keySet() {
+        return Collections.unmodifiableSet(stats.keySet());
+    }
 
-	/**
-	 * Gets the value for a given key. The key must exist.
-	 */
-	public final Object get(final String key) {
-		checkArgument(stats.containsKey(key), "Key not found");
-		return stats.get(key).get();
-	}
+    /**
+     * Gets the value for a given key. The key must exist.
+     */
+    public final Object get(final String key) {
+        checkArgument(stats.containsKey(key), "Key not found");
+        return stats.get(key).get();
+    }
 
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		for (final String key : keySet()) {
-			sb.append(key).append(": ").append(get(key)).append(System.lineSeparator());
-		}
-		return sb.toString();
-	}
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        for (final String key : keySet()) {
+            sb.append(key).append(": ").append(get(key)).append(System.lineSeparator());
+        }
+        return sb.toString();
+    }
 }

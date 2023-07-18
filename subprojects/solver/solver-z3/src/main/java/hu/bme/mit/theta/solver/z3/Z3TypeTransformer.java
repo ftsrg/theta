@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,66 +31,72 @@ import java.util.TreeSet;
 
 final class Z3TypeTransformer {
 
-	@SuppressWarnings("unused")
-	private final Z3TransformationManager transformer;
-	private final Context context;
+    @SuppressWarnings("unused")
+    private final Z3TransformationManager transformer;
+    private final Context context;
 
-	private final com.microsoft.z3.BoolSort boolSort;
-	private final com.microsoft.z3.IntSort intSort;
-	private final com.microsoft.z3.RealSort realSort;
-	private final Set<com.microsoft.z3.BitVecSort> bvSorts;
-	private final Set<com.microsoft.z3.FPSort> fpSorts;
+    private final com.microsoft.z3.BoolSort boolSort;
+    private final com.microsoft.z3.IntSort intSort;
+    private final com.microsoft.z3.RealSort realSort;
+    private final Set<com.microsoft.z3.BitVecSort> bvSorts;
+    private final Set<com.microsoft.z3.FPSort> fpSorts;
 
-	Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
-		this.context = context;
-		this.transformer = transformer;
+    Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
+        this.context = context;
+        this.transformer = transformer;
 
-		boolSort = context.mkBoolSort();
-		intSort = context.mkIntSort();
-		realSort = context.mkRealSort();
-		bvSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
-		fpSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
-	}
+        boolSort = context.mkBoolSort();
+        intSort = context.mkIntSort();
+        realSort = context.mkRealSort();
+        bvSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
+        fpSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
+    }
 
-	public com.microsoft.z3.Sort toSort(final Type type) {
-		if (type instanceof BoolType) {
-			return boolSort;
-		} else if (type instanceof IntType) {
-			return intSort;
-		} else if (type instanceof RatType) {
-			return realSort;
-		} else if (type instanceof BvType) {
-			final BvType bvType = (BvType) type;
-			final Optional<com.microsoft.z3.BitVecSort> bvSort = bvSorts.stream().filter(sort -> sort.getSize() == bvType.getSize()).findAny();
-			if (bvSort.isPresent()) {
-				return bvSort.get();
-			} else {
-				final com.microsoft.z3.BitVecSort newBvSort = context.mkBitVecSort(bvType.getSize());
-				bvSorts.add(newBvSort);
-				return newBvSort;
-			}
-		} else if (type instanceof FpType) {
-			final FpType fpType = (FpType) type;
-			final Optional<com.microsoft.z3.FPSort> fpSort = fpSorts.stream().filter(sort -> sort.getEBits() == fpType.getExponent() && sort.getSBits() == fpType.getSignificand()).findAny();
-			if (fpSort.isPresent()) {
-				return fpSort.get();
-			} else {
-				final com.microsoft.z3.FPSort newFpSort = context.mkFPSort(fpType.getExponent(), fpType.getSignificand());
-				fpSorts.add(newFpSort);
-				return newFpSort;
-			}
-		} else if (type instanceof ArrayType) {
-			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
-			final com.microsoft.z3.Sort indexSort = toSort(arrayType.getIndexType());
-			final com.microsoft.z3.Sort elemSort = toSort(arrayType.getElemType());
-			return context.mkArraySort(indexSort, elemSort);
-		} else {
-			throw new UnsupportedOperationException("Unsupporte type: " + type.getClass().getSimpleName());
-		}
-	}
+    public com.microsoft.z3.Sort toSort(final Type type) {
+        if (type instanceof BoolType) {
+            return boolSort;
+        } else if (type instanceof IntType) {
+            return intSort;
+        } else if (type instanceof RatType) {
+            return realSort;
+        } else if (type instanceof BvType) {
+            final BvType bvType = (BvType) type;
+            final Optional<com.microsoft.z3.BitVecSort> bvSort = bvSorts.stream()
+                    .filter(sort -> sort.getSize() == bvType.getSize()).findAny();
+            if (bvSort.isPresent()) {
+                return bvSort.get();
+            } else {
+                final com.microsoft.z3.BitVecSort newBvSort = context.mkBitVecSort(
+                        bvType.getSize());
+                bvSorts.add(newBvSort);
+                return newBvSort;
+            }
+        } else if (type instanceof FpType) {
+            final FpType fpType = (FpType) type;
+            final Optional<com.microsoft.z3.FPSort> fpSort = fpSorts.stream().filter(
+                    sort -> sort.getEBits() == fpType.getExponent()
+                            && sort.getSBits() == fpType.getSignificand()).findAny();
+            if (fpSort.isPresent()) {
+                return fpSort.get();
+            } else {
+                final com.microsoft.z3.FPSort newFpSort = context.mkFPSort(fpType.getExponent(),
+                        fpType.getSignificand());
+                fpSorts.add(newFpSort);
+                return newFpSort;
+            }
+        } else if (type instanceof ArrayType) {
+            final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
+            final com.microsoft.z3.Sort indexSort = toSort(arrayType.getIndexType());
+            final com.microsoft.z3.Sort elemSort = toSort(arrayType.getElemType());
+            return context.mkArraySort(indexSort, elemSort);
+        } else {
+            throw new UnsupportedOperationException(
+                    "Unsupporte type: " + type.getClass().getSimpleName());
+        }
+    }
 
-	public void reset() {
-		bvSorts.clear();
-	}
+    public void reset() {
+        bvSorts.clear();
+    }
 
 }

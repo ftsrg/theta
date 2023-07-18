@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,176 +30,180 @@ import com.google.common.collect.ImmutableList;
 
 public abstract class SExpr {
 
-	private SExpr() {
-	}
+    private SExpr() {
+    }
 
-	public static SAtom atom(final String atom) {
-		return new SAtom(atom);
-	}
+    public static SAtom atom(final String atom) {
+        return new SAtom(atom);
+    }
 
-	public static SList list(final Iterable<? extends SExpr> sexprs) {
-		return new SList(sexprs);
-	}
+    public static SList list(final Iterable<? extends SExpr> sexprs) {
+        return new SList(sexprs);
+    }
 
-	public static SList list(final SExpr... sexprs) {
-		return list(ImmutableList.copyOf(sexprs));
-	}
+    public static SList list(final SExpr... sexprs) {
+        return list(ImmutableList.copyOf(sexprs));
+    }
 
-	public static SExpr build(final Object object) {
-		checkNotNull(object);
-		if (object instanceof String) {
-			final String string = (String) object;
-			return atom(string);
-		} else if (object instanceof Iterable) {
-			final Iterable<?> iterable = (Iterable<?>) object;
-			final List<SExpr> sexprs = stream(iterable).map(SExpr::build).collect(toImmutableList());
-			return list(sexprs);
-		} else {
-			throw new IllegalArgumentException(
-					"Only String and Iterable types are supported, found: " + object.getClass().getSimpleName());
-		}
-	}
+    public static SExpr build(final Object object) {
+        checkNotNull(object);
+        if (object instanceof String) {
+            final String string = (String) object;
+            return atom(string);
+        } else if (object instanceof Iterable) {
+            final Iterable<?> iterable = (Iterable<?>) object;
+            final List<SExpr> sexprs = stream(iterable).map(SExpr::build)
+                    .collect(toImmutableList());
+            return list(sexprs);
+        } else {
+            throw new IllegalArgumentException(
+                    "Only String and Iterable types are supported, found: " + object.getClass()
+                            .getSimpleName());
+        }
+    }
 
-	public static SExpr parse(final String string) {
-		checkNotNull(string);
-		final Reader reader = new StringReader(string);
-		final LispLexer lexer = new LispLexer(reader);
-		final LispParser parser = new LispParser(lexer);
-		return parser.sexpr();
-	}
+    public static SExpr parse(final String string) {
+        checkNotNull(string);
+        final Reader reader = new StringReader(string);
+        final LispLexer lexer = new LispLexer(reader);
+        final LispParser parser = new LispParser(lexer);
+        return parser.sexpr();
+    }
 
-	public boolean isAtom() {
-		return false;
-	}
+    public boolean isAtom() {
+        return false;
+    }
 
-	public boolean isList() {
-		return false;
-	}
+    public boolean isList() {
+        return false;
+    }
 
-	public SAtom asAtom() {
-		throw new ClassCastException();
-	}
+    public SAtom asAtom() {
+        throw new ClassCastException();
+    }
 
-	public SList asList() {
-		throw new ClassCastException();
-	}
+    public SList asList() {
+        throw new ClassCastException();
+    }
 
-	public static final class SAtom extends SExpr {
-		private static final int HASH_SEED = 3943;
-		private volatile int hashCode = 0;
+    public static final class SAtom extends SExpr {
 
-		private final String atom;
+        private static final int HASH_SEED = 3943;
+        private volatile int hashCode = 0;
 
-		private SAtom(final String atom) {
-			checkNotNull(atom);
-			checkArgument(atom.length() > 0);
-			this.atom = atom;
-		}
+        private final String atom;
 
-		public String getAtom() {
-			return atom;
-		}
+        private SAtom(final String atom) {
+            checkNotNull(atom);
+            checkArgument(atom.length() > 0);
+            this.atom = atom;
+        }
 
-		@Override
-		public boolean isAtom() {
-			return true;
-		}
+        public String getAtom() {
+            return atom;
+        }
 
-		@Override
-		public SAtom asAtom() {
-			return this;
-		}
+        @Override
+        public boolean isAtom() {
+            return true;
+        }
 
-		@Override
-		public int hashCode() {
-			int result = hashCode;
-			if (result == 0) {
-				result = HASH_SEED;
-				result = 31 * result + atom.hashCode();
-				hashCode = result;
-			}
-			return result;
-		}
+        @Override
+        public SAtom asAtom() {
+            return this;
+        }
 
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			} else if (obj instanceof SAtom) {
-				final SAtom that = (SAtom) obj;
-				return this.atom.equals(that.atom);
-			} else {
-				return false;
-			}
-		}
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 31 * result + atom.hashCode();
+                hashCode = result;
+            }
+            return result;
+        }
 
-		@Override
-		public String toString() {
-			return atom;
-		}
-	}
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof SAtom) {
+                final SAtom that = (SAtom) obj;
+                return this.atom.equals(that.atom);
+            } else {
+                return false;
+            }
+        }
 
-	public static final class SList extends SExpr implements Iterable<SExpr> {
-		private static final String LPAREN = "(";
-		private static final String RPAREN = ")";
-		private static final String SPACE = " ";
+        @Override
+        public String toString() {
+            return atom;
+        }
+    }
 
-		private static final int HASH_SEED = 6563;
-		private volatile int hashCode = 0;
+    public static final class SList extends SExpr implements Iterable<SExpr> {
 
-		private final List<SExpr> list;
+        private static final String LPAREN = "(";
+        private static final String RPAREN = ")";
+        private static final String SPACE = " ";
 
-		private SList(final Iterable<? extends SExpr> sexprs) {
-			checkNotNull(sexprs);
-			this.list = ImmutableList.copyOf(sexprs);
-		}
+        private static final int HASH_SEED = 6563;
+        private volatile int hashCode = 0;
 
-		public List<SExpr> getList() {
-			return list;
-		}
+        private final List<SExpr> list;
 
-		@Override
-		public boolean isList() {
-			return true;
-		}
+        private SList(final Iterable<? extends SExpr> sexprs) {
+            checkNotNull(sexprs);
+            this.list = ImmutableList.copyOf(sexprs);
+        }
 
-		@Override
-		public SList asList() {
-			return this;
-		}
+        public List<SExpr> getList() {
+            return list;
+        }
 
-		@Override
-		public Iterator<SExpr> iterator() {
-			return list.iterator();
-		}
+        @Override
+        public boolean isList() {
+            return true;
+        }
 
-		@Override
-		public int hashCode() {
-			int result = hashCode;
-			if (result == 0) {
-				result = HASH_SEED;
-				result = 31 * result + list.hashCode();
-				hashCode = result;
-			}
-			return result;
-		}
+        @Override
+        public SList asList() {
+            return this;
+        }
 
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			} else if (obj instanceof SList) {
-				final SList that = (SList) obj;
-				return this.list.equals(that.list);
-			} else {
-				return false;
-			}
-		}
+        @Override
+        public Iterator<SExpr> iterator() {
+            return list.iterator();
+        }
 
-		@Override
-		public String toString() {
-			return list.stream().map(Object::toString).collect(joining(SPACE, LPAREN, RPAREN));
-		}
-	}
+        @Override
+        public int hashCode() {
+            int result = hashCode;
+            if (result == 0) {
+                result = HASH_SEED;
+                result = 31 * result + list.hashCode();
+                hashCode = result;
+            }
+            return result;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (obj instanceof SList) {
+                final SList that = (SList) obj;
+                return this.list.equals(that.list);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return list.stream().map(Object::toString).collect(joining(SPACE, LPAREN, RPAREN));
+        }
+    }
 
 }

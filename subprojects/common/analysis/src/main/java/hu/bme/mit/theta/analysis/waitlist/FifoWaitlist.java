@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,63 +26,62 @@ import java.util.stream.Stream;
 import hu.bme.mit.theta.common.Utils;
 
 /**
- * FIFO (First In First Out) waitlist. Items are removed in the same order as
- * they were added.
+ * FIFO (First In First Out) waitlist. Items are removed in the same order as they were added.
  */
 public final class FifoWaitlist<T> implements Waitlist<T> {
 
-	private final Queue<T> items;
+    private final Queue<T> items;
 
-	private FifoWaitlist(final Collection<? extends T> items) {
-		this.items = new ArrayDeque<>(checkNotNull(items));
-	}
+    private FifoWaitlist(final Collection<? extends T> items) {
+        this.items = new ArrayDeque<>(checkNotNull(items));
+    }
 
-	public static <T> FifoWaitlist<T> create(final Collection<? extends T> items) {
-		return new FifoWaitlist<>(items);
-	}
+    public static <T> FifoWaitlist<T> create(final Collection<? extends T> items) {
+        return new FifoWaitlist<>(items);
+    }
 
-	public static <T> FifoWaitlist<T> create() {
-		return new FifoWaitlist<>(Collections.emptySet());
-	}
+    public static <T> FifoWaitlist<T> create() {
+        return new FifoWaitlist<>(Collections.emptySet());
+    }
 
-	@Override
-	public void add(final T item) {
-		items.add(item);
-	}
+    @Override
+    public void add(final T item) {
+        items.add(item);
+    }
 
-	@Override
-	public void addAll(final Collection<? extends T> items) {
-		this.items.addAll(checkNotNull(items));
-	}
+    @Override
+    public void addAll(final Collection<? extends T> items) {
+        this.items.addAll(checkNotNull(items));
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return items.isEmpty();
-	}
+    @Override
+    public boolean isEmpty() {
+        return items.isEmpty();
+    }
 
-	@Override
-	public T remove() {
-		return items.remove();
-	}
+    @Override
+    public T remove() {
+        return items.remove();
+    }
 
-	@Override
-	public void clear() {
-		items.clear();
-	}
+    @Override
+    public void clear() {
+        items.clear();
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(items).toString();
-	}
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(items).toString();
+    }
 
-	@Override
-	public int size() {
-		return items.size();
-	}
+    @Override
+    public int size() {
+        return items.size();
+    }
 
-	@Override
-	public void addAll(final Stream<? extends T> items) {
-		checkNotNull(items);
-		items.forEach(this::add);
-	}
+    @Override
+    public void addAll(final Stream<? extends T> items) {
+        checkNotNull(items);
+        items.forEach(this::add);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.cli
 
 import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException
-import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import hu.bme.mit.theta.solver.validator.SolverValidationException
 import kotlin.system.exitProcess
@@ -40,35 +39,35 @@ enum class ExitCodes(val code: Int) {
 
 data class ErrorCodeException(val code: Int) : Exception()
 
-fun <T> exitOnError(body: () -> T): T {
-    try{
+fun <T> exitOnError(stacktrace: Boolean, body: () -> T): T {
+    try {
         return body();
-    } catch(e: SmtLibSolverException) {
-        e.printStackTrace();
+    } catch (e: SmtLibSolverException) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
-    } catch(e: SolverValidationException) {
-        e.printStackTrace();
+    } catch (e: SolverValidationException) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
-    } catch(e: Z3Exception) {
-        e.printStackTrace();
+    } catch (e: Z3Exception) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SOLVER_ERROR.code);
-    } catch(e: ClassCastException) {
-        e.printStackTrace();
+    } catch (e: ClassCastException) {
+        if (stacktrace) e.printStackTrace();
         if (e.message?.contains("com.microsoft.z3") == true)
             exitProcess(ExitCodes.SOLVER_ERROR.code);
         else
             exitProcess(ExitCodes.GENERIC_ERROR.code);
-    } catch(e: NotSolvableException) {
-        e.printStackTrace();
+    } catch (e: NotSolvableException) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.VERIFICATION_STUCK.code);
-    } catch(e: OutOfMemoryError) {
-        e.printStackTrace();
+    } catch (e: OutOfMemoryError) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.OUT_OF_MEMORY.code);
     } catch (e: RuntimeException) {
-        e.printStackTrace();
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.SERVER_ERROR.code);
-    } catch(e: Exception) {
-        e.printStackTrace();
+    } catch (e: Exception) {
+        if (stacktrace) e.printStackTrace();
         exitProcess(ExitCodes.GENERIC_ERROR.code);
     }
 }

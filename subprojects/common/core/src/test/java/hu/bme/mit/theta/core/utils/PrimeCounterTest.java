@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,66 +38,66 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public final class PrimeCounterTest {
 
-	@Parameter(value = 0)
-	public String exprString;
+    @Parameter(value = 0)
+    public String exprString;
 
-	@Parameter(value = 1)
-	public int nPrimesOnX;
+    @Parameter(value = 1)
+    public int nPrimesOnX;
 
-	@Parameter(value = 2)
-	public int nPrimesOnY;
+    @Parameter(value = 2)
+    public int nPrimesOnY;
 
-	@Parameters
-	public static Collection<Object[]> data() {
-		return asList(new Object[][]{
+    @Parameters
+    public static Collection<Object[]> data() {
+        return asList(new Object[][]{
 
-				{"true", 0, 0},
+                {"true", 0, 0},
 
-				{"(true)'", 0, 0},
+                {"(true)'", 0, 0},
 
-				{"x", 0, 0},
+                {"x", 0, 0},
 
-				{"not x'", 1, 0},
+                {"not x'", 1, 0},
 
-				{"x''", 2, 0},
+                {"x''", 2, 0},
 
-				{"x' and y", 1, 0},
+                {"x' and y", 1, 0},
 
-				{"(x imply y)'", 1, 1},
+                {"(x imply y)'", 1, 1},
 
-				{"(x' iff y)'", 2, 1},
+                {"(x' iff y)'", 2, 1},
 
-				{"a", 0, 0},
+                {"a", 0, 0},
 
-				{"a'", 0, 0},
+                {"a'", 0, 0},
 
-				{"x' and a", 1, 0},
+                {"x' and a", 1, 0},
 
-				{"(x' or a)'", 2, 0}
+                {"(x' or a)'", 2, 0}
 
-		});
-	}
+        });
+    }
 
-	@Test
-	public void test() {
-		// Arrange
-		final ConstDecl<BoolType> a = Const("a", Bool());
-		final VarDecl<BoolType> x = Var("x", Bool());
-		final VarDecl<BoolType> y = Var("y", Bool());
+    @Test
+    public void test() {
+        // Arrange
+        final ConstDecl<BoolType> a = Const("a", Bool());
+        final VarDecl<BoolType> x = Var("x", Bool());
+        final VarDecl<BoolType> y = Var("y", Bool());
 
-		final CoreDslManager manager = new CoreDslManager();
-		manager.declare(a);
-		manager.declare(x);
-		manager.declare(y);
+        final CoreDslManager manager = new CoreDslManager();
+        manager.declare(a);
+        manager.declare(x);
+        manager.declare(y);
 
-		final Expr<?> expr = manager.parseExpr(exprString);
+        final Expr<?> expr = manager.parseExpr(exprString);
 
-		// Act
-		final VarIndexing indexing = PathUtils.countPrimes(expr);
+        // Act
+        final VarIndexing indexing = PathUtils.countPrimes(expr);
 
-		// Assert
-		assertEquals(nPrimesOnX, indexing.get(x));
-		assertEquals(nPrimesOnY, indexing.get(y));
-	}
+        // Assert
+        assertEquals(nPrimesOnX, indexing.get(x));
+        assertEquals(nPrimesOnY, indexing.get(y));
+    }
 
 }

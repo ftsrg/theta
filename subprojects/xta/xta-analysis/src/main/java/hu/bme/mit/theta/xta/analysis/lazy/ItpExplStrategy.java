@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
+
 import hu.bme.mit.theta.common.container.Containers;
+
 import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Analysis;
@@ -45,93 +47,99 @@ import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, ItpExplState> {
 
-	private final Lens<S, ItpExplState> lens;
-	private final Analysis<ItpExplState, XtaAction, UnitPrec> analysis;
-	private final Function<ItpExplState, ?> projection;
+    private final Lens<S, ItpExplState> lens;
+    private final Analysis<ItpExplState, XtaAction, UnitPrec> analysis;
+    private final Function<ItpExplState, ?> projection;
 
-	public ItpExplStrategy(final XtaSystem system, final Lens<S, ItpExplState> lens) {
-		this.lens = checkNotNull(lens);
-		analysis = ItpExplAnalysis.create(XtaExplAnalysis.create(system));
-		projection = s -> unit();
-	}
+    public ItpExplStrategy(final XtaSystem system, final Lens<S, ItpExplState> lens) {
+        this.lens = checkNotNull(lens);
+        analysis = ItpExplAnalysis.create(XtaExplAnalysis.create(system));
+        projection = s -> unit();
+    }
 
-	@Override
-	public final Analysis<ItpExplState, XtaAction, UnitPrec> getAnalysis() {
-		return analysis;
-	}
+    @Override
+    public final Analysis<ItpExplState, XtaAction, UnitPrec> getAnalysis() {
+        return analysis;
+    }
 
-	@Override
-	public final Function<ItpExplState, ?> getProjection() {
-		return projection;
-	}
+    @Override
+    public final Function<ItpExplState, ?> getProjection() {
+        return projection;
+    }
 
-	@Override
-	public final boolean mightCover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer) {
-		final ExplState covereeExpl = lens.get(coveree.getState()).getConcrState();
-		final ExplState covererExpl = lens.get(coverer.getState()).getAbstrState();
-		return covereeExpl.isLeq(covererExpl);
-	}
+    @Override
+    public final boolean mightCover(final ArgNode<S, XtaAction> coveree,
+                                    final ArgNode<S, XtaAction> coverer) {
+        final ExplState covereeExpl = lens.get(coveree.getState()).getConcrState();
+        final ExplState covererExpl = lens.get(coverer.getState()).getAbstrState();
+        return covereeExpl.isLeq(covererExpl);
+    }
 
-	@Override
-	public final void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
-							final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
-		stats.startCloseExplRefinement();
-		final ItpExplState covererState = lens.get(coverer.getState());
-		blockExpl(coveree, Not(covererState.toExpr()), uncoveredNodes, stats);
-		stats.stopCloseExplRefinement();
-	}
+    @Override
+    public final void cover(final ArgNode<S, XtaAction> coveree,
+                            final ArgNode<S, XtaAction> coverer,
+                            final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+        stats.startCloseExplRefinement();
+        final ItpExplState covererState = lens.get(coverer.getState());
+        blockExpl(coveree, Not(covererState.toExpr()), uncoveredNodes, stats);
+        stats.stopCloseExplRefinement();
+    }
 
-	@Override
-	public final void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
-							final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
-		assert lens.get(succState).isBottom();
-		stats.startExpandExplRefinement();
-		final Expr<BoolType> preImage = XtaExplUtils.pre(True(), action);
-		blockExpl(node, preImage, uncoveredNodes, stats);
-		stats.stopExpandExplRefinement();
-	}
+    @Override
+    public final void block(final ArgNode<S, XtaAction> node, final XtaAction action,
+                            final S succState,
+                            final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+        assert lens.get(succState).isBottom();
+        stats.startExpandExplRefinement();
+        final Expr<BoolType> preImage = XtaExplUtils.pre(True(), action);
+        blockExpl(node, preImage, uncoveredNodes, stats);
+        stats.stopExpandExplRefinement();
+    }
 
-	////
+    ////
 
-	protected abstract Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
-										   final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats);
+    protected abstract Valuation blockExpl(final ArgNode<S, XtaAction> node,
+                                           final Expr<BoolType> expr,
+                                           final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats);
 
-	protected final Lens<S, ItpExplState> getLens() {
-		return lens;
-	}
+    protected final Lens<S, ItpExplState> getLens() {
+        return lens;
+    }
 
-	protected final void strengthen(final ArgNode<S, XtaAction> node, final Valuation interpolant) {
-		final S state = node.getState();
-		final ItpExplState itpExplState = lens.get(state);
-		final ExplState concreteExpl = itpExplState.getConcrState();
-		final ExplState abstractExpl = itpExplState.getAbstrState();
+    protected final void strengthen(final ArgNode<S, XtaAction> node, final Valuation interpolant) {
+        final S state = node.getState();
+        final ItpExplState itpExplState = lens.get(state);
+        final ExplState concreteExpl = itpExplState.getConcrState();
+        final ExplState abstractExpl = itpExplState.getAbstrState();
 
-		final Collection<Decl<?>> newVars = Containers.createSet();
-		newVars.addAll(interpolant.getDecls());
-		newVars.addAll(abstractExpl.getDecls());
-		final ImmutableValuation.Builder builder = ImmutableValuation.builder();
-		for (final Decl<?> decl : newVars) {
-			builder.put(decl, concreteExpl.eval(decl).get());
-		}
-		final Valuation val = builder.build();
-		final ExplState newAbstractExpl = ExplState.of(val);
+        final Collection<Decl<?>> newVars = Containers.createSet();
+        newVars.addAll(interpolant.getDecls());
+        newVars.addAll(abstractExpl.getDecls());
+        final ImmutableValuation.Builder builder = ImmutableValuation.builder();
+        for (final Decl<?> decl : newVars) {
+            builder.put(decl, concreteExpl.eval(decl).get());
+        }
+        final Valuation val = builder.build();
+        final ExplState newAbstractExpl = ExplState.of(val);
 
-		final ItpExplState newItpExplState = itpExplState.withAbstrState(newAbstractExpl);
-		final S newState = lens.set(state, newItpExplState);
-		node.setState(newState);
-	}
+        final ItpExplState newItpExplState = itpExplState.withAbstrState(newAbstractExpl);
+        final S newState = lens.set(state, newItpExplState);
+        node.setState(newState);
+    }
 
-	protected final void maintainCoverage(final ArgNode<S, XtaAction> node, final Valuation interpolant,
-										  final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
-		final Collection<ArgNode<S, XtaAction>> uncovered = node.getCoveredNodes()
-				.filter(covered -> shouldUncover(covered, interpolant)).collect(toList());
-		uncoveredNodes.addAll(uncovered);
-		uncovered.forEach(ArgNode::unsetCoveringNode);
-	}
+    protected final void maintainCoverage(final ArgNode<S, XtaAction> node,
+                                          final Valuation interpolant,
+                                          final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
+        final Collection<ArgNode<S, XtaAction>> uncovered = node.getCoveredNodes()
+                .filter(covered -> shouldUncover(covered, interpolant)).collect(toList());
+        uncoveredNodes.addAll(uncovered);
+        uncovered.forEach(ArgNode::unsetCoveringNode);
+    }
 
-	private boolean shouldUncover(final ArgNode<S, XtaAction> covered, final Valuation interpolant) {
-		final ItpExplState coveredExpl = lens.get(covered.getState());
-		return !coveredExpl.getAbstrState().isLeq(interpolant);
-	}
+    private boolean shouldUncover(final ArgNode<S, XtaAction> covered,
+                                  final Valuation interpolant) {
+        final ItpExplState coveredExpl = lens.get(covered.getState());
+        return !coveredExpl.getAbstrState().isLeq(interpolant);
+    }
 
 }

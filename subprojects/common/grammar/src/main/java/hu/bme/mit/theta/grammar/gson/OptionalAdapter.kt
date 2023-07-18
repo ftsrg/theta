@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,12 +24,13 @@ import com.google.gson.stream.JsonWriter
 import java.util.*
 import kotlin.reflect.KClass
 
-class OptionalAdapter<A: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Optional<A>>() {
+class OptionalAdapter<A : Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Optional<A>>() {
+
     private lateinit var gson: Gson
     override fun write(writer: JsonWriter, value: Optional<A>) {
         initGson()
         writer.beginObject()
-        if(value.isPresent) {
+        if (value.isPresent) {
             writer.name("type").value(value.get()::class.qualifiedName)
             writer.name("value")
             gson.toJson(gson.toJsonTree(value.get()), writer)
@@ -45,7 +46,7 @@ class OptionalAdapter<A: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Option
             lateinit var clazz: KClass<*>
             lateinit var value: Any
             while (reader.peek() != JsonToken.END_OBJECT) {
-                when(reader.nextName()) {
+                when (reader.nextName()) {
                     "type" -> clazz = Class.forName(reader.nextString()).kotlin
                     "value" -> value = gson.fromJson(reader, clazz.java)
                 }
@@ -57,6 +58,6 @@ class OptionalAdapter<A: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Option
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import hu.bme.mit.theta.common.logging.Logger;
@@ -15,6 +30,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkState;
 
 public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
+
     private Path solverPath;
     private String[] solverArgs;
 
@@ -27,47 +43,50 @@ public final class GenericSmtLibSolverInstaller extends SmtLibSolverInstaller.De
         return "generic";
     }
 
-    public void install(final Path home, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+    public void install(final Path home, final String version, final Path solverPath,
+                        final String[] solverArgs) throws SmtLibSolverInstallerException {
         this.solverPath = solverPath;
         this.solverArgs = solverArgs;
         super.install(home, version, version, solverPath);
     }
 
     @Override
-    protected void installSolver(Path installDir, String version) throws SmtLibSolverInstallerException {
+    protected void installSolver(Path installDir, String version)
+            throws SmtLibSolverInstallerException {
         checkState(solverPath != null);
         try {
             final var solverFilePath = solverFile(installDir);
-            Files.writeString(solverFilePath, solverPath.toAbsolutePath().toString(), StandardCharsets.UTF_8);
+            Files.writeString(solverFilePath, solverPath.toAbsolutePath().toString(),
+                    StandardCharsets.UTF_8);
 
             final var solverInfoPath = infoFile(installDir);
             final var info = Files.readString(solverInfoPath, StandardCharsets.UTF_8);
             Files.writeString(
-                solverInfoPath,
-                info + String.format("binary=%s\n", solverPath.toAbsolutePath().toString()),
-                StandardCharsets.UTF_8
+                    solverInfoPath,
+                    info + String.format("binary=%s\n", solverPath.toAbsolutePath().toString()),
+                    StandardCharsets.UTF_8
             );
 
             solverPath = null;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
         }
     }
 
     @Override
-    protected void uninstallSolver(Path installDir, String version) throws SmtLibSolverInstallerException {
+    protected void uninstallSolver(Path installDir, String version)
+            throws SmtLibSolverInstallerException {
         try {
             final var solverFilePath = solverFile(installDir);
             Files.delete(solverFilePath);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new SmtLibSolverInstallerException(String.format("Error: %s", e.getMessage()), e);
         }
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) {
+    public SolverFactory getSolverFactory(final Path installDir, final String version,
+                                          final Path solverPath, final String[] solverArgs) {
         return GenericSmtLibSolverFactory.create(solverPath, solverArgs);
     }
 

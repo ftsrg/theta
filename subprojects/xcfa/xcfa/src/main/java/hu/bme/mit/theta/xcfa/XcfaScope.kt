@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import hu.bme.mit.theta.common.dsl.SymbolTable
 import java.util.*
 
 class XcfaScope(
-        private val symbolTable: SymbolTable = SymbolTable(),
-        private val enclosingScope: Scope? = null,
+    private val symbolTable: SymbolTable = SymbolTable(),
+    private val enclosingScope: Scope? = null,
 ) : MutableScope {
 
     override fun enclosingScope(): Optional<out Scope> {
@@ -33,7 +33,7 @@ class XcfaScope(
 
     override fun resolve(name: String?): Optional<out Symbol> {
         val resolved = symbolTable[name]
-        return if(resolved.isEmpty)
+        return if (resolved.isEmpty)
             enclosingScope?.resolve(name) ?: Optional.empty()
         else
             resolved

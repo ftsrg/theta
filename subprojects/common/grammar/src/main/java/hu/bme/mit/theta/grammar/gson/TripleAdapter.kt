@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import kotlin.reflect.KClass
 
-class TripleAdapter<A: Any, B: Any, C: Any>(val gsonSupplier: () -> Gson) : TypeAdapter<Triple<A, B, C>>() {
+class TripleAdapter<A : Any, B : Any, C : Any>(val gsonSupplier: () -> Gson) :
+    TypeAdapter<Triple<A, B, C>>() {
+
     private lateinit var gson: Gson
     override fun write(writer: JsonWriter, value: Triple<A, B, C>) {
         initGson()
@@ -66,13 +68,13 @@ class TripleAdapter<A: Any, B: Any, C: Any>(val gsonSupplier: () -> Gson) : Type
             lateinit var clazz: KClass<*>
             lateinit var value: Any
             while (reader.peek() != JsonToken.END_OBJECT) {
-                when(reader.nextName()) {
+                when (reader.nextName()) {
                     "type" -> clazz = Class.forName(reader.nextString()).kotlin
                     "value" -> value = gson.fromJson(reader, clazz.java)
                 }
             }
             reader.endObject()
-            when(nextName) {
+            when (nextName) {
                 "first" -> a = value as A
                 "second" -> b = value as B
                 "third" -> c = value as C
@@ -84,6 +86,6 @@ class TripleAdapter<A: Any, B: Any, C: Any>(val gsonSupplier: () -> Gson) : Type
     }
 
     private fun initGson() {
-        if(!this::gson.isInitialized) gson = gsonSupplier()
+        if (!this::gson.isInitialized) gson = gsonSupplier()
     }
 }

@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import hu.bme.mit.theta.core.decl.Decl;
@@ -10,6 +25,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationMan
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
 
 public class GenericSmtLibTransformationManager implements SmtLibTransformationManager {
+
     private final SmtLibTypeTransformer typeTransformer;
     private final SmtLibDeclTransformer declTransformer;
     private final SmtLibExprTransformer exprTransformer;
@@ -35,17 +51,19 @@ public class GenericSmtLibTransformationManager implements SmtLibTransformationM
         return exprTransformer.toTerm(expr);
     }
 
-    protected SmtLibTypeTransformer instantiateTypeTransformer(final SmtLibTransformationManager transformer) {
+    protected SmtLibTypeTransformer instantiateTypeTransformer(
+            final SmtLibTransformationManager transformer) {
         return new GenericSmtLibTypeTransformer(transformer);
     }
 
     protected SmtLibDeclTransformer instantiateDeclTransformer(
-        final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable
     ) {
         return new GenericSmtLibDeclTransformer(transformer, symbolTable);
     }
 
-    protected SmtLibExprTransformer instantiateExprTransformer(final SmtLibTransformationManager transformer) {
+    protected SmtLibExprTransformer instantiateExprTransformer(
+            final SmtLibTransformationManager transformer) {
         return new GenericSmtLibExprTransformer(transformer);
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.xcfa.model.MetaData
 
-class MetaDataAdapter: TypeAdapter<MetaData>() {
+class MetaDataAdapter : TypeAdapter<MetaData>() {
+
     private val gson = GsonBuilder().create()
 
     override fun write(writer: JsonWriter, value: MetaData) {

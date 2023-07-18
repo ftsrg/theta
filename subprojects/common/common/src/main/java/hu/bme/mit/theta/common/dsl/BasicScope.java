@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,40 +22,40 @@ import java.util.Optional;
 
 public final class BasicScope implements Scope {
 
-	private final Optional<Scope> enclosingScope;
-	private final SymbolTable symbolTable;
+    private final Optional<Scope> enclosingScope;
+    private final SymbolTable symbolTable;
 
-	public BasicScope(final Scope eclosingScope) {
-		this.enclosingScope = Optional.ofNullable(eclosingScope);
-		symbolTable = new SymbolTable();
-	}
+    public BasicScope(final Scope eclosingScope) {
+        this.enclosingScope = Optional.ofNullable(eclosingScope);
+        symbolTable = new SymbolTable();
+    }
 
-	////
+    ////
 
-	public void declare(final Symbol symbol) {
-		symbolTable.add(symbol);
-	}
+    public void declare(final Symbol symbol) {
+        symbolTable.add(symbol);
+    }
 
-	public void declareAll(final Collection<? extends Symbol> symbols) {
-		symbolTable.addAll(symbols);
-	}
+    public void declareAll(final Collection<? extends Symbol> symbols) {
+        symbolTable.addAll(symbols);
+    }
 
-	////
+    ////
 
-	@Override
-	public Optional<Scope> enclosingScope() {
-		return enclosingScope;
-	}
+    @Override
+    public Optional<Scope> enclosingScope() {
+        return enclosingScope;
+    }
 
-	@Override
-	public Optional<? extends Symbol> resolve(final String name) {
-		checkNotNull(name);
-		final Optional<Symbol> symbol = symbolTable.get(name);
-		if (symbol.isPresent() || !enclosingScope.isPresent()) {
-			return symbol;
-		} else {
-			return enclosingScope.get().resolve(name);
-		}
-	}
+    @Override
+    public Optional<? extends Symbol> resolve(final String name) {
+        checkNotNull(name);
+        final Optional<Symbol> symbol = symbolTable.get(name);
+        if (symbol.isPresent() || !enclosingScope.isPresent()) {
+            return symbol;
+        } else {
+            return enclosingScope.get().resolve(name);
+        }
+    }
 
 }

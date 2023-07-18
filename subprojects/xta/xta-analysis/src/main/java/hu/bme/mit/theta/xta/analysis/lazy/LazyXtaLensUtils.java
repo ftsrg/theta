@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.xta.analysis.lazy;
 
 import hu.bme.mit.theta.core.utils.Lens;
@@ -24,6 +39,7 @@ public final class LazyXtaLensUtils {
                     return LazyState.of(concrState, abstrState);
                 }
             }
+
             @Override
             public LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> set(
                     LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> lazyState,
@@ -50,6 +66,7 @@ public final class LazyXtaLensUtils {
                     return LazyState.of(concrState, abstrState);
                 }
             }
+
             @Override
             public LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> set(
                     LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> lazyState,
@@ -68,6 +85,7 @@ public final class LazyXtaLensUtils {
             public DConcr get(LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> state) {
                 return state.getConcrState().getState().getState1();
             }
+
             @Override
             public LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> set(
                     LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> lazyState,
@@ -88,6 +106,7 @@ public final class LazyXtaLensUtils {
             public DAbstr get(LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> state) {
                 return state.getAbstrState().getState().getState1();
             }
+
             @Override
             public LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> set(
                     LazyState<XtaState<Prod2State<DConcr, ?>>, XtaState<Prod2State<DAbstr, ?>>> lazyState,
@@ -108,6 +127,7 @@ public final class LazyXtaLensUtils {
             public CConcr get(LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> state) {
                 return state.getConcrState().getState().getState2();
             }
+
             @Override
             public LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> set(
                     LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> lazyState,
@@ -128,6 +148,7 @@ public final class LazyXtaLensUtils {
             public CAbstr get(LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> state) {
                 return state.getAbstrState().getState().getState2();
             }
+
             @Override
             public LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> set(
                     LazyState<XtaState<Prod2State<?, CConcr>>, XtaState<Prod2State<?, CAbstr>>> lazyState,
@@ -148,6 +169,7 @@ public final class LazyXtaLensUtils {
             public Prod2State<DConcr, CConcr> get(LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>> state) {
                 return state.getConcrState().getState();
             }
+
             @Override
             public LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>> set(
                     LazyState<XtaState<Prod2State<DConcr, CConcr>>, XtaState<Prod2State<DAbstr, CAbstr>>> lazyState,

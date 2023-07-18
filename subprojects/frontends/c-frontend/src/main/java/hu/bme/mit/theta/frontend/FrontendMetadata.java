@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@
 package hu.bme.mit.theta.frontend;
 
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
-import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -31,43 +27,38 @@ import java.util.Set;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FrontendMetadata {
-	private static final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new LinkedHashMap<>();
-	private static final Map<Tuple2<Object, Integer>, Map<String, Object>> lookupKeyValue = new LinkedHashMap<>();
+    private final Map<Tuple2<String, ?>, Set<Object>> lookupOwner = new LinkedHashMap<>();
+    private final Map<Tuple2<Object, Integer>, Map<String, Object>> lookupKeyValue = new LinkedHashMap<>();
 
 
-	public static <T> Set<Object> lookupMetadata(String key, T value) {
-		return lookupOwner.getOrDefault(Tuple2.of(key, value), Set.of());
-	}
+    public <T> Set<Object> lookupMetadata(String key, T value) {
+        return lookupOwner.getOrDefault(Tuple2.of(key, value), Set.of());
+    }
 
-	public static <X> Map<String, ?> lookupMetadata(X owner) {
-		return lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of());
-	}
+    public <X> Map<String, ?> lookupMetadata(X owner) {
+        return lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of());
+    }
 
-	public static <X> Optional<Object> getMetadataValue(X owner, String key) {
-		return Optional.ofNullable(lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of()).get(key));
-	}
+    public <X> Optional<Object> getMetadataValue(X owner, String key) {
+        return Optional.ofNullable(lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), Map.of()).get(key));
+    }
 
-	public static <T, X> void create(X owner, String key, T value) {
-		checkNotNull(value);
-		Tuple2<String, T> tup = Tuple2.of(key, value);
-		Set<Object> set = lookupOwner.getOrDefault(tup, new LinkedHashSet<>());
-		set.add(owner);
-		lookupOwner.put(tup, set);
-		Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), new LinkedHashMap<>());
-		keyvalues.put(key, value);
-		lookupKeyValue.put(Tuple2.of(owner, getHashCode(owner)), keyvalues);
-	}
+    public <T, X> void create(X owner, String key, T value) {
+        checkNotNull(value);
+        Tuple2<String, T> tup = Tuple2.of(key, value);
+        Set<Object> set = lookupOwner.getOrDefault(tup, new LinkedHashSet<>());
+        set.add(owner);
+        lookupOwner.put(tup, set);
+        Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(Tuple2.of(owner, getHashCode(owner)), new LinkedHashMap<>());
+        keyvalues.put(key, value);
+        lookupKeyValue.put(Tuple2.of(owner, getHashCode(owner)), keyvalues);
+    }
 
-	private static int getHashCode(Object object) {
-		if (object instanceof String) return object.hashCode();
-		else return System.identityHashCode(object);
-	}
-
-	public static void clear() {
-		lookupKeyValue.clear();
-		lookupOwner.clear();
-		FunctionVisitor.instance.clear();
-		GlobalDeclUsageVisitor.instance.clear();
-		TypedefVisitor.instance.clear();
-	}
+    private static int getHashCode(Object object) {
+        if (object instanceof String) {
+            return object.hashCode();
+        } else {
+            return System.identityHashCode(object);
+        }
+    }
 }

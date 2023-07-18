@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -149,1999 +149,2001 @@ import static hu.bme.mit.theta.core.utils.SimplifierLevel.*;
 
 public final class ExprSimplifier {
 
-	private final SimplifierLevel level;
+    private final SimplifierLevel level;
 
-	private ExprSimplifier(final SimplifierLevel level) {
-		this.level = level;
-	}
+    private ExprSimplifier(final SimplifierLevel level) {
+        this.level = level;
+    }
 
-	public static ExprSimplifier create() {
-		return create(SimplifierLevel.FULL);
-	}
-	public static ExprSimplifier create(final SimplifierLevel level) {
-		return new ExprSimplifier(level);
-	}
+    public static ExprSimplifier create() {
+        return create(SimplifierLevel.FULL);
+    }
 
-	private final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
+    public static ExprSimplifier create(final SimplifierLevel level) {
+        return new ExprSimplifier(level);
+    }
 
-			// Boolean
+    private final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
 
-			.addCase(NotExpr.class, this::simplifyNot)
+            // Boolean
 
-			.addCase(ImplyExpr.class, this::simplifyImply)
+            .addCase(NotExpr.class, this::simplifyNot)
 
-			.addCase(IffExpr.class, this::simplifyIff)
+            .addCase(ImplyExpr.class, this::simplifyImply)
 
-			.addCase(XorExpr.class, this::simplifyXor)
+            .addCase(IffExpr.class, this::simplifyIff)
 
-			.addCase(AndExpr.class, this::simplifyAnd)
+            .addCase(XorExpr.class, this::simplifyXor)
 
-			.addCase(OrExpr.class, this::simplifyOr)
+            .addCase(AndExpr.class, this::simplifyAnd)
 
-			// Rational
+            .addCase(OrExpr.class, this::simplifyOr)
 
-			.addCase(RatAddExpr.class, this::simplifyRatAdd)
+            // Rational
 
-			.addCase(RatSubExpr.class, this::simplifyRatSub)
+            .addCase(RatAddExpr.class, this::simplifyRatAdd)
 
-			.addCase(RatPosExpr.class, this::simplifyRatPos)
+            .addCase(RatSubExpr.class, this::simplifyRatSub)
 
-			.addCase(RatNegExpr.class, this::simplifyRatNeg)
+            .addCase(RatPosExpr.class, this::simplifyRatPos)
 
-			.addCase(RatMulExpr.class, this::simplifyRatMul)
+            .addCase(RatNegExpr.class, this::simplifyRatNeg)
 
-			.addCase(RatDivExpr.class, this::simplifyRatDiv)
+            .addCase(RatMulExpr.class, this::simplifyRatMul)
 
-			.addCase(RatEqExpr.class, this::simplifyRatEq)
+            .addCase(RatDivExpr.class, this::simplifyRatDiv)
 
-			.addCase(RatNeqExpr.class, this::simplifyRatNeq)
+            .addCase(RatEqExpr.class, this::simplifyRatEq)
 
-			.addCase(RatGeqExpr.class, this::simplifyRatGeq)
+            .addCase(RatNeqExpr.class, this::simplifyRatNeq)
 
-			.addCase(RatGtExpr.class, this::simplifyRatGt)
+            .addCase(RatGeqExpr.class, this::simplifyRatGeq)
 
-			.addCase(RatLeqExpr.class, this::simplifyRatLeq)
+            .addCase(RatGtExpr.class, this::simplifyRatGt)
 
-			.addCase(RatLtExpr.class, this::simplifyRatLt)
+            .addCase(RatLeqExpr.class, this::simplifyRatLeq)
 
-			.addCase(RatToIntExpr.class, this::simplifyRatToInt)
+            .addCase(RatLtExpr.class, this::simplifyRatLt)
 
-			// Integer
+            .addCase(RatToIntExpr.class, this::simplifyRatToInt)
 
-			.addCase(IntToRatExpr.class, this::simplifyIntToRat)
+            // Integer
 
-			.addCase(IntAddExpr.class, this::simplifyIntAdd)
+            .addCase(IntToRatExpr.class, this::simplifyIntToRat)
 
-			.addCase(IntSubExpr.class, this::simplifyIntSub)
+            .addCase(IntAddExpr.class, this::simplifyIntAdd)
 
-			.addCase(IntPosExpr.class, this::simplifyIntPos)
+            .addCase(IntSubExpr.class, this::simplifyIntSub)
 
-			.addCase(IntNegExpr.class, this::simplifyIntNeg)
+            .addCase(IntPosExpr.class, this::simplifyIntPos)
 
-			.addCase(IntMulExpr.class, this::simplifyIntMul)
+            .addCase(IntNegExpr.class, this::simplifyIntNeg)
 
-			.addCase(IntDivExpr.class, this::simplifyIntDiv)
+            .addCase(IntMulExpr.class, this::simplifyIntMul)
 
-			.addCase(IntModExpr.class, this::simplifyMod)
+            .addCase(IntDivExpr.class, this::simplifyIntDiv)
 
-			.addCase(IntRemExpr.class, this::simplifyRem)
+            .addCase(IntModExpr.class, this::simplifyMod)
 
-			.addCase(IntEqExpr.class, this::simplifyIntEq)
+            .addCase(IntRemExpr.class, this::simplifyRem)
 
-			.addCase(IntNeqExpr.class, this::simplifyIntNeq)
+            .addCase(IntEqExpr.class, this::simplifyIntEq)
 
-			.addCase(IntGeqExpr.class, this::simplifyIntGeq)
+            .addCase(IntNeqExpr.class, this::simplifyIntNeq)
 
-			.addCase(IntGtExpr.class, this::simplifyIntGt)
+            .addCase(IntGeqExpr.class, this::simplifyIntGeq)
 
-			.addCase(IntLeqExpr.class, this::simplifyIntLeq)
+            .addCase(IntGtExpr.class, this::simplifyIntGt)
 
-			.addCase(IntLtExpr.class, this::simplifyIntLt)
+            .addCase(IntLeqExpr.class, this::simplifyIntLeq)
 
-			// Array
+            .addCase(IntLtExpr.class, this::simplifyIntLt)
 
-			.addCase(ArrayReadExpr.class, this::simplifyArrayRead)
+            // Array
 
-			.addCase(ArrayWriteExpr.class, this::simplifyArrayWrite)
+            .addCase(ArrayReadExpr.class, this::simplifyArrayRead)
 
-			//.addCase(ArrayInitExpr.class, this::simplifyArrayInit)
-			.addCase(ArrayInitExpr.class, (arrayInitExpr, valuation) -> this.simplifyArrayInit(arrayInitExpr, valuation))
+            .addCase(ArrayWriteExpr.class, this::simplifyArrayWrite)
 
-			// Bitvectors
+            //.addCase(ArrayInitExpr.class, this::simplifyArrayInit)
+            .addCase(ArrayInitExpr.class, (arrayInitExpr, valuation) -> this.simplifyArrayInit(arrayInitExpr, valuation))
 
-			.addCase(BvConcatExpr.class, this::simplifyBvConcat)
+            // Bitvectors
 
-			.addCase(BvExtractExpr.class, this::simplifyBvExtract)
+            .addCase(BvConcatExpr.class, this::simplifyBvConcat)
 
-			.addCase(BvZExtExpr.class, this::simplifyBvZExt)
+            .addCase(BvExtractExpr.class, this::simplifyBvExtract)
 
-			.addCase(BvSExtExpr.class, this::simplifyBvSExt)
+            .addCase(BvZExtExpr.class, this::simplifyBvZExt)
 
-			.addCase(BvAddExpr.class, this::simplifyBvAdd)
+            .addCase(BvSExtExpr.class, this::simplifyBvSExt)
 
-			.addCase(BvSubExpr.class, this::simplifyBvSub)
+            .addCase(BvAddExpr.class, this::simplifyBvAdd)
 
-			.addCase(BvPosExpr.class, this::simplifyBvPos)
+            .addCase(BvSubExpr.class, this::simplifyBvSub)
 
-			.addCase(BvNegExpr.class, this::simplifyBvNeg)
+            .addCase(BvPosExpr.class, this::simplifyBvPos)
 
-			.addCase(BvMulExpr.class, this::simplifyBvMul)
+            .addCase(BvNegExpr.class, this::simplifyBvNeg)
 
-			.addCase(BvUDivExpr.class, this::simplifyBvUDiv)
+            .addCase(BvMulExpr.class, this::simplifyBvMul)
 
-			.addCase(BvSDivExpr.class, this::simplifyBvSDiv)
+            .addCase(BvUDivExpr.class, this::simplifyBvUDiv)
 
-			.addCase(BvSModExpr.class, this::simplifyBvSMod)
+            .addCase(BvSDivExpr.class, this::simplifyBvSDiv)
 
-			.addCase(BvURemExpr.class, this::simplifyBvURem)
+            .addCase(BvSModExpr.class, this::simplifyBvSMod)
 
-			.addCase(BvSRemExpr.class, this::simplifyBvSRem)
+            .addCase(BvURemExpr.class, this::simplifyBvURem)
 
-			.addCase(BvAndExpr.class, this::simplifyBvAnd)
+            .addCase(BvSRemExpr.class, this::simplifyBvSRem)
 
-			.addCase(BvOrExpr.class, this::simplifyBvOr)
+            .addCase(BvAndExpr.class, this::simplifyBvAnd)
 
-			.addCase(BvXorExpr.class, this::simplifyBvXor)
+            .addCase(BvOrExpr.class, this::simplifyBvOr)
 
-			.addCase(BvNotExpr.class, this::simplifyBvNot)
+            .addCase(BvXorExpr.class, this::simplifyBvXor)
 
-			.addCase(BvShiftLeftExpr.class, this::simplifyBvShiftLeft)
+            .addCase(BvNotExpr.class, this::simplifyBvNot)
 
-			.addCase(BvArithShiftRightExpr.class, this::simplifyBvArithShiftRight)
+            .addCase(BvShiftLeftExpr.class, this::simplifyBvShiftLeft)
 
-			.addCase(BvLogicShiftRightExpr.class, this::simplifyBvLogicShiftRight)
+            .addCase(BvArithShiftRightExpr.class, this::simplifyBvArithShiftRight)
 
-			.addCase(BvRotateLeftExpr.class, this::simplifyBvRotateLeft)
+            .addCase(BvLogicShiftRightExpr.class, this::simplifyBvLogicShiftRight)
 
-			.addCase(BvRotateRightExpr.class, this::simplifyBvRotateRight)
+            .addCase(BvRotateLeftExpr.class, this::simplifyBvRotateLeft)
 
-			.addCase(BvEqExpr.class, this::simplifyBvEq)
+            .addCase(BvRotateRightExpr.class, this::simplifyBvRotateRight)
 
-			.addCase(BvNeqExpr.class, this::simplifyBvNeq)
+            .addCase(BvEqExpr.class, this::simplifyBvEq)
 
-			.addCase(BvUGeqExpr.class, this::simplifyBvUGeq)
+            .addCase(BvNeqExpr.class, this::simplifyBvNeq)
 
-			.addCase(BvUGtExpr.class, this::simplifyBvUGt)
+            .addCase(BvUGeqExpr.class, this::simplifyBvUGeq)
 
-			.addCase(BvULeqExpr.class, this::simplifyBvULeq)
+            .addCase(BvUGtExpr.class, this::simplifyBvUGt)
 
-			.addCase(BvULtExpr.class, this::simplifyBvULt)
+            .addCase(BvULeqExpr.class, this::simplifyBvULeq)
 
-			.addCase(BvSGeqExpr.class, this::simplifyBvSGeq)
+            .addCase(BvULtExpr.class, this::simplifyBvULt)
 
-			.addCase(BvSGtExpr.class, this::simplifyBvSGt)
+            .addCase(BvSGeqExpr.class, this::simplifyBvSGeq)
 
-			.addCase(BvSLeqExpr.class, this::simplifyBvSLeq)
+            .addCase(BvSGtExpr.class, this::simplifyBvSGt)
 
-			.addCase(BvSLtExpr.class, this::simplifyBvSLt)
+            .addCase(BvSLeqExpr.class, this::simplifyBvSLeq)
 
-			// Floating points
+            .addCase(BvSLtExpr.class, this::simplifyBvSLt)
 
-			.addCase(FpAddExpr.class, this::simplifyFpAdd)
+            // Floating points
 
-			.addCase(FpSubExpr.class, this::simplifyFpSub)
+            .addCase(FpAddExpr.class, this::simplifyFpAdd)
 
-			.addCase(FpPosExpr.class, this::simplifyFpPos)
+            .addCase(FpSubExpr.class, this::simplifyFpSub)
 
-			.addCase(FpNegExpr.class, this::simplifyFpNeg)
+            .addCase(FpPosExpr.class, this::simplifyFpPos)
 
-			.addCase(FpMulExpr.class, this::simplifyFpMul)
+            .addCase(FpNegExpr.class, this::simplifyFpNeg)
 
-			.addCase(FpDivExpr.class, this::simplifyFpDiv)
+            .addCase(FpMulExpr.class, this::simplifyFpMul)
 
-			.addCase(FpEqExpr.class, this::simplifyFpEq)
+            .addCase(FpDivExpr.class, this::simplifyFpDiv)
 
-			.addCase(FpAssignExpr.class, this::simplifyFpAssign)
+            .addCase(FpEqExpr.class, this::simplifyFpEq)
 
-			.addCase(FpGeqExpr.class, this::simplifyFpGeq)
+            .addCase(FpAssignExpr.class, this::simplifyFpAssign)
 
-			.addCase(FpLeqExpr.class, this::simplifyFpLeq)
+            .addCase(FpGeqExpr.class, this::simplifyFpGeq)
 
-			.addCase(FpGtExpr.class, this::simplifyFpGt)
+            .addCase(FpLeqExpr.class, this::simplifyFpLeq)
 
-			.addCase(FpLtExpr.class, this::simplifyFpLt)
+            .addCase(FpGtExpr.class, this::simplifyFpGt)
 
-			.addCase(FpNeqExpr.class, this::simplifyFpNeq)
+            .addCase(FpLtExpr.class, this::simplifyFpLt)
 
-			.addCase(FpAbsExpr.class, this::simplifyFpAbs)
+            .addCase(FpNeqExpr.class, this::simplifyFpNeq)
 
-			.addCase(FpRoundToIntegralExpr.class, this::simplifyFpRoundToIntegral)
+            .addCase(FpAbsExpr.class, this::simplifyFpAbs)
 
-			.addCase(FpMaxExpr.class, this::simplifyFpMax)
+            .addCase(FpRoundToIntegralExpr.class, this::simplifyFpRoundToIntegral)
 
-			.addCase(FpMinExpr.class, this::simplifyFpMin)
+            .addCase(FpMaxExpr.class, this::simplifyFpMax)
 
-			.addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
+            .addCase(FpMinExpr.class, this::simplifyFpMin)
 
-			.addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
+            .addCase(FpSqrtExpr.class, this::simplifyFpSqrt)
 
-			.addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
+            .addCase(FpIsNanExpr.class, this::simplifyFpIsNan)
 
-			.addCase(FpToBvExpr.class, this::simplifyFpToBv)
+            .addCase(FpFromBvExpr.class, this::simplifyFpFromBv)
 
-			.addCase(FpToFpExpr.class, this::simplifyFpToFp)
+            .addCase(FpToBvExpr.class, this::simplifyFpToBv)
 
-			// General
+            .addCase(FpToFpExpr.class, this::simplifyFpToFp)
 
-			.addCase(RefExpr.class, this::simplifyRef)
+            // General
 
-			.addCase(IteExpr.class, this::simplifyIte)
+            .addCase(RefExpr.class, this::simplifyRef)
 
-			// Default
+            .addCase(IteExpr.class, this::simplifyIte)
 
-			.addDefault((o, val) -> {
-				final Expr<?> expr = (Expr<?>) o;
-				return expr.map(e -> simplify(e, val));
-			})
+            // Default
 
-			.build();
+            .addDefault((o, val) -> {
+                final Expr<?> expr = (Expr<?>) o;
+                return expr.map(e -> simplify(e, val));
+            })
 
-	@SuppressWarnings("unchecked")
-	public <T extends Type> Expr<T> simplify(final Expr<T> expr, final Valuation valuation) {
-		return (Expr<T>) TABLE.dispatch(expr, valuation);
-	}
+            .build();
 
-	/*
-	 * General
-	 */
+    @SuppressWarnings("unchecked")
+    public <T extends Type> Expr<T> simplify(final Expr<T> expr, final Valuation valuation) {
+        return (Expr<T>) TABLE.dispatch(expr, valuation);
+    }
 
-	private Expr<?> simplifyRef(final RefExpr<?> expr, final Valuation val) {
-		return simplifyGenericRef(expr, val);
-	}
+    /*
+     * General
+     */
 
-	// TODO Eliminate helper method once the Java compiler is able to handle
-	// this kind of type inference
-	private <DeclType extends Type> Expr<DeclType> simplifyGenericRef(final RefExpr<DeclType> expr,
-																			 final Valuation val) {
-		final Optional<LitExpr<DeclType>> eval = val.eval(expr.getDecl());
-		if (eval.isPresent()) {
-			return eval.get();
-		}
+    private Expr<?> simplifyRef(final RefExpr<?> expr, final Valuation val) {
+        return simplifyGenericRef(expr, val);
+    }
 
-		return expr;
-	}
+    // TODO Eliminate helper method once the Java compiler is able to handle
+    // this kind of type inference
+    private <DeclType extends Type> Expr<DeclType> simplifyGenericRef(final RefExpr<DeclType> expr,
+                                                                      final Valuation val) {
+        final Optional<LitExpr<DeclType>> eval = val.eval(expr.getDecl());
+        if (eval.isPresent()) {
+            return eval.get();
+        }
 
-	private Expr<?> simplifyIte(final IteExpr<?> expr, final Valuation val) {
-		return simplifyGenericIte(expr, val);
-	}
+        return expr;
+    }
 
-	// TODO Eliminate helper method once the Java compiler is able to handle
-	// this kind of type inference
-	private <ExprType extends Type> Expr<ExprType> simplifyGenericIte(final IteExpr<ExprType> expr,
-																			 final Valuation val) {
-		final Expr<BoolType> cond = simplify(expr.getCond(), val);
+    private Expr<?> simplifyIte(final IteExpr<?> expr, final Valuation val) {
+        return simplifyGenericIte(expr, val);
+    }
 
-		if (cond instanceof TrueExpr) {
-			final Expr<ExprType> then = simplify(expr.getThen(), val);
-			return then;
+    // TODO Eliminate helper method once the Java compiler is able to handle
+    // this kind of type inference
+    private <ExprType extends Type> Expr<ExprType> simplifyGenericIte(final IteExpr<ExprType> expr,
+                                                                      final Valuation val) {
+        final Expr<BoolType> cond = simplify(expr.getCond(), val);
 
-		} else if (cond instanceof FalseExpr) {
-			final Expr<ExprType> elze = simplify(expr.getElse(), val);
-			return elze;
-		}
+        if (cond instanceof TrueExpr) {
+            final Expr<ExprType> then = simplify(expr.getThen(), val);
+            return then;
 
-		final Expr<ExprType> then = simplify(expr.getThen(), val);
-		final Expr<ExprType> elze = simplify(expr.getElse(), val);
+        } else if (cond instanceof FalseExpr) {
+            final Expr<ExprType> elze = simplify(expr.getElse(), val);
+            return elze;
+        }
 
-		return expr.with(cond, then, elze);
-	}
+        final Expr<ExprType> then = simplify(expr.getThen(), val);
+        final Expr<ExprType> elze = simplify(expr.getElse(), val);
 
-	private Expr<?> simplifyArrayRead(final ArrayReadExpr<?, ?> expr, final Valuation val) {
-		return simplifyGenericArrayRead(expr, val);
-	}
+        return expr.with(cond, then, elze);
+    }
 
-	private <IT extends Type, ET extends Type> Expr<ET>
-	simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
-		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
-		Expr<IT> index = simplify(expr.getIndex(), val);
-		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) { //The index is required to be a literal so that we can use 'equals' to compare it against existing keys in the array
-			return expr.eval(val);
-		}
-		return expr.with(arr, index);
-	}
+    private Expr<?> simplifyArrayRead(final ArrayReadExpr<?, ?> expr, final Valuation val) {
+        return simplifyGenericArrayRead(expr, val);
+    }
 
-	private Expr<?> simplifyArrayWrite(final ArrayWriteExpr<?, ?> expr, final Valuation val) {
-		return simplifyGenericArrayWrite(expr, val);
-	}
+    private <IT extends Type, ET extends Type> Expr<ET>
+    simplifyGenericArrayRead(final ArrayReadExpr<IT, ET> expr, final Valuation val) {
+        Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
+        Expr<IT> index = simplify(expr.getIndex(), val);
+        if (arr instanceof LitExpr<?> && index instanceof LitExpr<?>) { //The index is required to be a literal so that we can use 'equals' to compare it against existing keys in the array
+            return expr.eval(val);
+        }
+        return expr.with(arr, index);
+    }
 
-	private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
-	simplifyGenericArrayWrite(final ArrayWriteExpr<IT, ET> expr, final Valuation val) {
-		Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
-		Expr<IT> index = simplify(expr.getIndex(), val);
-		Expr<ET> elem = simplify(expr.getElem(), val);
-		if (arr instanceof LitExpr<?> && index instanceof LitExpr<?> && elem instanceof LitExpr<?>) {
-			return expr.eval(val);
-		}
-		return expr.with(arr, index, elem);
-	}
+    private Expr<?> simplifyArrayWrite(final ArrayWriteExpr<?, ?> expr, final Valuation val) {
+        return simplifyGenericArrayWrite(expr, val);
+    }
 
-	private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
-	simplifyArrayInit(final ArrayInitExpr<IT, ET> t, final Valuation val) {
-		boolean nonLiteralFound = false;
-		List<Tuple2<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
-		Expr<ET> newElseElem = simplify(t.getElseElem(), val);
-		if (!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
-		for (Tuple2<Expr<IT>, Expr<ET>> element : t.getElements()) {
-			Expr<IT> newIndex = simplify(element.get1(), val);
-			Expr<ET> newElement = simplify(element.get2(), val);
-			newElements.add(Tuple2.of(newIndex, newElement));
-			if (!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr)) nonLiteralFound = true;
-		}
-		if (nonLiteralFound) return ArrayInitExpr.of(newElements, newElseElem, t.getType());
-		else return t.eval(val);
-	}
+    private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
+    simplifyGenericArrayWrite(final ArrayWriteExpr<IT, ET> expr, final Valuation val) {
+        Expr<ArrayType<IT, ET>> arr = simplify(expr.getArray(), val);
+        Expr<IT> index = simplify(expr.getIndex(), val);
+        Expr<ET> elem = simplify(expr.getElem(), val);
+        if (arr instanceof LitExpr<?> && index instanceof LitExpr<?> && elem instanceof LitExpr<?>) {
+            return expr.eval(val);
+        }
+        return expr.with(arr, index, elem);
+    }
 
-	/*
-	 * Booleans
-	 */
+    private <IT extends Type, ET extends Type> Expr<ArrayType<IT, ET>>
+    simplifyArrayInit(final ArrayInitExpr<IT, ET> t, final Valuation val) {
+        boolean nonLiteralFound = false;
+        List<Tuple2<Expr<IT>, Expr<ET>>> newElements = new ArrayList<>();
+        Expr<ET> newElseElem = simplify(t.getElseElem(), val);
+        if (!(newElseElem instanceof LitExpr)) nonLiteralFound = true;
+        for (Tuple2<Expr<IT>, Expr<ET>> element : t.getElements()) {
+            Expr<IT> newIndex = simplify(element.get1(), val);
+            Expr<ET> newElement = simplify(element.get2(), val);
+            newElements.add(Tuple2.of(newIndex, newElement));
+            if (!(newElement instanceof LitExpr) || !(newIndex instanceof LitExpr))
+                nonLiteralFound = true;
+        }
+        if (nonLiteralFound) return ArrayInitExpr.of(newElements, newElseElem, t.getType());
+        else return t.eval(val);
+    }
 
-	private Expr<BoolType> simplifyNot(final NotExpr expr, final Valuation val) {
-		final Expr<BoolType> op = simplify(expr.getOp(), val);
-		if (op instanceof NotExpr) {
-			return ((NotExpr) op).getOp();
-		} else if (op instanceof TrueExpr) {
-			return False();
-		} else if (op instanceof FalseExpr) {
-			return True();
-		}
+    /*
+     * Booleans
+     */
 
-		return expr.with(op);
-	}
+    private Expr<BoolType> simplifyNot(final NotExpr expr, final Valuation val) {
+        final Expr<BoolType> op = simplify(expr.getOp(), val);
+        if (op instanceof NotExpr) {
+            return ((NotExpr) op).getOp();
+        } else if (op instanceof TrueExpr) {
+            return False();
+        } else if (op instanceof FalseExpr) {
+            return True();
+        }
 
-	private Expr<BoolType> simplifyImply(final ImplyExpr expr, final Valuation val) {
-		final Expr<BoolType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BoolType> rightOp = simplify(expr.getRightOp(), val);
+        return expr.with(op);
+    }
 
-		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
-			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
-			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
-			return Bool(!leftValue || rightValue);
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
+    private Expr<BoolType> simplifyImply(final ImplyExpr expr, final Valuation val) {
+        final Expr<BoolType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BoolType> rightOp = simplify(expr.getRightOp(), val);
 
-		if (leftOp instanceof FalseExpr || rightOp instanceof TrueExpr) {
-			return True();
-		} else if (leftOp instanceof TrueExpr) {
-			return rightOp;
-		} else if (rightOp instanceof FalseExpr) {
-			return simplify(Not(leftOp), val);
-		}
+        if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
+            final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
+            final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
+            return Bool(!leftValue || rightValue);
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
 
-		return expr.with(leftOp, rightOp);
-	}
+        if (leftOp instanceof FalseExpr || rightOp instanceof TrueExpr) {
+            return True();
+        } else if (leftOp instanceof TrueExpr) {
+            return rightOp;
+        } else if (rightOp instanceof FalseExpr) {
+            return simplify(Not(leftOp), val);
+        }
 
-	private Expr<BoolType> simplifyIff(final IffExpr expr, final Valuation val) {
-		final Expr<BoolType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BoolType> rightOp = simplify(expr.getRightOp(), val);
+        return expr.with(leftOp, rightOp);
+    }
 
-		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
-			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
-			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
-			return Bool(leftValue == rightValue);
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
+    private Expr<BoolType> simplifyIff(final IffExpr expr, final Valuation val) {
+        final Expr<BoolType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BoolType> rightOp = simplify(expr.getRightOp(), val);
 
-		if (leftOp instanceof TrueExpr) {
-			return rightOp;
-		} else if (rightOp instanceof TrueExpr) {
-			return leftOp;
-		} else if (leftOp instanceof FalseExpr) {
-			return simplify(Not(rightOp), val);
-		} else if (rightOp instanceof FalseExpr) {
-			return simplify(Not(leftOp), val);
-		}
+        if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
+            final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
+            final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
+            return Bool(leftValue == rightValue);
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
 
-		return expr.with(leftOp, rightOp);
-	}
+        if (leftOp instanceof TrueExpr) {
+            return rightOp;
+        } else if (rightOp instanceof TrueExpr) {
+            return leftOp;
+        } else if (leftOp instanceof FalseExpr) {
+            return simplify(Not(rightOp), val);
+        } else if (rightOp instanceof FalseExpr) {
+            return simplify(Not(leftOp), val);
+        }
 
-	private Expr<BoolType> simplifyXor(final XorExpr expr, final Valuation val) {
-		final Expr<BoolType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BoolType> rightOp = simplify(expr.getRightOp(), val);
+        return expr.with(leftOp, rightOp);
+    }
 
-		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
-			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
-			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
-			return Bool(leftValue != rightValue);
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
+    private Expr<BoolType> simplifyXor(final XorExpr expr, final Valuation val) {
+        final Expr<BoolType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BoolType> rightOp = simplify(expr.getRightOp(), val);
 
-		if (leftOp instanceof TrueExpr) {
-			return simplify(Not(rightOp), val);
-		} else if (rightOp instanceof TrueExpr) {
-			return simplify(Not(leftOp), val);
-		} else if (leftOp instanceof FalseExpr) {
-			return rightOp;
-		} else if (rightOp instanceof FalseExpr) {
-			return leftOp;
-		}
+        if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
+            final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
+            final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
+            return Bool(leftValue != rightValue);
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
 
-		return expr.with(leftOp, rightOp);
-	}
+        if (leftOp instanceof TrueExpr) {
+            return simplify(Not(rightOp), val);
+        } else if (rightOp instanceof TrueExpr) {
+            return simplify(Not(leftOp), val);
+        } else if (leftOp instanceof FalseExpr) {
+            return rightOp;
+        } else if (rightOp instanceof FalseExpr) {
+            return leftOp;
+        }
 
-	private Expr<BoolType> simplifyAnd(final AndExpr expr, final Valuation val) {
-		final List<Expr<BoolType>> ops = new ArrayList<>();
+        return expr.with(leftOp, rightOp);
+    }
 
-		if (expr.getOps().isEmpty()) {
-			return True();
-		}
+    private Expr<BoolType> simplifyAnd(final AndExpr expr, final Valuation val) {
+        final List<Expr<BoolType>> ops = new ArrayList<>();
 
-		for (final Expr<BoolType> op : expr.getOps()) {
-			final Expr<BoolType> opVisited = simplify(op, val);
-			if (opVisited instanceof TrueExpr) {
-				continue;
-			} else if (opVisited instanceof FalseExpr) {
-				return False();
-			} else if (opVisited instanceof AndExpr) {
-				final AndExpr andOp = (AndExpr) opVisited;
-				ops.addAll(andOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
+        if (expr.getOps().isEmpty()) {
+            return True();
+        }
 
-		if (ops.isEmpty()) {
-			return True();
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
+        for (final Expr<BoolType> op : expr.getOps()) {
+            final Expr<BoolType> opVisited = simplify(op, val);
+            if (opVisited instanceof TrueExpr) {
+                continue;
+            } else if (opVisited instanceof FalseExpr) {
+                return False();
+            } else if (opVisited instanceof AndExpr) {
+                final AndExpr andOp = (AndExpr) opVisited;
+                ops.addAll(andOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
 
-		return expr.with(ops);
-	}
+        if (ops.isEmpty()) {
+            return True();
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
 
-	private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
-		final List<Expr<BoolType>> ops = new ArrayList<>();
+        return expr.with(ops);
+    }
 
-		if (expr.getOps().isEmpty()) {
-			return True();
-		}
+    private Expr<BoolType> simplifyOr(final OrExpr expr, final Valuation val) {
+        final List<Expr<BoolType>> ops = new ArrayList<>();
 
-		for (final Expr<BoolType> op : expr.getOps()) {
-			final Expr<BoolType> opVisited = simplify(op, val);
-			if (opVisited instanceof FalseExpr) {
-				continue;
-			} else if (opVisited instanceof TrueExpr) {
-				return True();
-			} else if (opVisited instanceof OrExpr) {
-				final OrExpr orOp = (OrExpr) opVisited;
-				ops.addAll(orOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
+        if (expr.getOps().isEmpty()) {
+            return True();
+        }
 
-		if (ops.isEmpty()) {
-			return False();
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
+        for (final Expr<BoolType> op : expr.getOps()) {
+            final Expr<BoolType> opVisited = simplify(op, val);
+            if (opVisited instanceof FalseExpr) {
+                continue;
+            } else if (opVisited instanceof TrueExpr) {
+                return True();
+            } else if (opVisited instanceof OrExpr) {
+                final OrExpr orOp = (OrExpr) opVisited;
+                ops.addAll(orOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
 
-		return expr.with(ops);
-	}
+        if (ops.isEmpty()) {
+            return False();
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
 
-	/*
-	 * Rationals
-	 */
+        return expr.with(ops);
+    }
 
-	private Expr<RatType> simplifyRatAdd(final RatAddExpr expr, final Valuation val) {
-		final List<Expr<RatType>> ops = new ArrayList<>();
+    /*
+     * Rationals
+     */
 
-		for (final Expr<RatType> op : expr.getOps()) {
-			final Expr<RatType> opVisited = simplify(op, val);
-			if (opVisited instanceof RatAddExpr) {
-				final RatAddExpr addOp = (RatAddExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		var num = BigInteger.ZERO;
-		var denom = BigInteger.ONE;
+    private Expr<RatType> simplifyRatAdd(final RatAddExpr expr, final Valuation val) {
+        final List<Expr<RatType>> ops = new ArrayList<>();
 
-		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<RatType> op = iterator.next();
-			if (op instanceof RatLitExpr) {
-				final RatLitExpr litOp = (RatLitExpr) op;
-				num = num.multiply(litOp.getDenom()).add(denom.multiply(litOp.getNum()));
-				denom = denom.multiply(litOp.getDenom());
-				iterator.remove();
-			}
-		}
+        for (final Expr<RatType> op : expr.getOps()) {
+            final Expr<RatType> opVisited = simplify(op, val);
+            if (opVisited instanceof RatAddExpr) {
+                final RatAddExpr addOp = (RatAddExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        var num = BigInteger.ZERO;
+        var denom = BigInteger.ONE;
 
-		final Expr<RatType> sum = Rat(num, denom);
+        for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<RatType> op = iterator.next();
+            if (op instanceof RatLitExpr) {
+                final RatLitExpr litOp = (RatLitExpr) op;
+                num = num.multiply(litOp.getDenom()).add(denom.multiply(litOp.getNum()));
+                denom = denom.multiply(litOp.getDenom());
+                iterator.remove();
+            }
+        }
 
-		if (!sum.equals(Rat(0, 1))) {
-			ops.add(0, sum);
-		}
+        final Expr<RatType> sum = Rat(num, denom);
 
-		if (ops.isEmpty()) {
-			return Rat(0, 1);
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<RatType> simplifyRatSub(final RatSubExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			final RatLitExpr leftLit = (RatLitExpr) leftOp;
-			final RatLitExpr rightLit = (RatLitExpr) rightOp;
-			return leftLit.sub(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return Rat(0, 1);
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<RatType> simplifyRatPos(final RatPosExpr expr, final Valuation val) {
-		return simplify(expr.getOp(), val);
-	}
-
-	private Expr<RatType> simplifyRatNeg(final RatNegExpr expr, final Valuation val) {
-		final Expr<RatType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof RatLitExpr) {
-			final RatLitExpr litOp = (RatLitExpr) op;
-			return litOp.neg();
-		} else if (op instanceof RatNegExpr) {
-			final RatNegExpr negOp = (RatNegExpr) op;
-			return negOp.getOp();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<RatType> simplifyRatMul(final RatMulExpr expr, final Valuation val) {
-		final List<Expr<RatType>> ops = new ArrayList<>();
-
-		for (final Expr<RatType> op : expr.getOps()) {
-			final Expr<RatType> opVisited = simplify(op, val);
-			if (opVisited instanceof RatMulExpr) {
-				final RatMulExpr mulOp = (RatMulExpr) opVisited;
-				ops.addAll(mulOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		var num = BigInteger.ONE;
-		var denom = BigInteger.ONE;
-
-		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<RatType> op = iterator.next();
-			if (op instanceof RatLitExpr) {
-				final RatLitExpr litOp = (RatLitExpr) op;
-				num = num.multiply(litOp.getNum());
-				denom = denom.multiply(litOp.getDenom());
-				iterator.remove();
-				if (num.compareTo(BigInteger.ZERO) == 0) {
-					return Rat(0, 1);
-				}
-			}
-		}
-
-		final Expr<RatType> prod = Rat(num, denom);
-
-		if (!prod.equals(Rat(1, 1))) {
-			ops.add(0, prod);
-		}
-
-		if (ops.isEmpty()) {
-			return Rat(1, 1);
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<RatType> simplifyRatDiv(final RatDivExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			final RatLitExpr leftLit = (RatLitExpr) leftOp;
-			final RatLitExpr rightLit = (RatLitExpr) rightOp;
-			return leftLit.div(rightLit);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyRatEq(final RatEqExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			return Bool(leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyRatNeq(final RatNeqExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			return Bool(!leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyRatGeq(final RatGeqExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			final RatLitExpr leftLit = (RatLitExpr) leftOp;
-			final RatLitExpr rightLit = (RatLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) >= 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyRatGt(final RatGtExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			final RatLitExpr leftLit = (RatLitExpr) leftOp;
-			final RatLitExpr rightLit = (RatLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) > 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyRatLeq(final RatLeqExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			final RatLitExpr leftLit = (RatLitExpr) leftOp;
-			final RatLitExpr rightLit = (RatLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) <= 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyRatLt(final RatLtExpr expr, final Valuation val) {
-		final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
-			final RatLitExpr leftLit = (RatLitExpr) leftOp;
-			final RatLitExpr rightLit = (RatLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) < 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<IntType> simplifyRatToInt(final RatToIntExpr expr, final Valuation val) {
-		final Expr<RatType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof RatLitExpr) {
-			final RatLitExpr litOp = (RatLitExpr) op;
-			return litOp.toInt();
-		}
-
-		return expr.with(op);
-	}
-
-	/*
-	 * Integers
-	 */
-
-	private Expr<RatType> simplifyIntToRat(final IntToRatExpr expr, final Valuation val) {
-		final Expr<IntType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof IntLitExpr) {
-			final IntLitExpr litOp = (IntLitExpr) op;
-			return litOp.toRat();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<IntType> simplifyIntAdd(final IntAddExpr expr, final Valuation val) {
-		final List<Expr<IntType>> ops = new ArrayList<>();
-
-		for (final Expr<IntType> op : expr.getOps()) {
-			final Expr<IntType> opVisited = simplify(op, val);
-			if (opVisited instanceof IntAddExpr) {
-				final IntAddExpr addOp = (IntAddExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		var value = BigInteger.ZERO;
-
-		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<IntType> op = iterator.next();
-			if (op instanceof IntLitExpr) {
-				final IntLitExpr litOp = (IntLitExpr) op;
-				value = value.add(litOp.getValue());
-				iterator.remove();
-			}
-		}
-
-		if (value.compareTo(BigInteger.ZERO) != 0) {
-			final Expr<IntType> sum = Int(value);
-			ops.add(sum);
-		}
-
-		if (ops.isEmpty()) {
-			return Int(BigInteger.ZERO);
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<IntType> simplifyIntSub(final IntSubExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return leftLit.sub(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return Int(BigInteger.ZERO);
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<IntType> simplifyIntPos(final IntPosExpr expr, final Valuation val) {
-		return simplify(expr.getOp(), val);
-	}
-
-	private Expr<IntType> simplifyIntNeg(final IntNegExpr expr, final Valuation val) {
-		final Expr<IntType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof IntLitExpr) {
-			final IntLitExpr litOp = (IntLitExpr) op;
-			return litOp.neg();
-		} else if (op instanceof IntNegExpr) {
-			final IntNegExpr negOp = (IntNegExpr) op;
-			return negOp.getOp();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<IntType> simplifyIntMul(final IntMulExpr expr, final Valuation val) {
-		final List<Expr<IntType>> ops = new ArrayList<>();
-
-		for (final Expr<IntType> op : expr.getOps()) {
-			final Expr<IntType> opVisited = simplify(op, val);
-			if (opVisited instanceof IntMulExpr) {
-				final IntMulExpr mulOp = (IntMulExpr) opVisited;
-				ops.addAll(mulOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-
-		var value = BigInteger.ONE;
-		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<IntType> op = iterator.next();
-			if (op instanceof IntLitExpr) {
-				final IntLitExpr litOp = (IntLitExpr) op;
-				value = value.multiply(litOp.getValue());
-				iterator.remove();
-				if (value.compareTo(BigInteger.ZERO) == 0) {
-					return Int(BigInteger.ZERO);
-				}
-			}
-		}
-
-		if (value.compareTo(BigInteger.ONE) != 0) {
-			final Expr<IntType> prod = Int(value);
-			ops.add(0, prod);
-		}
-
-		if (ops.isEmpty()) {
-			return Int(BigInteger.ONE);
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<IntType> simplifyIntDiv(final IntDivExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return leftLit.div(rightLit);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<IntType> simplifyMod(final IntModExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return leftLit.mod(rightLit);
-		} else if (leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
-			return leftOp;
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<IntType> simplifyRem(final IntRemExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return leftLit.rem(rightLit);
-		} else if (leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
-			return simplify(leftOp, val);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyIntEq(final IntEqExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			return Bool(leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyIntNeq(final IntNeqExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			return Bool(!leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyIntGeq(final IntGeqExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) >= 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyIntGt(final IntGtExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) > 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyIntLeq(final IntLeqExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) <= 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyIntLt(final IntLtExpr expr, final Valuation val) {
-		final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return Bool(leftLit.compareTo(rightLit) < 0);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	/*
-	 * Bitvectors
-	 */
-
-	private Expr<BvType> simplifyBvConcat(final BvConcatExpr expr, final Valuation val) {
-		final List<Expr<BvType>> ops = new ArrayList<>();
-
-		for (final Expr<BvType> op : expr.getOps()) {
-			final Expr<BvType> opVisited = simplify(op, val);
-			if (opVisited instanceof BvConcatExpr) {
-				final BvConcatExpr addOp = (BvConcatExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		BvLitExpr value = null;
-
-		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<BvType> op = iterator.next();
-			if (op instanceof BvLitExpr) {
-				final BvLitExpr litOp = (BvLitExpr) op;
-				if (value == null) {
-					value = litOp;
-				} else {
-					value = value.concat(litOp);
-				}
+        if (!sum.equals(Rat(0, 1))) {
+            ops.add(0, sum);
+        }
+
+        if (ops.isEmpty()) {
+            return Rat(0, 1);
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<RatType> simplifyRatSub(final RatSubExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            final RatLitExpr leftLit = (RatLitExpr) leftOp;
+            final RatLitExpr rightLit = (RatLitExpr) rightOp;
+            return leftLit.sub(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return Rat(0, 1);
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<RatType> simplifyRatPos(final RatPosExpr expr, final Valuation val) {
+        return simplify(expr.getOp(), val);
+    }
+
+    private Expr<RatType> simplifyRatNeg(final RatNegExpr expr, final Valuation val) {
+        final Expr<RatType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof RatLitExpr) {
+            final RatLitExpr litOp = (RatLitExpr) op;
+            return litOp.neg();
+        } else if (op instanceof RatNegExpr) {
+            final RatNegExpr negOp = (RatNegExpr) op;
+            return negOp.getOp();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<RatType> simplifyRatMul(final RatMulExpr expr, final Valuation val) {
+        final List<Expr<RatType>> ops = new ArrayList<>();
+
+        for (final Expr<RatType> op : expr.getOps()) {
+            final Expr<RatType> opVisited = simplify(op, val);
+            if (opVisited instanceof RatMulExpr) {
+                final RatMulExpr mulOp = (RatMulExpr) opVisited;
+                ops.addAll(mulOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        var num = BigInteger.ONE;
+        var denom = BigInteger.ONE;
+
+        for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<RatType> op = iterator.next();
+            if (op instanceof RatLitExpr) {
+                final RatLitExpr litOp = (RatLitExpr) op;
+                num = num.multiply(litOp.getNum());
+                denom = denom.multiply(litOp.getDenom());
+                iterator.remove();
+                if (num.compareTo(BigInteger.ZERO) == 0) {
+                    return Rat(0, 1);
+                }
+            }
+        }
+
+        final Expr<RatType> prod = Rat(num, denom);
+
+        if (!prod.equals(Rat(1, 1))) {
+            ops.add(0, prod);
+        }
+
+        if (ops.isEmpty()) {
+            return Rat(1, 1);
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<RatType> simplifyRatDiv(final RatDivExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            final RatLitExpr leftLit = (RatLitExpr) leftOp;
+            final RatLitExpr rightLit = (RatLitExpr) rightOp;
+            return leftLit.div(rightLit);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyRatEq(final RatEqExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            return Bool(leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyRatNeq(final RatNeqExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            return Bool(!leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyRatGeq(final RatGeqExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            final RatLitExpr leftLit = (RatLitExpr) leftOp;
+            final RatLitExpr rightLit = (RatLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) >= 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyRatGt(final RatGtExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            final RatLitExpr leftLit = (RatLitExpr) leftOp;
+            final RatLitExpr rightLit = (RatLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) > 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyRatLeq(final RatLeqExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            final RatLitExpr leftLit = (RatLitExpr) leftOp;
+            final RatLitExpr rightLit = (RatLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) <= 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyRatLt(final RatLtExpr expr, final Valuation val) {
+        final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<RatType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr) {
+            final RatLitExpr leftLit = (RatLitExpr) leftOp;
+            final RatLitExpr rightLit = (RatLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) < 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<IntType> simplifyRatToInt(final RatToIntExpr expr, final Valuation val) {
+        final Expr<RatType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof RatLitExpr) {
+            final RatLitExpr litOp = (RatLitExpr) op;
+            return litOp.toInt();
+        }
+
+        return expr.with(op);
+    }
+
+    /*
+     * Integers
+     */
+
+    private Expr<RatType> simplifyIntToRat(final IntToRatExpr expr, final Valuation val) {
+        final Expr<IntType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof IntLitExpr) {
+            final IntLitExpr litOp = (IntLitExpr) op;
+            return litOp.toRat();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<IntType> simplifyIntAdd(final IntAddExpr expr, final Valuation val) {
+        final List<Expr<IntType>> ops = new ArrayList<>();
+
+        for (final Expr<IntType> op : expr.getOps()) {
+            final Expr<IntType> opVisited = simplify(op, val);
+            if (opVisited instanceof IntAddExpr) {
+                final IntAddExpr addOp = (IntAddExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        var value = BigInteger.ZERO;
+
+        for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<IntType> op = iterator.next();
+            if (op instanceof IntLitExpr) {
+                final IntLitExpr litOp = (IntLitExpr) op;
+                value = value.add(litOp.getValue());
+                iterator.remove();
+            }
+        }
+
+        if (value.compareTo(BigInteger.ZERO) != 0) {
+            final Expr<IntType> sum = Int(value);
+            ops.add(sum);
+        }
+
+        if (ops.isEmpty()) {
+            return Int(BigInteger.ZERO);
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<IntType> simplifyIntSub(final IntSubExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return leftLit.sub(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return Int(BigInteger.ZERO);
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<IntType> simplifyIntPos(final IntPosExpr expr, final Valuation val) {
+        return simplify(expr.getOp(), val);
+    }
+
+    private Expr<IntType> simplifyIntNeg(final IntNegExpr expr, final Valuation val) {
+        final Expr<IntType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof IntLitExpr) {
+            final IntLitExpr litOp = (IntLitExpr) op;
+            return litOp.neg();
+        } else if (op instanceof IntNegExpr) {
+            final IntNegExpr negOp = (IntNegExpr) op;
+            return negOp.getOp();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<IntType> simplifyIntMul(final IntMulExpr expr, final Valuation val) {
+        final List<Expr<IntType>> ops = new ArrayList<>();
+
+        for (final Expr<IntType> op : expr.getOps()) {
+            final Expr<IntType> opVisited = simplify(op, val);
+            if (opVisited instanceof IntMulExpr) {
+                final IntMulExpr mulOp = (IntMulExpr) opVisited;
+                ops.addAll(mulOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+
+        var value = BigInteger.ONE;
+        for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<IntType> op = iterator.next();
+            if (op instanceof IntLitExpr) {
+                final IntLitExpr litOp = (IntLitExpr) op;
+                value = value.multiply(litOp.getValue());
+                iterator.remove();
+                if (value.compareTo(BigInteger.ZERO) == 0) {
+                    return Int(BigInteger.ZERO);
+                }
+            }
+        }
+
+        if (value.compareTo(BigInteger.ONE) != 0) {
+            final Expr<IntType> prod = Int(value);
+            ops.add(0, prod);
+        }
+
+        if (ops.isEmpty()) {
+            return Int(BigInteger.ONE);
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<IntType> simplifyIntDiv(final IntDivExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return leftLit.div(rightLit);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<IntType> simplifyMod(final IntModExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return leftLit.mod(rightLit);
+        } else if (leftOp instanceof IntModExpr && ((IntModExpr) leftOp).getRightOp().equals(rightOp)) {
+            return leftOp;
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<IntType> simplifyRem(final IntRemExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return leftLit.rem(rightLit);
+        } else if (leftOp instanceof IntRemExpr && ((IntRemExpr) leftOp).getRightOp().equals(rightOp)) {
+            return simplify(leftOp, val);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyIntEq(final IntEqExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            return Bool(leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyIntNeq(final IntNeqExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            return Bool(!leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyIntGeq(final IntGeqExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) >= 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyIntGt(final IntGtExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) > 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyIntLeq(final IntLeqExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) <= 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyIntLt(final IntLtExpr expr, final Valuation val) {
+        final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+            final IntLitExpr leftLit = (IntLitExpr) leftOp;
+            final IntLitExpr rightLit = (IntLitExpr) rightOp;
+            return Bool(leftLit.compareTo(rightLit) < 0);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    /*
+     * Bitvectors
+     */
+
+    private Expr<BvType> simplifyBvConcat(final BvConcatExpr expr, final Valuation val) {
+        final List<Expr<BvType>> ops = new ArrayList<>();
+
+        for (final Expr<BvType> op : expr.getOps()) {
+            final Expr<BvType> opVisited = simplify(op, val);
+            if (opVisited instanceof BvConcatExpr) {
+                final BvConcatExpr addOp = (BvConcatExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        BvLitExpr value = null;
+
+        for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<BvType> op = iterator.next();
+            if (op instanceof BvLitExpr) {
+                final BvLitExpr litOp = (BvLitExpr) op;
+                if (value == null) {
+                    value = litOp;
+                } else {
+                    value = value.concat(litOp);
+                }
 //				iterator.remove();
-			} else {
-				return expr.withOps(ops);
-			}
-		}
-
-		return value;
-	}
-
-	private Expr<BvType> simplifyBvExtract(final BvExtractExpr expr, final Valuation val) {
-		final Expr<BvType> bitvec = simplify(expr.getBitvec(), val);
-
-		if (bitvec instanceof BvLitExpr) {
-			return ((BvLitExpr) bitvec).extract(expr.getFrom(), expr.getUntil());
-		} else {
-			return expr;
-		}
-	}
-
-	private Expr<BvType> simplifyBvZExt(final BvZExtExpr expr, final Valuation val) {
-		final Expr<BvType> bitvec = simplify(expr.getOp(), val);
-
-		if (bitvec instanceof BvLitExpr) {
-			return ((BvLitExpr) bitvec).zext(expr.getExtendType());
-		} else {
-			return expr;
-		}
-	}
-
-	private Expr<BvType> simplifyBvSExt(final BvSExtExpr expr, final Valuation val) {
-		final Expr<BvType> bitvec = simplify(expr.getOp(), val);
-
-		if (bitvec instanceof BvLitExpr) {
-			return ((BvLitExpr) bitvec).sext(expr.getExtendType());
-		} else {
-			return expr;
-		}
-	}
-
-	private Expr<BvType> simplifyBvAdd(final BvAddExpr expr, final Valuation val) {
-		final List<Expr<BvType>> ops = new ArrayList<>();
-
-		for (final Expr<BvType> op : expr.getOps()) {
-			final Expr<BvType> opVisited = simplify(op, val);
-			if (opVisited instanceof BvAddExpr) {
-				final BvAddExpr addOp = (BvAddExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		BvLitExpr value = Bv(new boolean[expr.getType().getSize()]);
-
-		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<BvType> op = iterator.next();
-			if (op instanceof BvLitExpr) {
-				final BvLitExpr litOp = (BvLitExpr) op;
-				value = value.add(litOp);
-				iterator.remove();
-			}
-		}
-
-		if (!value.eq(Bv(new boolean[expr.getType().getSize()])).getValue()) {
-			ops.add(value);
-		}
-
-		if (ops.isEmpty()) {
-			return Bv(new boolean[expr.getType().getSize()]);
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<BvType> simplifyBvSub(final BvSubExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.sub(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return Bv(new boolean[expr.getType().getSize()]);
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvPos(final BvPosExpr expr, final Valuation val) {
-		return simplify(expr.getOp(), val);
-	}
-
-	private Expr<BvType> simplifyBvNeg(final BvNegExpr expr, final Valuation val) {
-		final Expr<BvType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof BvLitExpr) {
-			final BvLitExpr litOp = (BvLitExpr) op;
-			return litOp.neg();
-		} else if (op instanceof BvNegExpr) {
-			final BvNegExpr negOp = (BvNegExpr) op;
-			return negOp.getOp();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<BvType> simplifyBvMul(final BvMulExpr expr, final Valuation val) {
-		final List<Expr<BvType>> ops = new ArrayList<>();
-
-		for (final Expr<BvType> op : expr.getOps()) {
-			final Expr<BvType> opVisited = simplify(op, val);
-			if (opVisited instanceof BvMulExpr) {
-				final BvMulExpr mulOp = (BvMulExpr) opVisited;
-				ops.addAll(mulOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-
-		final BvLitExpr ZERO = Bv(new boolean[expr.getType().getSize()]);
-		final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
-		ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
-
-		BvLitExpr value = ONE;
-		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<BvType> op = iterator.next();
-			if (op instanceof BvLitExpr) {
-				final BvLitExpr litOp = (BvLitExpr) op;
-				value = value.mul(litOp);
-				iterator.remove();
-				if (value.equals(ZERO)) {
-					return ZERO;
-				}
-			}
-		}
-
-		if (!value.equals(ONE)) {
-			ops.add(0, value);
-		}
-
-		if (ops.isEmpty()) {
-			return ONE;
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<BvType> simplifyBvUDiv(final BvUDivExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.udiv(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
-				ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
-				return ONE;
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvSDiv(final BvSDivExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.sdiv(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
-				ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
-				return ONE;
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvSMod(final BvSModExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.smod(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return Bv(new boolean[expr.getType().getSize()]);
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvURem(final BvURemExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.urem(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return Bv(new boolean[expr.getType().getSize()]);
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvSRem(final BvSRemExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.srem(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return Bv(new boolean[expr.getType().getSize()]);
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvAnd(final BvAndExpr expr, final Valuation val) {
-		final List<Expr<BvType>> ops = new ArrayList<>();
-
-		for (final Expr<BvType> op : expr.getOps()) {
-			final Expr<BvType> opVisited = simplify(op, val);
-			if (opVisited instanceof BvAndExpr) {
-				final BvAndExpr addOp = (BvAndExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		BvLitExpr ONES = Bv(new boolean[expr.getType().getSize()]);
-		for (int i = 0; i < expr.getType().getSize(); i++) {
-			ONES.getValue()[i] = true;
-		}
-
-		BvLitExpr value = ONES;
-
-		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<BvType> op = iterator.next();
-			if (op instanceof BvLitExpr) {
-				final BvLitExpr litOp = (BvLitExpr) op;
-				value = value.and(litOp);
-				iterator.remove();
-			}
-		}
-
-		if (!value.equals(ONES)) {
-			ops.add(value);
-		}
-
-		if (ops.isEmpty()) {
-			return ONES;
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<BvType> simplifyBvOr(final BvOrExpr expr, final Valuation val) {
-		final List<Expr<BvType>> ops = new ArrayList<>();
-
-		for (final Expr<BvType> op : expr.getOps()) {
-			final Expr<BvType> opVisited = simplify(op, val);
-			if (opVisited instanceof BvOrExpr) {
-				final BvOrExpr addOp = (BvOrExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		BvLitExpr ZEROS = Bv(new boolean[expr.getType().getSize()]);
-
-		BvLitExpr value = ZEROS;
-
-		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<BvType> op = iterator.next();
-			if (op instanceof BvLitExpr) {
-				final BvLitExpr litOp = (BvLitExpr) op;
-				value = value.or(litOp);
-				iterator.remove();
-			}
-		}
-
-		if (!value.equals(ZEROS)) {
-			ops.add(value);
-		}
-
-		if (ops.isEmpty()) {
-			return ZEROS;
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<BvType> simplifyBvXor(final BvXorExpr expr, final Valuation val) {
-		final List<Expr<BvType>> ops = new ArrayList<>();
-
-		for (final Expr<BvType> op : expr.getOps()) {
-			final Expr<BvType> opVisited = simplify(op, val);
-			if (opVisited instanceof BvXorExpr) {
-				final BvXorExpr addOp = (BvXorExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		BvLitExpr ZEROS = Bv(new boolean[expr.getType().getSize()]);
-
-		BvLitExpr value = ZEROS;
-
-		for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<BvType> op = iterator.next();
-			if (op instanceof BvLitExpr) {
-				final BvLitExpr litOp = (BvLitExpr) op;
-				value = value.xor(litOp);
-				iterator.remove();
-			}
-		}
-
-		if (!value.equals(ZEROS)) {
-			ops.add(value);
-		}
-
-		if (ops.isEmpty()) {
-			return ZEROS;
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<BvType> simplifyBvNot(final BvNotExpr expr, final Valuation val) {
-		final Expr<BvType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof BvLitExpr) {
-			final BvLitExpr litOp = (BvLitExpr) op;
-			return litOp.not();
-		} else if (op instanceof BvNotExpr) {
-			final BvNotExpr notOp = (BvNotExpr) op;
-			return notOp.getOp();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<BvType> simplifyBvShiftLeft(final BvShiftLeftExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.shiftLeft(rightLit);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvArithShiftRight(final BvArithShiftRightExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.arithShiftRight(rightLit);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvLogicShiftRight(final BvLogicShiftRightExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.logicShiftRight(rightLit);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvRotateLeft(final BvRotateLeftExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.rotateLeft(rightLit);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BvType> simplifyBvRotateRight(final BvRotateRightExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.rotateRight(rightLit);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvEq(final BvEqExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			return Bool(leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvNeq(final BvNeqExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			return Bool(!leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvUGeq(final BvUGeqExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.uge(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvUGt(final BvUGtExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.ugt(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvULeq(final BvULeqExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.ule(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvULt(final BvULtExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.ult(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvSGeq(final BvSGeqExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.sge(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvSGt(final BvSGtExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.sgt(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvSLeq(final BvSLeqExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.sle(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyBvSLt(final BvSLtExpr expr, final Valuation val) {
-		final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
-			final BvLitExpr leftLit = (BvLitExpr) leftOp;
-			final BvLitExpr rightLit = (BvLitExpr) rightOp;
-			return leftLit.slt(rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<FpType> simplifyFpAdd(final FpAddExpr expr, final Valuation val) {
-		final List<Expr<FpType>> ops = new ArrayList<>();
-
-		for (final Expr<FpType> op : expr.getOps()) {
-			final Expr<FpType> opVisited = simplify(op, val);
-			if (opVisited instanceof FpAddExpr) {
-				final FpAddExpr addOp = (FpAddExpr) opVisited;
-				ops.addAll(addOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-		final FpLitExpr zero = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-		FpLitExpr value = zero;
-
-		for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<FpType> op = iterator.next();
-			if (op instanceof FpLitExpr) {
-				final FpLitExpr litOp = (FpLitExpr) op;
-				value = value.add(expr.getRoundingMode(), litOp);
-				iterator.remove();
-			}
-		}
-
-		if (!value.equals(zero)) {
-			ops.add(value);
-		}
-
-		if (ops.isEmpty()) {
-			return zero;
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<FpType> simplifyFpSub(final FpSubExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			final FpLitExpr leftLit = (FpLitExpr) leftOp;
-			final FpLitExpr rightLit = (FpLitExpr) rightOp;
-			return leftLit.sub(expr.getRoundingMode(), rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<FpType> simplifyFpPos(final FpPosExpr expr, final Valuation val) {
-		return simplify(expr.getOp(), val);
-	}
-
-	private Expr<FpType> simplifyFpNeg(final FpNegExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpLitExpr) {
-			final FpLitExpr litOp = (FpLitExpr) op;
-			return litOp.neg();
-		} else if (op instanceof FpNegExpr) {
-			final FpNegExpr negOp = (FpNegExpr) op;
-			return negOp.getOp();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<FpType> simplifyFpAbs(final FpAbsExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpAbsExpr) {
-			final FpAbsExpr absOp = (FpAbsExpr) op;
-			return absOp.getOp();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<BoolType> simplifyFpIsNan(final FpIsNanExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpLitExpr) {
-			return Bool(((FpLitExpr) op).isNaN());
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<BoolType> simplifyFpIsInfinite(final FpIsInfiniteExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpLitExpr) {
-			return Bool((((FpLitExpr) op).isNegativeInfinity() || ((FpLitExpr) op).isPositiveInfinity()));
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<FpType> simplifyFpRoundToIntegral(final FpRoundToIntegralExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpRoundToIntegralExpr) {
-			final FpRoundToIntegralExpr rndOp = (FpRoundToIntegralExpr) op;
-			return rndOp.getOp();
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<FpType> simplifyFpMul(final FpMulExpr expr, final Valuation val) {
-		final List<Expr<FpType>> ops = new ArrayList<>();
-
-		for (final Expr<FpType> op : expr.getOps()) {
-			final Expr<FpType> opVisited = simplify(op, val);
-			if (opVisited instanceof FpMulExpr) {
-				final FpMulExpr mulOp = (FpMulExpr) opVisited;
-				ops.addAll(mulOp.getOps());
-			} else {
-				ops.add(opVisited);
-			}
-		}
-
-		final FpLitExpr ZERO = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
-		final FpLitExpr ONE = FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
-
-		FpLitExpr value = ONE;
-		for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
-			final Expr<FpType> op = iterator.next();
-			if (op instanceof FpLitExpr) {
-				final FpLitExpr litOp = (FpLitExpr) op;
-				value = value.mul(expr.getRoundingMode(), litOp);
-				iterator.remove();
-				if (value.equals(ZERO)) {
-					return ZERO;
-				}
-			}
-		}
-
-		if (!value.equals(ONE)) {
-			ops.add(0, value);
-		}
-
-		if (ops.isEmpty()) {
-			return ONE;
-		} else if (ops.size() == 1) {
-			return Utils.singleElementOf(ops);
-		}
-
-		return expr.with(ops);
-	}
-
-	private Expr<FpType> simplifyFpDiv(final FpDivExpr expr, final Valuation val) {
-		if(true)return expr; // Rationale: https://github.com/ftsrg/theta/issues/180
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			final FpLitExpr leftLit = (FpLitExpr) leftOp;
-			final FpLitExpr rightLit = (FpLitExpr) rightOp;
-			return leftLit.div(expr.getRoundingMode(), rightLit);
-		}
-
-		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (leftOp.equals(rightOp)) {
-				return FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyFpEq(final FpEqExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return Bool(leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return True();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyFpAssign(final FpAssignExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return Bool(leftOp.equals(rightOp));
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyFpGeq(final FpGeqExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyFpLeq(final FpLeqExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyFpGt(final FpGtExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<BoolType> simplifyFpLt(final FpLtExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-
-	private Expr<BoolType> simplifyFpNeq(final FpNeqExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return Bool(!leftOp.equals(rightOp));
-		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-			if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-				return False();
-			}
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<FpType> simplifyFpMax(final FpMaxExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<FpType> simplifyFpMin(final FpMinExpr expr, final Valuation val) {
-		final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
-		final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
-
-		if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(leftOp, rightOp);
-	}
-
-	private Expr<FpType> simplifyFpSqrt(final FpSqrtExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(op);
-	}
-
-	private Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
-		final Expr<BvType> sgn = simplify(expr.getOp(), val);
-
-		if (sgn instanceof BvLitExpr) {
-			return expr.eval(val);
-		}
-
-		return expr.with(sgn);
-	}
-
-	private Expr<BvType> simplifyFpToBv(final FpToBvExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpLitExpr) {
-			return expr.eval(val);
-		}
-		return expr.with(op);
-	}
-
-	private Expr<FpType> simplifyFpToFp(final FpToFpExpr expr, final Valuation val) {
-		final Expr<FpType> op = simplify(expr.getOp(), val);
-
-		if (op instanceof FpLitExpr) {
-			return expr.eval(val);
-		} else if (op instanceof FpToFpExpr) {
-			return simplify(expr.with(((FpToFpExpr) op).getOp()), val);
-		}
-
-		return expr.with(op);
-	}
+            } else {
+                return expr.withOps(ops);
+            }
+        }
+
+        return value;
+    }
+
+    private Expr<BvType> simplifyBvExtract(final BvExtractExpr expr, final Valuation val) {
+        final Expr<BvType> bitvec = simplify(expr.getBitvec(), val);
+
+        if (bitvec instanceof BvLitExpr) {
+            return ((BvLitExpr) bitvec).extract(expr.getFrom(), expr.getUntil());
+        } else {
+            return expr;
+        }
+    }
+
+    private Expr<BvType> simplifyBvZExt(final BvZExtExpr expr, final Valuation val) {
+        final Expr<BvType> bitvec = simplify(expr.getOp(), val);
+
+        if (bitvec instanceof BvLitExpr) {
+            return ((BvLitExpr) bitvec).zext(expr.getExtendType());
+        } else {
+            return expr;
+        }
+    }
+
+    private Expr<BvType> simplifyBvSExt(final BvSExtExpr expr, final Valuation val) {
+        final Expr<BvType> bitvec = simplify(expr.getOp(), val);
+
+        if (bitvec instanceof BvLitExpr) {
+            return ((BvLitExpr) bitvec).sext(expr.getExtendType());
+        } else {
+            return expr;
+        }
+    }
+
+    private Expr<BvType> simplifyBvAdd(final BvAddExpr expr, final Valuation val) {
+        final List<Expr<BvType>> ops = new ArrayList<>();
+
+        for (final Expr<BvType> op : expr.getOps()) {
+            final Expr<BvType> opVisited = simplify(op, val);
+            if (opVisited instanceof BvAddExpr) {
+                final BvAddExpr addOp = (BvAddExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        BvLitExpr value = Bv(new boolean[expr.getType().getSize()]);
+
+        for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<BvType> op = iterator.next();
+            if (op instanceof BvLitExpr) {
+                final BvLitExpr litOp = (BvLitExpr) op;
+                value = value.add(litOp);
+                iterator.remove();
+            }
+        }
+
+        if (!value.eq(Bv(new boolean[expr.getType().getSize()])).getValue()) {
+            ops.add(value);
+        }
+
+        if (ops.isEmpty()) {
+            return Bv(new boolean[expr.getType().getSize()]);
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<BvType> simplifyBvSub(final BvSubExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.sub(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return Bv(new boolean[expr.getType().getSize()]);
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvPos(final BvPosExpr expr, final Valuation val) {
+        return simplify(expr.getOp(), val);
+    }
+
+    private Expr<BvType> simplifyBvNeg(final BvNegExpr expr, final Valuation val) {
+        final Expr<BvType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof BvLitExpr) {
+            final BvLitExpr litOp = (BvLitExpr) op;
+            return litOp.neg();
+        } else if (op instanceof BvNegExpr) {
+            final BvNegExpr negOp = (BvNegExpr) op;
+            return negOp.getOp();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<BvType> simplifyBvMul(final BvMulExpr expr, final Valuation val) {
+        final List<Expr<BvType>> ops = new ArrayList<>();
+
+        for (final Expr<BvType> op : expr.getOps()) {
+            final Expr<BvType> opVisited = simplify(op, val);
+            if (opVisited instanceof BvMulExpr) {
+                final BvMulExpr mulOp = (BvMulExpr) opVisited;
+                ops.addAll(mulOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+
+        final BvLitExpr ZERO = Bv(new boolean[expr.getType().getSize()]);
+        final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
+        ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
+
+        BvLitExpr value = ONE;
+        for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<BvType> op = iterator.next();
+            if (op instanceof BvLitExpr) {
+                final BvLitExpr litOp = (BvLitExpr) op;
+                value = value.mul(litOp);
+                iterator.remove();
+                if (value.equals(ZERO)) {
+                    return ZERO;
+                }
+            }
+        }
+
+        if (!value.equals(ONE)) {
+            ops.add(0, value);
+        }
+
+        if (ops.isEmpty()) {
+            return ONE;
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<BvType> simplifyBvUDiv(final BvUDivExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.udiv(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
+                ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
+                return ONE;
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvSDiv(final BvSDivExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.sdiv(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                final BvLitExpr ONE = Bv(new boolean[expr.getType().getSize()]);
+                ONE.getValue()[expr.getType().getSize() - 1] = true; // 1
+                return ONE;
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvSMod(final BvSModExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.smod(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return Bv(new boolean[expr.getType().getSize()]);
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvURem(final BvURemExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.urem(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return Bv(new boolean[expr.getType().getSize()]);
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvSRem(final BvSRemExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.srem(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return Bv(new boolean[expr.getType().getSize()]);
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvAnd(final BvAndExpr expr, final Valuation val) {
+        final List<Expr<BvType>> ops = new ArrayList<>();
+
+        for (final Expr<BvType> op : expr.getOps()) {
+            final Expr<BvType> opVisited = simplify(op, val);
+            if (opVisited instanceof BvAndExpr) {
+                final BvAndExpr addOp = (BvAndExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        BvLitExpr ONES = Bv(new boolean[expr.getType().getSize()]);
+        for (int i = 0; i < expr.getType().getSize(); i++) {
+            ONES.getValue()[i] = true;
+        }
+
+        BvLitExpr value = ONES;
+
+        for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<BvType> op = iterator.next();
+            if (op instanceof BvLitExpr) {
+                final BvLitExpr litOp = (BvLitExpr) op;
+                value = value.and(litOp);
+                iterator.remove();
+            }
+        }
+
+        if (!value.equals(ONES)) {
+            ops.add(value);
+        }
+
+        if (ops.isEmpty()) {
+            return ONES;
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<BvType> simplifyBvOr(final BvOrExpr expr, final Valuation val) {
+        final List<Expr<BvType>> ops = new ArrayList<>();
+
+        for (final Expr<BvType> op : expr.getOps()) {
+            final Expr<BvType> opVisited = simplify(op, val);
+            if (opVisited instanceof BvOrExpr) {
+                final BvOrExpr addOp = (BvOrExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        BvLitExpr ZEROS = Bv(new boolean[expr.getType().getSize()]);
+
+        BvLitExpr value = ZEROS;
+
+        for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<BvType> op = iterator.next();
+            if (op instanceof BvLitExpr) {
+                final BvLitExpr litOp = (BvLitExpr) op;
+                value = value.or(litOp);
+                iterator.remove();
+            }
+        }
+
+        if (!value.equals(ZEROS)) {
+            ops.add(value);
+        }
+
+        if (ops.isEmpty()) {
+            return ZEROS;
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<BvType> simplifyBvXor(final BvXorExpr expr, final Valuation val) {
+        final List<Expr<BvType>> ops = new ArrayList<>();
+
+        for (final Expr<BvType> op : expr.getOps()) {
+            final Expr<BvType> opVisited = simplify(op, val);
+            if (opVisited instanceof BvXorExpr) {
+                final BvXorExpr addOp = (BvXorExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        BvLitExpr ZEROS = Bv(new boolean[expr.getType().getSize()]);
+
+        BvLitExpr value = ZEROS;
+
+        for (final Iterator<Expr<BvType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<BvType> op = iterator.next();
+            if (op instanceof BvLitExpr) {
+                final BvLitExpr litOp = (BvLitExpr) op;
+                value = value.xor(litOp);
+                iterator.remove();
+            }
+        }
+
+        if (!value.equals(ZEROS)) {
+            ops.add(value);
+        }
+
+        if (ops.isEmpty()) {
+            return ZEROS;
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<BvType> simplifyBvNot(final BvNotExpr expr, final Valuation val) {
+        final Expr<BvType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof BvLitExpr) {
+            final BvLitExpr litOp = (BvLitExpr) op;
+            return litOp.not();
+        } else if (op instanceof BvNotExpr) {
+            final BvNotExpr notOp = (BvNotExpr) op;
+            return notOp.getOp();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<BvType> simplifyBvShiftLeft(final BvShiftLeftExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.shiftLeft(rightLit);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvArithShiftRight(final BvArithShiftRightExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.arithShiftRight(rightLit);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvLogicShiftRight(final BvLogicShiftRightExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.logicShiftRight(rightLit);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvRotateLeft(final BvRotateLeftExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.rotateLeft(rightLit);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BvType> simplifyBvRotateRight(final BvRotateRightExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.rotateRight(rightLit);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvEq(final BvEqExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            return Bool(leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvNeq(final BvNeqExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            return Bool(!leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvUGeq(final BvUGeqExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.uge(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvUGt(final BvUGtExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.ugt(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvULeq(final BvULeqExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.ule(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvULt(final BvULtExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.ult(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvSGeq(final BvSGeqExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.sge(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvSGt(final BvSGtExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.sgt(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvSLeq(final BvSLeqExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.sle(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyBvSLt(final BvSLtExpr expr, final Valuation val) {
+        final Expr<BvType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<BvType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof BvLitExpr && rightOp instanceof BvLitExpr) {
+            final BvLitExpr leftLit = (BvLitExpr) leftOp;
+            final BvLitExpr rightLit = (BvLitExpr) rightOp;
+            return leftLit.slt(rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<FpType> simplifyFpAdd(final FpAddExpr expr, final Valuation val) {
+        final List<Expr<FpType>> ops = new ArrayList<>();
+
+        for (final Expr<FpType> op : expr.getOps()) {
+            final Expr<FpType> opVisited = simplify(op, val);
+            if (opVisited instanceof FpAddExpr) {
+                final FpAddExpr addOp = (FpAddExpr) opVisited;
+                ops.addAll(addOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+        final FpLitExpr zero = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+        FpLitExpr value = zero;
+
+        for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<FpType> op = iterator.next();
+            if (op instanceof FpLitExpr) {
+                final FpLitExpr litOp = (FpLitExpr) op;
+                value = value.add(expr.getRoundingMode(), litOp);
+                iterator.remove();
+            }
+        }
+
+        if (!value.equals(zero)) {
+            ops.add(value);
+        }
+
+        if (ops.isEmpty()) {
+            return zero;
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<FpType> simplifyFpSub(final FpSubExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            final FpLitExpr leftLit = (FpLitExpr) leftOp;
+            final FpLitExpr rightLit = (FpLitExpr) rightOp;
+            return leftLit.sub(expr.getRoundingMode(), rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<FpType> simplifyFpPos(final FpPosExpr expr, final Valuation val) {
+        return simplify(expr.getOp(), val);
+    }
+
+    private Expr<FpType> simplifyFpNeg(final FpNegExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr) {
+            final FpLitExpr litOp = (FpLitExpr) op;
+            return litOp.neg();
+        } else if (op instanceof FpNegExpr) {
+            final FpNegExpr negOp = (FpNegExpr) op;
+            return negOp.getOp();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<FpType> simplifyFpAbs(final FpAbsExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpAbsExpr) {
+            final FpAbsExpr absOp = (FpAbsExpr) op;
+            return absOp.getOp();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<BoolType> simplifyFpIsNan(final FpIsNanExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr) {
+            return Bool(((FpLitExpr) op).isNaN());
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<BoolType> simplifyFpIsInfinite(final FpIsInfiniteExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr) {
+            return Bool((((FpLitExpr) op).isNegativeInfinity() || ((FpLitExpr) op).isPositiveInfinity()));
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<FpType> simplifyFpRoundToIntegral(final FpRoundToIntegralExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpRoundToIntegralExpr) {
+            final FpRoundToIntegralExpr rndOp = (FpRoundToIntegralExpr) op;
+            return rndOp.getOp();
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<FpType> simplifyFpMul(final FpMulExpr expr, final Valuation val) {
+        final List<Expr<FpType>> ops = new ArrayList<>();
+
+        for (final Expr<FpType> op : expr.getOps()) {
+            final Expr<FpType> opVisited = simplify(op, val);
+            if (opVisited instanceof FpMulExpr) {
+                final FpMulExpr mulOp = (FpMulExpr) opVisited;
+                ops.addAll(mulOp.getOps());
+            } else {
+                ops.add(opVisited);
+            }
+        }
+
+        final FpLitExpr ZERO = FpUtils.bigFloatToFpLitExpr(BigFloat.zero(expr.getType().getSignificand()), expr.getType());
+        final FpLitExpr ONE = FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
+
+        FpLitExpr value = ONE;
+        for (final Iterator<Expr<FpType>> iterator = ops.iterator(); iterator.hasNext(); ) {
+            final Expr<FpType> op = iterator.next();
+            if (op instanceof FpLitExpr) {
+                final FpLitExpr litOp = (FpLitExpr) op;
+                value = value.mul(expr.getRoundingMode(), litOp);
+                iterator.remove();
+                if (value.equals(ZERO)) {
+                    return ZERO;
+                }
+            }
+        }
+
+        if (!value.equals(ONE)) {
+            ops.add(0, value);
+        }
+
+        if (ops.isEmpty()) {
+            return ONE;
+        } else if (ops.size() == 1) {
+            return Utils.singleElementOf(ops);
+        }
+
+        return expr.with(ops);
+    }
+
+    private Expr<FpType> simplifyFpDiv(final FpDivExpr expr, final Valuation val) {
+        if (true) return expr; // Rationale: https://github.com/ftsrg/theta/issues/180
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            final FpLitExpr leftLit = (FpLitExpr) leftOp;
+            final FpLitExpr rightLit = (FpLitExpr) rightOp;
+            return leftLit.div(expr.getRoundingMode(), rightLit);
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (leftOp.equals(rightOp)) {
+                return FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyFpEq(final FpEqExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return Bool(leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return True();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyFpAssign(final FpAssignExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return Bool(leftOp.equals(rightOp));
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyFpGeq(final FpGeqExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyFpLeq(final FpLeqExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyFpGt(final FpGtExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<BoolType> simplifyFpLt(final FpLtExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+
+    private Expr<BoolType> simplifyFpNeq(final FpNeqExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return Bool(!leftOp.equals(rightOp));
+        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+                return False();
+            }
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<FpType> simplifyFpMax(final FpMaxExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<FpType> simplifyFpMin(final FpMinExpr expr, final Valuation val) {
+        final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(leftOp, rightOp);
+    }
+
+    private Expr<FpType> simplifyFpSqrt(final FpSqrtExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(op);
+    }
+
+    private Expr<FpType> simplifyFpFromBv(final FpFromBvExpr expr, final Valuation val) {
+        final Expr<BvType> sgn = simplify(expr.getOp(), val);
+
+        if (sgn instanceof BvLitExpr) {
+            return expr.eval(val);
+        }
+
+        return expr.with(sgn);
+    }
+
+    private Expr<BvType> simplifyFpToBv(final FpToBvExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr) {
+            return expr.eval(val);
+        }
+        return expr.with(op);
+    }
+
+    private Expr<FpType> simplifyFpToFp(final FpToFpExpr expr, final Valuation val) {
+        final Expr<FpType> op = simplify(expr.getOp(), val);
+
+        if (op instanceof FpLitExpr) {
+            return expr.eval(val);
+        } else if (op instanceof FpToFpExpr) {
+            return simplify(expr.with(((FpToFpExpr) op).getOp()), val);
+        }
+
+        return expr.with(op);
+    }
 }

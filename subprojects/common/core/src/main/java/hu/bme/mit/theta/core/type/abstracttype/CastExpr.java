@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.UnaryExpr;
 
 public abstract class CastExpr<SourceType extends Castable<SourceType>, TargetType extends Type>
-		extends UnaryExpr<SourceType, TargetType> {
+        extends UnaryExpr<SourceType, TargetType> {
 
-	public CastExpr(final Expr<SourceType> op) {
-		super(op);
-	}
+    public CastExpr(final Expr<SourceType> op) {
+        super(op);
+    }
 
 }

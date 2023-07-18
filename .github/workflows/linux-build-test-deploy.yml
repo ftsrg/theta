@@ -1,0 +1,191 @@
+name: Linux build-test-deploy
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Summarize the contents since the last version'
+        required: true
+        default: 'Auto-generated release'
+
+permissions: write-all
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Build
+        uses: ./.github/actions/build-action
+      - name: Upload JARs
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: ThetaJars
+          path: subprojects/**/*-all.jar
+      - name: Positive outcome badge
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Success"
+          color: "green"
+          path: "badges/build-${{ runner.os }}"
+      - name: Negative outcome badge
+        if: ${{ failure() }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} build"
+          status: "Failure"
+          color: "red"
+          path: "badges/build-${{ runner.os }}"
+  
+  javadoc:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Deploy javadoc to github-pages
+        uses: ./.github/actions/deploy-javadoc
+
+  test-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04]
+    needs: build
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Run tests
+        uses: ./.github/actions/test-action
+      - name: Positive outcome badge
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} test"
+          status: "Success"
+          color: "green"
+          path: "badges/test-${{ runner.os }}"
+      - name: Negative outcome badge
+        if: ${{ failure() && matrix.os == 'ubuntu-latest' }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "${{ runner.os }} test"
+          status: "Failure"
+          color: "red"
+          path: "badges/test-${{ runner.os }}"
+
+
+  deploy-release:
+    needs: test-linux
+    if: "${{ github.event.inputs.message != '' &&  github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Create release and deploy JARs
+        uses: ./.github/actions/create-release
+        with:
+          message: ${{ inputs.message }}
+
+  deploy-maven:
+    needs: test-linux
+    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Create and publish maven release 
+        uses: ./.github/actions/deploy-maven
+        with:
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          PGP_KEY: ${{ secrets.PGP_KEY }}
+          PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
+          PGP_PWD: ${{ secrets.PGP_PWD }}
+  
+  test-docker:
+    strategy:
+      matrix:
+        dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Version
+        id: version
+        run: |
+          echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+      - name: docker-login
+        uses: ./.github/actions/docker-login
+        with:
+          username: ${{secrets.DOCKER_USERNAME}}
+          token: ${{secrets.DOCKER_TOKEN}}
+      - name: docker-login-ghcr
+        uses: ./.github/actions/docker-login
+        with:
+          registry: ghcr.io
+          username: ${{github.repository_owner}}
+          token: ${{secrets.GITHUB_TOKEN}}
+      - name: Build and publish docker file 
+        uses: ./.github/actions/docker-deploy
+        with:
+          project: ${{ matrix.dockerprojects }}
+          version: ${{ steps.version.outputs.version }}
+          user-dockerhub: ftsrg
+          user-ghcr: ftsrg
+          push: false
+  
+  deploy-docker:
+    needs: [test-linux, test-docker]
+    if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
+    strategy:
+      matrix:
+        dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Version
+        id: version
+        run: |
+          echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+      - name: docker-login
+        uses: ./.github/actions/docker-login
+        with:
+          username: ${{secrets.DOCKER_USERNAME}}
+          token: ${{secrets.DOCKER_TOKEN}}
+      - name: docker-login-ghcr
+        uses: ./.github/actions/docker-login
+        with:
+          registry: ghcr.io
+          username: ${{github.repository_owner}}
+          token: ${{secrets.GITHUB_TOKEN}}
+      - name: Build and publish docker file 
+        uses: ./.github/actions/docker-deploy
+        with:
+          project: ${{ matrix.dockerprojects }}
+          version: ${{ steps.version.outputs.version }}
+          user-dockerhub: ftsrg
+          user-ghcr: ftsrg
+          push: true
+      - name: Docker Hub Description update
+        uses: peter-evans/dockerhub-description@dc67fad7001ef9e8e3c124cb7a64e16d0a63d864
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          repository: ftsrg/${{ matrix.dockerprojects }}
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Deploy docs
+        uses: ./.github/actions/deploy-docs

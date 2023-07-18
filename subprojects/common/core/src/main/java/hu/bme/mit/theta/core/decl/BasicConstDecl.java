@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import hu.bme.mit.theta.core.type.Type;
 
 /**
  * A basic constant declaration that can be directly passed to the SMT solver.
+ *
  * @param <DeclType>
  */
 public final class BasicConstDecl<DeclType extends Type> extends ConstDecl<DeclType> {
 
-	BasicConstDecl(final String name, final DeclType type) {
-		super(name, type);
-	}
+    BasicConstDecl(final String name, final DeclType type) {
+        super(name, type);
+    }
 
 }
