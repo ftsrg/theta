@@ -49,7 +49,7 @@ data class InvokeLabel @JvmOverloads constructor(
     companion object {
 
         fun fromString(s: String, scope: Scope, env: Env, metadata: MetaData): XcfaLabel {
-            val (name, params) = Regex("(.*)\\((.*)\\)").matchEntire(s)!!.destructured
+            val (name, params) = Regex("([^\\(]*)\\((.*)\\)").matchEntire(s)!!.destructured
             return InvokeLabel(name,
                 params.split(",").map { ExpressionWrapper(scope, it).instantiate(env) },
                 metadata = metadata)

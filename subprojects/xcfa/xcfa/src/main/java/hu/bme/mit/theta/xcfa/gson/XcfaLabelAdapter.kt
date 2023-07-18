@@ -84,7 +84,7 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> G
                         metadata)
                 } catch (e: Exception) {
                     System.err.println("Could not parse $content\nscope: ${scope}\nenv: $env")
-                    error(e)
+                    throw e
                 }
             check(obj is XcfaLabel)
             reader.endObject()

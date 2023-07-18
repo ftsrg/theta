@@ -1,0 +1,237 @@
+{
+  "name": "",
+  "vars": [],
+  "procedures": [
+    {
+      "name": "reach_error",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "reach_error_ret",
+              "type": "(Bv 1)"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [],
+      "locs": [
+        "reach_error_init {init}",
+        "reach_error_final {final}",
+        "__loc_789 "
+      ],
+      "edges": [
+        {
+          "source": "reach_error_init",
+          "target": "__loc_789",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          }
+        },
+        {
+          "source": "__loc_789",
+          "target": "reach_error_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "main_ret",
+              "type": "(Bv 32)"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "main::f",
+          "type": "(Fp 8 24)"
+        },
+        {
+          "name": "main::d",
+          "type": "(Fp 11 53)"
+        },
+        {
+          "name": "main::ld",
+          "type": "(Fp 15 113)"
+        }
+      ],
+      "locs": [
+        "main_init {init}",
+        "main_final {final}",
+        "__loc_817 ",
+        "main_error {error}"
+      ],
+      "edges": [
+        {
+          "source": "__loc_817",
+          "target": "main_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 7,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 7,
+                    "colNumberStop": 30,
+                    "offsetStart": 164,
+                    "offsetEnd": 187,
+                    "sourceText": "ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f"
+                  }
+                },
+                "content": "(assume (\u003d (ite (and (/\u003d #b00000000000000000000000000000000 (ite (\u003e main::ld (#b0 #b011111111111101 #b0001111010111000010100100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000)) (/\u003d #b00000000000000000000000000000000 (ite (\u003c main::ld (#b0 #b011111111111101 #b0100011110101110000101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000))) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_817",
+          "target": "main_error",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 7,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 7,
+                    "colNumberStop": 30,
+                    "offsetStart": 164,
+                    "offsetEnd": 187,
+                    "sourceText": "ld \u003e 0.28f \u0026\u0026 ld \u003c 0.32f"
+                  }
+                },
+                "content": "(assume (/\u003d (ite (and (/\u003d #b00000000000000000000000000000000 (ite (\u003e main::ld (#b0 #b011111111111101 #b0001111010111000010100100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000)) (/\u003d #b00000000000000000000000000000000 (ite (\u003c main::ld (#b0 #b011111111111101 #b0100011110101110000101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000))) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "main_init",
+          "target": "__loc_817",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 4,
+                    "colNumberStart": 14,
+                    "lineNumberStop": 4,
+                    "colNumberStop": 38,
+                    "offsetStart": 88,
+                    "offsetEnd": 112,
+                    "sourceText": "__VERIFIER_nondet_float()"
+                  }
+                },
+                "content": "(havoc main::f)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 4,
+                    "colNumberStart": 14,
+                    "lineNumberStop": 4,
+                    "colNumberStop": 38,
+                    "offsetStart": 88,
+                    "offsetEnd": 112,
+                    "sourceText": "__VERIFIER_nondet_float()"
+                  }
+                },
+                "content": "(assume true)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 16,
+                    "offsetStart": 119,
+                    "offsetEnd": 131,
+                    "sourceText": "double d \u003d f;"
+                  }
+                },
+                "content": "(assign main::d (fptofp[11,53] main::f))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 6,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 6,
+                    "colNumberStop": 22,
+                    "offsetStart": 137,
+                    "offsetEnd": 155,
+                    "sourceText": "long double ld \u003d d;"
+                  }
+                },
+                "content": "(assign main::ld (fptofp[15,113] main::d))"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "initProcedures": [
+    {
+      "params": [],
+      "procedure": "main"
+    }
+  ]
+}

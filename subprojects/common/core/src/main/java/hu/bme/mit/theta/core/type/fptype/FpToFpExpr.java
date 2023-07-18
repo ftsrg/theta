@@ -105,7 +105,7 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
     }
 
     public String getOperatorLabel() {
-        return OPERATOR_LABEL;
+        return OPERATOR_LABEL + "[" + expBits + "," + signBits + "]";
     }
 
     public FpRoundingMode getRoundingMode() {

@@ -269,21 +269,19 @@ class XcfaCli(private val args: Array<String>) {
     }
 
     private fun preVerificationLogging(logger: ConsoleLogger, xcfa: XCFA, gsonForOutput: Gson) {
-        if (svcomp || outputResults) {
-            if (!svcomp) {
-                resultFolder.mkdirs()
+        if (outputResults && !svcomp) {
+            resultFolder.mkdirs()
 
-                logger.write(Logger.Level.INFO,
+            logger.write(Logger.Level.INFO,
                     "Writing results to directory ${resultFolder.absolutePath}")
 
-                val xcfaDotFile = File(resultFolder, "xcfa.dot")
-                xcfaDotFile.writeText(xcfa.toDot())
+            val xcfaDotFile = File(resultFolder, "xcfa.dot")
+            xcfaDotFile.writeText(xcfa.toDot())
 
-                val xcfaJsonFile = File(resultFolder, "xcfa.json")
-                val uglyJson = gsonForOutput.toJson(xcfa)
-                val create = GsonBuilder().setPrettyPrinting().create()
-                xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
-            }
+            val xcfaJsonFile = File(resultFolder, "xcfa.json")
+            val uglyJson = gsonForOutput.toJson(xcfa)
+            val create = GsonBuilder().setPrettyPrinting().create()
+            xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
         }
     }
 
@@ -329,14 +327,14 @@ class XcfaCli(private val args: Array<String>) {
                     xcfaFromC
                 }
 
-                InputType.XCFA_JSON -> {
+                InputType.JSON -> {
                     val gson = getGson()
                     gson.fromJson(input!!.readText(), XCFA::class.java)
                 }
 
-                InputType.XCFA_DSL -> {
+                InputType.DSL -> {
                     val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension(
-                        "kts")
+                            "kts")
                     kotlinEngine.eval(FileReader(input!!)) as XCFA
                 }
             }
@@ -354,7 +352,7 @@ class XcfaCli(private val args: Array<String>) {
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
             } catch (e: UnsupportedOperationException) {
                 logger.write(Logger.Level.INFO,
-                    "Non-linear CHC found, retrying using backward transformation...")
+                        "Non-linear CHC found, retrying using backward transformation...")
                 chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
             }
@@ -367,30 +365,38 @@ class XcfaCli(private val args: Array<String>) {
 
     private fun getExplicitProperty() = if (property != null) {
         remainingFlags.add("--error-detection")
-        if (property!!.name.endsWith("unreach-call.prp")) {
-            remainingFlags.add(ErrorDetection.ERROR_LOCATION.toString())
-            ErrorDetection.ERROR_LOCATION
-        } else if (property!!.name.endsWith("no-data-race.prp")) {
-            remainingFlags.add(ErrorDetection.DATA_RACE.toString())
-            if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
-                System.err.println(
-                    "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
-                lbeLevel = LbePass.LbeLevel.NO_LBE
+        when {
+            property!!.name.endsWith("unreach-call.prp") -> {
+                remainingFlags.add(ErrorDetection.ERROR_LOCATION.toString())
+                ErrorDetection.ERROR_LOCATION
             }
-            ErrorDetection.DATA_RACE
-        } else if (property!!.name.endsWith("no-overflow.prp")) {
-            remainingFlags.add(ErrorDetection.OVERFLOW.toString())
-            if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
-                System.err.println(
-                    "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
-                lbeLevel = LbePass.LbeLevel.NO_LBE
+
+            property!!.name.endsWith("no-data-race.prp") -> {
+                remainingFlags.add(ErrorDetection.DATA_RACE.toString())
+                if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
+                    System.err.println(
+                            "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
+                    lbeLevel = LbePass.LbeLevel.NO_LBE
+                }
+                ErrorDetection.DATA_RACE
             }
-            ErrorDetection.OVERFLOW
-        } else {
-            remainingFlags.add(ErrorDetection.NO_ERROR.toString())
-            System.err.println(
-                "Unknown property $property, using full state space exploration (no refinement)")
-            ErrorDetection.NO_ERROR
+
+            property!!.name.endsWith("no-overflow.prp") -> {
+                remainingFlags.add(ErrorDetection.OVERFLOW.toString())
+                if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
+                    System.err.println(
+                            "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
+                    lbeLevel = LbePass.LbeLevel.NO_LBE
+                }
+                ErrorDetection.OVERFLOW
+            }
+
+            else -> {
+                remainingFlags.add(ErrorDetection.NO_ERROR.toString())
+                System.err.println(
+                        "Unknown property $property, using full state space exploration (no refinement)")
+                ErrorDetection.NO_ERROR
+            }
         }
     } else ErrorDetection.ERROR_LOCATION
 

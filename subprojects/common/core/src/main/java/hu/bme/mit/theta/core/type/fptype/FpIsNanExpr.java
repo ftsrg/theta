@@ -28,7 +28,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 public final class FpIsNanExpr extends UnaryExpr<FpType, BoolType> {
 
     private static final int HASH_SEED = 1786;
-    private static final String OPERATOR_LABEL = "isnan";
+    private static final String OPERATOR_LABEL = "fpisnan";
 
     private FpIsNanExpr(final Expr<FpType> op) {
         super(op);
