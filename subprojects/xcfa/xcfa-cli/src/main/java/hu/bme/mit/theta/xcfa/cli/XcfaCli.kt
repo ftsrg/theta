@@ -79,7 +79,7 @@ class XcfaCli(private val args: Array<String>) {
 
     @Parameter(names = ["--chc-transformation"],
         description = "Direction of transformation from CHC to XCFA")
-    var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.FORWARD;
+    var chcTransformation: ChcFrontend.ChcTransformation = ChcFrontend.ChcTransformation.FORWARD
 
     //////////// backend options ////////////
     @Parameter(names = ["--backend"], description = "Backend analysis to use")
@@ -164,7 +164,7 @@ class XcfaCli(private val args: Array<String>) {
         // propagating input variables
         LbePass.level = lbeLevel
         if (randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
-        WebDebuggerLogger.getInstance().setTitle(input?.name);
+        WebDebuggerLogger.getInstance().setTitle(input?.name)
 
 
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
@@ -273,7 +273,7 @@ class XcfaCli(private val args: Array<String>) {
             resultFolder.mkdirs()
 
             logger.write(Logger.Level.INFO,
-                    "Writing results to directory ${resultFolder.absolutePath}")
+                "Writing results to directory ${resultFolder.absolutePath}")
 
             val xcfaDotFile = File(resultFolder, "xcfa.dot")
             xcfaDotFile.writeText(xcfa.toDot())
@@ -334,12 +334,12 @@ class XcfaCli(private val args: Array<String>) {
 
                 InputType.DSL -> {
                     val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension(
-                            "kts")
+                        "kts")
                     kotlinEngine.eval(FileReader(input!!)) as XCFA
                 }
             }
         } catch (e: Exception) {
-            if (stacktrace) e.printStackTrace();
+            if (stacktrace) e.printStackTrace()
             logger.write(Logger.Level.RESULT, "Frontend failed!\n")
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
@@ -352,7 +352,7 @@ class XcfaCli(private val args: Array<String>) {
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
             } catch (e: UnsupportedOperationException) {
                 logger.write(Logger.Level.INFO,
-                        "Non-linear CHC found, retrying using backward transformation...")
+                    "Non-linear CHC found, retrying using backward transformation...")
                 chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
             }
@@ -375,7 +375,7 @@ class XcfaCli(private val args: Array<String>) {
                 remainingFlags.add(ErrorDetection.DATA_RACE.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
                     System.err.println(
-                            "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
+                        "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
                 ErrorDetection.DATA_RACE
@@ -385,7 +385,7 @@ class XcfaCli(private val args: Array<String>) {
                 remainingFlags.add(ErrorDetection.OVERFLOW.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
                     System.err.println(
-                            "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
+                        "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
                 ErrorDetection.OVERFLOW
@@ -394,7 +394,7 @@ class XcfaCli(private val args: Array<String>) {
             else -> {
                 remainingFlags.add(ErrorDetection.NO_ERROR.toString())
                 System.err.println(
-                        "Unknown property $property, using full state space exploration (no refinement)")
+                    "Unknown property $property, using full state space exploration (no refinement)")
                 ErrorDetection.NO_ERROR
             }
         }
