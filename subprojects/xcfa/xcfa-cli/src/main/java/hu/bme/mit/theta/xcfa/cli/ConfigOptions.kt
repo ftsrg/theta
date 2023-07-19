@@ -80,10 +80,6 @@ enum class Strategy {
     PORTFOLIO
 }
 
-enum class Portfolio {
-    COMPLEX
-}
-
 // TODO partial orders nicely
 enum class Domain(
     val abstractor: (

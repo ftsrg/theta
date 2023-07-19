@@ -89,10 +89,13 @@ class XcfaCli(private val args: Array<String>) {
 
     @Parameter(names = ["--portfolio"],
         description = "Portfolio type (only valid with --strategy PORTFOLIO)")
-    var portfolio: Portfolio = Portfolio.COMPLEX
+    var portfolio: File = File("complex.kts")
 
     @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
     var solverHome: String = SmtLibSolverManager.HOME.toAbsolutePath().toString()
+
+    @Parameter(names = ["--debug"], description = "Debug mode (not exiting when encountering an exception)")
+    var debug: Boolean = false
 
     //////////// debug options ////////////
     @Parameter(names = ["--stacktrace"],
@@ -191,8 +194,8 @@ class XcfaCli(private val args: Array<String>) {
             when (strategy) {
                 Strategy.DIRECT -> runDirect(xcfa, config, logger)
                 Strategy.SERVER -> runServer(xcfa, config, logger, parseContext)
-                Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger)
-                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext)
+                Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
+                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug)
             }
         // post verification
         postVerificationLogging(safetyResult, parseContext)
@@ -200,7 +203,7 @@ class XcfaCli(private val args: Array<String>) {
     }
 
     private fun runDirect(xcfa: XCFA, config: XcfaCegarConfig, logger: ConsoleLogger) =
-        exitOnError(stacktrace) { config.check(xcfa, logger) }
+        exitOnError(stacktrace, debug) { config.check(xcfa, logger) }
 
     private fun runServer(xcfa: XCFA, config: XcfaCegarConfig,
         logger: ConsoleLogger, parseContext: ParseContext): SafetyResult<*, *> {
@@ -214,9 +217,9 @@ class XcfaCli(private val args: Array<String>) {
     }
 
     private fun runServerDebug(xcfa: XCFA, config: XcfaCegarConfig,
-        logger: ConsoleLogger): SafetyResult<*, *> {
+        logger: ConsoleLogger, parseContext: ParseContext): SafetyResult<*, *> {
         val safetyResultSupplier = config.checkInProcessDebug(xcfa, solverHome, true,
-            input!!.absolutePath, logger)
+            input!!.absolutePath, logger, parseContext)
         return try {
             safetyResultSupplier()
         } catch (e: ErrorCodeException) {
@@ -225,23 +228,13 @@ class XcfaCli(private val args: Array<String>) {
     }
 
     private fun runPortfolio(xcfa: XCFA, explicitProperty: ErrorDetection,
-        logger: ConsoleLogger,
-        parseContext: ParseContext): SafetyResult<*, *> {
-        var portfolioDescriptor = File(portfolio.name.lowercase() + ".kts")
-        if (!portfolioDescriptor.exists()) {
-            portfolioDescriptor = File(
-                File(XcfaCli::class.java.protectionDomain.codeSource.location.path).parent,
-                portfolio.name.lowercase() + ".kts")
-            if (!portfolioDescriptor.exists()) {
-                logger.write(Logger.Level.RESULT,
-                    "Portfolio file not found: ${portfolioDescriptor.absolutePath}\n")
-                exitProcess(ExitCodes.PORTFOLIO_ERROR.code)
-            }
-        }
+        logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false): SafetyResult<*, *> {
+        val portfolioDescriptor = portfolio
         val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
         return try {
             val bindings: Bindings = SimpleBindings()
             bindings["xcfa"] = xcfa
+            bindings["parseContext"] = parseContext
             bindings["property"] = explicitProperty
             bindings["cFileName"] = input!!.absolutePath
             bindings["logger"] = logger
@@ -258,8 +251,10 @@ class XcfaCli(private val args: Array<String>) {
 
             portfolioResult.second
         } catch (e: ErrorCodeException) {
+            if (debug) throw e
             exitProcess(e.code)
         } catch (e: Exception) {
+            if (debug) throw e
             logger.write(Logger.Level.RESULT,
                 "Portfolio from $portfolioDescriptor could not be executed.")
             e.printStackTrace()
