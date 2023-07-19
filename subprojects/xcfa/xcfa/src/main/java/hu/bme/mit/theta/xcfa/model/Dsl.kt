@@ -28,8 +28,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
 
 fun xcfa(name: String, lambda: XcfaBuilder.() -> Unit): XCFA =
     XcfaBuilder(name).apply(lambda).build()
@@ -180,6 +178,16 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
             return SequenceLabel(this@SequenceLabelContext.labelList)
         }
 
+        operator fun String.invoke(vararg expr: Any): SequenceLabel {
+            val exprs = expr.map {
+                if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
+                    it) else error("Bad type")
+            }
+            val label = InvokeLabel(this, exprs, EmptyMetaData)
+            this@SequenceLabelContext.labelList.add(label)
+            return SequenceLabel(this@SequenceLabelContext.labelList)
+        }
+
         fun String.start(ctx: XcfaProcedureBuilderContext, vararg expr: Any): SequenceLabel {
             val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)
             val exprs = expr.map {
@@ -225,6 +233,16 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
             val innerCtx = this@XcfaProcedureBuilderContext.SequenceLabelContext()
             val label = NondetLabel(lambda(innerCtx).labels.toSet())
             labelList.add(label)
+            return SequenceLabel(labelList)
+        }
+
+        fun nop(): SequenceLabel {
+            val label = NopLabel
+            labelList.add(label)
+            return SequenceLabel(labelList)
+        }
+
+        fun skip(): SequenceLabel {
             return SequenceLabel(labelList)
         }
     }
