@@ -115,7 +115,7 @@ enum class Domain(
     ),
     PRED_BOOL(
         abstractor = { a, b, c, d, e, f, g, h, i ->
-            getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanAbstractor(b),
+            getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.booleanAbstractor(b),
                 i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
@@ -128,7 +128,7 @@ enum class Domain(
     ),
     PRED_CART(
         abstractor = { a, b, c, d, e, f, g, h, i ->
-            getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.cartesianAbstractor(b),
+            getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.cartesianAbstractor(b),
                 i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
@@ -141,7 +141,7 @@ enum class Domain(
     ),
     PRED_SPLIT(
         abstractor = { a, b, c, d, e, f, g, h, i ->
-            getXcfaAbstractor(PredXcfaAnalaysis(a, b, PredAbstractors.booleanSplitAbstractor(b),
+            getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.booleanSplitAbstractor(b),
                 i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->

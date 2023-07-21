@@ -255,7 +255,7 @@ private fun getPredXcfaTransFunc(
     }
 }
 
-class PredXcfaAnalaysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor,
+class PredXcfaAnalysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor,
     partialOrd: PartialOrd<XcfaState<PredState>>) : XcfaAnalysis<PredState, PredPrec>(
     corePartialOrd = partialOrd,
     coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
