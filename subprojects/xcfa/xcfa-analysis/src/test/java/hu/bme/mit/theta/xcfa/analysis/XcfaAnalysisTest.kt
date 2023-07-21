@@ -72,7 +72,8 @@ class XcfaAnalysisTest {
         val lts = getXcfaLts()
 
         val abstractor = getXcfaAbstractor(analysis,
-            PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
+            PriorityWaitlist.create(
+                ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
             StopCriterions.firstCex<XcfaState<ExplState>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
@@ -84,7 +85,8 @@ class XcfaAnalysisTest {
             SingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL, NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
+                precRefiner, PruneStrategy.FULL,
+                NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
@@ -112,7 +114,8 @@ class XcfaAnalysisTest {
         val lts = XcfaSporLts(xcfa)
 
         val abstractor = getXcfaAbstractor(analysis,
-            PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
+            PriorityWaitlist.create(
+                ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
             StopCriterions.firstCex<XcfaState<ExplState>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
@@ -124,7 +127,8 @@ class XcfaAnalysisTest {
             SingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL, NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
+                precRefiner, PruneStrategy.FULL,
+                NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
@@ -139,7 +143,7 @@ class XcfaAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testDporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        if(filepath.contains("multithread")) return // TODO: why does it fail to verify?
+        if (filepath.contains("multithread")) return // TODO: why does it fail to verify?
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
 
@@ -165,7 +169,8 @@ class XcfaAnalysisTest {
             SingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL, ConsoleLogger(Logger.Level.DETAIL)) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
+                precRefiner, PruneStrategy.FULL,
+                ConsoleLogger(Logger.Level.DETAIL)) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
@@ -193,7 +198,8 @@ class XcfaAnalysisTest {
         val lts = XcfaAasporLts(xcfa, mutableMapOf())
 
         val abstractor = getXcfaAbstractor(analysis,
-            PriorityWaitlist.create(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
+            PriorityWaitlist.create(
+                ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
             StopCriterions.firstCex<XcfaState<ExplState>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
@@ -206,7 +212,8 @@ class XcfaAnalysisTest {
             SingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL, NullLogger.getInstance(), atomicNodePruner) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
+                precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
+                atomicNodePruner) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, AasporRefiner.create(refiner, PruneStrategy.FULL, mutableMapOf()))
@@ -218,11 +225,10 @@ class XcfaAnalysisTest {
         Assertions.assertTrue(verdict(safetyResult))
     }
 
-
     @ParameterizedTest
     @MethodSource("data")
     fun testAadporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        if(filepath.contains("multithread")) return // TODO: why does it fail to verify?
+        if (filepath.contains("multithread")) return // TODO: why does it fail to verify?
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
 
@@ -248,7 +254,8 @@ class XcfaAnalysisTest {
             SingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
-                precRefiner, PruneStrategy.FULL, NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
+                precRefiner, PruneStrategy.FULL,
+                NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
