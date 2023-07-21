@@ -99,7 +99,7 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
 
     @Override
     public String getOperatorLabel() {
-        return OPERATOR_LABEL;
+        return OPERATOR_LABEL + "[" + roundingMode.toString() + "]";
     }
 }
  

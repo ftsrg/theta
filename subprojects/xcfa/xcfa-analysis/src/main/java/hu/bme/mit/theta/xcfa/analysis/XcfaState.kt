@@ -29,8 +29,6 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
 
-private var nameCnt = 0
-
 data class XcfaState<S : ExprState> @JvmOverloads constructor(
     val xcfa: XCFA?,
     val processes: Map<Int, XcfaProcessState>,
@@ -39,6 +37,8 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
     val bottom: Boolean = false,
 ) : ExprState {
+
+    private var pidCnt = 1
 
     override fun isBottom(): Boolean {
         return bottom || sGlobal.isBottom
@@ -146,7 +146,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 //                }
         )
 
-        val pid = nameCnt++
+        val pid = pidCnt++
         val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
         newThreadLookup[startLabel.pidVar] = pid
         newProcesses[pid] = XcfaProcessState(
@@ -234,6 +234,8 @@ data class XcfaProcessState(
     val prefix: String = ""
 ) {
 
+    private var procCnt = 1
+
     fun withNewLoc(l: XcfaLocation): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         deque.pop()
@@ -255,7 +257,7 @@ data class XcfaProcessState(
         val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
         val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(paramStmts)
         deque.push(xcfaProcedure.initLoc)
-        val lookup = createLookup(xcfaProcedure, prefix, "P${nameCnt++}")
+        val lookup = createLookup(xcfaProcedure, prefix, "P${procCnt++}")
         varLookup.push(lookup)
         returnStmts.push(returnStmt)
         paramStmts.push(Pair(

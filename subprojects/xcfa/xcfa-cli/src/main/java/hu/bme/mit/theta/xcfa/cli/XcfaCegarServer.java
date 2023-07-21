@@ -86,7 +86,7 @@ class XcfaCegarServer {
         final Logger logger = new ConsoleLabelledLogger();
         logger.write(Logger.Level.INFO, "Server started on port " + port + ".\n");
 
-        exitOnError(false, () -> {
+        exitOnError(false, debug, () -> {
             SolverRegistrationKt.registerAllSolverManagers(solverHome, logger);
             try (final ServerSocket socket = new ServerSocket(port)) {
                 System.out.println("Port=(" + socket.getLocalPort() + ")");
@@ -128,7 +128,9 @@ class XcfaCegarServer {
                         logger.write(Logger.Level.INFO, "Parsed config.\n");
                         ParseContext parseContext;
                         try {
-                            parseContext = gson.fromJson(parseStr, ParseContext.class);
+//                            parseContext = gson.fromJson(parseStr, ParseContext.class);
+                            // TODO: add support for json
+                            parseContext = new ParseContext();
                         } catch (Exception e) {
                             File tempFile = File.createTempFile("parsecontext", ".json");
                             try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {

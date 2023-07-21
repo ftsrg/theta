@@ -17,14 +17,19 @@ package hu.bme.mit.theta.xcfa.cli
 
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
 import java.util.stream.Stream
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.exists
 
 class XcfaCliVerifyTest {
     companion object {
+
 
         @JvmStatic
         fun cFiles(): Stream<Arguments> {
@@ -58,6 +63,18 @@ class XcfaCliVerifyTest {
         }
 
         @JvmStatic
+        fun cFilesShort(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of("/c/dekker.i", "--search DFS --por-level SPOR"),
+                Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
+                Arguments.of("/c/litmustest/singlethread/01cast.c", null),
+                Arguments.of("/c/litmustest/singlethread/02types.c", null),
+                Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
+                Arguments.of("/c/litmustest/singlethread/04real.c", null),
+            )
+        }
+
+        @JvmStatic
         fun chcFiles(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.FORWARD, "--domain PRED_CART"),
@@ -69,15 +86,71 @@ class XcfaCliVerifyTest {
 
     @ParameterizedTest
     @MethodSource("cFiles")
-    fun testCVerify(filePath: String, extraArgs: String?) {
+    fun testCVerifyDirect(filePath: String, extraArgs: String?) {
         val params = arrayOf(
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
         )
-        println(params.toList())
         main(params)
+    }
+
+    @ParameterizedTest
+    @MethodSource("cFilesShort")
+    fun testCVerifyServer(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--input-type", "C",
+            "--strategy", "SERVER_DEBUG",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+        )
+        try {
+            main(params)
+        } catch (e: IllegalStateException) {
+            if (!e.message.equals("Done debugging")) {
+                throw e
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("cFilesShort")
+    fun testCVerifyPortfolio(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--input-type", "C",
+            "--strategy", "PORTFOLIO",
+            "--debug",
+            "--portfolio", javaClass.getResource("/simple.kts")!!.path,
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+        )
+        try {
+            main(params)
+        } catch (e: Throwable) {
+            if (!e.toString().contains("Done debugging")) {
+                throw e
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("cFiles")
+    fun testCWitness(filePath: String, extraArgs: String?) {
+        val temp = createTempDirectory()
+        val params = arrayOf(
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--output-results",
+            "--output-directory", temp.absolutePathString()
+        )
+        main(params)
+        Assertions.assertTrue(temp.resolve("xcfa.json").exists())
+        Assertions.assertTrue(temp.resolve("arg-true.dot").exists() || temp.resolve("arg-false.dot").exists())
+        temp.toFile().deleteRecursively()
     }
 
     @ParameterizedTest

@@ -110,4 +110,13 @@ public final class FpUtils {
         return new BinaryMathContext(type.getSignificand(), type.getExponent(),
                 getMathContextRoundingMode(roundingMode));
     }
+
+    public static FpLitExpr fromString(final String value, final FpType type) {
+        return bigFloatToFpLitExpr(new BigFloat(
+                        value,
+                        new BinaryMathContext(
+                                type.getExponent(),
+                                type.getSignificand())),
+                type);
+    }
 }

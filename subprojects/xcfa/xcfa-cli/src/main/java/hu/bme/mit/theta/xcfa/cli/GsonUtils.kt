@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
@@ -43,10 +44,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaActionAdapter
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.XcfaStateAdapter
 import hu.bme.mit.theta.xcfa.getSymbols
-import hu.bme.mit.theta.xcfa.gson.MetaDataAdapter
-import hu.bme.mit.theta.xcfa.gson.XcfaAdapter
-import hu.bme.mit.theta.xcfa.gson.XcfaLabelAdapter
-import hu.bme.mit.theta.xcfa.gson.xcfaLocationAdapter
+import hu.bme.mit.theta.xcfa.gson.*
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -125,6 +123,8 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: () ->
     gsonBuilder.registerTypeHierarchyAdapter(SafetyResult::class.java,
         SafetyResultAdapter({ gson }, { argHelper(domain().stateType) },
             { traceHelper(domain().stateType) }))
+    gsonBuilder.registerTypeHierarchyAdapter(ParseContext::class.java,
+        ParseContextAdapter { gson })
     gson = gsonBuilder.create()
     return gson
 }

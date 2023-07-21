@@ -214,7 +214,7 @@ data class XcfaCegarConfig(
         }
 
     fun checkInProcessDebug(xcfa: XCFA, smtHome: String, writeWitness: Boolean,
-        sourceFileName: String, logger: Logger): () -> SafetyResult<*, *> {
+        sourceFileName: String, logger: Logger, parseContext: ParseContext): () -> SafetyResult<*, *> {
         val gson = getGson(xcfa, { domain },
             { getSolver(abstractionSolver, validateAbstractionSolver).createSolver() })
         XcfaCegarServer.main(arrayOf("--smt-home",
@@ -227,6 +227,8 @@ data class XcfaCegarConfig(
             gson.toJson(this),
             "--xcfa",
             gson.toJson(xcfa),
+            "--parse-context",
+            gson.toJson(parseContext),
             "--debug"
         ))
         error("Done debugging")

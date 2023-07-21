@@ -147,14 +147,18 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
-        val type = CComplexType.getType(expr, parseContext)
-        val assign: AssignStmt<*> = Stmts.Assign(
-            TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
-            TypeUtils.cast(AbstractExprs.Ite<Type>(
-                FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>), type.unitValue,
-                type.nullValue), type.smtType))
-        parseContext.getMetadata().create(assign.expr, "cType", type)
-        return StmtLabel(assign, metadata = callStmt.metadata)
+        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
+            val type = CComplexType.getType(expr, parseContext)
+            val assign: AssignStmt<*> = Stmts.Assign(
+                TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
+                TypeUtils.cast(AbstractExprs.Ite<Type>(
+                    FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>), type.unitValue,
+                    type.nullValue), type.smtType))
+            parseContext.getMetadata().create(assign.expr, "cType", type)
+            return StmtLabel(assign, metadata = callStmt.metadata)
+        } else {
+            throw UnsupportedOperationException("Not yet supported without cType")
+        }
     }
 
     private fun handleIsfinite(builder: XcfaProcedureBuilder,
@@ -162,14 +166,18 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
-        val type = CComplexType.getType(expr, parseContext)
-        val assign: AssignStmt<*> = Stmts.Assign(
-            TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
-            TypeUtils.cast(AbstractExprs.Ite<Type>(
-                BoolExprs.Not(FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>)),
-                type.unitValue, type.nullValue), type.smtType))
-        parseContext.getMetadata().create(assign.expr, "cType", type)
-        return StmtLabel(assign, metadata = callStmt.metadata)
+        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
+            val type = CComplexType.getType(expr, parseContext)
+            val assign: AssignStmt<*> = Stmts.Assign(
+                TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
+                TypeUtils.cast(AbstractExprs.Ite<Type>(
+                    BoolExprs.Not(FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>)),
+                    type.unitValue, type.nullValue), type.smtType))
+            parseContext.getMetadata().create(assign.expr, "cType", type)
+            return StmtLabel(assign, metadata = callStmt.metadata)
+        } else {
+            throw UnsupportedOperationException("Not yet supported without cType")
+        }
     }
 
     private fun handleIsnormal(builder: XcfaProcedureBuilder,
@@ -186,14 +194,18 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
-        val type = CComplexType.getType(expr, parseContext)
-        val assign: AssignStmt<*> = Stmts.Assign(
-            TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
-            TypeUtils.cast(
-                AbstractExprs.Ite<Type>(FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>),
-                    type.unitValue, type.nullValue), type.smtType))
-        parseContext.getMetadata().create(assign.expr, "cType", type)
-        return StmtLabel(assign, metadata = callStmt.metadata)
+        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
+            val type = CComplexType.getType(expr, parseContext)
+            val assign: AssignStmt<*> = Stmts.Assign(
+                TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
+                TypeUtils.cast(
+                    AbstractExprs.Ite<Type>(FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>),
+                        type.unitValue, type.nullValue), type.smtType))
+            parseContext.getMetadata().create(assign.expr, "cType", type)
+            return StmtLabel(assign, metadata = callStmt.metadata)
+        } else {
+            throw UnsupportedOperationException("Not yet supported without cType")
+        }
     }
 
     private fun handleRound(builder: XcfaProcedureBuilder, callStmt: InvokeLabel): XcfaLabel {
@@ -246,7 +258,9 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
             FpMaxExpr.of(callStmt.params[1] as Expr<FpType?>,
                 callStmt.params[2] as Expr<FpType?>))
-        parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
+            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
 

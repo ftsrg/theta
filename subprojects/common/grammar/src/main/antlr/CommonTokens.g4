@@ -333,6 +333,11 @@ FP_ROUNDINGMODE
     |   '[rtp]'
     |   '[rtn]'
     |   '[rtz]'
+    |   '[RNE]'
+    |   '[RNA]'
+    |   '[RTP]'
+    |   '[RTN]'
+    |   '[RTZ]'
     ;
 
 FALSE
