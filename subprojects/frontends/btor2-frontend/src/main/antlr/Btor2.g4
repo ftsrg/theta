@@ -1,64 +1,78 @@
 grammar Btor2;
 
 // Lexer rules
-WS: [ \t\r\n]+ -> skip;
-COMMENT: ';' ~[\r\n]* -> skip;
-ID: [a-zA-Z_][a-zA-Z0-9_]*;
-NUM: [1-9][0-9]*;
-NID: NUM;
-SID: NUM;
-UINT: [0-9]+;
-STRING: '"' ~[\r\n"]* '"';
-HEX: '0x' [0-9a-fA-F]+;
+WS: [ ]+ -> skip;
+NUM: [0-9]+;
 PLUS: '+';
 MINUS: '-';
-OP: 'and' | 'nand' | 'nor' | 'or' | 'xor' | 'iff' | 'implies'
-    | 'eq' | 'neq' | 'slt' | 'sle' | 'sgt' | 'sge' | 'ult' | 'ule'
-    | 'ugt' | 'uge' | 'concat' | 'add' | 'mul' | 'udiv' | 'urem'
-    | 'sdiv' | 'srem' | 'smod' | 'saddo' | 'sdivo' | 'smulo' | 'ssubo'
-    | 'rol' | 'ror' | 'sll' | 'sra' | 'srl' | 'read' | 'write' | 'ite';
-SORT: 'bitvec' | 'array';
-KEYWORD: 'const' | 'constd' | 'consth' | 'input' | 'one' | 'ones'
-        | 'zero' | 'state' | 'bad' | 'constraint' | 'fair' | 'output'
-        | 'justice' | 'init' | 'next';
+UNARYOP: 'not'
+         | 'inc' | 'dec' | 'neg'
+         | 'redand' | 'redor' | 'redxor';
+TERNARYOP: 'ite' | 'write';
+BINOP: 'and' | 'nand' | 'nor' | 'or' | 'xor' | 'iff' | 'implies'
+    | 'eq' | 'neq'
+    | 'slt' | 'sle' | 'sgt' | 'sgte'
+    | 'ult' | 'ule' | 'ugt' | 'ugte'
+    | 'concat' | 'add' | 'mul'
+    | 'udiv' | 'urem'
+    | 'sdiv' | 'srem' | 'smod'
+    | 'saddo' | 'sdivo' | 'smulo' | 'ssubo'
+    | 'uaddo' | 'umulo' | 'usubo'
+    | 'rol' | 'ror' | 'sll' | 'sra' | 'srl' | 'read';
+SYMBOL: ~[ \r\n]+;
+COMMENT: ';' ~[\r\n]+;
 
 // Parser rules
 btor2: line+;
 
-line: comment | node (symbol)? comment?;
+line: ( comment | node (symbol)? (comment)? ) '\n';
 
 comment: COMMENT;
 
-node: SID 'sort' ( array_sort | bitvec_sort ) // sort declaration
-    | NID (input | state) // input or state declaration
-    | NID opidx SID NID NUM (NUM)? // indexed operator node
-    | NID op SID NID (NID (NID)?)? // non-indexed operator node
-    | NID ('init' | 'next') SID NID NID // init/next node
-    | NID ('bad' | 'constraint' | 'fair' | 'output') NID // property node
-    | NID 'justice' NUM (NID)+; // justice node
+nid: NUM; // TODO semantic check nid/sid for >0
+sid: NUM; // TODO semantic check nid/sid for >0
 
-input: 'input' ID
-    | 'one' ID
-    | 'ones' ID
-    | 'zero' ID
+node: ( array_sort | bitvec_sort ) // sort declaration
+    | (input | state) // input or state declaration
+    | opidx // indexed operator node
+    | op // non-indexed operator node
+    | (init | next) // init/next node
+    | property; // property node
+    // | nid 'justice' NUM (nid)+; // justice node // TODO we can not model check justice nodes (not reachability)
+
+opidx: ext | slice;
+
+ext: nid ('uext'|'sext') sid nid w=NUM;
+slice: nid 'slice' sid nid u=NUM l=NUM;
+
+op: binop | unop | terop;
+
+binop: nid BINOP sid opd1=nid opd2=nid;
+unop: nid UNARYOP sid opd1=nid;
+terop: nid TERNARYOP sid opd1=nid opd2=nid opd3=nid;
+
+input: nid ('input' sid
+    | 'one' sid
+    | 'ones' sid
+    | 'zero' sid
     | constant
     | constant_d
-    | constant_h;
+    | constant_h);
 
-state: 'state' ID;
+init: nid 'init' sid nid nid;
+next: nid 'next' sid nid nid;
 
-array_sort: 'array' ID ID;
+state: nid 'state' sid;
 
-bitvec_sort: 'bitvec' NUM;
+property: nid ('bad' | 'constraint' | 'fair' | 'output') nid;
 
-opidx: '[' (PLUS | MINUS)? UINT ']';
+array_sort: sid 'sort array' sid sid;
+bitvec_sort: sid 'sort bitvec' NUM; // TODO semantic check for >0
 
-op: OP;
+constant: 'const' sid bin=NUM; // TODO semantic check that really binary
 
-constant: 'const' ID (PLUS | MINUS)? ('0' | '1')+;
+constant_d: 'constd' sid (MINUS)? dec=NUM; // TODO semantic check that really uint
 
-constant_d: 'constd' ID (MINUS)? UINT;
+constant_h: 'consth' sid hex=SYMBOL; // TODO semantic check that really hex
 
-constant_h: 'consth' ID HEX;
-
-symbol: STRING;
+symbol: SYMBOL;
