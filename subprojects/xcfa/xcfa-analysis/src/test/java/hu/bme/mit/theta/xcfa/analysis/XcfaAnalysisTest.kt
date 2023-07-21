@@ -51,7 +51,7 @@ class XcfaAnalysisTest {
                 arrayOf("/01function.c", SafetyResult<*, *>::isUnsafe),
                 arrayOf("/02functionparam.c", SafetyResult<*, *>::isSafe),
                 arrayOf("/03nondetfunction.c", SafetyResult<*, *>::isUnsafe),
-                arrayOf("/04multithread.c", SafetyResult<*, *>::isSafe),
+                arrayOf("/04multithread.c", SafetyResult<*, *>::isUnsafe),
             )
         }
     }
@@ -143,7 +143,6 @@ class XcfaAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testDporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        if (filepath.contains("multithread")) return // TODO: why does it fail to verify?
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
 
