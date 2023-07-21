@@ -188,6 +188,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)),
                 metadata = getMetadata(statement))
         } else if (lValue is Dereference<*, *>) {
+            // TODO: Process pointer dereference here
             val op = lValue.op
             val type = op.type
             val ptrType = CComplexType.getUnsignedLong(parseContext).smtType
