@@ -23,6 +23,7 @@ include(
 
     "frontends/c-frontend",
     "frontends/chc-frontend",
+    "frontends/btor2-frontend",
 
     "cfa/cfa",
     "cfa/cfa-analysis",
