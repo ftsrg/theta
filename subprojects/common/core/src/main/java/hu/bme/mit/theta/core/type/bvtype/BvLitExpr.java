@@ -378,7 +378,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvLitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvLitExpr that = (BvLitExpr) obj;
             return Arrays.equals(this.value, that.value);
         } else {

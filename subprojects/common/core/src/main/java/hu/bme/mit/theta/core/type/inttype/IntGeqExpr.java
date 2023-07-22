@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class IntGeqExpr extends GeqExpr<IntType> {
 
@@ -79,7 +79,7 @@ public final class IntGeqExpr extends GeqExpr<IntType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof IntGeqExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final IntGeqExpr that = (IntGeqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

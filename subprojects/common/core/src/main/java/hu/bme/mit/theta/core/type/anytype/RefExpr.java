@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.type.anytype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -67,7 +67,7 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof RefExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final RefExpr<?> that = (RefExpr<?>) obj;
             return this.getDecl().equals(that.getDecl());
         } else {

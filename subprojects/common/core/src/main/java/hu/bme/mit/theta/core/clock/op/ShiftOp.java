@@ -15,19 +15,18 @@
  */
 package hu.bme.mit.theta.core.clock.op;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class ShiftOp implements ClockOp {
 
@@ -88,7 +87,7 @@ public final class ShiftOp implements ClockOp {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ShiftOp) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ShiftOp that = (ShiftOp) obj;
             return this.getVar().equals(that.getVar()) && this.getOffset() == that.getOffset();
         } else {

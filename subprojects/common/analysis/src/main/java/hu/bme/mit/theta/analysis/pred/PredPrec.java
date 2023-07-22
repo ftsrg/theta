@@ -108,7 +108,7 @@ public final class PredPrec implements Prec {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof PredPrec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final PredPrec that = (PredPrec) obj;
             return this.predToNegMap.keySet().equals(that.predToNegMap.keySet());
         } else {

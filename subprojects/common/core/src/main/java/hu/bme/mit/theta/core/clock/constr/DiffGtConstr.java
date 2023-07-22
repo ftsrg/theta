@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 public final class DiffGtConstr extends DiffConstr {
 
@@ -58,7 +58,7 @@ public final class DiffGtConstr extends DiffConstr {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof DiffGtConstr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final DiffGtConstr that = (DiffGtConstr) obj;
             return this.getBound() == that.getBound() && this.getLeftVar().equals(that.getLeftVar())
                     && this.getRightVar().equals(that.getRightVar());

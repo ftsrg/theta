@@ -15,14 +15,7 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
@@ -30,6 +23,12 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XtaState<S extends State> implements ExprState {
 
@@ -132,7 +131,7 @@ public final class XtaState<S extends State> implements ExprState {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof XtaState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final XtaState<?> that = (XtaState<?>) obj;
             return this.locs.equals(that.locs) && this.state.equals(that.state);
         } else {

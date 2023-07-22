@@ -97,7 +97,7 @@ public final class ExplPrec implements Prec {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ExplPrec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ExplPrec that = (ExplPrec) obj;
             return this.getVars().equals(that.getVars());
         } else {

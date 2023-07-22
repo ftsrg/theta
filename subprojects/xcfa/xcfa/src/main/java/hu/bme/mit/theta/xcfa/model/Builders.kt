@@ -204,9 +204,9 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
             !this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         val savedVars = ArrayList(vars)
         vars.clear()
-        savedVars.forEach { vars.add(varLut[it]!!) }
+        savedVars.forEach { vars.add(checkNotNull(varLut[it])) }
         val savedParams = ArrayList(params)
         params.clear()
-        savedParams.forEach { params.add(Pair(varLut[it.first]!!, it.second)) }
+        savedParams.forEach { params.add(Pair(checkNotNull(varLut[it.first]), it.second)) }
     }
 }

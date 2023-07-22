@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Havoc statement of the form havoc VARIABLE, which performs a non-deterministic assignment to
@@ -68,7 +68,7 @@ public final class HavocStmt<DeclType extends Type> implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof HavocStmt<?>) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final HavocStmt<?> that = (HavocStmt<?>) obj;
             return this.getVarDecl().equals(that.getVarDecl());
         } else {

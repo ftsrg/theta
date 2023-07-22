@@ -208,7 +208,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
             edgesByTarget[edge.target] = edgesToTarget
         }
         for (key in edgesByTarget.keys) {
-            val edgesToTarget: List<XcfaEdge> = edgesByTarget[key]!!
+            val edgesToTarget: List<XcfaEdge> = checkNotNull(edgesByTarget[key])
             if (edgesToTarget.size <= 1) continue
             val source = edgesToTarget[0].source
             val target = edgesToTarget[0].target

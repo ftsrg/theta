@@ -122,7 +122,7 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof LocalCfaPrec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final LocalCfaPrec<?> that = (LocalCfaPrec<?>) obj;
             return this.defaultPrec.equals(that.defaultPrec) && this.mapping.equals(that.mapping);
         } else {

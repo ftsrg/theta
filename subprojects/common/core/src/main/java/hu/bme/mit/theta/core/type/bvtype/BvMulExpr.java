@@ -73,7 +73,7 @@ public final class BvMulExpr extends MulExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvMulExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvMulExpr that = (BvMulExpr) obj;
             return this.getOps().equals(that.getOps());
         } else {

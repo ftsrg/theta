@@ -82,7 +82,7 @@ public final class Prod4Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec, 
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof Prod4Prec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Prod4Prec<?, ?, ?, ?> that = (Prod4Prec<?, ?, ?, ?>) obj;
             return this.prec1.equals(that.prec1) && this.prec2.equals(that.prec2)
                     && this.prec3.equals(that.prec3)

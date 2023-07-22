@@ -212,7 +212,7 @@ public final class ZoneState implements ExprState {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ZoneState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ZoneState that = (ZoneState) obj;
             return this.dbm.equals(that.dbm);
         } else {

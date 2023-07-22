@@ -81,7 +81,7 @@ public final class FpGtExpr extends GtExpr<FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpGtExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpGtExpr that = (FpGtExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

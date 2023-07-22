@@ -39,7 +39,7 @@ public final class BoolType implements Equational<BoolType> {
 
     @Override
     public boolean equals(final Object obj) {
-        return obj instanceof BoolType;
+        return obj != null && this.getClass() == obj.getClass();
     }
 
     @Override

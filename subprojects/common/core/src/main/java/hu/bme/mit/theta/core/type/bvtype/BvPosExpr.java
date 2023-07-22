@@ -64,7 +64,7 @@ public final class BvPosExpr extends PosExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvPosExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvPosExpr that = (BvPosExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

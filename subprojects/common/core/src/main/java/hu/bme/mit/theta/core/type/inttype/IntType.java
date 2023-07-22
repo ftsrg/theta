@@ -17,7 +17,14 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.abstracttype.Additive;
+import hu.bme.mit.theta.core.type.abstracttype.Castable;
+import hu.bme.mit.theta.core.type.abstracttype.Divisible;
+import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
+import hu.bme.mit.theta.core.type.abstracttype.Ordered;
+import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntType implements Additive<IntType>, Multiplicative<IntType>,
@@ -42,7 +49,7 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 
     @Override
     public boolean equals(final Object obj) {
-        return (obj instanceof IntType);
+        return (obj != null && this.getClass() == obj.getClass());
     }
 
     @Override

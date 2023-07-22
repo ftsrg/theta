@@ -67,7 +67,7 @@ public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof Prod2Prec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Prod2Prec<?, ?> that = (Prod2Prec<?, ?>) obj;
             return this.prec1.equals(that.prec1) && this.prec2.equals(that.prec2);
         } else {

@@ -15,17 +15,17 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
+
+import java.util.List;
+
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
-import java.util.List;
-
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.MultiaryExpr;
 
 public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 
@@ -73,7 +73,7 @@ public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof AndExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final AndExpr that = (AndExpr) obj;
             return this.getOps().equals(that.getOps());
         } else {

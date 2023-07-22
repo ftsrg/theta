@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.xta.analysis.expl.itp;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class ItpExplState implements ExprState {
 
@@ -88,7 +88,7 @@ public final class ItpExplState implements ExprState {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ItpExplState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ItpExplState that = (ItpExplState) obj;
             return this.concrState.equals(that.concrState) && this.abstrState.equals(
                     that.abstrState);

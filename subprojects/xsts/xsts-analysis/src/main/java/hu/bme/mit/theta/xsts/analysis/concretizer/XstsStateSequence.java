@@ -27,7 +27,9 @@ import hu.bme.mit.theta.xsts.analysis.XstsState;
 import java.util.List;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkElementIndex;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XstsStateSequence {
 
@@ -64,7 +66,7 @@ public final class XstsStateSequence {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof XstsStateSequence) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final XstsStateSequence that = (XstsStateSequence) obj;
             return this.states.equals(that.states);
         } else {

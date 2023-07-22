@@ -80,7 +80,7 @@ public class IfStmt implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof IfStmt) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final IfStmt that = (IfStmt) obj;
             return this.cond.equals(that.getCond()) &&
                     this.then.equals(that.getThen()) &&

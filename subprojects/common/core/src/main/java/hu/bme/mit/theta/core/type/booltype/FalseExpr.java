@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public final class FalseExpr extends BoolLitExpr {
 
@@ -55,7 +55,7 @@ public final class FalseExpr extends BoolLitExpr {
 
     @Override
     public boolean equals(final Object obj) {
-        return (obj instanceof FalseExpr);
+        return (obj != null && this.getClass() == obj.getClass());
     }
 
     @Override

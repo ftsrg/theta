@@ -15,23 +15,21 @@
  */
 package hu.bme.mit.theta.core.model;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import hu.bme.mit.theta.common.container.Containers;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Basic, immutable implementation of a substitution.
@@ -77,7 +75,7 @@ public final class BasicSubstitution implements Substitution {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BasicSubstitution) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BasicSubstitution that = (BasicSubstitution) obj;
             return this.declToExpr.equals(that.declToExpr);
         } else {

@@ -98,7 +98,7 @@ public final class BvConcatExpr implements Expr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvConcatExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvConcatExpr that = (BvConcatExpr) obj;
             return this.getOps().equals(that.getOps());
         } else {

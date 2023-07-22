@@ -15,18 +15,18 @@
  */
 package hu.bme.mit.theta.analysis.prod3;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-
-import java.util.ArrayList;
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends State> implements
         ExprState {
@@ -217,7 +217,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
         public boolean equals(final Object obj) {
             if (this == obj) {
                 return true;
-            } else if (obj instanceof Product) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final Product<?, ?, ?> that = (Product<?, ?, ?>) obj;
                 return this.state1.equals(that.state1) && this.state2.equals(that.state2)
                         && this.state3.equals(that.state3);
@@ -279,7 +279,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
         public final boolean equals(final Object obj) {
             if (this == obj) {
                 return true;
-            } else if (obj instanceof Bottom) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final Bottom<?, ?, ?> that = (Bottom<?, ?, ?>) obj;
                 return this.getIndex() == that.getIndex() && this.getState()
                         .equals(that.getState());

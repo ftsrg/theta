@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.common;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.function.Supplier;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class Try<T> {
 
@@ -101,7 +101,7 @@ public abstract class Try<T> {
                 return true;
             } else if (obj == null) {
                 return false;
-            } else if (obj instanceof Success) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final Success<?> that = (Success<?>) obj;
                 return this.value.equals(that.value);
             } else {
@@ -171,7 +171,7 @@ public abstract class Try<T> {
                 return true;
             } else if (obj == null) {
                 return false;
-            } else if (obj instanceof Failure) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final Failure<?> that = (Failure<?>) obj;
                 return this.exception.equals(that.exception);
             } else {

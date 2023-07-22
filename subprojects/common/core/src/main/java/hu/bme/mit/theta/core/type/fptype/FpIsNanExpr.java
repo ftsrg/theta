@@ -69,7 +69,7 @@ public final class FpIsNanExpr extends UnaryExpr<FpType, BoolType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpIsNanExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpIsNanExpr that = (FpIsNanExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

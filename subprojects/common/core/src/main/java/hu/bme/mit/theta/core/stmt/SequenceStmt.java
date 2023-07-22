@@ -64,7 +64,7 @@ public final class SequenceStmt implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof SequenceStmt) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final SequenceStmt that = (SequenceStmt) obj;
             return this.getStmts().equals(that.getStmts());
         } else {

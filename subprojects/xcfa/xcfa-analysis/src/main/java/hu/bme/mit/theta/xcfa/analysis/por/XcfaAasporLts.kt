@@ -60,7 +60,7 @@ class XcfaAasporLts(xcfa: XCFA,
             if (!ignoredVarRegistry.containsKey(ignoredVar)) {
                 ignoredVarRegistry[ignoredVar] = mutableSetOf()
             }
-            ignoredVarRegistry[ignoredVar]!!.add(state)
+            checkNotNull(ignoredVarRegistry[ignoredVar]).add(state)
         }
         minimalPersistentSet.removeAll(exploredActions.toSet())
         return minimalPersistentSet
@@ -105,13 +105,13 @@ class XcfaAasporLts(xcfa: XCFA,
                     actionsToRemove.add(action)
                     addedNewAction = true
                 } else {
-                    ignoredVarsByAction[action]!!.addAll(
+                    checkNotNull(ignoredVarsByAction[action]).addAll(
                         potentialIgnoredVars) // the action is not added to the persistent set because we ignore variables in potentialIgnoredVars
                 }
             }
             actionsToRemove.forEach(otherActions::remove)
         }
-        otherActions.forEach { action -> ignoredVars.addAll(ignoredVarsByAction[action]!!) }
+        otherActions.forEach { action -> ignoredVars.addAll(checkNotNull(ignoredVarsByAction[action])) }
         return persistentSet
     }
 

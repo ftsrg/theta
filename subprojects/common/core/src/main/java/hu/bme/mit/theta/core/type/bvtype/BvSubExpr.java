@@ -79,7 +79,7 @@ public final class BvSubExpr extends SubExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvSubExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvSubExpr that = (BvSubExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

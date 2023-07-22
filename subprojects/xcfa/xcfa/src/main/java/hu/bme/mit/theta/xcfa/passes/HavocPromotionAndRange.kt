@@ -59,12 +59,12 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                 edge.label.labels.forEach {
                     it.collectVars().forEach { v ->
                         labelEdgeLut.putIfAbsent(v, ArrayList())
-                        labelEdgeLut[v]!!.add(it)
+                        checkNotNull(labelEdgeLut[v]).add(it)
                     }
                 }
                 candidates = candidates.filter {
                     val v = ((it.second as StmtLabel).stmt as HavocStmt<*>).varDecl
-                    val labels = labelEdgeLut[v]!!
+                    val labels = checkNotNull(labelEdgeLut[v])
                     labels.size == 2 &&
                         labels[0] == edge.label.labels[it.first] &&
                         labels[1] == edge.label.labels[it.first + 1] &&

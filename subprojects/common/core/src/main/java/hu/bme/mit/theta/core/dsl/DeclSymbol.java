@@ -15,11 +15,11 @@
  */
 package hu.bme.mit.theta.core.dsl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class DeclSymbol implements Symbol {
 
@@ -61,7 +61,7 @@ public final class DeclSymbol implements Symbol {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof DeclSymbol) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final DeclSymbol that = (DeclSymbol) obj;
             return this.decl.equals(that.decl);
         } else {

@@ -15,18 +15,18 @@
  */
 package hu.bme.mit.theta.common.parser;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.Streams.stream;
-import static java.util.stream.Collectors.joining;
+import com.google.common.collect.ImmutableList;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.Streams.stream;
+import static java.util.stream.Collectors.joining;
 
 public abstract class SExpr {
 
@@ -128,7 +128,7 @@ public abstract class SExpr {
         public boolean equals(final Object obj) {
             if (this == obj) {
                 return true;
-            } else if (obj instanceof SAtom) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final SAtom that = (SAtom) obj;
                 return this.atom.equals(that.atom);
             } else {
@@ -192,7 +192,7 @@ public abstract class SExpr {
         public boolean equals(final Object obj) {
             if (this == obj) {
                 return true;
-            } else if (obj instanceof SList) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final SList that = (SList) obj;
                 return this.list.equals(that.list);
             } else {

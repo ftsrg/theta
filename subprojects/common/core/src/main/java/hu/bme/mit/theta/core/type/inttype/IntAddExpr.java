@@ -15,16 +15,16 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 
 import java.math.BigInteger;
 import java.util.List;
 
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class IntAddExpr extends AddExpr<IntType> {
 
@@ -71,7 +71,7 @@ public final class IntAddExpr extends AddExpr<IntType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof IntAddExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final IntAddExpr that = (IntAddExpr) obj;
             return this.getOps().equals(that.getOps());
         } else {

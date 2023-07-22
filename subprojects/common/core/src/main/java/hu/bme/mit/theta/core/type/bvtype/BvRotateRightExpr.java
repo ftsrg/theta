@@ -77,7 +77,7 @@ public final class BvRotateRightExpr extends BinaryExpr<BvType, BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvRotateRightExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvRotateRightExpr that = (BvRotateRightExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

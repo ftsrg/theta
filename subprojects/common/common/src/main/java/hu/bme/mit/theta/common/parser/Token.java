@@ -58,7 +58,7 @@ public final class Token {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof Token) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Token that = (Token) obj;
             return this.type.equals(that.type) && this.string.equals(that.string);
         } else {

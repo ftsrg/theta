@@ -84,7 +84,7 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpRoundToIntegralExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpRoundToIntegralExpr that = (FpRoundToIntegralExpr) obj;
             return this.getOp().equals(that.getOp()) && roundingMode.equals(that.roundingMode);
         } else {

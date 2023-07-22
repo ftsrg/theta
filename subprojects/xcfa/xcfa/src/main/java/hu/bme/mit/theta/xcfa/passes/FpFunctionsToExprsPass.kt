@@ -42,7 +42,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             for (stmt in (edge.label as SequenceLabel).labels) {
                 if (stmt is InvokeLabel) {
                     if (handlers.containsKey(stmt.name)) {
-                        newStmts.add(handlers[stmt.name]!!.apply(builder, stmt))
+                        newStmts.add(checkNotNull(handlers[stmt.name]).apply(builder, stmt))
                         found = true
                     }
                 } else newStmts.add(stmt)

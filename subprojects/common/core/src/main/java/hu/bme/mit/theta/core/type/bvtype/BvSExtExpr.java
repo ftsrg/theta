@@ -107,7 +107,7 @@ public final class BvSExtExpr implements Expr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvSExtExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvSExtExpr that = (BvSExtExpr) obj;
             return this.getOps().equals(that.getOps()) && this.getType().equals(that.getType());
         } else {

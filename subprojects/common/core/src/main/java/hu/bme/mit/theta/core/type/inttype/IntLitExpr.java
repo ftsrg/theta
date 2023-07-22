@@ -15,10 +15,6 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
@@ -26,6 +22,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 
 import java.math.BigInteger;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<IntType>,
         Comparable<IntLitExpr> {
@@ -164,7 +164,7 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof IntLitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final IntLitExpr that = (IntLitExpr) obj;
             return this.getValue().compareTo(that.getValue()) == 0;
         } else {

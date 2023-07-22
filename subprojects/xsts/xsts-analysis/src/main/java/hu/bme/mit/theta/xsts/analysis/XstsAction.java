@@ -47,7 +47,7 @@ public final class XstsAction extends StmtAction {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof XstsAction) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final XstsAction that = (XstsAction) obj;
             return this.stmts.equals(that.stmts);
         } else {

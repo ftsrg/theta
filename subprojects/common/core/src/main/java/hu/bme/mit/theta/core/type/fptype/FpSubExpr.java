@@ -88,7 +88,7 @@ public final class FpSubExpr extends SubExpr<FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpSubExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpSubExpr that = (FpSubExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp()) && roundingMode == that.roundingMode;

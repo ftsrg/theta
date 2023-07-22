@@ -84,7 +84,7 @@ public class FpMulExpr extends MulExpr<FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpMulExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpMulExpr that = (FpMulExpr) obj;
             return this.getOps().equals(that.getOps()) && roundingMode == that.roundingMode;
         } else {

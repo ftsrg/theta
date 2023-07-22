@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 /**
  * Assume statement of the form [EXPRESSION], where EXPRESSION is a Boolean {@link Expr}. The
@@ -73,7 +73,7 @@ public final class AssumeStmt implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof AssumeStmt) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final AssumeStmt that = (AssumeStmt) obj;
             return this.getCond().equals(that.getCond());
         } else {

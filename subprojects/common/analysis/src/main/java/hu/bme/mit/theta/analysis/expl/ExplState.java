@@ -61,7 +61,7 @@ public abstract class ExplState extends Valuation implements ExprState {
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ExplState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ExplState that = (ExplState) obj;
             return this.toMap().equals(that.toMap()) && this.isBottom() == that.isBottom();
         } else {

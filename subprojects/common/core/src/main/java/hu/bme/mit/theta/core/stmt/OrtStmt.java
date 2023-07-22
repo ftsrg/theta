@@ -65,7 +65,7 @@ public final class OrtStmt implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof OrtStmt) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final OrtStmt that = (OrtStmt) obj;
             return this.getStmts().equals(that.getStmts());
         } else {

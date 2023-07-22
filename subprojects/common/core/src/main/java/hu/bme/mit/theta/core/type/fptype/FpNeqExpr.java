@@ -81,7 +81,7 @@ public final class FpNeqExpr extends NeqExpr<FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpNeqExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpNeqExpr that = (FpNeqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

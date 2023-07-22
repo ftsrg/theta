@@ -17,7 +17,22 @@ package hu.bme.mit.theta.core.type.fptype;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Additive;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Ordered;
+import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -77,7 +92,7 @@ public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicat
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpType) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpType that = (FpType) obj;
             return this.getExponent() == that.getExponent()
                     && this.getSignificand() == that.getSignificand();

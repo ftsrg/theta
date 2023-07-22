@@ -72,7 +72,7 @@ public final class BvAndExpr extends MultiaryExpr<BvType, BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvAndExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvAndExpr that = (BvAndExpr) obj;
             return this.getOps().equals(that.getOps());
         } else {

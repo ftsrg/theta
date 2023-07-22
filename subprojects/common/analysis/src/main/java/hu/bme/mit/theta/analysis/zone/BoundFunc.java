@@ -15,19 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.toList;
-
-import java.util.Collection;
-import java.util.Collections;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Map;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.clock.constr.AndConstr;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.FailClockConstrVisitor;
@@ -38,6 +27,15 @@ import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr;
 import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.stream.Collectors.toList;
 
 public final class BoundFunc {
 
@@ -137,7 +135,7 @@ public final class BoundFunc {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BoundFunc) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BoundFunc that = (BoundFunc) obj;
             return this.varToLower.equals(that.varToLower) && this.varToUpper.equals(
                     that.varToUpper);

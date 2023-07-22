@@ -254,7 +254,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 val action = node.inEdge.get().action
                 if (relevantProcesses.contains(action.pid)) {
                     if (newLastDependents.containsKey(
-                            action.pid) && index <= newLastDependents[action.pid]!!) {
+                            action.pid) && index <= checkNotNull(newLastDependents[action.pid])) {
                         // there is an action a' such that  action -> a' -> newaction  (->: happens-before)
                         relevantProcesses.remove(action.pid)
                     } else if (dependent(newaction, action)) {
@@ -273,7 +273,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
                         newLastDependents[action.pid] = index
                         newLastDependents = max(newLastDependents,
-                            stack[index].lastDependents[action.pid]!!)
+                            checkNotNull(stack[index].lastDependents[action.pid]))
                         relevantProcesses.remove(action.pid)
                     }
                 }
@@ -438,8 +438,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         private fun noInfluenceOnRealExploration(
             realStackSize: Int) = last.processLastAction.keys.all { process ->
             last.lastDependents.containsKey(
-                process) && last.lastDependents[process]!!.all { (otherProcess, index) ->
-                index >= realStackSize || index >= last.processLastAction[otherProcess]!!
+                process) && checkNotNull(last.lastDependents[process]).all { (otherProcess, index) ->
+                index >= realStackSize || index >= checkNotNull(last.processLastAction[otherProcess])
             }
         }
     }

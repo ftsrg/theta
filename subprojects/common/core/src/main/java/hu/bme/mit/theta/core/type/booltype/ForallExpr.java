@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ForallExpr extends QuantifiedExpr {
 
@@ -62,7 +62,7 @@ public final class ForallExpr extends QuantifiedExpr {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ForallExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ForallExpr that = (ForallExpr) obj;
             return this.getParamDecls().equals(that.getParamDecls()) && this.getOp()
                     .equals(that.getOp());

@@ -158,7 +158,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ArrayWriteExpr<?, ?>) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ArrayWriteExpr<?, ?> that = (ArrayWriteExpr<?, ?>) obj;
             return this.getArray().equals(that.getArray()) && this.getIndex()
                     .equals(that.getIndex())

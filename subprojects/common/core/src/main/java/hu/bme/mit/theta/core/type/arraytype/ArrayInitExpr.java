@@ -100,7 +100,7 @@ public final class ArrayInitExpr<IndexType extends Type, ElemType extends Type> 
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ArrayInitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ArrayInitExpr<?, ?> that = (ArrayInitExpr<?, ?>) obj;
             return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(that.elseElem);
         } else {

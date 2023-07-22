@@ -20,13 +20,17 @@ import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
 import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
 import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
 import hu.bme.mit.theta.common.TupleN;
+import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 
 public class ReflexiveTransitiveClosure extends UnaryMCMRule {
     public ReflexiveTransitiveClosure(MCMRelation e) {
@@ -41,10 +45,10 @@ public class ReflexiveTransitiveClosure extends UnaryMCMRule {
     @Override
     public void encodeEvents(List<Integer> idList, EventConstantLookup resultEvents, EncodedRelationWrapper encodedRelationWrapper) {
         final EventConstantLookup events = e.encodeEvents(idList, encodedRelationWrapper);
-        resultEvents.getAll().forEach((tuple, constDecl) -> {
-            if (tuple.get(0) == tuple.get(1))
+        resultEvents.getAll().forEach((TupleN<Integer> tuple, ConstDecl<BoolType> constDecl) -> {
+            if (Objects.equals(tuple.get(0), tuple.get(1))) {
                 encodedRelationWrapper.getSolver().add(constDecl.getRef());
-            else {
+            } else {
                 int i = tuple.get(0);
                 int j = tuple.get(1);
                 final List<Expr<BoolType>> subexprs = new ArrayList<>();

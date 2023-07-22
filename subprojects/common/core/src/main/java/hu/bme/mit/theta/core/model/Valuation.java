@@ -15,13 +15,6 @@
  */
 package hu.bme.mit.theta.core.model;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -29,6 +22,13 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 /**
  * Interface for a valuation, which is a mapping from declarations to literal expressions.
@@ -87,7 +87,7 @@ public abstract class Valuation implements Substitution {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof Valuation) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Valuation that = (Valuation) obj;
             return this.toMap().equals(that.toMap());
         } else {

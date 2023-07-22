@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.CastExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 
@@ -67,7 +67,7 @@ public final class IntToRatExpr extends CastExpr<IntType, RatType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof IntToRatExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final IntToRatExpr that = (IntToRatExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

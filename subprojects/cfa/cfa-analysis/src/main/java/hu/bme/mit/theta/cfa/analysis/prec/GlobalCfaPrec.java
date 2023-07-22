@@ -70,7 +70,7 @@ public final class GlobalCfaPrec<P extends Prec> implements CfaPrec<P> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof GlobalCfaPrec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final GlobalCfaPrec<?> that = (GlobalCfaPrec<?>) obj;
             return this.prec.equals(that.prec);
         } else {

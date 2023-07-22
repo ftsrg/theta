@@ -83,7 +83,7 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type>
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ArrayType<?, ?>) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ArrayType<?, ?> that = (ArrayType<?, ?>) obj;
             return this.getIndexType().equals(that.getIndexType()) && this.getElemType()
                     .equals(that.getElemType());
