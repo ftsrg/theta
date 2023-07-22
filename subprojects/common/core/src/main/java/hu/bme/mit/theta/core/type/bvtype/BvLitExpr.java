@@ -389,7 +389,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-//		sb.append(getType().getSize());
+//        sb.append(getType().getSize());
         sb.append("#b");
         for (boolean bit : value) {
             sb.append(bit ? "1" : "0");

@@ -76,7 +76,7 @@ public class MCMTest {
                 new MultiprocTransFunc<>(Map.of(-1, new TestTransFunc(), -2, new TestTransFunc())),
                 List.of(-1, -2), List.<MemoryEvent.Write>of(), new TestPartialOrder(), ExplState.top(), Z3SolverFactory.getInstance().createSolver(), mcm, NullLogger.getInstance());
 
-//		mcmChecker.check(new TestPrec());
+//        mcmChecker.check(new TestPrec());
     }
 
     private class TestMemoryEventProvider implements MemoryEventProvider<TestState, TestAction> {

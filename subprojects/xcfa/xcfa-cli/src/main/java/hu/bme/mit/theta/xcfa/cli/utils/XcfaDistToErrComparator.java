@@ -55,7 +55,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
         this.xcfa = xcfa;
         Pair<XcfaProcedure, List<Expr<?>>> initProc = checkNotNull(xcfa.getInitProcedures().get(0));
         Optional<XcfaLocation> errorLocOpt = initProc.component1().getErrorLoc();
-//		checkState(errorLocOpt.isPresent());
+//        checkState(errorLocOpt.isPresent());
         this.errLoc = errorLocOpt.orElse(null);
         this.errorWeight = errorWeight;
         this.depthWeight = depthWeight;
