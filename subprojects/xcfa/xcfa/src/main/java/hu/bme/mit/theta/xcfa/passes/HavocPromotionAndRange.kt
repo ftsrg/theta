@@ -105,11 +105,13 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                     .reversed()
                 for ((index, value) in reversed) {
                     val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
-                    val type = CComplexType.getType(varDecl.ref,
-                        parseContext) // TODO: what to do when no info is available?
-                    if (type !is CVoid) {
-                        list.add(index + 1,
-                            StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                    if (parseContext.metadata.getMetadataValue(varDecl.ref, "cType").isPresent) {
+                        val type = CComplexType.getType(varDecl.ref,
+                            parseContext) // TODO: what to do when no info is available?
+                        if (type !is CVoid) {
+                            list.add(index + 1,
+                                StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                        }
                     }
                 }
                 builder.addEdge(edge.withLabel(SequenceLabel(list)))

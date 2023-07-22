@@ -207,7 +207,6 @@ fun getAtomicBlockInnerLocations(builder: XcfaProcedureBuilder): List<XcfaLocati
 
 /**
  * Get flattened label list (without sequence labels).
- * Fails if a nondet label is encountered.
  */
 fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
 
@@ -217,8 +216,6 @@ fun XcfaLabel.getFlatLabels(): List<XcfaLabel> = when (this) {
         labels.forEach { ret.addAll(it.getFlatLabels()) }
         ret
     }
-
-    is NondetLabel -> error("Nondet labels are not supported by flattening")
     else -> listOf(this)
 }
 
