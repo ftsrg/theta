@@ -117,16 +117,16 @@ public class LitmusCli {
 
         final Stopwatch sw = Stopwatch.createStarted();
         try {
-            final Solver solver = SolverManager.resolveSolverFactory(this.solver).createSolver();
+            try (Solver solver = SolverManager.resolveSolverFactory(this.solver).createSolver()) {
 
-            final MCM mcm = CatDslManager.createMCM(cat);
-            logger.write(Logger.Level.MAINSTEP, "CAT model parsed successfully\n");
-            final XCFA xcfa = LitmusInterpreter.getXcfa(litmus);
-            logger.write(Logger.Level.MAINSTEP, "Litmus test parsed successfully\n");
+                final MCM mcm = CatDslManager.createMCM(cat);
+                logger.write(Logger.Level.MAINSTEP, "CAT model parsed successfully\n");
+                final XCFA xcfa = LitmusInterpreter.getXcfa(litmus);
+                logger.write(Logger.Level.MAINSTEP, "Litmus test parsed successfully\n");
 
-            if (printxcfa) {
-                System.out.println(toDot(xcfa));
-            }
+                if (printxcfa) {
+                    System.out.println(toDot(xcfa));
+                }
 
 //            final List<Integer> processIds = listToRange(processes, -1, -1);
 //
@@ -151,6 +151,7 @@ public class LitmusCli {
 //                    mcmSafetyResult.visualize();
 //                }
 //            }
+            }
         } catch (final Throwable t) {
             t.printStackTrace();
             System.exit(-1);

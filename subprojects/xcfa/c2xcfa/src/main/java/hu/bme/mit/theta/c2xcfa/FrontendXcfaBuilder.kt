@@ -59,7 +59,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         if (name == null) return getAnonymousLoc(builder, metadata = metadata)
         locationLut.putIfAbsent(name, XcfaLocation(name, metadata = metadata))
         val location = locationLut[name]
-        builder.addLoc(location!!)
+        builder.addLoc(checkNotNull(location))
         return location
     }
 
@@ -199,7 +199,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 memoryMaps[type] = toAdd
                 parseContext.metadata.create(toAdd, "defaultElement", CComplexType.getType(op, parseContext).nullValue)
             }
-            val memoryMap = memoryMaps[type]!!
+            val memoryMap = checkNotNull(memoryMaps[type])
             parseContext.metadata.create(op, "dereferenced", true)
             parseContext.metadata.create(op, "refSubstitute", memoryMap)
             val write = ArrayExprs.Write(cast(memoryMap.ref, ArrayType.of(ptrType, type)),
@@ -690,7 +690,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             }
             if (cStatement is CCase) {
                 val afterGuard = buildPostStatement(testValue,
-                    ParamPack(builder, endInit!!, breakLoc, continueLoc, returnLoc))
+                    ParamPack(builder, checkNotNull(endInit), breakLoc, continueLoc, returnLoc))
                 val assume = StmtLabel(
                     Stmts.Assume(
                         AbstractExprs.Eq(testValue.expression, cStatement.expr.expression)),
