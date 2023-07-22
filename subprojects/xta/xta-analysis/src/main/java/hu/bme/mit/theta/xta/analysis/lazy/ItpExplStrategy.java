@@ -41,8 +41,8 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
-import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplAnalysis;
-import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.itp.ItpExplAnalysis;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.itp.ItpExplState;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, ItpExplState> {

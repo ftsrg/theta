@@ -15,30 +15,28 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone;
 
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.analysis.TransFunc;
+import hu.bme.mit.theta.analysis.InvTransFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 
-public final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec> {
+import java.util.Collection;
 
-    private final static XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
+public final class XtaZoneInvTransFunc implements InvTransFunc<ZoneState, XtaAction, ZonePrec> {
 
-    private XtaZoneTransFunc() {
+    private final static XtaZoneInvTransFunc INSTANCE = new XtaZoneInvTransFunc();
+
+    private XtaZoneInvTransFunc() {
     }
 
-    public static XtaZoneTransFunc getInstance() {
+    public static XtaZoneInvTransFunc getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action, final ZonePrec prec) {
-        final ZoneState succState = XtaZoneUtils.post(state, action, prec);
-        return ImmutableList.of(succState);
+    public Collection<? extends ZoneState> getPreStates(ZoneState state, XtaAction action, ZonePrec prec) {
+        final ZoneState preState = XtaZoneUtils.pre(state, action, prec);
+        return ImmutableList.of(preState);
     }
-
 }

@@ -29,7 +29,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
-import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
+import hu.bme.mit.theta.analysis.algorithm.lazy.expl.itp.ItpExplState;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 final class FwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
