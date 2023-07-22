@@ -216,6 +216,7 @@ fun XcfaLabel.getFlatLabels(): List<XcfaLabel> = when (this) {
         labels.forEach { ret.addAll(it.getFlatLabels()) }
         ret
     }
+
     else -> listOf(this)
 }
 
