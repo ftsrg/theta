@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 
-public final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec> {
+final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec> {
 
     private XtaExplTransFunc(final XtaSystem system) {
         // TODO remove parameter 'system'

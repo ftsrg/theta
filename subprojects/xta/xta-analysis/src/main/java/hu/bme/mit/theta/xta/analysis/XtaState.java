@@ -32,6 +32,7 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 
 public final class XtaState<S extends State> implements ExprState {
+
     private static final int HASH_SEED = 8291;
     private volatile int hashCode = 0;
 
@@ -39,27 +40,21 @@ public final class XtaState<S extends State> implements ExprState {
     private final S state;
     private final boolean committed;
     private final boolean urgent;
-    private final boolean error;
 
     private XtaState(final List<Loc> locs, final S state) {
         this.locs = ImmutableList.copyOf(checkNotNull(locs));
         this.state = checkNotNull(state);
         final LocKind locKind = extractKind(locs);
-        error = locKind == LocKind.ERROR;
         committed = locKind == LocKind.COMMITTED;
         urgent = locKind != LocKind.NORMAL;
     }
 
     private static final LocKind extractKind(final List<Loc> locs) {
-        boolean committed = false;
         boolean urgent = false;
         for (final Loc loc : locs) {
             switch (loc.getKind()) {
-                case ERROR:
-                    return LocKind.ERROR;
                 case COMMITTED:
-                    committed = true;
-                    break;
+                    return LocKind.COMMITTED;
                 case URGENT:
                     urgent = true;
                     break;
@@ -69,13 +64,7 @@ public final class XtaState<S extends State> implements ExprState {
                     throw new AssertionError();
             }
         }
-        if (committed) {
-            return LocKind.COMMITTED;
-        } else if (urgent) {
-            return LocKind.URGENT;
-        } else {
-            return LocKind.NORMAL;
-        }
+        return urgent ? LocKind.URGENT : LocKind.NORMAL;
     }
 
     public static <S extends State> XtaState<S> of(final List<Loc> locs, final S state) {
@@ -98,10 +87,6 @@ public final class XtaState<S extends State> implements ExprState {
 
     public S getState() {
         return state;
-    }
-
-    public boolean isError() {
-        return error;
     }
 
     public boolean isCommitted() {
@@ -158,7 +143,8 @@ public final class XtaState<S extends State> implements ExprState {
     @Override
     public String toString() {
         final String prefix = getClass().getSimpleName();
-        final String locString = Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName)).toString();
+        final String locString = Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName))
+                .toString();
         return Utils.lispStringBuilder(prefix).add(locString).body().add(state).toString();
     }
 
