@@ -241,10 +241,10 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
     isAtomic[initialLocation] = false
     while (!locationsToVisit.isEmpty()) {
         val visiting = locationsToVisit.removeAt(0)
-        if (isAtomic[visiting]!!) atomicLocations.add(visiting)
+        if (checkNotNull(isAtomic[visiting])) atomicLocations.add(visiting)
         visitedLocations.add(visiting)
         for (outEdge in visiting.outgoingEdges) {
-            var isNextAtomic = isAtomic[visiting]!!
+            var isNextAtomic = checkNotNull(isAtomic[visiting])
             if (outEdge.getFlatLabels().stream().anyMatch { label ->
                     label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")
                 }) {

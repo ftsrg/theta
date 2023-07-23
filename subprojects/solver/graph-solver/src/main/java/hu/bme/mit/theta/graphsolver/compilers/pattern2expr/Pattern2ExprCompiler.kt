@@ -154,7 +154,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
         val opCompiled = pattern.op.accept(this)
         return events.map { a ->
             events.map { b ->
-                Pair(Tuple2.of(a, b), if (a == b) True() else opCompiled[Tuple2.of(a, b)]!!)
+                Pair(Tuple2.of(a, b), if (a == b) True() else checkNotNull(opCompiled[Tuple2.of(a, b)]))
             }
         }.flatten().toMap()
     }
@@ -181,7 +181,8 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
 
     override fun compile(pattern: Inverse): Map<Tuple, Expr<BoolType>> {
         val opCompiled = pattern.op.accept(this)
-        return events.map { a -> events.map { b -> Pair(Tuple2.of(a, b), opCompiled[Tuple2.of(b, a)]!!) } }.flatten()
+        return events.map { a -> events.map { b -> Pair(Tuple2.of(a, b), checkNotNull(opCompiled[Tuple2.of(b, a)])) } }
+            .flatten()
             .toMap()
     }
 
@@ -213,16 +214,16 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
             events.map { b ->
                 Iff(Or(opCompiled[Tuple2.of(a, b)], Or(events.map { c ->
                     Or(
-                        And(opCompiled[Tuple2.of(a, c)], consts[Tuple2.of(c, b)]!!.ref),
-                        And(consts[Tuple2.of(a, c)]!!.ref, opCompiled[Tuple2.of(c, b)])
+                        And(opCompiled[Tuple2.of(a, c)], checkNotNull(consts[Tuple2.of(c, b)]).ref),
+                        And(checkNotNull(consts[Tuple2.of(a, c)]).ref, opCompiled[Tuple2.of(c, b)])
                     )
-                })), consts[Tuple2.of(a, b)]!!.ref)
+                })), checkNotNull(consts[Tuple2.of(a, b)]).ref)
             }
         }.flatten())
         transitiveConstraints.add(constraints)
         val ret = events.map { a ->
             events.map { b ->
-                Pair(Tuple2.of(a, b), if (a == b) True() else consts[Tuple2.of(a, b)]!!.ref)
+                Pair(Tuple2.of(a, b), if (a == b) True() else checkNotNull(consts[Tuple2.of(a, b)]).ref)
             }
         }
         return ret.flatten().toMap()
@@ -249,7 +250,7 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
         val opCompiled = pattern.op.accept(this)
         val ret = events.map { a ->
             events.map { b ->
-                Pair(Tuple2.of(a, b), if (a == b) opCompiled[Tuple1.of(a)]!! else False())
+                Pair(Tuple2.of(a, b), if (a == b) checkNotNull(opCompiled[Tuple1.of(a)]) else False())
             }
         }
         return ret.flatten().toMap()
@@ -276,14 +277,18 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
             events.map { b ->
                 Iff(Or(opCompiled[Tuple2.of(a, b)], Or(events.filter { c -> a != c && b != c }.map { c ->
                     Or(
-                        And(opCompiled[Tuple2.of(a, c)], consts[Tuple2.of(c, b)]!!.ref),
-                        And(consts[Tuple2.of(a, c)]!!.ref, opCompiled[Tuple2.of(c, b)])
+                        And(opCompiled[Tuple2.of(a, c)], checkNotNull(consts[Tuple2.of(c, b)]).ref),
+                        And(checkNotNull(consts[Tuple2.of(a, c)]).ref, opCompiled[Tuple2.of(c, b)])
                     )
-                })), consts[Tuple2.of(a, b)]!!.ref)
+                })), checkNotNull(consts[Tuple2.of(a, b)]).ref)
             }
         }.flatten())
         transitiveConstraints.add(constraints)
-        val ret = events.map { a -> events.map { b -> Pair(Tuple2.of(a, b), consts[Tuple2.of(a, b)]!!.ref) } }
+        val ret = events.map { a ->
+            events.map { b ->
+                Pair(Tuple2.of(a, b), checkNotNull(consts[Tuple2.of(a, b)]).ref)
+            }
+        }
         return ret.flatten().toMap()
     }
 

@@ -52,7 +52,7 @@ class FiniteStateChecker<S : ExplState, A : StmtAction, T>(
         initStates.forEach { lastIds[it] = initId }
         while (initStates.isNotEmpty()) {
             val state = initStates.pop()
-            val lastId = lastIds[state]!!
+            val lastId = checkNotNull(lastIds[state])
             val actions = actionFunc.getEnabledActionsFor(state)
 
             val nextStates = actions.map { a ->
