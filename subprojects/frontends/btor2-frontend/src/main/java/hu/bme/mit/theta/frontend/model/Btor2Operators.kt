@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.frontend.model
 
-import Btor2BvSortDeclaration
-import Btor2ConstDeclaration
-import Btor2StateDeclaration
+import Btor2BvSort
+import Btor2Const
+import Btor2State
 
 // Operator Nodes
-data class Btor2InitNode(val id: Int, val nodeType: Btor2BvSortDeclaration, val sortId: Btor2BvSortDeclaration, val state: Btor2StateDeclaration, val value: Btor2ConstDeclaration) : Btor2Node(id)
-data class Btor2NextNode(val id: Int, val nodeType: Btor2BvSortDeclaration, val sortId: Btor2BvSortDeclaration, val state: Btor2StateDeclaration, val value: Btor2Node) : Btor2Node(id)
+data class Btor2InitNode(val id: Int, val nodeType: Btor2BvSort, val sortId: Btor2BvSort, val state: Btor2State, val value: Btor2Const) : Btor2Node(id)
+data class Btor2NextNode(val id: Int, val nodeType: Btor2BvSort, val sortId: Btor2BvSort, val state: Btor2State, val value: Btor2Node) : Btor2Node(id)
 // TODO support justice nodes...? (not reachability, but an invariant)
 // data class Btor2JusticeNode(val id: Int, val num: Int, val children: List<Btor2Node>) : Btor2Node(id)
 data class Btor2BadNode(val id: Int, val operand: Btor2Node) : Btor2Node(id)
