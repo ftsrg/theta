@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class BinaryInstructionHandler extends BaseInstructionHandler {
         checkState(op1.getType() == IntType.getInstance(), "Rem only supports integer types!");
         checkState(op2.getType() == IntType.getInstance(), "Rem only supports integer types!");
         checkState(instruction.getRetVar().isPresent(), "Instruction must have return variable");
-        
+
         foldExpression(instruction, functionState, blockState, null, Rem(cast(op1.getExpr(functionState.getValues()), IntType.getInstance()), cast(op2.getExpr(functionState.getValues()), IntType.getInstance())), 0);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2023 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class XcfaUtils {
 
         if (!model.exists()) throw new FileNotFoundException();
 
-       if (model.getName().endsWith("ll") || model.getName().endsWith("bc")) {
+        if (model.getName().endsWith("ll") || model.getName().endsWith("bc")) {
             return createXCFA(new LlvmIrProvider(model.getAbsolutePath()), arithmeticType);
 
         } else if (model.getName().endsWith("c") || model.getName().endsWith("i")) {

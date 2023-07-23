@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2023 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,8 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                     stmts.add(havocVar(argument, functionState, blockState));
             }
             XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, new StmtLabel(SequenceStmt(stmts), EmptyMetaData.INSTANCE));
-            if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+            if (instruction.getLineNumber() >= 0)
+                FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
         }
@@ -131,7 +132,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
         Expr<?> expr1 = op1.getExpr(functionState.getValues());
         //TODO: what to do, when null?
         Expr<?> expr2 = op2.getExpr(functionState.getValues());
-        foldExpression(instruction, functionState, blockState, null, Ite(cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()),cast(expr1, expr1.getType()),cast(expr2, expr1.getType())), 0);
+        foldExpression(instruction, functionState, blockState, null, Ite(cast(cond.getExpr(functionState.getValues()), BoolType.getInstance()), cast(expr1, expr1.getType()), cast(expr2, expr1.getType())), 0);
     }
 
     // Phi nodes are the only possible place where an argument might not be known yet.
@@ -148,7 +149,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Stmt stmt;
             Expr<?> expr;
             if ((expr = value.getExpr(functionState.getValues())) != null) {
-                if(!phiVar.getRef().equals(expr)) {
+                if (!phiVar.getRef().equals(expr)) {
                     stmt = Assign(cast(phiVar, phiVar.getType()), cast(expr, phiVar.getType()));
                     val.get3().add(stmt);
                 }

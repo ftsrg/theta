@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,30 +23,30 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 
 public class VectorInstructionHandler extends BaseInstructionHandler {
-	@Override
-	public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-		switch (instruction.getOpName()) {
-			case "extractelement":
-				extractelement(instruction, globalState, functionState, blockState);
-				break;
-			case "insertelement":
-				insertelement(instruction, globalState, functionState, blockState);
-				break;
-			case "shufflevector":
-				break;
-			default:
-				super.handleInstruction(instruction, globalState, functionState, blockState);
-				break;
-		}
+    @Override
+    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        switch (instruction.getOpName()) {
+            case "extractelement":
+                extractelement(instruction, globalState, functionState, blockState);
+                break;
+            case "insertelement":
+                insertelement(instruction, globalState, functionState, blockState);
+                break;
+            case "shufflevector":
+                break;
+            default:
+                super.handleInstruction(instruction, globalState, functionState, blockState);
+                break;
+        }
 
-	}
+    }
 
-	private void insertelement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+    private void insertelement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
 
-		throw new RuntimeException("Not yet implemented!");
-	}
+        throw new RuntimeException("Not yet implemented!");
+    }
 
-	private void extractelement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-		throw new RuntimeException("Not yet implemented!");
-	}
+    private void extractelement(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        throw new RuntimeException("Not yet implemented!");
+    }
 }

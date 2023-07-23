@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,24 +25,24 @@ import java.util.Map;
 import static hu.bme.mit.theta.xcfa.ir.Utils.createConstant;
 
 public class ConstantArgument extends Argument {
-	private final LitExpr<?> expr;
+    private final LitExpr<?> expr;
 
-	ConstantArgument(String type, String name) {
-		this.expr = createConstant(type + " " + name);
-	}
+    ConstantArgument(String type, String name) {
+        this.expr = createConstant(type + " " + name);
+    }
 
-	@Override
-	public Type getType() {
-		return expr.getType();
-	}
+    @Override
+    public Type getType() {
+        return expr.getType();
+    }
 
-	@Override
-	public Expr<?> getExpr(Map<String, Expr<?>> values) {
-		return expr;
-	}
+    @Override
+    public Expr<?> getExpr(Map<String, Expr<?>> values) {
+        return expr;
+    }
 
-	@Override
-	public String getName() {
-		return expr.toString();
-	}
+    @Override
+    public String getName() {
+        return expr.toString();
+    }
 }

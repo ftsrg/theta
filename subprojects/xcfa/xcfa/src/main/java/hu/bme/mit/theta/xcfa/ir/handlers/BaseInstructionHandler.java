@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,16 @@ import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
 
 public abstract class BaseInstructionHandler implements InstructionHandler {
 
-	private InstructionHandler next;
+    private InstructionHandler next;
 
-	@Override
-	public void setNext(InstructionHandler instructionHandler) {
-		next = instructionHandler;
-	}
+    @Override
+    public void setNext(InstructionHandler instructionHandler) {
+        next = instructionHandler;
+    }
 
-	@Override
-	public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-		if (next != null) next.handleInstruction(instruction, globalState, functionState, blockState);
-	}
+    @Override
+    public void handleInstruction(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
+        if (next != null)
+            next.handleInstruction(instruction, globalState, functionState, blockState);
+    }
 }

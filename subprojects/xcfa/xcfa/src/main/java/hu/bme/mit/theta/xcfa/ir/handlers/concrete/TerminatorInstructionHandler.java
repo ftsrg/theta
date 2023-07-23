@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2023 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,8 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
         functionState.getProcedureBuilder().createErrorLoc();
         XcfaLocation errLoc = functionState.getProcedureBuilder().getErrorLoc().get();
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, NopLabel.INSTANCE);
-        if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+        if (instruction.getLineNumber() >= 0)
+            FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(errLoc);
     }
@@ -155,7 +156,8 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
         }
         XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(1).getName());
         XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(Assume(BoolExprs.Not(defaultBranch)), EmptyMetaData.INSTANCE));
-        if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+        if (instruction.getLineNumber() >= 0)
+            FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc().get());
     }

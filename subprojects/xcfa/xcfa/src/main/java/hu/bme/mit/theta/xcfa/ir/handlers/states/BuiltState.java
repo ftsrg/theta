@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2023 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,27 +25,27 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkState;
 
 public class BuiltState {
-	private XCFA xcfa;
-	private Map<String, XcfaProcedureBuilder> procedures;
+    private XCFA xcfa;
+    private Map<String, XcfaProcedureBuilder> procedures;
 
-	public BuiltState() {
-		procedures = new HashMap<>();
-	}
+    public BuiltState() {
+        procedures = new HashMap<>();
+    }
 
-	public XCFA getXcfa() {
-		checkState(xcfa != null, "XCFA has not been built yet");
-		return xcfa;
-	}
+    public XCFA getXcfa() {
+        checkState(xcfa != null, "XCFA has not been built yet");
+        return xcfa;
+    }
 
-	public void setXcfa(XCFA xcfa) {
-		this.xcfa = xcfa;
-	}
+    public void setXcfa(XCFA xcfa) {
+        this.xcfa = xcfa;
+    }
 
-	public Map<String, XcfaProcedureBuilder> getProcedures() {
-		return procedures;
-	}
+    public Map<String, XcfaProcedureBuilder> getProcedures() {
+        return procedures;
+    }
 
-	public void setProcedures(Map<String, XcfaProcedureBuilder> procedures) {
-		this.procedures = procedures;
-	}
+    public void setProcedures(Map<String, XcfaProcedureBuilder> procedures) {
+        this.procedures = procedures;
+    }
 }

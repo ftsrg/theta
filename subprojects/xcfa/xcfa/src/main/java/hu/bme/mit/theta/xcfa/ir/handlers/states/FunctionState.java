@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2023 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public class FunctionState {
                 return stmt;
             }).collect(Collectors.toUnmodifiableList());
             XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), new StmtLabel(SequenceStmt.of(stmts), EmptyMetaData.INSTANCE));
-            if(edgeTup.get4() >= 0) FrontendMetadata.create(edge, "lineNumber", edgeTup.get4());
+            if (edgeTup.get4() >= 0) FrontendMetadata.create(edge, "lineNumber", edgeTup.get4());
             procedureBuilder.addEdge(edge);
         });
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ public class PlaceholderAssignmentStmt<T extends Type> implements Stmt {
     public AssignStmt<T> toAssignStmt(Map<String, Expr<?>> values) {
         return Assign(lhs, cast(rhsKey.getExpr(values), lhs.getType()));
     }
+
     public boolean isSelfAssignment(Map<String, Expr<?>> values) {
         return lhs.getRef().equals(rhsKey.getExpr(values));
     }

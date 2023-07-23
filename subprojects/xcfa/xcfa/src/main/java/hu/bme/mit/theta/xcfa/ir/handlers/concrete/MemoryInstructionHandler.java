@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2023 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,11 +87,10 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
         Argument isatomic = instruction.getArguments().get(0);
         Argument op1;
         Argument op2;
-        if(isatomic.getName().equals("atomic")) {
+        if (isatomic.getName().equals("atomic")) {
             op1 = instruction.getArguments().get(2);
             op2 = instruction.getArguments().get(3);
-        }
-        else {
+        } else {
             op1 = instruction.getArguments().get(1);
             op2 = instruction.getArguments().get(2);
         }
@@ -115,7 +114,8 @@ public class MemoryInstructionHandler extends BaseInstructionHandler {
                 VarDecl<?> var = functionState.getLocalVars().get(op2.getName()).get1();
                 Stmt stmt = Assign(cast(var, var.getType()), cast(op1.getExpr(functionState.getValues()), var.getType()));
                 XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt, EmptyMetaData.INSTANCE));
-                if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+                if (instruction.getLineNumber() >= 0)
+                    FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
                 functionState.getProcedureBuilder().addLoc(loc);
                 functionState.getProcedureBuilder().addEdge(edge);
                 blockState.setLastLocation(loc);

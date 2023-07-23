@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,10 +67,9 @@ public class InstructionHandlerManager {
     private final List<Class<? extends InstructionHandler>> instructionHandlers;
 
     public InstructionHandlerManager(ArithmeticType arithmeticType) {
-        if(arithmeticType == ArithmeticType.bitvector) {
+        if (arithmeticType == ArithmeticType.bitvector) {
             this.instructionHandlers = bitvectorInstructionHandlers;
-        }
-        else {
+        } else {
             this.instructionHandlers = defaultInstructionHandlers;
         }
     }

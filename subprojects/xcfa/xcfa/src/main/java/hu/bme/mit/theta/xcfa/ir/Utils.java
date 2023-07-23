@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2023 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,19 +73,19 @@ public class Utils {
             case "float":
                 return Rat();
             case "i64":
-                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(64);
+                if (arithmeticType == ArithmeticType.bitvector) return BvType.of(64);
             case "i32":
-                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(32);
+                if (arithmeticType == ArithmeticType.bitvector) return BvType.of(32);
             case "i16":
-                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(16);
+                if (arithmeticType == ArithmeticType.bitvector) return BvType.of(16);
             case "i8":
-                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(8);
+                if (arithmeticType == ArithmeticType.bitvector) return BvType.of(8);
                 return Int();
             case "i1":
                 return Bool();
             default:
                 new RuntimeException("Type " + type + " not known! (Using 32 bit int instead)").printStackTrace();
-                if(arithmeticType == ArithmeticType.bitvector) return BvType.of(32);
+                if (arithmeticType == ArithmeticType.bitvector) return BvType.of(32);
                 return Int();
         }
     }
@@ -97,13 +97,15 @@ public class Utils {
     }
 
     public static LitExpr<? extends Type> parseConstant(Type type, String value) {
-        if(type instanceof RatType) return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(value) * doublePrecision)), BigInteger.valueOf(doublePrecision));
+        if (type instanceof RatType)
+            return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(value) * doublePrecision)), BigInteger.valueOf(doublePrecision));
         return IntLitExpr.of(new BigInteger(value));
     }
 
     public static LitExpr<? extends Type> createConstant(String value) {
         return createConstant(Int(), value);
     }
+
     public static LitExpr<? extends Type> createConstant(Type type, String value) {
         String[] arguments = value.split(" ");
         if (arguments.length != 2) {
@@ -117,37 +119,43 @@ public class Utils {
             case "float":
                 return RatLitExpr.of(BigInteger.valueOf((long) (Float.parseFloat(arguments[1]) * doublePrecision)), BigInteger.valueOf(doublePrecision));
             case "i64":
-                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 64);
+                if (arithmeticType == ArithmeticType.bitvector)
+                    return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 64);
             case "i32":
-                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 32);
+                if (arithmeticType == ArithmeticType.bitvector)
+                    return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 32);
             case "i16":
-                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 16);
+                if (arithmeticType == ArithmeticType.bitvector)
+                    return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 16);
             case "i8":
-                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 8);
+                if (arithmeticType == ArithmeticType.bitvector)
+                    return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger(arguments[1]), 8);
                 return IntLitExpr.of(new BigInteger(arguments[1]));
             case "i1":
                 return BoolLitExpr.of(arguments[1].equals("true"));
             default:
                 new RuntimeException("Type " + arguments[0] + " not known! (Using int32(0) instead)").printStackTrace();
-                if(arithmeticType == ArithmeticType.bitvector) return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger("0"), 32);
+                if (arithmeticType == ArithmeticType.bitvector)
+                    return BvUtils.bigIntegerToNeutralBvLitExpr(new BigInteger("0"), 32);
                 return IntLitExpr.of(BigInteger.ZERO);
         }
     }
 
     private static LitExpr<? extends Type> getDefaultValue(Type type) {
-        if(type instanceof RatType) return RatLitExpr.of(BigInteger.ZERO, BigInteger.ONE);
-        else if(type instanceof BvType) return BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize());
-        else if(type instanceof ArrayType) return ArrayLitExpr.of(
-                List.of(Tuple2.of(IntLitExpr.of(BigInteger.ZERO), cast(getDefaultValue(((ArrayType<?,?>)type).getElemType()), ((ArrayType<?,?>)type).getElemType()))),
-                cast(getDefaultValue(((ArrayType<?,?>)type).getElemType()), ((ArrayType<?,?>)type).getElemType()),
-                ArrayType.of(Int(), ((ArrayType<?,?>)type).getElemType()));
+        if (type instanceof RatType) return RatLitExpr.of(BigInteger.ZERO, BigInteger.ONE);
+        else if (type instanceof BvType)
+            return BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize());
+        else if (type instanceof ArrayType) return ArrayLitExpr.of(
+                List.of(Tuple2.of(IntLitExpr.of(BigInteger.ZERO), cast(getDefaultValue(((ArrayType<?, ?>) type).getElemType()), ((ArrayType<?, ?>) type).getElemType()))),
+                cast(getDefaultValue(((ArrayType<?, ?>) type).getElemType()), ((ArrayType<?, ?>) type).getElemType()),
+                ArrayType.of(Int(), ((ArrayType<?, ?>) type).getElemType()));
         return IntLitExpr.of(BigInteger.ZERO);
     }
 
     public static VarDecl<?> getOrCreateVar(FunctionState functionState, Argument regArgument) {
         VarDecl<?> var;
         Tuple2<VarDecl<?>, Integer> objects = functionState.getLocalVars().get(regArgument.getName());
-        if(objects == null) {
+        if (objects == null) {
             var = Var(regArgument.getName(), regArgument.getType());
             functionState.getProcedureBuilder().getVars().add(var);
             functionState.getLocalVars().put(regArgument.getName(), Tuple2.of(var, 1));
@@ -156,16 +164,14 @@ public class Utils {
         } else if (!objects.get1().getType().equals(regArgument.getType())) {
             String typedName = regArgument.getName() + "_" + regArgument.getType().toString();
             objects = functionState.getLocalVars().get(typedName);
-            if(objects == null) {
+            if (objects == null) {
                 var = Var(typedName, regArgument.getType());
                 functionState.getProcedureBuilder().getVars().add(var);
                 functionState.getLocalVars().put(typedName, Tuple2.of(var, 1));
                 functionState.getValues().put(typedName, var.getRef());
                 return var;
-            }
-            else return objects.get1();
-        }
-        else{
+            } else return objects.get1();
+        } else {
             return objects.get1();
         }
     }
@@ -173,16 +179,17 @@ public class Utils {
     public static void foldExpression(Instruction instruction, FunctionState functionState, BlockState blockState, String opName, Expr<?> op, int ref) {
         //noinspection OptionalGetWithoutIsPresent
         RegArgument ret = instruction.getRetVar().get();
-        if(ret instanceof LocalArgument) {
+        if (ret instanceof LocalArgument) {
             XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
             VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
             Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
             XcfaEdge edge;
-            if(!lhs.getRef().equals(op))
+            if (!lhs.getRef().equals(op))
                 edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt, EmptyMetaData.INSTANCE));
             else
                 edge = new XcfaEdge(blockState.getLastLocation(), loc, NopLabel.INSTANCE);
-            if(instruction.getLineNumber() >= 0) FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+            if (instruction.getLineNumber() >= 0)
+                FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
             functionState.getProcedureBuilder().addLoc(loc);
             functionState.getProcedureBuilder().addEdge(edge);
             blockState.setLastLocation(loc);

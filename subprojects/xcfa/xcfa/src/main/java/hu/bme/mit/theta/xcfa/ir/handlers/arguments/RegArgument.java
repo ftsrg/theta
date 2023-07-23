@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,26 +24,26 @@ import java.util.Map;
 import static hu.bme.mit.theta.xcfa.ir.Utils.createType;
 
 public class RegArgument extends Argument {
-	private final String name;
-	private final Type type;
+    private final String name;
+    private final Type type;
 
-	RegArgument(String type, String name) {
-		this.name = name;
-		this.type = createType(type);
-	}
+    RegArgument(String type, String name) {
+        this.name = name;
+        this.type = createType(type);
+    }
 
-	@Override
-	public Type getType() {
-		return type;
-	}
+    @Override
+    public Type getType() {
+        return type;
+    }
 
-	@Override
-	public Expr<?> getExpr(Map<String, Expr<?>> values) {
-		return values.get(name);
-	}
+    @Override
+    public Expr<?> getExpr(Map<String, Expr<?>> values) {
+        return values.get(name);
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 }

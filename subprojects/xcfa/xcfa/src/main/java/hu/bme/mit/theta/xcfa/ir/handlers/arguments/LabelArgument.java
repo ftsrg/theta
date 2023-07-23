@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Budapest University of Technology and Economics
+ * Copyright 2022 Budapest University of Technology and Economics
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,24 +22,24 @@ import hu.bme.mit.theta.core.type.Type;
 import java.util.Map;
 
 public class LabelArgument extends Argument {
-	private final String name;
+    private final String name;
 
-	LabelArgument(String type, String name) {
-		this.name = name;
-	}
+    LabelArgument(String type, String name) {
+        this.name = name;
+    }
 
-	@Override
-	public Type getType() {
-		return null;
-	}
+    @Override
+    public Type getType() {
+        return null;
+    }
 
-	@Override
-	public Expr<?> getExpr(Map<String, Expr<?>> values) {
-		return null;
-	}
+    @Override
+    public Expr<?> getExpr(Map<String, Expr<?>> values) {
+        return null;
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 }

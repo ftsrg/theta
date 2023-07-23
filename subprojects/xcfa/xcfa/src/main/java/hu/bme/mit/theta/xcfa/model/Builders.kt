@@ -143,7 +143,7 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
     @JvmOverloads
     fun createFinalLoc(metaData: MetaData = EmptyMetaData) {
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
-        if(finalLoc.isEmpty) {
+        if (finalLoc.isEmpty) {
             finalLoc = Optional.of(XcfaLocation(name + "_final", final = true, metadata = metaData))
             locs.add(finalLoc.get())
         }
