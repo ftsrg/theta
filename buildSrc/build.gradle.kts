@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import java.io.FileOutputStream
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -90,6 +89,11 @@ fun generateVersionsSource(): String {
 }
 
 tasks {
+    withType<KotlinCompile>() {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
     val generateVersions by creating {
         description = "Updates Versions.kt from project properties."
         group = "build"

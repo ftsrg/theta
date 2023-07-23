@@ -41,14 +41,3 @@ tasks {
         arguments.addAll(listOf("-package", packageName, "-Werror", "-visitor"))
     }
 }
-
-try {
-    tasks.named("compileKotlin") {
-        dependsOn("generateGrammarSource")
-    }
-    tasks.named("compileTestKotlin") {
-        dependsOn("generateTestGrammarSource")
-    }
-} catch (_: UnknownTaskException) {
-
-}
