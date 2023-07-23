@@ -8,7 +8,7 @@ name:   (QUOT? NAME+ QUOT?)
     ;
 
 scopeBody
-    :   (procCall | functionDef | procDef | definition | includeFile)+
+    :   (procCall | functionDef | procDef | definition | includeFile)*
     ;
 
 procCall
