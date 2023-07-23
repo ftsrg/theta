@@ -1,3 +1,5 @@
+// WARNING: this grammar is NOT an official BTOR2 grammar and will accept invalid btor2 circuits.
+// Check your circuit with catbtor before using this grammar!
 grammar Btor2;
 
 // Lexer rules
@@ -64,6 +66,6 @@ bitvec_sort: id=sid 'sort bitvec' width=NUM; // TODO semantic check for >0
 constant: id=nid 'const' sid bin=NUM; // TODO semantic check that really binary
 constant_d: id=nid 'constd' sid (MINUS)? dec=NUM; // TODO semantic check that really uint
 constant_h: id=nid 'consth' sid hex=SYMBOL; // TODO semantic check that really hex
-filled_constant: id=nid ('one' | 'ones' | 'zero') sid;
+filled_constant: id=nid fill=('one' | 'ones' | 'zero') sid;
 
 symbol: SYMBOL;

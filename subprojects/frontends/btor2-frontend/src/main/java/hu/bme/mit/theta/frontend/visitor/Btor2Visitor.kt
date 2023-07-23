@@ -4,13 +4,15 @@ import Btor2Sort
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2BaseVisitor
 import hu.bme.mit.theta.btor2.frontend.dsl.gen.Btor2Parser
 import hu.bme.mit.theta.frontend.model.Btor2Node
-import java.util.LinkedHashMap
+import kotlin.collections.LinkedHashMap
 
 class Btor2Visitor : Btor2BaseVisitor<Btor2Node>() {
+    val sorts = LinkedHashMap<UInt, Btor2Sort>()
+    val nodes = LinkedHashMap<UInt, Btor2Node>()
     val idVisitor = IdVisitor()
     val sortVisitor = SortVisitor(idVisitor)
-    val sorts = LinkedHashMap<Int, Btor2Sort>()
     val constantVisitor = ConstantVisitor(idVisitor, sorts)
+    val operationVisitor = OperationVisitor(idVisitor, sorts, nodes)
 
     // Parser rules
     override fun visitBtor2(ctx: Btor2Parser.Btor2Context): Btor2Node {
@@ -30,7 +32,16 @@ class Btor2Visitor : Btor2BaseVisitor<Btor2Node>() {
 
     override fun visitConstantNode(ctx: Btor2Parser.ConstantNodeContext): Btor2Node {
         val newConstant = constantVisitor.visit(ctx)
+        check(!nodes.containsKey(newConstant.nid))
+        nodes[newConstant.nid] = newConstant
         return newConstant
+    }
+
+    override fun visitOperation(ctx: Btor2Parser.OperationContext): Btor2Node {
+        val opNode = operationVisitor.visit(ctx)
+        check(!nodes.containsKey(opNode.nid))
+        nodes[opNode.nid] = opNode
+        return opNode
     }
 
     ////////////////////

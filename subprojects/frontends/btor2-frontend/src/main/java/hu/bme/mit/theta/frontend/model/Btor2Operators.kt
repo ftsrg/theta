@@ -1,20 +1,15 @@
 package hu.bme.mit.theta.frontend.model
 
-import Btor2BvSort
-import Btor2Const
-import Btor2State
+import Btor2Sort
 
-// Operator Nodes
-data class Btor2InitNode(val id: Int, val nodeType: Btor2BvSort, val sortId: Btor2BvSort, val state: Btor2State, val value: Btor2Const) : Btor2Node(id)
-data class Btor2NextNode(val id: Int, val nodeType: Btor2BvSort, val sortId: Btor2BvSort, val state: Btor2State, val value: Btor2Node) : Btor2Node(id)
-// TODO support justice nodes...? (not reachability, but an invariant)
-// data class Btor2JusticeNode(val id: Int, val num: Int, val children: List<Btor2Node>) : Btor2Node(id)
-data class Btor2BadNode(val id: Int, val operand: Btor2Node) : Btor2Node(id)
+abstract class Btor2Operator(id: UInt) : Btor2Node(id)
 
 // Operators
-data class Btor2UnaryOperation(val nodeId: Int, val operator: Btor2UnaryOperator, val operand: Btor2Node) : Btor2Node(nodeId)
-data class Btor2BinaryOperation(val nodeId: Int, val operator: Btor2BinaryOperator, val operand1: Btor2Node, val operand2: Btor2Node) : Btor2Node(nodeId)
-data class Btor2TernaryOperation(val nodeId: Int, val operator: Btor2TernaryOperator, val condition: Btor2Node, val trueValue: Btor2Node, val falseValue: Btor2Node) : Btor2Node(nodeId)
+data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2UnaryOperator, val operand: Btor2Node) : Btor2Operator(nid)
+data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2Sort, val operand: Btor2Node, val w : UInt) : Btor2Operator(nid)
+data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2Sort, val operand: Btor2Node, val u : UInt, val l : UInt) : Btor2Operator(nid)
+data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2BinaryOperator, val operand1: Btor2Node, val operand2: Btor2Node) : Btor2Operator(nid)
+data class Btor2TernaryOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2TernaryOperator, val condition: Btor2Node, val trueValue: Btor2Node, val falseValue: Btor2Node) : Btor2Operator(nid)
 enum class Btor2UnaryOperator {
     NOT,
     INC,
@@ -33,10 +28,12 @@ enum class Btor2BinaryOperator {
     SGT,
     SGTE,
     SLT,
+    SLE,
     SLTE,
     UGT,
     UGTE,
     ULT,
+    ULE,
     ULTE,
     AND,
     NAND,
@@ -56,8 +53,16 @@ enum class Btor2BinaryOperator {
     SMOD,
     UDIV,
     UREM,
-    UMOD,
-    SUB
+    SUB,
+    CONCAT,
+    SADDO,
+    SDIVO,
+    SMULO,
+    SSUBO,
+    UADDO,
+    UMULO,
+    USUBO,
+    READ
 }
 
 enum class Btor2TernaryOperator {
