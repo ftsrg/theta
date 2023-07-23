@@ -62,7 +62,7 @@ class GraphSolverTest<T> {
     @Test
     @Throws(IOException::class)
     fun test() {
-        compiler!!.addFacts(graphEvents!!, graphEdges!!)
+        compiler!!.addFacts(graphEdges!!)
         val compiledConstraint = constraint!!.accept(compiler!!)
         solver!!.add(compiledConstraint)
         val status = solver!!.check()
