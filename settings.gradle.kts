@@ -23,6 +23,7 @@ include(
 
     "frontends/c-frontend",
     "frontends/chc-frontend",
+    "frontends/llvm",
 
     "cfa/cfa",
     "cfa/cfa-analysis",
