@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import java.nio.file.Files
 
 apply<AntlrPlugin>()
 
@@ -41,4 +40,15 @@ tasks {
 
         arguments.addAll(listOf("-package", packageName, "-Werror", "-visitor"))
     }
+}
+
+try {
+    tasks.named("compileKotlin") {
+        dependsOn("generateGrammarSource")
+    }
+    tasks.named("compileTestKotlin") {
+        dependsOn("generateTestGrammarSource")
+    }
+} catch (_: UnknownTaskException) {
+
 }
