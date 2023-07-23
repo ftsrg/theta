@@ -35,10 +35,9 @@ nid: NUM;
 sid: NUM;
 
 node: ( array_sort | bitvec_sort ) #sort // sort declaration
-    | (input | state | init | next | property) #other
+    | (input | state | init | next | property) #stateful
     | (opidx | op) #operation
     | (filled_constant | constant | constant_d | constant_h) #constantNode;
-    // | nid 'justice' NUM (nid)+; // justice node // TODO we can not modelcheck justice nodes (not reachability)
 
 opidx: ext | slice;
 
@@ -58,7 +57,7 @@ next: id=nid 'next' sid param1=nid param2=nid;
 
 state: id=nid 'state' sid;
 
-property: id=nid ('bad' | 'constraint' | 'fair' | 'output') param=nid;
+property: id=nid property_type=('bad' | 'constraint' | 'fair' | 'output' | 'justice' ) param=nid;
 
 array_sort: id=sid 'sort array' sid1=sid sid2=sid;
 bitvec_sort: id=sid 'sort bitvec' width=NUM; // TODO semantic check for >0

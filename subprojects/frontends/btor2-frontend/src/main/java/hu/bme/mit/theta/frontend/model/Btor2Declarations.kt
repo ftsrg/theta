@@ -11,7 +11,3 @@ data class Btor2BvSort(override val nid: UInt, val width: UInt) : Btor2Sort(nid)
 
 // Constants
 data class Btor2Const(override val nid: UInt, val value: BigInteger, val type: Btor2BvSort) : Btor2Node(nid) // it can be in binary, decimal or hex in the circuit, but we extract the actual value to the int from that
-
-// Inputs and States
-data class Btor2Input(override val nid: UInt, override val sort: Btor2BvSort) : Btor2Node(nid)
-data class Btor2State(override val nid: UInt, override val sort: Btor2BvSort) : Btor2Node(nid)
