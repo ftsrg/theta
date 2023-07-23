@@ -1,17 +1,17 @@
 /*
- * Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.xcfa.ir.LlvmMetadata;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.arguments.Argument;
@@ -46,7 +46,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.*;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.SequenceStmt;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
@@ -106,9 +108,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 if (objects != null && objects.get2() > 0)
                     stmts.add(havocVar(argument, functionState, blockState));
             }
-            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, new StmtLabel(SequenceStmt(stmts), EmptyMetaData.INSTANCE));
-            if (instruction.getLineNumber() >= 0)
-                FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, new StmtLabel(SequenceStmt(stmts), EmptyMetaData.INSTANCE), new LlvmMetadata(instruction.getLineNumber()));
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
         }

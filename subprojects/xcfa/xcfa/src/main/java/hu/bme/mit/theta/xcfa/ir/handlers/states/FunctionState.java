@@ -1,17 +1,17 @@
 /*
- * Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.ir.handlers.states;
@@ -23,9 +23,14 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.*;
+import hu.bme.mit.theta.xcfa.ir.LlvmMetadata;
 import hu.bme.mit.theta.xcfa.ir.handlers.utils.PlaceholderAssignmentStmt;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.ParamDirection;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
 
 import java.util.HashMap;
@@ -112,8 +117,7 @@ public class FunctionState {
                 }
                 return stmt;
             }).collect(Collectors.toUnmodifiableList());
-            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), new StmtLabel(SequenceStmt.of(stmts), EmptyMetaData.INSTANCE));
-            if (edgeTup.get4() >= 0) FrontendMetadata.create(edge, "lineNumber", edgeTup.get4());
+            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), new StmtLabel(SequenceStmt.of(stmts), EmptyMetaData.INSTANCE), new LlvmMetadata(edgeTup.get4()));
             procedureBuilder.addEdge(edge);
         });
     }

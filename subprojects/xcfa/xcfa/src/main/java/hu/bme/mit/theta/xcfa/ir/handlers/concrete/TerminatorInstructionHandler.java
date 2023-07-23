@@ -1,24 +1,23 @@
 /*
- * Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2023 Budapest University of Technology and Economics
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package hu.bme.mit.theta.xcfa.ir.handlers.concrete;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Tuple4;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,19 +25,22 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
-import hu.bme.mit.theta.xcfa.model.*;
+import hu.bme.mit.theta.xcfa.ir.LlvmMetadata;
 import hu.bme.mit.theta.xcfa.ir.handlers.BaseInstructionHandler;
 import hu.bme.mit.theta.xcfa.ir.handlers.Instruction;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.BlockState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.FunctionState;
 import hu.bme.mit.theta.xcfa.ir.handlers.states.GlobalState;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.NopLabel;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -77,9 +79,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
     private void unreachable(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         functionState.getProcedureBuilder().createErrorLoc();
         XcfaLocation errLoc = functionState.getProcedureBuilder().getErrorLoc().get();
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, NopLabel.INSTANCE);
-        if (instruction.getLineNumber() >= 0)
-            FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, NopLabel.INSTANCE, new LlvmMetadata(instruction.getLineNumber()));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(errLoc);
     }
@@ -155,9 +155,7 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             functionState.getInterBlockEdges().put(key, Tuple4.of(blockState.getLastLocation(), loc, stmts, instruction.getLineNumber()));
         }
         XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(1).getName());
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(Assume(BoolExprs.Not(defaultBranch)), EmptyMetaData.INSTANCE));
-        if (instruction.getLineNumber() >= 0)
-            FrontendMetadata.create(edge, "lineNumber", instruction.getLineNumber());
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(Assume(BoolExprs.Not(defaultBranch)), EmptyMetaData.INSTANCE), new LlvmMetadata(instruction.getLineNumber()));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc().get());
     }
