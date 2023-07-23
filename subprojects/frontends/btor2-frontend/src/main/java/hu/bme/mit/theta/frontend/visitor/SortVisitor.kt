@@ -17,8 +17,8 @@ class SortVisitor(val idVisitor: IdVisitor) : Btor2BaseVisitor<Btor2Sort>() {
 
     override fun visitBitvec_sort(ctx: Btor2Parser.Bitvec_sortContext): Btor2Sort {
         val sid = idVisitor.visit(ctx.id)
-        val width = ctx.width.text.toInt()
-        if(width <= 0) {
+        val width = ctx.width.text.toUInt()
+        if(width <= 0u) {
             throw RuntimeException("Bitvector width should be bigger than 0")
         }
         return Btor2BvSort(sid, width)

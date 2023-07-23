@@ -9,21 +9,12 @@ import hu.bme.mit.theta.frontend.model.*
 import kotlin.collections.LinkedHashMap
 
 class Btor2Visitor : Btor2BaseVisitor<Btor2Node>() {
-    private val sorts = LinkedHashMap<UInt, Btor2Sort>()
-    private val nodes = LinkedHashMap<UInt, Btor2Node>()
+    val sorts = LinkedHashMap<UInt, Btor2Sort>()
+    val nodes = LinkedHashMap<UInt, Btor2Node>()
     private val idVisitor = IdVisitor()
     private val sortVisitor = SortVisitor(idVisitor)
     private val constantVisitor = ConstantVisitor(idVisitor, sorts)
     private val operationVisitor = OperationVisitor(idVisitor, sorts, nodes)
-
-    // Parser rules
-    override fun visitBtor2(ctx: Btor2Parser.Btor2Context): Btor2Node {
-        return visitChildren(ctx) // TODO
-    }
-
-    override fun visitLine(ctx: Btor2Parser.LineContext): Btor2Node {
-        return visitChildren(ctx) // TODO
-    }
 
     override fun visitSort(ctx: Btor2Parser.SortContext): Btor2Node {
         val newSort = sortVisitor.visit(ctx)
