@@ -60,7 +60,7 @@ class XcfaAnalysisTest {
     @MethodSource("data")
     fun testNoporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -102,7 +102,7 @@ class XcfaAnalysisTest {
     @MethodSource("data")
     fun testSporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -144,7 +144,7 @@ class XcfaAnalysisTest {
     @MethodSource("data")
     fun testDporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -185,7 +185,7 @@ class XcfaAnalysisTest {
     @MethodSource("data")
     fun testAasporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -229,7 +229,7 @@ class XcfaAnalysisTest {
     fun testAadporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         if (filepath.contains("multithread")) return // TODO: why does it fail to verify?
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false)
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
         val analysis = ExplXcfaAnalysis(
             xcfa,

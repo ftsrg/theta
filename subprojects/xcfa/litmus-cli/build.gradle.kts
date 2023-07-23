@@ -30,6 +30,7 @@ dependencies {
     implementation(project(":theta-solver"))
     implementation(project(":theta-solver-z3"))
     implementation(project(":theta-solver-smtlib"))
+    implementation(project(":theta-graph-solver"))
 }
 
 application {

@@ -49,6 +49,17 @@ fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when (this) {
     else -> setOf()
 }
 
+fun XcfaLabel.collectHavocs(): Set<HavocStmt<*>> = when (this) {
+    is StmtLabel -> when (stmt) {
+        is HavocStmt<*> -> setOf(stmt)
+        else -> setOf()
+    }
+
+    is NondetLabel -> labels.map { it.collectHavocs() }.flatten().toSet()
+    is SequenceLabel -> labels.map { it.collectHavocs() }.flatten().toSet()
+    else -> setOf()
+}
+
 fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when (this) {
     is StmtLabel -> StmtUtils.getVars(stmt)
     is NondetLabel -> labels.map { it.collectVars() }.flatten()
@@ -230,10 +241,10 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
     isAtomic[initialLocation] = false
     while (!locationsToVisit.isEmpty()) {
         val visiting = locationsToVisit.removeAt(0)
-        if (isAtomic[visiting]!!) atomicLocations.add(visiting)
+        if (checkNotNull(isAtomic[visiting])) atomicLocations.add(visiting)
         visitedLocations.add(visiting)
         for (outEdge in visiting.outgoingEdges) {
-            var isNextAtomic = isAtomic[visiting]!!
+            var isNextAtomic = checkNotNull(isAtomic[visiting])
             if (outEdge.getFlatLabels().stream().anyMatch { label ->
                     label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")
                 }) {

@@ -1,0 +1,10 @@
+digraph G {
+
+    a[label="1"];
+    b[label="2"];
+    c[label="3"];
+
+    a -> b [label="po"];
+    b -> c [label="po"];
+
+}

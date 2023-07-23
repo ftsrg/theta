@@ -19,7 +19,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
+import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint;
 import hu.bme.mit.theta.cat.dsl.CatDslManager;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
@@ -35,6 +35,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -119,13 +120,15 @@ public class LitmusCli {
         try {
             try (Solver solver = SolverManager.resolveSolverFactory(this.solver).createSolver()) {
 
-                final MCM mcm = CatDslManager.createMCM(cat);
+                final Collection<GraphConstraint> mcm = CatDslManager.createMCM(cat);
                 logger.write(Logger.Level.MAINSTEP, "CAT model parsed successfully\n");
                 final XCFA xcfa = LitmusInterpreter.getXcfa(litmus);
                 logger.write(Logger.Level.MAINSTEP, "Litmus test parsed successfully\n");
 
                 if (printxcfa) {
-                    System.out.println(toDot(xcfa));
+                    System.out.println("digraph G{");
+                    //TODO visualize
+                    System.out.println("}");
                 }
 
 //            final List<Integer> processIds = listToRange(processes, -1, -1);
@@ -136,6 +139,14 @@ public class LitmusCli {
 //            final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplStmtTransFunc.create(solver, 10)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 //            final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null, Set.of(), null)).collect(Collectors.toList());
 //            final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>(ExplOrd.getInstance());
+
+
+//			final XcfaProcessMemEventProvider<ExplState> memEventProvider = new XcfaProcessMemEventProvider<>(processes.size());
+//			final MultiprocLTS<XcfaProcessState<ExplState>, XcfaProcessAction> multiprocLTS = new MultiprocLTS<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessLTS<ExplState>())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+//			final MultiprocInitFunc<XcfaProcessState<ExplState>, ExplPrec> multiprocInitFunc = new MultiprocInitFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessInitFunc<>(processes.get(id*-1-1), ExplInitFunc.create(solver, True())))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+//			final MultiprocTransFunc<XcfaProcessState<ExplState>, XcfaProcessAction, ExplPrec> multiprocTransFunc = new MultiprocTransFunc<>(processIds.stream().map(id -> Map.entry(id, new XcfaProcessTransFunc<>(ExplStmtTransFunc.create(solver, 10)))).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+//			final List<MemoryEvent.Write> initialWrites = xcfa.getvars().stream().filter(it -> xcfa.getInitValue(it).isPresent()).map(it -> new MemoryEvent.Write(memEventProvider.getVarId(it), it, null, Set.of(), null)).collect(Collectors.toList());
+//			final XcfaProcessPartialOrd<ExplState> partialOrd = new XcfaProcessPartialOrd<>(ExplOrd.getInstance());
 //
 //            final MutableValuation val = new MutableValuation();
 //            for (VarDecl<? extends Type> var : xcfa.getvars()) {

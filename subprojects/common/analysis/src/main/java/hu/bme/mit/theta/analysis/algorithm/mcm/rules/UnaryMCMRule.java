@@ -16,8 +16,8 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRule;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.MCMRule;
 
 import java.util.Map;
 

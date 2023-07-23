@@ -16,10 +16,10 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
-import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRule;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.EventConstantLookup;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.MCMRule;
 
 import java.util.List;
 import java.util.Map;

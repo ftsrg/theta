@@ -30,3 +30,20 @@ tasks {
         }
     }
 }
+
+// Check if "antlr-common" plugin is applied and if the "generateGrammarSource" task is available
+// If yes, add a task dependency from "compileKotlin" to "generateGrammarSource"
+project.plugins.withType<AntlrPlugin> {
+    val generateGrammarTask = tasks.findByName("generateGrammarSource")
+    if (generateGrammarTask != null) {
+        project.tasks.named("compileKotlin").configure {
+            dependsOn(generateGrammarTask)
+        }
+    }
+    val generateTestGrammarTask = tasks.findByName("generateTestGrammarSource")
+    if (generateTestGrammarTask != null) {
+        project.tasks.named("compileTestKotlin").configure {
+            dependsOn(generateTestGrammarTask)
+        }
+    }
+}
