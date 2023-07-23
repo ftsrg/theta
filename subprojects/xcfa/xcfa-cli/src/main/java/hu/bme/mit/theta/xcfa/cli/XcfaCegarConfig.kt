@@ -325,6 +325,22 @@ data class XcfaCegarConfig(
             }
         }
     }
+
+    fun getParams(): List<Param> =
+        XcfaCegarConfig::class.java.declaredFields.filter {
+            it.isAnnotationPresent(Parameter::class.java)
+        }.mapNotNull {
+            it.getAnnotation(Parameter::class.java).names.getOrNull(0)?.run {
+                val name = this
+                it.get(this@XcfaCegarConfig)?.run {
+                    if (it.type == Boolean::class.java) {
+                        this as Boolean
+                        if (!this) null
+                        else Param(name)
+                    } else Param(name, this.toString())
+                }
+            }
+        }.toList()
 }
 
 private class ProcessHandler(

@@ -18,7 +18,7 @@ package hu.bme.mit.theta.cat.dsl;
 
 import hu.bme.mit.theta.cat.dsl.gen.CatLexer;
 import hu.bme.mit.theta.cat.dsl.gen.CatParser;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
+import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -26,10 +26,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collection;
 
 public class CatDslManager {
 
-    public static MCM createMCM(final File file) throws IOException {
+    public static Collection<GraphConstraint> createMCM(final File file) throws IOException {
         final CatParser.McmContext context = setupCatAntlr(file);
         final hu.bme.mit.theta.cat.dsl.CatVisitor visitor = new hu.bme.mit.theta.cat.dsl.CatVisitor(file);
         context.accept(visitor);

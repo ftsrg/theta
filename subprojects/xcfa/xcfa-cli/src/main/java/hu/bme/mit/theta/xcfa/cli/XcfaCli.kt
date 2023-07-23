@@ -314,8 +314,8 @@ class XcfaCli(private val args: Array<String>) {
 
                 InputType.C -> {
                     val stream = FileInputStream(input!!)
-                    val xcfaFromC = getXcfaFromC(stream, parseContext,
-                        explicitProperty == ErrorDetection.OVERFLOW)
+                    val xcfaFromC = getXcfaFromC(stream, parseContext, false,
+                        explicitProperty == ErrorDetection.OVERFLOW).first
                     logger.write(Logger.Level.RESULT,
                         "Arithmetic: ${parseContext.arithmetic}\n")
                     xcfaFromC

@@ -67,6 +67,6 @@ class TestFrontendXcfaBuilder {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, ParseContext(), false)
+        getXcfaFromC(stream!!, ParseContext(), false, false)
     }
 }

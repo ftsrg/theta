@@ -16,9 +16,9 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mcm.rules;
 
-import hu.bme.mit.theta.analysis.algorithm.mcm.EncodedRelationWrapper;
-import hu.bme.mit.theta.analysis.algorithm.mcm.EventConstantLookup;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.EncodedRelationWrapper;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.EventConstantLookup;
+import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.MCMRelation;
 import hu.bme.mit.theta.common.TupleN;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
