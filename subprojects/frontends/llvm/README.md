@@ -23,7 +23,7 @@ Gazer is the predecessor of this library. Many of this its techniques and implem
 As opposed to Gazer, this library approaches its usage in a reversed manner, being called and used by Theta as a native C++ library, not the other way around. It's long term goal is to be a fairly static library in a way, that extensions and implementation of new features related to the formalisms or the analysis can happen mainly in Theta, as it has better maintainability and is actively developed.
 
 # Transforming the program
-![architecture](theta-c-arch.png)
+![architecture](doc/theta-c-arch.png)
 *The red parts are modules/classes of Theta, the green ones are of this project and the blue ones are yet to be implemented - they are not properly connected yet, as their place in the project isn't certain yet*
 
 ## Input
