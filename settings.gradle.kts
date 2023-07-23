@@ -36,6 +36,7 @@ include(
     "xcfa/cat",
     "xcfa/c2xcfa",
     "xcfa/litmus2xcfa",
+    "xcfa/llvm2xcfa",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
     "xcfa/litmus-cli",
