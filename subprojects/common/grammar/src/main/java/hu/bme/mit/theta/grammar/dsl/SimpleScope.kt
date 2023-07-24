@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.grammar.dsl
 
+import hu.bme.mit.theta.common.dsl.MutableScope
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
@@ -24,7 +25,7 @@ import java.util.*
 class SimpleScope(
     private val symbolTable: SymbolTable = SymbolTable(),
     private val enclosingScope: Scope? = null,
-) : Scope {
+) : MutableScope {
 
     override fun enclosingScope(): Optional<out Scope> {
         return Optional.ofNullable(enclosingScope)
@@ -36,5 +37,13 @@ class SimpleScope(
             enclosingScope?.resolve(name) ?: Optional.empty()
         else
             resolved
+    }
+
+    override fun add(symbol: Symbol) {
+        symbolTable.add(symbol)
+    }
+
+    override fun addAll(symbols: MutableIterable<Symbol>?) {
+        symbolTable.addAll(symbols)
     }
 }
