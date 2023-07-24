@@ -60,6 +60,7 @@ fun jniConfigFlags(): Array<String> {
     val jdkHomeArr = runCommandForOutput("bash", "-c", "dirname \$(cd \$(dirname \$(readlink \$(which javac))); pwd -P)")
     check(jdkHomeArr.size == 1)
     val jdkHome = File(jdkHomeArr[0])
+    check(jdkHome.exists())
     val mainInclude = jdkHome.resolve("include")
     val linuxInclude = mainInclude.resolve("linux")
     return arrayOf(
@@ -77,6 +78,7 @@ library {
                 *jniConfigFlags(),
                 *llvmConfigFlags("--cxxflags")))
         onlyIf {
+            println("CppCompile is enabled: $enabled")
             enabled
         }
     }
@@ -87,6 +89,7 @@ library {
                 *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
                 "-ldl"))
         onlyIf {
+            println("LinkSharedLibrary is enabled: $enabled")
             enabled
         }
     }
