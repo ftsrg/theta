@@ -16,58 +16,39 @@
 package hu.bme.mit.theta.graphsolver
 
 import hu.bme.mit.theta.common.Tuple
+import hu.bme.mit.theta.common.Tuple1
 import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 import hu.bme.mit.theta.graphsolver.compilers.pattern2expr.Pattern2ExprCompiler
 import hu.bme.mit.theta.graphsolver.patterns.constraints.*
-import hu.bme.mit.theta.graphsolver.patterns.patterns.BasicRelation
+import hu.bme.mit.theta.graphsolver.patterns.patterns.*
 import hu.bme.mit.theta.graphsolver.solvers.GraphSolver
 import hu.bme.mit.theta.graphsolver.solvers.SATGraphSolver
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameter
-import java.io.IOException
 import java.util.*
 
-@RunWith(Parameterized::class)
 class GraphSolverTest<T> {
 
-    @Parameter(0)
-    @JvmField
-    var constraint: GraphConstraint? = null
-
-    @Parameter(1)
-    @JvmField
-    var compiler: GraphPatternCompiler<T, *>? = null
-
-    @Parameter(2)
-    @JvmField
-    var graphEvents: List<Int>? = null
-
-    @Parameter(3)
-    @JvmField
-    var graphEdges: Map<Pair<String, Tuple>, ThreeVL>? = null
-
-    @Parameter(4)
-    @JvmField
-    var solver: GraphSolver<T>? = null
-
-    @Parameter(5)
-    @JvmField
-    var allowed: Boolean = false
-
-    @Test
-    @Throws(IOException::class)
-    fun test() {
-        compiler!!.addEvents(graphEvents!!)
-        compiler!!.addFacts(graphEdges!!)
-        val compiledConstraint = constraint!!.accept(compiler!!)
-        solver!!.add(compiledConstraint)
-        val status = solver!!.check()
-        Assert.assertEquals(allowed, status.isSat)
+    @ParameterizedTest
+    @MethodSource("data")
+    fun test(
+        constraint: GraphConstraint,
+        compiler: GraphPatternCompiler<T, *>,
+        graphEvents: List<Int>,
+        graphEdges: Map<Pair<String, Tuple>, ThreeVL>,
+        solver: GraphSolver<T>,
+        allowed: Boolean,
+    ) {
+        compiler.addEvents(graphEvents)
+        compiler.addFacts(graphEdges)
+        val compiledConstraint = constraint.accept(compiler)
+        solver.add(compiledConstraint)
+        val status = solver.check()
+        Assertions.assertEquals(allowed, status.isSat)
     }
 
     companion object {
@@ -106,6 +87,9 @@ class GraphSolverTest<T> {
             Pair(Pair("po", Tuple2.of(3, 1)), ThreeVL.TRUE),
             Pair(Pair("po", Tuple2.of(3, 2)), ThreeVL.TRUE),
             Pair(Pair("po", Tuple2.of(3, 3)), ThreeVL.TRUE),
+            Pair(Pair("W", Tuple1.of(1)), ThreeVL.TRUE),
+            Pair(Pair("R", Tuple1.of(2)), ThreeVL.TRUE),
+            Pair(Pair("F", Tuple1.of(3)), ThreeVL.TRUE),
         ))
 
         @Parameterized.Parameters
@@ -202,6 +186,134 @@ class GraphSolverTest<T> {
                 ),
                 arrayOf(
                     Irreflexive(BasicRelation("po")),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    false
+                ),
+                arrayOf(
+                    Irreflexive(CartesianProduct(BasicEventSet("W"), BasicEventSet("R"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Irreflexive(IdentityClosure(BasicRelation("rf"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    false
+                ),
+                arrayOf(
+                    Empty(Difference(BasicRelation("po"), BasicRelation("po"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(DifferenceNode(Domain(BasicRelation("po")), Range(BasicRelation("po")))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(Complement(BasicRelation("po"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(ComplementNode(Domain(BasicRelation("po")))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(EmptyRel),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(EmptySet),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(Intersection(EmptyRel, BasicRelation("po"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(IntersectionNode(EmptySet, BasicEventSet("W"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(Complement(Union(Self(BasicRelation("po")), BasicRelation("po")))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Nonempty(Union(ReflexiveTransitiveClosure(BasicRelation("po")), BasicRelation("po"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(UnionNode(BasicEventSet("W"), BasicEventSet("R"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(Difference(Inverse(BasicRelation("po")), BasicRelation("po"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Empty(Difference(Sequence(BasicRelation("po"), BasicRelation("po")), BasicRelation("po"))),
+                    Pattern2ExprCompiler(),
+                    smallFull.first,
+                    smallFull.second,
+                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    true
+                ),
+                arrayOf(
+                    Nonempty(Difference(Toid(BasicEventSet("W")), BasicRelation("po"))),
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,

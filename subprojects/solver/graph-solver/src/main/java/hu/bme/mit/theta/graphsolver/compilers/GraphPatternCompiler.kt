@@ -43,7 +43,7 @@ interface GraphPatternCompiler<T1, T2> {
     fun compile(pattern: Difference): T2
     fun compile(pattern: DifferenceNode): T2
     fun compile(pattern: Domain): T2
-    fun compile(pattern: EmptyRelation): T2
+    fun compile(pattern: EmptySet): T2
     fun compile(pattern: EmptyRel): T2
     fun compile(pattern: IdentityClosure): T2
     fun compile(pattern: Intersection): T2
