@@ -22,6 +22,15 @@ plugins {
     id("cpp-library")
 }
 
+val enabled = Os.isFamily(Os.FAMILY_UNIX) &&
+        try {
+            runCommandForOutput("llvm-config")
+            true
+        } catch (e: IOException) {
+            println("LLVM not installed, not building native library.")
+            false
+        }
+
 fun runCommandForOutput(vararg args: String): Array<String> {
     val process = ProcessBuilder(*args).start()
     val outputStream = ByteArrayOutputStream()
@@ -37,7 +46,7 @@ fun runCommandForOutput(vararg args: String): Array<String> {
 }
 
 fun llvmConfigFlags(vararg args: String): Array<String> {
-    if (!Os.isFamily(Os.FAMILY_UNIX)) return arrayOf()
+    if (!enabled) return arrayOf()
     return try {
         runCommandForOutput("llvm-config", *args)
     } catch (e: IOException) {
@@ -47,7 +56,7 @@ fun llvmConfigFlags(vararg args: String): Array<String> {
 }
 
 fun jniConfigFlags(): Array<String> {
-    if (!Os.isFamily(Os.FAMILY_UNIX)) return arrayOf()
+    if (!enabled) return arrayOf()
     val jdkHomeArr = runCommandForOutput("bash", "-c", "dirname \$(cd \$(dirname \$(readlink \$(which javac))); pwd -P)")
     check(jdkHomeArr.size == 1)
     val jdkHome = File(jdkHomeArr[0])
@@ -68,7 +77,7 @@ library {
                 *jniConfigFlags(),
                 *llvmConfigFlags("--cxxflags")))
         onlyIf {
-            Os.isFamily(Os.FAMILY_UNIX)
+            this@Build_gradle.enabled
         }
     }
 
@@ -78,7 +87,7 @@ library {
                 *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
                 "-ldl"))
         onlyIf {
-            Os.isFamily(Os.FAMILY_UNIX)
+            this@Build_gradle.enabled
         }
     }
 }
