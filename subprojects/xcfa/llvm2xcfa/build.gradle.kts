@@ -29,6 +29,10 @@ dependencies {
 
 tasks.test {
     if (Os.isFamily(Os.FAMILY_UNIX)) {
-        dependsOn(project(":theta-llvm").tasks.build)
+        val nativeLibTasks = project(":theta-llvm").tasks
+        dependsOn(nativeLibTasks.build)
+
+        val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
+        systemProperty("java.library.path", linkTask.linkedFile.get().asFile.parent)
     }
 }

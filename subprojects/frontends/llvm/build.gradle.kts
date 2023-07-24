@@ -16,6 +16,7 @@
 
 import org.codehaus.plexus.util.Os
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 
 plugins {
     id("cpp-library")
@@ -37,7 +38,12 @@ fun runCommandForOutput(vararg args: String): Array<String> {
 
 fun llvmConfigFlags(vararg args: String): Array<String> {
     if (!Os.isFamily(Os.FAMILY_UNIX)) return arrayOf()
-    return runCommandForOutput("llvm-config", *args)
+    return try {
+        runCommandForOutput("llvm-config", *args)
+    } catch (e: IOException) {
+        e.printStackTrace()
+        arrayOf()
+    }
 }
 
 fun jniConfigFlags(): Array<String> {
@@ -66,23 +72,11 @@ library {
         }
     }
 
-    tasks.register("copyLinkedFile", Copy::class) {
-        tasks.withType(LinkSharedLibrary::class).forEach {
-            val linkedFile = it.linkedFile.get().asFile
-            val targetFolder = rootProject.rootDir.resolve("lib")
-
-            from(linkedFile.parent)
-            into(targetFolder)
-            include(linkedFile.name)
-        }
-    }
-
     tasks.withType(LinkSharedLibrary::class) {
         linkerArgs.addAll(listOf(
-            "-rdynamic",
-            *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
-            "-ldl"))
-        finalizedBy("copyLinkedFile")
+                "-rdynamic",
+                *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
+                "-ldl"))
         onlyIf {
             Os.isFamily(Os.FAMILY_UNIX)
         }
