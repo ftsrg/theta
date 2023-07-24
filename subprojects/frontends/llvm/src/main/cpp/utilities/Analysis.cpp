@@ -99,6 +99,6 @@ bool Analysis::checkIfAndOrXor(const llvm::BinaryOperator *binOp) {
 }
 
 void Analysis::reset() {
-//    hasIntInBitwiseBinaryOp = false;
-//    hasStructs = false;
+    hasIntInBitwiseBinaryOp = false;
+    hasStructs = false;
 }

@@ -57,9 +57,6 @@ Module::Module() {
 
 void Module::parseLLVMModule(std::shared_ptr <llvm::Module> llvmModule) {
     instance = Module();
-    Analysis::reset();
-    BasicBlock::reset();
-    Register::reset();
 
     // Analyze module first
     Analysis::checkModule(llvmModule.get());

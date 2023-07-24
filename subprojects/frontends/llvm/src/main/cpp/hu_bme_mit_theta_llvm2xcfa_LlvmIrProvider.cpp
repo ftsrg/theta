@@ -1,6 +1,9 @@
 #include "hu_bme_mit_theta_llvm2xcfa_LlvmIrProvider.h"
 #include "types/Module.h"
 #include "utilities/CPipeline.h"
+#include "utilities/Analysis.h"
+#include "types/BasicBlock.h"
+#include "types/operands/Register.h"
 
 // NOTE: don't use CLions automatic code formatting, it handles this part pretty badly
 
@@ -11,12 +14,17 @@
  */
 JNIEXPORT void JNICALL
 Java_hu_bme_mit_theta_llvm2xcfa_LlvmIrProvider_JniParseIr(JNIEnv* env, jobject, jstring filename) {
+    Analysis::reset();
+    BasicBlock::reset();
+    Register::reset();
+
     // Convert the JNI String (jstring) into C-String (char*)
     const char *cFilename = env->GetStringUTFChars(filename, NULL);
     if (NULL == cFilename) {
         std::cout << "Could not get filename from jenv!" << std::endl;
         return;
     }
+
 
     // (compile and) parse into llvm Module
     std::unique_ptr <llvm::Module> llvmModule;

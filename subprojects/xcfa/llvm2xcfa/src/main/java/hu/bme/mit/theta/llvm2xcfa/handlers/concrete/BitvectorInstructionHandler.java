@@ -72,11 +72,13 @@ public class BitvectorInstructionHandler extends BaseInstructionHandler {
                 break;
             case "udiv":
                 udiv(instruction, globalState, functionState, blockState);
+                break;
             case "sdiv":
                 sdiv(instruction, globalState, functionState, blockState);
                 break;
             case "urem":
                 urem(instruction, globalState, functionState, blockState);
+                break;
             case "srem":
                 srem(instruction, globalState, functionState, blockState);
                 break;
