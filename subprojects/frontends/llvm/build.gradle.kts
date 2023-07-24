@@ -79,7 +79,7 @@ library {
                 *llvmConfigFlags("--cxxflags")))
         onlyIf {
             println("CppCompile is enabled: $enabled")
-            enabled
+            this@Build_gradle.enabled
         }
     }
 
@@ -90,7 +90,7 @@ library {
                 "-ldl"))
         onlyIf {
             println("LinkSharedLibrary is enabled: $enabled")
-            enabled
+            this@Build_gradle.enabled
         }
     }
 }
