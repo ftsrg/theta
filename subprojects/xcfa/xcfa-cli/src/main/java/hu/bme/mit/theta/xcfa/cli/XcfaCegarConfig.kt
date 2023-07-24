@@ -121,14 +121,19 @@ data class XcfaCegarConfig(
         val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> = domain.partialOrd(
             abstractionSolverInstance)
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
-                xcfa,
-                abstractionSolverFactory.createSolver(),
-                maxEnum,
-                search.getComp(xcfa),
-                refinement.stopCriterion(cexMonitor),
-                logger,
-                porLevel.ltsSupplier(xcfa, ignoredVarRegistry),
-                errorDetectionType
+            xcfa,
+            abstractionSolverFactory.createSolver(),
+            maxEnum,
+            waitlist,
+            refinement.stopCriterion(cexMonitor),
+            logger,
+            lts,
+            errorDetectionType,
+            if (porLevel.isDynamic) {
+                XcfaDporLts.getPartialOrder(corePartialOrd)
+            } else {
+                corePartialOrd
+            }
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =
