@@ -23,6 +23,7 @@ include(
 
     "frontends/c-frontend",
     "frontends/chc-frontend",
+    "frontends/llvm",
 
     "cfa/cfa",
     "cfa/cfa-analysis",
@@ -37,6 +38,7 @@ include(
     "xcfa/exec-graph-cli",
     "xcfa/c2xcfa",
     "xcfa/litmus2xcfa",
+    "xcfa/llvm2xcfa",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
     "xcfa/litmus-cli",

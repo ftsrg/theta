@@ -57,7 +57,7 @@ tasks {
         }
 
         val reportTasks = subprojects.mapNotNull { subproject ->
-            subproject.tasks.named("jacocoTestReport", JacocoReport::class).orNull
+            subproject.tasks.findByName("jacocoTestReport")?.let { it as JacocoReport }
         }
 
         dependsOn(reportTasks.flatMap { it.dependsOn })
