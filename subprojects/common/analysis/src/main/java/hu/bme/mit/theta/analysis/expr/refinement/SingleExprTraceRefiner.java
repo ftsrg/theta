@@ -84,8 +84,8 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
         checkNotNull(prec);
         assert !arg.isSafe() : "ARG must be unsafe";
 
-		Optional<ArgTrace<S, A>> optionalNewCex = arg.getNewCexs(prec).findFirst();
-		final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
+        Optional<ArgTrace<S, A>> optionalNewCex = arg.getNewCexs(prec).findFirst();
+        final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
         final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
         logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
@@ -97,32 +97,32 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 
         assert cexStatus.isFeasible() || cexStatus.isInfeasible() : "Unknown CEX status";
 
-		if (cexStatus.isFeasible()) {
-			return RefinerResult.unsafe(traceToConcretize);
-		} else {
+        if (cexStatus.isFeasible()) {
+            return RefinerResult.unsafe(traceToConcretize);
+        } else {
             MonitorCheckpoint.Checkpoints.execute("SingleExprTraceRefiner.refinedCex");
-            logger.write(Level.INFO, cexToConcretize.toString()+"\n");
+            logger.write(Level.INFO, cexToConcretize.toString() + "\n");
             final R refutation = cexStatus.asInfeasible().getRefutation();
-			logger.write(Level.DETAIL, "|  |  |  Refutation: %s%n", refutation);
-			final P refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation);
-			final int pruneIndex = refutation.getPruneIndex();
-			assert 0 <= pruneIndex : "Pruning index must be non-negative";
-			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
+            logger.write(Level.DETAIL, "|  |  |  Refutation: %s%n", refutation);
+            final P refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation);
+            final int pruneIndex = refutation.getPruneIndex();
+            assert 0 <= pruneIndex : "Pruning index must be non-negative";
+            assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
-			switch (pruneStrategy) {
-				case LAZY:
-					logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
-					final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
-					nodePruner.prune(arg, nodeToPrune);
-					break;
-				case FULL:
-					logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);
-					arg.pruneAll();
-					break;
-				default:
-					throw new UnsupportedOperationException("Unsupported pruning strategy");
-			}
-			logger.write(Level.SUBSTEP, "done%n");
+            switch (pruneStrategy) {
+                case LAZY:
+                    logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
+                    final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
+                    nodePruner.prune(arg, nodeToPrune);
+                    break;
+                case FULL:
+                    logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);
+                    arg.pruneAll();
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported pruning strategy");
+            }
+            logger.write(Level.SUBSTEP, "done%n");
 
             return RefinerResult.spurious(refinedPrec);
         }

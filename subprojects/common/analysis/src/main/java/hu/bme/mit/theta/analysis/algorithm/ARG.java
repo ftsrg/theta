@@ -40,21 +40,21 @@ import static java.util.stream.Collectors.toList;
  * ArgBuilder.
  */
 public final class ARG<S extends State, A extends Action> {
-	private final Collection<ArgNode<S, A>> initNodes;
-	public boolean initialized; // Set by ArgBuilder
-	private int nextId = 0;
-	private final PartialOrd<S> partialOrd;
+    private final Collection<ArgNode<S, A>> initNodes;
+    public boolean initialized; // Set by ArgBuilder
+    private int nextId = 0;
+    private final PartialOrd<S> partialOrd;
 
     private final CexHashStorage<S, A> cexHashStorage;
     private final ArgPrecHashStorage<S, A, Prec> argPrecHashStorage; // TODO not the best solution with Prec
 
-	private ARG(final PartialOrd<S> partialOrd) {
-		initNodes = Containers.createSet();
-		this.partialOrd = partialOrd;
-		this.initialized = false;
+    private ARG(final PartialOrd<S> partialOrd) {
+        initNodes = Containers.createSet();
+        this.partialOrd = partialOrd;
+        this.initialized = false;
         this.cexHashStorage = new CexHashStorage<S, A>();
         this.argPrecHashStorage = new ArgPrecHashStorage<S, A, Prec>();
-	}
+    }
 
     public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
         return new ARG<>(partialOrd);
@@ -209,11 +209,11 @@ public final class ARG<S extends State, A extends Action> {
      */
     public <P extends Prec> Stream<ArgTrace<S, A>> getNewCexs(P prec) {
         return getUnsafeNodes().map(ArgTrace::to).filter(trace -> {
-            if(cexHashStorage.contains(trace)) {
+            if (cexHashStorage.contains(trace)) {
                 // isEmpty() below, because:
                 // if it is empty because we are in the first iteration - cexHashStorage is also empty, we can not be here
                 // if it is empty, because we do not track args and precs - cexHashStorage contains trace so it is not new - return false
-                if(argPrecHashStorage.isEmpty() || argPrecHashStorage.contains(Tuple2.of(this, prec))) {
+                if (argPrecHashStorage.isEmpty() || argPrecHashStorage.contains(Tuple2.of(this, prec))) {
                     return false;
                 }
             }
@@ -222,11 +222,11 @@ public final class ARG<S extends State, A extends Action> {
     }
 
     /**
-	 * Gets the size of the ARG, i.e., the number of nodes.
-	 */
-	public long size() {
-		return getNodes().count();
-	}
+     * Gets the size of the ARG, i.e., the number of nodes.
+     */
+    public long size() {
+        return getNodes().count();
+    }
 
     /**
      * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
@@ -257,10 +257,10 @@ public final class ARG<S extends State, A extends Action> {
                 initNodes.equals(arg.initNodes);
     }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(initNodes, initialized, partialOrd);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(initNodes, initialized, partialOrd);
+    }
 
     public CexHashStorage<S, A> getCexHashStorage() {
         return cexHashStorage;

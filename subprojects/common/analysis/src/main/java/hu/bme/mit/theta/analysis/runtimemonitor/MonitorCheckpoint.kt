@@ -46,7 +46,7 @@ class MonitorCheckpoint internal constructor(private val name: String) {
             "SingleExprTraceRefiner.refinedCex",
         )
 
-        private val registeredCheckpoints : HashMap<String, MonitorCheckpoint> = LinkedHashMap()
+        private val registeredCheckpoints: HashMap<String, MonitorCheckpoint> = LinkedHashMap()
 
         init {
             checkpointNames.forEach { registeredCheckpoints.put(it, MonitorCheckpoint(it)) }

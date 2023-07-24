@@ -93,9 +93,9 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         reachedSet.addAll(arg.getNodes());
         waitlist.addAll(arg.getIncompleteNodes());
 
-		if (!(stopCriterion.canStop(arg, prec))) {
-			while (!waitlist.isEmpty()) {
-				final ArgNode<S, A> node = waitlist.remove();
+        if (!(stopCriterion.canStop(arg, prec))) {
+            while (!waitlist.isEmpty()) {
+                final ArgNode<S, A> node = waitlist.remove();
 
                 Collection<ArgNode<S, A>> newNodes = Collections.emptyList();
                 close(node, reachedSet.get(node));
@@ -106,8 +106,8 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
                 }
 
                 if (stopCriterion.canStop(arg, newNodes, prec)) break;
-			}
-		}
+            }
+        }
 
         logger.write(Level.SUBSTEP, "done%n");
         logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
@@ -115,17 +115,17 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
         waitlist.clear(); // Optimization
 
-        if(!arg.isComplete()) {
+        if (!arg.isComplete()) {
             MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
         }
 
         if (arg.isSafe() && arg.getNewCexs(prec).toList().isEmpty()) { // TODO the second half of the condition is a quick fix and the check ARG part should especially be refactored
-			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
-			return AbstractorResult.safe();
-		} else {
-			return AbstractorResult.unsafe();
-		}
-	}
+            checkState(arg.isComplete(), "Returning incomplete ARG as safe");
+            return AbstractorResult.safe();
+        } else {
+            return AbstractorResult.unsafe();
+        }
+    }
 
     private void close(final ArgNode<S, A> node, final Collection<ArgNode<S, A>> candidates) {
         if (!node.isLeaf()) {

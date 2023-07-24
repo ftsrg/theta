@@ -33,6 +33,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -73,18 +74,21 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
     public ARG<S, A> getArg() {
         return arg;
     }
-    public Prec getCurrentPrec() { return prec; }
+
+    public Prec getCurrentPrec() {
+        return prec;
+    }
 
     @Override
-	public SafetyResult<S, A> check(final P initPrec) {
-		logger.write(Level.INFO, "Configuration: %s%n", this);
-		final Stopwatch stopwatch = Stopwatch.createStarted();
-		long abstractorTime = 0;
-		long refinerTime = 0;
-		RefinerResult<S, A, P> refinerResult = null;
-		AbstractorResult abstractorResult = null;
-		prec = initPrec;
-		int iteration = 0;
+    public SafetyResult<S, A> check(final P initPrec) {
+        logger.write(Level.INFO, "Configuration: %s%n", this);
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        long abstractorTime = 0;
+        long refinerTime = 0;
+        RefinerResult<S, A, P> refinerResult = null;
+        AbstractorResult abstractorResult = null;
+        prec = initPrec;
+        int iteration = 0;
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
             ++iteration;

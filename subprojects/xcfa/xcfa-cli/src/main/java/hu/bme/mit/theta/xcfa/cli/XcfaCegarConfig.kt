@@ -185,12 +185,12 @@ data class XcfaCegarConfig(
     }
 
     private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
-        if(cexMonitor!=CexMonitorOptions.DISABLE) {
-            val cm = if(cexMonitor==CexMonitorOptions.MITIGATE) {
+        if (cexMonitor != CexMonitorOptions.DISABLE) {
+            val cm = if (cexMonitor == CexMonitorOptions.MITIGATE) {
                 CexMonitor(mitigate = true, storeArgs = false, logger = logger, cegarChecker = cc)
-            } else if(cexMonitor==CexMonitorOptions.MITIGATE_ARG) {
+            } else if (cexMonitor == CexMonitorOptions.MITIGATE_ARG) {
                 CexMonitor(mitigate = true, storeArgs = true, logger = logger, cegarChecker = cc)
-            } else if(cexMonitor==CexMonitorOptions.CHECK_ARG) {
+            } else if (cexMonitor == CexMonitorOptions.CHECK_ARG) {
                 CexMonitor(mitigate = false, storeArgs = true, logger = logger, cegarChecker = cc)
             } else { // CHECK
                 CexMonitor(mitigate = false, storeArgs = false, logger = logger, cegarChecker = cc)
