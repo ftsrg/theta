@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-import org.codehaus.plexus.util.Os
+import org.gradle.internal.os.OperatingSystem.current
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 
@@ -22,7 +22,7 @@ plugins {
     id("cpp-library")
 }
 
-val enabled = Os.isFamily(Os.FAMILY_UNIX) &&
+val enabled = current().isLinux &&
         try {
             runCommandForOutput("llvm-config")
             true
@@ -52,7 +52,7 @@ fun llvmConfigFlags(vararg args: String): Array<String> {
     } catch (e: IOException) {
         e.printStackTrace()
         arrayOf()
-    }
+    }.also { println("LLVM flags (${args.toList()}): ${it.toList()}") }
 }
 
 fun jniConfigFlags(): Array<String> {
@@ -65,7 +65,7 @@ fun jniConfigFlags(): Array<String> {
     return arrayOf(
             "-I${mainInclude.absolutePath}",
             "-I${linuxInclude.absolutePath}",
-    )
+    ).also { println("JNI flags: ${it.toList()}") }
 }
 
 library {
@@ -77,7 +77,7 @@ library {
                 *jniConfigFlags(),
                 *llvmConfigFlags("--cxxflags")))
         onlyIf {
-            this@Build_gradle.enabled
+            enabled
         }
     }
 
@@ -87,7 +87,7 @@ library {
                 *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
                 "-ldl"))
         onlyIf {
-            this@Build_gradle.enabled
+            enabled
         }
     }
 }

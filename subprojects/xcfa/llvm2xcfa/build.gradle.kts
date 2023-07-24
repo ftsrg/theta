@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-import org.codehaus.plexus.util.Os
+import org.gradle.internal.os.OperatingSystem
 
 plugins {
     id("java-common")
@@ -28,7 +28,7 @@ dependencies {
 }
 
 tasks.test {
-    if (Os.isFamily(Os.FAMILY_UNIX)) {
+    if (OperatingSystem.current().isLinux) {
         val nativeLibTasks = project(":theta-llvm").tasks
         dependsOn(nativeLibTasks.build)
 
