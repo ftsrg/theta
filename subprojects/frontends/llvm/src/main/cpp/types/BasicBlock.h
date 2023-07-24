@@ -32,6 +32,8 @@ public:
         }
     }
 
+    static void reset();
+
     void init();
 
     int getNumOfInstructions() { return numOfInstructions; }

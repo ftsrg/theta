@@ -8,6 +8,10 @@ std::unordered_map<llvm::Value *, std::shared_ptr < Register>>
 Register::LUT = std::unordered_map < llvm::Value *, std::shared_ptr<Register>>
 ();
 
+void Register::reset() {
+    LUT = std::unordered_map < llvm::Value *, std::shared_ptr<Register>>();
+}
+
 Register::Register(llvm::Value &llvmRegister) {
     if(llvmRegister.getName() == "") name = "register_" + std::to_string(nameCounter);
     else {

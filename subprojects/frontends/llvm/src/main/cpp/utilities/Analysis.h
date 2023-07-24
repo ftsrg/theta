@@ -26,6 +26,7 @@ private:
 public:
     static void checkInstruction(llvm::Instruction* instruction); // when parsing, every instruction should be checked with this
     static void checkModule(const llvm::Module*); // before parsing module, this should be called on it
+    static void reset();
 
     static bool getStructAnalysisResult() {
         return hasStructs;

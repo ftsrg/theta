@@ -67,6 +67,8 @@ public:
         }
     }
 
+    static void reset();
+    
     static std::shared_ptr <Register> findRegister(llvm::Value *key);
 };
 

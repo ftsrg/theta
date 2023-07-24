@@ -97,3 +97,8 @@ bool Analysis::checkIfAndOrXor(const llvm::BinaryOperator *binOp) {
     if(opname=="xor") return true;
     return false;
 }
+
+void Analysis::reset() {
+//    hasIntInBitwiseBinaryOp = false;
+//    hasStructs = false;
+}

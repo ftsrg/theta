@@ -10,6 +10,8 @@
 #include <iostream>
 #include "Function.h"
 #include "BasicBlock.h"
+#include "operands/Register.h"
+#include "../utilities/Analysis.h"
 #include "GlobalVariable.h"
 
 // Global context

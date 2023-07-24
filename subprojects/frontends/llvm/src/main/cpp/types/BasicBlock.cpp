@@ -10,6 +10,10 @@ std::unordered_map<llvm::BasicBlock *, std::shared_ptr < BasicBlock>>
 BasicBlock::LUT = std::unordered_map < llvm::BasicBlock *, std::shared_ptr<BasicBlock>>
 ();
 
+void BasicBlock::reset() {
+    LUT = std::unordered_map < llvm::BasicBlock *, std::shared_ptr<BasicBlock>>();
+}
+
 void BasicBlock::init() {
     initialized = true;
     numOfInstructions = 0;
