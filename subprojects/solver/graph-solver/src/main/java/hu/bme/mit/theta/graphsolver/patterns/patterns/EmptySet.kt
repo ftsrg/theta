@@ -13,14 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.graphsolver.patterns.patterns
 
-package hu.bme.mit.theta.analysis.algorithm.mcm.mcm;
+import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 
-import java.util.List;
-import java.util.Map;
+object EmptySet : NodePattern() {
 
-public abstract class MCMRule {
-    public abstract void collectRelations(final Map<String, MCMRelation> relations);
-
-    public abstract void encodeEvents(final List<Integer> idList, final EventConstantLookup resultEvents, final EncodedRelationWrapper encodedRelationWrapper);
+    override fun <T> accept(compiler: GraphPatternCompiler<*, T>): T = compiler.compile(this)
 }

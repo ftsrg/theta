@@ -57,7 +57,7 @@ abstract class DefaultGraphPatternCompiler<T> : GraphPatternCompiler<T?, T?> {
         pattern.op.accept(this); return null
     }
 
-    override fun compile(pattern: EmptyRelation): T? = null
+    override fun compile(pattern: EmptySet): T? = null
     override fun compile(pattern: EmptyRel): T? = null
     override fun compile(pattern: IdentityClosure): T? {
         pattern.op.accept(this); return null

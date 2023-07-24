@@ -34,7 +34,7 @@ fun GraphPattern.collectSubRelations(): Set<GraphPattern> = when (this) {
     is Complement -> op.collectSubRelations()
     is Difference -> op1.collectSubRelations() union op2.collectSubRelations()
     EmptyRel -> emptySet()
-    EmptyRelation -> emptySet()
+    EmptySet -> emptySet()
     is IdentityClosure -> op.collectSubRelations()
     is Intersection -> op1.collectSubRelations() union op2.collectSubRelations()
     is Inverse -> op.collectSubRelations()

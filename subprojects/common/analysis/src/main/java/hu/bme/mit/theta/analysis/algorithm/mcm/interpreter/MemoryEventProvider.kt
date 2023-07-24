@@ -18,9 +18,9 @@ package hu.bme.mit.theta.analysis.algorithm.mcm.interpreter
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.MemoryEvent
+import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent
 
-interface MemoryEventProvider<A : Action, P : Prec> {
+fun interface MemoryEventProvider<A : Action, P : Prec> {
 
     operator fun get(a: A, p: P): MemoryEvent?
 }
