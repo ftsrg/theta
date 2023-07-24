@@ -21,30 +21,46 @@ plugins {
     id("cpp-library")
 }
 
-fun llvmConfigFlags(vararg args: String): Array<String> {
-    if (!Os.isFamily(Os.FAMILY_UNIX)) return arrayOf()
-    val process = ProcessBuilder("llvm-config", *args).start()
+fun runCommandForOutput(vararg args: String): Array<String> {
+    val process = ProcessBuilder(*args).start()
     val outputStream = ByteArrayOutputStream()
     process.inputStream.copyTo(outputStream)
     process.waitFor()
     val ret = outputStream.toString()
-        .trim()
-        .split(" ")
-        .filter { it.length > 1 }
-        .map { it.trim() }
-        .toTypedArray()
+            .trim()
+            .split(" ")
+            .filter { it.length > 1 }
+            .map { it.trim() }
+            .toTypedArray()
     return ret
+}
+
+fun llvmConfigFlags(vararg args: String): Array<String> {
+    if (!Os.isFamily(Os.FAMILY_UNIX)) return arrayOf()
+    return runCommandForOutput("llvm-config", *args)
+}
+
+fun jniConfigFlags(): Array<String> {
+    if (!Os.isFamily(Os.FAMILY_UNIX)) return arrayOf()
+    val jdkHomeArr = runCommandForOutput("bash", "-c", "dirname \$(cd \$(dirname \$(readlink \$(which javac))); pwd -P)")
+    check(jdkHomeArr.size == 1)
+    val jdkHome = File(jdkHomeArr[0])
+    val mainInclude = jdkHome.resolve("include")
+    val linuxInclude = mainInclude.resolve("linux")
+    return arrayOf(
+            "-I${mainInclude.absolutePath}",
+            "-I${linuxInclude.absolutePath}",
+    )
 }
 
 library {
     targetMachines.add(machines.linux.x86_64)
     tasks.withType(CppCompile::class) {
         compilerArgs.addAll(listOf(
-            "-Wall",
-            "-fpic",
-            "-I/usr/lib/jvm/java-17-openjdk/include/",
-            "-I/usr/lib/jvm/java-17-openjdk/include/linux/",
-            *llvmConfigFlags("--cxxflags")))
+                "-Wall",
+                "-fpic",
+                *jniConfigFlags(),
+                *llvmConfigFlags("--cxxflags")))
         onlyIf {
             Os.isFamily(Os.FAMILY_UNIX)
         }
