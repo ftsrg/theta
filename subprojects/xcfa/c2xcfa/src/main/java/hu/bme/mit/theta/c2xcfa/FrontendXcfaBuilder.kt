@@ -365,7 +365,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val breakLoc = param.breakLoc
         val continueLoc = param.continueLoc
         val returnLoc = param.returnLoc
-        return statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
+        return statement.statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
     }
 
     override fun visit(statement: CCompound, param: ParamPack): XcfaLocation {
@@ -417,7 +417,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val breakLoc = param.breakLoc
         val continueLoc = param.continueLoc
         val returnLoc = param.returnLoc
-        return statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
+        return statement.statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
     }
 
     override fun visit(statement: CDoWhile, param: ParamPack): XcfaLocation {

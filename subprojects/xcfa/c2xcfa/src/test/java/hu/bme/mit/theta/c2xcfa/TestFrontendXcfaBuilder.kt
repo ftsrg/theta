@@ -57,6 +57,7 @@ class TestFrontendXcfaBuilder {
                 arrayOf("/20testinline.c"),
                 arrayOf("/21namecollision.c"),
                 arrayOf("/22nondet.c"),
+                arrayOf("/23exotic.c"),
             )
         }
     }
