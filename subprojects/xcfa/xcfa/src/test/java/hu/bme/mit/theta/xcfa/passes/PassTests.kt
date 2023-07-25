@@ -26,6 +26,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -504,6 +505,43 @@ class PassTests {
         assertTrue(xcfaSource.procedures.first { it.name == "main" }.edges.none {
             it.getFlatLabels().any { it is InvokeLabel }
         })
+    }
+
+    @Test
+    fun testCPipeline() {
+        val xcfaSource = xcfa("example") {
+            procedure("main", CPasses(false, parseContext)) {
+                (init to final) {
+                    "proc1"()
+                }
+            }
+            procedure("proc1") {
+                (init to final) {
+                    assume("true")
+                }
+            }
+        }
+
+        assertTrue(xcfaSource.procedures.first { it.name == "main" }.edges.none {
+            it.getFlatLabels().any { it is InvokeLabel }
+        })
+    }
+
+    @Test
+    fun testSplit() {
+        lateinit var edge: XcfaEdge
+        val xcfaSource = xcfa("example") {
+            procedure("main", CPasses(false, parseContext)) {
+                edge = (init to final) {
+                    assume("true")
+                    "proc1"()
+                    assume("true")
+                }
+            }
+        }
+
+        val newEdges = edge.splitIf { it is InvokeLabel }
+        Assertions.assertTrue(newEdges.size == 3)
     }
 
 }
