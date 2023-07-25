@@ -29,10 +29,18 @@ int main() {
     int c = b - 3;
     int d = c*c;
     int e = d/c;
-    int f = d % 2;
+    int f = d % a;
 
     int i = a || b;
 
+    if ( i == 0 && a == 0 ) {
+        i = i + 1;
+    }
+
+    if ( i == 0 || a == 0 ) {
+        i = i + 1;
+    }
+
     foo();
-    return ifoo(a, b);
+    return ifoo(a, b) + c + d + e + f + i;
 }

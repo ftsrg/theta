@@ -79,9 +79,19 @@ class TestLlvm2Xcfa {
 
     @ParameterizedTest
     @MethodSource("data")
-    fun parse(filepath: String) {
+    fun testEfficient(filepath: String) {
         val fileName = javaClass.getResource(filepath)!!.file
+        println("Parsing using LLVM: $filepath")
 
         fromFile(File(fileName), ArithmeticType.efficient)
+    }
+
+    @ParameterizedTest
+    @MethodSource("data")
+    fun testBitvector(filepath: String) {
+        val fileName = javaClass.getResource(filepath)!!.file
+        println("Parsing using LLVM: $filepath")
+
+        fromFile(File(fileName), ArithmeticType.bitvector)
     }
 }
