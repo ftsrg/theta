@@ -66,7 +66,7 @@ class XcfaExplAnalysisTest {
         val analysis = ExplXcfaAnalysis(
             xcfa,
             Z3SolverFactory.getInstance().createSolver(),
-            0,
+            1,
             getPartialOrder(ExplOrd.getInstance())
         )
 
@@ -109,7 +109,7 @@ class XcfaExplAnalysisTest {
         val analysis = ExplXcfaAnalysis(
             xcfa,
             Z3SolverFactory.getInstance().createSolver(),
-            0,
+            1,
             getPartialOrder(ExplOrd.getInstance())
         )
 
@@ -152,7 +152,7 @@ class XcfaExplAnalysisTest {
         val analysis = ExplXcfaAnalysis(
             xcfa,
             Z3SolverFactory.getInstance().createSolver(),
-            0,
+            1,
             XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance()))
         )
 
@@ -194,7 +194,7 @@ class XcfaExplAnalysisTest {
         val analysis = ExplXcfaAnalysis(
             xcfa,
             Z3SolverFactory.getInstance().createSolver(),
-            0,
+            1,
             getPartialOrder(ExplOrd.getInstance())
         )
 
