@@ -59,6 +59,7 @@ class XcfaAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testNoporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+        println("Testing NOPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
@@ -101,6 +102,7 @@ class XcfaAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testSporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+        println("Testing SPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
@@ -143,6 +145,7 @@ class XcfaAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testDporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+        println("Testing DPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
@@ -184,6 +187,7 @@ class XcfaAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testAasporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+        println("Testing AASPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
@@ -227,7 +231,7 @@ class XcfaAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testAadporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
-        if (filepath.contains("multithread")) return // TODO: why does it fail to verify?
+        println("Testing AADPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
 
