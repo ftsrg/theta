@@ -19,11 +19,14 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions
@@ -54,6 +57,7 @@ class PassTests {
 
         private val dummyXcfa = xcfa("") {}
         private val parseContext = ParseContext()
+        private val fpParseContext = ParseContext().also { it.arithmetic = ArchitectureConfig.ArithmeticType.bitvector }
 
         @JvmStatic
         val data: List<Arguments> = listOf(
@@ -206,11 +210,16 @@ class PassTests {
                 },
             ),
             PassTestData(
-                global = { "x" type FpType(5, 11) init "0.0f"; },
+                global = {
+                    "y" type BvType(32) init "0"
+                    ("x" type FpType(8, 24) init "0.0f").also {
+                        fpParseContext.metadata.create(it.ref, "cType", CFloat(null, fpParseContext))
+                    };
+                },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    FpFunctionsToExprsPass(parseContext),
+                    NormalizePass(fpParseContext),
+                    DeterministicPass(fpParseContext),
+                    FpFunctionsToExprsPass(fpParseContext),
                 ),
                 input = {
                     (init to final) {
@@ -237,6 +246,12 @@ class PassTests {
                     (init to final) {
                         "ceil".invoke("x", "x")
                     }
+                    (init to final) {
+                        "isinf".invoke("y", "x")
+                    }
+                    (init to final) {
+                        "isfinite".invoke("y", "x")
+                    }
                 },
                 output = {
                     (init to final) {
@@ -262,6 +277,14 @@ class PassTests {
                     }
                     (init to final) {
                         "x".assign("(fproundtoint[RTP] x)")
+                    }
+                    (init to final) {
+                        "y".assign(
+                            "(ite (isinfinite x) #b00000000000000000000000000000001 #b00000000000000000000000000000000)")
+                    }
+                    (init to final) {
+                        "y".assign(
+                            "(ite (isinfinite x) #b00000000000000000000000000000000 #b00000000000000000000000000000001)")
                     }
                 },
             ),
