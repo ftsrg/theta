@@ -35,7 +35,7 @@ class CliTest {
 
     @BeforeAll
     static void testVersion() {
-        ExecutionGraphCli.main(new String[]{ "--version" });
+        ExecutionGraphCli.main(new String[]{"--version"});
     }
 
     @ParameterizedTest
@@ -43,7 +43,7 @@ class CliTest {
     void testExecGraphCli(String dotPath, String catPath) {
         dotPath = checkNotNull(getClass().getResource(dotPath)).getPath();
         catPath = checkNotNull(getClass().getResource(catPath)).getPath();
-        ExecutionGraphCli.main(new String[]{ "--graph", dotPath, "--cat", catPath });
+        ExecutionGraphCli.main(new String[]{"--graph", dotPath, "--cat", catPath});
     }
 
 }

@@ -81,7 +81,8 @@ class XcfaPredAnalysisTest {
             lts,
             ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(ItpRefToPredPrec(ExprSplitters.whole()))
+        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(
+            ItpRefToPredPrec(ExprSplitters.whole()))
 
         val refiner =
             SingleExprTraceRefiner.create(
@@ -125,7 +126,8 @@ class XcfaPredAnalysisTest {
             lts,
             ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(ItpRefToPredPrec(ExprSplitters.whole()))
+        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(
+            ItpRefToPredPrec(ExprSplitters.whole()))
 
         val refiner =
             SingleExprTraceRefiner.create(
@@ -168,7 +170,8 @@ class XcfaPredAnalysisTest {
             lts,
             ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(ItpRefToPredPrec(ExprSplitters.whole()))
+        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(
+            ItpRefToPredPrec(ExprSplitters.whole()))
 
         val refiner =
             SingleExprTraceRefiner.create(
