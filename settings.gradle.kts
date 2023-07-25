@@ -37,6 +37,7 @@ include(
     "xcfa/cat",
     "xcfa/exec-graph-cli",
     "xcfa/c2xcfa",
+    "xcfa/btor22xcfa",
     "xcfa/litmus2xcfa",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",

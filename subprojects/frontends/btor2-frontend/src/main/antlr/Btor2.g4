@@ -25,9 +25,9 @@ SYMBOL: ~[ \r\n]+;
 COMMENT: ';' ~[\r\n]+;
 
 // Parser rules
-btor2: line+;
+btor2: (line '\n')* line ('\n')*;
 
-line: ( comment | node (symbol)? (comment)? ) '\n';
+line: comment | node (symbol)? (comment)?;
 
 comment: COMMENT;
 
@@ -60,11 +60,11 @@ state: id=nid 'state' sid;
 property: id=nid property_type=('bad' | 'constraint' | 'fair' | 'output' | 'justice' ) param=nid;
 
 array_sort: id=sid 'sort array' sid1=sid sid2=sid;
-bitvec_sort: id=sid 'sort bitvec' width=NUM; // TODO semantic check for >0
+bitvec_sort: id=sid 'sort bitvec' width=NUM;
 
-constant: id=nid 'const' sid bin=NUM; // TODO semantic check that really binary
-constant_d: id=nid 'constd' sid (MINUS)? dec=NUM; // TODO semantic check that really uint
-constant_h: id=nid 'consth' sid hex=SYMBOL; // TODO semantic check that really hex
+constant: id=nid 'const' sid bin=NUM;
+constant_d: id=nid 'constd' sid (MINUS)? dec=NUM;
+constant_h: id=nid 'consth' sid hex=SYMBOL;
 filled_constant: id=nid fill=('one' | 'ones' | 'zero') sid;
 
 symbol: SYMBOL;
