@@ -37,12 +37,15 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
+import kotlin.random.Random
 
 
 class XcfaPredAnalysisTest {
 
 
     companion object {
+
+        private val seed = 1001;
 
         @JvmStatic
         fun data(): Collection<Array<Any>> {
@@ -149,6 +152,7 @@ class XcfaPredAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testDporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+        XcfaDporLts.random = Random(seed)
         println("Testing DPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
@@ -238,6 +242,7 @@ class XcfaPredAnalysisTest {
     @ParameterizedTest
     @MethodSource("data")
     fun testAadporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
+        XcfaDporLts.random = Random(seed)
         println("Testing AADPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
