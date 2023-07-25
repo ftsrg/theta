@@ -5,40 +5,40 @@ import Btor2Sort
 
 // Inputs and States
 data class Btor2Input(override val nid: UInt, override val sort: Btor2Sort) : Btor2Node(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2State(override val nid: UInt, override val sort: Btor2Sort) : Btor2Node(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2Init(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Const) : Btor2Node(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2Next(override val nid: UInt, override val sort: Btor2Sort, val state: Btor2State, val value: Btor2Node) : Btor2Node(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 
 // Property Nodes
 // data class Btor2JusticeNode(val id: Int, val num: Int, val children: List<Btor2Node>) : Btor2Node(id)
 data class Btor2Bad(override val nid: UInt, val operand: Btor2Node) : Btor2Node(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2Constraint(override val nid: UInt, val operand: Btor2Node) : Btor2Node(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2Output(override val nid: UInt, val operand: Btor2Node) : Btor2Node(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }

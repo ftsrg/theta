@@ -3,19 +3,19 @@ package hu.bme.mit.theta.frontend.model
 import Btor2BvSort
 import Btor2Const
 
-public interface Btor2NodeVisitor<R> {
-    fun visit(node : Btor2UnaryOperation) : R
-    fun visit(node : Btor2BinaryOperation) : R
-    fun visit(node : Btor2TernaryOperation) : R
-    fun visit(node : Btor2SliceOperation) : R
-    fun visit(node : Btor2ExtOperation) : R
-    fun visit(node : Btor2Const) : R
-    fun visit(node : Btor2BvSort) : R
-    fun visit(node : Btor2Input) : R
-    fun visit(node : Btor2State) : R
-    fun visit(node : Btor2Init) : R
-    fun visit(node : Btor2Next) : R
-    fun visit(node : Btor2Bad) : R
-    fun visit(node : Btor2Constraint) : R
-    fun visit(node : Btor2Output) : R
+public interface Btor2NodeVisitor<R, P> {
+    fun visit(node: Btor2UnaryOperation, param: P) : R
+    fun visit(node: Btor2BinaryOperation, param: P) : R
+    fun visit(node: Btor2TernaryOperation, param: P) : R
+    fun visit(node: Btor2SliceOperation, param: P) : R
+    fun visit(node: Btor2ExtOperation, param: P) : R
+    fun visit(node: Btor2Const, param: P) : R
+    fun visit(node: Btor2BvSort, param: P) : R
+    fun visit(node: Btor2Input, param: P) : R
+    fun visit(node: Btor2State, param: P) : R
+    fun visit(node: Btor2Init, param: P) : R
+    fun visit(node: Btor2Next, param: P) : R
+    fun visit(node: Btor2Bad, param: P) : R
+    fun visit(node: Btor2Constraint, param: P) : R
+    fun visit(node: Btor2Output, param: P) : R
 }

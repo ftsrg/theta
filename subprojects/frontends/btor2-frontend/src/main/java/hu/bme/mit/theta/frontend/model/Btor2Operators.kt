@@ -6,28 +6,28 @@ abstract class Btor2Operator(id: UInt) : Btor2Node(id)
 
 // Operators
 data class Btor2UnaryOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2UnaryOperator, val operand: Btor2Node) : Btor2Operator(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2ExtOperation(override val nid: UInt, override val sort : Btor2Sort, val operand: Btor2Node, val w : UInt) : Btor2Operator(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2SliceOperation(override val nid: UInt, override val sort : Btor2Sort, val operand: Btor2Node, val u : UInt, val l : UInt) : Btor2Operator(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2BinaryOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2BinaryOperator, val operand1: Btor2Node, val operand2: Btor2Node) : Btor2Operator(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 data class Btor2TernaryOperation(override val nid: UInt, override val sort : Btor2Sort, val operator: Btor2TernaryOperator, val condition: Btor2Node, val trueValue: Btor2Node, val falseValue: Btor2Node) : Btor2Operator(nid) {
-    override fun <R> accept(visitor: Btor2NodeVisitor<R>): R {
-        return visitor.visit(this)
+    override fun <R, P> accept(visitor: Btor2NodeVisitor<R, P>, param : P): R {
+        return visitor.visit(this, param)
     }
 }
 enum class Btor2UnaryOperator {
