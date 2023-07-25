@@ -39,7 +39,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.*
 
 
-class XcfaAnalysisTest {
+class XcfaExplAnalysisTest {
 
 
     companion object {
