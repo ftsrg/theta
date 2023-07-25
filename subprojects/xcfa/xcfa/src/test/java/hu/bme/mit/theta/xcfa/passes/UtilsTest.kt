@@ -39,19 +39,25 @@ class UtilsTest {
 
         @JvmStatic
         fun getLabels(): List<Arguments> = listOf(
-            Arguments.of(InvokeLabel("", listOf(x.ref, y.ref), EmptyMetaData), InvokeLabel("", listOf(xPrime.ref, y.ref), EmptyMetaData)),
+            Arguments.of(InvokeLabel("", listOf(x.ref, y.ref), EmptyMetaData),
+                InvokeLabel("", listOf(xPrime.ref, y.ref), EmptyMetaData)),
             Arguments.of(JoinLabel(x, EmptyMetaData), JoinLabel(xPrime, EmptyMetaData)),
             Arguments.of(NondetLabel(setOf(NopLabel), EmptyMetaData), NondetLabel(setOf(NopLabel), EmptyMetaData)),
-            Arguments.of(SequenceLabel(listOf(NopLabel), EmptyMetaData), SequenceLabel(listOf(NopLabel), EmptyMetaData)),
+            Arguments.of(SequenceLabel(listOf(NopLabel), EmptyMetaData),
+                SequenceLabel(listOf(NopLabel), EmptyMetaData)),
             Arguments.of(ReadLabel(x, y, setOf(), EmptyMetaData), ReadLabel(xPrime, y, setOf(), EmptyMetaData)),
             Arguments.of(WriteLabel(x, y, setOf(), EmptyMetaData), WriteLabel(xPrime, y, setOf(), EmptyMetaData)),
             Arguments.of(FenceLabel(setOf(), EmptyMetaData), FenceLabel(setOf(), EmptyMetaData)),
-            Arguments.of(StartLabel("", listOf(x.ref), y, EmptyMetaData), StartLabel("", listOf(xPrime.ref), y, EmptyMetaData)),
+            Arguments.of(StartLabel("", listOf(x.ref), y, EmptyMetaData),
+                StartLabel("", listOf(xPrime.ref), y, EmptyMetaData)),
             Arguments.of(ReturnLabel(JoinLabel(x, EmptyMetaData)), ReturnLabel(JoinLabel(xPrime, EmptyMetaData))),
 
-            Arguments.of(StmtLabel(Assign(x, y.ref), metadata = EmptyMetaData), StmtLabel(Assign(xPrime, y.ref), metadata = EmptyMetaData)),
-            Arguments.of(StmtLabel(Havoc(x), metadata = EmptyMetaData), StmtLabel(Havoc(xPrime), metadata = EmptyMetaData)),
-            Arguments.of(StmtLabel(Assume(Eq(x.ref, y.ref)), metadata = EmptyMetaData), StmtLabel(Assume(Eq(xPrime.ref, y.ref)), metadata = EmptyMetaData)),
+            Arguments.of(StmtLabel(Assign(x, y.ref), metadata = EmptyMetaData),
+                StmtLabel(Assign(xPrime, y.ref), metadata = EmptyMetaData)),
+            Arguments.of(StmtLabel(Havoc(x), metadata = EmptyMetaData),
+                StmtLabel(Havoc(xPrime), metadata = EmptyMetaData)),
+            Arguments.of(StmtLabel(Assume(Eq(x.ref, y.ref)), metadata = EmptyMetaData),
+                StmtLabel(Assume(Eq(xPrime.ref, y.ref)), metadata = EmptyMetaData)),
             Arguments.of(StmtLabel(Skip(), metadata = EmptyMetaData), StmtLabel(Skip(), metadata = EmptyMetaData)),
         )
     }
