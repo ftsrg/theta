@@ -44,6 +44,7 @@ class XcfaExplAnalysisTest {
 
 
     companion object {
+
         private val seed = 1001
 
         @JvmStatic
