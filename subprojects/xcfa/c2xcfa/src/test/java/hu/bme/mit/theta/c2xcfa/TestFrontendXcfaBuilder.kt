@@ -63,10 +63,19 @@ class TestFrontendXcfaBuilder {
 
     @Test
     @Throws(IOException::class)
-    fun parse() {
+    fun testReachability() {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
         getXcfaFromC(stream!!, ParseContext(), false, false)
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun testOverflow() {
+
+        val stream = javaClass.getResourceAsStream(filepath)
+
+        getXcfaFromC(stream!!, ParseContext(), false, true)
     }
 }
