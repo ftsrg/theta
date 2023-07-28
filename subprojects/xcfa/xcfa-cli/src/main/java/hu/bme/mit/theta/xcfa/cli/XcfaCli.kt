@@ -32,12 +32,15 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
+import hu.bme.mit.theta.common.visualization.writer.JSONWriter
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.pointers.AndersensPointerAnalysis
+import hu.bme.mit.theta.xcfa.analysis.pointers.SteensgaardsPointerAnalysis
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.toDot
@@ -175,6 +178,13 @@ class XcfaCli(private val args: Array<String>) {
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
         swFrontend.reset().start()
+
+        val andersenGraph = AndersensPointerAnalysis().run(xcfa).toGraph()
+        GraphvizWriter.getInstance().writeFileAutoConvert(andersenGraph, "pointers-andersen.dot")
+        val steensgaardsGraph = SteensgaardsPointerAnalysis().run(xcfa).toGraph()
+        GraphvizWriter.getInstance().writeFileAutoConvert(steensgaardsGraph, "pointers-steensgaard.dot")
+
+        exitProcess(0)
 
         val gsonForOutput = getGson()
 

@@ -5,6 +5,9 @@ class DisjointSet<T> {
     private val rank = mutableMapOf<T, Int>()
 
     fun makeSet(x: T) {
+        if (parent.containsKey(x)) {
+            return
+        }
         parent[x] = x
         rank[x] = 0
     }
@@ -31,5 +34,26 @@ class DisjointSet<T> {
             parent[yRoot] = xRoot
             rank[xRoot] = rank[xRoot]!! + 1
         }
+    }
+
+    fun has(x: T): Boolean {
+        return parent.containsKey(x)
+    }
+
+    fun getSetMembers(x: T): Set<T> {
+        val root = find(x)
+        return parent.filter { it.value == root }.keys
+    }
+
+    fun getSets(): Map<T, List<T>> {
+        val sets = mutableMapOf<T, MutableList<T>>()
+        for (x in parent.keys) {
+            val root = find(x)
+            if (!sets.containsKey(root)) {
+                sets[root] = mutableListOf()
+            }
+            sets[root]!!.add(x)
+        }
+        return sets
     }
 }
