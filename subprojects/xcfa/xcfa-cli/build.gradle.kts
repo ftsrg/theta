@@ -51,7 +51,9 @@ tasks.test {
         dependsOn(nativeLibTasks.build)
 
         val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
-        systemProperty("java.library.path", linkTask.linkedFile.get().asFile.parent)
+        val existingLibraryPath = System.getProperty("java.library.path")
+        val newLibraryPath = "${existingLibraryPath}:${linkTask.linkedFile.get().asFile.parent}"
+        systemProperty("java.library.path", newLibraryPath)
     }
 }
 
