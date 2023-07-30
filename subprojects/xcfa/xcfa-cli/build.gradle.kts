@@ -13,6 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     id("kotlin-common")
     id("cli-tool")
@@ -41,3 +44,14 @@ dependencies {
 application {
     mainClassName = "hu.bme.mit.theta.xcfa.cli.XcfaCli"
 }
+
+tasks.test {
+    if (OperatingSystem.current().isLinux) {
+        val nativeLibTasks = project(":theta-llvm").tasks
+        dependsOn(nativeLibTasks.build)
+
+        val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
+        systemProperty("java.library.path", linkTask.linkedFile.get().asFile.parent)
+    }
+}
+
