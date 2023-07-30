@@ -16,7 +16,8 @@ runs:
         # sudo ln -sf $(which llvm-config-${{inputs.version}}) /usr/bin/llvm-config
         wget https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz -O llvm.tar.xz
         sudo tar xvJf llvm.tar.xz --directory /opt
-        echo "/opt/*/bin" >> $GITHUB_PATH
+        sudo ln -sf /opt/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04/bin/clang /usr/bin/clang
+        sudo ln -sf /opt/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04/bin/llvm-config /usr/bin/llvm-config
     - name: Test version
       shell: bash
       run: |
