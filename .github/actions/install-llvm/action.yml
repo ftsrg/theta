@@ -9,11 +9,14 @@ runs:
     - name: Run install script
       shell: bash
       run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh ${{ inputs.version }}
-        sudo ln -sf $(which clang-${{inputs.version}}) /usr/bin/clang
-        sudo ln -sf $(which llvm-config-${{inputs.version}}) /usr/bin/llvm-config
+        # wget https://apt.llvm.org/llvm.sh
+        # chmod +x llvm.sh
+        # sudo ./llvm.sh ${{ inputs.version }}
+        # sudo ln -sf $(which clang-${{inputs.version}}) /usr/bin/clang
+        # sudo ln -sf $(which llvm-config-${{inputs.version}}) /usr/bin/llvm-config
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz -O llvm.tar.xz
+        sudo tar xvJf llvm.tar.xz --directory /opt
+        echo "/opt/*/bin" >> $GITHUB_PATH
     - name: Test version
       shell: bash
       run: |

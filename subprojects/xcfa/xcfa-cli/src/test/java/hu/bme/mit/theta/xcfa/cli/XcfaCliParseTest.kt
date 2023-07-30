@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.params.ParameterizedTest
@@ -164,11 +165,13 @@ class XcfaCliParseTest {
     @ParameterizedTest
     @MethodSource("llvmFiles")
     fun testLLVMParse(filePath: String) {
-        main(arrayOf(
-            "--input-type", "LLVM",
-            "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only", "--stacktrace"
-        ))
+        if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+            main(arrayOf(
+                "--input-type", "LLVM",
+                "--input", javaClass.getResource(filePath)!!.path,
+                "--parse-only", "--stacktrace"
+            ))
+        }
     }
 
     @ParameterizedTest
