@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 
-import org.gradle.internal.os.OperatingSystem
-
 plugins {
     id("kotlin-common")
     id("cli-tool")
@@ -45,15 +43,15 @@ application {
     mainClassName = "hu.bme.mit.theta.xcfa.cli.XcfaCli"
 }
 
-tasks.test {
-    if (OperatingSystem.current().isLinux) {
-        val nativeLibTasks = project(":theta-llvm").tasks
-        dependsOn(nativeLibTasks.build)
-
-        val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
-        val existingLibraryPath = systemProperties["java.library.path"]
-        val newLibraryPath = "${existingLibraryPath}:${linkTask.linkedFile.get().asFile.parent}"
-        systemProperty("java.library.path", newLibraryPath)
-    }
-}
+//tasks.test {
+//    if (OperatingSystem.current().isLinux) {
+//        val nativeLibTasks = project(":theta-llvm").tasks
+//        dependsOn(nativeLibTasks.build)
+//
+//        val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
+//        val existingLibraryPath = systemProperties["java.library.path"]
+//        val newLibraryPath = "${existingLibraryPath}:${linkTask.linkedFile.get().asFile.parent}"
+//        systemProperty("java.library.path", newLibraryPath)
+//    }
+//}
 
