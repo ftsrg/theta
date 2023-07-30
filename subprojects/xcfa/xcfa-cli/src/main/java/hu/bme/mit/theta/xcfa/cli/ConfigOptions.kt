@@ -50,6 +50,7 @@ import java.lang.reflect.Type
 
 enum class InputType {
     C,
+    LLVM,
     JSON,
     DSL,
     CHC
