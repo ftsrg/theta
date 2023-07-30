@@ -58,7 +58,7 @@ fun llvmConfigFlags(vararg args: String): Array<String> {
 fun jniConfigFlags(): Array<String> {
     if (!enabled) return arrayOf()
     val jdkHomeArr = runCommandForOutput("bash", "-c",
-        "dirname \$(cd \$(dirname \$(readlink \$(which javac) || which javac)); pwd -P)")
+        "dirname \$(cd \$(dirname \$(readlink -f \$(which javac) || which javac)); pwd -P)")
     check(jdkHomeArr.size == 1)
     val jdkHome = File(jdkHomeArr[0])
     check(jdkHome.exists())
