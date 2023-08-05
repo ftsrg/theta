@@ -20,6 +20,7 @@ import Btor2Const
 import Btor2Sort
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv
@@ -33,8 +34,7 @@ import java.util.*
 import kotlin.collections.LinkedHashSet
 
 class Btor2FrontendXcfaBuilder(val sorts : HashMap<UInt, Btor2Sort>, val nodes : HashMap<UInt, Btor2Node>) :
-    Btor2NodeVisitor<XcfaLocation, ParamPack> {
-    private val locationLut: MutableMap<Btor2Node, XcfaLocation> = LinkedHashMap()
+    Btor2NodeVisitor<ParamPack, ParamPack> {
     private val visitedNodes = LinkedHashSet<Btor2Node>()
     private val builder = XcfaBuilder("TODO")
 
@@ -49,27 +49,37 @@ class Btor2FrontendXcfaBuilder(val sorts : HashMap<UInt, Btor2Sort>, val nodes :
         }
     }
 
-    override fun visit(node: Btor2UnaryOperation, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2UnaryOperation, param: ParamPack): ParamPack {
+        node.operand.accept(this, param)
+
+        when (node.operator) {
+            Btor2UnaryOperator.NOT -> AbstractExprs.Neg<>() // bitwise negation
+            Btor2UnaryOperator.INC -> AbstractExprs.Add()
+            Btor2UnaryOperator.DEC -> AbstractExprs.Sub()
+            Btor2UnaryOperator.NEG -> TODO() // arithmetic negation
+            Btor2UnaryOperator.REDAND -> TODO()
+            Btor2UnaryOperator.REDOR -> TODO()
+            Btor2UnaryOperator.REDXOR -> TODO()
+        }
+    }
+
+    override fun visit(node: Btor2BinaryOperation, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2BinaryOperation, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2TernaryOperation, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2TernaryOperation, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2SliceOperation, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2SliceOperation, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2ExtOperation, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2ExtOperation, param: ParamPack): XcfaLocation {
-        TODO("Not yet implemented")
-    }
-
-    override fun visit(node: Btor2Const, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2Const, param: ParamPack): ParamPack {
         // TODO I will have to think more about what variables will be global in the end
         val constVar = node.getVar()
         param.builder.addVar(constVar)
@@ -80,56 +90,48 @@ class Btor2FrontendXcfaBuilder(val sorts : HashMap<UInt, Btor2Sort>, val nodes :
                                     constVar,
                                     BvUtils.bigIntegerToNeutralBvLitExpr(node.value, node.sort.width.toInt())
         ), metadata = EmptyMetaData)))
-        return newLoc
+        return ParamPack(param.builder, newLoc)
     }
 
-    override fun visit(node: Btor2BvSort, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2BvSort, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2Input, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2Input, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2State, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2State, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2Init, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2Init, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2Next, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2Next, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2Bad, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2Bad, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2Constraint, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2Constraint, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 
-    override fun visit(node: Btor2Output, param: ParamPack): XcfaLocation {
+    override fun visit(node: Btor2Output, param: ParamPack): ParamPack {
         TODO("Not yet implemented")
     }
 }
 
-class ParamPack(builder: XcfaProcedureBuilder, lastLoc: XcfaLocation, breakLoc: XcfaLocation?,
-                continueLoc: XcfaLocation?, returnLoc: XcfaLocation?) {
-
+class ParamPack(builder: XcfaProcedureBuilder, lastLoc: XcfaLocation) {
     val builder: XcfaProcedureBuilder
     val lastLoc: XcfaLocation
-    val breakLoc: XcfaLocation?
-    val continueLoc: XcfaLocation?
-    val returnLoc: XcfaLocation?
 
     init {
         this.builder = builder
         this.lastLoc = lastLoc
-        this.breakLoc = breakLoc
-        this.continueLoc = continueLoc
-        this.returnLoc = returnLoc
     }
 }

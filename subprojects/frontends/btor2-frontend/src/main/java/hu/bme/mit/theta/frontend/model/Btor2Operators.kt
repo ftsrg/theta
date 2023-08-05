@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.frontend.model
 
 import Btor2Sort
+import hu.bme.mit.theta.core.type.Expr
 
 abstract class Btor2Operator(id: UInt) : Btor2Node(id)
 
