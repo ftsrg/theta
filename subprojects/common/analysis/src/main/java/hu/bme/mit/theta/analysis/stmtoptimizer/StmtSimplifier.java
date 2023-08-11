@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -42,6 +43,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -114,6 +116,11 @@ public class StmtSimplifier {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			valuation.remove(varDecl);
 			return SimplifyResult.of(stmt, SimplifyStatus.SUCCESS);
+		}
+
+		@Override
+		public <DeclType extends Type> SimplifyResult visit(DerefWriteStmt<DeclType> stmt, MutableValuation param) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

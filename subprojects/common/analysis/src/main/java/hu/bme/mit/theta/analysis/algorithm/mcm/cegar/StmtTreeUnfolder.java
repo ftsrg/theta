@@ -71,6 +71,11 @@ public class StmtTreeUnfolder {
         }
 
         @Override
+        public <DeclType extends Type> Collection<Expr<BoolType>> visit(DerefWriteStmt<DeclType> stmt, VarIndexing rhsIndexing) {
+            throw new UnsupportedOperationException("Not yet implemented");
+        }
+
+        @Override
         public Collection<Expr<BoolType>> visit(SequenceStmt stmt, VarIndexing rhsIndexing) {
             Collection<Expr<BoolType>> ret = new ArrayList<>();
             for (Stmt stmtStmt : stmt.getStmts()) {

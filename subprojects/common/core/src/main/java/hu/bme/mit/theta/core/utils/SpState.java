@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -152,6 +153,11 @@ public class SpState {
 			final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
 			final Expr<BoolType> expr = sub.apply(state.getExpr());
 			return new SpState(expr, constCount);
+		}
+
+		@Override
+		public <DeclType extends Type> SpState visit(DerefWriteStmt<DeclType> stmt, final SpState state) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

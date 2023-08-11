@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -288,6 +289,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			}
 
 			@Override
+			public <DeclType extends Type> Stmt visit(DerefWriteStmt<DeclType> stmt, Void param) {
+				return DerefWriteStmt.of(stmt.getRef(), stmt.getExpr());
+			}
+
+			@Override
 			public Stmt visit(SequenceStmt stmt, Void param) {
 				throw new UnsupportedOperationException();
 			}
@@ -413,6 +419,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			}
 
 			@Override
+			public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) {
+				return ExprUtils.getVars(stmt.getExpr());
+			}
+
+			@Override
 			public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
 				throw new UnsupportedOperationException();
 			}
@@ -461,6 +472,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			}
 
 			@Override
+			public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) {
+				return ExprUtils.getVars(stmt.getRef());
+			}
+
+			@Override
 			public Collection<VarDecl<?>> visit(SequenceStmt stmt, Void param) {
 				throw new UnsupportedOperationException();
 			}
@@ -506,6 +522,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 			@Override
 			public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
 				return Collections.singletonList(stmt.getVarDecl());
+			}
+
+			@Override
+			public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) {
+				return Collections.emptySet();
 			}
 
 			@Override

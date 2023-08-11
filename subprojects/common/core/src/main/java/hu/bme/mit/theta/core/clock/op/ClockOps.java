@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -97,6 +98,11 @@ public final class ClockOps {
 		public <DeclType extends Type> ClockOp visit(final HavocStmt<DeclType> stmt, final Void param) {
 			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
 			return Free(varDecl);
+		}
+
+		@Override
+		public <DeclType extends Type> ClockOp visit(DerefWriteStmt<DeclType> stmt, final Void param) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

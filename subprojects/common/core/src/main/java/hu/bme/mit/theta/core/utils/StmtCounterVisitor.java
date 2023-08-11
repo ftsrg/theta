@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -58,6 +59,11 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 
 	@Override
 	public <DeclType extends Type> Integer visit(HavocStmt<DeclType> stmt, Void param) {
+		return 1;
+	}
+
+	@Override
+	public <DeclType extends Type> Integer visit(DerefWriteStmt<DeclType> stmt, Void param) {
 		return 1;
 	}
 

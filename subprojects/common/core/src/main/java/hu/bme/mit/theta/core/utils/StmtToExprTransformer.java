@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.utils;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -99,6 +100,11 @@ final class StmtToExprTransformer {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
 			return StmtUnfoldResult.of(ImmutableList.of(True()), newIndexing);
+		}
+
+		@Override
+		public <DeclType extends Type> StmtUnfoldResult visit(DerefWriteStmt<DeclType> stmt, VarIndexing indexing) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

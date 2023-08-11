@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -159,6 +160,11 @@ public final class WpState {
 		}
 
 		@Override
+		public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, final WpState state) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public WpState visit(SequenceStmt stmt, WpState param) {
 			throw new UnsupportedOperationException();
 		}
@@ -216,6 +222,11 @@ public final class WpState {
 		@Override
 		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
 			return WpVisitor.getInstance().visit(stmt, state);
+		}
+
+		@Override
+		public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, final WpState state) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

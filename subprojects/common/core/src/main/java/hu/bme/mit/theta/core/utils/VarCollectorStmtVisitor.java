@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -65,6 +66,13 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	@Override
 	public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
 		vars.add(stmt.getVarDecl());
+		return null;
+	}
+
+	@Override
+	public <DeclType extends Type> Void visit(DerefWriteStmt<DeclType> stmt, Collection<VarDecl<?>> vars) {
+		ExprUtils.collectVars(stmt.getRef(), vars);
+		ExprUtils.collectVars(stmt.getExpr(), vars);
 		return null;
 	}
 

@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.dsl.impl;
 
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
@@ -52,6 +53,11 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 	@Override
 	public <DeclType extends Type> String visit(final HavocStmt<DeclType> stmt, final Void param) {
 		return "havoc " + stmt.getVarDecl().getName();
+	}
+
+	@Override
+	public <DeclType extends Type> String visit(DerefWriteStmt<DeclType> stmt, final Void param) {
+		return "*(" + stmt.getRef().toString() + ") := " + writeExpr(stmt.getExpr());
 	}
 
 	@Override
