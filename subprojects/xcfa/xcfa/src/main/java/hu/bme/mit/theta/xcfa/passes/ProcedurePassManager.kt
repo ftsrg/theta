@@ -35,6 +35,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePas
     SvCompIntrinsicsPass(parseContext),
     FpFunctionsToExprsPass(parseContext),
     PthreadFunctionsPass(parseContext),
+    LoopUnrollPass(),
     // trying to inline procedures
     InlineProceduresPass(parseContext),
     RemoveDeadEnds(parseContext),
