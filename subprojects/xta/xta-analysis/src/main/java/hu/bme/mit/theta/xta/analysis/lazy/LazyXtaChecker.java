@@ -15,9 +15,19 @@
  */
 package hu.bme.mit.theta.xta.analysis.lazy;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
 import com.google.common.collect.Lists;
+
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.*;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -26,17 +36,15 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaLts;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
-import java.util.ArrayList;
-import java.util.Collection;
+final class LazyXtaChecker<S extends State> implements
+        SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
     private final XtaLts lts;
     private final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy;
     private final SearchStrategy searchStrategy;
 
-    private LazyXtaChecker(final XtaSystem system, final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy,
+    private LazyXtaChecker(final XtaSystem system,
+                           final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy,
                            final SearchStrategy searchStrategy) {
         checkNotNull(system);
         lts = XtaLts.create(system);
@@ -45,7 +53,8 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
     }
 
     public static <S extends State> LazyXtaChecker<S> create(final XtaSystem system,
-                                                             final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy, final SearchStrategy searchStrategy) {
+                                                             final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy,
+                                                             final SearchStrategy searchStrategy) {
         return new LazyXtaChecker<>(system, algorithmStrategy, searchStrategy);
     }
 
@@ -55,6 +64,7 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
     }
 
     private final class CheckMethod {
+
         final ARG<XtaState<S>, XtaAction> arg;
         final LazyXtaStatistics.Builder stats;
         final Partition<ArgNode<XtaState<S>, XtaAction>, ?> passed;
@@ -89,7 +99,8 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
         }
 
         private void init() {
-            final Collection<? extends XtaState<S>> initStates = algorithmStrategy.getAnalysis().getInitFunc()
+            final Collection<? extends XtaState<S>> initStates = algorithmStrategy.getAnalysis()
+                    .getInitFunc()
                     .getInitStates(UnitPrec.getInstance());
             initStates.forEach(s -> arg.createInitNode(s, false));
         }
@@ -97,7 +108,8 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
         private void close(final ArgNode<XtaState<S>, XtaAction> coveree) {
             stats.startClosing();
 
-            final Iterable<ArgNode<XtaState<S>, XtaAction>> candidates = Lists.reverse(passed.get(coveree));
+            final Iterable<ArgNode<XtaState<S>, XtaAction>> candidates = Lists.reverse(
+                    passed.get(coveree));
             for (final ArgNode<XtaState<S>, XtaAction> coverer : candidates) {
 
                 stats.checkCoverage();
@@ -127,7 +139,8 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
             final XtaState<S> state = node.getState();
 
             for (final XtaAction action : lts.getEnabledActionsFor(state)) {
-                final Collection<? extends XtaState<S>> succStates = algorithmStrategy.getAnalysis().getTransFunc()
+                final Collection<? extends XtaState<S>> succStates = algorithmStrategy.getAnalysis()
+                        .getTransFunc()
                         .getSuccStates(state, action, UnitPrec.getInstance());
 
                 for (final XtaState<S> succState : succStates) {
@@ -136,7 +149,8 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
                         algorithmStrategy.block(node, action, succState, uncoveredNodes, stats);
                         waiting.addAll(uncoveredNodes);
                     } else {
-                        final ArgNode<XtaState<S>, XtaAction> succNode = arg.createSuccNode(node, action, succState,
+                        final ArgNode<XtaState<S>, XtaAction> succNode = arg.createSuccNode(node,
+                                action, succState,
                                 false);
                         waiting.add(succNode);
                     }

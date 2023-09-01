@@ -64,8 +64,8 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                             procedure.getVars().forEach { builder.addVar(it) }
                             procedure.getParams().forEach { builder.addVar(it.first) }
                             procedure.getEdges().forEach {
-                                builder.addEdge(it.withSource(newLocs.get(it.source)!!)
-                                    .withTarget(newLocs.get(it.target)!!))
+                                builder.addEdge(it.withSource(checkNotNull(newLocs[it.source]))
+                                    .withTarget(checkNotNull(newLocs[it.target])))
                             }
 
                             val inStmts: MutableList<XcfaLabel> = ArrayList()
@@ -92,14 +92,14 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                             val errorLoc = procedure.errorLoc
 
                             builder.addEdge(
-                                XcfaEdge(source, newLocs[initLoc]!!, SequenceLabel(inStmts)))
+                                XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts)))
                             if (finalLoc.isPresent)
-                                builder.addEdge(XcfaEdge(newLocs[finalLoc.get()]!!, target,
+                                builder.addEdge(XcfaEdge(checkNotNull(newLocs[finalLoc.get()]), target,
                                     SequenceLabel(outStmts)))
                             if (errorLoc.isPresent) {
                                 if (builder.errorLoc.isEmpty) builder.createErrorLoc()
                                 builder.addEdge(
-                                    XcfaEdge(newLocs[errorLoc.get()]!!, builder.errorLoc.get(),
+                                    XcfaEdge(checkNotNull(newLocs[errorLoc.get()]), builder.errorLoc.get(),
                                         SequenceLabel(listOf())))
                             }
                         } else {

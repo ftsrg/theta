@@ -54,7 +54,7 @@ public final class FalseConstr implements ClockConstr {
 
     @Override
     public boolean equals(final Object obj) {
-        return obj instanceof FalseConstr;
+        return obj != null && this.getClass() == obj.getClass();
     }
 
     @Override

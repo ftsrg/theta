@@ -36,6 +36,8 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
+import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
+import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -318,12 +320,14 @@ class XcfaCli(private val args: Array<String>) {
 
                 InputType.C -> {
                     val stream = FileInputStream(input!!)
-                    val xcfaFromC = getXcfaFromC(stream, parseContext,
-                        explicitProperty == ErrorDetection.OVERFLOW)
+                    val xcfaFromC = getXcfaFromC(stream, parseContext, false,
+                        explicitProperty == ErrorDetection.OVERFLOW).first
                     logger.write(Logger.Level.RESULT,
                         "Arithmetic: ${parseContext.arithmetic}\n")
                     xcfaFromC
                 }
+
+                InputType.LLVM -> fromFile(input!!, ArithmeticType.efficient)
 
                 InputType.JSON -> {
                     val gson = getGson()

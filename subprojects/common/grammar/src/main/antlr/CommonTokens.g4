@@ -245,6 +245,10 @@ FP_FROM_BV
     :   'fpfrombv' FP_TYPE_DECL (LBRACK ('u' | 's') RBRACK) FP_ROUNDINGMODE?
     ;
 
+FP_IS_INF
+    :   'isinfinite'
+    ;
+
 FP_IS_NAN
     :   'fpisnan'
     ;

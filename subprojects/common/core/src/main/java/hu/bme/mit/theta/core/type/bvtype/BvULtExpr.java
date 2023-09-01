@@ -81,7 +81,7 @@ public final class BvULtExpr extends LtExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvULtExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvULtExpr that = (BvULtExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

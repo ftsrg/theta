@@ -18,4 +18,13 @@ package hu.bme.mit.theta.xcfa.model
 
 abstract class MetaData
 
-object EmptyMetaData : MetaData()
+object EmptyMetaData : MetaData() {
+    // TODO why is this necessary? {@see GsonTest.kt}
+
+    private val hash = 123123
+
+    override fun equals(other: Any?): Boolean =
+        other is EmptyMetaData
+
+    override fun hashCode(): Int = hash
+}

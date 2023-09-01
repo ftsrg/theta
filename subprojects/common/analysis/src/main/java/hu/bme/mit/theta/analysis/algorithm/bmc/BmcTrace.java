@@ -144,7 +144,7 @@ public final class BmcTrace<S extends ExprState, A extends StmtAction> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BmcTrace) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BmcTrace<?, ?> that = (BmcTrace<?, ?>) obj;
             return this.states.equals(that.states) && this.actions.equals(that.actions);
         } else {

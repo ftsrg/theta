@@ -16,20 +16,19 @@
 package hu.bme.mit.theta.xcfa.cat;
 
 import hu.bme.mit.theta.cat.dsl.CatDslManager;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCM;
-import hu.bme.mit.theta.analysis.algorithm.mcm.MCMRelation;
+import hu.bme.mit.theta.graphsolver.compilers.DefaultGraphPatternCompiler;
+import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint;
+import hu.bme.mit.theta.graphsolver.patterns.patterns.BasicEventSet;
+import hu.bme.mit.theta.graphsolver.patterns.patterns.BasicRelation;
+import hu.bme.mit.theta.graphsolver.patterns.patterns.GraphPattern;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -62,13 +61,24 @@ public class ParseTest {
     @Test
     public void test() throws IOException {
         try {
-            final MCM mcm = CatDslManager.createMCM(new File(getClass().getResource(filepath).getFile()));
-            assertEquals(constraintNumber, mcm.getConstraints().size());
-            Map<String, MCMRelation> relations = new LinkedHashMap<>();
-            mcm.getRelations().forEach((s, mcmRelation) -> mcmRelation.collectRelations(relations));
+            final Collection<GraphConstraint> mcm = CatDslManager.createMCM(new File(getClass().getResource(filepath).getFile()));
+            assertEquals(constraintNumber, mcm.size());
             if (allowedPrimitives != null) {
-                final Map<String, MCMRelation> primitives = relations.entrySet().stream().filter(mcmRelation -> mcmRelation.getValue().getRule() == null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                assertEquals(allowedPrimitives, primitives.keySet());
+                Map<String, GraphPattern> basicElements = new LinkedHashMap<>();
+                mcm.forEach(c -> c.accept(new DefaultGraphPatternCompiler<Void>() {
+                    @Override
+                    public Void compile(@NotNull BasicEventSet pattern) {
+                        basicElements.put(pattern.getName(), pattern);
+                        return super.compile(pattern);
+                    }
+
+                    @Override
+                    public Void compile(@NotNull BasicRelation pattern) {
+                        basicElements.put(pattern.getPatternName(), pattern);
+                        return super.compile(pattern);
+                    }
+                }));
+                assertEquals(allowedPrimitives, basicElements.keySet());
             }
         } catch (IOException e) {
             throw new IOException(filepath, e);

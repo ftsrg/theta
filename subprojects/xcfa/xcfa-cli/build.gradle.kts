@@ -13,6 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 plugins {
     id("kotlin-common")
     id("cli-tool")
@@ -33,10 +34,24 @@ dependencies {
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
     implementation(project(":theta-grammar"))
-    implementation("com.zaxxer:nuprocess:2.0.2")
+    implementation(project(":theta-llvm2xcfa"))
+    implementation("com.zaxxer:nuprocess:2.0.5")
     runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.7.10")
 }
 
 application {
     mainClassName = "hu.bme.mit.theta.xcfa.cli.XcfaCli"
 }
+
+//tasks.test {
+//    if (OperatingSystem.current().isLinux) {
+//        val nativeLibTasks = project(":theta-llvm").tasks
+//        dependsOn(nativeLibTasks.build)
+//
+//        val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
+//        val existingLibraryPath = systemProperties["java.library.path"]
+//        val newLibraryPath = "${existingLibraryPath}:${linkTask.linkedFile.get().asFile.parent}"
+//        systemProperty("java.library.path", newLibraryPath)
+//    }
+//}
+

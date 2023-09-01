@@ -63,7 +63,7 @@ public final class BvNotExpr extends UnaryExpr<BvType, BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvNotExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvNotExpr that = (BvNotExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

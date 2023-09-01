@@ -316,14 +316,15 @@ public class BasicVarIndexing implements VarIndexing {
         BasicVarIndexingBuilder builder = null;
         for (String s : mappings.split(", ")) {
             String[] split = s.split(" -> ");
-            if (split.length == 1) builder = BasicVarIndexing.builder(Integer.parseInt(split[0]));
-            else {
+            if (split.length == 1) {
+                builder = BasicVarIndexing.builder(Integer.parseInt(split[0]));
+            } else {
                 VarDecl<?> var = (VarDecl<?>) env.eval(scope.resolve(split[0]).get());
                 int index = Integer.parseInt(split[1]);
-                builder.varToOffset.put(var, index);
+                checkNotNull(builder).varToOffset.put(var, index);
             }
         }
-        return builder.build();
+        return checkNotNull(builder).build();
     }
 
     ////

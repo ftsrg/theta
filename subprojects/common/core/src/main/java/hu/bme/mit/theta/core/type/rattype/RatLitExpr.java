@@ -176,7 +176,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof RatLitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final RatLitExpr that = (RatLitExpr) obj;
             return (this.getNum().compareTo(that.getNum()) == 0
                     && this.getDenom().compareTo(that.getDenom()) == 0);

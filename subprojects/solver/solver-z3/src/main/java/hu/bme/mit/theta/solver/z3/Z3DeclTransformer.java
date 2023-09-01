@@ -15,18 +15,17 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.Context;
-
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.functype.FuncType;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 final class Z3DeclTransformer {
 

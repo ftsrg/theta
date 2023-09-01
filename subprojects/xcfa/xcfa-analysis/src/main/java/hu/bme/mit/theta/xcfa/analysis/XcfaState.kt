@@ -29,6 +29,9 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
 
+private var pidCnt = 1
+private var procCnt = 1
+
 data class XcfaState<S : ExprState> @JvmOverloads constructor(
     val xcfa: XCFA?,
     val processes: Map<Int, XcfaProcessState>,
@@ -38,7 +41,6 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     val bottom: Boolean = false,
 ) : ExprState {
 
-    private var pidCnt = 1
 
     override fun isBottom(): Boolean {
         return bottom || sGlobal.isBottom
@@ -233,8 +235,6 @@ data class XcfaProcessState(
     val paramsInitialized: Boolean = false,
     val prefix: String = ""
 ) {
-
-    private var procCnt = 1
 
     fun withNewLoc(l: XcfaLocation): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)

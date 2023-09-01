@@ -82,7 +82,7 @@ public final class LoopStmt implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof LoopStmt) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final LoopStmt that = (LoopStmt) obj;
             return this.getStmt().equals(that.getStmt())
                     && this.loopVariable.equals(that.loopVariable)

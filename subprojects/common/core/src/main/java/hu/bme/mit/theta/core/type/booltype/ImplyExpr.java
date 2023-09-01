@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
 import hu.bme.mit.theta.core.type.Expr;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 
@@ -77,7 +77,7 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ImplyExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ImplyExpr that = (ImplyExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

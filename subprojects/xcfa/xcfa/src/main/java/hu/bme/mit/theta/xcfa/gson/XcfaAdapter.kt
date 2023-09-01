@@ -26,9 +26,6 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.LinkedHashSet
 
 class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
 
@@ -125,7 +122,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
             while (reader.peek() != JsonToken.END_OBJECT) {
                 when (reader.nextName()) {
                     "params" -> params = gson.fromJson(reader, paramsType)
-                    "procedure" -> procedure = procedures[reader.nextString()]!!
+                    "procedure" -> procedure = checkNotNull(procedures[reader.nextString()])
                 }
             }
             ret.add(Pair(procedure, params))
@@ -178,8 +175,8 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
                             lateinit var label: XcfaLabel
                             while (reader.peek() != JsonToken.END_OBJECT) {
                                 when (reader.nextName()) {
-                                    "source" -> source = locs[reader.nextString()]!!
-                                    "target" -> target = locs[reader.nextString()]!!
+                                    "source" -> source = checkNotNull(locs[reader.nextString()])
+                                    "target" -> target = checkNotNull(locs[reader.nextString()])
                                     "label" -> label = gson.fromJson(reader, labelType)
                                 }
                             }

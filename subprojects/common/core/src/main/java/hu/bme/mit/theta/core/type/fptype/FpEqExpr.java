@@ -81,7 +81,7 @@ public final class FpEqExpr extends EqExpr<FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpEqExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpEqExpr that = (FpEqExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

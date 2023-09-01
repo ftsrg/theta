@@ -84,7 +84,7 @@ public class FpAddExpr extends AddExpr<FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpAddExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpAddExpr that = (FpAddExpr) obj;
             return this.getOps().equals(that.getOps()) && roundingMode == that.roundingMode;
         } else {

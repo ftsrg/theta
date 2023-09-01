@@ -107,7 +107,7 @@ public final class WpState {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof WpState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final WpState that = (WpState) obj;
             return this.constCount == that.constCount && this.expr.equals(that.expr);
         } else {

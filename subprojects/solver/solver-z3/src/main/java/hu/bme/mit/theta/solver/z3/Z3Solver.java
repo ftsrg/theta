@@ -337,11 +337,11 @@ final class Z3Solver implements UCSolver, Solver {
                     final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
                     builder.add(constDecl);
                 }
-				/* else {
-					if (!assumptions.containsKey(symbol.getName().toString())) {
-						// Quantifier?
-					}
-				} */
+                /* else {
+                    if (!assumptions.containsKey(symbol.getName().toString())) {
+                        // Quantifier?
+                    }
+                } */
             }
             return builder.build();
         }

@@ -70,7 +70,7 @@ public abstract class Tuple implements Iterable<Object> {
             return true;
         } else if (obj == null) {
             return false;
-        } else if (this.getClass() == obj.getClass()) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Tuple that = (Tuple) obj;
             return this.elems.equals(that.elems);
         } else {

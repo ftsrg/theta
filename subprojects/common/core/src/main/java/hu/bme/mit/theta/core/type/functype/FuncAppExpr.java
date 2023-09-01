@@ -125,7 +125,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FuncAppExpr<?, ?>) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FuncAppExpr<?, ?> that = (FuncAppExpr<?, ?>) obj;
             return this.getFunc().equals(that.getFunc()) && this.getParam().equals(that.getParam());
         } else {

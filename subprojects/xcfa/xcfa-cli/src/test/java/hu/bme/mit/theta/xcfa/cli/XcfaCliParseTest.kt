@@ -59,6 +59,37 @@ class XcfaCliParseTest {
         }
 
         @JvmStatic
+        fun llvmFiles(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of("/c/dekker.i"),
+                Arguments.of("/c/litmustest/singlethread/00assignment.c"),
+//                Arguments.of("/c/litmustest/singlethread/01cast.c"),
+                Arguments.of("/c/litmustest/singlethread/02types.c"),
+                Arguments.of("/c/litmustest/singlethread/03bitwise.c"),
+//                Arguments.of("/c/litmustest/singlethread/04real.c"),
+//                Arguments.of("/c/litmustest/singlethread/05math.c"),
+                Arguments.of("/c/litmustest/singlethread/06arrays.c"),
+                Arguments.of("/c/litmustest/singlethread/07arrayinit.c"),
+                Arguments.of("/c/litmustest/singlethread/08vararray.c"),
+//                    Arguments.of("/c/litmustest/singlethread/09struct.c"),
+//                    Arguments.of("/c/litmustest/singlethread/10ptr.c"),
+//                    Arguments.of("/c/litmustest/singlethread/11ptrs.c"),
+//                    Arguments.of("/c/litmustest/singlethread/12ptrtypes.c"),
+                Arguments.of("/c/litmustest/singlethread/13typedef.c"),
+                Arguments.of("/c/litmustest/singlethread/14ushort.c"),
+                Arguments.of("/c/litmustest/singlethread/15addition.c"),
+                Arguments.of("/c/litmustest/singlethread/16loop.c"),
+//                Arguments.of("/c/litmustest/singlethread/17recursive.c"),
+                Arguments.of("/c/litmustest/singlethread/18multithread.c"),
+                Arguments.of("/c/litmustest/singlethread/19dportest.c"),
+                Arguments.of("/c/litmustest/singlethread/20testinline.c"),
+                Arguments.of("/c/litmustest/singlethread/21namecollision.c"),
+//                Arguments.of("/c/litmustest/singlethread/22nondet.c"),
+                Arguments.of("/c/litmustest/singlethread/23overflow.c"),
+            )
+        }
+
+        @JvmStatic
         fun chcFiles(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
@@ -129,6 +160,18 @@ class XcfaCliParseTest {
             "--parse-only", "--stacktrace"
         ))
     }
+
+//    @ParameterizedTest
+//    @MethodSource("llvmFiles")
+//    fun testLLVMParse(filePath: String) {
+//        if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+//            main(arrayOf(
+//                "--input-type", "LLVM",
+//                "--input", javaClass.getResource(filePath)!!.path,
+//                "--parse-only", "--stacktrace"
+//            ))
+//        }
+//    }
 
     @ParameterizedTest
     @MethodSource("chcFiles")

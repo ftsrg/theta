@@ -15,10 +15,10 @@
  */
 package hu.bme.mit.theta.core.type.functype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class FuncType<ParamType extends Type, ResultType extends Type> implements Type {
 
@@ -64,7 +64,7 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FuncType<?, ?>) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FuncType<?, ?> that = (FuncType<?, ?>) obj;
             return this.getParamType().equals(that.getParamType()) && this.getResultType()
                     .equals(that.getResultType());

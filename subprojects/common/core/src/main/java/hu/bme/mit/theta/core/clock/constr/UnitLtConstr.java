@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class UnitLtConstr extends UnitConstr {
 
@@ -56,7 +56,7 @@ public final class UnitLtConstr extends UnitConstr {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof UnitLtConstr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final UnitLtConstr that = (UnitLtConstr) obj;
             return this.getBound() == that.getBound() && this.getVar().equals(that.getVar());
         } else {

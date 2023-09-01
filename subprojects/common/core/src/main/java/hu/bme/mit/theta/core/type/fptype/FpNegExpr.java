@@ -63,7 +63,7 @@ public final class FpNegExpr extends NegExpr<FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpNegExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpNegExpr that = (FpNegExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

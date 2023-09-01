@@ -52,7 +52,7 @@ public final class SkipStmt implements Stmt {
         } else if (obj == null) {
             return false;
         } else {
-            return this.getClass() == obj.getClass();
+            return obj != null && this.getClass() == obj.getClass();
         }
     }
 

@@ -15,6 +15,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      - name: Install LLVM and Clang
+        uses: ./.github/actions/install-llvm
+        with:
+          version: "15"
       - name: Analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -73,7 +73,7 @@ public final class BvAddExpr extends AddExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvAddExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvAddExpr that = (BvAddExpr) obj;
             return this.getOps().equals(that.getOps());
         } else {

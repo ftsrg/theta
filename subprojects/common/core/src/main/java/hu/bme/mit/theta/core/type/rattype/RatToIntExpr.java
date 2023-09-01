@@ -67,7 +67,7 @@ public final class RatToIntExpr extends UnaryExpr<RatType, IntType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof RatToIntExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final RatToIntExpr that = (RatToIntExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

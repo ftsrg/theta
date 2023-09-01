@@ -36,7 +36,7 @@ public final class Unit {
 
     @Override
     public boolean equals(final Object obj) {
-        return obj instanceof Unit;
+        return obj != null && this.getClass() == obj.getClass();
     }
 
     @Override

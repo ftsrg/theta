@@ -42,7 +42,7 @@ public final class RatType
 
     @Override
     public boolean equals(final Object obj) {
-        return (obj instanceof RatType);
+        return (obj != null && this.getClass() == obj.getClass());
     }
 
     @Override

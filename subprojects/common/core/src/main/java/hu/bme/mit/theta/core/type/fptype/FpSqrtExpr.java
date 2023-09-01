@@ -77,7 +77,7 @@ public class FpSqrtExpr extends UnaryExpr<FpType, FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpSqrtExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpSqrtExpr that = (FpSqrtExpr) obj;
             return this.getOp().equals(that.getOp()) && roundingMode.equals(that.roundingMode);
         } else {

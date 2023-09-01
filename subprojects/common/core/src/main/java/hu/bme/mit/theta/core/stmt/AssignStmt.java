@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -86,7 +85,7 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof AssignStmt) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final AssignStmt<?> that = (AssignStmt<?>) obj;
             return this.getVarDecl().equals(that.getVarDecl()) && this.getExpr()
                     .equals(that.getExpr());

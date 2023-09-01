@@ -75,7 +75,7 @@ public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> 
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof Prod3Prec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Prod3Prec<?, ?, ?> that = (Prod3Prec<?, ?, ?>) obj;
             return this.prec1.equals(that.prec1) && this.prec2.equals(that.prec2)
                     && this.prec3.equals(that.prec3);

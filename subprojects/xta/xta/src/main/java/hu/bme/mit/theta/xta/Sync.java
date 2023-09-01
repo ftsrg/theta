@@ -97,7 +97,7 @@ public final class Sync {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof Sync) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Sync that = (Sync) obj;
             return this.label.equals(that.label) && this.kind.equals(that.kind) && this.args.equals(
                     that.args);

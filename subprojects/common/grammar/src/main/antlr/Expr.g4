@@ -120,7 +120,7 @@ bvExtendExpr
 
 unaryExpr
 	:	bitwiseNotExpr
-	|	LPAREN oper=(PLUS | MINUS | BV_POS | BV_NEG | FP_ABS | FP_IS_NAN | FPROUNDTOINT | FPSQRT | FPTOFP | FPTOBV | FP_FROM_BV | FPNEG | FPPOS ) op=expr RPAREN
+	|	LPAREN oper=(PLUS | MINUS | BV_POS | BV_NEG | FP_ABS | FP_IS_INF | FP_IS_NAN | FPROUNDTOINT | FPSQRT | FPTOFP | FPTOBV | FP_FROM_BV | FPNEG | FPPOS ) op=expr RPAREN
 	;
 
 bitwiseNotExpr

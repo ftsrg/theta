@@ -102,7 +102,7 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpToBvExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpToBvExpr that = (FpToBvExpr) obj;
             return this.getOp().equals(that.getOp()) && size == that.size && sgn == that.sgn
                     && roundingMode.equals(that.roundingMode);

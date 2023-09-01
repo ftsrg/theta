@@ -98,7 +98,7 @@ public class SpState {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof SpState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final SpState that = (SpState) obj;
             return this.constCount == that.constCount && this.expr.equals(that.expr);
         } else {

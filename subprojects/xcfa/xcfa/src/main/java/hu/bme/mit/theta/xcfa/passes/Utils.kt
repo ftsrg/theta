@@ -101,6 +101,8 @@ fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: Par
             is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
                 metadata = metadata)
 
+            is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
+
             else -> this
         }
     else this

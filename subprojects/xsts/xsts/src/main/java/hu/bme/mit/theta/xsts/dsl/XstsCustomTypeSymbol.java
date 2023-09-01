@@ -42,7 +42,7 @@ public final class XstsCustomTypeSymbol implements Symbol {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof XstsCustomTypeSymbol) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final XstsCustomTypeSymbol that = (XstsCustomTypeSymbol) obj;
             return this.xstsType.equals(that.xstsType);
         } else {

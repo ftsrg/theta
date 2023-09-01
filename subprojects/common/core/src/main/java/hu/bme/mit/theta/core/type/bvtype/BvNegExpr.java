@@ -64,7 +64,7 @@ public final class BvNegExpr extends NegExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvNegExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvNegExpr that = (BvNegExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

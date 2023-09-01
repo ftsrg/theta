@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A comparator for ArgNodes that is based on the distance from the error
@@ -54,7 +55,7 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
         this.xcfa = xcfa;
         Pair<XcfaProcedure, List<Expr<?>>> initProc = checkNotNull(xcfa.getInitProcedures().get(0));
         Optional<XcfaLocation> errorLocOpt = initProc.component1().getErrorLoc();
-//		checkState(errorLocOpt.isPresent());
+//        checkState(errorLocOpt.isPresent());
         this.errLoc = errorLocOpt.orElse(null);
         this.errorWeight = errorWeight;
         this.depthWeight = depthWeight;
@@ -71,9 +72,12 @@ public class XcfaDistToErrComparator implements ArgNodeComparator {
     }
 
     private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
-        checkArgument(node.getState() instanceof XcfaState && ((XcfaState) node.getState()).getProcesses().size() <= 1, "XcfaState expected with a single process.");
-        if (((XcfaState) node.getState()).getProcesses().size() == 0) return Integer.MAX_VALUE;
-        final XcfaState<?> state = (XcfaState<?>) node.getState();
+        final var localState = node.getState();
+        checkArgument(localState instanceof XcfaState && ((XcfaState) localState).getProcesses().size() <= 1, "XcfaState expected with a single process.");
+        if (((XcfaState) localState).getProcesses().size() == 0) {
+            return Integer.MAX_VALUE;
+        }
+        final XcfaState<?> state = (XcfaState<?>) localState;
         final int distanceToError = getDistanceToError(state.getProcesses().get(0).component1().peek());
         if (distanceToError == Integer.MAX_VALUE) {
             return distanceToError;

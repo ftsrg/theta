@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
+
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class IntNegExpr extends NegExpr<IntType> {
 
@@ -64,7 +64,7 @@ public final class IntNegExpr extends NegExpr<IntType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof IntNegExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final IntNegExpr that = (IntNegExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

@@ -64,7 +64,7 @@ public final class RatPosExpr extends PosExpr<RatType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof RatPosExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final RatPosExpr that = (RatPosExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

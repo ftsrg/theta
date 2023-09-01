@@ -80,7 +80,7 @@ public final class BvUDivExpr extends DivExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvUDivExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvUDivExpr that = (BvUDivExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

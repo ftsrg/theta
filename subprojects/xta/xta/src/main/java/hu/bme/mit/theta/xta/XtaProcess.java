@@ -174,7 +174,7 @@ public final class XtaProcess {
     ////
 
     public enum LocKind {
-        NORMAL, URGENT, COMMITTED, ERROR
+        NORMAL, URGENT, COMMITTED;
     }
 
     public final class Loc {

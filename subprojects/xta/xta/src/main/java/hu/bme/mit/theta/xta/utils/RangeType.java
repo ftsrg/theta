@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.xta.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public final class RangeType implements Type {
 
@@ -76,7 +76,7 @@ public final class RangeType implements Type {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof RangeType) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final RangeType that = (RangeType) obj;
             return this.lower == that.lower && this.upper == that.upper;
         } else {

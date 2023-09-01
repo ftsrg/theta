@@ -209,6 +209,27 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
             return SequenceLabel(labelList)
         }
 
+        fun String.start(ctx: String, vararg expr: Any): SequenceLabel {
+            val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)
+            val exprs = expr.map {
+                if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
+                    it) else error("Bad type")
+            }
+            val label = StartLabel(ctx, exprs, lhs, EmptyMetaData)
+            labelList.add(label)
+            return SequenceLabel(labelList)
+        }
+
+        fun VarDecl<*>.start(ctx: String, vararg expr: Any): SequenceLabel {
+            val exprs = expr.map {
+                if (it is Expr<*>) it else if (it is String) this@XcfaProcedureBuilderContext.builder.parse(
+                    it) else error("Bad type")
+            }
+            val label = StartLabel(ctx, exprs, this, EmptyMetaData)
+            labelList.add(label)
+            return SequenceLabel(labelList)
+        }
+
         fun String.join(): SequenceLabel {
             val lhs = this@XcfaProcedureBuilderContext.builder.lookup(this)
             val label = JoinLabel(lhs, EmptyMetaData)
@@ -232,6 +253,12 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
         fun nondet(lambda: SequenceLabelContext.() -> SequenceLabel): SequenceLabel {
             val innerCtx = this@XcfaProcedureBuilderContext.SequenceLabelContext()
             val label = NondetLabel(lambda(innerCtx).labels.toSet())
+            labelList.add(label)
+            return SequenceLabel(labelList)
+        }
+
+        fun fence(vararg content: String): SequenceLabel {
+            val label = FenceLabel(content.toSet(), EmptyMetaData)
             labelList.add(label)
             return SequenceLabel(labelList)
         }
@@ -274,11 +301,16 @@ fun XcfaBuilder.threadlocal(lambda: VarContext.() -> Unit) {
     context.apply(lambda)
 }
 
-fun XcfaBuilder.procedure(name: String,
+fun XcfaBuilder.procedure(name: String, passManager: ProcedurePassManager,
     lambda: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilderContext {
-    val builder = XcfaProcedureBuilder(name, ProcedurePassManager(emptyList()))
+    val builder = XcfaProcedureBuilder(name, passManager)
     builder.parent = this
     val procBuilder = XcfaProcedureBuilderContext(builder).apply(lambda)
     this.addProcedure(procBuilder.builder)
     return procBuilder
+}
+
+fun XcfaBuilder.procedure(name: String,
+    lambda: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilderContext {
+    return procedure(name, ProcedurePassManager(emptyList()), lambda)
 }

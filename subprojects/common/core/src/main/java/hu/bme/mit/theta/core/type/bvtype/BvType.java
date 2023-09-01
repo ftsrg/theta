@@ -110,7 +110,7 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvType) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvType that = (BvType) obj;
             return this.getSize() == that.getSize();
         } else {

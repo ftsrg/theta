@@ -135,7 +135,7 @@ public final class BvExtractExpr implements Expr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvExtractExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvExtractExpr that = (BvExtractExpr) obj;
             return this.getBitvec().equals(that.getBitvec()) && this.getFrom()
                     .equals(that.getFrom())

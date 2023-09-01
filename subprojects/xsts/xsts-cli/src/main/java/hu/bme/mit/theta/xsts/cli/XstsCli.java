@@ -233,11 +233,11 @@ public class XstsCli {
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
         // set up stopping analysis if it is stuck on same ARGs and precisions
-//		if (noStuckCheck) {
-//			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
-//		} else {
-//			ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
-//		}
+//        if (noStuckCheck) {
+//            ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+//        } else {
+//            ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
+//        }
 
         registerAllSolverManagers(solverHome, logger);
         SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);

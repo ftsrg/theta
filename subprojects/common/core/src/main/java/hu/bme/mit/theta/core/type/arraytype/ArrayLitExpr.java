@@ -104,7 +104,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ArrayLitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ArrayLitExpr<?, ?> that = (ArrayLitExpr<?, ?>) obj;
             return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(that.elseElem);
         } else {

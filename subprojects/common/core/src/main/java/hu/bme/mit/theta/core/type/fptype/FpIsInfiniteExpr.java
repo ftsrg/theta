@@ -74,7 +74,7 @@ public final class FpIsInfiniteExpr extends UnaryExpr<FpType, BoolType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpIsInfiniteExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpIsInfiniteExpr that = (FpIsInfiniteExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

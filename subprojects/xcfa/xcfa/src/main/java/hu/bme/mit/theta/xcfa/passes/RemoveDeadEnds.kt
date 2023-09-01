@@ -16,57 +16,39 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.model.*
 import java.util.stream.Collectors
 
 class RemoveDeadEnds(val parseContext: ParseContext) : ProcedurePass {
 
     // TODO: thread start and procedure call should not be dead-end! Use-case: while(1) pthread_create(..);
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        return if (parseContext.multiThreading) {
-            val reachableEdges: MutableSet<XcfaEdge> = LinkedHashSet()
-            filterReachableEdges(builder.initLoc, reachableEdges)
-            for (edge in ArrayList<XcfaEdge>(builder.getEdges())) {
-                if (!reachableEdges.contains(edge)) {
-                    builder.removeEdge(edge)
-                }
-            }
-            builder
-        } else {
-            if (parseContext.metadata.lookupMetadata<Boolean>("shouldInline", false).size > 0) return builder
-            val nonDeadEndEdges: MutableSet<XcfaEdge> = LinkedHashSet()
-            val reachableEdges: MutableSet<XcfaEdge> = LinkedHashSet()
-            val errorLoc = builder.errorLoc
-            val nonDeadEndFromErrorEdges: MutableSet<XcfaEdge> = LinkedHashSet()
-            errorLoc.ifPresent { xcfaLocation: XcfaLocation ->
-                collectNonDeadEndEdges(xcfaLocation, nonDeadEndFromErrorEdges)
-            }
-            val nonDeadEndFromFinalEdges: Set<XcfaEdge> = LinkedHashSet()
-            val finalLoc = builder.finalLoc
-            finalLoc.ifPresent { xcfaLocation: XcfaLocation ->
-                collectNonDeadEndEdges(xcfaLocation, nonDeadEndFromErrorEdges)
-            }
-            nonDeadEndEdges.addAll(nonDeadEndFromErrorEdges)
-            nonDeadEndEdges.addAll(nonDeadEndFromFinalEdges)
-            filterReachableEdges(builder.initLoc, reachableEdges)
-            val collect = builder.getEdges().stream().filter { xcfaEdge: XcfaEdge ->
-                (!nonDeadEndEdges.contains(xcfaEdge)
-                    || !reachableEdges.contains(xcfaEdge))
-            }.collect(Collectors.toSet())
-            for (edge in collect) {
-                builder.removeEdge(edge!!)
-            }
-            val toRemove = builder.getLocs().stream().filter { loc: XcfaLocation ->
-                (loc.incomingEdges.size == 0 && loc.outgoingEdges.size == 0 && loc !== builder.finalLoc.orElse(null)
-                    && loc !== builder.errorLoc.orElse(null))
-            }.toList()
-            for (location in toRemove) {
-                if (builder.initLoc !== location) builder.removeLoc(location)
-            }
-            builder
+        val nonDeadEndEdges: MutableSet<XcfaEdge> = LinkedHashSet()
+        val reachableEdges: MutableSet<XcfaEdge> = LinkedHashSet()
+        val errorLoc = builder.errorLoc
+        errorLoc.ifPresent { xcfaLocation: XcfaLocation ->
+            collectNonDeadEndEdges(xcfaLocation, nonDeadEndEdges)
         }
+        val finalLoc = builder.finalLoc
+        finalLoc.ifPresent { xcfaLocation: XcfaLocation ->
+            collectNonDeadEndEdges(xcfaLocation, nonDeadEndEdges)
+        }
+
+        builder.getEdges().filter { it.getFlatLabels().any { it is InvokeLabel || it is StartLabel } }.forEach {
+            nonDeadEndEdges.add(it)
+            collectNonDeadEndEdges(it.source, nonDeadEndEdges)
+        }
+
+        filterReachableEdges(builder.initLoc, reachableEdges)
+        val collect = builder.getEdges().stream().filter { xcfaEdge: XcfaEdge ->
+            (!nonDeadEndEdges.contains(xcfaEdge)
+                || !reachableEdges.contains(xcfaEdge))
+        }.collect(Collectors.toSet())
+        for (edge in collect) {
+            builder.removeEdge(edge!!)
+        }
+        return builder
     }
 
     private fun filterReachableEdges(loc: XcfaLocation, reachableEdges: MutableSet<XcfaEdge>) {

@@ -59,12 +59,12 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                 edge.label.labels.forEach {
                     it.collectVars().forEach { v ->
                         labelEdgeLut.putIfAbsent(v, ArrayList())
-                        labelEdgeLut[v]!!.add(it)
+                        checkNotNull(labelEdgeLut[v]).add(it)
                     }
                 }
                 candidates = candidates.filter {
                     val v = ((it.second as StmtLabel).stmt as HavocStmt<*>).varDecl
-                    val labels = labelEdgeLut[v]!!
+                    val labels = checkNotNull(labelEdgeLut[v])
                     labels.size == 2 &&
                         labels[0] == edge.label.labels[it.first] &&
                         labels[1] == edge.label.labels[it.first + 1] &&
@@ -105,11 +105,13 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                     .reversed()
                 for ((index, value) in reversed) {
                     val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
-                    val type = CComplexType.getType(varDecl.ref,
-                        parseContext) // TODO: what to do when no info is available?
-                    if (type !is CVoid) {
-                        list.add(index + 1,
-                            StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                    if (parseContext.metadata.getMetadataValue(varDecl.ref, "cType").isPresent) {
+                        val type = CComplexType.getType(varDecl.ref,
+                            parseContext) // TODO: what to do when no info is available?
+                        if (type !is CVoid) {
+                            list.add(index + 1,
+                                StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                        }
                     }
                 }
                 builder.addEdge(edge.withLabel(SequenceLabel(list)))

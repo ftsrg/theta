@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.clock.op;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
 public final class FreeOp implements ClockOp {
 
@@ -79,7 +78,7 @@ public final class FreeOp implements ClockOp {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FreeOp) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FreeOp that = (FreeOp) obj;
             return this.getVar().equals(that.getVar());
         } else {

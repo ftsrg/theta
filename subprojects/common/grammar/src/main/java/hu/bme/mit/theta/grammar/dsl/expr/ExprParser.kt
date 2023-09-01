@@ -616,6 +616,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
                     PLUS -> AbstractExprs.Pos(op)
                     MINUS -> AbstractExprs.Neg(op)
                     FP_ABS -> FpExprs.Abs(op as Expr<FpType?>)
+                    FP_IS_INF -> FpExprs.IsInfinite(op as Expr<FpType?>)
                     FP_IS_NAN -> FpExprs.IsNan(op as Expr<FpType?>)
                     FPROUNDTOINT -> FpExprs.RoundToIntegral(getRoundingMode(ctx.oper.text),
                         op as Expr<FpType?>)

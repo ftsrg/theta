@@ -68,7 +68,7 @@ public class FpAbsExpr extends UnaryExpr<FpType, FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpAbsExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpAbsExpr that = (FpAbsExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {
