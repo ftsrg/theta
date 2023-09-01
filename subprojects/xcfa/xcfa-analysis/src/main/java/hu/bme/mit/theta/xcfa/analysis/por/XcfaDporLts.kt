@@ -75,7 +75,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     companion object {
 
-        var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
+        var random: Random =
+            Random.Default // use Random(seed) with a seed or Random.Default without seed
 
         /**
          * Simple LTS that returns the enabled actions in a state.
@@ -92,7 +93,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          * Partial order of states considering sleep sets (unexplored behavior).
          */
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) = PartialOrd<E> { s1, s2 ->
-            partialOrd.isLeq(s1, s2) && s2.reExplored == true && s1.sleep.containsAll(s2.sleep - s2.explored)
+            partialOrd.isLeq(
+                s1,
+                s2
+            ) && s2.reExplored == true && s1.sleep.containsAll(s2.sleep - s2.explored)
         }
     }
 
@@ -161,7 +165,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             // lazy pruning: goes to the root when the stack is empty
             while (stack.isEmpty() && node.parent.isPresent) node = node.parent.get()
 
-            node.state.reExplored = true // lazy pruning: indicates that the state is explored in the current iteration
+            node.state.reExplored =
+                true // lazy pruning: indicates that the state is explored in the current iteration
             push(node, stack.size)
         }
 
@@ -188,12 +193,15 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 exploreLazily()
             }
             while (stack.isNotEmpty() &&
-                (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(last.sleep).isEmpty()))
+                (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(last.sleep)
+                    .isEmpty()))
             ) { // until we need to pop (the last is covered or not feasible, or it has no more actions that need to be explored
                 if (stack.size >= 2) {
                     val lastButOne = stack[stack.size - 2]
                     val mutexNeverReleased = last.mutexLocks.containsKey("") &&
-                            (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains("")
+                            (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
+                                ""
+                            )
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
                         // if a mutex is never released another action (practically all the others) have to be explored
                         lastButOne.backtrack = lastButOne.state.enabled.toMutableSet()
@@ -235,10 +243,12 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             val newaction = item.inEdge.get().action
             val process = newaction.pid
 
-            val newProcessLastAction = last.processLastAction.toMutableMap().apply { this[process] = stack.size }
-            var newLastDependents = (last.lastDependents[process]?.toMutableMap() ?: mutableMapOf()).apply {
-                this[process] = stack.size
-            }
+            val newProcessLastAction =
+                last.processLastAction.toMutableMap().apply { this[process] = stack.size }
+            var newLastDependents =
+                (last.lastDependents[process]?.toMutableMap() ?: mutableMapOf()).apply {
+                    this[process] = stack.size
+                }
             val relevantProcesses = (newProcessLastAction.keys - setOf(process)).toMutableSet()
 
             // Race detection
@@ -266,7 +276,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                         }
 
                         newLastDependents[action.pid] = index
-                        newLastDependents = max(newLastDependents, stack[index].lastDependents[action.pid]!!)
+                        newLastDependents =
+                            max(newLastDependents, stack[index].lastDependents[action.pid]!!)
                         relevantProcesses.remove(action.pid)
                     }
                 }
@@ -280,7 +291,13 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             val lockedMutexes = newMutexes - oldMutexes
             val releasedMutexes = oldMutexes - newMutexes
             if (!item.state.isBottom) {
-                releasedMutexes.forEach { m -> last.mutexLocks[m]?.let { stack[it].mutexLocks.remove(m) } }
+                releasedMutexes.forEach { m ->
+                    last.mutexLocks[m]?.let {
+                        stack[it].mutexLocks.remove(
+                            m
+                        )
+                    }
+                }
             }
 
             val isVirtualExploration = virtualLimit < stack.size || item.parent.get() != last.node
@@ -345,7 +362,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 while (stack.size > startStackSize && stack.peek().node != visiting.parent.get()) stack.pop()
 
                 if (node != visiting) {
-                    if (!push(visiting, startStackSize) || noInfluenceOnRealExploration(realStackSize)) continue
+                    if (!push(visiting, startStackSize) || noInfluenceOnRealExploration(
+                            realStackSize
+                        )
+                    ) continue
                 }
 
                 // visiting is not on the stack: no cycle && further virtual exploration can influence real exploration
@@ -382,7 +402,12 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          * Returns a map with the keys of the original maps and the maximum of the reference numbers associated to each key.
          */
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
-            (map1.keys union map2.keys).associateWith { key -> max(map1[key] ?: -1, map2[key] ?: -1) }.toMutableMap()
+            (map1.keys union map2.keys).associateWith { key ->
+                max(
+                    map1[key] ?: -1,
+                    map2[key] ?: -1
+                )
+            }.toMutableMap()
 
         /**
          * See the article for the definition of notdep.
@@ -391,7 +416,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             val e = stack[start].action
             return stack.slice(start + 1 until stack.size)
                 .filterIndexed { index, item ->
-                    item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(e, item.action)
+                    item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(
+                        e,
+                        item.action
+                    )
                 }
                 .map { it.action }
                 .toMutableList().apply { add(action) }
@@ -417,11 +445,12 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         /**
          * Returns true when the virtual exploration cannot detect any more races relevant in the "real" exploration (the part of the search stack before the first covering node).
          */
-        private fun noInfluenceOnRealExploration(realStackSize: Int) = last.processLastAction.keys.all { process ->
-            last.lastDependents.containsKey(process) && last.lastDependents[process]!!.all { (_, index) ->
-                index >= realStackSize
+        private fun noInfluenceOnRealExploration(realStackSize: Int) =
+            last.processLastAction.keys.all { process ->
+                last.lastDependents.containsKey(process) && last.lastDependents[process]!!.all { (_, index) ->
+                    index >= realStackSize
+                }
             }
-        }
     }
 
     /**

@@ -273,13 +273,13 @@ public final class ArgNode<S extends State, A extends Action> {
         return result;
     }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		ArgNode<?, ?> argNode = (ArgNode<?, ?>) o;
-		return id == argNode.id;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArgNode<?, ?> argNode = (ArgNode<?, ?>) o;
+        return id == argNode.id;
+    }
 
     @Override
     public String toString() {
