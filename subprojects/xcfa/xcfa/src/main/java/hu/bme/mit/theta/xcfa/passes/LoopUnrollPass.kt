@@ -48,14 +48,7 @@ class LoopUnrollPass : ProcedurePass {
     private val testedLoops = mutableSetOf<Loop>()
 
     private data class Loop(
-        val loopVar: VarDecl<*>,
-        val loopVarModifiers: List<XcfaEdge>,
-        val loopVarInit: XcfaEdge,
-        val loopCondEdge: XcfaEdge,
-        val exitCondEdge: XcfaEdge,
-        val loopStart: XcfaLocation,
-        val loopLocs: List<XcfaLocation>,
-        val loopEdges: List<XcfaEdge>
+        val loopVar: VarDecl<*>, val loopVarModifiers: List<XcfaEdge>, val loopVarInit: XcfaEdge, val loopCondEdge: XcfaEdge, val exitCondEdge: XcfaEdge, val loopStart: XcfaLocation, val loopLocs: List<XcfaLocation>, val loopEdges: List<XcfaEdge>
     ) {
         private class BasicStmtAction(private val stmt: Stmt) : StmtAction() {
             constructor(edge: XcfaEdge) : this(edge.label.toStmt())
@@ -82,13 +75,12 @@ class LoopUnrollPass : ProcedurePass {
         }
 
         private fun XcfaLabel.removeCondition(): XcfaLabel {
-            val stmtToRemove = getFlatLabels()
-                .find { it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty() }
+            val stmtToRemove =
+                getFlatLabels().find { it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty() }
             return when {
                 this == stmtToRemove -> NopLabel
                 this is SequenceLabel -> SequenceLabel(
-                    labels.map { it.removeCondition() },
-                    metadata
+                    labels.map { it.removeCondition() }, metadata
                 )
 
                 else -> this

@@ -94,8 +94,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          */
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) = PartialOrd<E> { s1, s2 ->
             partialOrd.isLeq(
-                s1,
-                s2
+                s1, s2
             ) && s2.reExplored == true && s1.sleep.containsAll(s2.sleep - s2.explored)
         }
     }
@@ -192,16 +191,16 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 // when lazy pruning is used the explored parts from previous iterations are reexplored to detect possible races
                 exploreLazily()
             }
-            while (stack.isNotEmpty() &&
-                (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(last.sleep)
-                    .isEmpty()))
+            while (stack.isNotEmpty() && (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(
+                    last.sleep
+                ).isEmpty()))
             ) { // until we need to pop (the last is covered or not feasible, or it has no more actions that need to be explored
                 if (stack.size >= 2) {
                     val lastButOne = stack[stack.size - 2]
-                    val mutexNeverReleased = last.mutexLocks.containsKey("") &&
-                            (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
-                                ""
-                            )
+                    val mutexNeverReleased =
+                        last.mutexLocks.containsKey("") && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
+                            ""
+                        )
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
                         // if a mutex is never released another action (practically all the others) have to be explored
                         lastButOne.backtrack = lastButOne.state.enabled.toMutableSet()
@@ -404,8 +403,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
             (map1.keys union map2.keys).associateWith { key ->
                 max(
-                    map1[key] ?: -1,
-                    map2[key] ?: -1
+                    map1[key] ?: -1, map2[key] ?: -1
                 )
             }.toMutableMap()
 
@@ -414,15 +412,11 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          */
         private fun notdep(start: Int, action: A): List<A> {
             val e = stack[start].action
-            return stack.slice(start + 1 until stack.size)
-                .filterIndexed { index, item ->
+            return stack.slice(start + 1 until stack.size).filterIndexed { index, item ->
                     item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(
-                        e,
-                        item.action
+                        e, item.action
                     )
-                }
-                .map { it.action }
-                .toMutableList().apply { add(action) }
+                }.map { it.action }.toMutableList().apply { add(action) }
         }
 
         /**
@@ -462,8 +456,7 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         val aGlobalVars = a.edge.getGlobalVars(xcfa)
         val bGlobalVars = b.edge.getGlobalVars(xcfa)
         // dependent if they access the same variable (at least one write)
-        return (aGlobalVars.keys intersect bGlobalVars.keys)
-            .any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
+        return (aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }
 }
 
