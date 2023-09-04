@@ -29,6 +29,8 @@ public interface StmtVisitor<P, R> {
 
 	<DeclType extends Type> R visit(DerefWriteStmt<DeclType> stmt, P param);
 
+	<DeclType extends Type> R visit(DerefWriteStmt<DeclType> stmt, P param);
+
 	R visit(SequenceStmt stmt, P param);
 
     R visit(NonDetStmt stmt, P param);
