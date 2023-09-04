@@ -190,6 +190,9 @@ public final class WpState {
         }
 
         @Override
+        public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, WpState param) { throw new UnsupportedOperationException(); }
+
+        @Override
         public WpState visit(final AssumeStmt stmt, final WpState state) {
             final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
             final int constCount = state.constCount;
@@ -251,6 +254,9 @@ public final class WpState {
         public WpState visit(IfStmt stmt, WpState param) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, WpState param) { throw new UnsupportedOperationException(); }
 
         @Override
         public WpState visit(final AssumeStmt stmt, final WpState state) {

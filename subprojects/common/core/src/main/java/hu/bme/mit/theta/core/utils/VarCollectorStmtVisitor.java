@@ -111,4 +111,11 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
         return null;
     }
 
+    @Override
+    public <DeclType extends Type> Void visit(DerefWriteStmt<DeclType> stmt, Collection<VarDecl<?>> vars) {
+        vars.add((VarDecl<?>) stmt.getRef().getDecl());
+        ExprUtils.collectVars(stmt.getExpr(), vars);
+        return null;
+    }
+
 }

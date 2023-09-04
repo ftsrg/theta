@@ -256,6 +256,11 @@ public class StmtSimplifier {
                         SimplifyStatus.SUCCESS);
             }
         }
+
+        @Override
+        public <DeclType extends Type> SimplifyResult visit(DerefWriteStmt<DeclType> stmt, MutableValuation valuation) {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }

@@ -311,6 +311,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Stmt visit(IfStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public <DeclType extends Type> Stmt visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -436,6 +439,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -484,6 +490,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -532,6 +541,10 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public Collection<VarDecl<?>> visit(IfStmt stmt, Void param) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
+
         }, null);
     }
 

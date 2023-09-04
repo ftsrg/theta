@@ -191,5 +191,8 @@ public class SpState {
         public SpState visit(IfStmt stmt, SpState param) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public <DeclType extends Type> SpState visit(DerefWriteStmt<DeclType> stmt, SpState param) { throw new UnsupportedOperationException(); }
     }
 }

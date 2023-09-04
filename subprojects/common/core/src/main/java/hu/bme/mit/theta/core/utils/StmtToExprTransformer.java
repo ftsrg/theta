@@ -231,5 +231,10 @@ final class StmtToExprTransformer {
             throw new UnsupportedOperationException(
                     String.format("Loop statement %s was not unrolled", stmt));
         }
+
+        @Override
+        public <DeclType extends Type> StmtUnfoldResult visit(DerefWriteStmt<DeclType> stmt, VarIndexing indexing) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

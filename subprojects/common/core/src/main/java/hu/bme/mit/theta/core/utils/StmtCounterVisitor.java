@@ -101,4 +101,9 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
                 + stmt.getElze().accept(this, null)
                 + 1;
     }
+
+    @Override
+    public <DeclType extends Type> Integer visit(DerefWriteStmt<DeclType> stmt, Void param) {
+        return 1;
+    }
 }
