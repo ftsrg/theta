@@ -42,6 +42,7 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.xcfa.analysis.COI
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -109,7 +110,9 @@ data class XcfaCegarConfig(
 
         val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
 
-        val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
+        //val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
+        COI.coreLts = porLevel.getLts(xcfa, ignoredVarRegistry)
+        val lts = COI.lts
         val waitlist = if (porLevel.isDynamic) {
             (lts as XcfaDporLts).waitlist
         } else {

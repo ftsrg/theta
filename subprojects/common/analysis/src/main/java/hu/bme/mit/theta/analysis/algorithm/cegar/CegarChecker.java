@@ -29,9 +29,13 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -86,6 +90,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
+            System.err.println(prec);
             final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             abstractorResult = abstractor.check(arg, prec);
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
@@ -95,6 +100,19 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             String precString = prec.toString();
 
             wdl.addIteration(iteration, argGraph, precString);
+
+
+
+            System.err.println("Printing ARG..." + System.lineSeparator());
+            Graph g = ArgVisualizer.create(s -> s.toString().replace(" initialized=true", ""), Object::toString).visualize(arg);
+            try {
+                FileWriter myWriter = new FileWriter("/mnt/d/Theta/test/arg-latest.dot");
+                myWriter.write(GraphvizWriter.getInstance().writeString(g));
+                myWriter.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            System.err.println(arg.size() + System.lineSeparator());
 
             if (abstractorResult.isUnsafe()) {
                 MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
@@ -136,6 +154,18 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         assert cegarResult != null;
         logger.write(Level.RESULT, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
+
+        System.err.println("Printing ARG..." + System.lineSeparator());
+        Graph g = ArgVisualizer.create(s -> s.toString().replace(" initialized=true", ""), Object::toString).visualize(arg);
+        try {
+            FileWriter myWriter = new FileWriter("/mnt/d/Theta/test/arg-latest.dot");
+            myWriter.write(GraphvizWriter.getInstance().writeString(g));
+            myWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.err.println(arg.size() + System.lineSeparator());
+
         return cegarResult;
     }
 
