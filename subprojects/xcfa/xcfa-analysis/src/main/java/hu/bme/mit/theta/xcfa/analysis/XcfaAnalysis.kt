@@ -50,8 +50,13 @@ import java.util.function.Predicate
 open class XcfaAnalysis<S : ExprState, P : Prec>(
     private val corePartialOrd: PartialOrd<XcfaState<S>>,
     private val coreInitFunc: InitFunc<XcfaState<S>, XcfaPrec<P>>,
-    private val coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
+    private var coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
 ) : Analysis<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
+
+    init {
+        COI.coreTransFunc = transFunc as TransFunc<XcfaState<out ExprState>, XcfaAction, XcfaPrec<out Prec>>
+        coreTransFunc = COI.transFunc as TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>
+    }
 
     override fun getPartialOrd(): PartialOrd<XcfaState<S>> = corePartialOrd
     override fun getInitFunc(): InitFunc<XcfaState<S>, XcfaPrec<P>> = coreInitFunc

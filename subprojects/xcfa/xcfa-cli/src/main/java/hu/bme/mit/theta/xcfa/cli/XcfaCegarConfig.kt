@@ -110,9 +110,7 @@ data class XcfaCegarConfig(
 
         val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
 
-        //val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
-        COI.coreLts = porLevel.getLts(xcfa, ignoredVarRegistry)
-        val lts = COI.lts
+        val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
         val waitlist = if (porLevel.isDynamic) {
             (lts as XcfaDporLts).waitlist
         } else {

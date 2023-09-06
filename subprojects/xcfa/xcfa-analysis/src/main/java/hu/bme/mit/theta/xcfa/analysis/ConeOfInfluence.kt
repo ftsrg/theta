@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.xcfa.analysis
 
-import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.TransFunc
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -19,48 +19,66 @@ private typealias A = XcfaAction
 
 class ConeOfInfluence(
     private val xcfa: XCFA,
-    var coreLts: LTS<S, A> = getXcfaLts()
 ) {
+    lateinit var coreTransFunc: TransFunc<S, A, XcfaPrec<out Prec>>
 
     private var lastPrec: Prec? = null
 
     private val edgeToProcedure: MutableMap<XcfaEdge, XcfaProcedure> = mutableMapOf()
+    private val startThreads: MutableSet<XcfaEdge> = mutableSetOf()
     private val locToScc: MutableMap<XcfaLocation, Int> = mutableMapOf()
 
     private val directObservers: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
     private val interProcessObservers: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
 
-    val lts = object : LTS<S, A> {
-        override fun getEnabledActionsFor(state: S): Collection<A> {
-            val enabled = coreLts.getEnabledActionsFor(state)
-            return replaceIrrelevantActions(state, enabled)
-        }
+    private data class ProcedureEntry(
+        val procedure: XcfaProcedure,
+        val scc: Int,
+        val pid: Int
+    )
 
-        override fun <P : Prec> getEnabledActionsFor(state: S, explored: Collection<A>, prec: P): Collection<A> {
+    val transFunc = object : TransFunc<S, A, XcfaPrec<out Prec>> {
+        override fun getSuccStates(state: S, action: A, prec: XcfaPrec<out Prec>): Collection<S> {
             if (lastPrec != prec) reinitialize(prec)
-            val enabled = coreLts.getEnabledActionsFor(state, explored, prec)
-            return replaceIrrelevantActions(state, enabled)
+            val effectiveAction = replaceIfIrrelevant(state, action)
+            return coreTransFunc.getSuccStates(state, effectiveAction, prec)
         }
 
-        private fun replaceIrrelevantActions(state: S, enabled: Collection<A>): Collection<A> {
-            if (lastPrec == null) return enabled
+        private fun replaceIfIrrelevant(state: S, action: A): A {
+            if (lastPrec == null) return action
 
-            val procedures = state.processes.map { (p, pState) ->
+            val procedures = state.processes.map { (pid, pState) ->
                 val loc = pState.locs.peek()
                 val procedure = edgeToProcedure[loc.incomingEdges.ifEmpty(loc::outgoingEdges).first()]!!
-                p to Pair(procedure, locToScc[loc]!!)
-            }.toMap()
-            return enabled.map { action ->
-                val otherProcedures = procedures.filter { it.key != action.pid }.values.fold(
-                    mutableMapOf<XcfaProcedure, Int>()) { acc, next ->
-                    acc[next.first] = max(next.second, acc[next.first] ?: 0)
-                    acc
+                ProcedureEntry(procedure, locToScc[loc]!!, pid)
+            }.toMutableSet()
+
+            do {
+                var anyNew = false
+                startThreads.filter { edge ->
+                    procedures.any { edgeToProcedure[edge] == it.procedure && it.scc >= locToScc[edge.source]!! }
+                }.forEach { edge ->
+                    edge.getFlatLabels().filterIsInstance<StartLabel>().forEach { startLabel ->
+                        val procedure = xcfa.procedures.find { it.name == startLabel.name }!!
+                        val procedureEntry = ProcedureEntry(procedure, locToScc[procedure.initLoc]!!, -1)
+                        if (procedureEntry !in procedures) {
+                            procedures.add(procedureEntry)
+                            anyNew = true
+                        }
+                    }
                 }
-                if (!isObserved(action, otherProcedures)) {
-                    replace(action)
-                } else {
-                    action
-                }
+            } while (anyNew)
+
+            val otherProcedures = procedures.filter { it.pid != action.pid }.fold(
+                mutableMapOf<XcfaProcedure, Int>()) { acc, next ->
+                acc[next.procedure] = max(next.scc, acc[next.procedure] ?: 0)
+                acc
+            }
+
+            return if (!isObserved(action, otherProcedures)) {
+                replace(action)
+            } else {
+                action
             }
         }
 
@@ -101,10 +119,11 @@ class ConeOfInfluence(
         directObservers.clear()
         interProcessObservers.clear()
         xcfa.procedures.forEach { procedure ->
-            procedure.edges.forEach {
-                edgeToProcedure[it] = procedure
-                findDirectObservers(it, prec)
-                findInterProcessObservers(it, prec)
+            procedure.edges.forEach { edge ->
+                edgeToProcedure[edge] = procedure
+                if (edge.getFlatLabels().any { it is StartLabel }) startThreads.add(edge)
+                findDirectObservers(edge, prec)
+                findInterProcessObservers(edge, prec)
             }
         }
         lastPrec = prec
