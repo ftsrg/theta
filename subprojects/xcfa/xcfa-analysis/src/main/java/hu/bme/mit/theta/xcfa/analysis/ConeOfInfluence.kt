@@ -65,14 +65,17 @@ class ConeOfInfluence(
         }
 
         private fun isObserved(action: A, otherProcedures: Map<XcfaProcedure, Int>): Boolean {
-            val toVisit = mutableListOf(action.edge)
+            val toVisit = edgeToProcedure.keys.filter {
+                it.source == action.edge.source && it.target == action.edge.target
+            }.toMutableList()
             while (toVisit.isNotEmpty()) {
                 val visiting = toVisit.removeFirst()
                 if (isRealObserver(visiting)) return true
 
                 toVisit.addAll(directObservers[visiting] ?: emptySet())
                 toVisit.addAll(interProcessObservers[visiting]?.filter { edge ->
-                    otherProcedures[edgeToProcedure[edge]]!! > locToScc[edge.source]!! // the edge is still reachable
+                    otherProcedures.containsKey(edgeToProcedure[edge]) &&
+                        otherProcedures[edgeToProcedure[edge]]!! > locToScc[edge.source]!! // the edge is still reachable
                 } ?: emptySet())
             }
             return false
