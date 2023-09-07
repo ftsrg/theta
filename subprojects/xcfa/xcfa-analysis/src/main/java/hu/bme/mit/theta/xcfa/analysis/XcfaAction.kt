@@ -36,11 +36,7 @@ data class XcfaAction(val pid: Int, val edge: XcfaEdge) : StmtAction() {
     }
 
     override fun toString(): String {
-        try {
-            return "$pid: $source -> $target [$finalLabel]"
-        } catch (e: Exception) {
-            return "$pid: $source -> $target [$label]"
-        }
+        return "$pid: $source -> $target [$label]"
     }
 
     fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {

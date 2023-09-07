@@ -90,7 +90,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
-            System.err.println(prec);
             final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             abstractorResult = abstractor.check(arg, prec);
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
@@ -100,19 +99,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             String precString = prec.toString();
 
             wdl.addIteration(iteration, argGraph, precString);
-
-
-
-            System.err.println("Printing ARG..." + System.lineSeparator());
-            Graph g = ArgVisualizer.create(s -> s.toString().replace(" initialized=true", ""), Object::toString).visualize(arg);
-            try {
-                FileWriter myWriter = new FileWriter("/mnt/d/Theta/test/arg-latest.dot");
-                myWriter.write(GraphvizWriter.getInstance().writeString(g));
-                myWriter.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            System.err.println(arg.size() + System.lineSeparator());
 
             if (abstractorResult.isUnsafe()) {
                 MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");

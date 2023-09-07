@@ -45,6 +45,7 @@ import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.analysis.COI
 import hu.bme.mit.theta.xcfa.analysis.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -172,7 +173,10 @@ class XcfaCli(private val args: Array<String>) {
 
         // propagating input variables
         LbePass.level = lbeLevel
-        if (randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
+        if (randomSeed >= 0){
+            XcfaSporLts.random = Random(randomSeed)
+            XcfaDporLts.random = Random(randomSeed)
+        }
         LoopUnrollPass.UNROLL_LIMIT = loopUnroll
         WebDebuggerLogger.getInstance().setTitle(input?.name)
 
