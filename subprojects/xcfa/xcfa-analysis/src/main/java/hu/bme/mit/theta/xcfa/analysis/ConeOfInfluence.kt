@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.analysis
 
+import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.TransFunc
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -7,6 +8,8 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.xcfa.*
+import hu.bme.mit.theta.xcfa.analysis.por.extension
+import hu.bme.mit.theta.xcfa.analysis.por.nullableExtension
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import kotlin.math.max
@@ -17,9 +20,14 @@ lateinit var COI: ConeOfInfluence
 private typealias S = XcfaState<out ExprState>
 private typealias A = XcfaAction
 
+var XcfaAction.finalLabel: XcfaLabel by extension()
+private var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
+
 class ConeOfInfluence(
     private val xcfa: XCFA,
 ) {
+
+    var coreLts: LTS<S, A> = getXcfaLts()
     lateinit var coreTransFunc: TransFunc<S, A, XcfaPrec<out Prec>>
 
     private var lastPrec: Prec? = null
@@ -31,22 +39,30 @@ class ConeOfInfluence(
     private val directObservers: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
     private val interProcessObservers: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
 
-    private data class ProcedureEntry(
+    data class ProcedureEntry(
         val procedure: XcfaProcedure,
         val scc: Int,
         val pid: Int
     )
 
-    val transFunc = object : TransFunc<S, A, XcfaPrec<out Prec>> {
-        override fun getSuccStates(state: S, action: A, prec: XcfaPrec<out Prec>): Collection<S> {
-            if (lastPrec != prec) reinitialize(prec)
-            val effectiveAction = replaceIfIrrelevant(state, action)
-            return coreTransFunc.getSuccStates(state, effectiveAction, prec)
+    val transFunc = TransFunc<S, A, XcfaPrec<out Prec>> { state, action, prec ->
+        action.finalLabel = action.transFuncVersion?.label ?: action.label
+        coreTransFunc.getSuccStates(state, action.transFuncVersion ?: action, prec)
+    }
+
+    val lts = object : LTS<S, A> {
+        override fun getEnabledActionsFor(state: S): Collection<A> {
+            val enabled = coreLts.getEnabledActionsFor(state)
+            return lastPrec?.let { replaceIrrelevantActions(state, enabled, it) } ?: enabled
         }
 
-        private fun replaceIfIrrelevant(state: S, action: A): A {
-            if (lastPrec == null) return action
+        override fun <P : Prec> getEnabledActionsFor(state: S, explored: Collection<A>, prec: P): Collection<A> {
+            if (lastPrec != prec) reinitialize(prec)
+            val enabled = coreLts.getEnabledActionsFor(state, explored, prec)
+            return replaceIrrelevantActions(state, enabled, prec)
+        }
 
+        private fun replaceIrrelevantActions(state: S, enabled: Collection<A>, prec: Prec): Collection<A> {
             val procedures = state.processes.map { (pid, pState) ->
                 val loc = pState.locs.peek()
                 val procedure = edgeToProcedure[loc.incomingEdges.ifEmpty(loc::outgoingEdges).first()]!!
@@ -69,16 +85,17 @@ class ConeOfInfluence(
                 }
             } while (anyNew)
 
-            val otherProcedures = procedures.filter { it.pid != action.pid }.fold(
-                mutableMapOf<XcfaProcedure, Int>()) { acc, next ->
-                acc[next.procedure] = max(next.scc, acc[next.procedure] ?: 0)
-                acc
-            }
-
-            return if (!isObserved(action, otherProcedures)) {
-                replace(action)
-            } else {
-                action
+            return enabled.map { action ->
+                val otherProcedures = procedures.filter { it.pid != action.pid }.fold(
+                    mutableMapOf<XcfaProcedure, Int>()) { acc, next ->
+                    acc[next.procedure] = max(next.scc, acc[next.procedure] ?: 0)
+                    acc
+                }
+                if (!isObserved(action, otherProcedures)) {
+                    replace(action, prec)
+                } else {
+                    action
+                }
             }
         }
 
@@ -99,16 +116,43 @@ class ConeOfInfluence(
             return false
         }
 
-        private fun replace(action: A) = action.withLabel(action.label.replace().run {
-            if (this !is SequenceLabel) SequenceLabel(listOf(this)) else this
-        })
-
-        private fun XcfaLabel.replace(): XcfaLabel = when {
-            this is SequenceLabel -> SequenceLabel(labels.map { it.replace() }, metadata)
-            this is NondetLabel -> NondetLabel(labels.map { it.replace() }.toSet(), metadata)
-            this is StmtLabel && (this.stmt is AssignStmt<*> || this.stmt is HavocStmt<*>) -> NopLabel
-            else -> this
+        private fun replace(action: A, prec: Prec): XcfaAction {
+            val replacedLabel = action.label.replace(prec)
+            val newAction = action.withLabel(replacedLabel.first.wrapInSequenceLabel())
+            newAction.transFuncVersion = action.withLabel(replacedLabel.second.wrapInSequenceLabel())
+            return newAction
         }
+
+        private fun XcfaLabel.replace(prec: Prec): Pair<XcfaLabel, XcfaLabel> = when (this) {
+            is SequenceLabel -> pairOf(labels.map { it.replace(prec) }) { SequenceLabel(it, metadata) }
+            is NondetLabel -> pairOf(labels.map { it.replace(prec) }) { NondetLabel(it.toSet(), metadata) }
+            is StmtLabel -> {
+                when (val stmt = this.stmt) {
+                    is AssignStmt<*> -> if (stmt.varDecl in prec.usedVars) {
+                        Pair(NopLabel, NopLabel)
+                    } else {
+                        Pair(this, NopLabel)
+                    }
+
+                    is HavocStmt<*> -> if (stmt.varDecl in prec.usedVars) {
+                        Pair(NopLabel, NopLabel)
+                    } else {
+                        Pair(this, NopLabel)
+                    }
+
+                    else -> Pair(this, this)
+                }
+            }
+
+            else -> Pair(this, this)
+        }
+
+        private inline fun <T> pairOf(list: List<Pair<T, T>>, builder: (List<T>) -> T): Pair<T, T> {
+            return Pair(builder(list.map { it.first }), builder(list.map { it.second }))
+        }
+
+        private fun XcfaLabel.wrapInSequenceLabel(): SequenceLabel =
+            if (this !is SequenceLabel) SequenceLabel(listOf(this)) else this
     }
 
     init {
@@ -128,10 +172,10 @@ class ConeOfInfluence(
         }
         lastPrec = prec
 
-        System.err.println("Direct:")
-        directObservers.forEach { (k, v) -> System.err.println("${k.label} -> ${v.map { it.label }}") }
-        System.err.println("Indirect:")
-        interProcessObservers.forEach { (k, v) -> System.err.println("${k.label} -> ${v.map { it.label }}") }
+//        System.err.println("Direct:")
+//        directObservers.forEach { (k, v) -> System.err.println("${k.label} -> ${v.map { it.label }}") }
+//        System.err.println("Indirect:")
+//        interProcessObservers.forEach { (k, v) -> System.err.println("${k.label} -> ${v.map { it.label }}") }
     }
 
 
