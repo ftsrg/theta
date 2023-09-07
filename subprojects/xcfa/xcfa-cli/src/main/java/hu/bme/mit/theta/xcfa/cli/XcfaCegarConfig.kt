@@ -78,6 +78,8 @@ data class XcfaCegarConfig(
     var initPrec: InitPrec = InitPrec.EMPTY,
     @Parameter(names = ["--por-level"], description = "POR dependency level")
     var porLevel: POR = POR.NOPOR,
+    @Parameter(names = ["--coi"])
+    var coiEnabled: Boolean = false,
     @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
     var refinementSolver: String = "Z3",
     @Parameter(names = ["--validate-refinement-solver"],
@@ -112,7 +114,7 @@ data class XcfaCegarConfig(
 
         val porLts = porLevel.getLts(xcfa, ignoredVarRegistry)
         COI.coreLts = porLts
-        val lts = COI.lts
+        val lts = if(coiEnabled) COI.lts else porLts
         val waitlist = if (porLevel.isDynamic) {
             (porLts as XcfaDporLts).waitlist
         } else {
