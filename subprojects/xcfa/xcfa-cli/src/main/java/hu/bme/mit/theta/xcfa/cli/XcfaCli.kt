@@ -174,8 +174,9 @@ class XcfaCli(private val args: Array<String>) {
         // propagating input variables
         LbePass.level = lbeLevel
         if (randomSeed >= 0){
-            XcfaSporLts.random = Random(randomSeed)
-            XcfaDporLts.random = Random(randomSeed)
+            val random = Random(randomSeed)
+            XcfaSporLts.random = random
+            XcfaDporLts.random = random
         }
         LoopUnrollPass.UNROLL_LIMIT = loopUnroll
         WebDebuggerLogger.getInstance().setTitle(input?.name)

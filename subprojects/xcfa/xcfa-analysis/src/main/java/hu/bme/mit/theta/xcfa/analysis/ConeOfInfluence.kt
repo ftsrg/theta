@@ -80,17 +80,20 @@ class ConeOfInfluence(private val xcfa: XCFA) {
                     }
                 }
             } while (anyNew)
+            val multipleProcedures = procedures.groupingBy { it.procedure }.eachCount().filter { it.value > 1 }.keys
 
             return enabled.map { action ->
-                if (!isObserved(action, procedures)) {
+                if (!isObserved(action, procedures, multipleProcedures)) {
                     replace(action, prec)
                 } else {
+                    action.transFuncVersion = null
                     action
                 }
             }
         }
 
-        private fun isObserved(action: A, procedures: MutableSet<ProcedureEntry>): Boolean {
+        private fun isObserved(action: A, procedures: MutableSet<ProcedureEntry>,
+            multipleProcedures: Set<XcfaProcedure>): Boolean {
             val toVisit = edgeToProcedure.keys.filter {
                 it.source == action.edge.source && it.target == action.edge.target
             }.toMutableList()
@@ -104,7 +107,8 @@ class ConeOfInfluence(private val xcfa: XCFA) {
                 val toAdd = (directObservers[visiting] ?: emptySet()) union
                     (interProcessObservers[visiting]?.filter { edge ->
                         procedures.any {
-                            it.procedure == edge.procedure && it.scc >= edge.source.scc
+                            it.procedure == edge.procedure && it.scc >= edge.source.scc &&
+                                (it.procedure != visiting.procedure || it.procedure in multipleProcedures)
                         } // the edge is still reachable
                     } ?: emptySet())
                 toVisit.addAll(toAdd.filter { it !in visited })
@@ -171,11 +175,6 @@ class ConeOfInfluence(private val xcfa: XCFA) {
             }
         }
         lastPrec = prec
-
-//        System.err.println("Direct:")
-//        directObservers.forEach { (k, v) -> System.err.println("${k.label} -> ${v.map { it.label }}") }
-//        System.err.println("Indirect:")
-//        interProcessObservers.forEach { (k, v) -> System.err.println("${k.label} -> ${v.map { it.label }}") }
     }
 
 

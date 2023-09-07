@@ -140,18 +140,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         assert cegarResult != null;
         logger.write(Level.RESULT, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
-
-        System.err.println("Printing ARG..." + System.lineSeparator());
-        Graph g = ArgVisualizer.create(s -> s.toString().replace(" initialized=true", ""), Object::toString).visualize(arg);
-        try {
-            FileWriter myWriter = new FileWriter("/mnt/d/Theta/test/arg-latest.dot");
-            myWriter.write(GraphvizWriter.getInstance().writeString(g));
-            myWriter.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        System.err.println(arg.size() + System.lineSeparator());
-
         return cegarResult;
     }
 
