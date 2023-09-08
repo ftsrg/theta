@@ -1,9 +1,11 @@
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
+import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
@@ -43,16 +45,18 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-        return new IntObjMapViews.Transforming<>(node, (n, key) -> {
+        final MddNode constraint = localStateSpace.toStructuralRepresentation();
+        return new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(node, (n, key) -> {
             if(key == null) return AbstractNextStateDescriptor.terminalEmpty();
             else return MddNodeNextStateDescriptor.of((MddHandle) n.get(key));
-        });
+        }), constraint);
     }
 
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
+        final MddNode constraint = localStateSpace.toStructuralRepresentation();
         return new IntObjMapViews.Transforming<>(node,
-                outerNode -> new IntObjMapViews.Transforming<>(outerNode, n -> MddNodeNextStateDescriptor.of((MddHandle) n)));
+                outerNode -> new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(outerNode, n -> MddNodeNextStateDescriptor.of((MddHandle) n)),constraint));
     }
 
     @Override
@@ -224,5 +228,26 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             return Optional.of(List.of(this));
         }
 
+    }
+
+    private class ConstrainedIntObjMapView<E> extends IntObjMapViews.ForwardingBase<E> implements IntObjMapView<E> {
+
+        private final IntObjMapView<? extends E> target;
+        private final IntObjMapView constraint;
+
+        public ConstrainedIntObjMapView(IntObjMapView<? extends E> target, IntObjMapView constraint) {
+            this.target = target;
+            this.constraint = constraint;
+        }
+
+        @Override
+        public IntObjMapView<? extends E> getForwardingTarget() {
+            return this.target;
+        }
+
+        @Override
+        public IntObjCursor<? extends E> cursor() {
+            return target.cursor(constraint);
+        }
     }
 }
