@@ -46,7 +46,7 @@ public class MddValuationCollector {
         return valuations;
     }
 
-    public static void collect(MddNode node, RecursiveIntObjCursor<? extends MddNode> cursor, Stack<Assignment> assignments, Set<Valuation> valuations) {
+    private static void collect(MddNode node, RecursiveIntObjCursor<? extends MddNode> cursor, Stack<Assignment> assignments, Set<Valuation> valuations) {
         if (node.isTerminal()) {
             valuations.add(toValuation(assignments));
         } else {
