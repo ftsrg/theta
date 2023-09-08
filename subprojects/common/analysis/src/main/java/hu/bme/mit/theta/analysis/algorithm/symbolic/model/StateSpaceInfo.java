@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.model;
 
 import hu.bme.mit.delta.collections.ElementChain;
 import hu.bme.mit.delta.collections.IntSetView;
+import hu.bme.mit.delta.java.mdd.MddNode;
 
 /**
  * Represents a sub-state space of the system under analysis. Instances of this
@@ -72,5 +73,7 @@ public interface StateSpaceInfo {
 	 *         the current sub-state space or {@code null} if the state space is
 	 *         undefined.
 	 */
-	//public StateSpaceInfo getLocalStateSpace(Object someLowerComponent);
+	public StateSpaceInfo getLocalStateSpace(Object someLowerComponent);
+
+	public MddNode toStructuralRepresentation();
 }
