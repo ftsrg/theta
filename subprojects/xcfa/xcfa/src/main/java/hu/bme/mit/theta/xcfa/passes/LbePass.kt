@@ -306,7 +306,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
     private fun isNotLocal(edge: XcfaEdge): Boolean {
         return !edge.getFlatLabels().all { label ->
             !(label is StartLabel || label is JoinLabel) && label.collectVars().all(builder.getVars()::contains) &&
-                    !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr)
+                !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr)
         }
     }
 }
