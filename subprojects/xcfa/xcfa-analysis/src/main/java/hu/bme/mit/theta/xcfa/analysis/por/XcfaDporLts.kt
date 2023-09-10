@@ -198,7 +198,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 if (stack.size >= 2) {
                     val lastButOne = stack[stack.size - 2]
                     val mutexNeverReleased =
-                        last.mutexLocks.containsKey("") && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
+                        last.mutexLocks.containsKey(
+                            "") && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
                             ""
                         )
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
@@ -413,10 +414,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         private fun notdep(start: Int, action: A): List<A> {
             val e = stack[start].action
             return stack.slice(start + 1 until stack.size).filterIndexed { index, item ->
-                    item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(
-                        e, item.action
-                    )
-                }.map { it.action }.toMutableList().apply { add(action) }
+                item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(
+                    e, item.action
+                )
+            }.map { it.action }.toMutableList().apply { add(action) }
         }
 
         /**

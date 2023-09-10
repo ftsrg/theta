@@ -40,6 +40,7 @@ import java.util.*
 class LoopUnrollPass : ProcedurePass {
 
     companion object {
+
         var UNROLL_LIMIT = 50
 
         private val solver: Solver = SolverManager.resolveSolverFactory("Z3").createSolver()
@@ -48,8 +49,11 @@ class LoopUnrollPass : ProcedurePass {
     private val testedLoops = mutableSetOf<Loop>()
 
     private data class Loop(
-        val loopVar: VarDecl<*>, val loopVarModifiers: List<XcfaEdge>, val loopVarInit: XcfaEdge, val loopCondEdge: XcfaEdge, val exitCondEdge: XcfaEdge, val loopStart: XcfaLocation, val loopLocs: List<XcfaLocation>, val loopEdges: List<XcfaEdge>
+        val loopVar: VarDecl<*>, val loopVarModifiers: List<XcfaEdge>, val loopVarInit: XcfaEdge,
+        val loopCondEdge: XcfaEdge, val exitCondEdge: XcfaEdge, val loopStart: XcfaLocation,
+        val loopLocs: List<XcfaLocation>, val loopEdges: List<XcfaEdge>
     ) {
+
         private class BasicStmtAction(private val stmt: Stmt) : StmtAction() {
             constructor(edge: XcfaEdge) : this(edge.label.toStmt())
             constructor(edges: List<XcfaEdge>) : this(SequenceLabel(edges.map { it.label }).toStmt())
