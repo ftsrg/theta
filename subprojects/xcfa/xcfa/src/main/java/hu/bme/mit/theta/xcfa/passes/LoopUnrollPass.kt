@@ -43,7 +43,7 @@ class LoopUnrollPass : ProcedurePass {
 
         var UNROLL_LIMIT = 50
 
-        private val solver: Solver = SolverManager.resolveSolverFactory("Z3").createSolver()
+        private val solver: Solver = Z3SolverFactory.getInstance().createSolver()
     }
 
     private val testedLoops = mutableSetOf<Loop>()
