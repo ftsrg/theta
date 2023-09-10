@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import com.google.common.base.Preconditions
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
@@ -303,8 +305,8 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
      */
     private fun isNotLocal(edge: XcfaEdge): Boolean {
         return !edge.getFlatLabels().all { label ->
-            !(label is StartLabel || label is JoinLabel) && label.collectVars()
-                .all(builder.getVars()::contains)
+            !(label is StartLabel || label is JoinLabel) && label.collectVars().all(builder.getVars()::contains) &&
+                    !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr)
         }
     }
 }

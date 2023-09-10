@@ -22,4 +22,6 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-grammar"))
     implementation(project(":theta-c-frontend"))
+    implementation(project(":theta-analysis"))
+    implementation(project(":theta-solver"))
 }

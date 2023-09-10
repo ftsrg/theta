@@ -48,6 +48,7 @@ import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import org.antlr.v4.runtime.CharStreams
 import java.io.File
 import java.io.FileInputStream
@@ -75,6 +76,9 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--lbe"],
         description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ
+
+    @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll")
+    var loopUnroll: Int = 50
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C
@@ -164,12 +168,13 @@ class XcfaCli(private val args: Array<String>) {
         val gsonForOutput = getGson()
         val logger = ConsoleLogger(logLevel)
         val explicitProperty: ErrorDetection = getExplicitProperty()
+        registerAllSolverManagers(solverHome, logger)
 
         // propagating input variables
         LbePass.level = lbeLevel
         if (randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
+        LoopUnrollPass.UNROLL_LIMIT = loopUnroll
         WebDebuggerLogger.getInstance().setTitle(input?.name)
-
 
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
         val parseContext = ParseContext()
@@ -187,7 +192,6 @@ class XcfaCli(private val args: Array<String>) {
         // verification
         stopwatch.reset().start()
         logger.write(Logger.Level.INFO, "Starting verification of ${xcfa.name} using $backend")
-        registerAllSolverManagers(solverHome, logger)
         val config = parseConfigFromCli()
         if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
             printConfigFile!!.writeText(gsonForOutput.toJson(config))
