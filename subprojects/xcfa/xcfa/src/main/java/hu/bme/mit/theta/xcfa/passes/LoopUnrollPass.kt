@@ -99,13 +99,13 @@ class LoopUnrollPass : ProcedurePass {
             }
 
             loopEdges.forEach {
-                val newSource = if (it.source == loopStart) startLocation else locs[it.source]!!
+                val newSource = if (it.source == loopStart) startLocation else checkNotNull(locs[it.source])
                 val newLabel = if (it.source == loopStart) it.label.removeCondition() else it.label
-                val edge = XcfaEdge(newSource, locs[it.target]!!, newLabel, it.metadata)
+                val edge = XcfaEdge(newSource, checkNotNull(locs[it.target]!!), newLabel, it.metadata)
                 builder.addEdge(edge)
             }
 
-            return locs[loopStart]!!
+            return checkNotNull(locs[loopStart])
         }
 
         fun unroll(builder: XcfaProcedureBuilder, transFunc: ExplStmtTransFunc) {
