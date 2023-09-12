@@ -63,7 +63,7 @@ class ConeOfInfluence(private val xcfa: XCFA) {
                 val loc = pState.locs.peek()
                 val procedure = loc.incomingEdges.ifEmpty(loc::outgoingEdges).first().procedure
                 ProcedureEntry(procedure, loc.scc, pid)
-            }.toMutableSet()
+            }.toMutableList()
 
             do {
                 var anyNew = false
@@ -80,7 +80,7 @@ class ConeOfInfluence(private val xcfa: XCFA) {
                     }
                 }
             } while (anyNew)
-            val multipleProcedures = procedures.groupingBy { it.procedure }.eachCount().filter { it.value > 1 }.keys
+            val multipleProcedures = findDuplicates(procedures.map { it.procedure })
 
             return enabled.map { action ->
                 if (!isObserved(action, procedures, multipleProcedures)) {
@@ -92,7 +92,7 @@ class ConeOfInfluence(private val xcfa: XCFA) {
             }
         }
 
-        private fun isObserved(action: A, procedures: MutableSet<ProcedureEntry>,
+        private fun isObserved(action: A, procedures: MutableList<ProcedureEntry>,
             multipleProcedures: Set<XcfaProcedure>): Boolean {
             val toVisit = edgeToProcedure.keys.filter {
                 it.source == action.edge.source && it.target == action.edge.target
@@ -153,6 +153,17 @@ class ConeOfInfluence(private val xcfa: XCFA) {
 
         private fun XcfaLabel.wrapInSequenceLabel(): SequenceLabel =
             if (this !is SequenceLabel) SequenceLabel(listOf(this)) else this
+
+        fun findDuplicates(list: List<XcfaProcedure>): Set<XcfaProcedure> {
+            val seen = mutableSetOf<String>()
+            val duplicates = mutableSetOf<XcfaProcedure>()
+            for (item in list) {
+                if (!seen.add(item.name)) {
+                    duplicates.add(item)
+                }
+            }
+            return duplicates
+        }
     }
 
     val transFunc = TransFunc<S, A, XcfaPrec<out Prec>> { state, action, prec ->
