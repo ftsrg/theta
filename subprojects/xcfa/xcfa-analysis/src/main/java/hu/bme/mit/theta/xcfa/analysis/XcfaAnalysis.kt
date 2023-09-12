@@ -166,8 +166,9 @@ fun getXcfaErrorPredicate(
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
-        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(
-            s1.sGlobal, s2.sGlobal)
+        s1.processes.size == s2.processes.size && s1.processes.keys.all { pid ->
+            s2.processes[pid]?.let { s1.processes.getValue(pid).isLeq(it) } ?: false
+        } && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
     }
 
 private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(

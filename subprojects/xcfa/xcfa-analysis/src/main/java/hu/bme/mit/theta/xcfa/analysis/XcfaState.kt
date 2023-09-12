@@ -301,6 +301,14 @@ data class XcfaProcessState(
         return true
     }
 
+    fun isLeq(other: XcfaProcessState): Boolean {
+        if (other.locs.size < this.locs.size) return false
+
+        val stackIsLeq = this.locs.drop(1).reversed().zip(other.locs.reversed()).all { (l1, l2) -> l1 == l2 }
+                && this.locs.first() == other.locs.first()
+        return stackIsLeq && this.paramsInitialized == other.paramsInitialized
+    }
+
     override fun hashCode(): Int {
         var result = locs.hashCode()
         result = 31 * result + paramsInitialized.hashCode() // TODO FRICKIN INNER STATE HASH
