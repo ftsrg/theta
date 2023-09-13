@@ -34,6 +34,8 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
@@ -164,11 +166,40 @@ fun getXcfaErrorPredicate(
     ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out ExprState>> { false }
 }
 
+private fun<K, V> Map<K, V>.reverseMapping() = this.entries.associate { it.value to it.key }
+
+private fun valIsLeq(lhs: Map<VarDecl<out Type>, Optional<out LitExpr<out Type>>>, rhs: Map<VarDecl<out Type>, Optional<out LitExpr<out Type>>>): Boolean {
+    val lessVars = if (rhs.keys.size > lhs.keys.size) lhs else rhs
+    val moreVars = if (rhs.keys.size > lhs.keys.size) rhs else lhs
+    for (varDecl in lessVars.keys) {
+        if (lessVars[varDecl] != moreVars[varDecl]) {
+            return false
+        }
+    }
+    return true
+}
+
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
-        s1.processes.size == s2.processes.size && s1.processes.keys.all { pid ->
+        val locIsLeq = s1.processes.size == s2.processes.size && s1.processes.keys.all { pid ->
             s2.processes[pid]?.let { s1.processes.getValue(pid).isLeq(it) } ?: false
-        } && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
+        } && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
+        if (locIsLeq) {
+            val s1Global = s1.sGlobal
+            val s2Global = s2.sGlobal
+            val s1VarLookup = s1.processes[0]?.varLookup?.peek()?.reverseMapping() ?: mapOf()
+            val s2VarLookup = s2.processes[0]?.varLookup?.peek()?.reverseMapping() ?: mapOf()
+            if (s1Global is ExplState && s2Global is ExplState) {
+                val s1Val = s1Global.decls.associate { v -> v.changeVars(s1VarLookup) to s1Global.eval(v) }
+                val s2Val = s2Global.decls.associate { v -> v.changeVars(s2VarLookup) to s2Global.eval(v) }
+                valIsLeq(s1Val, s2Val)
+            } else if (s1Global is PredState && s2Global is PredState) {
+                val s1Translated = PredState.of(s1Global.preds.map { p -> p.changeVars(s1VarLookup) })
+                val s2Translated = PredState.of(s2Global.preds.map { p -> p.changeVars(s2VarLookup) })
+                partialOrd.isLeq(s1Translated as S, s2Translated as S)
+            } else
+                partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
+        } else false
     }
 
 private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
