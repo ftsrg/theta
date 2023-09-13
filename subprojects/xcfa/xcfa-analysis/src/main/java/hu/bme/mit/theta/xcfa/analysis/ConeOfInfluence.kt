@@ -129,13 +129,13 @@ class ConeOfInfluence(private val xcfa: XCFA) {
             is StmtLabel -> {
                 when (val stmt = this.stmt) {
                     is AssignStmt<*> -> if (stmt.varDecl in prec.usedVars) {
-                        Pair(NopLabel, NopLabel)
+                        Pair(this, StmtLabel(HavocStmt.of(stmt.varDecl), metadata = this.metadata))
                     } else {
                         Pair(this, NopLabel)
                     }
 
                     is HavocStmt<*> -> if (stmt.varDecl in prec.usedVars) {
-                        Pair(NopLabel, NopLabel)
+                        Pair(this, this)
                     } else {
                         Pair(this, NopLabel)
                     }
@@ -155,10 +155,10 @@ class ConeOfInfluence(private val xcfa: XCFA) {
             if (this !is SequenceLabel) SequenceLabel(listOf(this)) else this
 
         fun findDuplicates(list: List<XcfaProcedure>): Set<XcfaProcedure> {
-            val seen = mutableSetOf<String>()
+            val seen = mutableSetOf<XcfaProcedure>()
             val duplicates = mutableSetOf<XcfaProcedure>()
             for (item in list) {
-                if (!seen.add(item.name)) {
+                if (!seen.add(item)) {
                     duplicates.add(item)
                 }
             }
