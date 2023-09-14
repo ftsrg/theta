@@ -148,7 +148,7 @@ public interface AbstractNextStateDescriptor {
 
 			@Override
 			public Cursor valueCursor(int from) {
-				return null;
+				return value.cursor(from);
 			}
 
 			@Override
