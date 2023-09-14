@@ -311,6 +311,29 @@ enum class InitPrec(
 
 }
 
+enum class ConeOfInfluenceMode(
+    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out ExprState>, XcfaAction>
+) {
+
+    NONE({ xcfa, ivr, por ->
+        por.getLts(xcfa, ivr).also { NONE.porLts = it }
+    }),
+    COI_POR({ xcfa, ivr, por ->
+        COI.coreLts = por.getLts(xcfa, ivr).also { COI_POR.porLts = it }
+        COI.lts
+    }),
+    POR_COI({ xcfa, ivr, _ ->
+        COI.coreLts = getXcfaLts()
+        XcfaAasporCoiLts(xcfa, ivr, COI.lts)
+    }),
+    POR_COI_POR({ xcfa, ivr, por ->
+        COI.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
+        XcfaAasporCoiLts(xcfa, ivr, COI.lts)
+    })
+    ;
+    var porLts: LTS<XcfaState<out ExprState>, XcfaAction>? = null
+}
+
 // TODO CexMonitor: disable for multi_seq?
 enum class CexMonitorOptions {
 

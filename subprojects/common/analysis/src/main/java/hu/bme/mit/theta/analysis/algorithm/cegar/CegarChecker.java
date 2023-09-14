@@ -84,7 +84,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         AbstractorResult abstractorResult = null;
         P prec = initPrec;
         int iteration = 0;
-        WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
+//        WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
             ++iteration;
 
@@ -95,10 +95,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
             logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
-            String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
-            String precString = prec.toString();
+//            String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
+//            String precString = prec.toString();
 
-            wdl.addIteration(iteration, argGraph, precString);
+//            wdl.addIteration(iteration, argGraph, precString);
 
             if (abstractorResult.isUnsafe()) {
                 MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");

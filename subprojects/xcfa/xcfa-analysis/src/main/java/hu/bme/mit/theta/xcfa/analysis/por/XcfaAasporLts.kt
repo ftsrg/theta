@@ -23,7 +23,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-class XcfaAasporLts(xcfa: XCFA,
+open class XcfaAasporLts(xcfa: XCFA,
     private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>) :
     XcfaSporLts(xcfa) {
 

@@ -19,6 +19,8 @@ lateinit var COI: ConeOfInfluence
 private typealias S = XcfaState<out ExprState>
 private typealias A = XcfaAction
 
+internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
+
 class ConeOfInfluence(private val xcfa: XCFA) {
 
     var coreLts: LTS<S, A> = getXcfaLts()
@@ -37,8 +39,6 @@ class ConeOfInfluence(private val xcfa: XCFA) {
 
     private val directObservers: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
     private val interProcessObservers: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
-
-    private var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
 
     data class ProcedureEntry(
         val procedure: XcfaProcedure,

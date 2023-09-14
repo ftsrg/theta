@@ -198,7 +198,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 if (stack.size >= 2) {
                     val lastButOne = stack[stack.size - 2]
                     val mutexNeverReleased =
-                        last.mutexLocks.containsKey("") && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
+                        last.mutexLocks.containsKey(
+                            "") && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
                             ""
                         )
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
@@ -413,10 +414,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         private fun notdep(start: Int, action: A): List<A> {
             val e = stack[start].action
             return stack.slice(start + 1 until stack.size).filterIndexed { index, item ->
-                    item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(
-                        e, item.action
-                    )
-                }.map { it.action }.toMutableList().apply { add(action) }
+                item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(
+                    e, item.action
+                )
+            }.map { it.action }.toMutableList().apply { add(action) }
         }
 
         /**
@@ -468,7 +469,7 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     /**
      * The current precision of the abstraction.
      */
-    private lateinit var prec: Prec
+    private var prec: Prec? = null
 
     /**
      * Returns actions to be explored from the given state considering the given precision.
@@ -484,9 +485,9 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     override fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
+        val precVars = prec?.usedVars?.toSet() ?: return super.dependent(a, b)
         val aGlobalVars = a.edge.getGlobalVars(xcfa)
         val bGlobalVars = b.edge.getGlobalVars(xcfa)
-        val precVars = prec.usedVars.toSet()
         // dependent if they access the same variable in the precision (at least one write)
         return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }
