@@ -49,13 +49,19 @@ public class DomainBasedStateSpaceInfo implements StateSpaceInfo {
 		return mddNode.keySet();
 	}
 	
-	// @Override
-	// public StateSpaceInfo getLocalStateSpace(final Component someLowerComponent) {
-	// 	// TODO: Auto-generated method stub.
-	// 	throw new UnsupportedOperationException("Not (yet) implemented.");
-	// 	//return null;
-	// }
-	
+	 @Override
+	 public StateSpaceInfo getLocalStateSpace(final Object someLowerComponent) {
+	 	// TODO: Auto-generated method stub.
+	 	throw new UnsupportedOperationException("Not (yet) implemented.");
+	 	//return null;
+	 }
+
+	@Override
+	public MddNode toStructuralRepresentation() {
+
+		return null;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof DomainBasedStateSpaceInfo) {
