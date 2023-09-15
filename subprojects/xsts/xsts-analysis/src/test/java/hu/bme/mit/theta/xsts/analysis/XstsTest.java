@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -102,13 +103,9 @@ public class XstsTest {
                         "src/test/resources/property/x_between_0_and_5.prop", true,
                         XstsConfigBuilder.Domain.PRED_CART},
 
-<<<<<<< HEAD
                 {"src/test/resources/model/counter5.xsts",
                         "src/test/resources/property/x_between_0_and_5.prop", true,
                         XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
-=======
-
->>>>>>> 727693816 (loopcheck fixed, xsts input fixed)
 
                 {"src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop",
                         false, XstsConfigBuilder.Domain.EXPL},
@@ -270,13 +267,9 @@ public class XstsTest {
                         "src/test/resources/property/count_up_down2.prop", true,
                         XstsConfigBuilder.Domain.EXPL},
 
-<<<<<<< HEAD
                 {"src/test/resources/model/count_up_down.xsts",
                         "src/test/resources/property/count_up_down2.prop", true,
                         XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
-=======
-
->>>>>>> 727693816 (loopcheck fixed, xsts input fixed)
 
                 {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop",
                         true, XstsConfigBuilder.Domain.PRED_CART},
@@ -377,7 +370,6 @@ public class XstsTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-<<<<<<< HEAD
         final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain,
                 XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance(),
                 Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL)
@@ -391,40 +383,5 @@ public class XstsTest {
             assertTrue(status.isUnsafe());
         }
     }
-=======
-		final Logger logger = new ConsoleLogger(Level.SUBSTEP);
-
-		XSTS xsts;
-		try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath), new FileInputStream(propPath))) {
-			xsts = XstsDslManager.createXsts(inputStream);
-		}
-
-		var init = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
-		Expr<BoolType> ini;
-
-
-		Expr<BoolType> initExpr = init.getExprs().iterator().next();
-		ini = And(initExpr,xsts.getInitFormula());
-		var firstIndex= init.getIndexing();
-
-		var merged = Stmts.SequenceStmt(List.of(xsts.getEnv(), xsts.getTran()));
-		StmtUnfoldResult trans = StmtUtils.toExpr(merged, VarIndexingFactory.indexing(0));
-		Expr<BoolType> transExpr = trans.getExprs().iterator().next();
-		var offset= trans.getIndexing();
-
-		var action = XstsAction.create(merged);
-
-		var checker = new KIndChecker2<XstsState<ExplState>, XstsAction>(transExpr, ini, xsts.getProp(), 50,Z3SolverFactory.getInstance().createSolver(),Z3SolverFactory.getInstance().createSolver(),firstIndex,offset,(x)->XstsState.of(ExplState.of(x), false, true),xsts.getVars());
-		var old = new Xsts_K_induction();
-		//final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain, XstsConfigBuilder.Refinement.SEQ_ITP, Z3SolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL).optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON).predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250).autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS).logger(logger).build(xsts);
-		final SafetyResult<?, ?> status = checker.check(null);
-		//final SafetyResult<?, ?> status = old.check(xsts,50,Z3SolverFactory.getInstance().createSolver());
-		if (safe) {
-			assertTrue(status.isSafe());
-		} else {
-			assertTrue(status.isUnsafe());
-		}
-	}
->>>>>>> 727693816 (loopcheck fixed, xsts input fixed)
 
 }
