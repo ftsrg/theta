@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.transFuncVersion
+import hu.bme.mit.theta.xcfa.analysis.coi.transFuncVersion
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 class XcfaAasporCoiLts(

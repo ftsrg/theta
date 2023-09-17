@@ -38,6 +38,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
+import hu.bme.mit.theta.xcfa.analysis.coi.COI
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.isWritten

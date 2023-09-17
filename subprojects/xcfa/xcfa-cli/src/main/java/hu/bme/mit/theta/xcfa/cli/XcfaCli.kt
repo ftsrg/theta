@@ -39,13 +39,16 @@ import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
-import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.coi.COI
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.analysis.COI
-import hu.bme.mit.theta.xcfa.analysis.ConeOfInfluence
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -173,7 +176,7 @@ class XcfaCli(private val args: Array<String>) {
 
         // propagating input variables
         LbePass.level = lbeLevel
-        if (randomSeed >= 0){
+        if (randomSeed >= 0) {
             val random = Random(randomSeed)
             XcfaSporLts.random = random
             XcfaDporLts.random = random
@@ -184,7 +187,7 @@ class XcfaCli(private val args: Array<String>) {
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
         val parseContext = ParseContext()
         val xcfa = getXcfa(logger, explicitProperty, parseContext)
-        COI = ConeOfInfluence(xcfa)
+        COI = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
         logger.write(Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
         } ms)\n")
