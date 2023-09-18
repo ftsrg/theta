@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
 import hu.bme.mit.theta.analysis.expl.ExplPrec
@@ -168,11 +167,14 @@ fun getXcfaErrorPredicate(
 
 private fun<K, V> Map<K, V>.reverseMapping() = this.entries.associate { it.value to it.key }
 
-private fun valIsLeq(lhs: Map<VarDecl<out Type>, Optional<out LitExpr<out Type>>>, rhs: Map<VarDecl<out Type>, Optional<out LitExpr<out Type>>>): Boolean {
-    val lessVars = if (rhs.keys.size > lhs.keys.size) lhs else rhs
-    val moreVars = if (rhs.keys.size > lhs.keys.size) rhs else lhs
-    for (varDecl in lessVars.keys) {
-        if (lessVars[varDecl] != moreVars[varDecl]) {
+fun<S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.processes.keys.all { pid ->
+    s1.processes[pid]?.let { s2.processes.getValue(pid).isLeq(it) } ?: false
+}
+
+private fun valIsLeq(val1: Map<VarDecl<out Type>, Optional<out LitExpr<out Type>>>, val2: Map<VarDecl<out Type>, Optional<out LitExpr<out Type>>>): Boolean {
+    if (val2.size > val1.size) return false
+    for (varDecl in val2.keys) {
+        if (val1[varDecl] != val2[varDecl]) {
             return false
         }
     }
@@ -181,9 +183,7 @@ private fun valIsLeq(lhs: Map<VarDecl<out Type>, Optional<out LitExpr<out Type>>
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
-        val locIsLeq = s1.processes.size == s2.processes.size && s1.processes.keys.all { pid ->
-            s2.processes[pid]?.let { s1.processes.getValue(pid).isLeq(it) } ?: false
-        } && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
+        val locIsLeq = s1.processes.size == s2.processes.size && stackIsLeq(s1, s2) && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
         if (locIsLeq) {
             val s1Global = s1.sGlobal
             val s2Global = s2.sGlobal
@@ -221,7 +221,7 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
     lts: LTS<XcfaState<out ExprState>, XcfaAction>,
     errorDetection: ErrorDetection
 ): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
-    BasicAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
+    XcfaAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
         .build() // TODO: can we do this nicely?

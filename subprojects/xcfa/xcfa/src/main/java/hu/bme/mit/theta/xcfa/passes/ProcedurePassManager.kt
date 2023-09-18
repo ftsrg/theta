@@ -36,7 +36,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePas
     FpFunctionsToExprsPass(parseContext),
     PthreadFunctionsPass(parseContext),
     // trying to inline procedures
-    InlineProceduresPass(parseContext),
+//    InlineProceduresPass(parseContext),
     RemoveDeadEnds(parseContext),
     EliminateSelfLoops(parseContext),
     // handling remaining function calls
