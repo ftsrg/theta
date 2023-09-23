@@ -28,23 +28,12 @@ internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
 
 abstract class XcfaCoi(protected val xcfa: XCFA) {
 
-    protected data class XcfaEdgeWrapper(val source: XcfaLocation, val target: XcfaLocation) {
-
-        lateinit var edge: XcfaEdge
-
-        constructor(edge: XcfaEdge) : this(edge.source, edge.target) {
-            this.edge = edge
-        }
-    }
-
-    protected val XcfaEdge.wrapper: XcfaEdgeWrapper get() = XcfaEdgeWrapper(this)
-
     var coreLts: LTS<S, A> = getXcfaLts()
     lateinit var coreTransFunc: TransFunc<S, A, XcfaPrec<out Prec>>
 
     protected var lastPrec: Prec? = null
     protected var XcfaLocation.scc: Int by extension()
-    protected val directObservation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>> = mutableMapOf()
+    protected val directObservation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
 
     abstract val lts: LTS<S, A>
 
@@ -127,7 +116,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     protected open fun addEdgeIfObserved(
         source: XcfaEdge, target: XcfaEdge, observableVars: Map<VarDecl<*>, AccessType>,
-        precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>>
+        precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>
     ) {
         val vars = target.getVars()
         var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
@@ -142,7 +131,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
     }
 
     protected abstract fun addToRelation(source: XcfaEdge, target: XcfaEdge,
-        relation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>>)
+        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>)
 
     protected fun isRealObserver(edge: XcfaEdge) = edge.label.collectAssumesVars().isNotEmpty()
 

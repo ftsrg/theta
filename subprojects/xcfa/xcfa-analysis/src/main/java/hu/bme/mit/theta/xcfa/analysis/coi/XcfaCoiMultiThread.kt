@@ -13,14 +13,14 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
-    private val startThreads: MutableSet<XcfaEdgeWrapper> = mutableSetOf()
-    private val edgeToProcedure: MutableMap<XcfaEdgeWrapper, XcfaProcedure> = mutableMapOf()
+    private val startThreads: MutableSet<XcfaEdge> = mutableSetOf()
+    private val edgeToProcedure: MutableMap<XcfaEdge, XcfaProcedure> = mutableMapOf()
     private var XcfaEdge.procedure: XcfaProcedure
-        get() = edgeToProcedure[this.wrapper]!!
+        get() = edgeToProcedure[this]!!
         set(value) {
-            edgeToProcedure[this.wrapper] = value
+            edgeToProcedure[this] = value
         }
-    private val interProcessObservation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>> = mutableMapOf()
+    private val interProcessObservation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
 
     data class ProcedureEntry(
         val procedure: XcfaProcedure,
@@ -57,10 +57,10 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
             do {
                 var anyNew = false
-                startThreads.filter { edgeWrapper ->
-                    procedures.any { edgeWrapper.edge.procedure == it.procedure && it.scc >= edgeWrapper.source.scc }
-                }.forEach { edgeWrapper ->
-                    edgeWrapper.edge.getFlatLabels().filterIsInstance<StartLabel>().forEach { startLabel ->
+                startThreads.filter { edge ->
+                    procedures.any { edge.procedure == it.procedure && it.scc >= edge.source.scc }
+                }.forEach { edge ->
+                    edge.getFlatLabels().filterIsInstance<StartLabel>().forEach { startLabel ->
                         val procedure = xcfa.procedures.find { it.name == startLabel.name }!!
                         val procedureEntry = ProcedureEntry(procedure, procedure.initLoc.scc, -1)
                         if (procedureEntry !in procedures) {
@@ -87,18 +87,18 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
             val toVisit = edgeToProcedure.keys.filter {
                 it.source == action.edge.source && it.target == action.edge.target
             }.toMutableList()
-            val visited = mutableSetOf<XcfaEdgeWrapper>()
+            val visited = mutableSetOf<XcfaEdge>()
 
             while (toVisit.isNotEmpty()) {
                 val visiting = toVisit.removeFirst()
-                if (isRealObserver(visiting.edge)) return true
+                if (isRealObserver(visiting)) return true
 
                 visited.add(visiting)
                 val toAdd = (directObservation[visiting] ?: emptySet()) union
-                    (interProcessObservation[visiting]?.filter { edgeWrapper ->
+                    (interProcessObservation[visiting]?.filter { edge ->
                         procedures.any {
-                            it.procedure.name == edgeWrapper.edge.procedure.name && it.scc >= edgeWrapper.source.scc &&
-                                (it.procedure.name != visiting.edge.procedure.name || it.procedure in multipleProcedures)
+                            it.procedure.name == edge.procedure.name && it.scc >= edge.source.scc &&
+                                (it.procedure.name != visiting.procedure.name || it.procedure in multipleProcedures)
                         } // the edge is still reachable
                     } ?: emptySet())
                 toVisit.addAll(toAdd.filter { it !in visited })
@@ -124,7 +124,7 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
         xcfa.procedures.forEach { procedure ->
             procedure.edges.forEach { edge ->
                 edge.procedure = procedure
-                if (edge.getFlatLabels().any { it is StartLabel }) startThreads.add(edge.wrapper)
+                if (edge.getFlatLabels().any { it is StartLabel }) startThreads.add(edge)
                 findDirectObservers(edge, prec)
                 findInterProcessObservers(edge, prec)
             }
@@ -145,10 +145,8 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
     }
 
     override fun addToRelation(source: XcfaEdge, target: XcfaEdge,
-        relation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>>) {
-        val sourceW = source.wrapper
-        val targetW = target.wrapper
-        relation[sourceW] = relation[sourceW] ?: mutableSetOf()
-        relation[sourceW]!!.add(targetW)
+        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>) {
+        relation[source] = relation[source] ?: mutableSetOf()
+        relation[source]!!.add(target)
     }
 }
