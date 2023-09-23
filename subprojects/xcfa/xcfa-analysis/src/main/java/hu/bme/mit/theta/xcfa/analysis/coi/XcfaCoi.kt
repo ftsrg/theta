@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.analysis.coi
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.TransFunc
+import hu.bme.mit.theta.analysis.algorithm.cegar.COILogger
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -27,21 +28,44 @@ internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
 
 abstract class XcfaCoi(protected val xcfa: XCFA) {
 
+    protected data class XcfaEdgeWrapper(val source: XcfaLocation, val target: XcfaLocation) {
+
+        lateinit var edge: XcfaEdge
+
+        constructor(edge: XcfaEdge) : this(edge.source, edge.target) {
+            this.edge = edge
+        }
+    }
+
+    protected val XcfaEdge.wrapper: XcfaEdgeWrapper get() = XcfaEdgeWrapper(this)
+
     var coreLts: LTS<S, A> = getXcfaLts()
     lateinit var coreTransFunc: TransFunc<S, A, XcfaPrec<out Prec>>
 
     protected var lastPrec: Prec? = null
     protected var XcfaLocation.scc: Int by extension()
-    protected val directObservation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
+    protected val directObservation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>> = mutableMapOf()
 
     abstract val lts: LTS<S, A>
 
     val transFunc = TransFunc<S, A, XcfaPrec<out Prec>> { state, action, prec ->
-        coreTransFunc.getSuccStates(state, action.transFuncVersion ?: action, prec)
+        val a = action.transFuncVersion ?: action
+        a.label.getFlatLabels().forEach {
+            COILogger.incAllLabels()
+            if (it is NopLabel) COILogger.incNops()
+        }
+
+        COILogger.startTransFuncTimer()
+        val r = coreTransFunc.getSuccStates(state, a, prec)
+        COILogger.stopTransFuncTimer()
+
+        r
     }
 
     init {
+        COILogger.startCoiTimer()
         xcfa.procedures.forEach { tarjan(it.initLoc) }
+        COILogger.stopCoiTimer()
     }
 
     private fun tarjan(initLoc: XcfaLocation) {
@@ -103,7 +127,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     protected open fun addEdgeIfObserved(
         source: XcfaEdge, target: XcfaEdge, observableVars: Map<VarDecl<*>, AccessType>,
-        precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>
+        precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>>
     ) {
         val vars = target.getVars()
         var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
@@ -118,7 +142,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
     }
 
     protected abstract fun addToRelation(source: XcfaEdge, target: XcfaEdge,
-        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>)
+        relation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>>)
 
     protected fun isRealObserver(edge: XcfaEdge) = edge.label.collectAssumesVars().isNotEmpty()
 

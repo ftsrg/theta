@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.analysis.coi
 
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.algorithm.cegar.COILogger
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getVars
 import hu.bme.mit.theta.xcfa.isWritten
@@ -12,14 +13,14 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
-    private val startThreads: MutableSet<XcfaEdge> = mutableSetOf()
-    private val edgeToProcedure: MutableMap<XcfaEdge, XcfaProcedure> = mutableMapOf()
+    private val startThreads: MutableSet<XcfaEdgeWrapper> = mutableSetOf()
+    private val edgeToProcedure: MutableMap<XcfaEdgeWrapper, XcfaProcedure> = mutableMapOf()
     private var XcfaEdge.procedure: XcfaProcedure
-        get() = edgeToProcedure[this]!!
+        get() = edgeToProcedure[this.wrapper]!!
         set(value) {
-            edgeToProcedure[this] = value
+            edgeToProcedure[this.wrapper] = value
         }
-    private val interProcessObservation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
+    private val interProcessObservation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>> = mutableMapOf()
 
     data class ProcedureEntry(
         val procedure: XcfaProcedure,
@@ -30,13 +31,21 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
     override val lts = object : LTS<S, A> {
         override fun getEnabledActionsFor(state: S): Collection<A> {
             val enabled = coreLts.getEnabledActionsFor(state)
-            return lastPrec?.let { replaceIrrelevantActions(state, enabled, it) } ?: enabled
+            COILogger.startCoiTimer()
+            val r = lastPrec?.let { replaceIrrelevantActions(state, enabled, it) } ?: enabled
+            COILogger.stopCoiTimer()
+            return r
         }
 
         override fun <P : Prec> getEnabledActionsFor(state: S, explored: Collection<A>, prec: P): Collection<A> {
+            COILogger.startCoiTimer()
             if (lastPrec != prec) reinitialize(prec)
+            COILogger.stopCoiTimer()
             val enabled = coreLts.getEnabledActionsFor(state, explored, prec)
-            return replaceIrrelevantActions(state, enabled, prec)
+            COILogger.startCoiTimer()
+            val r = replaceIrrelevantActions(state, enabled, prec)
+            COILogger.stopCoiTimer()
+            return r
         }
 
         private fun replaceIrrelevantActions(state: S, enabled: Collection<A>, prec: Prec): Collection<A> {
@@ -48,10 +57,10 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
             do {
                 var anyNew = false
-                startThreads.filter { edge ->
-                    procedures.any { edge.procedure == it.procedure && it.scc >= edge.source.scc }
-                }.forEach { edge ->
-                    edge.getFlatLabels().filterIsInstance<StartLabel>().forEach { startLabel ->
+                startThreads.filter { edgeWrapper ->
+                    procedures.any { edgeWrapper.edge.procedure == it.procedure && it.scc >= edgeWrapper.source.scc }
+                }.forEach { edgeWrapper ->
+                    edgeWrapper.edge.getFlatLabels().filterIsInstance<StartLabel>().forEach { startLabel ->
                         val procedure = xcfa.procedures.find { it.name == startLabel.name }!!
                         val procedureEntry = ProcedureEntry(procedure, procedure.initLoc.scc, -1)
                         if (procedureEntry !in procedures) {
@@ -78,18 +87,18 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
             val toVisit = edgeToProcedure.keys.filter {
                 it.source == action.edge.source && it.target == action.edge.target
             }.toMutableList()
-            val visited = mutableSetOf<XcfaEdge>()
+            val visited = mutableSetOf<XcfaEdgeWrapper>()
 
             while (toVisit.isNotEmpty()) {
                 val visiting = toVisit.removeFirst()
-                if (isRealObserver(visiting)) return true
+                if (isRealObserver(visiting.edge)) return true
 
                 visited.add(visiting)
                 val toAdd = (directObservation[visiting] ?: emptySet()) union
-                    (interProcessObservation[visiting]?.filter { edge ->
+                    (interProcessObservation[visiting]?.filter { edgeWrapper ->
                         procedures.any {
-                            it.procedure == edge.procedure && it.scc >= edge.source.scc &&
-                                (it.procedure != visiting.procedure || it.procedure in multipleProcedures)
+                            it.procedure.name == edgeWrapper.edge.procedure.name && it.scc >= edgeWrapper.source.scc &&
+                                (it.procedure.name != visiting.edge.procedure.name || it.procedure in multipleProcedures)
                         } // the edge is still reachable
                     } ?: emptySet())
                 toVisit.addAll(toAdd.filter { it !in visited })
@@ -98,10 +107,10 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
         }
 
         fun findDuplicates(list: List<XcfaProcedure>): Set<XcfaProcedure> {
-            val seen = mutableSetOf<XcfaProcedure>()
+            val seen = mutableSetOf<String>()
             val duplicates = mutableSetOf<XcfaProcedure>()
             for (item in list) {
-                if (!seen.add(item)) {
+                if (!seen.add(item.name)) {
                     duplicates.add(item)
                 }
             }
@@ -115,7 +124,7 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
         xcfa.procedures.forEach { procedure ->
             procedure.edges.forEach { edge ->
                 edge.procedure = procedure
-                if (edge.getFlatLabels().any { it is StartLabel }) startThreads.add(edge)
+                if (edge.getFlatLabels().any { it is StartLabel }) startThreads.add(edge.wrapper)
                 findDirectObservers(edge, prec)
                 findInterProcessObservers(edge, prec)
             }
@@ -136,8 +145,10 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
     }
 
     override fun addToRelation(source: XcfaEdge, target: XcfaEdge,
-        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>) {
-        relation[source] = relation[source] ?: mutableSetOf()
-        relation[source]!!.add(target)
+        relation: MutableMap<XcfaEdgeWrapper, MutableSet<XcfaEdgeWrapper>>) {
+        val sourceW = source.wrapper
+        val targetW = target.wrapper
+        relation[sourceW] = relation[sourceW] ?: mutableSetOf()
+        relation[sourceW]!!.add(targetW)
     }
 }

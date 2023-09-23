@@ -99,6 +99,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 //            String precString = prec.toString();
 
 //            wdl.addIteration(iteration, argGraph, precString);
+            COILogger.newIteration();
 
             if (abstractorResult.isUnsafe()) {
                 MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
@@ -140,6 +141,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         assert cegarResult != null;
         logger.write(Level.RESULT, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
+        System.err.println("Abstractor time: " + stats.getAbstractorTimeMs());
+        System.err.println("Refiner time: " + stats.getRefinerTimeMs());
+        System.err.println("COI time: " + COILogger.coiTimer);
+        System.err.println("TransFunc time: " + COILogger.transFuncTimer);
+        System.err.println("COI NOP labels: " + COILogger.nopsList);
+        System.err.println("COI all labels: " + COILogger.allLabelsList);
         return cegarResult;
     }
 
