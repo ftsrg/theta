@@ -215,9 +215,9 @@ private fun getExplXcfaTransFunc(solver: Solver,
     val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
-        explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
+        explTransFunc.getSuccStatesWithPointerStore(newSt.sGlobal, newAct, p.p.addVars(
             listOf(s.processes.map { it.value.varLookup }.flatten(),
-                listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
+                listOf(getTempLookup(a.label))).flatten()), newSt.pointerStore).map { newSt.withState(it) }
     }
 }
 

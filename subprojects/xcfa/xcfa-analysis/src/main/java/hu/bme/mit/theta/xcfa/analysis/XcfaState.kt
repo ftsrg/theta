@@ -17,13 +17,20 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.core.utils.PointerStore
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntModExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
+import hu.bme.mit.theta.xcfa.analysis.pointers.*
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
@@ -39,9 +46,10 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
     val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
     val bottom: Boolean = false,
+    val pointerActions: MutableList<PointerAction> = mutableListOf<PointerAction>(),
 ) : ExprState {
 
-
+    var pointerStore: PointerStore = PointerStore()
     override fun isBottom(): Boolean {
         return bottom || sGlobal.isBottom
     }
@@ -115,7 +123,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 is ReadLabel -> error("Read/Write labels not yet supported")
                 is SequenceLabel -> true
                 is StartLabel -> changes.add { state -> state.start(it) }.let { true }
-                is StmtLabel -> true
+                is StmtLabel -> changes.add { state -> state.handleStmtLabel(it) }.let { true }
                 is WriteLabel -> error("Read/Write labels not yet supported")
             }
         }
@@ -125,8 +133,19 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 a.pid) else state
         }
 
-        return Pair(changes.fold(this) { current, change -> change(current) },
-            a.withLabel(SequenceLabel(newLabels)))
+        if (pointerActions.isNotEmpty()) {
+            runPointerAnalysis()
+        }
+
+        val applyResult = Pair(changes.fold(this) { current, change -> change(current) },
+                a.withLabel(SequenceLabel(newLabels)))
+
+        applyResult.first.runPointerAnalysis()
+        return applyResult
+    }
+
+    private fun runPointerAnalysis() {
+        pointerStore = AndersensPointerAnalysis().runOnActions(pointerActions)
     }
 
     private fun start(startLabel: StartLabel): XcfaState<S> {
@@ -212,6 +231,41 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         return copy(mutexes = newMutexes)
     }
 
+    private fun handleStmtLabel(label: StmtLabel): XcfaState<S> {
+        val newPointerActions = pointerActions.toMutableList()
+        if (label.stmt is AssignStmt<*>) {
+            val assignStmt = label.stmt as AssignStmt<*>
+            val expr = assignStmt.expr
+
+            if (expr is Reference<*, *>) {
+                // p = &i
+                val pVarDecl = assignStmt.varDecl
+                val iVarDecl = ((expr.op as RefExpr<*>).decl) as VarDecl<*>
+                newPointerActions.add(ReferencingPointerAction(pVarDecl, iVarDecl))
+            } else if (expr is ArrayWriteExpr<*, *> && expr.array is RefExpr<*>) {
+                // *p = q
+                val pVarDecl = (expr.index as RefExpr<*>).decl as VarDecl<*>
+                val qVarDecl = (expr.elem as RefExpr<*>).decl as VarDecl<*>
+
+                newPointerActions.add(DereferencingWritePointerAction(pVarDecl, qVarDecl))
+            } else if (expr is IntModExpr && expr.leftOp is Dereference<*, *>) {
+                // p = *q
+                val leftOp = expr.leftOp as Dereference<*, *>
+                val op = leftOp.op as RefExpr<*>
+                val pVarDecl = assignStmt.varDecl
+                val qVarDecl = op.decl as VarDecl<*>
+
+                newPointerActions.add(DereferencingReadPointerAction(pVarDecl, qVarDecl))
+            } else if (expr is RefExpr<*>) {
+                // p = q
+                val pVarDecl = assignStmt.varDecl
+                val qVarDecl = expr.decl as VarDecl<*>
+
+                newPointerActions.add(AliasingPointerAction(pVarDecl, qVarDecl))
+            }
+        }
+        return copy(pointerActions = newPointerActions)
+    }
 
     private fun withProcesses(nP: Map<Int, XcfaProcessState>): XcfaState<S> {
         return copy(processes = nP)
@@ -222,7 +276,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     override fun toString(): String {
-        return "$processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}}"
+        return "XcfaState: $processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}} ptrs=[$pointerStore]"
     }
 }
 
