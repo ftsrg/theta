@@ -18,10 +18,14 @@ package hu.bme.mit.theta.core.utils;
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
@@ -133,10 +137,7 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import org.kframework.mpfr.BigFloat;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -368,6 +369,8 @@ public final class ExprSimplifier {
 
             .addCase(IteExpr.class, this::simplifyIte)
 
+            .addCase(DeRefExpr.class, this::simplifyDeRef)
+
             // Default
 
             .addDefault((o, val) -> {
@@ -399,6 +402,27 @@ public final class ExprSimplifier {
             return eval.get();
         }
 
+        return expr;
+    }
+
+    private <T> Expr<?> simplifyDeRef(final DeRefExpr<?> expr, final Valuation val) {
+        return simplifyGenericDeRef(expr, val);
+    }
+
+    private <DeclType extends Type> Expr<DeclType> simplifyGenericDeRef(final DeRefExpr<DeclType> expr,
+                                                                      final Valuation val) {
+        if (val instanceof MutableValuation mutableVal && expr.getOp() instanceof RefExpr<DeclType> refExpr) {
+            VarDecl<DeclType> varDecl = (VarDecl<DeclType>) refExpr.getDecl();
+            Set<VarDecl<?>> pointsTo = mutableVal.getPointerStore().pointsTo_ByName_Unsafe(varDecl);
+            if (pointsTo.size() == 1) {
+                VarDecl<?> p = pointsTo.iterator().next();
+                final Optional<LitExpr<DeclType>> eval = val.eval((Decl<DeclType>) p);
+                if (eval.isPresent()) {
+                    System.out.println("\nPointer dereferenced: " + varDecl.getName() + " -> " + p.getName() + " = " + eval.get() + "\n");
+                    return eval.get();
+                }
+            }
+        }
         return expr;
     }
 
