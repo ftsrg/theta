@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.utils.PointerStore;
 
 /**
  * Mutable implementation of a valuation.
@@ -39,10 +40,20 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 public final class MutableValuation extends Valuation {
 
     private final Map<Decl<?>, LitExpr<?>> declToExpr;
+    private PointerStore pointerStore;
+
+    public PointerStore getPointerStore() {
+        return pointerStore;
+    }
+
+    public void setPointerStore(PointerStore pointerStore) {
+        this.pointerStore = pointerStore;
+    }
 
     public MutableValuation() {
         // LinkedHashMap is used for deterministic order
         this.declToExpr = new LinkedHashMap<>();
+        this.pointerStore = new PointerStore();
     }
 
     public static MutableValuation copyOf(final Valuation val) {
