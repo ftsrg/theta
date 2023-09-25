@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.common.pointerstore
 
+import hu.bme.mit.theta.core.utils.PointerStore
 import org.junit.Test
 import org.junit.Assert
 

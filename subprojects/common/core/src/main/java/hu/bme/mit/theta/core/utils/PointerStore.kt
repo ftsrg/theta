@@ -1,19 +1,24 @@
-package hu.bme.mit.theta.common.pointerstore
+package hu.bme.mit.theta.core.utils
 
 import hu.bme.mit.theta.common.visualization.*
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
+import hu.bme.mit.theta.core.decl.VarDecl
 import java.awt.Color
-import java.util.UUID
+import java.util.*
 
-class PointerStore<T> {
-    private val pointerStoreMembers: MutableSet<T> = mutableSetOf()
-    private val pointsTo: MutableSet<Pair<T, T>> = mutableSetOf()
+class PointerStore {
+    private val pointerStoreMembers: MutableSet<VarDecl<*>> = mutableSetOf()
+    private val pointsTo: MutableSet<Pair<VarDecl<*>, VarDecl<*>>> = mutableSetOf()
 
-    fun addPointer(pointerStoreMember: T) {
+    fun clear() {
+        pointerStoreMembers.clear()
+        pointsTo.clear()
+    }
+
+    fun addPointer(pointerStoreMember: VarDecl<*>) {
         pointerStoreMembers.add(pointerStoreMember)
     }
 
-    fun addPointsTo(from: T, to: T) {
+    fun addPointsTo(from: VarDecl<*>, to: VarDecl<*>) {
         if (!pointerStoreMembers.contains(from)) {
             addPointer(from)
         }
@@ -23,14 +28,18 @@ class PointerStore<T> {
         this.pointsTo.add(from to to)
     }
 
-    fun pointsTo(pointerStoreMember: T): Set<T> {
+    fun pointsTo(pointerStoreMember: VarDecl<*>): Set<VarDecl<*>> {
         if (!pointerStoreMembers.contains(pointerStoreMember)) {
             return emptySet()
         }
         return pointsTo.filter { it.first == pointerStoreMember }.map { it.second }.toSet()
     }
 
-    fun has(pointerStoreMember: T): Boolean {
+    fun pointsTo_ByName_Unsafe(pointerStoreMember: VarDecl<*>): Set<VarDecl<*>> {
+        return pointsTo.filter { it.first.name.contains(pointerStoreMember.name) }.map { it.second }.toSet()
+    }
+    
+    fun has(pointerStoreMember: VarDecl<*>): Boolean {
         return pointerStoreMembers.contains(pointerStoreMember)
     }
 
@@ -46,6 +55,10 @@ class PointerStore<T> {
             graph.addEdge("\"" + source.toString() + "\"", "\"" + target.toString() + "\"", eAttrs)
         }}
         return graph
+    }
+
+    override fun toString(): String {
+        return pointsTo.joinToString(",") { (source, target) -> "$source -> $target" }
     }
 
     fun edgeCount() = pointsTo.size

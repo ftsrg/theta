@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.xcfa.analysis.pointers
 
-import hu.bme.mit.theta.common.pointerstore.PointerStore
+import hu.bme.mit.theta.core.utils.PointerStore
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -22,7 +22,7 @@ data class DereferencingWritePointerAction(override val p: VarDecl<*>, override 
 data class AliasingPointerAction(override val p: VarDecl<*>, override val q: VarDecl<*>) : PointerAction
 
 abstract class PointerAnalysis {
-    abstract fun run(xcfa: XCFA): PointerStore<VarDecl<*>>
+    abstract fun run(xcfa: XCFA): PointerStore
 
     protected fun getPointerActions(xcfa: XCFA): List<PointerAction> {
         val main = xcfa.initProcedures.first().first
