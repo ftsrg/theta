@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.functype;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Type;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -78,4 +79,8 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
         return Utils.lispStringBuilder(TYPE_LABEL).add(paramType).add(resultType).toString();
     }
 
+    @Override
+    public DomainSize getDomainSize() {
+        throw new UnsupportedOperationException();
+    }
 }
