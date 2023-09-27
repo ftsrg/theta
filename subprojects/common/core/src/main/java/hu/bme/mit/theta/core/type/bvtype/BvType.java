@@ -17,28 +17,10 @@
 package hu.bme.mit.theta.core.type.bvtype;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Additive;
-import hu.bme.mit.theta.core.type.abstracttype.Castable;
-import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Divisible;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Equational;
-import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;
-import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.Ordered;
-import hu.bme.mit.theta.core.type.abstracttype.PosExpr;
-import hu.bme.mit.theta.core.type.abstracttype.RemExpr;
-import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
+import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 
@@ -222,5 +204,10 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
         } else {
             return BvExprs.UGeq(leftOp, rightOp);
         }
+    }
+
+    @Override
+    public DomainSize getDomainSize() {
+        return DomainSize.of((long) Math.pow(2, size));
     }
 }
