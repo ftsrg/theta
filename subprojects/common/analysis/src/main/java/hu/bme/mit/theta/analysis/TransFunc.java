@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.analysis;
 
-import hu.bme.mit.theta.core.utils.PointerStore;
 import java.util.Collection;
 
 /**
@@ -33,9 +32,5 @@ public interface TransFunc<S extends State, A extends Action, P extends Prec> {
      * @return Collection of successor states
      */
     Collection<? extends S> getSuccStates(S state, A action, P prec);
-
-    default Collection<? extends S> getSuccStatesWithPointerStore(S state, A action, P prec, PointerStore pointerStore) {
-        return getSuccStates(state, action, prec);
-    }
 
 }

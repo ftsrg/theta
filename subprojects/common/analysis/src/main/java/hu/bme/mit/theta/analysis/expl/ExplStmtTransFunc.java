@@ -19,7 +19,6 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.StmtApplier.ApplyResult;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
-import hu.bme.mit.theta.core.utils.PointerStore;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -60,24 +59,13 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
         return getSuccStates(state, action.getStmts(), prec);
     }
 
-    @Override
-    public Collection<ExplState> getSuccStatesWithPointerStore(final ExplState state, final StmtAction action,
-                                                               final ExplPrec prec, final PointerStore pointerStore) {
-        return getSuccStatesWithPointerStore(state, action.getStmts(), prec, pointerStore);
-    }
-
     Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts,
                                         final ExplPrec prec) {
-        return getSuccStatesWithPointerStore(state, stmts, prec, new PointerStore());
-    }
-    Collection<ExplState> getSuccStatesWithPointerStore(final ExplState state, final List<Stmt> stmts,
-                                        final ExplPrec prec, final PointerStore pointerStore) {
         final MutableValuation val = MutableValuation.copyOf(state);
         boolean triedSolver = false;
 
         for (int i = 0; i < stmts.size(); i++) {
             final Stmt stmt = stmts.get(i);
-            val.setPointerStore(pointerStore);
             final ApplyResult applyResult = StmtApplier.apply(stmt, val, triedSolver);
 
             assert !triedSolver || applyResult != ApplyResult.BOTTOM;

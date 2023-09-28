@@ -411,18 +411,6 @@ public final class ExprSimplifier {
 
     private <DeclType extends Type> Expr<DeclType> simplifyGenericDeRef(final DeRefExpr<DeclType> expr,
                                                                       final Valuation val) {
-        if (val instanceof MutableValuation mutableVal && expr.getOp() instanceof RefExpr<DeclType> refExpr) {
-            VarDecl<DeclType> varDecl = (VarDecl<DeclType>) refExpr.getDecl();
-            Set<VarDecl<?>> pointsTo = mutableVal.getPointerStore().pointsTo_ByName_Unsafe(varDecl);
-            if (pointsTo.size() == 1) {
-                VarDecl<?> p = pointsTo.iterator().next();
-                final Optional<LitExpr<DeclType>> eval = val.eval((Decl<DeclType>) p);
-                if (eval.isPresent()) {
-                    System.out.println("\nPointer dereferenced: " + varDecl.getName() + " -> " + p.getName() + " = " + eval.get() + "\n");
-                    return eval.get();
-                }
-            }
-        }
         return expr;
     }
 
