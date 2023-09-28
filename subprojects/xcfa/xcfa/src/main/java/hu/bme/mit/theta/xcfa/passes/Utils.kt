@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -108,6 +109,17 @@ fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: Par
     else this
 
 @JvmOverloads
+fun XcfaLabel.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null): XcfaLabel =
+        if (deRefLut.isNotEmpty())
+            when (this) {
+                is SequenceLabel -> SequenceLabel(labels.map { it.changeDeRefs(deRefLut, parseContext) },
+                        metadata = metadata)
+                is StmtLabel -> StmtLabel(stmt.changeDeRefs(deRefLut, parseContext), metadata = metadata)
+                else -> this
+            }
+        else this
+
+@JvmOverloads
 fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
     val stmt = when (this) {
         is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type),
@@ -116,6 +128,22 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
         is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut, parseContext))
         is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut, parseContext) })
+        is SkipStmt -> this
+        else -> TODO("Not yet implemented")
+    }
+    val metadataValue = parseContext?.getMetadata()?.getMetadataValue(this, "sourceStatement")
+    if (metadataValue?.isPresent == true)
+        parseContext.getMetadata().create(stmt, "sourceStatement", metadataValue.get())
+    return stmt
+}
+
+@JvmOverloads
+fun Stmt.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
+    val stmt = when (this) {
+        //is AssignStmt<*> -> AssignStmt.of(this.varDecl,
+        //        cast(expr.changeDeRefs(deRefLut, parseContext), varDecl.type))
+        is AssumeStmt -> AssumeStmt.of(cond.changeDeRefs(deRefLut, parseContext))
+        is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeDeRefs(deRefLut, parseContext) })
         is SkipStmt -> this
         else -> TODO("Not yet implemented")
     }
@@ -135,6 +163,15 @@ fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseCon
         }
         ret
     }
+
+@JvmOverloads
+fun <T : Type> Expr<T>.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null): Expr<T> =
+        if (this is DeRefExpr<T> && deRefLut.containsKey(this)) {
+            deRefLut[this]!!.ref as Expr<T>
+        }
+        else {
+            this.withOps(this.ops.map { it.changeDeRefs(deRefLut, parseContext) })
+        }
 
 fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
     (varLut[this] ?: this) as VarDecl<T>
