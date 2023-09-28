@@ -33,7 +33,11 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
@@ -42,6 +46,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeDeRefs
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import hu.bme.mit.theta.xcfa.startsAtomic
 import java.util.*
@@ -72,7 +77,7 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
             listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(),
                 proc.value.paramStmts.peek().first)))
         } else {
-            proc.value.locs.peek().outgoingEdges.map { edge ->
+            val actions: List<List<XcfaAction>> = proc.value.locs.peek().outgoingEdges.map { edge ->
                 val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
                 val flatLabels = newLabel.getFlatLabels()
                 if (flatLabels.any { it is InvokeLabel || it is StartLabel }) {
@@ -111,14 +116,50 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                                 }, listOf(label.copy(tempLookup = lookup))).flatten())
                         } else label
                     })
-                    XcfaAction(proc.key, edge.withLabel(newNewLabel))
-                } else
-                    XcfaAction(proc.key, edge.withLabel(newLabel))
+                    listOf(XcfaAction(proc.key, edge.withLabel(newNewLabel)))
+                } else {
+                    val actions = mutableListOf<XcfaAction>()
+                    if (newLabel is SequenceLabel) {
+                        s.runPointerAnalysis()
+                        newLabel.labels.map { label ->
+                            if (label is StmtLabel) {
+                                val stmt = label.stmt
+                                if (stmt is AssumeStmt) {
+                                    val deRefExprs = getDeRefExprs(stmt.cond, mutableSetOf())
+                                    if (deRefExprs.size == 1) {
+                                        val deRefExpr = deRefExprs.first()
+                                        val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
+                                        val pointsToSet = s.pointerStore.pointsTo(varDecl)
+                                        val deReffedActions: List<XcfaAction> = pointsToSet.map { pointsTo ->
+                                            val newDeReffedLabel = newLabel.changeDeRefs(mapOf(deRefExpr to pointsTo))
+                                            XcfaAction(proc.key, edge.withLabel(newDeReffedLabel))
+                                        }
+                                        actions.addAll(deReffedActions)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (actions.isEmpty()) {
+                        actions.add(XcfaAction(proc.key, edge.withLabel(newLabel)))
+                    }
+                    actions
+                }
             }
+            actions.flatten()
         }
     }.flatten().toSet()
 }
 
+fun getDeRefExprs(expr: Expr<*>, output: MutableSet<DeRefExpr<*>>): Set<DeRefExpr<*>> {
+    if (expr is DeRefExpr<*>) {
+        output.add(expr)
+        getDeRefExprs(expr.op, output)
+    } else {
+        expr.getOps().forEach { getDeRefExprs(it, output) }
+    }
+    return output
+}
 fun getXcfaLts(): LTS<XcfaState<out ExprState>, XcfaAction> {
     val lts = getCoreXcfaLts()
     return LTS<XcfaState<out ExprState>, XcfaAction> { s ->
@@ -166,7 +207,9 @@ fun getXcfaErrorPredicate(
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
-        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(
+        s1.runPointerAnalysis()
+        s2.runPointerAnalysis()
+        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && s1.pointerStore == s2.pointerStore && partialOrd.isLeq(
             s1.sGlobal, s2.sGlobal)
     }
 
@@ -215,9 +258,9 @@ private fun getExplXcfaTransFunc(solver: Solver,
     val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
-        explTransFunc.getSuccStatesWithPointerStore(newSt.sGlobal, newAct, p.p.addVars(
+        explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
             listOf(s.processes.map { it.value.varLookup }.flatten(),
-                listOf(getTempLookup(a.label))).flatten()), newSt.pointerStore).map { newSt.withState(it) }
+                listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
     }
 }
 
