@@ -43,7 +43,6 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaAasporCoiLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.BufferedReader
@@ -77,7 +76,7 @@ data class XcfaCegarConfig(
     @Parameter(names = ["--por-level"], description = "POR dependency level")
     var porLevel: POR = POR.NOPOR,
     @Parameter(names = ["--coi"])
-    var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NONE,
+    var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
     @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
     var refinementSolver: String = "Z3",
     @Parameter(names = ["--validate-refinement-solver"],

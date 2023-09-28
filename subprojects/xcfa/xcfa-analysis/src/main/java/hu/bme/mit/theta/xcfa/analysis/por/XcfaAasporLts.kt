@@ -33,7 +33,7 @@ open class XcfaAasporLts(xcfa: XCFA,
         prec: P
     ): Set<XcfaAction> {
         // Collecting enabled actions
-        val allEnabledActions = getAllEnabledActionsFor(state)
+        val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
 
         // Calculating the persistent set starting from every (or some of the) enabled transition or from exploredActions if it is not empty
         // The minimal persistent set is stored

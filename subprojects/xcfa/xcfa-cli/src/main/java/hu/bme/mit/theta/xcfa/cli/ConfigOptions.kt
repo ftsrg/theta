@@ -316,8 +316,8 @@ enum class ConeOfInfluenceMode(
     val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out ExprState>, XcfaAction>
 ) {
 
-    NONE({ xcfa, ivr, por ->
-        por.getLts(xcfa, ivr).also { NONE.porLts = it }
+    NO_COI({ xcfa, ivr, por ->
+        por.getLts(xcfa, ivr).also { NO_COI.porLts = it }
     }),
     COI_POR({ xcfa, ivr, por ->
         COI.coreLts = por.getLts(xcfa, ivr).also { COI_POR.porLts = it }
