@@ -32,6 +32,8 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr;
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
@@ -399,6 +401,12 @@ final class Z3ExprTransformer {
                 .addCase(ArrayLitExpr.class, this::transformArrayLit)
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
+
+                // Pointers
+
+                .addCase(DeRefExpr.class, this::transformDeRef)
+
+                .addCase(AddrOfExpr.class, this::transformAddrOf)
 
                 .build();
     }
@@ -1238,6 +1246,27 @@ final class Z3ExprTransformer {
         } else {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
+        }
+    }
+
+
+    private com.microsoft.z3.Expr transformDeRef(DeRefExpr<?> deRefExpr) {
+        final RefExpr<?> refExpr = (RefExpr<?>) deRefExpr.getOp();
+        final Decl<?> decl = refExpr.getDecl();
+        if (decl instanceof ConstDecl) {
+            return context.mkConst("deref_" + decl.getName(), context.mkIntSort());
+        } else {
+            throw new UnsupportedOperationException("Unable to dereference: " + deRefExpr);
+        }
+    }
+
+    private com.microsoft.z3.Expr transformAddrOf(AddrOfExpr<?> addrOfExpr) {
+        final RefExpr<?> refExpr = (RefExpr<?>) addrOfExpr.getOp();
+        final Decl<?> decl = refExpr.getDecl();
+        if (decl instanceof ConstDecl) {
+            return context.mkConst("addrOf_" + decl.getName(), context.mkIntSort());
+        } else {
+            throw new UnsupportedOperationException("Unable to take address of: " + addrOfExpr);
         }
     }
 

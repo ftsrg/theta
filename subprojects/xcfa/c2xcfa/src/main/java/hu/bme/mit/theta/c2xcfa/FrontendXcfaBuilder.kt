@@ -26,6 +26,8 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
@@ -178,7 +180,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         builder.addLoc(location)
         initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
         Preconditions.checkState(
-            lValue is Dereference<*, *> || lValue is ArrayReadExpr<*, *> || lValue is RefExpr<*> && lValue.decl is VarDecl<*>,
+            lValue is Dereference<*, *> || lValue is DeRefExpr<*> || lValue is ArrayReadExpr<*, *> || lValue is RefExpr<*> && lValue.decl is VarDecl<*>,
             "lValue must be a variable, pointer dereference or an array element!")
         val rExpression = statement.getrExpression()
         val label: StmtLabel = if (lValue is ArrayReadExpr<*, *>) {
@@ -187,7 +189,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 exprs)
             StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)),
                 metadata = getMetadata(statement))
-        } else if (lValue is Dereference<*, *>) {
+        } else if (lValue is DeRefExpr<*>) {
             // TODO: Process pointer dereference here
             val op = lValue.op
             val type = op.type
@@ -218,7 +220,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             if (CComplexType.getType(lValue, parseContext) is CPointer && CComplexType.getType(
                     rExpression, parseContext) is CPointer) {
                 Preconditions.checkState(
-                    rExpression is RefExpr<*> || rExpression is Reference<*, *>)
+                    rExpression is RefExpr<*> || rExpression is Reference<*, *> || rExpression is AddrOfExpr<*>)
                 if (rExpression is RefExpr<*>) {
                     var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
                     if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
@@ -231,10 +233,10 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                     var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
                     if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
                         (pointsTo.get() as MutableCollection<Expr<*>?>).add(
-                            (rExpression as Reference<*, *>).op)
+                            (rExpression as AddrOfExpr<*>).op)
                     } else {
                         pointsTo = Optional.of(
-                            LinkedHashSet(Set.of((rExpression as Reference<*, *>).op)))
+                            LinkedHashSet(Set.of((rExpression as AddrOfExpr<*>).op)))
                     }
                     parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
                 }

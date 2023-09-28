@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr;
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -510,10 +511,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     private Expr<?> reference(RefExpr<?> accept) {
         checkState(!(CComplexType.getType(accept, parseContext) instanceof CReal), "Float pointers are not yet supported!", parseContext);
-        Reference<Type, ?> of = Reference.of(accept, CComplexType.getUnsignedLong(parseContext).getSmtType());
+        Expr<?> of = AddrOfExpr.of(accept);
         parseContext.getMetadata().create(of, "cType", new CPointer(null, CComplexType.getType(accept, parseContext), parseContext));
         parseContext.getMetadata().create(accept, "referenced", true);
-        parseContext.getMetadata().create(accept, "ptrValue", of.getId());
+        //parseContext.getMetadata().create(accept, "ptrValue", of.getId());
         return of;
     }
 

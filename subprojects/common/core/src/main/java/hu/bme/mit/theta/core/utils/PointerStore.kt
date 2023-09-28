@@ -35,6 +35,7 @@ class PointerStore {
         return pointsTo.filter { it.first == pointerStoreMember }.map { it.second }.toSet()
     }
 
+    @Deprecated("")
     fun pointsTo_ByName_Unsafe(pointerStoreMember: VarDecl<*>): Set<VarDecl<*>> {
         return pointsTo.filter { it.first.name.contains(pointerStoreMember.name) }.map { it.second }.toSet()
     }
@@ -62,4 +63,11 @@ class PointerStore {
     }
 
     fun edgeCount() = pointsTo.size
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is PointerStore) {
+            return false
+        }
+        return (pointerStoreMembers == other.pointerStoreMembers) && (pointsTo == other.pointsTo)
+    }
 }
