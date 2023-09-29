@@ -36,15 +36,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A Refiner implementation that can refine a single trace (of ExprStates and
  * ExprActions) using an ExprTraceChecker and a PrecRefiner.
  */
-public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
+public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
         implements Refiner<S, A, P> {
-    private final ExprTraceChecker<R> exprTraceChecker;
-    private final PrecRefiner<S, A, P, R> precRefiner;
-    private final PruneStrategy pruneStrategy;
-    private final NodePruner<S, A> nodePruner;
-    private final Logger logger;
+    protected final ExprTraceChecker<R> exprTraceChecker;
+    protected final PrecRefiner<S, A, P, R> precRefiner;
+    protected final PruneStrategy pruneStrategy;
+    protected final NodePruner<S, A> nodePruner;
+    protected final Logger logger;
 
-    private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+    protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
                                    final PrecRefiner<S, A, P, R> precRefiner,
                                    final PruneStrategy pruneStrategy, final Logger logger) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
@@ -54,7 +54,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
         this.logger = checkNotNull(logger);
     }
 
-    private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+    protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
                                    final PrecRefiner<S, A, P, R> precRefiner,
                                    final PruneStrategy pruneStrategy, final Logger logger,
                                    final NodePruner<S, A> nodePruner) {

@@ -46,6 +46,7 @@ import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
+import hu.bme.mit.theta.xcfa.analysis.XcfaSingleExprTraceRefiner
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.BufferedReader
 import java.io.File
@@ -152,10 +153,10 @@ data class XcfaCegarConfig(
                     MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
             else
                 if (porLevel == POR.AASPOR)
-                    SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger,
+                    XcfaSingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger,
                         atomicNodePruner)
                 else
-                    SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+                    XcfaSingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
         /*
         // set up stopping analysis if it is stuck on same ARGs and precisions

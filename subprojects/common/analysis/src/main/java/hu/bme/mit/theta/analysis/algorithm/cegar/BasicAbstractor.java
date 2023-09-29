@@ -43,11 +43,11 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class BasicAbstractor<S extends State, A extends Action, P extends Prec> implements Abstractor<S, A, P> {
 
-    private final ArgBuilder<S, A, P> argBuilder;
-    private final Function<? super S, ?> projection;
-    private final Waitlist<ArgNode<S, A>> waitlist;
-    private final StopCriterion<S, A> stopCriterion;
-    private final Logger logger;
+    protected final ArgBuilder<S, A, P> argBuilder;
+    protected final Function<? super S, ?> projection;
+    protected final Waitlist<ArgNode<S, A>> waitlist;
+    protected final StopCriterion<S, A> stopCriterion;
+    protected final Logger logger;
 
     protected BasicAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
                             final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {

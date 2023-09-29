@@ -235,6 +235,7 @@ data class XcfaProcessState(
     val paramsInitialized: Boolean = false,
     val prefix: String = ""
 ) {
+    var popped: XcfaLocation? = null
 
     fun withNewLoc(l: XcfaLocation): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
@@ -306,7 +307,7 @@ data class XcfaProcessState(
 
         val stackIsLeq = this.locs.drop(1).reversed().zip(other.locs.reversed()).all { (l1, l2) -> l1 == l2 }
                 && this.locs.first() == other.locs.first()
-        return stackIsLeq && this.paramsInitialized == other.paramsInitialized
+        return stackIsLeq && this.paramsInitialized && other.paramsInitialized
     }
 
     override fun hashCode(): Int {
