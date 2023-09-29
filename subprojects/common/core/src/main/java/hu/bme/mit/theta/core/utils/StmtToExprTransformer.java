@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -235,6 +236,11 @@ final class StmtToExprTransformer {
         @Override
         public <DeclType extends Type> StmtUnfoldResult visit(DerefWriteStmt<DeclType> stmt, VarIndexing indexing) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public StmtUnfoldResult visit(PointerDereffedStmt stmt, VarIndexing indexing) {
+            return StmtUnfoldResult.of(ImmutableList.of(True()), indexing);
         }
     }
 }

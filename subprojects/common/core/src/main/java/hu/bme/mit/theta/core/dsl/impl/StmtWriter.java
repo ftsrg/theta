@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -57,6 +58,11 @@ public class StmtWriter implements StmtVisitor<Void, String> {
     @Override
     public <DeclType extends Type> String visit(DerefWriteStmt<DeclType> stmt, Void param) {
         return "deref " + stmt.getRef().toString() + " := " + writeExpr(stmt.getExpr());
+    }
+
+    @Override
+    public <DeclType extends Type> String visit(PointerDereffedStmt stmt, Void param) {
+        return "prtdereffed " + stmt.getDeRefExpr().toString() + " -> " + stmt.getVarDeclTo().getName();
     }
 
     @Override

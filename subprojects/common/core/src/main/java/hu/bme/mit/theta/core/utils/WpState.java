@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -193,6 +194,11 @@ public final class WpState {
         public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, WpState param) { throw new UnsupportedOperationException(); }
 
         @Override
+        public WpState visit(PointerDereffedStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public WpState visit(final AssumeStmt stmt, final WpState state) {
             final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
             final int constCount = state.constCount;
@@ -257,6 +263,11 @@ public final class WpState {
 
         @Override
         public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, WpState param) { throw new UnsupportedOperationException(); }
+
+        @Override
+        public WpState visit(PointerDereffedStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
         @Override
         public WpState visit(final AssumeStmt stmt, final WpState state) {

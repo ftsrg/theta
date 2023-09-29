@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Type;
@@ -115,6 +116,11 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
     public <DeclType extends Type> Void visit(DerefWriteStmt<DeclType> stmt, Collection<VarDecl<?>> vars) {
         vars.add((VarDecl<?>) stmt.getRef().getDecl());
         ExprUtils.collectVars(stmt.getExpr(), vars);
+        return null;
+    }
+
+    @Override
+    public Void visit(PointerDereffedStmt stmt, Collection<VarDecl<?>> param) {
         return null;
     }
 

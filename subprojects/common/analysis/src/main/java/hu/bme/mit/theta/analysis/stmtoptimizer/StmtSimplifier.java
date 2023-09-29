@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -259,6 +260,11 @@ public class StmtSimplifier {
 
         @Override
         public <DeclType extends Type> SimplifyResult visit(DerefWriteStmt<DeclType> stmt, MutableValuation valuation) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <DeclType extends Type> SimplifyResult visit(PointerDereffedStmt stmt, MutableValuation valuation) {
             throw new UnsupportedOperationException();
         }
     }

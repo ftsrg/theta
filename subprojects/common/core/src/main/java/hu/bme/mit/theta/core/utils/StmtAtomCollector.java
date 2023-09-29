@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -106,6 +107,11 @@ public class StmtAtomCollector {
         public <DeclType extends Type> Void visit(DerefWriteStmt<DeclType> stmt, Set<Expr<BoolType>> atoms) {
             final Expr<BoolType> eq = EqExpr.create2(stmt.getRef(), stmt.getExpr());
             atoms.addAll(ExprUtils.getAtoms(eq));
+            return null;
+        }
+
+        @Override
+        public Void visit(PointerDereffedStmt stmt, Set<Expr<BoolType>> param) {
             return null;
         }
     }

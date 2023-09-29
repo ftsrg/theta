@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
@@ -194,5 +195,10 @@ public class SpState {
 
         @Override
         public <DeclType extends Type> SpState visit(DerefWriteStmt<DeclType> stmt, SpState param) { throw new UnsupportedOperationException(); }
+
+        @Override
+        public SpState visit(PointerDereffedStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

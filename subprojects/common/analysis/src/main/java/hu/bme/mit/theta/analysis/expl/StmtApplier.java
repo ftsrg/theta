@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -82,6 +83,8 @@ public final class StmtApplier {
         } else if (stmt instanceof IfStmt) {
             final IfStmt ifStmt = (IfStmt) stmt;
             return applyIf(ifStmt, val, approximate);
+        } else if (stmt instanceof PointerDereffedStmt) {
+            return ApplyResult.SUCCESS;
         } else {
             throw new UnsupportedOperationException("Unhandled statement: " + stmt);
         }
