@@ -33,7 +33,10 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr
@@ -123,19 +126,29 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                         s.runPointerAnalysis()
                         newLabel.labels.map { label ->
                             if (label is StmtLabel) {
-                                val stmt = label.stmt
-                                if (stmt is AssumeStmt) {
-                                    val deRefExprs = getDeRefExprs(stmt.cond, mutableSetOf())
-                                    if (deRefExprs.size == 1) {
-                                        val deRefExpr = deRefExprs.first()
-                                        val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
-                                        val pointsToSet = s.pointerStore.pointsTo(varDecl)
-                                        val deReffedActions: List<XcfaAction> = pointsToSet.map { pointsTo ->
+                                val deRefExprs = when (val stmt = label.stmt) {
+                                    is AssumeStmt -> getDeRefExprs(stmt.cond, mutableSetOf())
+                                    is AssignStmt<*> -> getDeRefExprs(stmt.expr, mutableSetOf())
+                                    else -> emptySet()
+                                }
+                                if (deRefExprs.size == 1) {
+                                    val deRefExpr = deRefExprs.first()
+                                    val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
+                                    val pointsToSet = s.pointerStore.pointsTo(varDecl)
+                                    actions.addAll(
+                                        pointsToSet.map { pointsTo ->
                                             val newDeReffedLabel = newLabel.changeDeRefs(mapOf(deRefExpr to pointsTo))
-                                            XcfaAction(proc.key, edge.withLabel(newDeReffedLabel))
+                                            val newSeqLabel = SequenceLabel(
+                                                listOf(
+                                                    newDeReffedLabel,
+                                                    StmtLabel(PointerDereffedStmt.of(deRefExpr, pointsTo), metadata = label.metadata)
+                                                )
+                                            )
+                                            XcfaAction(proc.key, edge.withLabel(newSeqLabel))
                                         }
-                                        actions.addAll(deReffedActions)
-                                    }
+                                    )
+                                } else if (deRefExprs.size > 1) {
+                                    throw UnsupportedOperationException("Found multiple dereferences in $label")
                                 }
                             }
                         }

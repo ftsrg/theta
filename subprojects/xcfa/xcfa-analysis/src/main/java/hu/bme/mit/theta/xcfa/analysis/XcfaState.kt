@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.PointerDereffedStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.AddrOfExpr
@@ -48,6 +49,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
     val bottom: Boolean = false,
     val pointerActions: MutableList<PointerAction> = mutableListOf<PointerAction>(),
+    val pointerDeRefs: Map<DeRefExpr<*>, VarDecl<*>> = emptyMap(),
 ) : ExprState {
 
     var pointerStore: PointerStore = PointerStore()
@@ -145,6 +147,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     public fun runPointerAnalysis() {
         if (pointerAnalysisDone) return
         pointerStore = AndersensPointerAnalysis().runOnActions(pointerActions)
+        pointerStore.implicitDeRef(pointerDeRefs)
         pointerAnalysisDone = true
     }
 
@@ -234,7 +237,13 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     private fun handleStmtLabel(label: StmtLabel): XcfaState<S> {
         val newPointerActions = pointerActions.toMutableList()
         PointerAnalysis.getPointerAction(label)?.let { newPointerActions.add(it) }
-        return copy(pointerActions = newPointerActions)
+
+        val newPointerDeRefs = pointerDeRefs.toMutableMap()
+        if (label.stmt is PointerDereffedStmt) {
+            val pointerDereffedStmt = label.stmt as PointerDereffedStmt
+            newPointerDeRefs.put(pointerDereffedStmt.deRefExpr, pointerDereffedStmt.varDeclTo)
+        }
+        return copy(pointerActions = newPointerActions, pointerDeRefs = newPointerDeRefs)
     }
 
     private fun isPointerOnlyAction(label: StmtLabel): Boolean {
@@ -253,7 +262,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 return true
             } else if (expr is RefExpr<*>) {
                 // p = q
-                return true
+                return false
             }
         }
         return false
@@ -268,7 +277,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     override fun toString(): String {
-        return "XcfaState: $processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}} ptrs=[$pointerStore]"
+        return "XcfaState: $processes {$sGlobal, mutex=$mutexes${if (bottom) ", bottom" else ""}} ptrs=[$pointerStore] ptrDeRefs=[$pointerDeRefs]"
     }
 }
 

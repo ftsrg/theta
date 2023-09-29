@@ -2,6 +2,8 @@ package hu.bme.mit.theta.core.utils
 
 import hu.bme.mit.theta.common.visualization.*
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import java.awt.Color
 import java.util.*
 
@@ -69,5 +71,10 @@ class PointerStore {
             return false
         }
         return (pointerStoreMembers == other.pointerStoreMembers) && (pointsTo == other.pointsTo)
+    }
+
+    fun implicitDeRef(deRefLut: Map<DeRefExpr<*>, VarDecl<*>>) {
+        val varDeclLut = deRefLut.map { (deRefExpr, varDecl) -> (deRefExpr.op as RefExpr<*>).decl as VarDecl<*> to varDecl }.toMap()
+        pointsTo.removeIf { (source, target) -> varDeclLut.containsKey(source) && varDeclLut[source] != target }
     }
 }

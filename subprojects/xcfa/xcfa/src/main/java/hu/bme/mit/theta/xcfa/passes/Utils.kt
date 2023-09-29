@@ -140,8 +140,7 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
 @JvmOverloads
 fun Stmt.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
     val stmt = when (this) {
-        //is AssignStmt<*> -> AssignStmt.of(this.varDecl,
-        //        cast(expr.changeDeRefs(deRefLut, parseContext), varDecl.type))
+        is AssignStmt<*> -> AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.changeDeRefs(deRefLut, parseContext), varDecl.type))
         is AssumeStmt -> AssumeStmt.of(cond.changeDeRefs(deRefLut, parseContext))
         is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeDeRefs(deRefLut, parseContext) })
         is SkipStmt -> this
