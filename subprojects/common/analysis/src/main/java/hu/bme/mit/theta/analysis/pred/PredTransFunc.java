@@ -18,13 +18,16 @@ package hu.bme.mit.theta.analysis.pred;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public final class PredTransFunc<A extends ExprAction> implements
         TransFunc<PredState, A, PredPrec> {
@@ -47,6 +50,16 @@ public final class PredTransFunc<A extends ExprAction> implements
         checkNotNull(state);
         checkNotNull(action);
         checkNotNull(prec);
+
+        var actionExpr = action.toExpr();
+        if (actionExpr.equals(True())) {
+            var filteredPreds = state.getPreds().stream().filter(p -> {
+                var vars = ExprUtils.getVars(p);
+                var indexing = action.nextIndexing();
+                return vars.stream().allMatch(v -> indexing.get(v) == 0);
+            }).collect(Collectors.toList());
+            return Collections.singleton(PredState.of(filteredPreds));
+        }
 
         final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
                 And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
