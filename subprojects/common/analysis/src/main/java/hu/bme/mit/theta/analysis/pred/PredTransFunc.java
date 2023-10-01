@@ -51,19 +51,9 @@ public final class PredTransFunc<A extends ExprAction> implements
         checkNotNull(action);
         checkNotNull(prec);
 
-        var actionExpr = action.toExpr();
-        if (actionExpr.equals(True())) {
-            var filteredPreds = state.getPreds().stream().filter(p -> {
-                var vars = ExprUtils.getVars(p);
-                var indexing = action.nextIndexing();
-                return vars.stream().allMatch(v -> indexing.get(v) == 0);
-            }).collect(Collectors.toList());
-            return Collections.singleton(PredState.of(filteredPreds));
-        }
-
         final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
                 And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
-                action.nextIndexing());
+                action.nextIndexing(), state, action);
         return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
     }
 
