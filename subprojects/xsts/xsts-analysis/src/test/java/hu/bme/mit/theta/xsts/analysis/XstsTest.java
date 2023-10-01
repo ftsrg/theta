@@ -131,14 +131,16 @@ public class XstsTest {
                 {"src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop",
                         false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-                {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.PRED_CART},
-
-                {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.EXPL},
-
-                {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+//                The following three tests are invalid now, as two different types can't be equal even if they have
+//                literals of the same name
+//                {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
+//                        true, XstsConfigBuilder.Domain.PRED_CART},
+//
+//                {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
+//                        true, XstsConfigBuilder.Domain.EXPL},
+//
+//                {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
+//                        true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
                 {"src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop",
                         false, XstsConfigBuilder.Domain.PRED_CART},
