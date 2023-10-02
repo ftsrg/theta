@@ -95,8 +95,6 @@ data class XcfaCegarConfig(
     @Parameter(names = ["--timeout-ms"],
         description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
     var timeoutMs: Long = 0,
-    @Parameter(names = ["--arg-to-file"])
-    var argToFile: Boolean = false
 ) {
 
     @Suppress("UNCHECKED_CAST")
@@ -200,16 +198,14 @@ data class XcfaCegarConfig(
     fun check(xcfa: XCFA, logger: Logger): SafetyResult<ExprState, ExprAction> =
         try {
             val check = getCegarChecker(xcfa, logger).check(domain.initPrec(xcfa, initPrec))
-            if (argToFile) {
-                val fileName = "wdl-output.json"
-                WebDebuggerLogger.getInstance().writeToFile(fileName)
-            }
+            val fileName = "wdl-output.json"
+            // will only write file if WebDebuggerLogger enabled
+            WebDebuggerLogger.getInstance().writeToFile(fileName)
             check
         } catch (e: Exception) {
-            if (argToFile) {
-                val fileName = "wdl-output.json"
-                WebDebuggerLogger.getInstance().writeToFile(fileName)
-            }
+            val fileName = "wdl-output.json"
+            // will only write file if WebDebuggerLogger enabled
+            WebDebuggerLogger.getInstance().writeToFile(fileName)
             throw e
         }
 
