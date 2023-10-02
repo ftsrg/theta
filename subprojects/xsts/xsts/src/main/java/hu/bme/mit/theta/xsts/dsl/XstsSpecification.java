@@ -26,8 +26,6 @@ import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XstsContext;
-import hu.bme.mit.theta.xsts.type.XstsCustomType;
-import hu.bme.mit.theta.xsts.type.XstsType;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -67,7 +65,6 @@ public class XstsSpecification implements DynamicScope {
     public XSTS instantiate() {
         final Env env = new Env();
 
-        final Map<VarDecl<?>, XstsType<?>> varToType = Containers.createMap();
         final Set<VarDecl<?>> ctrlVars = Containers.createSet();
         final List<Expr<BoolType>> initExprs = new ArrayList<>();
 
@@ -88,7 +85,7 @@ public class XstsSpecification implements DynamicScope {
 
             final XstsCustomTypeSymbol typeDeclSymbol = XstsCustomTypeSymbol.of(enumType);
             typeTable.add(typeDeclSymbol);
-            env.define(typeDeclSymbol, XstsCustomType.of(enumType));
+            env.define(typeDeclSymbol, enumType);
         }
 
         for (var varDeclContext : context.variableDeclarations) {
@@ -101,8 +98,7 @@ public class XstsSpecification implements DynamicScope {
                 throw new ParseException(varDeclContext,
                         String.format("Variable name '%s' matches at least one declared enum literal", varName));
 
-            final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable, varToType,
-                    varDeclContext);
+            final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable, varDeclContext);
             declare(symbol);
 
             final VarDecl var = symbol.instantiate(env);
@@ -114,7 +110,7 @@ public class XstsSpecification implements DynamicScope {
                 if (var.getType() instanceof EnumType enumType) {
                     env.push();
                     enumType.getValues().forEach(literal -> {
-                        Symbol fullNameSymbol = resolve(String.format("%s%s%s", enumType.getName(), EnumType.FULLY_QUALIFIED_NAME_SEPARATOR, literal)).orElseThrow();
+                        Symbol fullNameSymbol = resolve(EnumType.makeLongName(enumType, literal)).orElseThrow();
                         if (fullNameSymbol instanceof XstsCustomLiteralSymbol fNameCustLitSymbol) {
                             var customSymbol = XstsCustomLiteralSymbol.copyWithName(fNameCustLitSymbol, literal);
                             scope.declare(customSymbol);
@@ -134,21 +130,18 @@ public class XstsSpecification implements DynamicScope {
         }
 
         final NonDetStmt tranSet = new XstsTransitionSet(this, typeTable,
-                context.tran.transitionSet(), varToType).instantiate(env);
+                context.tran.transitionSet()).instantiate(env);
         final NonDetStmt initSet = new XstsTransitionSet(this, typeTable,
-                context.init.transitionSet(), varToType).instantiate(env);
+                context.init.transitionSet()).instantiate(env);
         final NonDetStmt envSet = new XstsTransitionSet(this, typeTable,
-                context.env.transitionSet(), varToType).instantiate(env);
+                context.env.transitionSet()).instantiate(env);
 
-        for (VarDecl varDecl : varToType.keySet()) {
-            initExprs.add(varToType.get(varDecl).createBoundExpr(varDecl));
-        }
         final Expr<BoolType> initFormula = ExprUtils.simplify(And(initExprs));
 
         final Expr<BoolType> prop = cast(
                 new XstsExpression(this, typeTable, context.prop).instantiate(env), Bool());
 
-        return new XSTS(varToType, ctrlVars, initSet, tranSet, envSet, initFormula, prop);
+        return new XSTS(ctrlVars, initSet, tranSet, envSet, initFormula, prop);
     }
 
     @Override

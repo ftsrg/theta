@@ -17,18 +17,13 @@ package hu.bme.mit.theta.xsts.dsl;
 
 import hu.bme.mit.theta.common.dsl.DynamicScope;
 import hu.bme.mit.theta.common.dsl.Env;
-import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.TransitionSetContext;
-import hu.bme.mit.theta.xsts.type.XstsType;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -37,14 +32,12 @@ public class XstsTransitionSet {
     private final DynamicScope scope;
     private final SymbolTable typeTable;
     private final TransitionSetContext context;
-    private final Map<VarDecl<?>, XstsType<?>> varToType;
 
     public XstsTransitionSet(final DynamicScope scope, final SymbolTable typeTable,
-                             final TransitionSetContext context, final Map<VarDecl<?>, XstsType<?>> varToType) {
+                             final TransitionSetContext context) {
         this.scope = checkNotNull(scope);
         this.typeTable = checkNotNull(typeTable);
         this.context = checkNotNull(context);
-        this.varToType = checkNotNull(varToType);
     }
 
     public NonDetStmt instantiate(final Env env) {
@@ -68,8 +61,9 @@ public class XstsTransitionSet {
         @Override
         public NonDetStmt visitTransitionSet(TransitionSetContext ctx) {
             final List<Stmt> stmts = ctx.stmts.stream()
-                    .map((stmtContext -> new XstsStatement(scope, typeTable, stmtContext,
-                            varToType).instantiate(env))).collect(Collectors.toList());
+                    .map((stmtContext ->
+                            new XstsStatement(scope, typeTable, stmtContext)
+                                    .instantiate(env))).toList();
             return NonDetStmt.of(stmts);
         }
     }

@@ -478,7 +478,7 @@ final class XstsExpression {
             final T2 valueType;
 
             if (ctx.indexType != null) {
-                indexType = (T1) new XstsType(typeTable, ctx.indexType).instantiate(env).getType();
+                indexType = (T1) new XstsType(typeTable, ctx.indexType).instantiate(env);
             } else {
                 indexType = (T1) ctx.indexExpr.get(0).accept(this).getType();
             }

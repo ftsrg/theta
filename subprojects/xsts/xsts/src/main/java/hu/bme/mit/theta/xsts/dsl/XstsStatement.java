@@ -31,11 +31,9 @@ import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
-import hu.bme.mit.theta.xsts.type.XstsCustomType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
@@ -49,19 +47,16 @@ public class XstsStatement {
     private final DynamicScope scope;
     private final SymbolTable typeTable;
     private final StmtContext context;
-    private final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType;
 
     public XstsStatement(final DynamicScope scope, final SymbolTable typeTable,
-                         final StmtContext context,
-                         final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
+                         final StmtContext context) {
         this.scope = checkNotNull(scope);
         this.typeTable = checkNotNull(typeTable);
         this.context = checkNotNull(context);
-        this.varToType = checkNotNull(varToType);
     }
 
     public Stmt instantiate(final Env env) {
-        final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, typeTable, env, varToType);
+        final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, typeTable, env);
         final Stmt stmt = context.accept(visitor);
         if (stmt == null) {
             throw new AssertionError();
@@ -74,16 +69,13 @@ public class XstsStatement {
 
         private DynamicScope currentScope;
         private final SymbolTable typeTable;
-        final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType;
         private final Env env;
 
         public StmtCreatorVisitor(final DynamicScope scope, final SymbolTable typeTable,
-                                  final Env env,
-                                  final Map<VarDecl<?>, hu.bme.mit.theta.xsts.type.XstsType<?>> varToType) {
+                                  final Env env) {
             this.currentScope = checkNotNull(scope);
             this.typeTable = checkNotNull(typeTable);
             this.env = checkNotNull(env);
-            this.varToType = checkNotNull(varToType);
         }
 
         private void push() {
@@ -104,13 +96,6 @@ public class XstsStatement {
             final String lhsId = ctx.lhs.getText();
             final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
             final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
-
-            final hu.bme.mit.theta.xsts.type.XstsType type = varToType.get(var);
-            if (type instanceof XstsCustomType) {
-                final Expr<BoolType> expr = type.createBoundExpr(var);
-                final AssumeStmt assume = Assume(expr);
-                return SequenceStmt.of(List.of(Havoc(var), assume));
-            }
 
             return Havoc(var);
         }
@@ -228,21 +213,14 @@ public class XstsStatement {
         @SuppressWarnings("unchecked")
         public Stmt visitLocalVarDeclStmt(LocalVarDeclStmtContext ctx) {
             final String name = ctx.name.getText();
-            final hu.bme.mit.theta.xsts.type.XstsType xstsType = new XstsType(typeTable,
+            final Type type = new XstsType(typeTable,
                     ctx.ttype).instantiate(env);
-            final Type type = xstsType.getType();
             final var decl = Decls.Var(name, type);
             final Symbol symbol = DeclSymbol.of(decl);
 
             final Stmt result;
             if (ctx.initValue == null) {
-                if (xstsType instanceof XstsCustomType) {
-                    final Expr<BoolType> expr = xstsType.createBoundExpr(decl);
-                    final AssumeStmt assume = Assume(expr);
-                    result = assume;
-                } else {
-                    result = SkipStmt.getInstance();
-                }
+                result = SkipStmt.getInstance();
             } else {
                 var expr = new XstsExpression(currentScope, typeTable, ctx.initValue).instantiate(
                         env);
@@ -258,7 +236,6 @@ public class XstsStatement {
 
             currentScope.declare(symbol);
             env.define(symbol, decl);
-            varToType.put(decl, xstsType);
 
             return result;
         }
