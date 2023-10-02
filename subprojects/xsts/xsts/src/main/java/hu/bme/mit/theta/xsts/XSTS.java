@@ -22,16 +22,16 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.xsts.type.XstsType;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XSTS {
 
     private final Collection<VarDecl<?>> vars;
-    private final Map<VarDecl<?>, XstsType<?>> varToType;
     private final Set<VarDecl<?>> ctrlVars;
 
     private final NonDetStmt tran;
@@ -47,10 +47,6 @@ public final class XSTS {
 
     public Collection<VarDecl<?>> getVars() {
         return vars;
-    }
-
-    public Map<VarDecl<?>, XstsType<?>> getVarToType() {
-        return varToType;
     }
 
     public Expr<BoolType> getProp() {
@@ -73,7 +69,7 @@ public final class XSTS {
         return ctrlVars;
     }
 
-    public XSTS(final Map<VarDecl<?>, XstsType<?>> varToType, final Set<VarDecl<?>> ctrlVars,
+    public XSTS(final Set<VarDecl<?>> ctrlVars,
                 final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env,
                 final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
         this.tran = checkNotNull(tran);
@@ -81,11 +77,9 @@ public final class XSTS {
         this.env = checkNotNull(env);
         this.initFormula = checkNotNull(initFormula);
         this.prop = checkNotNull(prop);
-        this.varToType = varToType;
         this.ctrlVars = ctrlVars;
 
         final Set<VarDecl<?>> tmpVars = Containers.createSet();
-        tmpVars.addAll(varToType.keySet());
         tmpVars.addAll(StmtUtils.getVars(tran));
         tmpVars.addAll(StmtUtils.getVars(env));
         tmpVars.addAll(StmtUtils.getVars(init));
