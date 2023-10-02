@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.utils;
+package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
-import hu.bme.mit.theta.analysis.stmtoptimizer.StmtSimplifier;
+import hu.bme.mit.theta.core.utils.StmtSimplifier;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import org.junit.Test;
