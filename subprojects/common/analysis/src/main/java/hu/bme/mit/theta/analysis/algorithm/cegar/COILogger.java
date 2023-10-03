@@ -55,18 +55,45 @@ public class COILogger {
 
     static long nops = 0;
     static List<Long> nopsList = new ArrayList<>();
-    static long allLabels = 0;
-    static List<Long> allLabelsList = new ArrayList<>();
     public static void incNops() {
         nops++;
     }
+    public static void decNops() {
+        nops--;
+    }
+    static long havocs = 0;
+    static List<Long> havocsList = new ArrayList<>();
+    public static void incHavocs() {
+        havocs++;
+    }
+    public static void decHavocs() {
+        havocs--;
+    }
+    static long allLabels = 0;
+    static List<Long> allLabelsList = new ArrayList<>();
     public static void incAllLabels() {
         allLabels++;
     }
+    static long exploredActions = 0;
+    static List<Long> exploredActionsList = new ArrayList<>();
+    public static void incExploredActions() {
+        exploredActions++;
+    }
+    static long covers = 0;
+    static List<Long> coversList = new ArrayList<>();
+    public static void incCovers() {
+        covers++;
+    }
     public static void newIteration() {
         nopsList.add(nops);
+        havocsList.add(havocs);
         allLabelsList.add(allLabels);
+        exploredActionsList.add(exploredActions);
+        coversList.add(covers);
         nops = 0;
+        havocs = 0;
         allLabels = 0;
+        exploredActions = 0;
+        covers = 0;
     }
 }

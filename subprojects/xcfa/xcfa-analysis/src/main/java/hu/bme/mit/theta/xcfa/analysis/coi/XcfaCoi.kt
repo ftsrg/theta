@@ -39,10 +39,16 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     val transFunc = TransFunc<S, A, XcfaPrec<out Prec>> { state, action, prec ->
         val a = action.transFuncVersion ?: action
+        action.label.getFlatLabels().forEach {
+            if (it is NopLabel) COILogger.decNops()
+            if (it is StmtLabel && it.stmt is HavocStmt<*>) COILogger.decHavocs()
+        }
         a.label.getFlatLabels().forEach {
             COILogger.incAllLabels()
             if (it is NopLabel) COILogger.incNops()
+            if (it is StmtLabel && it.stmt is HavocStmt<*>) COILogger.incHavocs()
         }
+        COILogger.incExploredActions()
 
         COILogger.startTransFuncTimer()
         val r = coreTransFunc.getSuccStates(state, a, prec)

@@ -146,7 +146,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         System.err.println("COI time: " + COILogger.coiTimer);
         System.err.println("TransFunc time: " + COILogger.transFuncTimer);
         System.err.println("COI NOP labels: " + COILogger.nopsList);
+        System.err.println("COI havoc labels: " + COILogger.havocsList);
         System.err.println("COI all labels: " + COILogger.allLabelsList);
+        System.err.println("Covers: " + COILogger.coversList);
+        System.err.println("Explored actions: " + COILogger.exploredActionsList);
         return cegarResult;
     }
 
