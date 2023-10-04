@@ -61,7 +61,7 @@ public class StmtWriter implements StmtVisitor<Void, String> {
     }
 
     @Override
-    public <DeclType extends Type> String visit(PointerDereffedStmt stmt, Void param) {
+    public String visit(PointerDereffedStmt stmt, Void param) {
         return "prtdereffed " + stmt.getDeRefExpr().toString() + " -> " + stmt.getVarDeclTo().getName();
     }
 

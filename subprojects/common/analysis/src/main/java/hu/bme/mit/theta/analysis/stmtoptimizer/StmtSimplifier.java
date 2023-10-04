@@ -264,7 +264,7 @@ public class StmtSimplifier {
         }
 
         @Override
-        public <DeclType extends Type> SimplifyResult visit(PointerDereffedStmt stmt, MutableValuation valuation) {
+        public SimplifyResult visit(PointerDereffedStmt stmt, MutableValuation valuation) {
             throw new UnsupportedOperationException();
         }
     }

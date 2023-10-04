@@ -317,7 +317,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Stmt visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
 
             @Override
-            public <DeclType extends Type> Stmt visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+            public Stmt visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
 
         }, null);
     }
@@ -449,7 +449,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+            public Collection<VarDecl<?>> visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -503,7 +503,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+            public Collection<VarDecl<?>> visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
         }, null);
     }
 
@@ -557,7 +557,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             public <DeclType extends Type> Collection<VarDecl<?>> visit(DerefWriteStmt<DeclType> stmt, Void param) { throw new UnsupportedOperationException(); }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+            public Collection<VarDecl<?>> visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
 
         }, null);
     }
