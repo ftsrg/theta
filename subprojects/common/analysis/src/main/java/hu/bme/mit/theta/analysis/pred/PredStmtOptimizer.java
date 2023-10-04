@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
-import hu.bme.mit.theta.analysis.stmtoptimizer.StmtSimplifier;
+import hu.bme.mit.theta.core.utils.StmtSimplifier;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
