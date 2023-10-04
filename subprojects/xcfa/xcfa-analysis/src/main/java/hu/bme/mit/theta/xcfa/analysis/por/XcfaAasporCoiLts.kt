@@ -8,6 +8,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.transFuncVersion
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 
 class XcfaAasporCoiLts(
     xcfa: XCFA,
@@ -19,8 +20,9 @@ class XcfaAasporCoiLts(
         simpleXcfaLts = coiLTS
     }
 
-    override fun getPersistentSetFirstActions(allEnabledActions: Collection<XcfaAction>): List<List<XcfaAction>> {
-        val actions = super.getPersistentSetFirstActions(allEnabledActions)
-        return actions.map { a -> a.map { it.transFuncVersion ?: it } }
-    }
+    override fun getTransitionOf(action: XcfaAction): XcfaEdge =
+        super.getTransitionOf(action.transFuncVersion ?: action)
+
+    override fun isBackwardAction(action: XcfaAction): Boolean =
+        backwardTransitions.any { it.source == action.edge.source && it.target == action.edge.target }
 }
