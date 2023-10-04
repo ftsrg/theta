@@ -19,3 +19,7 @@ dest/
 bin
 *.dot
 .vscode
+
+# Temporary
+wdl-output*.json
+_ptrs*.c
