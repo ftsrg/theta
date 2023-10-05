@@ -17,6 +17,8 @@ package hu.bme.mit.theta.solver.z3;
 
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.*;
+import com.microsoft.z3.enumerations.Z3_decl_kind;
+import com.microsoft.z3.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -153,14 +155,6 @@ final class Z3TermTransformer {
     }
 
     ////////
-
-    private Expr<?> transform(final com.microsoft.z3.Expr term, final Model model,
-                              final List<Decl<?>> vars, final Type type) {
-        if (type instanceof EnumType enumType) {
-            return transformEnumLit(term, enumType);
-        }
-        return transform(term, model, vars);
-    }
 
     private Expr<?> transform(final com.microsoft.z3.Expr term, final Model model,
                               final List<Decl<?>> vars) {
@@ -487,20 +481,24 @@ final class Z3TermTransformer {
         return (term, model, vars) -> {
             final com.microsoft.z3.Expr[] args = term.getArgs();
             checkArgument(args.length == 2, "Number of arguments must be two");
-            Expr<?> op1;
-            Expr<?> op2;
-            boolean isInverse = false;
-            try {
-                op1 = transform(args[0], model, vars);
-            } catch (Exception e) {
-                op1 = transform(args[1], model, vars);
-                isInverse = true;
+            if (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
+                // binary operator is on enum types
+                // if either arg is a literal, we need special handling to get its type
+                // (references' decl kind is Z3_OP_UNINTERPRETED, literals' decl kind is Z3_OP_DT_CONSTRUCTOR)
+                int litIndex = -1;
+                for (int i = 0; i < 2; i++) {
+                    if (args[i].getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR))
+                        litIndex = i;
+                }
+                if (litIndex > -1) {
+                    int refIndex = Math.abs(litIndex - 1);
+                    final Expr<?> refOp = transform(args[refIndex], model, vars);
+                    final Expr<EnumType> litExpr = transformEnumLit(args[litIndex], (EnumType) refOp.getType());
+                    return function.apply(refOp, litExpr);
+                }
             }
-            try {
-                op2 = transform(args[isInverse ? 0 : 1], model, vars);
-            } catch (Exception e) {
-                op2 = transform(args[isInverse ? 0 : 1], model, vars, op1.getType());
-            }
+            final Expr<?> op1 = transform(args[0], model, vars);
+            final Expr<?> op2 = transform(args[1], model, vars);
             return function.apply(op1, op2);
         };
     }
