@@ -20,6 +20,8 @@ import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.*;
 
+import java.math.BigInteger;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicative<FpType>,
@@ -144,6 +146,6 @@ public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicat
 
     @Override
     public DomainSize getDomainSize() {
-        return DomainSize.INFINITY;
+        return DomainSize.of(BigInteger.TWO.pow(significand).multiply(BigInteger.TWO.pow(exponent)));
     }
 }

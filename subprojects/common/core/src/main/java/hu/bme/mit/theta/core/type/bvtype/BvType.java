@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 
+import java.math.BigInteger;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
@@ -208,6 +210,6 @@ public class BvType implements Additive<BvType>, Multiplicative<BvType>, Divisib
 
     @Override
     public DomainSize getDomainSize() {
-        return DomainSize.of((long) Math.pow(2, size));
+        return DomainSize.of(BigInteger.TWO.pow(size));
     }
 }

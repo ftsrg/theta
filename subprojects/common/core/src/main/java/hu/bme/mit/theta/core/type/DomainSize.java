@@ -20,11 +20,14 @@ import com.google.common.base.Objects;
 import java.math.BigInteger;
 import java.util.function.BinaryOperator;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class DomainSize {
 
 	private final BigInteger finiteSize;
 
 	private DomainSize(BigInteger value) {
+		checkArgument(value.signum() != -1, "DomainSize can't be negative");
 		finiteSize = value;
 	}
 
@@ -52,7 +55,7 @@ public class DomainSize {
 	}
 
 	public boolean isBiggerThan(long limit) {
-		return finiteSize.compareTo(BigInteger.valueOf(limit)) > 0;
+		return this.equals(INFINITY) || finiteSize.compareTo(BigInteger.valueOf(limit)) > 0;
 	}
 
 	public BigInteger getFiniteSize() {

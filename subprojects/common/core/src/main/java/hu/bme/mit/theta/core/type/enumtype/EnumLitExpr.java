@@ -35,7 +35,7 @@ public final class EnumLitExpr extends NullaryExpr<EnumType> implements LitExpr<
 	}
 
 	public static EnumLitExpr of(EnumType type, String literalName) {
-		String value = literalName.contains(".") ? literalName.substring(literalName.indexOf(".") + 1) : literalName;
+		String value = EnumType.getShortName(literalName);
 		checkArgument(type.getValues().contains(value), "Invalid value %s for type %s", value, type.getName());
 		return new EnumLitExpr(type, value);
 	}
