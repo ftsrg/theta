@@ -104,7 +104,7 @@ final class Z3TypeTransformer {
     }
 
     private EnumSort createEnumSort(EnumType enumType) {
-        return context.mkEnumSort(enumType.getName(), enumType.getValues().stream().map(lit -> String.format("%s.%s", enumType.getName(), lit)).toArray(String[]::new));
+        return context.mkEnumSort(enumType.getName(), enumType.getValues().stream().map(lit -> EnumType.makeLongName(enumType, lit)).toArray(String[]::new));
     }
 
 }

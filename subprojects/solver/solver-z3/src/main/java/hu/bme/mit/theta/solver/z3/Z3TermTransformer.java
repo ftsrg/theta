@@ -254,7 +254,7 @@ final class Z3TermTransformer {
 
     private Expr<EnumType> transformEnumLit(final com.microsoft.z3.Expr term, final EnumType enumType) {
         String longName = term.getFuncDecl().getName().toString();
-        String literal = longName.contains(".") ? longName.substring(longName.indexOf(".") + 1) : longName;
+        String literal = EnumType.getShortName(longName);
         return EnumLitExpr.of(enumType, literal);
     }
 
