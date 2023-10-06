@@ -20,8 +20,10 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+// TODO refactor and enhance this class and related features?
 public class WebDebuggerLogger {
     private static final WebDebuggerLogger instance = new WebDebuggerLogger();
+    private static Boolean enabled = false;
 
     private final ArrayList<String> iterations = new ArrayList<String>();
     private final ArrayList<String> traces = new ArrayList<String>();
@@ -30,18 +32,23 @@ public class WebDebuggerLogger {
     private WebDebuggerLogger() {
     }
 
+    public static void enableWebDebuggerLogger() {
+        enabled = true;
+    }
 
     public static WebDebuggerLogger getInstance() {
         return instance;
     }
 
     public void addIteration(int iteration, String arg, String prec) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{").append(System.lineSeparator()).append("\"iteration\": ").append(iteration).append(",");
-        sb.append("\"arg\": ").append(arg).append(",");
-        sb.append("\"precision\": \"").append(prec).append("\"");
-        sb.append("}");
-        iterations.add(sb.toString());
+        if (enabled) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{").append(System.lineSeparator()).append("\"iteration\": ").append(iteration).append(",");
+            sb.append("\"arg\": ").append(arg).append(",");
+            sb.append("\"precision\": \"").append(prec).append("\"");
+            sb.append("}");
+            iterations.add(sb.toString());
+        }
     }
 
     public void setTitle(String title) {
@@ -70,20 +77,15 @@ public class WebDebuggerLogger {
     }
 
     public void writeToFile(String fileName) {
-        String content = getFileContent();
+        if (enabled) {
+            String content = getFileContent();
 
-        final File file = new File(fileName);
-        try (PrintWriter printWriter = new PrintWriter(file)) {
-            printWriter.write(content);
-        } catch (final FileNotFoundException e) {
-            System.out.println("File not found");
+            final File file = new File(fileName);
+            try (PrintWriter printWriter = new PrintWriter(file)) {
+                printWriter.write(content);
+            } catch (final FileNotFoundException e) {
+                System.out.println("File not found");
+            }
         }
-    }
-
-    public void addTrace(String trace) {
-        // remove all linebreaks
-        trace = trace.replaceAll("[\\r\\n]", "");
-        trace = trace.replaceAll("\\s+", " ");
-        traces.add(trace);
     }
 }

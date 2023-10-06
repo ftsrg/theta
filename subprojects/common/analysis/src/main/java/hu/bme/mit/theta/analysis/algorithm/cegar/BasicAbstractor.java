@@ -127,7 +127,7 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
             return;
         }
         for (final ArgNode<S, A> candidate : candidates) {
-            if (candidate.mayCover(node)) {
+            if (candidate.mayCoverStandard(node)) {
                 node.cover(candidate);
                 return;
             }

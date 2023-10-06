@@ -48,6 +48,7 @@ import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import org.antlr.v4.runtime.CharStreams
 import java.io.File
 import java.io.FileInputStream
@@ -75,6 +76,9 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--lbe"],
         description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ
+
+    @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll")
+    var loopUnroll: Int = 50
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C
@@ -141,6 +145,9 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--seed"], description = "Random seed used for DPOR")
     var randomSeed: Int = -1
 
+    @Parameter(names = ["--arg-to-file"], description = "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/")
+    var argToFile: Boolean = false
+
     @Parameter
     var remainingFlags: MutableList<String> = ArrayList()
 
@@ -168,7 +175,11 @@ class XcfaCli(private val args: Array<String>) {
         // propagating input variables
         LbePass.level = lbeLevel
         if (randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
-        WebDebuggerLogger.getInstance().setTitle(input?.name)
+        if (argToFile) {
+            WebDebuggerLogger.enableWebDebuggerLogger()
+            WebDebuggerLogger.getInstance().setTitle(input?.name)
+        }
+        LoopUnrollPass.UNROLL_LIMIT = loopUnroll
 
 
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")

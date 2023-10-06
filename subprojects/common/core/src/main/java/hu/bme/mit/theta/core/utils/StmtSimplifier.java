@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.stmtoptimizer;
+package hu.bme.mit.theta.core.utils;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -38,7 +38,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
