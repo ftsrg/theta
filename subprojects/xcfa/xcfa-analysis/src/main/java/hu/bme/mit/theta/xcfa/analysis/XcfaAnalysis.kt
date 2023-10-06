@@ -220,9 +220,7 @@ fun getXcfaErrorPredicate(
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
-        s1.runPointerAnalysis()
-        s2.runPointerAnalysis()
-        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && s1.pointerStore == s2.pointerStore && partialOrd.isLeq(
+        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && s1.pointerStore.isLeq(s2.pointerStore) && partialOrd.isLeq(
             s1.sGlobal, s2.sGlobal)
     }
 

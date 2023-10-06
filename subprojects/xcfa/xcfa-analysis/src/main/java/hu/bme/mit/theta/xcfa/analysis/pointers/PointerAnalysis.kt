@@ -55,5 +55,37 @@ abstract class PointerAnalysis {
             }
             return null
         }
+
+        fun updateWithLabel(label: StmtLabel, pointerStore: PointerStore): PointerStore {
+            val newPointerStore = pointerStore.copy()
+            when (val action = getPointerAction(label)) {
+                is ReferencingPointerAction -> {
+                    // p = &q
+                    newPointerStore.removePointsToAny(action.p)
+                    newPointerStore.addPointsTo(action.p, action.q)
+                }
+                is DereferencingWritePointerAction -> {
+                    // *p = q
+                    throw UnsupportedOperationException("DereferencingWritePointerAction found")
+                }
+                is DereferencingReadPointerAction -> {
+                    // p = *q
+                    newPointerStore.removePointsToAny(action.p)
+                    newPointerStore.pointsTo(action.q).forEach { q ->
+                        newPointerStore.pointsTo(q).forEach { r ->
+                            newPointerStore.addPointsTo(action.p, r)
+                        }
+                    }
+                }
+                is AliasingPointerAction -> {
+                    // p = q
+                    newPointerStore.removePointsToAny(action.p)
+                    newPointerStore.pointsTo(action.q).forEach { q ->
+                        newPointerStore.addPointsTo(action.p, q)
+                    }
+                }
+            }
+            return newPointerStore
+        }
     }
 }

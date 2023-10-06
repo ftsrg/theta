@@ -48,11 +48,11 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     val mutexes: Map<String, Int> = processes.keys.associateBy { "$it" },
     val threadLookup: Map<VarDecl<*>, Int> = emptyMap(),
     val bottom: Boolean = false,
-    val pointerActions: MutableList<PointerAction> = mutableListOf<PointerAction>(),
+    // val pointerActions: MutableList<PointerAction> = mutableListOf<PointerAction>(),
     val pointerDeRefs: Map<DeRefExpr<*>, VarDecl<*>> = emptyMap(),
+    val pointerStore: PointerStore = PointerStore(),
 ) : ExprState {
 
-    var pointerStore: PointerStore = PointerStore()
     var pointerAnalysisDone = false
     override fun isBottom(): Boolean {
         return bottom || sGlobal.isBottom
@@ -144,13 +144,6 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 a.withLabel(SequenceLabel(newLabels)))
     }
 
-    public fun runPointerAnalysis() {
-        if (pointerAnalysisDone) return
-        pointerStore = AndersensPointerAnalysis().runOnActions(pointerActions)
-        pointerStore.implicitDeRef(pointerDeRefs)
-        pointerAnalysisDone = true
-    }
-
     private fun start(startLabel: StartLabel): XcfaState<S> {
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
         val newThreadLookup: MutableMap<VarDecl<*>, Int> = LinkedHashMap(threadLookup)
@@ -235,15 +228,15 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     private fun handleStmtLabel(label: StmtLabel): XcfaState<S> {
-        val newPointerActions = pointerActions.toMutableList()
-        PointerAnalysis.getPointerAction(label)?.let { newPointerActions.add(it) }
-
         val newPointerDeRefs = pointerDeRefs.toMutableMap()
+        var newPointerStore = pointerStore
         if (label.stmt is PointerDereffedStmt) {
             val pointerDereffedStmt = label.stmt as PointerDereffedStmt
             newPointerDeRefs.put(pointerDereffedStmt.deRefExpr, pointerDereffedStmt.varDeclTo)
+        } else {
+            newPointerStore = PointerAnalysis.updateWithLabel(label, pointerStore)
         }
-        return copy(pointerActions = newPointerActions, pointerDeRefs = newPointerDeRefs)
+        return copy(pointerDeRefs = newPointerDeRefs, pointerStore = newPointerStore)
     }
 
     private fun isPointerOnlyAction(label: StmtLabel): Boolean {

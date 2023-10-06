@@ -30,16 +30,15 @@ class PointerStore {
         this.pointsTo.add(from to to)
     }
 
+    fun removePointsToAny(from: VarDecl<*>) {
+        pointsTo.removeIf { it.first == from }
+    }
+
     fun pointsTo(pointerStoreMember: VarDecl<*>): Set<VarDecl<*>> {
         if (!pointerStoreMembers.contains(pointerStoreMember)) {
             return emptySet()
         }
         return pointsTo.filter { it.first == pointerStoreMember }.map { it.second }.toSet()
-    }
-
-    @Deprecated("")
-    fun pointsTo_ByName_Unsafe(pointerStoreMember: VarDecl<*>): Set<VarDecl<*>> {
-        return pointsTo.filter { it.first.name.contains(pointerStoreMember.name) }.map { it.second }.toSet()
     }
     
     fun has(pointerStoreMember: VarDecl<*>): Boolean {
@@ -65,16 +64,14 @@ class PointerStore {
     }
 
     fun edgeCount() = pointsTo.size
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is PointerStore) {
-            return false
-        }
-        return (pointerStoreMembers == other.pointerStoreMembers) && (pointsTo == other.pointsTo)
+    fun copy(): PointerStore {
+        val copy = PointerStore()
+        copy.pointerStoreMembers.addAll(pointerStoreMembers)
+        copy.pointsTo.addAll(pointsTo)
+        return copy
     }
 
-    fun implicitDeRef(deRefLut: Map<DeRefExpr<*>, VarDecl<*>>) {
-        val varDeclLut = deRefLut.map { (deRefExpr, varDecl) -> (deRefExpr.op as RefExpr<*>).decl as VarDecl<*> to varDecl }.toMap()
-        pointsTo.removeIf { (source, target) -> varDeclLut.containsKey(source) && varDeclLut[source] != target }
+    fun isLeq(other: PointerStore): Boolean {
+        return pointsTo.all { (source, target) -> other.pointsTo(source).contains(target) }
     }
 }
