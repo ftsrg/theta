@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr;
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -371,6 +372,8 @@ public final class ExprSimplifier {
 
             .addCase(DeRefExpr.class, this::simplifyDeRef)
 
+            .addCase(AddrOfExpr.class, this::simplifyAddrOf)
+
             // Default
 
             .addDefault((o, val) -> {
@@ -411,6 +414,10 @@ public final class ExprSimplifier {
 
     private <DeclType extends Type> Expr<DeclType> simplifyGenericDeRef(final DeRefExpr<DeclType> expr,
                                                                       final Valuation val) {
+        return expr;
+    }
+
+    private Expr<?> simplifyAddrOf(final AddrOfExpr<?> expr, final Valuation val) {
         return expr;
     }
 
