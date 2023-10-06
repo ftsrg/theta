@@ -35,7 +35,7 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt
 import hu.bme.mit.theta.core.stmt.PointerDereffedStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
@@ -123,32 +123,36 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                 } else {
                     val actions = mutableListOf<XcfaAction>()
                     if (newLabel is SequenceLabel) {
-                        s.runPointerAnalysis()
                         newLabel.labels.map { label ->
                             if (label is StmtLabel) {
                                 val deRefExprs = when (val stmt = label.stmt) {
                                     is AssumeStmt -> getDeRefExprs(stmt.cond, mutableSetOf())
                                     is AssignStmt<*> -> getDeRefExprs(stmt.expr, mutableSetOf())
+                                    is DerefWriteStmt -> setOf(stmt.deRef)
                                     else -> emptySet()
                                 }
-                                if (deRefExprs.size == 1) {
-                                    val deRefExpr = deRefExprs.first()
-                                    val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
-                                    val pointsToSet = s.pointerStore.pointsTo(varDecl)
+                                if (deRefExprs.isNotEmpty()) {
+                                    val deRefsPointTo = deRefExprs.associateWith { deRefExpr ->
+                                        val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
+                                        s.pointerStore.pointsTo(varDecl)
+                                    }
+                                    val descartesProduct: Set<Set<Pair<DeRefExpr<*>, VarDecl<*>>>> = deRefsPointTo.map { entry ->
+                                        entry.value.map { pointsTo ->
+                                            setOf(Pair(entry.key, pointsTo))
+                                        }.toSet()
+                                    }.reduce { acc, set -> acc.flatMap { accSet -> set.map { setSet -> accSet + setSet } }.toSet() }
+
                                     actions.addAll(
-                                        pointsToSet.map { pointsTo ->
-                                            val newDeReffedLabel = newLabel.changeDeRefs(mapOf(deRefExpr to pointsTo))
-                                            val newSeqLabel = SequenceLabel(
-                                                listOf(
-                                                    newDeReffedLabel,
-                                                    StmtLabel(PointerDereffedStmt.of(deRefExpr, pointsTo), metadata = label.metadata)
-                                                )
-                                            )
+                                        descartesProduct.map { pointsToSet ->
+                                            val newDeReffedLabel = newLabel.changeDeRefs(pointsToSet.toMap())
+                                            val newSeqLabels = mutableListOf(newDeReffedLabel)
+                                            newSeqLabels.addAll(pointsToSet.map { (deRefExpr, pointsTo) ->
+                                                StmtLabel(PointerDereffedStmt.of(deRefExpr, pointsTo), metadata = label.metadata)
+                                            })
+                                            val newSeqLabel = SequenceLabel(newSeqLabels)
                                             XcfaAction(proc.key, edge.withLabel(newSeqLabel))
                                         }
                                     )
-                                } else if (deRefExprs.size > 1) {
-                                    throw UnsupportedOperationException("Found multiple dereferences in $label")
                                 }
                             }
                         }
