@@ -2,48 +2,48 @@ package hu.bme.mit.theta.core.stmt;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public final class DerefWriteStmt<DeclType extends Type> implements Stmt {
+public final class DerefWriteStmt implements Stmt {
 	private static final String STMT_LABEL = "derefassign";
 
-	private final RefExpr<DeclType> ref;
-	private final Expr<DeclType> expr;
+	private final DeRefExpr<Type> deRef;
+	private final Expr<Type> expr;
 
-	private DerefWriteStmt(final RefExpr<DeclType> lhs, final Expr<DeclType> expr) {
-		this.ref = checkNotNull(lhs);
+	private DerefWriteStmt(final DeRefExpr<Type> lhs, final Expr<Type> expr) {
+		this.deRef = checkNotNull(lhs);
 		this.expr = checkNotNull(expr);
 	}
 
-	public static <DeclType extends Type> DerefWriteStmt<DeclType> of(final RefExpr<DeclType> lhs, final Expr<DeclType> rhs) {
-		return new DerefWriteStmt<>(lhs, rhs);
+	public static DerefWriteStmt of(final DeRefExpr<?> lhs, final Expr<?> rhs) {
+		return new DerefWriteStmt((DeRefExpr<Type>) lhs, (Expr<Type>) rhs);
 	}
 
-	public static <DeclType extends Type> DerefWriteStmt<DeclType> create(final RefExpr<?> lhs, final Expr<?> rhs) {
-		@SuppressWarnings("unchecked") final RefExpr<DeclType> newLhs = (RefExpr<DeclType>) lhs;
-		final Expr<DeclType> newRhs = cast(rhs, newLhs.getType());
+	public static DerefWriteStmt create(final DeRefExpr<?> lhs, final Expr<?> rhs) {
+		@SuppressWarnings("unchecked") final DeRefExpr<?> newLhs = (DeRefExpr<?>) lhs;
+		final Expr<?> newRhs = cast(rhs, newLhs.getType());
 		return DerefWriteStmt.of(newLhs, newRhs);
 	}
 
-	public RefExpr<DeclType> getRef() {
-		return ref;
+	public DeRefExpr<Type> getDeRef() {
+		return deRef;
 	}
 
-	public Expr<DeclType> getExpr() {
+	public Expr<Type> getExpr() {
 		return expr;
 	}
 
 	@Override
 	public String toString() {
-		return STMT_LABEL + "(" + ref + ", " + expr + ")";
+		return STMT_LABEL + "(" + deRef + ", " + expr + ")";
 	}
 
 	@Override
 	public <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
-		throw new UnsupportedOperationException();
+		return visitor.visit(this, param);
 	}
 
 }

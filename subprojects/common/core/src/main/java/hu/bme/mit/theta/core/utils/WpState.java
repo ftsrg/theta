@@ -191,7 +191,7 @@ public final class WpState {
         }
 
         @Override
-        public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, WpState param) { throw new UnsupportedOperationException(); }
+        public WpState visit(DerefWriteStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
         @Override
         public WpState visit(PointerDereffedStmt stmt, WpState param) {
@@ -262,7 +262,7 @@ public final class WpState {
         }
 
         @Override
-        public <DeclType extends Type> WpState visit(DerefWriteStmt<DeclType> stmt, WpState param) { throw new UnsupportedOperationException(); }
+        public WpState visit(DerefWriteStmt stmt, WpState param) { throw new UnsupportedOperationException(); }
 
         @Override
         public WpState visit(PointerDereffedStmt stmt, WpState param) {

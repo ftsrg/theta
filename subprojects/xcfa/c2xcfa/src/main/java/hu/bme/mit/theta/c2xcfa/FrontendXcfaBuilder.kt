@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
@@ -50,7 +51,6 @@ import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.util.*
 import java.util.Set
 import java.util.stream.Collectors
-import kotlin.collections.set
 
 class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false) :
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
@@ -194,6 +194,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             val op = lValue.op
             val type = op.type
             val ptrType = CComplexType.getUnsignedLong(parseContext).smtType
+            /*
             if (!memoryMaps.containsKey(type)) {
                 val toAdd = Decls.Var<ArrayType<*, *>>("memory_$type", ArrayType.of(ptrType, type))
                 builder.parent.addVar(XcfaGlobalVar(toAdd,
@@ -212,6 +213,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 CArray(null, CComplexType.getType(lValue.op, parseContext), parseContext))
             StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write),
                 metadata = getMetadata(statement))
+             */
+            StmtLabel(Stmts.DerefWriteStmt(lValue, rExpression), metadata = getMetadata(statement))
         } else {
             val label = StmtLabel(Stmts.Assign(
                 cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
@@ -244,7 +247,11 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             label
         }
 
-        val lhs = (label.stmt as AssignStmt<*>).varDecl
+        val lhs = when (label.stmt) {
+            is AssignStmt<*> -> (label.stmt as AssignStmt<*>).varDecl
+            is DerefWriteStmt -> (((label.stmt as DerefWriteStmt).deRef as DeRefExpr<*>).op as RefExpr<*>).decl as VarDecl<*>
+            else -> throw UnsupportedOperationException("Unknown statement type")
+        }
         val type: CComplexType? = try {
             CComplexType.getType(lhs.ref, parseContext)
         } catch (_: Exception) {

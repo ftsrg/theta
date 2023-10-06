@@ -258,7 +258,7 @@ public class StmtSimplifier {
         }
 
         @Override
-        public <DeclType extends Type> SimplifyResult visit(DerefWriteStmt<DeclType> stmt, MutableValuation valuation) {
+        public SimplifyResult visit(DerefWriteStmt stmt, MutableValuation valuation) {
             throw new UnsupportedOperationException();
         }
 

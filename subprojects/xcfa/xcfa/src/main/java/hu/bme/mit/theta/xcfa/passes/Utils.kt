@@ -128,6 +128,7 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
         is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut, parseContext))
         is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut, parseContext) })
+        is DerefWriteStmt -> DerefWriteStmt.of(deRef.changeVars(varLut) as DeRefExpr<*>, expr.changeVars(varLut, parseContext))
         is SkipStmt -> this
         else -> TODO("Not yet implemented")
     }
@@ -144,6 +145,10 @@ fun Stmt.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext:
         is AssumeStmt -> AssumeStmt.of(cond.changeDeRefs(deRefLut, parseContext))
         is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeDeRefs(deRefLut, parseContext) })
         is SkipStmt -> this
+        is DerefWriteStmt -> {
+            val type = deRef.type
+            AssignStmt.of(cast((deRef.changeDeRefs(deRefLut, parseContext) as RefExpr<*>).decl as VarDecl<*>, type), cast(expr.changeDeRefs(deRefLut, parseContext), deRef.type))
+        }
         else -> TODO("Not yet implemented")
     }
     val metadataValue = parseContext?.getMetadata()?.getMetadataValue(this, "sourceStatement")

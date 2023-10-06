@@ -234,7 +234,7 @@ final class StmtToExprTransformer {
         }
 
         @Override
-        public <DeclType extends Type> StmtUnfoldResult visit(DerefWriteStmt<DeclType> stmt, VarIndexing indexing) {
+        public StmtUnfoldResult visit(DerefWriteStmt stmt, VarIndexing indexing) {
             throw new UnsupportedOperationException();
         }
 

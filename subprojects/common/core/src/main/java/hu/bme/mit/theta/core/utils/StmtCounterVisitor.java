@@ -104,7 +104,7 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
     }
 
     @Override
-    public <DeclType extends Type> Integer visit(DerefWriteStmt<DeclType> stmt, Void param) {
+    public Integer visit(DerefWriteStmt stmt, Void param) {
         return 1;
     }
 

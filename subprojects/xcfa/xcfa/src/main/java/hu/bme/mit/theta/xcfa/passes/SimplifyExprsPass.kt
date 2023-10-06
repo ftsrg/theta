@@ -46,7 +46,11 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
-        val valuation = findConstVariables(builder)
+        // TODO: this does not work if the program contains deRefWrites
+        // e.g. x = 1; y = &x; *y = 2;
+        // Maybe we should run a static analysis on the xcfa first, to find out which variables are constant
+        // val valuation = findConstVariables(builder)
+        val valuation = MutableValuation()
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
             val newLabels = (edge.label as SequenceLabel).labels.map {

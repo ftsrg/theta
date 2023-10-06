@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.stmt;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.List;
@@ -54,6 +55,10 @@ public final class Stmts {
 
     public static NonDetStmt NonDetStmt(final List<Stmt> stmts) {
         return NonDetStmt.of(stmts);
+    }
+
+    public static DerefWriteStmt DerefWriteStmt(final DeRefExpr<?> ref, final Expr<?> value) {
+        return DerefWriteStmt.of(ref, value);
     }
 
 }

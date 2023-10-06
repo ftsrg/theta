@@ -56,8 +56,8 @@ public class StmtWriter implements StmtVisitor<Void, String> {
         return "havoc " + stmt.getVarDecl().getName();
     }
     @Override
-    public <DeclType extends Type> String visit(DerefWriteStmt<DeclType> stmt, Void param) {
-        return "deref " + stmt.getRef().toString() + " := " + writeExpr(stmt.getExpr());
+    public String visit(DerefWriteStmt stmt, Void param) {
+        return "deref " + stmt.getDeRef().toString() + " := " + writeExpr(stmt.getExpr());
     }
 
     @Override

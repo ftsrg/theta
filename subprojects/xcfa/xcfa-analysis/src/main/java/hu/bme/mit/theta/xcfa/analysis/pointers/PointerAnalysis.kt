@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xcfa.analysis.pointers
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.DerefWriteStmt
 import hu.bme.mit.theta.core.type.anytype.AddrOfExpr
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -33,12 +34,6 @@ abstract class PointerAnalysis {
                     val pVarDecl = assignStmt.varDecl
                     val iVarDecl = ((expr.op as RefExpr<*>).decl) as VarDecl<*>
                     return ReferencingPointerAction(pVarDecl, iVarDecl)
-                } else if (expr is ArrayWriteExpr<*, *> && expr.array is RefExpr<*>) {
-                    // *p = q
-                    val pVarDecl = (expr.index as RefExpr<*>).decl as VarDecl<*>
-                    val qVarDecl = (expr.elem as RefExpr<*>).decl as VarDecl<*>
-
-                    return DereferencingWritePointerAction(pVarDecl, qVarDecl)
                 } else if (expr is DeRefExpr<*>) {
                     // p = *q
                     val pVarDecl = assignStmt.varDecl
@@ -52,6 +47,12 @@ abstract class PointerAnalysis {
 
                     return AliasingPointerAction(pVarDecl, qVarDecl)
                 }
+            } else if (label.stmt is DerefWriteStmt) {
+                // *p = q
+                val pVarDecl = ((label.stmt as DerefWriteStmt).deRef.op as RefExpr<*>).decl as VarDecl<*>
+                val qVarDecl = ((label.stmt as DerefWriteStmt).expr as RefExpr<*>).decl as VarDecl<*>
+
+                return DereferencingWritePointerAction(pVarDecl, qVarDecl)
             }
             return null
         }

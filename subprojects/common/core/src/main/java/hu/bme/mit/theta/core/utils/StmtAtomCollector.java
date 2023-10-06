@@ -104,8 +104,8 @@ public class StmtAtomCollector {
         }
 
         @Override
-        public <DeclType extends Type> Void visit(DerefWriteStmt<DeclType> stmt, Set<Expr<BoolType>> atoms) {
-            final Expr<BoolType> eq = EqExpr.create2(stmt.getRef(), stmt.getExpr());
+        public Void visit(DerefWriteStmt stmt, Set<Expr<BoolType>> atoms) {
+            final Expr<BoolType> eq = EqExpr.create2(stmt.getDeRef(), stmt.getExpr());
             atoms.addAll(ExprUtils.getAtoms(eq));
             return null;
         }
