@@ -27,11 +27,11 @@ public class DomainSize {
 	private final BigInteger finiteSize;
 
 	private DomainSize(BigInteger value) {
-		checkArgument(value.signum() != -1, "DomainSize can't be negative");
 		finiteSize = value;
 	}
 
 	public static DomainSize of(BigInteger val) {
+		checkArgument(val.signum() != -1, "DomainSize can't be negative");
 		return new DomainSize(val);
 	}
 
@@ -39,7 +39,7 @@ public class DomainSize {
 		return of(BigInteger.valueOf(val));
 	}
 
-	public static final DomainSize INFINITY = of(-1);
+	public static final DomainSize INFINITY = new DomainSize(BigInteger.valueOf(-1));
 	public static final DomainSize ZERO = of(0);
 	public static final DomainSize ONE = of(1);
 	public static final DomainSize TWO = of(2);
