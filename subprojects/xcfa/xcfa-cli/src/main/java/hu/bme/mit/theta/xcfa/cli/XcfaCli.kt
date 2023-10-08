@@ -23,9 +23,13 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
+import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.StmtAction
+import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
@@ -42,6 +46,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -51,6 +56,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaToKindImc
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -78,6 +84,13 @@ class XcfaCli(private val args: Array<String>) {
 
     //////////// CONFIGURATION OPTIONS BEGIN ////////////
     //////////// input task ////////////
+    public enum class Algorithm{
+        CEGAR,
+        KINDUCTION,
+        IMC
+    }
+    @Parameter(names = ["--algorithm"], description = "Algorithm")
+    var algorithm: Algorithm = Algorithm.CEGAR
     @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
     var input: File? = null
 
@@ -234,28 +247,41 @@ class XcfaCli(private val args: Array<String>) {
         }
         // verification
         stopwatch.reset().start()
-        logger.write(Logger.Level.INFO,
-            "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
-        registerAllSolverManagers(solverHome, logger)
-        logger.write(Logger.Level.INFO,
-            "Registered solver managers successfully (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
-        stopwatch.reset().start()
-        val config = parseConfigFromCli(parseContext)
-        if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
-            printConfigFile!!.writeText(gsonForOutput.toJson(config))
-        }
-        logger.write(Logger.Level.INFO, "Parsed config (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
-        stopwatch.reset().start()
-        val safetyResult: SafetyResult<*, *> =
-            when (strategy) {
-                Strategy.DIRECT -> runDirect(xcfa, config, logger)
-                Strategy.SERVER -> runServer(xcfa, config, logger, parseContext, argdebug)
-                Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
-                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug, argdebug)
+
+
+        if(algorithm == Algorithm.CEGAR) {
+            logger.write(Logger.Level.INFO,
+                "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
+            registerAllSolverManagers(solverHome, logger)
+            logger.write(Logger.Level.INFO,
+                "Registered solver managers successfully (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+            stopwatch.reset().start()
+            val config = parseConfigFromCli(parseContext)
+            if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
+                printConfigFile!!.writeText(gsonForOutput.toJson(config))
             }
-        // post verification
-        postVerificationLogging(safetyResult, parseContext)
-        logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
+            logger.write(Logger.Level.INFO, "Parsed config (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+            stopwatch.reset().start()
+            val safetyResult: SafetyResult<*, *> =
+                    when (strategy) {
+                        Strategy.DIRECT -> runDirect(xcfa, config, logger)
+                        Strategy.SERVER -> runServer(xcfa, config, logger, parseContext)
+                        Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
+                        Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug)
+                    }
+            // post verification
+            postVerificationLogging(safetyResult, parseContext)
+            logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
+        } else {
+            val xcfaPrep = XcfaToKindImc(xcfa,Int.MAX_VALUE,Z3SolverFactory.getInstance())
+            val checker = if (algorithm == Algorithm.KINDUCTION) {
+                xcfaPrep.createKind()
+            } else {
+                xcfaPrep.createImc()
+            }
+            var result = checker.check(null)
+            logger.write(Logger.Level.RESULT,result.toString() + "\n")
+        }
     }
 
     private fun runDirect(xcfa: XCFA, config: XcfaCegarConfig, logger: ConsoleLogger) =
