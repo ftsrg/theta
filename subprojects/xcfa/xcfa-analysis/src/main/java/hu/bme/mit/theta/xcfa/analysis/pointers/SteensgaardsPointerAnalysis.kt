@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.analysis.pointers
 import hu.bme.mit.theta.common.disjointset.DisjointSet
 import hu.bme.mit.theta.core.utils.PointerStore
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.xcfa.model.XCFA
 import kotlin.math.absoluteValue
 
 class DisjointSetMember(val varDecl: VarDecl<*>, val derefLevel: Int) {
@@ -51,6 +52,11 @@ class SteensgaardsPointerAnalysis : PointerAnalysis() {
         disjointSet.makeSet(xStar)
         disjointSetEdges.add(xAmp to x)
         disjointSetEdges.add(x to xStar)
+    }
+
+    override fun run(xcfa: XCFA): PointerStore {
+        val actions = getPointerActions(xcfa)
+        return runOnActions(actions)
     }
 
     override fun runOnActions(actions: List<PointerAction>): PointerStore {

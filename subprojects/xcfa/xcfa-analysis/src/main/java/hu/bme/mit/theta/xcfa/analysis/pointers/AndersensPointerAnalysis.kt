@@ -1,8 +1,14 @@
 package hu.bme.mit.theta.xcfa.analysis.pointers
 
 import hu.bme.mit.theta.core.utils.PointerStore
+import hu.bme.mit.theta.xcfa.model.XCFA
 
 class AndersensPointerAnalysis : PointerAnalysis() {
+    override fun run(xcfa: XCFA): PointerStore {
+        val actions = getPointerActions(xcfa)
+        return runOnActions(actions)
+    }
+
     override fun runOnActions(actions: List<PointerAction>): PointerStore {
         val pointerStore = PointerStore()
 

@@ -7,8 +7,11 @@ import hu.bme.mit.theta.core.type.anytype.AddrOfExpr
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
+import hu.bme.mit.theta.core.type.inttype.IntModExpr
 import hu.bme.mit.theta.core.utils.PointerStore
+import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XCFA
 
 interface PointerAction {
     val p: VarDecl<*>
@@ -21,10 +24,11 @@ data class DereferencingWritePointerAction(override val p: VarDecl<*>, override 
 data class AliasingPointerAction(override val p: VarDecl<*>, override val q: VarDecl<*>) : PointerAction
 
 abstract class PointerAnalysis {
+    abstract fun run(xcfa: XCFA): PointerStore
     abstract fun runOnActions(actions: List<PointerAction>): PointerStore
 
     companion object {
-        fun getPointerAction(label: StmtLabel): PointerAction? {
+        private fun getPointerAction(label: StmtLabel): PointerAction? {
             if (label.stmt is AssignStmt<*>) {
                 val assignStmt = label.stmt as AssignStmt<*>
                 val expr = assignStmt.expr
@@ -34,11 +38,14 @@ abstract class PointerAnalysis {
                     val pVarDecl = assignStmt.varDecl
                     val iVarDecl = ((expr.op as RefExpr<*>).decl) as VarDecl<*>
                     return ReferencingPointerAction(pVarDecl, iVarDecl)
-                } else if (expr is DeRefExpr<*>) {
+                } else if (expr is DeRefExpr<*> || (expr is IntModExpr && (expr as IntModExpr).leftOp is DeRefExpr<*>)) {
                     // p = *q
                     val pVarDecl = assignStmt.varDecl
-                    val qVarDecl = (expr.op as RefExpr<*>).decl as VarDecl<*>
-
+                    val qVarDecl = if (expr is DeRefExpr<*>) {
+                        (expr.op as RefExpr<*>).decl as VarDecl<*>
+                    } else {
+                        (((expr as IntModExpr).leftOp as DeRefExpr<*>).op as RefExpr<*>).decl as VarDecl<*>
+                    }
                     return DereferencingReadPointerAction(pVarDecl, qVarDecl)
                 } else if (expr is RefExpr<*>) {
                     // p = q
@@ -55,6 +62,23 @@ abstract class PointerAnalysis {
                 return DereferencingWritePointerAction(pVarDecl, qVarDecl)
             }
             return null
+        }
+
+        @JvmStatic
+        protected fun getPointerActions(xcfa: XCFA): List<PointerAction> {
+            val main = xcfa.initProcedures.first().first
+            val edges = main.edges
+            val actions = mutableListOf<PointerAction>()
+            edges.forEach { edge ->
+                val labels = edge.label.getFlatLabels()
+                labels.forEach { label ->
+                    val action = getPointerAction(label as StmtLabel)
+                    if (action != null) {
+                        actions.add(action)
+                    }
+                }
+            }
+            return actions
         }
 
         fun updateWithLabel(label: StmtLabel, pointerStore: PointerStore): PointerStore {
