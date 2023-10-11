@@ -23,15 +23,11 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-class XcfaAasporLts(xcfa: XCFA,
-    private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>) :
+class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>) :
     XcfaSporLts(xcfa) {
 
-    override fun <P : Prec> getEnabledActionsFor(
-        state: XcfaState<*>,
-        exploredActions: Collection<XcfaAction>,
-        prec: P
-    ): Set<XcfaAction> {
+    override fun <P : Prec> getEnabledActionsFor(state: XcfaState<*>, exploredActions: Collection<XcfaAction>,
+        prec: P): Set<XcfaAction> {
         // Collecting enabled actions
         val allEnabledActions = getAllEnabledActionsFor(state)
 
@@ -121,8 +117,8 @@ class XcfaAasporLts(xcfa: XCFA,
             return true
         }
         val usedByPersistentSetAction = getCachedUsedSharedObjects(
-            getTransitionOf(persistentSetAction))
-        val influencedSharedObjects = getInfluencedSharedObjects(getTransitionOf(action))
+            getEdgeOf(persistentSetAction))
+        val influencedSharedObjects = getInfluencedSharedObjects(getEdgeOf(action))
         for (varDecl in influencedSharedObjects) {
             if (usedByPersistentSetAction.contains(varDecl)) {
                 if (varDecl !in prec.usedVars) {
