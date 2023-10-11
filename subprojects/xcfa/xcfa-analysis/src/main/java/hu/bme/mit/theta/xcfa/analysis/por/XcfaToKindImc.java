@@ -19,9 +19,11 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import org.checkerframework.checker.units.qual.K;
+import hu.bme.mit.theta.xcfa.UtilsKt
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,15 +40,17 @@ public class XcfaToKindImc {
      Expr<BoolType> initExpr;
      Expr<BoolType> propExpr;
      int upperBound;
-     SolverFactory solverFactory;
+     SolverFactory solverFactory1;
      Set<VarDecl<?>> vars;
      StmtUnfoldResult transUnfold;
     
      
     public XcfaToKindImc(XCFA xcfa,int bound,SolverFactory solverFactory) {
-        Preconditions.checkArgument(xcfa.getProcedures().size() == 1);
+        Preconditions.checkArgument(xcfa.getInitProcedures().size() == 1);
 
-        var proc = xcfa.getProcedures().stream().findFirst().orElse(null);
+        var proc = xcfa.getInitProcedures().stream().findFirst().orElse(null).getFirst();
+        assert proc != null;
+        Preconditions.checkArgument(proc.getEdges().stream().map(UtilsKt::getFlatLabels).noneMatch(it -> it.stream().anyMatch(i -> !(i instanceof StmtLabel))));
         Preconditions.checkArgument(proc.getErrorLoc().isPresent());
         int i=0;
         final Map<XcfaLocation,Integer> map = new HashMap<>();
@@ -66,13 +70,14 @@ public class XcfaToKindImc {
         initExpr = Eq(locVar.getRef(), Int(map.get(proc.getInitLoc())));
         propExpr = Neq(locVar.getRef(), Int(map.get(proc.getErrorLoc().get())));
         upperBound = bound;
+        solverFactory1 = solverFactory;
 
     }
     public  KIndChecker<ExplState, StmtAction> createKind() {
-        return new KIndChecker<>(transExpr, initExpr, propExpr, upperBound, solverFactory.createSolver(), VarIndexingFactory.indexing(0), transUnfold.getIndexing(), ExplState::of, vars);
+        return new KIndChecker<>(transExpr, initExpr, propExpr, upperBound, solverFactory1.createSolver(), VarIndexingFactory.indexing(0), transUnfold.getIndexing(), ExplState::of, vars);
     }
     public  ImcChecker<ExplState, StmtAction> createImc() {
-        return new ImcChecker<>(transExpr, initExpr, propExpr, upperBound, solverFactory.createItpSolver(), VarIndexingFactory.indexing(0), transUnfold.getIndexing(), ExplState::of, vars,true);
+        return new ImcChecker<>(transExpr, initExpr, propExpr, upperBound, solverFactory1.createItpSolver(), VarIndexingFactory.indexing(0), transUnfold.getIndexing(), ExplState::of, vars,true);
     }
 
 }
