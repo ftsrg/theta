@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <key attr.name="sourcecodelang" attr.type="string" for="graph" id="sourcecodelang"/>
+    <key attr.name="creationtime" attr.type="string" for="graph" id="creationtime"/>
+    <key attr.name="witness-type" attr.type="string" for="graph" id="witness-type"/>
+    <key attr.name="producer" attr.type="string" for="graph" id="producer"/>
+    <key attr.name="architecture" attr.type="string" for="graph" id="architecture"/>
+    <key attr.name="programHash" attr.type="string" for="graph" id="programhash"/>
+    <key attr.name="programfile" attr.type="string" for="graph" id="programfile"/>
+    <key attr.name="specification" attr.type="string" for="graph" id="specification"/>
+    <key attr.name="assumption" attr.type="string" for="edge" id="assumption"/>
+    <key attr.name="assumption.scope" attr.type="string" for="edge" id="assumption.scope"/>
+    <key attr.name="assumption.resultfunction" attr.type="string" for="edge" id="assumption.resultfunction"/>
+    <key attr.name="control" attr.type="string" for="edge" id="control"/>
+    <key attr.name="startline" attr.type="string" for="edge" id="startline"/>
+    <key attr.name="endline" attr.type="string" for="edge" id="endline"/>
+    <key attr.name="startoffset" attr.type="string" for="edge" id="startoffset"/>
+    <key attr.name="endoffset" attr.type="string" for="edge" id="endoffset"/>
+    <key attr.name="enterLoopHead" attr.type="string" for="edge" id="enterLoopHead"/>
+    <key attr.name="enterFunction" attr.type="string" for="edge" id="enterFunction"/>
+    <key attr.name="returnFromFunction" attr.type="string" for="edge" id="returnFromFunction"/>
+    <key attr.name="threadId" attr.type="string" for="edge" id="threadId"/>
+    <key attr.name="stmt" attr.type="string" for="edge" id="stmt"/>
+    <key attr.name="cSource" attr.type="string" for="edge" id="cSource"/>
+    <key attr.name="entry" attr.type="string" for="node" id="entry">
+        <default>false</default>
+    </key>
+    <key attr.name="sink" attr.type="string" for="node" id="sink">
+        <default>false</default>
+    </key>
+    <key attr.name="violation" attr.type="string" for="node" id="violation">
+        <default>false</default>
+    </key>
+    <key attr.name="locationStacks" attr.type="string" for="node" id="locationStacks"/>
+    <key attr.name="sourceLines" attr.type="string" for="node" id="sourceLines"/>
+    <key attr.name="state" attr.type="string" for="node" id="state"/>
+    <graph edgedefault="directed">
+        <data key="witness-type">violation_witness</data>
+        <data key="producer">theta</data>
+        <data key="sourcecodelang">C</data>
+        <data key="specification">CHECK( init(main()), LTL(G ! call(reach_error())) )</data>
+        <data key="programfile">C:\Users\IQL\Documents\GitHub\theta\subprojects\xcfa\xcfa-cli\build\resources\test\c\litmustest\singlethread\04real.c</data>
+        <data key="programhash">e88353ba89b710f5672ee3fd2aa5a29920cab3d254480618c6155b4fa3320924</data>
+        <data key="architecture">32bit</data>
+        <data key="creationtime">2023-09-25T13:33:48Z</data>
+        <node id="N0">
+            <data key="entry">true</data>
+        </node>
+        <node id="N1">
+            <data key="locationStacks">{0=[main_init {init}]}</data>
+            <data key="sourceLines">{0=[&lt;unknown&gt;]}</data>
+            <data key="state">(ExplState)</data>
+        </node>
+        <node id="N2">
+            <data key="locationStacks">{0=[main_init {init}]}</data>
+            <data key="sourceLines">{0=[&lt;unknown&gt;]}</data>
+            <data key="state">(ExplState)</data>
+        </node>
+        <node id="N3"/>
+        <node id="N4"/>
+        <node id="N5"/>
+        <node id="N6"/>
+        <node id="N7">
+            <data key="locationStacks">{0=[__loc_8252 ]}</data>
+            <data key="sourceLines">{0=[&lt;unknown&gt;]}</data>
+            <data key="state">(ExplState (T0::_::main::ld (#b0 #b011111111111101 #b0001111011000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) (T0::_::main::d (#b0 #b01111111101 #b0001111011000001000000000000000000000000000000000000)) (T0::_::main::f (#b0 #b01111101 #b00011110110000010000000)))</data>
+        </node>
+        <node id="N8"/>
+        <node id="N9">
+            <data key="violation">true</data>
+            <data key="locationStacks">{0=[main_error {error}]}</data>
+            <data key="sourceLines">{0=[&lt;unknown&gt;]}</data>
+            <data key="state">(ExplState (T0::_::main::ld (#b0 #b011111111111101 #b0001111011000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) (T0::_::main::d (#b0 #b01111111101 #b0001111011000001000000000000000000000000000000000000)) (T0::_::main::f (#b0 #b01111101 #b00011110110000010000000)))</data>
+        </node>
+          
+        <edge source="N0" target="N1">
+            <data key="threadId">0</data>
+        </edge>
+        <edge source="N1" target="N2">
+            <data key="threadId">0</data>
+        </edge>
+        <edge source="N2" target="N3">
+            <data key="startline">4</data>
+            <data key="endline">4</data>
+            <data key="startoffset">4</data>
+            <data key="endoffset">4</data>
+            <data key="threadId">0</data>
+            <data key="stmt">(havoc T0::_::main::f)</data>
+            <data key="cSource">__VERIFIER_nondet_float()</data>
+        </edge>
+        <edge source="N3" target="N4">
+            <data key="startline">4</data>
+            <data key="endline">4</data>
+            <data key="startoffset">4</data>
+            <data key="endoffset">4</data>
+            <data key="threadId">0</data>
+            <data key="stmt">(assume true)</data>
+            <data key="cSource">__VERIFIER_nondet_float()</data>
+        </edge>
+        <edge source="N4" target="N5">
+            <data key="startline">5</data>
+            <data key="endline">5</data>
+            <data key="startoffset">5</data>
+            <data key="endoffset">5</data>
+            <data key="threadId">0</data>
+            <data key="stmt">(assign T0::_::main::d (fptofp[11,53] T0::_::main::f))</data>
+            <data key="cSource">double d = f;</data>
+        </edge>
+        <edge source="N5" target="N6">
+            <data key="startline">6</data>
+            <data key="endline">6</data>
+            <data key="startoffset">6</data>
+            <data key="endoffset">6</data>
+            <data key="threadId">0</data>
+            <data key="stmt">(assign T0::_::main::ld (fptofp[15,113] T0::_::main::d))</data>
+            <data key="cSource">long double ld = d;</data>
+        </edge>
+        <edge source="N6" target="N7">
+            <data key="threadId">0</data>
+        </edge>
+        <edge source="N7" target="N8">
+            <data key="startline">7</data>
+            <data key="endline">7</data>
+            <data key="startoffset">7</data>
+            <data key="endoffset">7</data>
+            <data key="threadId">0</data>
+            <data key="stmt">(assume (/= (ite (and (/= #b00000000000000000000000000000000 (ite (&gt; T0::_::main::ld (#b0 #b011111111111101 #b0001111010111000010100100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000)) (/= #b00000000000000000000000000000000 (ite (&lt; T0::_::main::ld (#b0 #b011111111111101 #b0100011110101110000101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)) #b00000000000000000000000000000001 #b00000000000000000000000000000000))) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))</data>
+            <data key="cSource">ld &gt; 0.28f &amp;&amp; ld &lt; 0.32f</data>
+        </edge>
+        <edge source="N8" target="N9"/>
+    </graph>
+</graphml>
