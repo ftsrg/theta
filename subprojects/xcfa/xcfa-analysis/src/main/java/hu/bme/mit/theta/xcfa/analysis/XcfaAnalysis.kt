@@ -224,7 +224,7 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
     XcfaAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
-        .projection { it.processes }
+        .projection { it.processes.map { (_, p) -> p.locs.peek() } }
         .build() // TODO: can we do this nicely?
 
 /// EXPL
