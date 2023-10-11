@@ -55,7 +55,9 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         val cexToConcretize = optionalNewCex.get()
         val traceToConcretize = cexToConcretize.toTrace()
 
-        return getAbstractedProcedureState(traceToConcretize)?.let { (i, state) ->
+        val refinerResult = super.refine(arg, prec)
+
+        return if (refinerResult.isUnsafe) getAbstractedProcedureState(traceToConcretize)?.let { (i, state) ->
             when (pruneStrategy) {
                 PruneStrategy.LAZY -> {
                     logger.write(Logger.Level.SUBSTEP, "|  |  Pruning from index %d...", i)
@@ -74,7 +76,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
             val refinedPrec = (prec as XcfaPrec<P>).copy()
             refinedPrec.noPop.add(state)
             RefinerResult.spurious(refinedPrec as P?)
-        } ?: super.refine(arg, prec)
+        } ?: refinerResult else refinerResult
     }
 
     companion object {

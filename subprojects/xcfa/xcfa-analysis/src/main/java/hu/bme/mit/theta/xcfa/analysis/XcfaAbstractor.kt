@@ -98,8 +98,8 @@ class XcfaAbstractor<S : State, A : Action, P : Prec>(
                 }
                 if (!onlyStackCovers) {
                     node.cover(candidate)
-                    return
                 }
+                return
             }
         }
     }
