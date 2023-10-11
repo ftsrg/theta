@@ -23,7 +23,7 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
 import org.checkerframework.checker.units.qual.K;
-import hu.bme.mit.theta.xcfa.UtilsKt
+import hu.bme.mit.theta.xcfa.UtilsKt;
 
 import java.util.HashMap;
 import java.util.List;
