@@ -132,13 +132,13 @@ public class XstsTest {
                         false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
                 {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.PRED_CART},
+                        false, XstsConfigBuilder.Domain.PRED_CART},
 
                 {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.EXPL},
+                        false, XstsConfigBuilder.Domain.EXPL},
 
                 {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+                        false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
                 {"src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop",
                         false, XstsConfigBuilder.Domain.PRED_CART},

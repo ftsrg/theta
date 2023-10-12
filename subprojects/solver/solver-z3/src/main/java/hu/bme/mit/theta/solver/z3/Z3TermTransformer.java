@@ -16,12 +16,9 @@
 package hu.bme.mit.theta.solver.z3;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.ArrayExpr;
-import com.microsoft.z3.ArraySort;
-import com.microsoft.z3.FPNum;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Model;
-import com.microsoft.z3.Z3Exception;
+import com.microsoft.z3.*;
+import com.microsoft.z3.enumerations.Z3_decl_kind;
+import com.microsoft.z3.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -30,25 +27,14 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.IffExpr;
-import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
-import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.type.booltype.OrExpr;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.booltype.*;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
@@ -74,18 +60,13 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
@@ -269,6 +250,12 @@ final class Z3TermTransformer {
                         FpUtils.getMathContext(type, FpRoundingMode.RNE)),
                 FpUtils.getMathContext(type, FpRoundingMode.RNE));
         return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
+    }
+
+    private Expr<EnumType> transformEnumLit(final com.microsoft.z3.Expr term, final EnumType enumType) {
+        String longName = term.getFuncDecl().getName().toString();
+        String literal = EnumType.getShortName(longName);
+        return EnumLitExpr.of(enumType, literal);
     }
 
     private Expr<?> transformApp(final com.microsoft.z3.Expr term, final Model model,
@@ -494,6 +481,22 @@ final class Z3TermTransformer {
         return (term, model, vars) -> {
             final com.microsoft.z3.Expr[] args = term.getArgs();
             checkArgument(args.length == 2, "Number of arguments must be two");
+            if (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
+                // binary operator is on enum types
+                // if either arg is a literal, we need special handling to get its type
+                // (references' decl kind is Z3_OP_UNINTERPRETED, literals' decl kind is Z3_OP_DT_CONSTRUCTOR)
+                int litIndex = -1;
+                for (int i = 0; i < 2; i++) {
+                    if (args[i].getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR))
+                        litIndex = i;
+                }
+                if (litIndex > -1) {
+                    int refIndex = Math.abs(litIndex - 1);
+                    final Expr<?> refOp = transform(args[refIndex], model, vars);
+                    final Expr<EnumType> litExpr = transformEnumLit(args[litIndex], (EnumType) refOp.getType());
+                    return function.apply(refOp, litExpr);
+                }
+            }
             final Expr<?> op1 = transform(args[0], model, vars);
             final Expr<?> op2 = transform(args[1], model, vars);
             return function.apply(op1, op2);
