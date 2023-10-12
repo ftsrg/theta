@@ -36,6 +36,6 @@ public final class ClockType implements Type {
 
     @Override
     public DomainSize getDomainSize() {
-        return DomainSize.ONE;
+        return DomainSize.INFINITY;
     }
 }
