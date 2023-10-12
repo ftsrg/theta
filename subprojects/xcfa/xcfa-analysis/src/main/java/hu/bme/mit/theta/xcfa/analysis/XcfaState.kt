@@ -78,8 +78,10 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                             state.exitMutex(label.substring("mutex_unlock".length + 1, label.length - 1), a.pid)
                         }
 
-                        in Regex("cond_init\\((.*)\\)") -> changes.add { state ->
-                            state.enterMutex(label.substring("cond_init".length + 1, label.length - 1), -1)
+                        in Regex("start_cond_wait\\((.*)\\)") -> {
+                            val args = label.substring("start_cond_wait".length + 1, label.length - 1).split(",")
+                            changes.add { state -> state.enterMutex(args[0], -1) }
+                            changes.add { state -> state.exitMutex(args[1], a.pid) }
                         }
 
                         in Regex("cond_wait\\((.*)\\)") -> {

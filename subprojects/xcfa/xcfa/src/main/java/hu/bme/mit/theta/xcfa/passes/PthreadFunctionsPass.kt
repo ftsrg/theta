@@ -38,18 +38,17 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
             val edges = edge.splitIf(this::predicate)
             if (edges.size > 1 || (edges.size == 1 && predicate((edges[0].label as SequenceLabel).labels[0]))) {
                 builder.removeEdge(edge)
-                val labels: MutableList<XcfaLabel> = ArrayList()
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
-                        val fence: XcfaLabel = when (invokeLabel.name) {
+                        val metadata = invokeLabel.metadata
+                        val fences: List<XcfaLabel> = when (invokeLabel.name) {
                             "pthread_join" -> {
                                 var handle = invokeLabel.params[1]
                                 while (handle is Reference<*, *>) handle = handle.op
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>,
-                                    metadata = invokeLabel.metadata)
+                                listOf(JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>, metadata))
                             }
 
                             "pthread_create" -> {
@@ -62,13 +61,9 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                                 val param = invokeLabel.params[4]
 
-                                StartLabel((funcptr as RefExpr<out Type>).decl.name,
+                                listOf(StartLabel((funcptr as RefExpr<out Type>).decl.name,
                                     listOf(Int(0), param), // int(0) to solve StartLabel not handling return params
-                                    (handle as RefExpr<out Type>).decl as VarDecl<*>, metadata = invokeLabel.metadata)
-                            }
-
-                            "pthread_mutex_init" -> {
-                                NopLabel
+                                    (handle as RefExpr<out Type>).decl as VarDecl<*>, metadata))
                             }
 
                             "pthread_mutex_lock" -> {
@@ -76,7 +71,7 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                                 while (handle is Reference<*, *>) handle = handle.op
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                FenceLabel(setOf("mutex_lock(${handle.decl.name})"), metadata = invokeLabel.metadata)
+                                listOf(FenceLabel(setOf("mutex_lock(${handle.decl.name})"), metadata))
                             }
 
                             "pthread_mutex_unlock" -> {
@@ -84,15 +79,7 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                                 while (handle is Reference<*, *>) handle = handle.op
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                FenceLabel(setOf("mutex_unlock(${handle.decl.name})"), metadata = invokeLabel.metadata)
-                            }
-
-                            "pthread_cond_init" -> {
-                                var cond = invokeLabel.params[1]
-                                while (cond is Reference<*, *>) cond = cond.op
-                                check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)
-
-                                FenceLabel(setOf("cond_init(${cond.decl.name})"), metadata = invokeLabel.metadata)
+                                listOf(FenceLabel(setOf("mutex_unlock(${handle.decl.name})"), metadata))
                             }
 
                             "pthread_cond_wait" -> {
@@ -103,8 +90,11 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                                 check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
-                                FenceLabel(setOf("cond_wait(${cond.decl.name},${handle.decl.name})"),
-                                    metadata = invokeLabel.metadata)
+                                listOf(
+                                    FenceLabel(setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"),
+                                        metadata),
+                                    FenceLabel(setOf("cond_wait(${cond.decl.name},${handle.decl.name})"), metadata)
+                                )
                             }
 
                             "pthread_cond_signal" -> {
@@ -112,17 +102,20 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                                 while (cond is Reference<*, *>) cond = cond.op
                                 check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)
 
-                                FenceLabel(setOf("cond_signal(${cond.decl.name})"), metadata = invokeLabel.metadata)
+                                listOf(FenceLabel(setOf("cond_signal(${cond.decl.name})"), metadata))
                             }
+
+                            "pthread_mutex_init", "pthread_cond_init" -> listOf(NopLabel)
 
                             else -> error("Unknown pthread function ${invokeLabel.name}")
                         }
-                        labels.add(fence)
+                        edge.withLabel(SequenceLabel(fences)).splitIf { fence ->
+                            fence is FenceLabel && fence.labels.any { l -> l.startsWith("start_cond_wait") }
+                        }.forEach(builder::addEdge)
                     } else {
-                        labels.addAll(it.label.labels)
+                        builder.addEdge(edge.withLabel(SequenceLabel(it.label.labels)))
                     }
                 }
-                builder.addEdge(edge.withLabel(SequenceLabel(labels)))
             }
         }
         return builder
