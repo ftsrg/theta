@@ -33,6 +33,9 @@ import kotlin.random.Random
 
 /**
  * LTS with a POR (Partial Order Reduction) algorithm applied as a filter when returning enabled actions.
+ * The algorithm is similar to the static source-set based POR algorithm described in the following paper:
+ * Abdulla, P., Aronis, S., Jonsson, B., Sagonas, K. (2017):
+ * Comparing source sets and persistent sets for partial order reduction
  *
  * @param xcfa the XCFA of the verified program
  */
@@ -76,16 +79,16 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
         // Collecting enabled actions
         val allEnabledActions = getAllEnabledActionsFor(state)
 
-        // Calculating the persistent set starting from every (or some of the) enabled transition; the minimal persistent set is stored
-        var minimalPersistentSet = setOf<XcfaAction>()
-        val persistentSetFirstActions = getPersistentSetFirstActions(state, allEnabledActions)
-        for (firstActions in persistentSetFirstActions) {
-            val persistentSet = calculatePersistentSet(allEnabledActions, firstActions)
-            if (minimalPersistentSet.isEmpty() || persistentSet.size < minimalPersistentSet.size) {
-                minimalPersistentSet = persistentSet
+        // Calculating the source set starting from every (or some of the) enabled transition; the minimal source set is stored
+        var minimalSourceSet = setOf<XcfaAction>()
+        val sourceSetFirstActions = getSourceSetFirstActions(state, allEnabledActions)
+        for (firstActions in sourceSetFirstActions) {
+            val sourceSet = calculateSourceSet(allEnabledActions, firstActions)
+            if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
+                minimalSourceSet = sourceSet
             }
         }
-        return minimalPersistentSet
+        return minimalSourceSet
     }
 
     /**
@@ -98,28 +101,38 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
         simpleXcfaLts.getEnabledActionsFor(state)
 
     /**
-     * Returns the possible starting actions of a persistent set.
+     * Returns the possible starting actions of a source set.
      *
      * @param allEnabledActions the enabled actions in the present state
-     * @return the possible starting actions of a persistent set
+     * @return the possible starting actions of a source set
      */
-    protected fun getPersistentSetFirstActions(state: XcfaState<*>,
+    protected fun getSourceSetFirstActions(state: XcfaState<*>,
         allEnabledActions: Collection<XcfaAction>): Collection<Collection<XcfaAction>> {
         val enabledActionsByProcess = allEnabledActions.groupBy(XcfaAction::pid)
         val enabledProcesses = enabledActionsByProcess.keys.toList().shuffled(random)
         return enabledProcesses.map { pid ->
             val firstProcesses = mutableSetOf(pid)
             checkMutexBlocks(state, pid, firstProcesses, enabledActionsByProcess)
-            firstProcesses.flatMap { checkNotNull(enabledActionsByProcess[it]) }
+            firstProcesses.flatMap { enabledActionsByProcess[it] ?: emptyList() }
         }
     }
 
+    /**
+     * Checks whether a process is blocked by a mutex and if it is, it adds the process that blocks it to the set of
+     * first processes.
+     *
+     * @param state the current state
+     * @param pid the process whose blocking is to be checked
+     * @param firstProcesses the set of first processes
+     * @param enabledActionsByProcess the enabled actions grouped by processes
+     * @return the set of first processes
+     */
     private fun checkMutexBlocks(state: XcfaState<*>, pid: Int, firstProcesses: MutableSet<Int>,
         enabledActionsByProcess: Map<Int, List<XcfaAction>>) {
         val processState = checkNotNull(state.processes[pid])
         if (!processState.paramsInitialized) return
         val disabledOutEdges = processState.locs.peek().outgoingEdges.filter { edge ->
-            checkNotNull(enabledActionsByProcess[pid]).none { action -> action.target == edge.target }
+            enabledActionsByProcess[pid]?.none { action -> action.target == edge.target } ?: true
         }
         disabledOutEdges.forEach { edge ->
             edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
@@ -137,52 +150,52 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
     }
 
     /**
-     * Calculates a persistent set of enabled actions starting from a particular action.
+     * Calculates a source set of enabled actions starting from a particular action.
      *
      * @param enabledActions the enabled actions in the present state
-     * @param firstActions   the actions that will be added to the persistent set as the first actions
-     * @return a persistent set of enabled actions
+     * @param firstActions   the actions that will be added to the source set as the first actions
+     * @return a source set of enabled actions
      */
-    private fun calculatePersistentSet(enabledActions: Collection<XcfaAction>,
+    private fun calculateSourceSet(enabledActions: Collection<XcfaAction>,
         firstActions: Collection<XcfaAction>): Set<XcfaAction> {
         if (firstActions.any(::isBackwardAction)) {
             return enabledActions.toSet()
         }
-        val persistentSet = firstActions.toMutableSet()
-        val otherActions = (enabledActions.toMutableSet() subtract persistentSet).toMutableSet() // actions not in the persistent set
+        val sourceSet = firstActions.toMutableSet()
+        val otherActions = (enabledActions.toMutableSet() subtract sourceSet).toMutableSet() // actions not in the source set
         var addedNewAction = true
         while (addedNewAction) {
             addedNewAction = false
             val actionsToRemove = mutableSetOf<XcfaAction>()
             for (action in otherActions) {
-                // for every action that is not in the persistent set it is checked whether it should be added to the persistent set
-                // (because it is dependent with an action already in the persistent set)
-                if (persistentSet.any { persistentSetAction -> areDependents(persistentSetAction, action) }) {
+                // for every action that is not in the source set it is checked whether it should be added to the source set
+                // (because it is dependent with an action already in the source set)
+                if (sourceSet.any { areDependents(it, action) }) {
                     if (isBackwardAction(action)) {
                         return enabledActions.toSet() // see POR algorithm for the reason of removing backward transitions
                     }
-                    persistentSet.add(action)
+                    sourceSet.add(action)
                     actionsToRemove.add(action)
                     addedNewAction = true
                 }
             }
             actionsToRemove.forEach(otherActions::remove)
         }
-        return persistentSet
+        return sourceSet
     }
 
     /**
      * Determines whether an action is dependent with another one (based on the notions introduced for the POR
-     * algorithm) already in the persistent set.
+     * algorithm) already in the source set.
      *
-     * @param persistentSetAction the action in the persistent set
-     * @param action              the other action (not in the persistent set)
-     * @return true, if the two actions are dependent in the context of persistent sets
+     * @param sourceSetAction the action in the source set
+     * @param action          the other action (not in the source set)
+     * @return true, if the two actions are dependent in the context of source sets
      */
-    private fun areDependents(persistentSetAction: XcfaAction, action: XcfaAction): Boolean {
-        val usedByPersistentSetAction = getCachedUsedSharedObjects(getEdgeOf(persistentSetAction))
-        return isSameProcess(persistentSetAction, action) ||
-            getInfluencedSharedObjects(getEdgeOf(action)).any { it in usedByPersistentSetAction }
+    private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction): Boolean {
+        val usedBySourceSetAction = getCachedUsedSharedObjects(getEdgeOf(sourceSetAction))
+        return isSameProcess(sourceSetAction, action) ||
+            getInfluencedSharedObjects(getEdgeOf(action)).any { it in usedBySourceSetAction }
     }
 
     /**
