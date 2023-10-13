@@ -43,6 +43,7 @@ import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
+import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -174,7 +175,10 @@ class XcfaCli(private val args: Array<String>) {
 
         // propagating input variables
         LbePass.level = lbeLevel
-        if (randomSeed >= 0) XcfaDporLts.random = Random(randomSeed)
+        if (randomSeed >= 0){
+            XcfaSporLts.random = Random(randomSeed)
+            XcfaDporLts.random = Random(randomSeed)
+        }
         if (argToFile) {
             WebDebuggerLogger.enableWebDebuggerLogger()
             WebDebuggerLogger.getInstance().setTitle(input?.name)
