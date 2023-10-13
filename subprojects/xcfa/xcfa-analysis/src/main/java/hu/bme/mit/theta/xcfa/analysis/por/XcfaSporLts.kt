@@ -40,7 +40,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
 
     companion object {
 
-        private val random: Random = Random.Default
+        var random: Random = Random.Default
         private val simpleXcfaLts = getXcfaLts()
     }
 
@@ -78,7 +78,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
 
         // Calculating the persistent set starting from every (or some of the) enabled transition; the minimal persistent set is stored
         var minimalPersistentSet = setOf<XcfaAction>()
-        val persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions)
+        val persistentSetFirstActions = getPersistentSetFirstActions(state, allEnabledActions)
         for (firstActions in persistentSetFirstActions) {
             val persistentSet = calculatePersistentSet(allEnabledActions, firstActions)
             if (minimalPersistentSet.isEmpty() || persistentSet.size < minimalPersistentSet.size) {
@@ -103,11 +103,37 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param allEnabledActions the enabled actions in the present state
      * @return the possible starting actions of a persistent set
      */
-    protected fun getPersistentSetFirstActions(
+    protected fun getPersistentSetFirstActions(state: XcfaState<*>,
         allEnabledActions: Collection<XcfaAction>): Collection<Collection<XcfaAction>> {
         val enabledActionsByProcess = allEnabledActions.groupBy(XcfaAction::pid)
         val enabledProcesses = enabledActionsByProcess.keys.toList().shuffled(random)
-        return enabledProcesses.map { checkNotNull(enabledActionsByProcess[it]) }
+        return enabledProcesses.map { pid ->
+            val firstProcesses = mutableSetOf(pid)
+            checkMutexBlocks(state, pid, firstProcesses, enabledActionsByProcess)
+            firstProcesses.flatMap { checkNotNull(enabledActionsByProcess[it]) }
+        }
+    }
+
+    private fun checkMutexBlocks(state: XcfaState<*>, pid: Int, firstProcesses: MutableSet<Int>,
+        enabledActionsByProcess: Map<Int, List<XcfaAction>>) {
+        val processState = checkNotNull(state.processes[pid])
+        if (!processState.paramsInitialized) return
+        val disabledOutEdges = processState.locs.peek().outgoingEdges.filter { edge ->
+            checkNotNull(enabledActionsByProcess[pid]).none { action -> action.target == edge.target }
+        }
+        disabledOutEdges.forEach { edge ->
+            edge.getFlatLabels().filterIsInstance<FenceLabel>().forEach { fence ->
+                fence.labels.filter { it.startsWith("mutex_lock") }.forEach { lock ->
+                    val mutex = lock.substringAfter('(').substringBefore(')')
+                    state.mutexes[mutex]?.let { pid2 ->
+                        if (pid2 !in firstProcesses) {
+                            firstProcesses.add(pid2)
+                            checkMutexBlocks(state, pid2, firstProcesses, enabledActionsByProcess)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -188,14 +214,25 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param edge whose global variables are to be returned
      * @return the set of directly or indirectly used global variables
      */
-    private fun getUsedSharedObjects(edge: XcfaEdge): Set<Decl<out Type>> =
-        if (edge.getFlatLabels().any(XcfaLabel::isAtomicBegin)) {
-            getSharedObjectsWithBFS(edge) {
-                it.getFlatLabels().none(XcfaLabel::isAtomicEnd)
-            }.toSet()
+    private fun getUsedSharedObjects(edge: XcfaEdge): Set<Decl<out Type>> {
+        val flatLabels = edge.getFlatLabels()
+        return if (flatLabels.any(XcfaLabel::isAtomicBegin)) {
+            getSharedObjectsWithBFS(edge) { it.getFlatLabels().none(XcfaLabel::isAtomicEnd) }.toSet()
         } else {
-            getDirectlyUsedSharedObjects(edge)
+            val lock = flatLabels.firstOrNull {
+                it is FenceLabel && it.labels.any { l -> l.startsWith("mutex_lock") }
+            } as FenceLabel?
+            if (lock != null) {
+                val mutex = lock.labels.first { l -> l.startsWith("mutex_lock") }
+                    .substringAfter('(').substringBefore(')')
+                getSharedObjectsWithBFS(edge) {
+                    it.getFlatLabels().none { fl -> fl is FenceLabel && "mutex_unlock(${mutex})" in fl.labels }
+                }.toSet()
+            } else {
+                getDirectlyUsedSharedObjects(edge)
+            }
         }
+    }
 
     /**
      * Same as [getUsedSharedObjects] with an additional cache layer.

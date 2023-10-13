@@ -35,7 +35,7 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
         // The minimal persistent set is stored
         var minimalPersistentSet = mutableSetOf<XcfaAction>()
         val persistentSetFirstActions = if (exploredActions.isEmpty()) {
-            getPersistentSetFirstActions(allEnabledActions)
+            getPersistentSetFirstActions(state, allEnabledActions)
         } else {
             setOf(exploredActions)
         }
@@ -116,8 +116,7 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
         if (isSameProcess(persistentSetAction, action)) {
             return true
         }
-        val usedByPersistentSetAction = getCachedUsedSharedObjects(
-            getEdgeOf(persistentSetAction))
+        val usedByPersistentSetAction = getCachedUsedSharedObjects(getEdgeOf(persistentSetAction))
         val influencedSharedObjects = getInfluencedSharedObjects(getEdgeOf(action))
         for (varDecl in influencedSharedObjects) {
             if (usedByPersistentSetAction.contains(varDecl)) {
