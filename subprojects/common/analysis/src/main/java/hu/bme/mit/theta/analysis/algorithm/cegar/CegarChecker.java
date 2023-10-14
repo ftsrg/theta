@@ -91,7 +91,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
             logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
-            if (wdl != null) {
+            if (WebDebuggerLogger.enabled()) {
                 String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
                 String precString = prec.toString();
                 wdl.addIteration(iteration, argGraph, precString);
