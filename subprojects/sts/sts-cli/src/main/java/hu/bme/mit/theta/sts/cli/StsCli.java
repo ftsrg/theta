@@ -27,7 +27,9 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -51,6 +53,7 @@ import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
 import hu.bme.mit.theta.sts.analysis.StsAction;
+import hu.bme.mit.theta.sts.analysis.StsToMonoliticTransFunc;
 import hu.bme.mit.theta.sts.analysis.StsTraceConcretizer;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
@@ -73,7 +76,8 @@ public class StsCli {
 
 	enum Algorithm{
 		CEGAR,
-		KINDUCTION
+		KINDUCTION,
+        IMC
 	}
 
 	@Parameter(names = {"--domain"}, description = "Abstract domain")
@@ -162,11 +166,15 @@ public class StsCli {
 			if(algorithm.equals(Algorithm.CEGAR)) {
 				final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
 				status = check(configuration);
-			}else if(algorithm.equals(Algorithm.KINDUCTION))
-			{
-				var checker=new KIndChecker<>(sts.getTrans(), sts.getInit(), sts.getProp(),Integer.MAX_VALUE,Z3SolverFactory.getInstance().createSolver(), VarIndexingFactory.indexing(0),VarIndexingFactory.indexing(1),v -> ExplState.of(v),sts.getVars());
-				status=checker.check(null);
-			}
+            } else if (algorithm.equals(Algorithm.KINDUCTION)) {
+                var transFunc = StsToMonoliticTransFunc.create(sts);
+                var checker = new KIndChecker2<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, sts.getVars());
+                status = checker.check(null);
+            } else if (algorithm.equals(Algorithm.IMC)) {
+                var transFunc = StsToMonoliticTransFunc.create(sts);
+                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, sts.getVars(), true);
+                status = checker.check(null);
+            }
 			sw.stop();
 			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {

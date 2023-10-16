@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.algorithm.imc;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.MonolithicTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -38,26 +39,22 @@ public class ImcChecker<S  extends ExprState, A extends StmtAction> implements S
     final Collection<VarDecl<?>> vars;
     final boolean interpolateForward;
 
-    public ImcChecker(Expr<BoolType> trans,
-                       Expr<BoolType> init,
-                       Expr<BoolType> prop,
-                       int upperBound,
-                       ItpSolver solver,
-                       VarIndexing firstIndexing,
-                       VarIndexing offset,
-                       Function<Valuation,S> valToState,
-                       Collection<VarDecl<?>> vars,
-                       boolean interpolateForward) {
-        this.trans = trans;
-        this.init = init;
-        this.prop = prop;
+    public ImcChecker(MonolithicTransFunc transFunc,
+                      int upperBound,
+                      ItpSolver solver,
+                      Function<Valuation,S> valToState,
+                      Collection<VarDecl<?>> vars,
+                      boolean interpolateForward1) {
+        this.trans = transFunc.getTransExpr();
+        this.init = transFunc.getInitExpr();
+        this.prop = transFunc.getPropExpr();
         this.upperBound = upperBound;
         this.solver = solver;
-        this.firstIndexing = firstIndexing;
-        this.offset = offset;
+        this.firstIndexing = transFunc.getInitIndexing();
+        this.offset = transFunc.getOffsetIndexing();
         this.valToState = valToState;
         this.vars = vars;
-        this.interpolateForward = interpolateForward;
+        interpolateForward =interpolateForward1;
     }
 
 

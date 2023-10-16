@@ -95,7 +95,8 @@ public class XstsConfigBuilder {
 
 	public enum Algorithm {
 		CEGAR,
-		KINDUCTION
+		KINDUCTION,
+        IMC
 	}
 
 	public enum Domain {

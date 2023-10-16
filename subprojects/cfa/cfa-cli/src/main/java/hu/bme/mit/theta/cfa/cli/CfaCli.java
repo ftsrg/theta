@@ -35,13 +35,12 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.cfa.analysis.CfaKIndCheckerBuilder;
-import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
+import hu.bme.mit.theta.cfa.analysis.*;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Algorithm;
@@ -245,16 +244,23 @@ public class CfaCli {
             }
 
 			final SafetyResult<?, ?> status;
-			if(algorithm == Algorithm.CEGAR){
-				final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
-				status = check(configuration);
-				sw.stop();
-			} else if(algorithm == Algorithm.KINDUCTION){
-				var checker = CfaKIndCheckerBuilder.create(cfa, Z3SolverFactory.getInstance(), Integer.MAX_VALUE);
-				status = checker.check(null);
-				logger.write(Logger.Level.RESULT, "%s%n", status);
-				sw.stop();
-			} else {
+            if (algorithm == Algorithm.CEGAR) {
+                final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
+                status = check(configuration);
+                sw.stop();
+            } else if (algorithm == Algorithm.KINDUCTION) {
+                var transFunc = CfaToMonoliticTransFunc.create(cfa);
+                var checker = new KIndChecker2<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, cfa.getVars());
+                status = checker.check(null);
+                logger.write(Logger.Level.RESULT, "%s%n", status);
+                sw.stop();
+            } else if (algorithm == Algorithm.IMC) {
+                var transFunc = CfaToMonoliticTransFunc.create(cfa);
+                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, cfa.getVars(), true);
+                status = checker.check(null);
+                logger.write(Logger.Level.RESULT, "%s%n", status);
+                sw.stop();
+            } else {
 				throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
 			}
 
