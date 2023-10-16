@@ -95,7 +95,8 @@ public class CfaConfigBuilder {
 
 	public enum Algorithm {
 		CEGAR,
-		KINDUCTION
+		KINDUCTION,
+        IMC
 	}
     
     public enum Domain {

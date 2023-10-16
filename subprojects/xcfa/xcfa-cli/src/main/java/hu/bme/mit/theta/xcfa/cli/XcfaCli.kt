@@ -27,6 +27,8 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
@@ -40,6 +42,7 @@ import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -53,6 +56,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
+import hu.bme.mit.theta.xcfa.analysis.XcfaTransFunc
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio
@@ -273,13 +277,13 @@ class XcfaCli(private val args: Array<String>) {
             postVerificationLogging(safetyResult, parseContext)
             logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
         } else {
-            val xcfaPrep = XcfaToKindImc(xcfa,Int.MAX_VALUE,Z3SolverFactory.getInstance())
+            val transFunc = XcfaTransFunc.create(xcfa)
             val checker = if (algorithm == Algorithm.KINDUCTION) {
-                xcfaPrep.createKind()
+                KIndChecker2(transFunc, Int.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr))
             } else {
-                xcfaPrep.createImc()
+                ImcChecker<ExplState, StmtAction>(transFunc, Int.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr), true)
             }
-            var result = checker.check(null)
+            val result = checker.check(null)
             logger.write(Logger.Level.RESULT,result.toString() + "\n")
         }
     }

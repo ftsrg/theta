@@ -22,6 +22,7 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -50,6 +51,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
+import hu.bme.mit.theta.xsts.analysis.XstsToMonoliticTransFunc;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
@@ -59,6 +61,8 @@ import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
+import hu.bme.mit.theta.analysis.algorithm.MonolithicTransFunc;
+import hu.bme.mit.theta.xsts.type.XstsPrimitiveType;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -254,6 +258,7 @@ public class XstsCli {
                 status = check(configuration);
                 sw.stop();
             } else if (algorithm.equals(Algorithm.KINDUCTION)) {
+<<<<<<< HEAD
 
 <<<<<<< HEAD
                 var init = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
@@ -458,6 +463,16 @@ public class XstsCli {
 =======
                 var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(trans, init, xsts.getProp(), Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), firstIndex, offsetIndex, (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
 >>>>>>> 1ac9dc74b (Refactored CFA KInduction handling)
+=======
+                var transFunc = XstsToMonoliticTransFunc.create(xsts);
+                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
+                status = checker.check(null);
+                logger.write(Logger.Level.RESULT, "%s%n", status);
+                sw.stop();
+            } else if (algorithm.equals(Algorithm.IMC)) {
+                var transFunc = XstsToMonoliticTransFunc.create(xsts);
+                var checker = new ImcChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars(), true);
+>>>>>>> a773ce9c3 (introduced monolitic interface)
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();

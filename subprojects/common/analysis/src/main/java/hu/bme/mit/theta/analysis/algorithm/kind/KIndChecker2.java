@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.algorithm.kind;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.MonolithicTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 
@@ -42,25 +43,20 @@ public class KIndChecker2<S  extends ExprState, A extends ExprAction> implements
     final Collection<VarDecl<?>> vars;
 
 
-    public KIndChecker2(Expr<BoolType> trans,
-                       Expr<BoolType> init,
-                       Expr<BoolType> prop,
-                       int upperBound,
-                       Solver solver1,
+    public KIndChecker2(MonolithicTransFunc transFunc,
+                        int upperBound,
+                        Solver solver1,
                         Solver solver2,
-                       VarIndexing firstIndexing,
-                       VarIndexing offset,
-                       Function<Valuation,S> valToState,
-                       Collection<VarDecl<?>> vars) {
-        this.trans = trans;
-        this.init = init;
-        this.prop = prop;
+                        Function<Valuation,S> valToState,
+                        Collection<VarDecl<?>> vars) {
+        this.trans = transFunc.getTransExpr();
+        this.init = transFunc.getInitExpr();
+        this.prop = transFunc.getPropExpr();
         this.upperBound = upperBound;
         this.solver1 = solver1;
         this.solver2= solver2;
-        this.firstIndexing = firstIndexing;
-
-        this.offset = offset;
+        this.firstIndexing = transFunc.getInitIndexing();
+        this.offset = transFunc.getOffsetIndexing();
         this.valToState = valToState;
         this.vars = vars;
     }

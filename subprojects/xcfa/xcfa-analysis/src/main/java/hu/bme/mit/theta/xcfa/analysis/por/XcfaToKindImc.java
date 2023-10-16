@@ -73,11 +73,4 @@ public class XcfaToKindImc {
         solverFactory1 = solverFactory;
 
     }
-    public  KIndChecker<ExplState, StmtAction> createKind() {
-        return new KIndChecker<>(transExpr, initExpr, propExpr, upperBound, solverFactory1.createSolver(), VarIndexingFactory.indexing(0), transUnfold.getIndexing(), ExplState::of, vars);
-    }
-    public  ImcChecker<ExplState, StmtAction> createImc() {
-        return new ImcChecker<>(transExpr, initExpr, propExpr, upperBound, solverFactory1.createItpSolver(), VarIndexingFactory.indexing(0), transUnfold.getIndexing(), ExplState::of, vars,true);
-    }
-
 }
