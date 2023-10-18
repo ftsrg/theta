@@ -29,37 +29,45 @@ abstract class PointerAnalysis {
 
     companion object {
         private fun getPointerAction(label: StmtLabel): PointerAction? {
-            if (label.stmt is AssignStmt<*>) {
-                val assignStmt = label.stmt as AssignStmt<*>
-                val expr = assignStmt.expr
+            try {
+                if (label.stmt is AssignStmt<*>) {
+                    val assignStmt = label.stmt as AssignStmt<*>
+                    val expr = assignStmt.expr
 
-                if (expr is AddrOfExpr<*>) {
-                    // p = &i
-                    val pVarDecl = assignStmt.varDecl
-                    val iVarDecl = ((expr.op as RefExpr<*>).decl) as VarDecl<*>
-                    return ReferencingPointerAction(pVarDecl, iVarDecl)
-                } else if (expr is DeRefExpr<*> || (expr is IntModExpr && (expr as IntModExpr).leftOp is DeRefExpr<*>)) {
-                    // p = *q
-                    val pVarDecl = assignStmt.varDecl
-                    val qVarDecl = if (expr is DeRefExpr<*>) {
-                        (expr.op as RefExpr<*>).decl as VarDecl<*>
-                    } else {
-                        (((expr as IntModExpr).leftOp as DeRefExpr<*>).op as RefExpr<*>).decl as VarDecl<*>
+                    if (expr is AddrOfExpr<*>) {
+                        // p = &i
+                        val pVarDecl = assignStmt.varDecl
+                        val iVarDecl = ((expr.op as RefExpr<*>).decl) as VarDecl<*>
+                        return ReferencingPointerAction(pVarDecl, iVarDecl)
+                    } else if (expr is DeRefExpr<*> || (expr is IntModExpr && (expr as IntModExpr).leftOp is DeRefExpr<*>)) {
+                        // p = *q
+                        val pVarDecl = assignStmt.varDecl
+                        val qVarDecl = if (expr is DeRefExpr<*>) {
+                            (expr.op as RefExpr<*>).decl as VarDecl<*>
+                        } else {
+                            (((expr as IntModExpr).leftOp as DeRefExpr<*>).op as RefExpr<*>).decl as VarDecl<*>
+                        }
+                        return DereferencingReadPointerAction(pVarDecl, qVarDecl)
+                    } else if (expr is RefExpr<*>) {
+                        // p = q
+                        val pVarDecl = assignStmt.varDecl
+                        val qVarDecl = expr.decl as VarDecl<*>
+
+                        return AliasingPointerAction(pVarDecl, qVarDecl)
                     }
-                    return DereferencingReadPointerAction(pVarDecl, qVarDecl)
-                } else if (expr is RefExpr<*>) {
-                    // p = q
-                    val pVarDecl = assignStmt.varDecl
-                    val qVarDecl = expr.decl as VarDecl<*>
-
-                    return AliasingPointerAction(pVarDecl, qVarDecl)
+                } else if (label.stmt is DerefWriteStmt) {
+                    // *p = q
+                    val pVarDecl = ((label.stmt as DerefWriteStmt).deRef.op as RefExpr<*>).decl as VarDecl<*>
+                    return if ((label.stmt as DerefWriteStmt).expr is RefExpr<*>) {
+                        val qVarDecl = ((label.stmt as DerefWriteStmt).expr as RefExpr<*>).decl as VarDecl<*>
+                        DereferencingWritePointerAction(pVarDecl, qVarDecl)
+                    } else {
+                        null
+                    }
                 }
-            } else if (label.stmt is DerefWriteStmt) {
-                // *p = q
-                val pVarDecl = ((label.stmt as DerefWriteStmt).deRef.op as RefExpr<*>).decl as VarDecl<*>
-                val qVarDecl = ((label.stmt as DerefWriteStmt).expr as RefExpr<*>).decl as VarDecl<*>
-
-                return DereferencingWritePointerAction(pVarDecl, qVarDecl)
+            } catch (e: Exception) {
+                println("Exception in getPointerAction: $label ${e.message}")
+                return null
             }
             return null
         }
@@ -72,9 +80,11 @@ abstract class PointerAnalysis {
             edges.forEach { edge ->
                 val labels = edge.label.getFlatLabels()
                 labels.forEach { label ->
-                    val action = getPointerAction(label as StmtLabel)
-                    if (action != null) {
-                        actions.add(action)
+                    if (label is StmtLabel) {
+                        val action = getPointerAction(label)
+                        if (action != null) {
+                            actions.add(action)
+                        }
                     }
                 }
             }
@@ -91,7 +101,8 @@ abstract class PointerAnalysis {
                 }
                 is DereferencingWritePointerAction -> {
                     // *p = q
-                    throw UnsupportedOperationException("DereferencingWritePointerAction found")
+                    // throw UnsupportedOperationException("DereferencingWritePointerAction found")
+                    println("DereferencingWritePointerAction found: $label")
                 }
                 is DereferencingReadPointerAction -> {
                     // p = *q

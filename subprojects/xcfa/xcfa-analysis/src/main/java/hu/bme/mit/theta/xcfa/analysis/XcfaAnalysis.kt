@@ -33,11 +33,7 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.DerefWriteStmt
-import hu.bme.mit.theta.core.stmt.PointerDereffedStmt
-import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -80,94 +76,89 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
             listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(),
                 proc.value.paramStmts.peek().first)))
         } else {
-            val actions: List<List<XcfaAction>> = proc.value.locs.peek().outgoingEdges.map { edge ->
+            proc.value.locs.peek().outgoingEdges.map { edge ->
                 val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
                 val flatLabels = newLabel.getFlatLabels()
-                if (flatLabels.any { it is InvokeLabel || it is StartLabel }) {
-                    val newNewLabel = SequenceLabel(flatLabels.map { label ->
-                        if (label is InvokeLabel) {
-                            val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
-                                ?: error("No such method ${label.name}.")
-                            val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-                            SequenceLabel(listOf(procedure.params.withIndex()
-                                .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
-                                    val originalVar = iVal.value.first
-                                    val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
-                                        originalVar.type)
-                                    lookup[originalVar] = tempVar
-                                    StmtLabel(
-                                        Stmts.Assign(
-                                            TypeUtils.cast(tempVar, tempVar.type),
-                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
-                                        metadata = label.metadata)
-                                }, listOf(label.copy(tempLookup = lookup))).flatten())
-                        } else if (label is StartLabel) {
-                            val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
-                                ?: error("No such method ${label.name}.")
-                            val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
-                            SequenceLabel(listOf(procedure.params.withIndex()
-                                .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
-                                    val originalVar = iVal.value.first
-                                    val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
-                                        originalVar.type)
-                                    lookup[originalVar] = tempVar
-                                    StmtLabel(
-                                        Stmts.Assign(
-                                            TypeUtils.cast(tempVar, tempVar.type),
-                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
-                                        metadata = label.metadata)
-                                }, listOf(label.copy(tempLookup = lookup))).flatten())
-                        } else label
-                    })
-                    listOf(XcfaAction(proc.key, edge.withLabel(newNewLabel)))
-                } else {
-                    val actions = mutableListOf<XcfaAction>()
-                    if (newLabel is SequenceLabel) {
-                        newLabel.labels.map { label ->
-                            if (label is StmtLabel) {
-                                val deRefExprs = when (val stmt = label.stmt) {
-                                    is AssumeStmt -> getDeRefExprs(stmt.cond, mutableSetOf())
-                                    is AssignStmt<*> -> getDeRefExprs(stmt.expr, mutableSetOf())
-                                    is DerefWriteStmt -> setOf(stmt.deRef)
-                                    else -> emptySet()
-                                }
-                                if (deRefExprs.isNotEmpty()) {
-                                    val deRefsPointTo = deRefExprs.associateWith { deRefExpr ->
-                                        val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
-                                        s.pointerStore.pointsTo(varDecl)
-                                    }
-                                    val descartesProduct: Set<Set<Pair<DeRefExpr<*>, VarDecl<*>>>> = deRefsPointTo.map { entry ->
-                                        entry.value.map { pointsTo ->
-                                            setOf(Pair(entry.key, pointsTo))
-                                        }.toSet()
-                                    }.reduce { acc, set -> acc.flatMap { accSet -> set.map { setSet -> accSet + setSet } }.toSet() }
 
-                                    actions.addAll(
-                                        descartesProduct.map { pointsToSet ->
-                                            val newDeReffedLabel = newLabel.changeDeRefs(pointsToSet.toMap())
-                                            val newSeqLabels = mutableListOf(newDeReffedLabel)
-                                            newSeqLabels.addAll(pointsToSet.map { (deRefExpr, pointsTo) ->
-                                                StmtLabel(PointerDereffedStmt.of(deRefExpr, pointsTo), metadata = label.metadata)
-                                            })
-                                            val newSeqLabel = SequenceLabel(newSeqLabels)
-                                            XcfaAction(proc.key, edge.withLabel(newSeqLabel))
-                                        }
-                                    )
-                                }
-                            }
-                        }
+                val newNewLabel = if (flatLabels.any { it is InvokeLabel || it is StartLabel }) handleInvokeAndStartLabels(
+                    flatLabels,
+                    s
+                ) else newLabel
+                assert(newNewLabel is SequenceLabel)
+
+                val deRefExprs = getDeRefEpxrs(newNewLabel)
+
+                if (deRefExprs.isNotEmpty()) {
+                    val deRefLut = deRefExprs.associateWith { deRefExpr ->
+                        val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
+                        val pointsTo = s.pointerStore.pointsTo(varDecl)
+                        assert(pointsTo.size == 1) { "Pointer points to multiple variables." }
+                        pointsTo.first()
                     }
-                    if (actions.isEmpty()) {
-                        actions.add(XcfaAction(proc.key, edge.withLabel(newLabel)))
+                    val deReffedNewLabel = newNewLabel.changeDeRefs(deRefLut)
+                    val ptrDereffedStmts = deRefLut.map { (deRefExpr, pointsTo) ->
+                        StmtLabel(PointerDereffedStmt.of(deRefExpr, pointsTo), metadata = newLabel.metadata)
                     }
-                    actions
+                    val finalSequenceLabel = SequenceLabel(listOf(deReffedNewLabel.getFlatLabels(), ptrDereffedStmts).flatten())
+                    listOf(XcfaAction(proc.key, edge.withLabel(finalSequenceLabel)))
+                } else {
+                    listOf(XcfaAction(proc.key, edge.withLabel(newNewLabel)))
                 }
-            }
-            actions.flatten()
+            }.flatten()
         }
     }.flatten().toSet()
 }
 
+private fun handleInvokeAndStartLabels(flatLabels: List<XcfaLabel>, s: XcfaState<out ExprState>) =
+        SequenceLabel(flatLabels.map { label ->
+            if (label is InvokeLabel) {
+                val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                        ?: error("No such method ${label.name}.")
+                val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+                SequenceLabel(listOf(procedure.params.withIndex()
+                        .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                            val originalVar = iVal.value.first
+                            val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
+                                    originalVar.type)
+                            lookup[originalVar] = tempVar
+                            StmtLabel(
+                                    Stmts.Assign(
+                                            TypeUtils.cast(tempVar, tempVar.type),
+                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                    metadata = label.metadata)
+                        }, listOf(label.copy(tempLookup = lookup))).flatten())
+            } else if (label is StartLabel) {
+                val procedure = s.xcfa?.procedures?.find { proc -> proc.name == label.name }
+                        ?: error("No such method ${label.name}.")
+                val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
+                SequenceLabel(listOf(procedure.params.withIndex()
+                        .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                            val originalVar = iVal.value.first
+                            val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
+                                    originalVar.type)
+                            lookup[originalVar] = tempVar
+                            StmtLabel(
+                                    Stmts.Assign(
+                                            TypeUtils.cast(tempVar, tempVar.type),
+                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                    metadata = label.metadata)
+                        }, listOf(label.copy(tempLookup = lookup))).flatten())
+            } else label
+        })
+
+
+fun getDeRefEpxrs(label: XcfaLabel): Set<DeRefExpr<*>> {
+    return label.getFlatLabels().map {
+        if (it is StmtLabel) {
+            when (val stmt = it.stmt) {
+                is AssumeStmt -> getDeRefExprs(stmt.cond, mutableSetOf())
+                is AssignStmt<*> -> getDeRefExprs(stmt.expr, mutableSetOf())
+                is DerefWriteStmt -> setOf(stmt.deRef)
+                else -> emptySet()
+            }
+        } else emptySet()
+    }.flatten().toSet()
+}
 fun getDeRefExprs(expr: Expr<*>, output: MutableSet<DeRefExpr<*>>): Set<DeRefExpr<*>> {
     if (expr is DeRefExpr<*>) {
         output.add(expr)
@@ -272,6 +263,7 @@ private fun getExplXcfaInitFunc(xcfa: XCFA,
 private fun getExplXcfaTransFunc(solver: Solver,
     maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
     val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
+    // xcfastatebe elrakni a precisiont
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
