@@ -495,17 +495,17 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 checkState(localAccept instanceof RefExpr<?> && ((RefExpr<?>) localAccept).getDecl() instanceof VarDecl, "Referencing non-variable expressions is not allowed!");
                 return reference((RefExpr<?>) localAccept);
             case "*":
-                type = CComplexType.getType(accept, parseContext);
-                checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
-                return dereference(accept, (CPointer) type);
+                // type = CComplexType.getType(accept, parseContext);
+                // checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
+                return dereference(accept);
         }
         return accept;
     }
 
-    private Expr<?> dereference(Expr<?> accept, CPointer type) {
+    private Expr<?> dereference(Expr<?> accept) {
         checkState(!(CComplexType.getType(accept, parseContext) instanceof CReal), "Float pointers are not yet supported!", parseContext);
         Expr<?> of = DeRefExpr.of(accept);
-        parseContext.getMetadata().create(of, "cType", type.getEmbeddedType());
+        parseContext.getMetadata().create(of, "cType", new CPointer(null, CComplexType.getType(accept, parseContext), parseContext));
         return of;
     }
 

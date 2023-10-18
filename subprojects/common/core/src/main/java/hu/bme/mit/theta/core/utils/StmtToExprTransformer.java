@@ -235,7 +235,7 @@ final class StmtToExprTransformer {
 
         @Override
         public StmtUnfoldResult visit(DerefWriteStmt stmt, VarIndexing indexing) {
-            throw new UnsupportedOperationException();
+            return StmtUnfoldResult.of(ImmutableList.of(True()), indexing);
         }
 
         @Override

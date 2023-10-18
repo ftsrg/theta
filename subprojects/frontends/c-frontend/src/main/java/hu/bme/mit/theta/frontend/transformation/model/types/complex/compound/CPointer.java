@@ -36,4 +36,9 @@ public class CPointer extends CCompound {
     public CComplexType getEmbeddedType() {
         return embeddedType;
     }
+
+    @Override
+    public CComplexType getSmallestCommonType(CComplexType type) {
+        return embeddedType.getSmallestCommonType(type);
+    }
 }

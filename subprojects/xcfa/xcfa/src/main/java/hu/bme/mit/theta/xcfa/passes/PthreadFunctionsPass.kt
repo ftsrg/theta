@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.UnaryExpr
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
@@ -46,7 +48,7 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                         val fence = when (invokeLabel.name) {
                             "pthread_join" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *> || handle is AddrOfExpr<*>) handle = (handle as UnaryExpr<*, *>).op
                                 check(
                                     handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
@@ -56,7 +58,7 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_create" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *> || handle is AddrOfExpr<*>) handle = (handle as UnaryExpr<*, *>).op
                                 check(
                                     handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
@@ -74,7 +76,7 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_mutex_lock" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *> || handle is AddrOfExpr<*>) handle = (handle as UnaryExpr<*, *>).op
                                 check(
                                     handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
@@ -84,7 +86,7 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_mutex_unlock" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *> || handle is AddrOfExpr<*>) handle = (handle as UnaryExpr<*, *>).op
                                 check(
                                     handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 

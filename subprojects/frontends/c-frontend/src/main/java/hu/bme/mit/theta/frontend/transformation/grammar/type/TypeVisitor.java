@@ -106,6 +106,11 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             }
             type.setSigned(true);
         }
+        for (CSimpleType cSimpleType : cSimpleTypes) {
+            for (int i = 0; i < cSimpleType.getPointerLevel(); i++) {
+                mainType.incrementPointer();
+            }
+        }
         return type;
     }
 

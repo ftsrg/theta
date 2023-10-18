@@ -8,7 +8,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class DerefWriteStmt implements Stmt {
-	private static final String STMT_LABEL = "derefassign";
+	private static final String STMT_LABEL = "derefwrite";
 
 	private final DeRefExpr<Type> deRef;
 	private final Expr<Type> expr;
