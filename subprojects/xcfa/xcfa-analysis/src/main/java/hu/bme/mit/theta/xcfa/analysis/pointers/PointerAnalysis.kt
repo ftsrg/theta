@@ -74,16 +74,17 @@ abstract class PointerAnalysis {
 
         @JvmStatic
         protected fun getPointerActions(xcfa: XCFA): List<PointerAction> {
-            val main = xcfa.initProcedures.first().first
-            val edges = main.edges
             val actions = mutableListOf<PointerAction>()
-            edges.forEach { edge ->
-                val labels = edge.label.getFlatLabels()
-                labels.forEach { label ->
-                    if (label is StmtLabel) {
-                        val action = getPointerAction(label)
-                        if (action != null) {
-                            actions.add(action)
+            xcfa.procedures.forEach { procedure ->
+                val edges = procedure.edges
+                edges.forEach { edge ->
+                    val labels = edge.label.getFlatLabels()
+                    labels.forEach { label ->
+                        if (label is StmtLabel) {
+                            val action = getPointerAction(label)
+                            if (action != null) {
+                                actions.add(action)
+                            }
                         }
                     }
                 }

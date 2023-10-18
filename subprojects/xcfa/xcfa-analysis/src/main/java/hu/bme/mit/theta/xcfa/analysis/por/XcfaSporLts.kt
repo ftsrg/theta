@@ -19,9 +19,11 @@ import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.utils.PointerStore
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
+import hu.bme.mit.theta.xcfa.analysis.pointers.AndersensPointerAnalysis
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.isAtomicBegin
@@ -62,6 +64,11 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      */
     private val backwardTransitions: MutableSet<XcfaEdge> = mutableSetOf()
 
+    /**
+     * Results of static pointer analysis on the XCFA.
+     */
+    private val xcfaPointerStore: PointerStore = AndersensPointerAnalysis().run(xcfa)
+
     init {
         collectBackwardTransitions()
     }
@@ -80,7 +87,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
         var minimalPersistentSet = setOf<XcfaAction>()
         val persistentSetFirstActions = getPersistentSetFirstActions(allEnabledActions)
         for (firstActions in persistentSetFirstActions) {
-            val persistentSet = calculatePersistentSet(allEnabledActions, firstActions)
+            val persistentSet = calculatePersistentSet(allEnabledActions, firstActions, state)
             if (minimalPersistentSet.isEmpty() || persistentSet.size < minimalPersistentSet.size) {
                 minimalPersistentSet = persistentSet
             }
@@ -118,7 +125,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return a persistent set of enabled actions
      */
     private fun calculatePersistentSet(enabledActions: Collection<XcfaAction>,
-        firstActions: Collection<XcfaAction>): Set<XcfaAction> {
+        firstActions: Collection<XcfaAction>, state: XcfaState<*>): Set<XcfaAction> {
         if (firstActions.any(::isBackwardAction)) {
             return enabledActions.toSet()
         }
@@ -131,7 +138,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
             for (action in otherActions) {
                 // for every action that is not in the persistent set it is checked whether it should be added to the persistent set
                 // (because it is dependent with an action already in the persistent set)
-                if (persistentSet.any { persistentSetAction -> areDependents(persistentSetAction, action) }) {
+                if (persistentSet.any { persistentSetAction -> areDependents(persistentSetAction, action, state) }) {
                     if (isBackwardAction(action)) {
                         return enabledActions.toSet() // see POR algorithm for the reason of removing backward transitions
                     }
@@ -153,8 +160,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param action              the other action (not in the persistent set)
      * @return true, if the two actions are dependent in the context of persistent sets
      */
-    private fun areDependents(persistentSetAction: XcfaAction, action: XcfaAction): Boolean {
-        val usedByPersistentSetAction = getCachedUsedSharedObjects(getEdgeOf(persistentSetAction))
+    private fun areDependents(persistentSetAction: XcfaAction, action: XcfaAction, state: XcfaState<*>): Boolean {
+        val usedByPersistentSetAction = getDirectlyUsedSharedObjects(getEdgeOf(persistentSetAction), state)
         return isSameProcess(persistentSetAction, action) ||
             getInfluencedSharedObjects(getEdgeOf(action)).any { it in usedByPersistentSetAction }
     }
@@ -169,16 +176,36 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
     protected fun isSameProcess(action1: XcfaAction, action2: XcfaAction) = action1.pid == action2.pid
 
     /**
-     * Returns the global variables that an edge uses (it is present in one of its labels).
+     * Returns the global variables that an edge uses (it is present in one of its labels),
+     * and all the global variables that are pointed to by the variables used by the edge,
+     * based on the results of the static pointer analysis.
      *
      * @param edge whose global variables are to be returned
      * @return the set of used global variables
      */
     private fun getDirectlyUsedSharedObjects(edge: XcfaEdge): Set<VarDecl<out Type>> {
         val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
-        return edge.getFlatLabels().flatMap { label ->
+        val varDeclsInEdge = edge.getFlatLabels().flatMap { label ->
             label.collectVars().filter { it in globalVars }
         }.toSet()
+        return varDeclsInEdge + varDeclsInEdge.flatMap { xcfaPointerStore.pointsTo(it) }
+    }
+
+    /**
+     * Returns the global variables that an edge uses (it is present in one of its labels),
+     * and all the global variables that are pointed to by the variables used by the edge,
+     * based on the dynamic pointer analysis at the current state.
+     *
+     * @param edge whose global variables are to be returned
+     * @param state the current state
+     * @return the set of used global variables
+     */
+    private fun getDirectlyUsedSharedObjects(edge: XcfaEdge, state: XcfaState<*>): Set<VarDecl<out Type?>> {
+        val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
+        val varDeclsInEdge = edge.getFlatLabels().flatMap { label ->
+            label.collectVars().filter { it in globalVars }
+        }.toSet()
+        return varDeclsInEdge + varDeclsInEdge.flatMap { state.pointerStore.pointsTo(it) }
     }
 
     /**
