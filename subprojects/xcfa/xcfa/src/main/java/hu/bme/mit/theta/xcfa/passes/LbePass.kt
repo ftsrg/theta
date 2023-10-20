@@ -96,7 +96,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
      *
      */
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        if (level == LbeLevel.NO_LBE || builder.errorLoc.isEmpty) return builder
+        if (level == LbeLevel.NO_LBE) return builder
 
         if (level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL && parseContext.multiThreading) {
             level = LbeLevel.LBE_LOCAL
@@ -107,7 +107,9 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
         this.builder = builder
 
         // Step 0
-        builder.errorLoc.get().outgoingEdges.forEach(builder::removeEdge)
+        if (builder.errorLoc.isPresent) {
+            builder.errorLoc.get().outgoingEdges.forEach(builder::removeEdge)
+        }
 
         // Step 1
         if (level == LbeLevel.LBE_LOCAL) {
