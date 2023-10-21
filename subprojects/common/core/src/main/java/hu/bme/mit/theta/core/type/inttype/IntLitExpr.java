@@ -78,7 +78,16 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
     }
 
     public IntLitExpr div(final IntLitExpr that) {
-        return IntLitExpr.of(this.value.divide(that.value));
+        // Semantics:
+        // 5 div 3 = 1
+        // 5 div -3 = -1
+        // -5 div 3 = -2
+        // -5 div -3 = 2
+        var result = this.value.divide(that.value);
+        if (this.value.compareTo(BigInteger.ZERO) < 0 && this.value.mod(that.value.abs()).compareTo(BigInteger.ZERO) != 0) {
+            result = result.subtract(BigInteger.valueOf(that.value.signum()));
+        }
+        return IntLitExpr.of(result);
     }
 
     public IntLitExpr mod(final IntLitExpr that) {
