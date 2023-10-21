@@ -16,3 +16,6 @@ dest/
 .idea/
 *.iml
 *.iws
+
+# Other
+wdl-output.json

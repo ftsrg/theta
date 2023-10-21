@@ -92,6 +92,14 @@ public final class ArgNode<S extends State, A extends Action> {
         }
     }
 
+    public boolean mayCoverStandard(final ArgNode<S, A> node) {
+        if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
+            return !(this.equals(node) || this.isSubsumed()); // no need to check ancestors in CEGAR
+        } else {
+            return false;
+        }
+    }
+
     public void setCoveringNode(final ArgNode<S, A> node) {
         if (!node.canCover) return;
         checkNotNull(node);
@@ -278,7 +286,11 @@ public final class ArgNode<S extends State, A extends Action> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ArgNode<?, ?> argNode = (ArgNode<?, ?>) o;
-        return id == argNode.id;
+        return depth == argNode.depth &&
+                state.equals(argNode.state) &&
+                coveringNode.equals(argNode.coveringNode) &&
+                Set.copyOf(outEdges).equals(Set.copyOf(argNode.outEdges)) &&
+                target == argNode.target;
     }
 
     @Override

@@ -24,4 +24,5 @@ dependencies {
     implementation(project(":theta-c-frontend"))
     implementation(project(":theta-analysis"))
     implementation(project(":theta-solver"))
+    implementation(project(mapOf("path" to ":theta-solver-z3")))
 }
