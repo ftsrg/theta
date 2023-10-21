@@ -20,8 +20,8 @@ class XcfaAasporCoiLts(
         simpleXcfaLts = coiLTS
     }
 
-    override fun getTransitionOf(action: XcfaAction): XcfaEdge =
-        super.getTransitionOf(action.transFuncVersion ?: action)
+    override fun getEdgeOf(action: XcfaAction): XcfaEdge =
+        super.getEdgeOf(action.transFuncVersion ?: action)
 
     override fun isBackwardAction(action: XcfaAction): Boolean =
         backwardTransitions.any { it.source == action.edge.source && it.target == action.edge.target }

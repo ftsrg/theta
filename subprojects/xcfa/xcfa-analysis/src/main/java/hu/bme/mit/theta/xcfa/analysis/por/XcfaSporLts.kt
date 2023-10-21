@@ -64,7 +64,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
     /**
      * Backward transitions in the transition system (a transition of a loop).
      */
-    private val backwardTransitions: MutableSet<XcfaEdge> = mutableSetOf()
+    protected val backwardTransitions: MutableSet<XcfaEdge> = mutableSetOf()
 
     init {
         collectBackwardTransitions()
@@ -312,7 +312,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param action the action whose edge is to be returned
      * @return the edge of the action
      */
-    protected fun getEdgeOf(action: XcfaAction) = action.edge
+    protected open fun getEdgeOf(action: XcfaAction) = action.edge
 
     /**
      * Returns the outgoing edges of the target of the given edge.
@@ -338,7 +338,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param action the action to be classified as backward action or non-backward action
      * @return true, if the action is a backward action
      */
-    protected fun isBackwardAction(action: XcfaAction): Boolean = backwardTransitions.contains(getEdgeOf(action))
+    protected open fun isBackwardAction(action: XcfaAction): Boolean = backwardTransitions.contains(getEdgeOf(action))
 
     /**
      * Collects backward edges of the given XCFA.

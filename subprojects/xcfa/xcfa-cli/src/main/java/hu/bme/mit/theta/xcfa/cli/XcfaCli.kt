@@ -175,7 +175,6 @@ class XcfaCli(private val args: Array<String>) {
         val gsonForOutput = getGson()
         val logger = ConsoleLogger(logLevel)
         val explicitProperty: ErrorDetection = getExplicitProperty()
-        registerAllSolverManagers(solverHome, logger)
 
         // propagating input variables
         LbePass.level = lbeLevel
@@ -207,6 +206,7 @@ class XcfaCli(private val args: Array<String>) {
         // verification
         stopwatch.reset().start()
         logger.write(Logger.Level.INFO, "Starting verification of ${xcfa.name} using $backend")
+        registerAllSolverManagers(solverHome, logger)
         val config = parseConfigFromCli()
         if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
             printConfigFile!!.writeText(gsonForOutput.toJson(config))
