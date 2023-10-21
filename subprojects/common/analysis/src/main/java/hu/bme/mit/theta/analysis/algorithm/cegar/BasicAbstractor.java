@@ -129,7 +129,6 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         for (final ArgNode<S, A> candidate : candidates) {
             if (candidate.mayCover(node)) {
                 node.cover(candidate);
-                COILogger.incCovers();
                 return;
             }
         }

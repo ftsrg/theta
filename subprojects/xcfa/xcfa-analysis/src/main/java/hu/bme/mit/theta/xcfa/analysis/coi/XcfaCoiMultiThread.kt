@@ -2,7 +2,6 @@ package hu.bme.mit.theta.xcfa.analysis.coi
 
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.algorithm.cegar.COILogger
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getVars
 import hu.bme.mit.theta.xcfa.isWritten
@@ -31,21 +30,13 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
     override val lts = object : LTS<S, A> {
         override fun getEnabledActionsFor(state: S): Collection<A> {
             val enabled = coreLts.getEnabledActionsFor(state)
-            COILogger.startCoiTimer()
-            val r = lastPrec?.let { replaceIrrelevantActions(state, enabled, it) } ?: enabled
-            COILogger.stopCoiTimer()
-            return r
+            return lastPrec?.let { replaceIrrelevantActions(state, enabled, it) } ?: enabled
         }
 
         override fun <P : Prec> getEnabledActionsFor(state: S, explored: Collection<A>, prec: P): Collection<A> {
-            COILogger.startCoiTimer()
             if (lastPrec != prec) reinitialize(prec)
-            COILogger.stopCoiTimer()
             val enabled = coreLts.getEnabledActionsFor(state, explored, prec)
-            COILogger.startCoiTimer()
-            val r = replaceIrrelevantActions(state, enabled, prec)
-            COILogger.stopCoiTimer()
-            return r
+            return replaceIrrelevantActions(state, enabled, prec)
         }
 
         private fun replaceIrrelevantActions(state: S, enabled: Collection<A>, prec: Prec): Collection<A> {
