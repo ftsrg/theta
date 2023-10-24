@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import hu.bme.mit.theta.core.type.anytype.AddrOfExpr;
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
@@ -31,12 +33,9 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.*;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -45,11 +44,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
+import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -58,16 +53,11 @@ import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -373,10 +363,18 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                         expr = AbstractExprs.Mul(leftExpr, rightExpr);
                         break;
                     case "/":
-                        expr = AbstractExprs.Div(leftExpr, rightExpr);
+                        if (leftExpr.getType() instanceof IntType && rightExpr.getType() instanceof IntType) {
+                            expr = createIntDiv(leftExpr, rightExpr);
+                        } else {
+                            expr = AbstractExprs.Div(leftExpr, rightExpr);
+                        }
                         break;
                     case "%":
-                        expr = AbstractExprs.Mod(leftExpr, rightExpr);
+                        if (leftExpr.getType() instanceof IntType && rightExpr.getType() instanceof IntType) {
+                            expr = createIntMod(leftExpr, rightExpr);
+                        } else {
+                            expr = AbstractExprs.Mod(leftExpr, rightExpr);
+                        }
                         break;
                     default:
                         throw new IllegalStateException("Unexpected value: " + ctx.signs.get(i).getText());
@@ -388,6 +386,46 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             return expr;
         }
         return ctx.castExpression(0).accept(this);
+    }
+
+    /**
+     * Conversion from C (/) semantics to solver (div) semantics.
+     * @param a dividend
+     * @param b divisor
+     * @return expression representing C division semantics with solver operations
+     */
+    private Expr<?> createIntDiv(Expr<?> a, Expr<?> b) {
+        DivExpr<?> aDivB = Div(a, b);
+        return Ite(Geq(a, Int(0)),          // if (a >= 0)
+            aDivB,                                //   a div b
+                                                  // else
+            Ite(Neq(Mod(a, b), Int(0)),     //   if (a mod b != 0)
+                Ite(Geq(b, Int(0)),         //     if (b >= 0)
+                    Add(aDivB, Int(1)),     //       a div b + 1
+                                                  //     else
+                    Sub(aDivB, Int(1))      //       a div b - 1
+                ),                                //   else
+                aDivB                             //     a div b
+            )
+        );
+    }
+
+    /**
+     * Conversion from C (%) semantics to solver (mod) semantics.
+     * @param a dividend
+     * @param b divisor
+     * @return expression representing C modulo semantics with solver operations
+     */
+    private Expr<?> createIntMod(Expr<?> a, Expr<?> b) {
+        ModExpr<?> aModB = Mod(a, b);
+        return Ite(Geq(a, Int(0)),  // if (a >= 0)
+            aModB,                        //   a mod b
+                                          // else
+            Ite(Geq(b, Int(0)),     //   if (b >= 0)
+                Sub(aModB, b),            //     a mod b - b
+                Add(aModB, b)             //     a mod b + b
+            )
+        );
     }
 
     @Override

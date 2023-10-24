@@ -36,6 +36,10 @@ public class WebDebuggerLogger {
         enabled = true;
     }
 
+    public static Boolean enabled() {
+        return enabled;
+    }
+
     public static WebDebuggerLogger getInstance() {
         return instance;
     }
