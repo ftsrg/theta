@@ -45,7 +45,7 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
         for (firstActions in sourceSetFirstActions) {
             // Variables that have been ignored (if they would be in the precision, more actions have had to be added to the source set)
             val ignoredVars = mutableSetOf<Decl<out Type>>()
-            val sourceSet = calculateSourceSet(allEnabledActions, firstActions, prec, ignoredVars)
+            val sourceSet = calculateSourceSet(allEnabledActions, firstActions, prec, ignoredVars, state)
             if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
                 minimalSourceSet = sourceSet.toMutableSet()
                 finalIgnoredVars = ignoredVars
@@ -71,7 +71,7 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
      * @return a source set of enabled actions in the current abstraction
      */
     private fun calculateSourceSet(enabledActions: Collection<XcfaAction>, firstActions: Collection<XcfaAction>,
-        prec: Prec, ignoredVars: MutableSet<Decl<out Type>>): Set<XcfaAction> {
+        prec: Prec, ignoredVars: MutableSet<Decl<out Type>>, state: XcfaState<*>): Set<XcfaAction> {
         if (firstActions.any(this::isBackwardAction)) {
             return enabledActions.toSet()
         }
@@ -89,7 +89,7 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
                 // for every action that is not in the source set it is checked whether it should be added to the source set
                 // (because it is dependent with an action already in the source set)
                 val potentialIgnoredVars = mutableSetOf<Decl<out Type>>()
-                if (sourceSet.any { areDependents(it, action, prec, potentialIgnoredVars) }) {
+                if (sourceSet.any { areDependents(it, action, prec, potentialIgnoredVars, state) }) {
                     if (isBackwardAction(action)) {
                         return enabledActions.toSet() // see POR algorithm for the reason of removing backward transitions
                     }
@@ -108,11 +108,11 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
     }
 
     private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction, prec: Prec,
-        ignoredVariables: MutableSet<Decl<out Type?>>): Boolean {
+        ignoredVariables: MutableSet<Decl<out Type?>>, state: XcfaState<*>): Boolean {
         if (isSameProcess(sourceSetAction, action)) {
             return true
         }
-        val usedBySourceSetAction = getCachedUsedSharedObjects(getEdgeOf(sourceSetAction))
+        val usedBySourceSetAction = getDirectlyUsedSharedObjects(getEdgeOf(sourceSetAction), state)
         val influencedSharedObjects = getInfluencedSharedObjects(getEdgeOf(action))
         for (varDecl in influencedSharedObjects) {
             if (usedBySourceSetAction.contains(varDecl)) {

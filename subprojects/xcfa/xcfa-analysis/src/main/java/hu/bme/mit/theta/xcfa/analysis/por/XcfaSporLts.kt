@@ -90,7 +90,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
         var minimalSourceSet = setOf<XcfaAction>()
         val sourceSetFirstActions = getSourceSetFirstActions(state, allEnabledActions)
         for (firstActions in sourceSetFirstActions) {
-            val sourceSet = calculateSourceSet(allEnabledActions, firstActions)
+            val sourceSet = calculateSourceSet(allEnabledActions, firstActions, state)
             if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
                 minimalSourceSet = sourceSet
             }
@@ -164,7 +164,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return a source set of enabled actions
      */
     private fun calculateSourceSet(enabledActions: Collection<XcfaAction>,
-        firstActions: Collection<XcfaAction>): Set<XcfaAction> {
+        firstActions: Collection<XcfaAction>, state: XcfaState<*>): Set<XcfaAction> {
         if (firstActions.any(::isBackwardAction)) {
             return enabledActions.toSet()
         }
@@ -177,7 +177,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
             for (action in otherActions) {
                 // for every action that is not in the source set it is checked whether it should be added to the source set
                 // (because it is dependent with an action already in the source set)
-                if (sourceSet.any { areDependents(it, action) }) {
+                if (sourceSet.any { areDependents(it, action, state) }) {
                     if (isBackwardAction(action)) {
                         return enabledActions.toSet() // see POR algorithm for the reason of removing backward transitions
                     }
@@ -199,8 +199,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param action          the other action (not in the source set)
      * @return true, if the two actions are dependent in the context of source sets
      */
-    private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction): Boolean {
-        val usedBySourceSetAction = getCachedUsedSharedObjects(getEdgeOf(sourceSetAction))
+    private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction, state: XcfaState<*>): Boolean {
+        val usedBySourceSetAction = getDirectlyUsedSharedObjects(getEdgeOf(sourceSetAction), state)
         return isSameProcess(sourceSetAction, action) ||
             getInfluencedSharedObjects(getEdgeOf(action)).any { it in usedBySourceSetAction }
     }
