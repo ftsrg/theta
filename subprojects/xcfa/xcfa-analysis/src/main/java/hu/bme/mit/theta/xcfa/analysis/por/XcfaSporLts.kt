@@ -200,7 +200,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param state the current state
      * @return the set of used global variables
      */
-    private fun getDirectlyUsedSharedObjects(edge: XcfaEdge, state: XcfaState<*>): Set<VarDecl<out Type?>> {
+    protected fun getDirectlyUsedSharedObjects(edge: XcfaEdge, state: XcfaState<*>): Set<VarDecl<out Type?>> {
         val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
         val varDeclsInEdge = edge.getFlatLabels().flatMap { label ->
             label.collectVars().filter { it in globalVars }
