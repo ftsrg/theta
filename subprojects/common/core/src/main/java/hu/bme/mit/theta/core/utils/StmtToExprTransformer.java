@@ -32,6 +32,8 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -241,6 +243,16 @@ final class StmtToExprTransformer {
         @Override
         public StmtUnfoldResult visit(PointerDereffedStmt stmt, VarIndexing indexing) {
             return StmtUnfoldResult.of(ImmutableList.of(True()), indexing);
+            /* Z3TermTransformer::transformApp fails because the deref_ version is not added to the symbol table
+            final DeRefExpr<?> deRefExpr = stmt.getDeRefExpr();
+            final VarDecl<?> varDeclTo = stmt.getVarDeclTo();
+            final Expr<?> lhs = ExprUtils.applyPrimes(deRefExpr, indexing);
+            final Expr<?> rhs = ExprUtils.applyPrimes(varDeclTo.getRef(), indexing);
+
+            final Expr<BoolType> expr;
+            expr = Eq(lhs, rhs);
+            return StmtUnfoldResult.of(ImmutableList.of(expr), indexing);
+             */
         }
     }
 }

@@ -28,6 +28,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
@@ -1254,7 +1255,8 @@ final class Z3ExprTransformer {
         final RefExpr<?> refExpr = (RefExpr<?>) deRefExpr.getOp();
         final Decl<?> decl = refExpr.getDecl();
         if (decl instanceof ConstDecl) {
-            return context.mkConst("deref_" + decl.getName(), context.mkIntSort());
+            final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
+            return context.mkConst("deref_" + funcDecl.getName(), context.mkIntSort());
         } else {
             throw new UnsupportedOperationException("Unable to dereference: " + deRefExpr);
         }
@@ -1264,7 +1266,11 @@ final class Z3ExprTransformer {
         final RefExpr<?> refExpr = (RefExpr<?>) addrOfExpr.getOp();
         final Decl<?> decl = refExpr.getDecl();
         if (decl instanceof ConstDecl) {
-            return context.mkConst("addrOf_" + decl.getName(), context.mkIntSort());
+            final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
+            final com.microsoft.z3.FuncDecl addrOfFuncDecl = context.mkFuncDecl(
+                    "addrOf_" + funcDecl.getName(), context.mkIntSort(), context.mkIntSort());
+            // return context.mkApp(addrOfFuncDecl, transformRef(refExpr));
+            return context.mkConst("addrOf_" + funcDecl.getName(), context.mkIntSort());
         } else {
             throw new UnsupportedOperationException("Unable to take address of: " + addrOfExpr);
         }
