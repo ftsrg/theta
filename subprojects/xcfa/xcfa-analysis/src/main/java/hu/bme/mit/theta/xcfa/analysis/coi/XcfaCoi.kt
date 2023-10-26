@@ -18,7 +18,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import kotlin.math.min
 
-lateinit var COI: XcfaCoi
+lateinit var ConeOfInfluence: XcfaCoi
 
 internal typealias S = XcfaState<out ExprState>
 internal typealias A = XcfaAction

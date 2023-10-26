@@ -38,7 +38,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
-import hu.bme.mit.theta.xcfa.analysis.coi.COI
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.isWritten
@@ -55,8 +55,8 @@ open class XcfaAnalysis<S : ExprState, P : Prec>(
 ) : Analysis<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
 
     init {
-        COI.coreTransFunc = transFunc as TransFunc<XcfaState<out ExprState>, XcfaAction, XcfaPrec<out Prec>>
-        coreTransFunc = COI.transFunc as TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>
+        ConeOfInfluence.coreTransFunc = transFunc as TransFunc<XcfaState<out ExprState>, XcfaAction, XcfaPrec<out Prec>>
+        coreTransFunc = ConeOfInfluence.transFunc as TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>
     }
 
     override fun getPartialOrd(): PartialOrd<XcfaState<S>> = corePartialOrd
