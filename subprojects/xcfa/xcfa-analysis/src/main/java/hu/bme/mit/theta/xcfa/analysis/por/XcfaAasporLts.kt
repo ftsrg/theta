@@ -23,13 +23,13 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>) :
+open class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>) :
     XcfaSporLts(xcfa) {
 
     override fun <P : Prec> getEnabledActionsFor(state: XcfaState<*>, exploredActions: Collection<XcfaAction>,
         prec: P): Set<XcfaAction> {
         // Collecting enabled actions
-        val allEnabledActions = getAllEnabledActionsFor(state)
+        val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
 
         // Calculating the source set starting from every (or some of the) enabled transition or from exploredActions if it is not empty
         // The minimal source set is stored

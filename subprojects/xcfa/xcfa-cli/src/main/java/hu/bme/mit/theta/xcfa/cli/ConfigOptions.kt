@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.collectAssumes
@@ -309,6 +310,29 @@ enum class InitPrec(
         predPrec = { xcfa -> XcfaPrec(PredPrec.of(xcfa.collectAssumes())) },
     ),
 
+}
+
+enum class ConeOfInfluenceMode(
+    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out ExprState>, XcfaAction>
+) {
+
+    NO_COI({ xcfa, ivr, por ->
+        por.getLts(xcfa, ivr).also { NO_COI.porLts = it }
+    }),
+    COI({ xcfa, ivr, por ->
+        ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { COI.porLts = it }
+        ConeOfInfluence.lts
+    }),
+    POR_COI({ xcfa, ivr, _ ->
+        ConeOfInfluence.coreLts = getXcfaLts()
+        XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+    }),
+    POR_COI_POR({ xcfa, ivr, por ->
+        ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
+        XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+    })
+    ;
+    var porLts: LTS<XcfaState<out ExprState>, XcfaAction>? = null
 }
 
 // TODO CexMonitor: disable for multi_seq?

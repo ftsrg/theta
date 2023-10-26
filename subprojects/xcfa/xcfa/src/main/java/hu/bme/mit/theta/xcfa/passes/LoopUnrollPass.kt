@@ -67,22 +67,21 @@ class LoopUnrollPass : ProcedurePass {
             state = transFunc.getSuccStates(state, BasicStmtAction(loopVarInit), prec).first()
 
             var cnt = 0
-            while (!transFunc.getSuccStates(state, BasicStmtAction(loopCondEdge), prec)
-                    .first().isBottom
-            ) {
+            while (!transFunc.getSuccStates(state, BasicStmtAction(loopCondEdge), prec).first().isBottom) {
                 cnt++
                 if (cnt > UNROLL_LIMIT) return -1
-                state =
-                    transFunc.getSuccStates(state, BasicStmtAction(loopVarModifiers), prec).first()
+                state = transFunc.getSuccStates(state, BasicStmtAction(loopVarModifiers), prec).first()
             }
             return cnt
         }
 
         private fun XcfaLabel.removeCondition(): XcfaLabel {
-            val stmtToRemove =
-                getFlatLabels().find { it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty() }
+            val stmtToRemove = getFlatLabels().find {
+                it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty()
+            }
             return when {
                 this == stmtToRemove -> NopLabel
+
                 this is SequenceLabel -> SequenceLabel(
                     labels.map { it.removeCondition() }, metadata
                 )

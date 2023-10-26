@@ -42,9 +42,7 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.BufferedReader
@@ -77,6 +75,8 @@ data class XcfaCegarConfig(
     var initPrec: InitPrec = InitPrec.EMPTY,
     @Parameter(names = ["--por-level"], description = "POR dependency level")
     var porLevel: POR = POR.NOPOR,
+    @Parameter(names = ["--coi"])
+    var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
     @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
     var refinementSolver: String = "Z3",
     @Parameter(names = ["--validate-refinement-solver"],
@@ -107,9 +107,9 @@ data class XcfaCegarConfig(
 
         val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
 
-        val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
+        val lts = coi.getLts(xcfa, ignoredVarRegistry, porLevel)
         val waitlist = if (porLevel.isDynamic) {
-            (lts as XcfaDporLts).waitlist
+            (coi.porLts as XcfaDporLts).waitlist
         } else {
             PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(
                 search.getComp(xcfa))
