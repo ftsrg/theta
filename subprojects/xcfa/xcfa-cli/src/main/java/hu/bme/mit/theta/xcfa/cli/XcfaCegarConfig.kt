@@ -90,7 +90,9 @@ data class XcfaCegarConfig(
     @Parameter(names = ["--prunestrategy"],
         description = "Strategy for pruning the ARG after refinement")
     var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
-    @Parameter(names = ["--cex-monitor"])
+    @Parameter(names = ["--cex-monitor"],
+        description = "Warning: With some configurations (e.g. lazy pruning) it is POSSIBLE (but rare) that analysis is stopped, " +
+                "even though it could still progress. If in doubt, disable this monitor and check results.")
     var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
     @Parameter(names = ["--timeout-ms"],
         description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
@@ -135,7 +137,7 @@ data class XcfaCegarConfig(
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =
-            refinement.refiner(refinementSolverFactory)
+            refinement.refiner(refinementSolverFactory, cexMonitor)
                 as ExprTraceChecker<Refutation>
         val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
             domain.itpPrecRefiner(exprSplitter.exprSplitter)
@@ -155,19 +157,6 @@ data class XcfaCegarConfig(
                 else
                     SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
-        /*
-        // set up stopping analysis if it is stuck on same ARGs and precisions
-        if (disableCexMonitor) {
-            ArgCexCheckHandler.instance.setArgCexCheck(false, false, mitigation)
-        } else {
-            if(checkArg) {
-                ArgCexCheckHandler.instance.setArgCexCheck(true, true, mitigation)
-            } else {
-                ArgCexCheckHandler.instance.setArgCexCheck(true, false, mitigation)
-            }
-        }
-        */
-
         val cegarChecker = if (porLevel == POR.AASPOR)
             CegarChecker.create(
                 abstractor,
@@ -183,14 +172,8 @@ data class XcfaCegarConfig(
     }
 
     private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
-        if (cexMonitor != CexMonitorOptions.DISABLE) {
-            val cm = if (cexMonitor == CexMonitorOptions.MITIGATE) {
-                throw RuntimeException(
-                    "Mitigation is temporarily unusable, use DISABLE or CHECK instead")
-                // CexMonitor(true, logger, cc.arg)
-            } else { // CHECK
-                CexMonitor(false, logger, cc.arg)
-            }
+        if (cexMonitor == CexMonitorOptions.CHECK) {
+            val cm = CexMonitor(false, logger, cc.arg)
             MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
         }
     }
