@@ -1,0 +1,14 @@
+var x : integer = 0
+
+trans {
+    choice {
+        assume (false);
+        x := 1;
+    } else {
+        x := 2;
+    }
+}
+
+init {}
+
+env {}
