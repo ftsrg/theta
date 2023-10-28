@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -30,6 +31,8 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -42,14 +45,18 @@ import java.util.List;
 import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 final class StmtToExprTransformer {
@@ -130,42 +137,88 @@ final class StmtToExprTransformer {
 
         @Override
         public StmtUnfoldResult visit(NonDetStmt nonDetStmt, VarIndexing indexing) {
-
             final List<Expr<BoolType>> choices = new ArrayList<>();
+
             final List<VarIndexing> indexings = new ArrayList<>();
             VarIndexing jointIndexing = indexing;
             int count = 0;
-            VarDecl<IntType> tempVar = VarPoolUtil.requestInt();
-            for (Stmt stmt : nonDetStmt.getStmts()) {
+            var tempVar = VarPoolUtil.requestInt();
+            for (var stmt : nonDetStmt.getStmts()) {
                 final Expr<BoolType> tempExpr = Eq(
-                        ExprUtils.applyPrimes(tempVar.getRef(), indexing), Int(count++));
+                        ExprUtils.applyPrimes(tempVar.getRef(), indexing),
+                        Int(count++)
+                );
                 final StmtUnfoldResult result = toExpr(stmt, indexing.inc(tempVar));
                 choices.add(And(tempExpr, And(result.exprs)));
                 indexings.add(result.indexing);
                 jointIndexing = jointIndexing.join(result.indexing);
             }
-            final Set<VarDecl<?>> vars = ExprUtils.getVars(choices);
-            final List<Expr<BoolType>> branchExprs = new ArrayList<>();
-            for (int i = 0; i < choices.size(); i++) {
-                final List<Expr<BoolType>> exprs = new ArrayList<>();
-                exprs.add(choices.get(i));
-                for (VarDecl<?> decl : vars) {
-                    int currentBranchIndex = indexings.get(i).get(decl);
-                    int jointIndex = jointIndexing.get(decl);
+
+            final var branchExprs = fixVariablePrimes(choices, indexings, jointIndexing);
+
+            final var choiceExpr = Or(branchExprs);
+            final Expr<BoolType> expr;
+
+            if (nonDetStmt.getElze() != null) {
+                final var tempExpr = Eq(
+                        ExprUtils.applyPrimes(tempVar.getRef(), indexing), Int(count)
+                );
+                final var result = toExpr(nonDetStmt.getElze(), indexing.inc(tempVar));
+                final var elzeIndexing = result.indexing;
+                final var elzeExpr = And(tempExpr, And(result.exprs));
+                final var elzeJointIndexing = jointIndexing.join(elzeIndexing);
+
+                final var expressions = fixVariablePrimes(
+                        ImmutableList.of(choiceExpr, elzeExpr),
+                        ImmutableList.of(jointIndexing, elzeIndexing),
+                        elzeJointIndexing
+                );
+
+                final var choiceExprExtended = expressions.get(0);
+                final var elzeExprExtended = expressions.get(1);
+
+                final var choiceVar = VarPoolUtil.requestBool();
+                final var iffExpr = Iff(choiceExprExtended, Ref(choiceVar));
+                final var iteExpr = IteExpr.of(Ref(choiceVar), Ref(choiceVar), elzeExprExtended);
+                final var tempValidExpr = And(
+                        Leq(Ref(tempVar), Int(count)),
+                        Geq(Ref(tempVar), Int(0))
+                );
+
+                expr = And(iffExpr, iteExpr, tempValidExpr);
+
+                VarPoolUtil.returnBool(choiceVar);
+            } else {
+                expr = choiceExpr;
+            }
+
+            VarPoolUtil.returnInt(tempVar);
+            return StmtUnfoldResult.of(ImmutableList.of(expr), jointIndexing);
+        }
+
+        private static List<Expr<BoolType>> fixVariablePrimes(List<Expr<BoolType>> branches, List<VarIndexing> indexings, VarIndexing jointIndexing) {
+            final var vars = ExprUtils.getVars(branches);
+            final var branchExprs = new ArrayList<Expr<BoolType>>();
+            for (int i = 0; i < branches.size(); i++) {
+                final var exprs = new ArrayList<Expr<BoolType>>();
+                exprs.add(branches.get(i));
+                for (var declaration : vars) {
+                    int currentBranchIndex = indexings.get(i).get(declaration);
+                    int jointIndex = jointIndexing.get(declaration);
                     if (currentBranchIndex < jointIndex) {
                         if (currentBranchIndex > 0) {
-                            exprs.add(Eq(Prime(decl.getRef(), currentBranchIndex),
-                                    Prime(decl.getRef(), jointIndex)));
+                            exprs.add(Eq(
+                                    Prime(declaration.getRef(), currentBranchIndex),
+                                    Prime(declaration.getRef(), jointIndex)
+                            ));
                         } else {
-                            exprs.add(Eq(decl.getRef(), Prime(decl.getRef(), jointIndex)));
+                            exprs.add(Eq(declaration.getRef(), Prime(declaration.getRef(), jointIndex)));
                         }
                     }
                 }
                 branchExprs.add(And(exprs));
             }
-            final Expr<BoolType> expr = Or(branchExprs);
-            VarPoolUtil.returnInt(tempVar);
-            return StmtUnfoldResult.of(ImmutableList.of(expr), jointIndexing);
+            return branchExprs;
         }
 
         @Override
@@ -183,40 +236,19 @@ final class StmtToExprTransformer {
 
             final Expr<BoolType> thenExpr = And(thenResult.getExprs());
             final Expr<BoolType> elzeExpr = And(elzeResult.getExprs());
-            final Set<VarDecl<?>> vars = ExprUtils.getVars(ImmutableList.of(thenExpr, elzeExpr));
 
             VarIndexing jointIndexing = thenIndexing.join(elzeIndexing);
-            final List<Expr<BoolType>> thenAdditions = new ArrayList<>();
-            final List<Expr<BoolType>> elzeAdditions = new ArrayList<>();
-            for (VarDecl<?> decl : vars) {
-                final int thenIndex = thenIndexing.get(decl);
-                final int elzeIndex = elzeIndexing.get(decl);
-                if (thenIndex < elzeIndex) {
-                    if (thenIndex > 0) {
-                        thenAdditions.add(
-                                Eq(Prime(decl.getRef(), thenIndex), Prime(decl.getRef(), elzeIndex)));
-                    } else {
-                        thenAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), elzeIndex)));
-                    }
-                } else if (elzeIndex < thenIndex) {
-                    if (elzeIndex > 0) {
-                        elzeAdditions.add(
-                                Eq(Prime(decl.getRef(), elzeIndex), Prime(decl.getRef(), thenIndex)));
-                    } else {
-                        elzeAdditions.add(Eq(decl.getRef(), Prime(decl.getRef(), thenIndex)));
-                    }
-                }
-            }
 
-            final Expr<BoolType> thenExprExtended =
-                    thenAdditions.size() > 0 ? SmartBoolExprs.And(thenExpr, And(thenAdditions))
-                            : thenExpr;
-            final Expr<BoolType> elzeExprExtended =
-                    elzeAdditions.size() > 0 ? SmartBoolExprs.And(elzeExpr, And(elzeAdditions))
-                            : elzeExpr;
+            final var expressions = fixVariablePrimes(
+                    ImmutableList.of(thenExpr, elzeExpr),
+                    ImmutableList.of(thenIndexing, elzeIndexing),
+                    jointIndexing
+            );
 
-            final Expr<BoolType> ite = cast(Ite(condExpr, thenExprExtended, elzeExprExtended),
-                    Bool());
+            final Expr<BoolType> thenExprExtended = expressions.get(0);
+            final Expr<BoolType> elzeExprExtended = expressions.get(1);
+
+            final Expr<BoolType> ite = cast(Ite(condExpr, thenExprExtended, elzeExprExtended), Bool());
             return StmtUnfoldResult.of(ImmutableList.of(ite), jointIndexing);
         }
 
