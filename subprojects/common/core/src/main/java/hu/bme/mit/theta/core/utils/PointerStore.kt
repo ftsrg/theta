@@ -2,10 +2,14 @@ package hu.bme.mit.theta.core.utils
 
 import hu.bme.mit.theta.common.visualization.*
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.anytype.DeRefExpr
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import java.awt.Color
 import java.util.*
+import java.util.function.Consumer
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 
 class PointerStore {
     private val pointerStoreMembers: MutableSet<VarDecl<*>> = mutableSetOf()
@@ -73,5 +77,21 @@ class PointerStore {
 
     fun isLeq(other: PointerStore): Boolean {
         return pointsTo.all { (source, target) -> other.pointsTo(source).contains(target) }
+    }
+
+    fun nodes() = pointerStoreMembers
+
+    fun toExpr(): Expr<BoolType> {
+        val ops = mutableSetOf<NeqExpr<*>>()
+        pointerStoreMembers.forEach { v1 ->
+            pointerStoreMembers.forEach { v2 ->
+                val v1PointsTo = pointsTo(v1)
+                val v2PointsTo = pointsTo(v2)
+                if (v1PointsTo.size == 1 && v2PointsTo.size == 1 && v1PointsTo != v2PointsTo && !ops.contains(Neq(v2.ref, v1.ref))) {
+                    ops.add(Neq(v1.ref, v2.ref))
+                }
+            }
+        }
+        return SmartBoolExprs.And(ops)
     }
 }

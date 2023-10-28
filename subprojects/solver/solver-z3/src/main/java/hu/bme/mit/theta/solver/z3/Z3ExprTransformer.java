@@ -1267,10 +1267,10 @@ final class Z3ExprTransformer {
         final Decl<?> decl = refExpr.getDecl();
         if (decl instanceof ConstDecl) {
             final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
-            final com.microsoft.z3.FuncDecl addrOfFuncDecl = context.mkFuncDecl(
-                    "addrOf_" + funcDecl.getName(), context.mkIntSort(), context.mkIntSort());
-            // return context.mkApp(addrOfFuncDecl, transformRef(refExpr));
-            return context.mkConst("addrOf_" + funcDecl.getName(), context.mkIntSort());
+            final com.microsoft.z3.FuncDecl addrOfFuncDecl = context.mkConst("addrOf_" + funcDecl.getName(), context.mkIntSort()).getFuncDecl();
+            final com.microsoft.z3.BoolExpr addrIsNotZero = context.mkNot(context.mkEq(addrOfFuncDecl.apply(), context.mkInt(0)));
+
+            return addrOfFuncDecl.apply();
         } else {
             throw new UnsupportedOperationException("Unable to take address of: " + addrOfExpr);
         }

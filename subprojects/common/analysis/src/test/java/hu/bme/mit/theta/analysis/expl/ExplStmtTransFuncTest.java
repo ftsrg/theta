@@ -26,14 +26,10 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 import hu.bme.mit.theta.common.container.Containers;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.junit.Assert;
@@ -69,7 +65,7 @@ public class ExplStmtTransFuncTest {
         stmts.add(Assume(Leq(x.getRef(), Int(100))));
 
         final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+                stmts, prec, Optional.empty());
 
         Assert.assertEquals(1, succStates.size());
         final ExplState expectedState = ExplState.of(
@@ -87,7 +83,7 @@ public class ExplStmtTransFuncTest {
         stmts.add(Assume(Lt(Mul(x.getRef(), x.getRef()), Int(0))));
 
         final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+                stmts, prec, Optional.empty());
 
         Assert.assertEquals(1, succStates.size());
         final ExplState expectedState = ExplState.bottom();
@@ -104,7 +100,7 @@ public class ExplStmtTransFuncTest {
         stmts.add(Assume(Eq(x.getRef(), y.getRef())));
 
         final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+                stmts, prec, Optional.empty());
 
         Assert.assertEquals(1, succStates.size());
         final ExplState expectedState = ExplState
@@ -122,7 +118,7 @@ public class ExplStmtTransFuncTest {
         stmts.add(Assume(Eq(x.getRef(), y.getRef())));
 
         final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                stmts, prec);
+                stmts, prec, Optional.empty());
 
         Assert.assertEquals(1, succStates.size());
         final ExplState expectedState = ExplState
@@ -147,7 +143,7 @@ public class ExplStmtTransFuncTest {
         for (final Entry<Integer, Integer> entry : solverCallsToExpectedStates.entrySet()) {
             final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, entry.getKey());
             final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState,
-                    stmts, prec);
+                    stmts, prec, Optional.empty());
 
             Assert.assertEquals(entry.getValue().intValue(), succStates.size());
         }

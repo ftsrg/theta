@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.anytype.DeRefExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.utils.PointerStore
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.analysis.pointers.AndersensPointerAnalysis
@@ -59,7 +60,8 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     override fun toExpr(): Expr<BoolType> {
-        return sGlobal.toExpr()
+        val ops = mutableListOf(sGlobal.toExpr(), pointerStore.toExpr())
+        return SmartBoolExprs.And(ops)
     }
 
     fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {

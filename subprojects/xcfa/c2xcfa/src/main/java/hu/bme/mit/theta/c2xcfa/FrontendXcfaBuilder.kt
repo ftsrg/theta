@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference
@@ -48,6 +49,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInt
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
+import java.math.BigInteger
 import java.util.*
 import java.util.Set
 import java.util.stream.Collectors
@@ -220,6 +222,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
                 cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type)),
                 metadata = getMetadata(statement))
+            /*
             if (CComplexType.getType(lValue, parseContext) is CPointer && CComplexType.getType(
                     rExpression, parseContext) is CPointer) {
                 Preconditions.checkState(
@@ -244,6 +247,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                     parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
                 }
             }
+            */
             label
         }
 
@@ -259,8 +263,19 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         }
 
         if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
-            xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
-            builder.addEdge(xcfaEdge)
+            // TODO: Ez gondolom nem ide kéne
+            if (rExpression is AddrOfExpr<*>) {
+                val assume = Stmts.Assume(AbstractExprs.Neq(lValue, IntLitExpr.of(BigInteger.valueOf(0L))))
+                val middleLoc = getAnonymousLoc(builder, getMetadata(statement))
+                xcfaEdge = XcfaEdge(initLoc, middleLoc, label, metadata = getMetadata(statement))
+                builder.addEdge(xcfaEdge)
+                xcfaEdge = XcfaEdge(middleLoc, location, StmtLabel(assume, metadata = getMetadata(statement)),
+                        metadata = getMetadata(statement))
+                builder.addEdge(xcfaEdge)
+            } else {
+                xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
+                builder.addEdge(xcfaEdge)
+            }
         } else {
             val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
             val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))

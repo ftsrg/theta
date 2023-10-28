@@ -1077,10 +1077,25 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyIntEq(final IntEqExpr expr, final Valuation val) {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
+        if (leftOp instanceof RefExpr && rightOp.equals(IntLitExpr.of(BigInteger.valueOf(0))) && val instanceof MutableValuation && ((RefExpr<?>) leftOp).getDecl() instanceof VarDecl<?>) {
+            final Set<VarDecl<?>> pointsTo = ((MutableValuation) val).getPointerStore().pointsTo((VarDecl<?>) ((RefExpr<?>) leftOp).getDecl());
+            if (!pointsTo.isEmpty()) {
+                return False();
+            }
+        }
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             return Bool(leftOp.equals(rightOp));
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (val instanceof MutableValuation && ((RefExpr<?>) leftOp).getDecl() instanceof VarDecl<?> && ((RefExpr<?>) rightOp).getDecl() instanceof VarDecl<?>) {
+                final Set<VarDecl<?>> leftPointsTo = ((MutableValuation) val).getPointerStore().pointsTo((VarDecl<?>) ((RefExpr<?>) leftOp).getDecl());
+                final Set<VarDecl<?>> rightPointsTo = ((MutableValuation) val).getPointerStore().pointsTo((VarDecl<?>) ((RefExpr<?>) rightOp).getDecl());
+                if (leftPointsTo.size() == 1 && leftPointsTo.equals(rightPointsTo)) {
+                    return True();
+                }
+                if (!leftPointsTo.equals(rightPointsTo)) {
+                    return False();
+                }
+            }
             if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
                 return True();
             }
@@ -1092,10 +1107,25 @@ public final class ExprSimplifier {
     private Expr<BoolType> simplifyIntNeq(final IntNeqExpr expr, final Valuation val) {
         final Expr<IntType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<IntType> rightOp = simplify(expr.getRightOp(), val);
-
+        if (leftOp instanceof RefExpr && rightOp.equals(IntLitExpr.of(BigInteger.valueOf(0))) && val instanceof MutableValuation && ((RefExpr<?>) leftOp).getDecl() instanceof VarDecl<?>) {
+            final Set<VarDecl<?>> pointsTo = ((MutableValuation) val).getPointerStore().pointsTo((VarDecl<?>) ((RefExpr<?>) leftOp).getDecl());
+            if (!pointsTo.isEmpty()) {
+                return True();
+            }
+        }
         if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
             return Bool(!leftOp.equals(rightOp));
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+            if (val instanceof MutableValuation && ((RefExpr<?>) leftOp).getDecl() instanceof VarDecl<?> && ((RefExpr<?>) rightOp).getDecl() instanceof VarDecl<?>) {
+                final Set<VarDecl<?>> leftPointsTo = ((MutableValuation) val).getPointerStore().pointsTo((VarDecl<?>) ((RefExpr<?>) leftOp).getDecl());
+                final Set<VarDecl<?>> rightPointsTo = ((MutableValuation) val).getPointerStore().pointsTo((VarDecl<?>) ((RefExpr<?>) rightOp).getDecl());
+                if (leftPointsTo.size() == 1 && leftPointsTo.equals(rightPointsTo)) {
+                    return False();
+                }
+                if (!leftPointsTo.equals(rightPointsTo)) {
+                    return True();
+                }
+            }
             if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
                 return False();
             }

@@ -23,14 +23,17 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.PointerStore;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -56,12 +59,23 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
     @Override
     public Collection<ExplState> getSuccStates(final ExplState state, final StmtAction action,
                                                final ExplPrec prec) {
-        return getSuccStates(state, action.getStmts(), prec);
+        return getSuccStates(state, action.getStmts(), prec, Optional.empty());
+    }
+
+    public Collection<ExplState> getSuccStates(final ExplState state, final StmtAction action,
+                                               final ExplPrec prec, PointerStore pointerStore) {
+        return getSuccStates(state, action.getStmts(), prec, Optional.of(pointerStore));
+    }
+
+    public Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts,
+                                               final ExplPrec prec, PointerStore pointerStore) {
+        return getSuccStates(state, stmts, prec, Optional.of(pointerStore));
     }
 
     Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts,
-                                        final ExplPrec prec) {
+                                        final ExplPrec prec, Optional<PointerStore> pointerStore) {
         final MutableValuation val = MutableValuation.copyOf(state);
+		pointerStore.ifPresent(val::setPointerStore);
         boolean triedSolver = false;
 
         for (int i = 0; i < stmts.size(); i++) {
@@ -100,5 +114,4 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
         final ExplState abstracted = prec.createState(val);
         return singleton(abstracted);
     }
-
 }

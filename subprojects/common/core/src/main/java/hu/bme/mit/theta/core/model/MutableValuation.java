@@ -17,21 +17,20 @@ package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.utils.PointerStore;
 
 /**
  * Mutable implementation of a valuation.
@@ -39,10 +38,20 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 public final class MutableValuation extends Valuation {
 
     private final Map<Decl<?>, LitExpr<?>> declToExpr;
+    private PointerStore pointerStore;
+
+    public PointerStore getPointerStore() {
+        return pointerStore;
+    }
+
+    public void setPointerStore(PointerStore pointerStore) {
+        this.pointerStore = pointerStore;
+    }
 
     public MutableValuation() {
         // LinkedHashMap is used for deterministic order
         this.declToExpr = new LinkedHashMap<>();
+        this.pointerStore = new PointerStore();
     }
 
     public static MutableValuation copyOf(final Valuation val) {
@@ -91,9 +100,9 @@ public final class MutableValuation extends Valuation {
 
     @Override
     public Expr<BoolType> toExpr() {
-        return SmartBoolExprs.And(
-                declToExpr.entrySet().stream().map(e -> Eq(e.getKey().getRef(), e.getValue()))
-                        .collect(toImmutableList()));
+        var valOps = SmartBoolExprs.And(declToExpr.entrySet().stream().map(e -> Eq(e.getKey().getRef(), e.getValue())).toList());
+        var pointerStoreOps = pointerStore.toExpr();
+        return SmartBoolExprs.And(valOps, pointerStoreOps);
     }
 
     @Override

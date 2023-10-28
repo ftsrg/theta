@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
+import hu.bme.mit.theta.xcfa.analysis.pointers.PointerAnalysis
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.isWritten
@@ -84,26 +85,27 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                     flatLabels,
                     s
                 ) else newLabel
-                assert(newNewLabel is SequenceLabel)
+                var localPointerStore = s.pointerStore.copy()
 
-                val deRefExprs = getDeRefEpxrs(newNewLabel)
-
-                if (deRefExprs.isNotEmpty()) {
-                    val deRefLut = deRefExprs.associateWith { deRefExpr ->
-                        val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
-                        val pointsTo = s.pointerStore.pointsTo(varDecl)
-                        assert(pointsTo.size == 1) { "Pointer points to multiple variables." }
-                        pointsTo.first()
+                val deReffedLabels = (newNewLabel as? SequenceLabel)?.labels?.map { label ->
+                    val deRefExprs = getDeRefEpxrs(label)
+                    val deReffedLabel = if (deRefExprs.isNotEmpty()) {
+                        val deRefLut = deRefExprs.associateWith { deRefExpr ->
+                            val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
+                            val pointsTo = localPointerStore.pointsTo(varDecl)
+                            assert(pointsTo.size == 1) { "Pointer points to multiple variables." }
+                            pointsTo.first()
+                        }
+                        label.changeDeRefs(deRefLut)
+                    } else label
+                    if (label is StmtLabel) {
+                        localPointerStore = PointerAnalysis.updateWithLabel(label, localPointerStore)
                     }
-                    val deReffedNewLabel = newNewLabel.changeDeRefs(deRefLut)
-                    val ptrDereffedStmts = deRefLut.map { (deRefExpr, pointsTo) ->
-                        StmtLabel(PointerDereffedStmt.of(deRefExpr, pointsTo), metadata = newLabel.metadata)
-                    }
-                    val finalSequenceLabel = SequenceLabel(listOf(deReffedNewLabel.getFlatLabels(), ptrDereffedStmts).flatten())
-                    listOf(XcfaAction(proc.key, edge.withLabel(finalSequenceLabel)))
-                } else {
-                    listOf(XcfaAction(proc.key, edge.withLabel(newNewLabel)))
+                    deReffedLabel
                 }
+
+                val finalSequenceLabel = SequenceLabel(deReffedLabels ?: listOf(newNewLabel))
+                listOf(XcfaAction(proc.key, edge.withLabel(finalSequenceLabel)))
             }.flatten()
         }
     }.flatten().toSet()
@@ -153,7 +155,11 @@ fun getDeRefEpxrs(label: XcfaLabel): Set<DeRefExpr<*>> {
             when (val stmt = it.stmt) {
                 is AssumeStmt -> getDeRefExprs(stmt.cond, mutableSetOf())
                 is AssignStmt<*> -> getDeRefExprs(stmt.expr, mutableSetOf())
-                is DerefWriteStmt -> setOf(stmt.deRef)
+                is DerefWriteStmt -> {
+                    val deRefExprs = getDeRefExprs(stmt.expr, mutableSetOf()).toMutableSet()
+                    deRefExprs.add(stmt.deRef)
+                    deRefExprs
+                }
                 else -> emptySet()
             }
         } else emptySet()
@@ -268,7 +274,7 @@ private fun getExplXcfaTransFunc(solver: Solver,
         val (newSt, newAct) = s.apply(a)
         explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
             listOf(s.processes.map { it.value.varLookup }.flatten(),
-                listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
+                listOf(getTempLookup(a.label))).flatten()), newSt.pointerStore).map { newSt.withState(it) }
     }
 }
 
