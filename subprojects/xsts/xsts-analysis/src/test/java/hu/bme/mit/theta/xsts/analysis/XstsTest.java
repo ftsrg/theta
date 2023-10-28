@@ -339,8 +339,26 @@ public class XstsTest {
                 {"src/test/resources/model/if1.xsts", "src/test/resources/property/if1.prop", true,
                         XstsConfigBuilder.Domain.PRED_CART},
 
+                {"src/test/resources/model/crossroads_choice_else.xsts", "src/test/resources/property/cross.prop",
+                        false, XstsConfigBuilder.Domain.PRED_CART},
+
                 {"src/test/resources/model/if2.xsts", "src/test/resources/property/if2.prop", false,
-                        XstsConfigBuilder.Domain.EXPL_PRED_COMBINED}
+                        XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+
+                {"src/test/resources/model/choice-else.xsts", "src/test/resources/property/choice-else1.prop", true,
+                        XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+
+                {"src/test/resources/model/choice-else.xsts", "src/test/resources/property/choice-else2.prop", false,
+                        XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+
+                {"src/test/resources/model/choice-else2.xsts", "src/test/resources/property/choice-else1.prop", true,
+                        XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+
+                {"src/test/resources/model/choice-else2.xsts", "src/test/resources/property/choice-else2.prop", false,
+                        XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+
+                {"src/test/resources/model/choice-else2.xsts", "src/test/resources/property/choice-else3.prop", true,
+                        XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
         });
     }
 

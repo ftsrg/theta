@@ -152,6 +152,10 @@ public class XstsStatement {
                 final Stmt stmt = block.accept(this);
                 stmts.add(stmt);
             }
+            if (ctx.elze != null) {
+                return NonDetStmt.of(stmts, ctx.elze.accept(this));
+            }
+
             return NonDetStmt.of(stmts);
         }
 

@@ -261,7 +261,7 @@ stmt:	localVarDeclStmt
 	;
 
 nonDetStmt
-    :   CHOICE blocks+=stmt (NONDET_OR blocks+=stmt)*
+    :   CHOICE blocks+=stmt (NONDET_OR blocks+=stmt)* (ELSE elze=stmt)?
     ;
 
 blockStmt

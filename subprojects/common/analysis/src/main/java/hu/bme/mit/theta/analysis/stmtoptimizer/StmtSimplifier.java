@@ -147,7 +147,43 @@ public class StmtSimplifier {
                     successfulSubStmts.add(result.stmt);
                 }
             }
-            if (successfulSubStmts.size() == 0) {
+            MutableValuation elzeValuation = null;
+            Stmt elzeSubStmt = null;
+            if (stmt.getElze() != null) {
+                final MutableValuation subVal = MutableValuation.copyOf(valuation);
+                final SimplifyResult result = stmt.getElze().accept(this, subVal);
+                if (result.status == SimplifyStatus.SUCCESS) {
+                    elzeValuation = subVal;
+                    elzeSubStmt = result.stmt;
+                }
+            }
+
+            if (elzeSubStmt != null) {
+                if (successfulSubStmts.isEmpty()) {
+                    elzeSubStmt.accept(this, valuation);
+                    return SimplifyResult.of(elzeSubStmt, SimplifyStatus.SUCCESS);
+                } else {
+                    successfulSubStmts.get(0).accept(this, valuation);
+                    List<Decl<?>> toRemove = new ArrayList<>();
+                    for (Decl<?> decl : valuation.getDecls()) {
+                        for (MutableValuation subVal : valuations) {
+                            if (!valuation.eval(decl).equals(subVal.eval(decl))) {
+                                toRemove.add(decl);
+                                break;
+                            }
+                        }
+                        if (!valuation.eval(decl).equals(elzeValuation.eval(decl))) {
+                            toRemove.add(decl);
+                        }
+                    }
+                    for (Decl<?> decl : toRemove) {
+                        valuation.remove(decl);
+                    }
+                    return SimplifyResult.of(NonDetStmt.of(successfulSubStmts, elzeSubStmt), SimplifyStatus.SUCCESS);
+                }
+            }
+
+            if (successfulSubStmts.isEmpty()) {
                 return SimplifyResult.of(AssumeStmt.of(False()), SimplifyStatus.BOTTOM);
             } else if (successfulSubStmts.size() == 1) {
                 successfulSubStmts.get(0).accept(this, valuation);
@@ -168,7 +204,6 @@ public class StmtSimplifier {
                 }
                 return SimplifyResult.of(NonDetStmt.of(successfulSubStmts), SimplifyStatus.SUCCESS);
             }
-
         }
 
         @Override
