@@ -24,10 +24,10 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>) :
-    XcfaSporLts(xcfa) {
+        XcfaSporLts(xcfa) {
 
     override fun <P : Prec> getEnabledActionsFor(state: XcfaState<*>, exploredActions: Collection<XcfaAction>,
-        prec: P): Set<XcfaAction> {
+                                                 prec: P): Set<XcfaAction> {
         // Collecting enabled actions
         val allEnabledActions = getAllEnabledActionsFor(state)
 
@@ -71,7 +71,7 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
      * @return a source set of enabled actions in the current abstraction
      */
     private fun calculateSourceSet(enabledActions: Collection<XcfaAction>, firstActions: Collection<XcfaAction>,
-        prec: Prec, ignoredVars: MutableSet<Decl<out Type>>, state: XcfaState<*>): Set<XcfaAction> {
+                                   prec: Prec, ignoredVars: MutableSet<Decl<out Type>>, state: XcfaState<*>): Set<XcfaAction> {
         if (firstActions.any(this::isBackwardAction)) {
             return enabledActions.toSet()
         }
@@ -108,11 +108,11 @@ class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<
     }
 
     private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction, prec: Prec,
-        ignoredVariables: MutableSet<Decl<out Type?>>, state: XcfaState<*>): Boolean {
+                              ignoredVariables: MutableSet<Decl<out Type?>>, state: XcfaState<*>): Boolean {
         if (isSameProcess(sourceSetAction, action)) {
             return true
         }
-        val usedBySourceSetAction = getDirectlyUsedSharedObjects(getEdgeOf(sourceSetAction), state)
+        val usedBySourceSetAction = getUsedSharedObjects(getEdgeOf(sourceSetAction), state)
         val influencedSharedObjects = getInfluencedSharedObjects(getEdgeOf(action))
         for (varDecl in influencedSharedObjects) {
             if (usedBySourceSetAction.contains(varDecl)) {
