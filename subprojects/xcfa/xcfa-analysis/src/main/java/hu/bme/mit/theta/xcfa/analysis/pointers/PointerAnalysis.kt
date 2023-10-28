@@ -22,6 +22,7 @@ data class ReferencingPointerAction(override val p: VarDecl<*>, override val q: 
 data class DereferencingReadPointerAction(override val p: VarDecl<*>, override val q: VarDecl<*>) : PointerAction
 data class DereferencingWritePointerAction(override val p: VarDecl<*>, override val q: VarDecl<*>) : PointerAction
 data class AliasingPointerAction(override val p: VarDecl<*>, override val q: VarDecl<*>) : PointerAction
+data class DoubleDerefAliasAction(override val p: VarDecl<*>, override val q: VarDecl<*>) : PointerAction
 
 abstract class PointerAnalysis {
     abstract fun run(xcfa: XCFA): PointerStore
@@ -56,11 +57,14 @@ abstract class PointerAnalysis {
                         return AliasingPointerAction(pVarDecl, qVarDecl)
                     }
                 } else if (label.stmt is DerefWriteStmt) {
-                    // *p = q
+                    // *p = q or *p = *q
                     val pVarDecl = ((label.stmt as DerefWriteStmt).deRef.op as RefExpr<*>).decl as VarDecl<*>
                     return if ((label.stmt as DerefWriteStmt).expr is RefExpr<*>) {
                         val qVarDecl = ((label.stmt as DerefWriteStmt).expr as RefExpr<*>).decl as VarDecl<*>
                         DereferencingWritePointerAction(pVarDecl, qVarDecl)
+                    } else if ((label.stmt as DerefWriteStmt).expr is DeRefExpr<*>) {
+                        val qVarDecl = (((label.stmt as DerefWriteStmt).expr as DeRefExpr<*>).op as RefExpr<*>).decl as VarDecl<*>
+                        DoubleDerefAliasAction(pVarDecl, qVarDecl)
                     } else {
                         null
                     }
@@ -119,6 +123,17 @@ abstract class PointerAnalysis {
                     newPointerStore.removePointsToAny(action.p)
                     newPointerStore.pointsTo(action.q).forEach { q ->
                         newPointerStore.addPointsTo(action.p, q)
+                    }
+                }
+                is DoubleDerefAliasAction -> {
+                    // *p = *q
+                    newPointerStore.pointsTo(action.p).forEach{ newPointerStore.removePointsToAny(it) }
+                    newPointerStore.pointsTo(action.p).forEach { r ->
+                        newPointerStore.pointsTo(action.q).forEach { s ->
+                            newPointerStore.pointsTo(s).forEach { t ->
+                                newPointerStore.addPointsTo(r, t)
+                            }
+                        }
                     }
                 }
             }
