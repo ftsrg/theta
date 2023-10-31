@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-final class DiffBounds {
+/*final*/ public class DiffBounds {
 
 	private static final int INF = Integer.MAX_VALUE;
 

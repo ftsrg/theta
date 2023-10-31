@@ -5,7 +5,7 @@ For more information about the STS formalism and its supported language elements
 
 ### Related projects
 
-* [`sts`](../sts/README.md): Classes to represent STSs and a domain specific language (DSL) to parse STSs from a textual representation.
+* [`sts`](../sts/README.md): Classes to represent STSs and a dataDomain specific language (DSL) to parse STSs from a textual representation.
 * [`sts-analysis`](../sts-analysis/README.md): STS specific analysis modules enabling the algorithms to operate on them.
 
 ## Using the tool

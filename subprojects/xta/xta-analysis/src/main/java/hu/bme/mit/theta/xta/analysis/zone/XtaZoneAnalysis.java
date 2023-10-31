@@ -22,9 +22,10 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.zone.ZoneOrd;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.xta.analysis.ClockPred.ClockAnalysis;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 
-public final class XtaZoneAnalysis implements Analysis<ZoneState, XtaAction, ZonePrec> {
+public final class XtaZoneAnalysis implements Analysis<ZoneState,XtaAction,ZonePrec> {
 
 	private static final XtaZoneAnalysis INSTANCE = new XtaZoneAnalysis();
 

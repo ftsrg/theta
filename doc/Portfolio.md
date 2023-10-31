@@ -15,11 +15,11 @@ Usage of the portfolio simply happens by using the `--portfolio` flag with a par
 
 The complex portfolio has a global timeout of approximately 900 seconds.
 
-"Based on preliminary experiments and domain knowledge, we manually constructed a dynamic algorithm selection portfolio for SV-COMP'22, illustrated by Figure.
+"Based on preliminary experiments and dataDomain knowledge, we manually constructed a dynamic algorithm selection portfolio for SV-COMP'22, illustrated by Figure.
 Rounded white boxes correspond to decision points.
 We start by branching on the arithmetic (floats, bitvectors, integers).
 Under integers, there are further decision points based on the cyclomatic complexity and the number of havocs and variables.
-Grey boxes represent configurations, defining the *solver\domain\refinement* in this order.
+Grey boxes represent configurations, defining the *solver\dataDomain\refinement* in this order.
 Lighter and darker grey represents explicit and predicate domains respectively.
 Internal timeouts are written below the boxes.
 An unspecified timeout means that the configuration can use all the remaining time.
@@ -42,9 +42,9 @@ The configurations are:
 3. A Newtonian analysis (mainly to handle bitvector arithmetics as well)
 
 The precise parameters of these configurations:
-1. `–domain EXPL –initprec EMPTY –search ERR –encodingLBE –refinement SEQ_ITP –maxenum 1 –precgranularityGLOBAL –prunestrategy LAZY`
-2. `–domain PRED_CART –initprec EMPTY –search ERR–encoding  LBE  –refinement  BW_BIN_ITP  –predsplitWHOLE –precgranularity GLOBAL –prunestrategy LAZY`
-3. `–domain  EXPL  –initprec  EMPTY  –search  ERR  –encoding  LBE  –refinement  NWT_IT_WP  –maxenum1 –precgranularity GLOBAL –prunestrategy LAZY`
+1. `–dataDomain EXPL –initprec EMPTY –search ERR –encodingLBE –refinement SEQ_ITP –maxenum 1 –precgranularityGLOBAL –prunestrategy LAZY`
+2. `–dataDomain PRED_CART –initprec EMPTY –search ERR–encoding  LBE  –refinement  BW_BIN_ITP  –predsplitWHOLE –precgranularity GLOBAL –prunestrategy LAZY`
+3. `–dataDomain  EXPL  –initprec  EMPTY  –search  ERR  –encoding  LBE  –refinement  NWT_IT_WP  –maxenum1 –precgranularity GLOBAL –prunestrategy LAZY`
 
 ### Adding further portfolios
 To create a new concrete portfolio, create a subclass of the `hu.bme.mit.theta.xcfa.analysis.portfolio.common.AbstractPortfolio` class and implement its abstract method `executeAnalysis`. The `AbstractPortfolio` class serves as a utility, in which the execution of any given configuration with a time limit on a separate thread is already implemented in the method `executeConfiguration`.

@@ -7,7 +7,7 @@ groups of graphs, where edges are annotated with program statements and each gra
 single process. The project contains:
 
 * Classes to represent XCFAs.
-* A domain specific language (DSL) to parse XCFAs from a textual representation.
+* A dataDomain specific language (DSL) to parse XCFAs from a textual representation.
 * A program transformation method that takes LLVM IR and creates an XCFA. 
 
 Every _XCFA_ model consists of global variables and _XcfaProcess_ definitions. _XcfaProcesses_ consist of thread-local variables and _XcfaProcedure_ definitions. _XcfaProcedures_ are akin to the _CFA_ models, in the sense that they consist of local variables, _XcfaLocations_ and _XcfaEdges_; and _XcfaEdges_ contain zero or more _XcfaLabels_.

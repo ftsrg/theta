@@ -4,21 +4,24 @@ clock z;
 
 int a = 0;
 bool b = false;
+broadcast chan ch;
 process P1(){
 
     state
         idle ,
         A { y < 5 },
         B,
-        C ;
+        C ,
+        c;
 
-    commit idle;
+    commit idle,c;
 
     init
-        A;
+        idle;
 
     trans
-        idle -> A {},
+        idle -> A { guard x < 1; sync ch!;},
+        c -> A {},
         A -> A {guard x == 1; assign a = a + 1, x = 0, b = true;},
         A -> B {guard a == 4 ;},
         A -> C {guard a == 3;};

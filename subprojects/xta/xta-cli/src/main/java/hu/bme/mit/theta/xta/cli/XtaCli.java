@@ -15,20 +15,12 @@
  */
 package hu.bme.mit.theta.xta.cli;
 
-import java.io.*;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -48,34 +40,26 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaVisualizer;
-import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.combinedlazycegar.CombinedLazyCegarXtaCheckerConfigFactory;
-import hu.bme.mit.theta.xta.analysis.lazy.*;
-import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.config.XtaConfig;
-import hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder;
+import hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder_Zone;
 import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 import hu.bme.mit.theta.xta.utils.CTLOperatorNotSupportedException;
 import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
 
-import javax.sound.sampled.AudioFormat;
+import java.io.*;
+import java.nio.file.Path;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder.*;
+import static hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder_Zone.*;
 
 public final class XtaCli {
 
 	public enum Algorithm {
-		LAZY, EXPERIMENTAL_EAGERLAZY
+		EAGER
 	}
 
 	private static final String JAR_NAME = "theta-xta.jar";
@@ -85,7 +69,7 @@ public final class XtaCli {
 	@Parameter(names = {"--model", "-m"}, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = {"--discreteconcr", "-dc"}, description = "Concrete domain for discrete variables", required = false)
+	/*@Parameter(names = {"--discreteconcr", "-dc"}, description = "Concrete domain for discrete variables", required = false)
 	DataStrategy2.ConcrDom concrDataDom = DataStrategy2.ConcrDom.EXPL;
 
 	@Parameter(names = {"--discreteabstr", "-da"}, description = "Abstract domain for discrete variables", required = false)
@@ -95,19 +79,16 @@ public final class XtaCli {
 	DataStrategy2.ItpStrategy dataItpStrategy = DataStrategy2.ItpStrategy.BIN_BW;
 
 	@Parameter(names = {"--meet", "-me"}, description = "Meet strategy for expressions", required = false)
-	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;
+	ExprMeetStrategy exprMeetStrategy = ExprMeetStrategy.BASIC;*/
 
 	@Parameter(names = {"--clock", "-c"}, description = "Refinement strategy for clock variables", required = false)
 	ClockStrategy clockStrategy = ClockStrategy.BWITP;
 
-	@Parameter(names = {"--search", "-s"}, description = "Search strategy", required = false)
-	SearchStrategy searchStrategy = SearchStrategy.BFS;
+	@Parameter(names = {"--algorithm"}, description = "")
+	Algorithm algorithm = Algorithm.EAGER;
 
 	@Parameter(names = {"--benchmark", "-b"}, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
-
-	@Parameter(names = {"--visualize", "-v"}, description = "Write proof or counterexample to file in dot format")
-	String dotfile = null;
 
 	@Parameter(names = {"--header", "-h"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -122,8 +103,6 @@ public final class XtaCli {
 	boolean versionInfo = false;
 
 	//Eager CEGAR
-	@Parameter(names = {"--checkmethod", "-cm"}, description = "Check the model with Eager-CEGAR, or Lazy-Abstraction", required = true)
-	String method;
 	@Parameter(names = "--domain", description = "Abstract domain")
 	Domain domain = Domain.PRED_CART;
 
@@ -157,10 +136,6 @@ public final class XtaCli {
 
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
-
-	@Parameter(names = "--loglevel", description = "Detailedness of logging")
-	Logger.Level logLevel = Logger.Level.SUBSTEP;
-
 
 	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
@@ -199,10 +174,6 @@ public final class XtaCli {
 			return;
 		}
 		try {
-			if(method.equals("eager")){
-				Eager_Cegar_check();
-				return;
-			}
 		} catch (Throwable ex) {
 			printError(ex);
 			System.exit(1);
@@ -221,8 +192,8 @@ public final class XtaCli {
 		try {
 			final XtaSystem system = loadModel();
 			switch (algorithm) {
-				case LAZY -> runLazy(system);
-				case EXPERIMENTAL_EAGERLAZY -> runCombined(system);
+				//case LAZY -> runLazy(system);
+				//case EXPERIMENTAL_EAGERLAZY -> runCombined(system);
 				case EAGER -> runEager(system);
 			}
 		} catch (final Throwable ex) {
@@ -231,7 +202,7 @@ public final class XtaCli {
 		}
 	}
 
-	private void runLazy(final XtaSystem system) {
+	/*private void runLazy(final XtaSystem system) {
 		final LazyXtaAbstractorConfig<?, ?, ?> abstractor = LazyXtaAbstractorConfigFactory.create(
 			system, new DataStrategy2(concrDataDom, abstrDataDom, dataItpStrategy),
 			clockStrategy, searchStrategy, exprMeetStrategy
@@ -244,16 +215,10 @@ public final class XtaCli {
 		final var config = CombinedLazyCegarXtaCheckerConfigFactory.create(system, NullLogger.getInstance(), Z3SolverFactory.getInstance()).build();
 		final var result = config.check();
 		resultPrinter(result.isSafe(), result.isUnsafe(), system);
-	}
+	}*/
 
 	private void runEager(XtaSystem system){
-		final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system, dataStrategy,
-				clockStrategy, searchStrategy);
-		final SafetyResult<?, ?> result = check(checker);
-		resultPrinter(result.isSafe(), result.isUnsafe(), system);
-		if (dotfile != null) {
-			writeVisualStatus(result, dotfile);
-		}
+		Eager_Cegar_check(system);
 	}
 
 	private void resultPrinter(final boolean isSafe, final boolean isUnsafe, final XtaSystem system) {
@@ -335,7 +300,7 @@ public final class XtaCli {
 		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 
-	private void Eager_Cegar_check(){
+	private void Eager_Cegar_check(XtaSystem xta){
 		final SolverFactory abstractionSolverFactory;
 		try {
 			SolverManager.registerSolverManager(Z3SolverManager.create());
@@ -346,7 +311,6 @@ public final class XtaCli {
 			}
 
 			final Stopwatch sw = Stopwatch.createStarted();
-			final XtaSystem xta = loadModel();
 
 			if (visualize != null) {
 				final Graph graph = XtaVisualizer.visualize(xta);
@@ -373,7 +337,7 @@ public final class XtaCli {
 			final XtaConfig<?, ?, ?> configuration = buildConfiguration(xta, abstractionSolverFactory, refinementSolverFactory);
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
-			printResult(status);
+			resultPrinter(status.isSafe(), status.isUnsafe(), xta);
 			if (status.isUnsafe() && cexfile != null) {
 				writeCex(status.asUnsafe());
 			}
@@ -385,7 +349,7 @@ public final class XtaCli {
 	}
 	private XtaConfig<?, ?, ?> buildConfiguration(final XtaSystem xta, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) throws Exception {
 		try {
-			return new XtaConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
+			return new XtaConfigBuilder_Zone(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
 					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(xta);

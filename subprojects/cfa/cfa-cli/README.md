@@ -6,7 +6,7 @@ For more information about the CFA formalism and its supported language elements
 
 ### Related projects
 
-* [`cfa`](../cfa/README.md): Classes to represent CFAs and a domain specific language (DSL) to parse CFAs from a textual representation.
+* [`cfa`](../cfa/README.md): Classes to represent CFAs and a dataDomain specific language (DSL) to parse CFAs from a textual representation.
 * [`cfa-analysis`](../cfa-analysis/README.md): CFA specific analysis modules enabling the algorithms to operate on them.
 
 ### Frontends

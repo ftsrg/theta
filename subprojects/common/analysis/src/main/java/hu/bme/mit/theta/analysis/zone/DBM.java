@@ -62,10 +62,12 @@ import hu.bme.mit.theta.core.clock.op.FreeOp;
 import hu.bme.mit.theta.core.clock.op.GuardOp;
 import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.clock.op.ShiftOp;
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-final class DBM {
+public class DBM {
 
 	private static final IntBinaryOperator ZERO_DBM_VALUES = (x, y) -> Leq(0);
 	private static final IntBinaryOperator TOP_DBM_VALUES = BasicDbm::defaultBound;
@@ -835,5 +837,53 @@ final class DBM {
 	private interface Procedure {
 		void execute();
 	}
+
+	public void setIfGreater(ClockPredPrec prec){
+		BasicDbm newdbm = new BasicDbm(dbm);
+		newdbm.free();
+		ArrayList<Pair<Integer, Integer>> changes = new ArrayList<Pair<Integer, Integer>>();
+		for (Pair<VarDecl<RatType>, VarDecl<RatType>> e : prec.getPreds().keySet()){
+
+			int i = signature.indexOf(e.getKey());
+			int j;
+
+			if(e.NoValue()){
+				j = 0;
+			}
+			else j = signature.indexOf(e.getValue());
+			int currval = dbm.get(i,j);
+			changes.add(new Pair<Integer, Integer>(i,j));
+			//its already sorted
+			var ps = new ArrayList<>(prec.getPreds().get(e));
+			ps.add(DiffBounds.Inf());
+			for(Integer b: ps) {
+				if( b >= currval){
+					newdbm.set(i, j, b);
+					break;
+				}
+
+//				if (DiffBounds.isStrict(b)) {
+//					if (DiffBounds.getBound(b) > DiffBounds.getBound(currval)) {
+//
+//					}
+//				} else {
+//					if (DiffBounds.getBound(b) >= DiffBounds.getBound(currval)) {
+//						newdbm.set(i, j, b);
+//						break;
+//					}
+//				}
+			}
+			//if(newdbm.get(i,j) == dbm.get(i,j)) newdbm.set(i,j, DiffBounds.Inf());
+			dbm.set(i,j,newdbm.get(i,j));
+		}
+		for(int i = 0; i < dbm.size(); i++){
+			for(int j = 1; j < dbm.size(); j++){
+				dbm.set(i,j,newdbm.get(i,j));
+			}
+		}
+	}
+
+
+
 
 }

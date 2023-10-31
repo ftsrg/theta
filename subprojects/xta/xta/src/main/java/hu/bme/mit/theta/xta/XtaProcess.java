@@ -110,10 +110,13 @@ public final class XtaProcess {
                            final Optional<Sync> sync, final List<Stmt> updates) {
         checkArgument(locs.contains(source));
         checkArgument(locs.contains(target));
+
         if(!name.equals("ErrorProc") && !target.getKind().equals(LocKind.ERROR)) {
             int count = 0;
+            //this for is to add the update the location bool variables to keep track of which are the active locations (for property checking)
             for (VarDecl<?> var : system.getDataVars()) {
-                if (!target.equals(source) || count == 2) {
+                //count : if we find both of the location bool variable we can break the cycle
+                if (!target.equals(source) && count < 2) {
                     if (var.getName().contains(target.name)) {
                         updates.add(AssignStmt.create(var, BoolLitExpr.of(true)));
                         count++;

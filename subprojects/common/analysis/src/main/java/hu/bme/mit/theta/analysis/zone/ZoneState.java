@@ -222,6 +222,7 @@ public final class ZoneState implements ExprState {
 		return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().addAll(constrs).toString();
 	}
 
+
 	////////
 
 	public static class Builder {
@@ -300,4 +301,11 @@ public final class ZoneState implements ExprState {
 		}
 	}
 
+	public void clockPredicate(ClockPredPrec prec){
+		dbm.setIfGreater(prec);
+	}
+
+	public DBM getDbm() {
+		return dbm;
+	}
 }

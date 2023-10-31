@@ -1,0 +1,21 @@
+clock x;
+clock y;
+
+int a = 0;
+process P1(){
+
+    state
+        idle ,
+        A {y <= 2},
+        B;
+
+
+    init
+        idle;
+
+    trans
+        idle -> A {guard x <= 5; assign y = 0;},
+        A -> B {guard x >=7   ;assign a = 3;};
+
+}
+system P1;

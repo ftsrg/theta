@@ -33,7 +33,7 @@ import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-public class XtaConfigBuilder {
+public class XtaConfigBuilder_Zone {
     public enum Domain {
         EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
     }
@@ -95,7 +95,7 @@ public class XtaConfigBuilder {
 
 
             public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<XtaState<S>, A, XtaPrec<P>, R> createRefiner(
-            final RefutationToPrec<P, R> refToPrec) {
+                    final RefutationToPrec<P, R> refToPrec) {
                 return LocalXtaPrecRefiner.create(refToPrec);
             }
         };
@@ -120,44 +120,44 @@ public class XtaConfigBuilder {
     private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
 
-    public XtaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
+    public XtaConfigBuilder_Zone(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
         this.domain = domain;
         this.refinement = refinement;
         this.abstractionSolverFactory = solverFactory;
         this.refinementSolverFactory = solverFactory;
     }
-    public XtaConfigBuilder(final Domain domain, final Refinement refinement, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) {
+    public XtaConfigBuilder_Zone(final Domain domain, final Refinement refinement, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) {
         this.domain = domain;
         this.refinement = refinement;
         this.abstractionSolverFactory = abstractionSolverFactory;
         this.refinementSolverFactory = refinementSolverFactory;
     }
-    public XtaConfigBuilder logger(final Logger logger) {
+    public XtaConfigBuilder_Zone logger(final Logger logger) {
         this.logger = logger;
         return this;
     }
-    public XtaConfigBuilder search(final Search search) {
+    public XtaConfigBuilder_Zone search(final Search search) {
         this.search = search;
         return this;
     }
-    public XtaConfigBuilder predSplit(final PredSplit predSplit) {
+    public XtaConfigBuilder_Zone predSplit(final PredSplit predSplit) {
         this.predSplit = predSplit;
         return this;
     }
-    public XtaConfigBuilder precGranularity(final PrecGranularity precGranularity) {
+    public XtaConfigBuilder_Zone precGranularity(final PrecGranularity precGranularity) {
         this.precGranularity = precGranularity;
 
         return this;
     }
-    public XtaConfigBuilder maxEnum(final int maxEnum) {
+    public XtaConfigBuilder_Zone maxEnum(final int maxEnum) {
         this.maxEnum = maxEnum;
         return this;
     }
-    public XtaConfigBuilder initPrec(final InitPrec initPrec) {
+    public XtaConfigBuilder_Zone initPrec(final InitPrec initPrec) {
         this.initPrec = initPrec;
         return this;
     }
-    public XtaConfigBuilder pruneStrategy(final PruneStrategy pruneStrategy) {
+    public XtaConfigBuilder_Zone pruneStrategy(final PruneStrategy pruneStrategy) {
         this.pruneStrategy = pruneStrategy;
         return this;
     }
@@ -197,7 +197,7 @@ public class XtaConfigBuilder {
                     refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), refinementSolverFactory.createItpSolver()),
                             precGranularity.createRefiner(reftoprec ), pruneStrategy, logger);
                     break;
-                    //TODO
+                //TODO
                     /*
                 case UNSAT_CORE:
                     refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), refinementSolverFactory.createUCSolver()),
@@ -234,7 +234,7 @@ public class XtaConfigBuilder {
                 case NWT_WP_LV:
                     refiner = SingleExprTraceRefiner.create(
                             ExprTraceNewtonChecker.create(True(), True(), refinementSolverFactory.createUCSolver()).withoutIT().withWP().withLV(),
-                            precGranularity.createRefiner(reftoprec ),
+                            precGranularity.createRefiner(reftoprec),
                             pruneStrategy,
                             logger
                     );

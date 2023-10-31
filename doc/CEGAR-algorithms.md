@@ -8,7 +8,7 @@ This document gives a brief introduction to the possible configuration options o
 
 > "[Counterexample-Guided Abstraction Refinement](https://link.springer.com/chapter/10.1007/10722167_15) (CEGAR) is a widely used technique for the automated formal verification of different systems, including both software and hardware.
 CEGAR works by iteratively constructing and refining abstractions until a proper precision is reached.
-It starts with computing an abstraction of the system with respect to some abstract domain and a given initial -- usually coarse -- precision.
+It starts with computing an abstraction of the system with respect to some abstract dataDomain and a given initial -- usually coarse -- precision.
 The abstraction [over-approximates](https://dl.acm.org/doi/10.1145/186025.186051) the possible behaviors (i.e., the state space) of the original system.
 Thus, if no erroneous behavior can be found in the abstract state space then the original system is also safe.
 However, abstract counterexamples corresponding to erroneous behaviors must be checked whether they are reproducible (feasible) in the original system.
@@ -28,18 +28,18 @@ Quoted from [Á. Hajdu and Z. Micskei - Efficient Strategies for CEGAR-Based Mod
 Note that not all options might be available in all tools.
 The available options, along with their default values are presented in the help screen (`--help`) of each tool.
 
-### `--domain`
+### `--dataDomain`
 
-The domain controls the abstract information that is being tracked about the system.
+The dataDomain controls the abstract information that is being tracked about the system.
 
 * `PRED_CART`: [Cartesian predicate abstraction](https://link.springer.com/article/10.1007/s10009-002-0095-0) keeps track of conjunctions of logical predicates (e.g., `x > 5 and y = x`) instead of concrete values.
 * `PRED_BOOL`: [Boolean predicate abstraction](https://link.springer.com/article/10.1007/s10009-002-0095-0) keeps track of arbitrary Boolean combination of predicates.
 * `PRED_SPLIT`: Boolean predicate abstraction, but states are [split]((https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf)) into sub-states along disjunctions.
 * `EXPL`: [Explicit-value abstraction]((https://link.springer.com/chapter/10.1007/978-3-642-37057-1_11)) keeps track of concrete values, but only for a (continuously expanded) set of variables.
-* `EXPL_PRED_CART`, `EXPL_PRED_SPLIT`, `EXPL_PRED_BOOL` and `EXPL_PRED_COMBINED`: Product abstraction domains, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates (using the corresponding predicate domain). Variables can automatically be switched from predicate tracking to explicit tracking depending on the `--autoexpl` option (see below).
+* `EXPL_PRED_CART`, `EXPL_PRED_SPLIT`, `EXPL_PRED_BOOL` and `EXPL_PRED_COMBINED`: Product abstraction domains, available for XSTS models. The set of control variables (marked with `ctrl`) are tracked explicitly while others are tracked by predicates (using the corresponding predicate dataDomain). Variables can automatically be switched from predicate tracking to explicit tracking depending on the `--autoexpl` option (see below).
 
-Predicate abstraction (`PRED_*`) tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) domain.
-Explicit-values (`EXPL`) keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small domain.
+Predicate abstraction (`PRED_*`) tracks logical formulas instead of concrete values of variables, which can be efficient for variables with large (or infinite) dataDomain.
+Explicit-values (`EXPL`) keep track of a subset of system variables, which can be efficient if variables are mostly deterministic or have a small dataDomain.
 Cartesian predicate abstraction only uses conjunctions (more efficient) while Boolean allows arbitrary formulas (more expressive).
 Boolean predicate abstraction often gives predicates in a disjunctive normal form (DNF).
 In `PRED_BOOL` this DNF formula is treated as a single state, while in `PRED_SPLIT` each operand of the disjunction is a separate state.
@@ -54,10 +54,10 @@ More information on the abstract domains can be found in Section 2.2.1 and 3.1.3
 Controls the initial precision of the abstraction (e.g., what predicates or variables are tracked initially).
 
 * `EMPTY`: Start with an empty initial precision.
-* `ALLVARS`: Tracks all variables from the beginning. Available for CFA and XSTS if `--domain` is `EXPL`.
-* `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable for CFA and if `--domain` is `PRED_*`.
-* `PROP`: Available for XSTS. Tracks variables from the property if `--domain` is `EXPL` and predicates from the property if `--domain` is `PRED_*`.
-* `CTRL`: Available for XSTS if `--domain` is `EXPL` or `EXPL_PRED_*`. Tracks all control variables.
+* `ALLVARS`: Tracks all variables from the beginning. Available for CFA and XSTS if `--dataDomain` is `EXPL`.
+* `ALLASSUMES`: Track all assumptions by default (e.g., branch/loop conditions). Only applicable for CFA and if `--dataDomain` is `PRED_*`.
+* `PROP`: Available for XSTS. Tracks variables from the property if `--dataDomain` is `EXPL` and predicates from the property if `--dataDomain` is `PRED_*`.
+* `CTRL`: Available for XSTS if `--dataDomain` is `EXPL` or `EXPL_PRED_*`. Tracks all control variables.
 
 We observed that usually the `EMPTY` initial precision yields good performance: the algorithm can automatically determine the precision.
 However, if the system is mostly deterministic, it might be suitable to track all variables from the beginning.
@@ -84,14 +84,14 @@ Available for CFA, determines the [points where abstraction is applied](https://
 ### `--maxenum`
 
 Available for CFA and XSTS.
-Maximal number of states to be enumerated when performing explicit-value analysis (`--domain EXPL`) and an expression cannot be deterministically evaluated.
+Maximal number of states to be enumerated when performing explicit-value analysis (`--dataDomain EXPL`) and an expression cannot be deterministically evaluated.
 If the limit is exceeded, unknown values are propagated.
-As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded domain (or that variable is deterministically assigned).
+As a special case, `0` stands for infinite, but it should only be used if the model does not have any variable with unbounded dataDomain (or that variable is deterministically assigned).
 In general, values between `5` to `50` perform well (see Section 3.1.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information).
 
 ### `--autoexpl`
 
-Automatic predicate-to-explicit switching strategy. Available for XSTS, when used an `EXPL_PRED_*` domain. The goal of these options is to automatically detect when many values of a variable are enumerated in order to unroll a loop.
+Automatic predicate-to-explicit switching strategy. Available for XSTS, when used an `EXPL_PRED_*` dataDomain. The goal of these options is to automatically detect when many values of a variable are enumerated in order to unroll a loop.
 * `STATIC`: No automatic switching
 * `NEWATOMS`: A variable is switched to explicit tracking when it appears in an atom that isn't present in the model.
 * `NEWOPERANDS`: A variable is switched to explicit tracking when it appears in an expression with an operand that it doesn't appear with in the model.
@@ -104,7 +104,7 @@ Strategy for refining the precision of the abstraction, i.e., inferring new pred
 * `BW_BIN_ITP`: Backward binary interpolation (see Section 3.2.1 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information). Searches backwards for the first state where the counterexample becomes infeasible starting from the target state.
 * `SEQ_ITP`: Sequence interpolation.
 * `MULTI_SEQ`: Sequence interpolation with multiple counterexamples (see Section 3.2.2 of [our JAR paper](https://link.springer.com/content/pdf/10.1007%2Fs10817-019-09535-x.pdf) for more information). Can be useful for models with high cyclomatic complexity to converge faster.
-* `UNSAT_CORE`: Extract variables to be tracked from an unsat core, only available if `--domain` is `EXPL`.
+* `UNSAT_CORE`: Extract variables to be tracked from an unsat core, only available if `--dataDomain` is `EXPL`.
 * `UCB`: Extracts predicates or variables using weakest preconditions and unsat cores ([see paper](https://link.springer.com/chapter/10.1007%2F978-3-319-26287-1_10) for more information). _Experimental feature._ Available for CFA.
 * `NWT_*`: Newton-style refinement. _Experimental feature._ Available for CFA. The following variants are supported ([see paper](https://dl.acm.org/doi/10.1145/3106237.3106307) for more information):
 	* `NWT_SP` and `NWT_WP` only works for really simple inputs,
@@ -120,7 +120,7 @@ Floating point support *(known experimental problems)*:
 
 ### `--predsplit`
 
-Available if `--domain` is `PRED_*`.
+Available if `--dataDomain` is `PRED_*`.
 Determines whether splitting is applied to new predicates that are obtained during refinement.
 * `WHOLE`: Keep predicates as a whole, no splitting is applied. Can perform well if the model has many Boolean variables.
 * `CONJUNCTS`: Split predicates into conjuncts.

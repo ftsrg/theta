@@ -38,6 +38,9 @@ final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec
 	@Override
 	public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action, final ZonePrec prec) {
 		final ZoneState succState = XtaZoneUtils.post(state, action, prec);
+		//saját prec amiben óra párok és értékek vannak, ha a succStateben lévő dbm ben felül tudunk
+		//becsülni akkor felülbecslünk, ha nem akkor top
+		
 		return ImmutableList.of(succState);
 	}
 

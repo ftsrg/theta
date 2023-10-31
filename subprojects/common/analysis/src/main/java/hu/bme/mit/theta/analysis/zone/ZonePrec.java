@@ -27,11 +27,11 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class ZonePrec implements Prec {
+public class ZonePrec implements Prec {
 
 	private final Set<VarDecl<RatType>> clocks;
 
-	private ZonePrec(final Collection<? extends VarDecl<RatType>> clocks) {
+	protected ZonePrec(final Collection<? extends VarDecl<RatType>> clocks) {
 		checkNotNull(clocks);
 		this.clocks = ImmutableSet.copyOf(clocks);
 	}
@@ -70,6 +70,7 @@ public final class ZonePrec implements Prec {
 	public Collection<VarDecl<?>> getUsedVars() { // This could be way more elegant
 		return clocks.stream().map(ratTypeVarDecl -> (VarDecl<?>) ratTypeVarDecl).collect(Collectors.toSet());
 	}
+	/////????
 
 	@Override
 	public Prec join(Prec other) {

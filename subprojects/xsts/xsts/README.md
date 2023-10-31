@@ -3,7 +3,7 @@
 This project contains the Extended Symbolic Transition System (XSTS) formalism. The project includes:
 
 * Classes to represent XSTSs.
-* A domain specific language (DSL) to parse XSTSs from a textual representation.
+* A dataDomain specific language (DSL) to parse XSTSs from a textual representation.
 * A frontend that can parse Petri net models described in the [PNML](http://www.pnml.org/) format (experimental).
 
 ### Related projects

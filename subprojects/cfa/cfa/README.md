@@ -3,7 +3,7 @@
 This project contains the Control Flow Automata (CFA) formalism. Its main purpose is to describe programs as a graphs, where nodes correspond to program locations and edges are annotated with program statements.
 The project contains:
 * Classes to represent CFAs.
-* A domain specific language (DSL) to parse CFAs from a textual representation.
+* A dataDomain specific language (DSL) to parse CFAs from a textual representation.
 
 ### Related projects
 

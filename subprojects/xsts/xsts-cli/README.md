@@ -5,7 +5,7 @@ For more information about the XSTS formalism and its supported language element
 
 ### Related projects
 
-* [`xsts`](../xsts/README.md): Classes to represent XSTSs and a domain specific language (DSL) to parse XSTSs from a textual representation.
+* [`xsts`](../xsts/README.md): Classes to represent XSTSs and a dataDomain specific language (DSL) to parse XSTSs from a textual representation.
 * [`xsts-analysis`](../xsts-analysis/README.md): XSTS specific analysis modules enabling the algorithms to operate on them.
 
 ### Frontends

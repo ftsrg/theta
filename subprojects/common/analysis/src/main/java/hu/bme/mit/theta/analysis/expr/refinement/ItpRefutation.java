@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -53,6 +54,11 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<BoolType>>
 		}
 		this.pruneIndex = i;
 		assert 0 <= this.pruneIndex && this.pruneIndex < itpSequence.size();
+	}
+
+	private ItpRefutation() {
+		itpSequence = Collections.emptyList();
+		pruneIndex = -1;
 	}
 
 	public static ItpRefutation sequence(final List<Expr<BoolType>> itpSequence) {
@@ -114,5 +120,9 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<BoolType>>
 			builder.add(i, ExprUtils.getVars(itpSequence.get(i)));
 		}
 		return VarsRefutation.create(builder.build());
+	}
+
+	public static ItpRefutation emptyRefutation(){
+		return new ItpRefutation();
 	}
 }

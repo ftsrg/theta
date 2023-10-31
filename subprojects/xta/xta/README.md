@@ -1,9 +1,9 @@
 ## Overview
 
-This project contains the Uppaal timed automata (XTA) formalism. Its main purpose is to describe timed systems as graphs with clock variables. A domain specific language (DSL) is available to parse XTAs from the textual representation of Uppaal. The project contains:
+This project contains the Uppaal timed automata (XTA) formalism. Its main purpose is to describe timed systems as graphs with clock variables. A dataDomain specific language (DSL) is available to parse XTAs from the textual representation of Uppaal. The project contains:
 
 * Classes to represent XTAs.
-* A domain specific language (DSL) to parse XTAs from a textual representation.
+* A dataDomain specific language (DSL) to parse XTAs from a textual representation.
 
 ### Related projects
 

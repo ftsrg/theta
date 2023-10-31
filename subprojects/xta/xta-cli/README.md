@@ -4,7 +4,7 @@ This project contains an executable tool (command line) for running analyses on 
 
 ### Related projects
 
-* [`xta`](../xta/README.md): Classes to represent XTAs and a domain specific language (DSL) to parse XTAs from a textual representation.
+* [`xta`](../xta/README.md): Classes to represent XTAs and a dataDomain specific language (DSL) to parse XTAs from a textual representation.
 * [`xta-analysis`](../xta-analysis/README.md): XTA specific analysis modules enabling the algorithms to operate on them.
 
 ## Using the tool
