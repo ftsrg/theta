@@ -209,7 +209,13 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         while (locs.any(pred)) {
             locs.removeIf(pred)
-            edges.removeIf { pred(it.source) }
+            edges.removeIf {
+                pred(it.source).also { removing ->
+                    if (removing) {
+                        it.target.incomingEdges.remove(it)
+                    }
+                }
+            }
         }
     }
 

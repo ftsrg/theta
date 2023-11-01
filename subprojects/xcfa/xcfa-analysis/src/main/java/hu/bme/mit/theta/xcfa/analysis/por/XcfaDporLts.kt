@@ -471,7 +471,7 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     /**
      * The current precision of the abstraction.
      */
-    private lateinit var prec: Prec
+    private var prec: Prec? = null
 
     /**
      * Returns actions to be explored from the given state considering the given precision.
@@ -487,9 +487,9 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     override fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
+        val precVars = prec?.usedVars?.toSet() ?: return super.dependent(a, b)
         val aGlobalVars = a.edge.getGlobalVars(xcfa)
         val bGlobalVars = b.edge.getGlobalVars(xcfa)
-        val precVars = prec.usedVars.toSet()
         // dependent if they access the same variable in the precision (at least one write)
         return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }

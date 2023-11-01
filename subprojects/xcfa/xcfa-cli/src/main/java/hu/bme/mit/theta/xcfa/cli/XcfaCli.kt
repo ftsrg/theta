@@ -42,6 +42,9 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
@@ -177,8 +180,9 @@ class XcfaCli(private val args: Array<String>) {
         // propagating input variables
         LbePass.level = lbeLevel
         if (randomSeed >= 0) {
-            XcfaSporLts.random = Random(randomSeed)
-            XcfaDporLts.random = Random(randomSeed)
+            val random = Random(randomSeed)
+            XcfaSporLts.random = random
+            XcfaDporLts.random = random
         }
         if (argToFile) {
             WebDebuggerLogger.enableWebDebuggerLogger()
@@ -186,10 +190,10 @@ class XcfaCli(private val args: Array<String>) {
         }
         LoopUnrollPass.UNROLL_LIMIT = loopUnroll
 
-
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
         val parseContext = ParseContext()
         val xcfa = getXcfa(logger, explicitProperty, parseContext)
+        ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
         logger.write(Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
         } ms)\n")

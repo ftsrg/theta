@@ -41,6 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaDistToErrComparator
 import hu.bme.mit.theta.xcfa.collectAssumes
@@ -156,98 +157,99 @@ enum class Domain(
 }
 
 enum class Refinement(
-    val refiner: (solverFactory: SolverFactory) -> ExprTraceChecker<out Refutation>,
-    val stopCriterion: StopCriterion<XcfaState<out ExprState>, XcfaAction>
+    val refiner: (solverFactory: SolverFactory, monitorOption: CexMonitorOptions) -> ExprTraceChecker<out Refutation>,
+    val stopCriterion: StopCriterion<XcfaState<out ExprState>, XcfaAction>,
 ) {
 
     FW_BIN_ITP(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceFwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
         },
-        stopCriterion = StopCriterions.firstCex()
+        stopCriterion = StopCriterions.firstCex(),
     ),
     BW_BIN_ITP(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     SEQ_ITP(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     MULTI_SEQ(
-        refiner = { s ->
+        refiner = { s, m ->
+            if(m == CexMonitorOptions.CHECK) error("CexMonitor is not implemented for MULTI_SEQ")
             ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
         },
         stopCriterion = StopCriterions.fullExploration()
     ),
     UNSAT_CORE(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceUnsatCoreChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     UCB(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceUCBChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
         },
         stopCriterion = StopCriterions.firstCex()
     ),
 
     NWT_SP(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withoutIT().withSP().withoutLV()
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     NWT_WP(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withoutIT().withWP().withoutLV()
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     NWT_SP_LV(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withoutIT().withSP().withLV()
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     NWT_WP_LV(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withoutIT().withWP().withLV()
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     NWT_IT_WP(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withIT().withWP().withoutLV()
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     NWT_IT_SP(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withIT().withSP().withoutLV()
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     NWT_IT_WP_LV(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withIT().withWP().withLV()
         },
         stopCriterion = StopCriterions.firstCex()
     ),
     NWT_IT_SP_LV(
-        refiner = { s ->
+        refiner = { s, _ ->
             ExprTraceNewtonChecker.create(BoolExprs.True(), BoolExprs.True(), s.createUCSolver())
                 .withIT().withSP().withLV()
         },
@@ -311,10 +313,32 @@ enum class InitPrec(
 
 }
 
-// TODO CexMonitor: disable for multi_seq?
-enum class CexMonitorOptions {
+enum class ConeOfInfluenceMode(
+    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out ExprState>, XcfaAction>
+) {
 
+    NO_COI({ xcfa, ivr, por ->
+        por.getLts(xcfa, ivr).also { NO_COI.porLts = it }
+    }),
+    COI({ xcfa, ivr, por ->
+        ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { COI.porLts = it }
+        ConeOfInfluence.lts
+    }),
+    POR_COI({ xcfa, ivr, _ ->
+        ConeOfInfluence.coreLts = getXcfaLts()
+        XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+    }),
+    POR_COI_POR({ xcfa, ivr, por ->
+        ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
+        XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+    })
+    ;
+    var porLts: LTS<XcfaState<out ExprState>, XcfaAction>? = null
+}
+
+// TODO CexMonitor: disable for multi_seq
+// TODO add new monitor to xsts cli
+enum class CexMonitorOptions {
     CHECK,
-    MITIGATE,
     DISABLE
 }
