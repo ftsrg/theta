@@ -96,7 +96,6 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         }
         val unusedVars = xcfaBuilder.getVars().map { it.wrappedVar } union builder.getVars() subtract
             usedVars subtract builder.getParams().map { it.first }.toSet()
-        System.err.println("Unused vars: $unusedVars")
         xcfaBuilder.getProcedures().forEach { b ->
             b.getEdges().toList().forEach { edge ->
                 val newLabel = edge.label.removeUnusedWrites(unusedVars)

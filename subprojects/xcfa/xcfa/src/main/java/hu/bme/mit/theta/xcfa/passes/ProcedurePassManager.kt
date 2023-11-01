@@ -18,38 +18,48 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.frontend.ParseContext
 
-open class ProcedurePassManager(val passes: List<ProcedurePass>)
+open class ProcedurePassManager(vararg passes: List<ProcedurePass>) {
 
-class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePassManager(listOf(
-    // formatting
-    NormalizePass(parseContext),
-    DeterministicPass(parseContext),
-    // removing redundant elements
-    EmptyEdgeRemovalPass(parseContext),
-    UnusedLocRemovalPass(parseContext),
-    // handling intrinsics
-    ErrorLocationPass(checkOverflow, parseContext),
-    FinalLocationPass(checkOverflow, parseContext),
-    SvCompIntrinsicsPass(parseContext),
-    FpFunctionsToExprsPass(parseContext),
-    CLibraryFunctionsPass(parseContext),
-    // optimizing
-//    UnusedWriteRemovalPass(),
-    SimplifyExprsPass(parseContext),
-    LoopUnrollPass(),
-    // trying to inline procedures
-    InlineProceduresPass(parseContext),
-    RemoveDeadEnds(parseContext),
-    EliminateSelfLoops(parseContext),
-    // handling remaining function calls
-    NondetFunctionPass(parseContext),
-    LbePass(parseContext),
-    NormalizePass(parseContext), // needed after lbe, TODO
-    DeterministicPass(parseContext), // needed after lbe, TODO
-    HavocPromotionAndRange(parseContext),
-    // Final cleanup
-    UnusedVarPass(parseContext),
-))
+    val passes: List<List<ProcedurePass>> = passes.toList()
+}
+
+class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePassManager(
+    listOf(
+        // formatting
+        NormalizePass(parseContext),
+        DeterministicPass(parseContext),
+        // removing redundant elements
+        EmptyEdgeRemovalPass(parseContext),
+        UnusedLocRemovalPass(parseContext),
+        // handling intrinsics
+        ErrorLocationPass(checkOverflow, parseContext),
+        FinalLocationPass(checkOverflow, parseContext),
+        SvCompIntrinsicsPass(parseContext),
+        FpFunctionsToExprsPass(parseContext),
+        CLibraryFunctionsPass(parseContext),
+    ),
+    listOf(
+        // optimizing
+        SimplifyExprsPass(parseContext),
+        LoopUnrollPass(),
+    ),
+    listOf(
+        // trying to inline procedures
+        InlineProceduresPass(parseContext),
+        RemoveDeadEnds(parseContext),
+        EliminateSelfLoops(parseContext),
+    ),
+    listOf(
+        // handling remaining function calls
+        NondetFunctionPass(parseContext),
+        LbePass(parseContext),
+        NormalizePass(parseContext), // needed after lbe, TODO
+        DeterministicPass(parseContext), // needed after lbe, TODO
+        HavocPromotionAndRange(parseContext),
+        // Final cleanup
+        UnusedVarPass(parseContext),
+    )
+)
 
 class ChcPasses : ProcedurePassManager(listOf(/*
         // formatting

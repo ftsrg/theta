@@ -30,7 +30,8 @@ class XcfaBuilder @JvmOverloads constructor(
     private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
     private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
     private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
-    val metaData: MutableMap<String, Any> = LinkedHashMap()) {
+    val metaData: MutableMap<String, Any> = LinkedHashMap()
+) {
 
     fun getVars(): Set<XcfaGlobalVar> = vars
     fun getProcedures(): Set<XcfaProcedureBuilder> = procedures
@@ -63,7 +64,7 @@ class XcfaBuilder @JvmOverloads constructor(
 @XcfaDsl
 class XcfaProcedureBuilder @JvmOverloads constructor(
     var name: String,
-    private val manager: ProcedurePassManager,
+    val manager: ProcedurePassManager,
     private val params: MutableList<Pair<VarDecl<*>, ParamDirection>> = ArrayList(),
     private val vars: MutableSet<VarDecl<*>> = LinkedHashSet(),
     private val locs: MutableSet<XcfaLocation> = LinkedHashSet(),
@@ -78,8 +79,10 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
     var errorLoc: Optional<XcfaLocation> = Optional.empty()
         private set
     lateinit var parent: XcfaBuilder
-    private lateinit var optimized: XcfaProcedureBuilder
     private lateinit var built: XcfaProcedure
+    private lateinit var optimized: XcfaProcedureBuilder
+    private lateinit var partlyOptimized: XcfaProcedureBuilder
+    private var lastOptimized: Int = -1
     fun getParams(): List<Pair<VarDecl<*>, ParamDirection>> = if (this::optimized.isInitialized) optimized.params else params
     fun getVars(): Set<VarDecl<*>> = if (this::optimized.isInitialized) optimized.vars else vars
     fun getLocs(): Set<XcfaLocation> = if (this::optimized.isInitialized) optimized.locs else locs
@@ -88,11 +91,27 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
     fun optimize() {
         if (!this::optimized.isInitialized) {
             var that = this
-            for (pass in manager.passes) {
+            for (pass in manager.passes.flatten()) {
                 that = pass.run(that)
             }
             optimized = that
         }
+    }
+
+    fun optimize(phase: Int): Boolean { // true, if optimization is finished (no more phases to execute)
+        if (this::optimized.isInitialized || phase >= manager.passes.size) return true
+        if (phase <= lastOptimized) return lastOptimized >= manager.passes.size - 1
+        check(phase == lastOptimized + 1) { "Wrong optimization phase!" }
+
+        var that = if (this::partlyOptimized.isInitialized) partlyOptimized else this
+        for (pass in manager.passes[phase]) {
+            that = pass.run(that)
+        }
+
+        partlyOptimized = that
+        lastOptimized = phase
+        if (phase >= manager.passes.size - 1) optimized = that
+        return phase >= manager.passes.size - 1
     }
 
     fun build(parent: XCFA): XcfaProcedure {
