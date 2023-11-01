@@ -92,7 +92,7 @@ data class XcfaCegarConfig(
     var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
     @Parameter(names = ["--cex-monitor"],
         description = "Warning: With some configurations (e.g. lazy pruning) it is POSSIBLE (but rare) that analysis is stopped, " +
-                "even though it could still progress. If in doubt, disable this monitor and check results.")
+            "even though it could still progress. If in doubt, disable this monitor and check results.")
     var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
     @Parameter(names = ["--timeout-ms"],
         description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")

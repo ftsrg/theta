@@ -388,6 +388,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     /**
      * Conversion from C (/) semantics to solver (div) semantics.
+     *
      * @param a dividend
      * @param b divisor
      * @return expression representing C division semantics with solver operations
@@ -395,21 +396,22 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private Expr<?> createIntDiv(Expr<?> a, Expr<?> b) {
         DivExpr<?> aDivB = Div(a, b);
         return Ite(Geq(a, Int(0)),          // if (a >= 0)
-            aDivB,                                //   a div b
-                                                  // else
-            Ite(Neq(Mod(a, b), Int(0)),     //   if (a mod b != 0)
-                Ite(Geq(b, Int(0)),         //     if (b >= 0)
-                    Add(aDivB, Int(1)),     //       a div b + 1
-                                                  //     else
-                    Sub(aDivB, Int(1))      //       a div b - 1
-                ),                                //   else
-                aDivB                             //     a div b
-            )
+                aDivB,                                //   a div b
+                // else
+                Ite(Neq(Mod(a, b), Int(0)),     //   if (a mod b != 0)
+                        Ite(Geq(b, Int(0)),         //     if (b >= 0)
+                                Add(aDivB, Int(1)),     //       a div b + 1
+                                //     else
+                                Sub(aDivB, Int(1))      //       a div b - 1
+                        ),                                //   else
+                        aDivB                             //     a div b
+                )
         );
     }
 
     /**
      * Conversion from C (%) semantics to solver (mod) semantics.
+     *
      * @param a dividend
      * @param b divisor
      * @return expression representing C modulo semantics with solver operations
@@ -417,12 +419,12 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private Expr<?> createIntMod(Expr<?> a, Expr<?> b) {
         ModExpr<?> aModB = Mod(a, b);
         return Ite(Geq(a, Int(0)),  // if (a >= 0)
-            aModB,                        //   a mod b
-                                          // else
-            Ite(Geq(b, Int(0)),     //   if (b >= 0)
-                Sub(aModB, b),            //     a mod b - b
-                Add(aModB, b)             //     a mod b + b
-            )
+                aModB,                        //   a mod b
+                // else
+                Ite(Geq(b, Int(0)),     //   if (b >= 0)
+                        Sub(aModB, b),            //     a mod b - b
+                        Add(aModB, b)             //     a mod b + b
+                )
         );
     }
 

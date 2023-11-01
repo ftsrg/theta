@@ -23,8 +23,10 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-open class XcfaAasporLts(xcfa: XCFA, private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>) :
-    XcfaSporLts(xcfa) {
+open class XcfaAasporLts(
+    xcfa: XCFA,
+    private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>
+) : XcfaSporLts(xcfa) {
 
     override fun <P : Prec> getEnabledActionsFor(state: XcfaState<*>, exploredActions: Collection<XcfaAction>,
         prec: P): Set<XcfaAction> {
