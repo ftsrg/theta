@@ -61,7 +61,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePas
     )
 )
 
-class ChcPasses : ProcedurePassManager(listOf(/*
+class ChcPasses : ProcedurePassManager(/*listOf(
         // formatting
         NormalizePass(),
         DeterministicPass(),
@@ -88,6 +88,6 @@ class ChcPasses : ProcedurePassManager(listOf(/*
 //        HavocPromotionAndRange(),
         // Final cleanup
         UnusedVarPass(),
-*/))
+)*/)
 
-class LitmusPasses : ProcedurePassManager(emptyList())
+class LitmusPasses : ProcedurePassManager()

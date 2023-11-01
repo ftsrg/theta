@@ -32,6 +32,9 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -65,6 +68,7 @@ class XcfaExplAnalysisTest {
         println("Testing NOPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -108,6 +112,7 @@ class XcfaExplAnalysisTest {
         println("Testing SPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -152,6 +157,7 @@ class XcfaExplAnalysisTest {
         println("Testing DPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -194,6 +200,7 @@ class XcfaExplAnalysisTest {
         println("Testing AASPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -239,6 +246,7 @@ class XcfaExplAnalysisTest {
         println("Testing AADPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
