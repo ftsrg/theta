@@ -146,7 +146,8 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--seed"], description = "Random seed used for DPOR")
     var randomSeed: Int = -1
 
-    @Parameter(names = ["--arg-to-file"], description = "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/")
+    @Parameter(names = ["--arg-to-file"],
+        description = "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/")
     var argToFile: Boolean = false
 
     @Parameter
@@ -175,7 +176,7 @@ class XcfaCli(private val args: Array<String>) {
 
         // propagating input variables
         LbePass.level = lbeLevel
-        if (randomSeed >= 0){
+        if (randomSeed >= 0) {
             XcfaSporLts.random = Random(randomSeed)
             XcfaDporLts.random = Random(randomSeed)
         }
