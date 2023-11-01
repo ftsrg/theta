@@ -31,6 +31,7 @@ public class XstsToMonoliticTransFunc extends AbstractMonolithicTransFunc {
         final StmtUnfoldResult envTranUnfoldResult = StmtUtils.toExpr(envTran, VarIndexingFactory.indexing(0));
         transExpr = And(envTranUnfoldResult.getExprs());
         offsetIndex = envTranUnfoldResult.getIndexing();
+        propExpr = xsts.getProp();
 
     }
     public static MonolithicTransFunc create(XSTS xsts){

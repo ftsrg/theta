@@ -57,6 +57,7 @@ public class XcfaTransFunc extends AbstractMonolithicTransFunc {
             initExpr = Eq(locVar.getRef(), Int(map.get(proc.getInitLoc())));
             firstIndex = VarIndexingFactory.indexing(0);
             offsetIndex = transUnfold.getIndexing();
+            propExpr = Neq(locVar.getRef(), Int(map.get(proc.getErrorLoc().get())));
     }
     public static MonolithicTransFunc create(XCFA xcfa){
             return new XcfaTransFunc(xcfa);
