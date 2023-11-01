@@ -94,7 +94,7 @@ private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf
  * Returns the list of accessed variables by the label.
  * The variable is associated with true if the variable is written and false otherwise.
  */
-internal fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
+fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is StmtLabel -> {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)

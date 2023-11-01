@@ -27,14 +27,15 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePas
     // removing redundant elements
     EmptyEdgeRemovalPass(parseContext),
     UnusedLocRemovalPass(parseContext),
-    // optimizing
-    SimplifyExprsPass(parseContext),
     // handling intrinsics
     ErrorLocationPass(checkOverflow, parseContext),
     FinalLocationPass(checkOverflow, parseContext),
     SvCompIntrinsicsPass(parseContext),
     FpFunctionsToExprsPass(parseContext),
-    PthreadFunctionsPass(parseContext),
+    CLibraryFunctionsPass(parseContext),
+    // optimizing
+//    UnusedWriteRemovalPass(),
+    SimplifyExprsPass(parseContext),
     LoopUnrollPass(),
     // trying to inline procedures
     InlineProceduresPass(parseContext),
