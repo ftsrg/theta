@@ -126,9 +126,6 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
         return builder
     }
 
-    val isPostInlining: Boolean
-        get() = true
-
     /**
      * Collapses atomic blocks sequentially.
      */
@@ -278,7 +275,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
         if (location.outgoingEdges.size != 1) return false
         val outEdge = location.outgoingEdges.first()
         if (
-            location.incomingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel || (it is StmtLabel && it.stmt is AssumeStmt) } }
+            location.incomingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel } }
             || location.outgoingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel } }
             || (level == LbeLevel.LBE_LOCAL && !atomicPhase && isNotLocal(outEdge))
         ) {
@@ -308,7 +305,10 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
     private fun isNotLocal(edge: XcfaEdge): Boolean {
         return !edge.getFlatLabels().all { label ->
             !(label is StartLabel || label is JoinLabel) && label.collectVars().all(builder.getVars()::contains) &&
-                !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr)
+                !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr) &&
+                !(label is FenceLabel && label.labels.any { name ->
+                    listOf("ATOMIC_BEGIN", "mutex_lock", "cond_wait").any { name.startsWith(it) }
+                })
         }
     }
 }

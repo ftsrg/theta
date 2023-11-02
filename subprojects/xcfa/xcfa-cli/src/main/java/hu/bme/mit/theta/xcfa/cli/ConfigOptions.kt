@@ -181,7 +181,7 @@ enum class Refinement(
     ),
     MULTI_SEQ(
         refiner = { s, m ->
-            if(m == CexMonitorOptions.CHECK) error("CexMonitor is not implemented for MULTI_SEQ")
+            if (m == CexMonitorOptions.CHECK) error("CexMonitor is not implemented for MULTI_SEQ")
             ExprTraceSeqItpChecker.create(BoolExprs.True(), BoolExprs.True(), s.createItpSolver())
         },
         stopCriterion = StopCriterions.fullExploration()
@@ -333,12 +333,14 @@ enum class ConeOfInfluenceMode(
         XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
     })
     ;
+
     var porLts: LTS<XcfaState<out ExprState>, XcfaAction>? = null
 }
 
 // TODO CexMonitor: disable for multi_seq
 // TODO add new monitor to xsts cli
 enum class CexMonitorOptions {
+
     CHECK,
     DISABLE
 }

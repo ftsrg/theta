@@ -19,9 +19,11 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
@@ -81,13 +83,17 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                                 "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList = new CInitializerList(
                                 cSimpleType.getActualType(), parseContext);
-                        for (CParser.InitializerContext initializer : context.initializer()
-                                .initializerList().initializers) {
-                            CStatement expr = initializer.assignmentExpression()
-                                    .accept(functionVisitor);
-                            cInitializerList.addStatement(null /* TODO: add designator */, expr);
+                        try {
+                            for (CParser.InitializerContext initializer : context.initializer()
+                                    .initializerList().initializers) {
+                                CStatement expr = initializer.assignmentExpression().accept(functionVisitor);
+                                cInitializerList.addStatement(null /* TODO: add designator */, expr);
+                            }
+                            initializerExpression = cInitializerList;
+                        } catch (NullPointerException e) {
+                            initializerExpression = new CExpr(new UnsupportedInitializer(), parseContext);
+                            parseContext.getMetadata().create(initializerExpression.getExpression(), "cType", cSimpleType);
                         }
-                        initializerExpression = cInitializerList;
                     } else {
                         initializerExpression = context.initializer().assignmentExpression()
                                 .accept(functionVisitor);

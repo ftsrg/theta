@@ -373,7 +373,7 @@ class PassTests {
                 passes = listOf(
                     NormalizePass(parseContext),
                     DeterministicPass(parseContext),
-                    PthreadFunctionsPass(parseContext),
+                    CLibraryFunctionsPass(parseContext),
                 ),
                 input = {
                     (init to "L1") {

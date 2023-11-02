@@ -37,14 +37,12 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
-import hu.bme.mit.theta.xcfa.startsAtomic
 import java.util.*
 import java.util.function.Predicate
 
@@ -153,15 +151,16 @@ fun getXcfaErrorPredicate(
                     if (process1.key != process2.key)
                         for (edge1 in process1.value.locs.peek().outgoingEdges)
                             for (edge2 in process2.value.locs.peek().outgoingEdges) {
-                                val globalVars1 = edge1.getGlobalVars(xcfa)
-                                val globalVars2 = edge2.getGlobalVars(xcfa)
-                                val isAtomic1 = edge1.startsAtomic()
-                                val isAtomic2 = edge2.startsAtomic()
-                                if (!isAtomic1 || !isAtomic2) {
-                                    val intersection = globalVars1.keys intersect globalVars2.keys
-                                    if (intersection.any { globalVars1[it].isWritten || globalVars2[it].isWritten })
-                                        return@Predicate true
-                                }
+                                val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
+                                val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
+                                val globalVars1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+                                val globalVars2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+                                for (v1 in globalVars1)
+                                    for (v2 in globalVars2)
+                                        if (v1.varDecl == v2.varDecl)
+                                            if (v1.access.isWritten || v2.access.isWritten)
+                                                if ((v1.mutexes intersect v2.mutexes).isEmpty())
+                                                    return@Predicate true
                             }
             false
         }
