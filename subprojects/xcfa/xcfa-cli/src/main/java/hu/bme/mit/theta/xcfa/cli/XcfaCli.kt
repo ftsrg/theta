@@ -306,8 +306,12 @@ class XcfaCli(private val args: Array<String>) {
             val xcfaDotFile = File(resultFolder, "xcfa.dot")
             xcfaDotFile.writeText(xcfa.toDot())
 
-            val xcfaCFile = File(resultFolder, "xcfa.c")
-            xcfaCFile.writeText(xcfa.toC(parseContext, useArr, useExArr, useRange))
+            try {
+                val xcfaCFile = File(resultFolder, "xcfa.c")
+                xcfaCFile.writeText(xcfa.toC(parseContext, useArr, useExArr, useRange))
+            } catch (e: Throwable) {
+                logger.write(Logger.Level.VERBOSE, "Could not emit C file")
+            }
 
             val xcfaJsonFile = File(resultFolder, "xcfa.json")
             val uglyJson = gsonForOutput.toJson(xcfa)
