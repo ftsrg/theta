@@ -61,16 +61,16 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePas
     )
 )
 
-class ChcPasses : ProcedurePassManager(/*listOf(
-        // formatting
-        NormalizePass(),
-        DeterministicPass(),
-        // removing redundant elements
-        EmptyEdgeRemovalPass(),
-        UnusedLocRemovalPass(),
-        // optimizing
-        SimplifyExprsPass(),
-        // handling intrinsics
+class ChcPasses(parseContext: ParseContext) : ProcedurePassManager(listOf(
+    // formatting
+    NormalizePass(parseContext),
+    DeterministicPass(parseContext),
+    // removing redundant elements
+    EmptyEdgeRemovalPass(parseContext),
+    UnusedLocRemovalPass(parseContext),
+    // optimizing
+    SimplifyExprsPass(parseContext),
+    // handling intrinsics
 //        ErrorLocationPass(false),
 //        FinalLocationPass(false),
 //        SvCompIntrinsicsPass(),
