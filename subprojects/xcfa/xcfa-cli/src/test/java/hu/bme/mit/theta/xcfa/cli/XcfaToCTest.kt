@@ -49,16 +49,18 @@ class XcfaToCTest {
         }
     }
 
-
     @ParameterizedTest
     @MethodSource("chcFiles")
     fun testRoundTrip(filePath: String, chcTransformation: ChcTransformation) {
         val chcFrontend = ChcFrontend(chcTransformation)
-        val xcfa = chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(javaClass.getResource(filePath)!!.path)), ChcPasses(
+        val xcfa = chcFrontend.buildXcfa(
+            CharStreams.fromStream(FileInputStream(javaClass.getResource(filePath)!!.path)), ChcPasses(
             ParseContext())).build()
         val temp = createTempDirectory()
-        val file = temp.resolve("${filePath.split("/").last()}.c").also { it.toFile().writeText(xcfa.toC(ParseContext(),
-            false, false, false))}
+        val file = temp.resolve("${filePath.split("/").last()}.c").also {
+            it.toFile().writeText(xcfa.toC(ParseContext(),
+                false, false, false))
+        }
         System.err.println(file)
     }
 
