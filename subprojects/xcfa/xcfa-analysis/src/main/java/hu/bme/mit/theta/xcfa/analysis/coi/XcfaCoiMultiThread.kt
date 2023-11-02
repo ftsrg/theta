@@ -19,7 +19,7 @@ package hu.bme.mit.theta.xcfa.analysis.coi
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.getVars
+import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -141,7 +141,7 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
     private fun findInterProcessObservers(edge: XcfaEdge, prec: Prec) {
         val precVars = prec.usedVars
-        val writtenVars = edge.getVars().filter { it.value.isWritten && it.key in precVars }
+        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars }
         if (writtenVars.isEmpty()) return
 
         xcfa.procedures.forEach { procedure ->

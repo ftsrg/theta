@@ -19,13 +19,10 @@ import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
-import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.isAtomicBegin
-import hu.bme.mit.theta.xcfa.isAtomicEnd
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import java.util.function.Predicate
@@ -78,7 +75,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      */
     override fun getEnabledActionsFor(state: XcfaState<*>): Set<XcfaAction> {
         // Collecting enabled actions
-        val allEnabledActions = getAllEnabledActionsFor(state)
+        val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state)
 
         // Calculating the source set starting from every (or some of the) enabled transition; the minimal source set is stored
         var minimalSourceSet = setOf<XcfaAction>()
@@ -91,15 +88,6 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
         }
         return minimalSourceSet
     }
-
-    /**
-     * Returns all enabled actions in the given state.
-     *
-     * @param state the state whose enabled actions we would like to know
-     * @return the enabled actions
-     */
-    protected fun getAllEnabledActionsFor(state: XcfaState<*>): Collection<XcfaAction> =
-        simpleXcfaLts.getEnabledActionsFor(state)
 
     /**
      * Returns the possible starting actions of a source set.
@@ -230,21 +218,11 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      */
     private fun getUsedSharedObjects(edge: XcfaEdge): Set<Decl<out Type>> {
         val flatLabels = edge.getFlatLabels()
-        return if (flatLabels.any(XcfaLabel::isAtomicBegin)) {
-            getSharedObjectsWithBFS(edge) { it.getFlatLabels().none(XcfaLabel::isAtomicEnd) }.toSet()
+        val mutexes = flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
+        return if (mutexes.isEmpty()) {
+            getDirectlyUsedSharedObjects(edge)
         } else {
-            val lock = flatLabels.firstOrNull {
-                it is FenceLabel && it.labels.any { l -> l.startsWith("mutex_lock") }
-            } as FenceLabel?
-            if (lock != null) {
-                val mutex = lock.labels.first { l -> l.startsWith("mutex_lock") }
-                    .substringAfter('(').substringBefore(')')
-                getSharedObjectsWithBFS(edge) {
-                    it.getFlatLabels().none { fl -> fl is FenceLabel && "mutex_unlock(${mutex})" in fl.labels }
-                }.toSet()
-            } else {
-                getDirectlyUsedSharedObjects(edge)
-            }
+            getSharedObjectsWithBFS(edge) { it.mutexOperations(mutexes) }.toSet()
         }
     }
 
@@ -287,21 +265,21 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
     private fun getSharedObjectsWithBFS(startTransition: XcfaEdge,
         goFurther: Predicate<XcfaEdge>): Set<Decl<out Type>> {
         val vars = mutableSetOf<Decl<out Type>>()
-        val exploredTransitions = mutableListOf<XcfaEdge>()
-        val transitionsToExplore = mutableListOf<XcfaEdge>()
-        transitionsToExplore.add(startTransition)
-        while (transitionsToExplore.isNotEmpty()) {
-            val exploring = transitionsToExplore.removeFirst()
+        val exploredEdges = mutableListOf<XcfaEdge>()
+        val edgesToExplore = mutableListOf<XcfaEdge>()
+        edgesToExplore.add(startTransition)
+        while (edgesToExplore.isNotEmpty()) {
+            val exploring = edgesToExplore.removeFirst()
             vars.addAll(getDirectlyUsedSharedObjects(exploring))
             if (goFurther.test(exploring)) {
-                val successiveTransitions = getSuccessiveTransitions(exploring)
-                for (newTransition in successiveTransitions) {
-                    if (newTransition !in exploredTransitions) {
-                        transitionsToExplore.add(newTransition)
+                val successiveEdges = getSuccessiveTransitions(exploring)
+                for (newEdge in successiveEdges) {
+                    if (newEdge !in exploredEdges) {
+                        edgesToExplore.add(newEdge)
                     }
                 }
             }
-            exploredTransitions.add(exploring)
+            exploredEdges.add(exploring)
         }
         return vars
     }
@@ -325,8 +303,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
         val startThreads = edge.getFlatLabels().filterIsInstance<StartLabel>().toList()
         if (startThreads.isNotEmpty()) { // for start thread labels, the thread procedure must be explored, too!
             startThreads.forEach { startThread ->
-                outgoingEdges.addAll(
-                    xcfa.procedures.first { it.name == startThread.name }.initLoc.outgoingEdges)
+                outgoingEdges.addAll(xcfa.procedures.first { it.name == startThread.name }.initLoc.outgoingEdges)
             }
         }
         return outgoingEdges

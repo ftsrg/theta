@@ -104,7 +104,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     protected fun findDirectObservers(edge: XcfaEdge, prec: Prec) {
         val precVars = prec.usedVars
-        val writtenVars = edge.getVars().filter { it.value.isWritten && it.key in precVars }
+        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars }
         if (writtenVars.isEmpty()) return
 
         val toVisit = mutableListOf(edge)
@@ -121,7 +121,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
         source: XcfaEdge, target: XcfaEdge, observableVars: Map<VarDecl<*>, AccessType>,
         precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>
     ) {
-        val vars = target.getVars()
+        val vars = target.collectVarsWithAccessType()
         var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
         if (!relevantAction) {
             val assumeVars = target.label.collectAssumesVars()

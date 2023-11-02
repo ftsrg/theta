@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
-import hu.bme.mit.theta.xcfa.getGlobalVars
+import hu.bme.mit.theta.xcfa.collectIndirectGlobalVarAccesses
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.util.*
@@ -456,8 +456,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     protected open fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
-        val aGlobalVars = a.edge.getGlobalVars(xcfa)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa)
+        val aGlobalVars = a.edge.collectIndirectGlobalVarAccesses(xcfa)
+        val bGlobalVars = b.edge.collectIndirectGlobalVarAccesses(xcfa)
         // dependent if they access the same variable (at least one write)
         return (aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }
@@ -488,8 +488,8 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
         if (a.pid == b.pid) return true
 
         val precVars = prec?.usedVars?.toSet() ?: return super.dependent(a, b)
-        val aGlobalVars = a.edge.getGlobalVars(xcfa)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa)
+        val aGlobalVars = a.edge.collectIndirectGlobalVarAccesses(xcfa)
+        val bGlobalVars = b.edge.collectIndirectGlobalVarAccesses(xcfa)
         // dependent if they access the same variable in the precision (at least one write)
         return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }

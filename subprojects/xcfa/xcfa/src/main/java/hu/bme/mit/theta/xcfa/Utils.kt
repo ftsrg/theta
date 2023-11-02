@@ -16,7 +16,6 @@
 
 package hu.bme.mit.theta.xcfa
 
-import com.google.common.collect.Sets
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
@@ -29,13 +28,28 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xcfa.model.*
+import java.util.function.Predicate
 
 
-fun XCFA.collectVars(): Iterable<VarDecl<*>> = vars.map { it.wrappedVar }
-    .union(procedures.map { it.vars }.flatten())
+/**
+ * Get flattened label list (without sequence labels).
+ */
+fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
 
-fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> = procedures.map {
-    it.edges.map { it.label.collectAssumes() }.flatten()
+fun XcfaLabel.getFlatLabels(): List<XcfaLabel> = when (this) {
+    is SequenceLabel -> {
+        val ret = mutableListOf<XcfaLabel>()
+        labels.forEach { ret.addAll(it.getFlatLabels()) }
+        ret
+    }
+
+    else -> listOf(this)
+}
+
+fun XCFA.collectVars(): Iterable<VarDecl<*>> = vars.map { it.wrappedVar } union procedures.map { it.vars }.flatten()
+
+fun XCFA.collectAssumes(): Iterable<Expr<BoolType>> = procedures.map { procedure ->
+    procedure.edges.map { it.label.collectAssumes() }.flatten()
 }.flatten()
 
 fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when (this) {
@@ -75,14 +89,15 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when (this) {
     is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten()
     is JoinLabel -> setOf(pidVar)
     is ReadLabel -> setOf(global, local)
-    is StartLabel -> Sets.union(params.map { ExprUtils.getVars(it) }.flatten().toSet(),
-        setOf(pidVar))
-
+    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().toSet() union setOf(pidVar)
     is WriteLabel -> setOf(global, local)
     else -> emptySet()
 }
 
+// Complex var access requests
+
 typealias AccessType = Pair<Boolean, Boolean>
+private typealias VarAccessMap = Map<VarDecl<*>, AccessType>
 
 val AccessType?.isRead get() = this?.first == true
 val AccessType?.isWritten get() = this?.second == true
@@ -92,11 +107,40 @@ fun AccessType?.merge(other: AccessType?) =
 val WRITE: AccessType get() = Pair(false, true)
 val READ: AccessType get() = Pair(true, false)
 
-private typealias VarAccessMap = Map<VarDecl<*>, AccessType>
-
 private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf()) { acc, next ->
     (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
 }
+
+/**
+ * The list of mutexes acquired by the label.
+ */
+inline val FenceLabel.acquiredMutexes: Set<String>
+    get() = labels.mapNotNull {
+        when {
+            it == "ATOMIC_BEGIN" -> "___atomic_block_mutex___"
+            it.startsWith("mutex_lock") -> it.substringAfter('(').substringBefore(')')
+            it.startsWith("cond_wait") -> it.substring("cond_wait".length + 1, it.length - 1).split(",")[1]
+            else -> null
+        }
+    }.toSet()
+
+/**
+ * The list of mutexes released by the label.
+ */
+inline val FenceLabel.releasedMutexes: Set<String>
+    get() = labels.mapNotNull {
+        when {
+            it == "ATOMIC_END" -> "___atomic_block_mutex___"
+            it.startsWith("mutex_unlock") -> it.substringAfter('(').substringBefore(')')
+            it.startsWith("start_cond_wait") -> it.substring("start_cond_wait".length + 1, it.length - 1).split(",")[1]
+            else -> null
+        }
+    }.toSet()
+
+/**
+ * Returns the list of accessed variables by the edge associated with an AccessType object.
+ */
+fun XcfaEdge.collectVarsWithAccessType(): VarAccessMap = label.collectVarsWithAccessType()
 
 /**
  * Returns the list of accessed variables by the label.
@@ -106,27 +150,17 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is StmtLabel -> {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
-            is AssignStmt<*> -> StmtUtils.getVars(stmt).associateWith { READ } + mapOf(
-                stmt.varDecl to WRITE)
-
+            is AssignStmt<*> -> StmtUtils.getVars(stmt).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
             else -> StmtUtils.getVars(stmt).associateWith { READ }
         }
     }
 
-    is NondetLabel -> {
-        labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    }
-
-    is SequenceLabel -> {
-        labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    }
-
+    is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
+    is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ }
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
-    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(
-        pidVar to READ)
-
+    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
     is WriteLabel -> mapOf(global to WRITE, local to WRITE)
     else -> emptyMap()
 }
@@ -134,56 +168,108 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
 /**
  * Returns the global variables accessed by the label (the variables present in the given argument).
  */
-private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>) =
+private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>): VarAccessMap =
     collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
-
-inline val XcfaLabel.isAtomicBegin
-    get() = this is FenceLabel && this.labels.contains("ATOMIC_BEGIN")
-inline val XcfaLabel.isAtomicEnd get() = this is FenceLabel && this.labels.contains("ATOMIC_END")
 
 /**
  * Returns the global variables (potentially indirectly) accessed by the edge.
- * If the edge starts an atomic block, all variable accesses in the atomic block is returned.
+ * If the edge starts an atomic block, all variable accesses in the atomic block are returned.
  * Variables are associated with a pair of boolean values: the first is true if the variable is read and false otherwise. The second is similar for write access.
  */
-fun XcfaEdge.getGlobalVars(xcfa: XCFA): Map<VarDecl<*>, AccessType> {
+fun XcfaEdge.collectIndirectGlobalVarAccesses(xcfa: XCFA): VarAccessMap {
     val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar).toSet()
-    var label = this.label
-    if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
-    if (label.isAtomicBegin || (label is SequenceLabel && label.labels.any { it.isAtomicBegin } && label.labels.none { it.isAtomicEnd })) {
-        val vars = mutableMapOf<VarDecl<*>, AccessType>()
-        val processed = mutableSetOf<XcfaEdge>()
-        val unprocessed = mutableListOf(this)
-        while (unprocessed.isNotEmpty()) {
-            val e = unprocessed.removeFirst()
-            var eLabel = e.label
-            if (eLabel is SequenceLabel && eLabel.labels.size == 1) eLabel = eLabel.labels[0]
-            eLabel.collectGlobalVars(globalVars).forEach { (varDecl, accessType) ->
-                vars[varDecl] = accessType.merge(vars[varDecl])
-            }
-            processed.add(e)
-            if (!(eLabel.isAtomicEnd || (eLabel is SequenceLabel && eLabel.labels.any { it.isAtomicEnd }))) {
-                unprocessed.addAll(e.target.outgoingEdges subtract processed)
-            }
-        }
-        return vars
+    val flatLabels = getFlatLabels()
+    val mutexes = flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
+    return if (mutexes.isEmpty()) {
+        label.collectGlobalVars(globalVars)
     } else {
-        return label.collectGlobalVars(globalVars)
+        collectGlobalVarsWithTraversal(globalVars) { it.mutexOperations(mutexes) }
     }
 }
 
 /**
- * Returns the list of accessed variables by the edge associated with an AccessType object.
+ * Represents a global variable access: stores the variable declaration, the access type (read/write) and the set of
+ * mutexes that are needed to perform the variable access.
  */
-fun XcfaEdge.getVars(): Map<VarDecl<*>, AccessType> = label.collectVarsWithAccessType()
+class GlobalVarAccessWithMutexes(val varDecl: VarDecl<*>, val access: AccessType, val mutexes: Set<String>)
 
 /**
- * Returns true if the edge starts an atomic block.
+ * Returns the global variable accesses of the edge.
+ *
+ * @param xcfa the XCFA that contains the edge
+ * @param currentMutexes the set of mutexes currently acquired by the process of the edge
+ * @return the list of global variable accesses (c.f., [GlobalVarAccessWithMutexes])
  */
-fun XcfaEdge.startsAtomic(): Boolean {
-    var label = this.label
-    if (label is SequenceLabel && label.labels.size == 1) label = label.labels[0]
-    return label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")
+fun XcfaEdge.getGlobalVarsWithNeededMutexes(xcfa: XCFA, currentMutexes: Set<String>): List<GlobalVarAccessWithMutexes> {
+    val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar).toSet()
+    val neededMutexes = currentMutexes.toMutableSet()
+    val accesses = mutableListOf<GlobalVarAccessWithMutexes>()
+    getFlatLabels().forEach { label ->
+        if (label is FenceLabel) {
+            neededMutexes.addAll(label.acquiredMutexes)
+        } else {
+            val vars = label.collectGlobalVars(globalVars)
+            accesses.addAll(vars.mapNotNull { (varDecl, accessType) ->
+                if (accesses.any { it.varDecl == varDecl && (it.access == accessType && it.access == WRITE) }) {
+                    null
+                } else {
+                    GlobalVarAccessWithMutexes(varDecl, accessType, neededMutexes.toSet())
+                }
+            })
+        }
+    }
+    return accesses
+}
+
+/**
+ * Returns global variables encountered in a search starting from the edge.
+ *
+ * @param goFurther the predicate that tells whether more edges have to be explored through an edge
+ * @return the set of encountered shared objects
+ */
+private fun XcfaEdge.collectGlobalVarsWithTraversal(globalVars: Set<VarDecl<*>>, goFurther: Predicate<XcfaEdge>)
+    : VarAccessMap {
+    val vars = mutableMapOf<VarDecl<*>, AccessType>()
+    val exploredEdges = mutableListOf<XcfaEdge>()
+    val edgesToExplore = mutableListOf<XcfaEdge>()
+    edgesToExplore.add(this)
+    while (edgesToExplore.isNotEmpty()) {
+        val exploring = edgesToExplore.removeFirst()
+        exploring.label.collectGlobalVars(globalVars).forEach { (varDecl, access) ->
+            vars[varDecl] = vars[varDecl].merge(access)
+        }
+        if (goFurther.test(exploring)) {
+            for (newEdge in exploring.target.outgoingEdges) {
+                if (newEdge !in exploredEdges) {
+                    edgesToExplore.add(newEdge)
+                }
+            }
+        }
+        exploredEdges.add(exploring)
+    }
+    return vars
+}
+
+/**
+ * Follows the mutex operations of the given edge and updates the given set of mutexes.
+ *
+ * @param mutexes the set of mutexes currently acquired
+ * @return true if the set of mutexes is non-empty after the mutex operations
+ */
+fun XcfaEdge.mutexOperations(mutexes: MutableSet<String>): Boolean {
+    val edgeFlatLabels = getFlatLabels()
+    val acquiredLocks = mutableSetOf<String>()
+    val releasedLocks = mutableSetOf<String>()
+    edgeFlatLabels.filterIsInstance<FenceLabel>().forEach { fence ->
+        releasedLocks.addAll(fence.releasedMutexes)
+        acquiredLocks.removeAll(fence.releasedMutexes)
+
+        acquiredLocks.addAll(fence.acquiredMutexes)
+        releasedLocks.removeAll(fence.acquiredMutexes)
+    }
+    mutexes.removeAll(releasedLocks)
+    mutexes.addAll(acquiredLocks)
+    return mutexes.isNotEmpty()
 }
 
 fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
@@ -199,25 +285,6 @@ fun XCFA.getSymbols(): Pair<XcfaScope, Env> {
     return Pair(scope, env)
 }
 
-private val atomicBlockInnerLocationsCache: HashMap<XcfaProcedure, List<XcfaLocation>> = HashMap()
-
-/**
- * Returns XCFA locations that are inner locations of any atomic block (after an edge with an AtomicBegin and before
- * an edge with an AtomicEnd).
- *
- * @param xcfaProcedure the atomic block inner locations of this XCFA procedure will be returned
- * @return the list of locations in an atomic block
- */
-fun getAtomicBlockInnerLocations(xcfaProcedure: XcfaProcedure): List<XcfaLocation>? {
-    if (atomicBlockInnerLocationsCache.containsKey(xcfaProcedure)) {
-        return atomicBlockInnerLocationsCache[xcfaProcedure]
-    }
-    val atomicBlockInnerLocations: List<XcfaLocation> = getAtomicBlockInnerLocations(
-        xcfaProcedure.initLoc)
-    atomicBlockInnerLocationsCache[xcfaProcedure] = atomicBlockInnerLocations
-    return atomicBlockInnerLocations
-}
-
 /**
  * Returns XCFA locations that are inner locations of any atomic block (after an edge with an AtomicBegin and before
  * an edge with an AtomicEnd).
@@ -225,55 +292,32 @@ fun getAtomicBlockInnerLocations(xcfaProcedure: XcfaProcedure): List<XcfaLocatio
  * @param builder the atomic block inner locations of the procedure of this builder will be returned
  * @return the list of locations in an atomic block
  */
-fun getAtomicBlockInnerLocations(builder: XcfaProcedureBuilder): List<XcfaLocation> {
-    return getAtomicBlockInnerLocations(builder.initLoc)
-}
-
-/**
- * Get flattened label list (without sequence labels).
- */
-fun XcfaEdge.getFlatLabels(): List<XcfaLabel> = label.getFlatLabels()
-
-fun XcfaLabel.getFlatLabels(): List<XcfaLabel> = when (this) {
-    is SequenceLabel -> {
-        val ret = ArrayList<XcfaLabel>()
-        labels.forEach { ret.addAll(it.getFlatLabels()) }
-        ret
-    }
-
-    else -> listOf(this)
-}
-
+fun getAtomicBlockInnerLocations(builder: XcfaProcedureBuilder): List<XcfaLocation> =
+    getAtomicBlockInnerLocations(builder.initLoc)
 
 private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<XcfaLocation> {
-    val atomicLocations: MutableList<XcfaLocation> = ArrayList()
-    val visitedLocations: MutableList<XcfaLocation> = ArrayList()
-    val locationsToVisit: MutableList<XcfaLocation> = ArrayList()
-    val isAtomic: HashMap<XcfaLocation, Boolean> = HashMap()
-    locationsToVisit.add(initialLocation)
-    isAtomic[initialLocation] = false
-    while (!locationsToVisit.isEmpty()) {
+    val atomicLocations = mutableListOf<XcfaLocation>()
+    val visitedLocations = mutableListOf<XcfaLocation>()
+    val locationsToVisit = mutableListOf(initialLocation)
+    val isAtomic = mutableMapOf(initialLocation to false)
+    while (locationsToVisit.isNotEmpty()) {
         val visiting = locationsToVisit.removeAt(0)
         if (checkNotNull(isAtomic[visiting])) atomicLocations.add(visiting)
         visitedLocations.add(visiting)
         for (outEdge in visiting.outgoingEdges) {
             var isNextAtomic = checkNotNull(isAtomic[visiting])
-            if (outEdge.getFlatLabels().stream().anyMatch { label ->
-                    label is FenceLabel && label.labels.contains("ATOMIC_BEGIN")
-                }) {
+            if (outEdge.getFlatLabels().any { it is FenceLabel && it.labels.contains("ATOMIC_BEGIN") }) {
                 isNextAtomic = true
             }
-            if (outEdge.getFlatLabels().stream().anyMatch { label ->
-                    label is FenceLabel && label.labels.contains("ATOMIC_END")
-                }) {
+            if (outEdge.getFlatLabels().any { it is FenceLabel && it.labels.contains("ATOMIC_END") }) {
                 isNextAtomic = false
             }
             val target = outEdge.target
             isAtomic[target] = isNextAtomic
-            if (atomicLocations.contains(target) && !isNextAtomic) {
+            if (target in atomicLocations && !isNextAtomic) {
                 atomicLocations.remove(target)
             }
-            if (!locationsToVisit.contains(target) && !visitedLocations.contains(target)) {
+            if (target !in locationsToVisit && target !in visitedLocations) {
                 locationsToVisit.add(outEdge.target)
             }
         }
