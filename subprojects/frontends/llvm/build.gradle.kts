@@ -52,7 +52,7 @@ fun llvmConfigFlags(vararg args: String): Array<String> {
     } catch (e: IOException) {
         e.printStackTrace()
         arrayOf()
-    }.also { println("LLVM flags (${args.toList()}): ${it.toList()}") }
+    }//.also { println("LLVM flags (${args.toList()}): ${it.toList()}") }
 }
 
 fun jniConfigFlags(): Array<String> {
@@ -67,7 +67,7 @@ fun jniConfigFlags(): Array<String> {
     return arrayOf(
         "-I${mainInclude.absolutePath}",
         "-I${linuxInclude.absolutePath}",
-    ).also { println("JNI flags: ${it.toList()}") }
+    )//.also { println("JNI flags: ${it.toList()}") }
 }
 
 library {
