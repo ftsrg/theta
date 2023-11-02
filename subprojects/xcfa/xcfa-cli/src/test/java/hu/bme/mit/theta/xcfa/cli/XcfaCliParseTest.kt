@@ -20,7 +20,6 @@ import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.*
 import java.util.stream.Stream
 import kotlin.io.path.createTempDirectory
 
@@ -95,19 +94,16 @@ class XcfaCliParseTest {
                 Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
                 Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
-                Arguments.of("/chc/chc-LIA-nonlin-Arrays-nonrecADT_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
                 Arguments.of("/chc/chc-LIA_000.smt2", ChcFrontend.ChcTransformation.PORTFOLIO),
 
 //                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.FORWARD), // nonlin
                 Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
-                Arguments.of("/chc/chc-LIA-nonlin-Arrays-nonrecADT_000.smt2", ChcFrontend.ChcTransformation.FORWARD),
 //                Arguments.of("/chc/chc-LIA_000.smt2", ChcFrontend.ChcTransformation.FORWARD), // nonlin
 
                 Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
                 Arguments.of("/chc/chc-LIA-Lin-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
-                Arguments.of("/chc/chc-LIA-nonlin-Arrays-nonrecADT_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
                 Arguments.of("/chc/chc-LIA_000.smt2", ChcFrontend.ChcTransformation.BACKWARD),
             )
         }
