@@ -20,6 +20,9 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CCompound;
@@ -117,7 +120,7 @@ public abstract class CComplexType {
     }
 
     public String getTypeName() {
-        throw new RuntimeException("Type name could not be queried from this type!");
+        throw new RuntimeException("Type name could not be queried from this type: " + this);
     }
 
     public int width() {
@@ -138,7 +141,20 @@ public abstract class CComplexType {
             return (CComplexType) cTypeOptional.get();
         } else if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CSimpleType) {
             return ((CSimpleType) cTypeOptional.get()).getActualType();
-        } else throw new RuntimeException("Type not known for expression: " + expr);
+        } else {
+            return getType(expr.getType(), parseContext);
+//            throw new RuntimeException("Type not known for expression: " + expr);
+        }
+    }
+
+    private static CComplexType getType(Type type, ParseContext parseContext) {
+        if (type instanceof IntType) {
+            return new CSignedInt(null, parseContext);
+        } else if (type instanceof ArrayType<?, ?> aType) {
+            return new CArray(null, getType(aType.getElemType(), parseContext), parseContext);
+        } else if (type instanceof BoolType) {
+            return new CBool(null, parseContext);
+        } else throw new RuntimeException("Not yet implemented for type: " + type);
     }
 
 

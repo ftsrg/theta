@@ -628,6 +628,15 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     }
 
     @Override
+    public Expr<?> visitGccPrettyFunc(CParser.GccPrettyFuncContext ctx) {
+        System.err.println("WARNING: gcc intrinsic encountered in place of an expression, using a literal 0 instead.");
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        LitExpr<?> zero = signedInt.getNullValue();
+        parseContext.getMetadata().create(zero, "cType", signedInt);
+        return zero;
+    }
+
+    @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
         return getVar(ctx.Identifier().getText()).getRef();
     }

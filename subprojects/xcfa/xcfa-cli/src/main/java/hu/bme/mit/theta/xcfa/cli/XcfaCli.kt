@@ -51,8 +51,10 @@ import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
+import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.toC
 import org.antlr.v4.runtime.CharStreams
 import java.io.File
 import java.io.FileInputStream
@@ -142,6 +144,15 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
     var concretizerSolver: String = "Z3"
 
+    @Parameter(names = ["--to-c-use-arrays"])
+    var useArr: Boolean = false
+
+    @Parameter(names = ["--to-c-use-exact-arrays"])
+    var useExArr: Boolean = false
+
+    @Parameter(names = ["--to-c-use-ranges"])
+    var useRange: Boolean = false
+
     @Parameter(names = ["--validate-cex-solver"],
         description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateConcretizerSolver: Boolean = false
@@ -198,7 +209,7 @@ class XcfaCli(private val args: Array<String>) {
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
         } ms)\n")
 
-        preVerificationLogging(logger, xcfa, gsonForOutput)
+        preVerificationLogging(logger, xcfa, gsonForOutput, parseContext)
 
         if (noAnalysis) {
             logger.write(Logger.Level.RESULT, "ParsingResult Success")
@@ -284,7 +295,8 @@ class XcfaCli(private val args: Array<String>) {
         }
     }
 
-    private fun preVerificationLogging(logger: ConsoleLogger, xcfa: XCFA, gsonForOutput: Gson) {
+    private fun preVerificationLogging(logger: ConsoleLogger, xcfa: XCFA, gsonForOutput: Gson,
+        parseContext: ParseContext) {
         if (outputResults && !svcomp) {
             resultFolder.mkdirs()
 
@@ -293,6 +305,9 @@ class XcfaCli(private val args: Array<String>) {
 
             val xcfaDotFile = File(resultFolder, "xcfa.dot")
             xcfaDotFile.writeText(xcfa.toDot())
+
+            val xcfaCFile = File(resultFolder, "xcfa.c")
+            xcfaCFile.writeText(xcfa.toC(parseContext, useArr, useExArr, useRange))
 
             val xcfaJsonFile = File(resultFolder, "xcfa.json")
             val uglyJson = gsonForOutput.toJson(xcfa)
@@ -331,7 +346,7 @@ class XcfaCli(private val args: Array<String>) {
         try {
             when (inputType) {
                 InputType.CHC -> {
-                    parseChc(logger)
+                    parseChc(logger, parseContext)
                 }
 
                 InputType.C -> {
@@ -362,20 +377,20 @@ class XcfaCli(private val args: Array<String>) {
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
 
-    private fun parseChc(logger: ConsoleLogger): XCFA {
+    private fun parseChc(logger: ConsoleLogger, parseContext: ParseContext): XCFA {
         var chcFrontend: ChcFrontend
         val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.PORTFOLIO) { // try forward, fallback to backward
             chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.FORWARD)
             try {
-                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)), ChcPasses(parseContext))
             } catch (e: UnsupportedOperationException) {
                 logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...")
                 chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
-                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)), ChcPasses(parseContext))
             }
         } else {
             chcFrontend = ChcFrontend(chcTransformation)
-            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)), ChcPasses(parseContext))
         }
         return xcfaBuilder.build()
     }

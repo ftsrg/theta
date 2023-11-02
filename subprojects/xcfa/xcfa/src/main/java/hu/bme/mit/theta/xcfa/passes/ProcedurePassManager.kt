@@ -76,18 +76,18 @@ class ChcPasses : ProcedurePassManager(/*listOf(
 //        SvCompIntrinsicsPass(),
 //        FpFunctionsToExprsPass(),
 //        PthreadFunctionsPass(),
-        // trying to inline procedures
-        InlineProceduresPass(),
-        RemoveDeadEnds(),
-        EliminateSelfLoops(),
-        // handling remaining function calls
+    // trying to inline procedures
+    InlineProceduresPass(parseContext),
+    RemoveDeadEnds(parseContext),
+    EliminateSelfLoops(parseContext),
+    // handling remaining function calls
 //        NondetFunctionPass(),
-        LbePass(),
-        NormalizePass(), // needed after lbe, TODO
-        DeterministicPass(), // needed after lbe, TODO
+    LbePass(parseContext),
+    NormalizePass(parseContext), // needed after lbe, TODO
+    DeterministicPass(parseContext), // needed after lbe, TODO
 //        HavocPromotionAndRange(),
-        // Final cleanup
-        UnusedVarPass(),
-)*/)
+    // Final cleanup
+    UnusedVarPass(parseContext),
+))
 
 class LitmusPasses : ProcedurePassManager()
