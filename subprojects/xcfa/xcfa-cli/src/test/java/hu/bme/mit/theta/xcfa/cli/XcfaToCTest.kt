@@ -25,7 +25,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.FileInputStream
-import java.util.*
 import java.util.stream.Stream
 import kotlin.io.path.createTempDirectory
 
@@ -59,7 +58,7 @@ class XcfaToCTest {
         val temp = createTempDirectory()
         val file = temp.resolve("${filePath.split("/").last()}.c").also {
             it.toFile().writeText(xcfa.toC(ParseContext(),
-                false, false, false))
+                true, false, false))
         }
         System.err.println(file)
     }
