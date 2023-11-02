@@ -77,6 +77,7 @@ class ChcPasses(parseContext: ParseContext) : ProcedurePassManager(listOf(
 //        FpFunctionsToExprsPass(),
 //        PthreadFunctionsPass(),
     // trying to inline procedures
+), listOf(
     InlineProceduresPass(parseContext),
     RemoveDeadEnds(parseContext),
     EliminateSelfLoops(parseContext),
