@@ -58,6 +58,23 @@ class XcfaCliParseTest {
         }
 
         @JvmStatic
+        fun simpleCFiles(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of("/c/litmustest/singlethread/00assignment.c"),
+                Arguments.of("/c/litmustest/singlethread/01cast.c"),
+                Arguments.of("/c/litmustest/singlethread/02types.c"),
+                Arguments.of("/c/litmustest/singlethread/03bitwise.c"),
+                Arguments.of("/c/litmustest/singlethread/14ushort.c"),
+                Arguments.of("/c/litmustest/singlethread/15addition.c"),
+                Arguments.of("/c/litmustest/singlethread/16loop.c"),
+                Arguments.of("/c/litmustest/singlethread/17recursive.c"),
+                Arguments.of("/c/litmustest/singlethread/21namecollision.c"),
+                Arguments.of("/c/litmustest/singlethread/22nondet.c"),
+                Arguments.of("/c/litmustest/singlethread/23overflow.c"),
+            )
+        }
+
+        @JvmStatic
         fun llvmFiles(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of("/c/dekker.i"),
@@ -219,6 +236,28 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "JSON",
             "--input", xcfaJson.absolutePath.toString(),
+            "--parse-only",
+            "--stacktrace",
+        ))
+        temp.toFile().deleteRecursively()
+    }
+
+    @ParameterizedTest
+    @MethodSource("simpleCFiles")
+    fun testCParseRoundTrip(filePath: String) {
+        val temp = createTempDirectory()
+        main(arrayOf(
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--parse-only",
+            "--stacktrace",
+            "--output-results",
+            "--output-directory", temp.toAbsolutePath().toString(),
+        ))
+        val xcfaC = temp.resolve("xcfa.c").toFile()
+        main(arrayOf(
+            "--input-type", "C",
+            "--input", xcfaC.absolutePath.toString(),
             "--parse-only",
             "--stacktrace",
         ))
