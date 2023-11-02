@@ -55,13 +55,15 @@ import hu.bme.mit.theta.xcfa.model.*
 
 private const val arraySize = 10;
 
-fun XCFA.toC(parseContext: ParseContext, arraySupport: Boolean, exactArraySupport: Boolean, intRangeConstraint: Boolean): String = """         
+fun XCFA.toC(parseContext: ParseContext, arraySupport: Boolean, exactArraySupport: Boolean,
+    intRangeConstraint: Boolean): String = """         
     extern void abort();
     extern int __VERIFIER_nondet_int();
     extern _Bool __VERIFIER_nondet__Bool();
     extern void reach_error();
     
-    ${if(procedures.any { it.vars.any { it.type is ArrayType<*, *> } } ) if(arraySupport) if(exactArraySupport) """
+    ${
+    if (procedures.any { it.vars.any { it.type is ArrayType<*, *> } }) if (arraySupport) if (exactArraySupport) """
         // "exact" array support
         typedef long unsigned int size_t;
 
@@ -127,21 +129,22 @@ fun XCFA.toC(parseContext: ParseContext, arraySupport: Boolean, exactArraySuppor
             }
             return 1;
         }        
-    """.trimIndent() else error("Array support not enabled") else ""}
+    """.trimIndent() else error("Array support not enabled") else ""
+}
     
     ${procedures.joinToString("\n\n") { it.decl(parseContext) + ";" }}
     
     ${procedures.joinToString("\n\n") { it.def(parseContext, intRangeConstraint) }}
     
-    ${ if(initProcedures.size != 1) error("Exactly one initial procedure is supported.") else 
-        {
-            val proc = initProcedures[0]
-            val procName = proc.first.name.toC()
-            if (procName != "main")
-                "int main() { $procName(${proc.second.joinToString(", ") { it.toC(parseContext) } }); }"
-            else ""
-        }
+    ${
+    if (initProcedures.size != 1) error("Exactly one initial procedure is supported.") else {
+        val proc = initProcedures[0]
+        val procName = proc.first.name.toC()
+        if (procName != "main")
+            "int main() { $procName(${proc.second.joinToString(", ") { it.toC(parseContext) }}); }"
+        else ""
     }
+}
 
 """.trimIndent()
 
@@ -156,18 +159,18 @@ fun XcfaProcedure.decl(parseContext: ParseContext): String =
     }
 
 private fun VarDecl<*>.unsafeBounds(parseContext: ParseContext) =
-   CComplexType.getType(ref, parseContext).accept(object: CComplexTypeVisitor<Unit, Expr<BoolType>?>() {
+    CComplexType.getType(ref, parseContext).accept(object : CComplexTypeVisitor<Unit, Expr<BoolType>?>() {
         override fun visit(type: CInteger, param: Unit): Expr<BoolType>? {
             return Or(Leq(ref, Int(-1_000_000_000)), Geq(ref, Int(1_000_000_000)))
         }
 
-       override fun visit(type: CBool?, param: Unit?): Expr<BoolType>? {
-           return null
-       }
-   }, Unit)
+        override fun visit(type: CBool?, param: Unit?): Expr<BoolType>? {
+            return null
+        }
+    }, Unit)
 
 private fun Set<VarDecl<*>>.unsafeBounds(parseContext: ParseContext, intRangeConstraint: Boolean): String {
-    if(!intRangeConstraint) return ""
+    if (!intRangeConstraint) return ""
 
     val conditions = this.map { (it.unsafeBounds(parseContext))?.toC(parseContext) }.filterNotNull()
     return if (conditions.isNotEmpty())
@@ -179,7 +182,7 @@ private fun Set<VarDecl<*>>.unsafeBounds(parseContext: ParseContext, intRangeCon
 fun XcfaProcedure.def(parseContext: ParseContext, intRangeConstraint: Boolean): String = """
     ${decl(parseContext)} {
         // return parameter
-        ${if(params.isNotEmpty()) params[0].decl(parseContext) + ";" else ""}
+        ${if (params.isNotEmpty()) params[0].decl(parseContext) + ";" else ""}
         
         // variables
         ${(vars - params.map { it.first }.toSet()).joinToString("\n") { it.decl(parseContext) + ";" }}
@@ -189,13 +192,14 @@ fun XcfaProcedure.def(parseContext: ParseContext, intRangeConstraint: Boolean): 
         // main logic
         goto ${initLoc.name.toC()};
         
-        ${locs.joinToString("\n") {
-                """
+        ${
+    locs.joinToString("\n") {
+        """
                     ${it.name.toC()}:
                     ${it.toC(parseContext, intRangeConstraint)}
                 """.trimIndent()
-            }
-        }
+    }
+}
         
         // return expression
         ${if (params.isNotEmpty()) "return " + params[0].first.name.toC() + ";" else ""}
@@ -203,7 +207,7 @@ fun XcfaProcedure.def(parseContext: ParseContext, intRangeConstraint: Boolean): 
 """.trimIndent()
 
 private fun XcfaLocation.toC(parseContext: ParseContext, intRangeConstraint: Boolean): String =
-    if(this.error) {
+    if (this.error) {
         "reach_error();"
     } else when (outgoingEdges.size) {
         0 -> "goto ${name.toC()};"
@@ -213,12 +217,14 @@ private fun XcfaLocation.toC(parseContext: ParseContext, intRangeConstraint: Boo
         2 ->
             """
                 switch(__VERIFIER_nondet__Bool()) {
-                ${outgoingEdges.mapIndexed { index, xcfaEdge -> 
-                    "case $index: \n" + 
-                        xcfaEdge.getFlatLabels().joinToString("\n", postfix="\n") { it.toC(parseContext, intRangeConstraint) } +  
+                ${
+                outgoingEdges.mapIndexed { index, xcfaEdge ->
+                    "case $index: \n" +
+                        xcfaEdge.getFlatLabels()
+                            .joinToString("\n", postfix = "\n") { it.toC(parseContext, intRangeConstraint) } +
                         "goto ${xcfaEdge.target.name.toC()};\n"
-                    }.joinToString("\n")
-                }
+                }.joinToString("\n")
+            }
                 default: abort();
                 }
             """.trimIndent()
@@ -226,10 +232,12 @@ private fun XcfaLocation.toC(parseContext: ParseContext, intRangeConstraint: Boo
         else ->
             """
                 switch(__VERIFIER_nondet_int()) {
-                ${outgoingEdges.mapIndexed { index, xcfaEdge ->
-                "case $index: \n" +
-                    xcfaEdge.getFlatLabels().joinToString("\n", postfix="\n") { it.toC(parseContext, intRangeConstraint) } +
-                    "goto ${xcfaEdge.target.name.toC()};\n"
+                ${
+                outgoingEdges.mapIndexed { index, xcfaEdge ->
+                    "case $index: \n" +
+                        xcfaEdge.getFlatLabels()
+                            .joinToString("\n", postfix = "\n") { it.toC(parseContext, intRangeConstraint) } +
+                        "goto ${xcfaEdge.target.name.toC()};\n"
                 }.joinToString("\n")
             }
                 default: abort();
@@ -238,16 +246,22 @@ private fun XcfaLocation.toC(parseContext: ParseContext, intRangeConstraint: Boo
     }
 
 private fun XcfaLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolean): String =
-    when(this) {
+    when (this) {
         is StmtLabel -> this.toC(parseContext, intRangeConstraint)
         is SequenceLabel -> labels.joinToString("\n") { it.toC(parseContext, intRangeConstraint) }
-        is InvokeLabel -> "${params[0].toC(parseContext)} = ${name.toC()}(${params.subList(1, params.size).map { it.toC(parseContext) }.joinToString(", ")});"
+        is InvokeLabel -> "${params[0].toC(parseContext)} = ${name.toC()}(${
+            params.subList(1, params.size).map { it.toC(parseContext) }.joinToString(", ")
+        });"
+
         else -> TODO("Not yet supported: $this")
     }
 
 private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolean): String =
-    when(stmt) {
-        is HavocStmt<*> -> "${stmt.varDecl.name.toC()} = __VERIFIER_nondet_${CComplexType.getType(stmt.varDecl.ref, parseContext).toC()}(); ${setOf(stmt.varDecl).unsafeBounds(parseContext, intRangeConstraint)}"
+    when (stmt) {
+        is HavocStmt<*> -> "${stmt.varDecl.name.toC()} = __VERIFIER_nondet_${
+            CComplexType.getType(stmt.varDecl.ref, parseContext).toC()
+        }(); ${setOf(stmt.varDecl).unsafeBounds(parseContext, intRangeConstraint)}"
+
         is AssignStmt<*> -> "${stmt.varDecl.name.toC()} = ${stmt.expr.toC(parseContext)};"
         is AssumeStmt -> "if(!${stmt.cond.toC(parseContext)}) abort();"
         else -> TODO("Not yet supported: $stmt")
@@ -255,14 +269,14 @@ private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
 
 fun Pair<VarDecl<*>, ParamDirection>.decl(parseContext: ParseContext): String =
 //    if(second == ParamDirection.IN) {
-        first.decl(parseContext)
+    first.decl(parseContext)
 //    } else error("Only IN params are supported right now")
 
 fun VarDecl<*>.decl(parseContext: ParseContext): String =
     "${CComplexType.getType(ref, parseContext).toC()} ${name.toC()}"
 
 private fun CComplexType.toC(): String =
-    when(this) {
+    when (this) {
         is CArray -> "${this.embeddedType.toC()}_arr"
         is CSignedInt -> "int"
         is CUnsignedInt -> "unsigned int"
@@ -273,7 +287,7 @@ private fun CComplexType.toC(): String =
 
 // below functions implement the serialization of expressions to C-style expressions
 fun Expr<*>.toC(parseContext: ParseContext) =
-    when(this) {
+    when (this) {
         is NullaryExpr<*> -> this.toC(parseContext)
         is UnaryExpr<*, *> -> this.toC(parseContext)
         is BinaryExpr<*, *> -> this.toC(parseContext)
@@ -295,14 +309,14 @@ fun IteExpr<*>.toC(parseContext: ParseContext): String =
 
 // nullary: ref + lit
 fun NullaryExpr<*>.toC(parseContext: ParseContext): String =
-    when(this) {
+    when (this) {
         is RefExpr<*> -> this.decl.name.toC()
         is LitExpr<*> -> (this as LitExpr<*>).toC(parseContext)
         else -> TODO("Not yet supported: $this")
     }
 
 fun LitExpr<*>.toC(parseContext: ParseContext): String =
-    when(this) {
+    when (this) {
         is FalseExpr -> "0"
         is TrueExpr -> "1"
         is IntLitExpr -> this.value.toString()
@@ -317,10 +331,12 @@ fun UnaryExpr<*, *>.toC(parseContext: ParseContext): String =
     "(${this.cOperator()} ${op.toC(parseContext)})"
 
 fun BinaryExpr<*, *>.toC(parseContext: ParseContext): String =
-    if(leftOp.type is ArrayType<*, *>) {
+    if (leftOp.type is ArrayType<*, *>) {
         "${this.arrayCOperator()}(${leftOp.toC(parseContext)}, ${rightOp.toC(parseContext)})"
-    } else if(this is ModExpr<*>) {
-        "( (${leftOp.toC(parseContext)} % ${rightOp.toC(parseContext)} + ${rightOp.toC(parseContext)}) % ${rightOp.toC(parseContext)} )"
+    } else if (this is ModExpr<*>) {
+        "( (${leftOp.toC(parseContext)} % ${rightOp.toC(parseContext)} + ${rightOp.toC(parseContext)}) % ${
+            rightOp.toC(parseContext)
+        } )"
     } else {
         "(${leftOp.toC(parseContext)} ${this.cOperator()} ${rightOp.toC(parseContext)})"
     }
@@ -329,7 +345,7 @@ fun MultiaryExpr<*, *>.toC(parseContext: ParseContext): String =
     ops.joinToString(separator = " ${this.cOperator()} ", prefix = "(", postfix = ")") { it.toC(parseContext) }
 
 fun Expr<*>.cOperator() =
-    when(this) {
+    when (this) {
         is EqExpr<*> -> "=="
         is NeqExpr<*> -> "!="
         is OrExpr -> "||"
@@ -345,7 +361,7 @@ fun Expr<*>.cOperator() =
     }
 
 fun Expr<*>.arrayCOperator() =
-    when(this) {
+    when (this) {
         is EqExpr<*> -> "array_equals"
         is NeqExpr<*> -> "!array_equals"
         else -> TODO("Not yet implemented array operator label for expr: $this")
