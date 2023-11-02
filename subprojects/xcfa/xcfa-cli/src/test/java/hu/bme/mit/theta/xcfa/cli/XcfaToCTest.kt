@@ -58,7 +58,7 @@ class XcfaToCTest {
             ParseContext())).build()
         val temp = createTempDirectory()
         val file = temp.resolve("${filePath.split("/").last()}.c").also { it.toFile().writeText(xcfa.toC(ParseContext(),
-            useArr, useExArr, useRange))}
+            false, false, false))}
         System.err.println(file)
     }
 
