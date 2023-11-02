@@ -83,10 +83,29 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
     private lateinit var optimized: XcfaProcedureBuilder
     private lateinit var partlyOptimized: XcfaProcedureBuilder
     private var lastOptimized: Int = -1
-    fun getParams(): List<Pair<VarDecl<*>, ParamDirection>> = if (this::optimized.isInitialized) optimized.params else params
-    fun getVars(): Set<VarDecl<*>> = if (this::optimized.isInitialized) optimized.vars else vars
-    fun getLocs(): Set<XcfaLocation> = if (this::optimized.isInitialized) optimized.locs else locs
-    fun getEdges(): Set<XcfaEdge> = if (this::optimized.isInitialized) optimized.edges else edges
+    fun getParams(): List<Pair<VarDecl<*>, ParamDirection>> = when {
+        this::optimized.isInitialized -> optimized.params
+        this::partlyOptimized.isInitialized -> partlyOptimized.params
+        else -> params
+    }
+
+    fun getVars(): Set<VarDecl<*>> = when {
+        this::optimized.isInitialized -> optimized.vars
+        this::partlyOptimized.isInitialized -> partlyOptimized.vars
+        else -> vars
+    }
+
+    fun getLocs(): Set<XcfaLocation> = when {
+        this::optimized.isInitialized -> optimized.locs
+        this::partlyOptimized.isInitialized -> partlyOptimized.locs
+        else -> locs
+    }
+
+    fun getEdges(): Set<XcfaEdge> = when {
+        this::optimized.isInitialized -> optimized.edges
+        this::partlyOptimized.isInitialized -> partlyOptimized.edges
+        else -> edges
+    }
 
     fun optimize() {
         if (!this::optimized.isInitialized) {
