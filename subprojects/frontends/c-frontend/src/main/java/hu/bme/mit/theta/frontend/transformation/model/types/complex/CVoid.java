@@ -28,4 +28,9 @@ public class CVoid extends CComplexType {
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
         return visitor.visit(this, param);
     }
+
+    @Override
+    public String getTypeName() {
+        return "void";
+    }
 }

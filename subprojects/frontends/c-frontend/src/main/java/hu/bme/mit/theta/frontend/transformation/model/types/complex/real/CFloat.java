@@ -31,4 +31,9 @@ public class CFloat extends CReal {
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
         return visitor.visit(this, param);
     }
+
+    @Override
+    public String getTypeName() {
+        return "float";
+    }
 }
