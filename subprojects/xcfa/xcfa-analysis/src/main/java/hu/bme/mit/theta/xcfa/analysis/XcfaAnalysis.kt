@@ -145,7 +145,6 @@ fun getXcfaErrorPredicate(
     ErrorDetection.DATA_RACE -> {
         Predicate<XcfaState<out ExprState>> { s ->
             val xcfa = s.xcfa!!
-            if (s.mutexes.containsKey("")) return@Predicate false
             for (process1 in s.processes)
                 for (process2 in s.processes)
                     if (process1.key != process2.key)
