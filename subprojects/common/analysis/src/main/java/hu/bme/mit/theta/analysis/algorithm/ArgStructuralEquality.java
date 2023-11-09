@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.State;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Objects.equal;
@@ -82,8 +83,8 @@ public final class ArgStructuralEquality {
     public static boolean equals(final ARG<? extends State, ? extends Action> a1,
                                  final ARG<? extends State, ? extends Action> a2) {
 
-        var leaves1 = a1.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
-        var leaves2 = a2.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
+        Set<ArgNode<? extends State, ? extends Action>> leaves1 = a1.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
+        Set<ArgNode<? extends State, ? extends Action>> leaves2 = a2.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
 
         // if the two ARGs contain a different number of leaf nodes, they are not equal
         if(leaves1.size() != leaves2.size()) {
@@ -141,7 +142,7 @@ public final class ArgStructuralEquality {
     public static int hashCode(final ARG<? extends State, ? extends Action> a) {
         int hashcode = 0;
 
-        var leaves = a.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
+        Set<ArgNode<? extends State, ? extends Action>> leaves = a.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
         for (ArgNode<? extends State, ? extends Action> leaf : leaves) {
             hashcode += hashCode(leaf);
         }
