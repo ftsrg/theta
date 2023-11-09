@@ -59,20 +59,24 @@ jobs:
         run: |
           sudo add-apt-repository ppa:sosy-lab/benchmarking
           sudo apt install benchexec
-          echo +cpuset | sudo tee /sys/fs/cgroup/user.slice/user-1001.slice/user@1001.service/cgroup.subtree_control
-          echo +cpuset | sudo tee /sys/fs/cgroup/user.slice/user-1001.slice/user@1001.service/benchexec.slice/cgroup.subtree_control
-          echo "Testing benchexec cgroup support"
-          python3 -m benchexec.check_cgroups
       - name: Get benchmark definition file
         run: |
           mkdir -p xml
           wget https://gitlab.com/sosy-lab/sv-comp/bench-defs/-/raw/main/benchmark-defs/theta.xml -P xml
+          sed -i 's/<benchmark tool="theta" timelimit="990 s" hardtimelimit="1050 s" memlimit="15 GB" cpuCores="4">/<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">/g' xml/theta.xml
       - name: Get sv-benchmarks
         run: |
           git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
           cd sv-benchmarks
           git sparse-checkout add c
           git checkout
+      - name: Get JAR
+        run: |
+          wget https://github.com/ftsrg/theta/releases/download/svcomp23/theta.zip
+          unzip theta.zip
+      - name: Run benchexec
+        run: |
+          benchexec xml/theta.xml --no-container
       - name: Positive outcome badge
         uses: ./.github/actions/badge-creation
         with:
