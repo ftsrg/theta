@@ -47,18 +47,17 @@ jobs:
 
 
   test-benchexec:
+    strategy:
+      matrix:
+        task: [ReachSafety-Arrays, ReachSafety-BitVectors, ReachSafety-ControlFlow, ReachSafety-ECA, ReachSafety-Floats, ReachSafety-Heap, ReachSafety-Loops, ReachSafety-ProductLines, ReachSafety-Recursive, ReachSafety-Sequentialized, ReachSafety-XCSP, ReachSafety-Combinations, ReachSafety-Hardware, ConcurrencySafety-Main, NoDataRace-Main, ConcurrencySafety-NoOverflows, ConcurrencySafety-MemSafety]
     runs-on: ubuntu-latest
     steps:
-      # - name: Checkout repository
-      #   uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      # - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-      #   with:
-      #     name: ThetaJars
-      #     path: jar/
-      - name: Install benchexec
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Install benchexec and dependencies
         run: |
           sudo add-apt-repository ppa:sosy-lab/benchmarking
-          sudo apt install benchexec
+          sudo apt install benchexec openjdk-17-jre-headless libgomp1 libmpfr-dev
       - name: Get benchmark definition file
         run: |
           mkdir -p xml
@@ -70,17 +69,26 @@ jobs:
           cd sv-benchmarks
           git sparse-checkout add c
           git checkout
-      - name: Get JAR
+      - name: Get archive
         run: |
           wget https://github.com/ftsrg/theta/releases/download/svcomp23/theta.zip
           unzip theta.zip
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        name: Get JAR
+        with:
+          name: ThetaJars
+          path: jar/
+      - name: Add new jar to archive
+        run: |
+          mv jar/xcfa/xcfa-cli/build/libs/*-all.jar theta/theta.jar
+          ls -l theta
       - name: Run benchexec
         run: |
-          benchexec xml/theta.xml --no-container --tool-directory theta
+          benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ matrix.task }}
       - name: Upload results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
-          name: BenchexecResults
+          name: BenchexecResults-${{ matrix.task }}
           path: results
       - name: Positive outcome badge
         uses: ./.github/actions/badge-creation
@@ -88,7 +96,7 @@ jobs:
           label: "Benchexec Test"
           status: "Success"
           color: "green"
-          path: "badges/benchexec"
+          path: "badges/benchexec-${{ matrix.task }}"
       - name: Negative outcome badge
         if: ${{ failure() }}
         uses: ./.github/actions/badge-creation
@@ -96,7 +104,7 @@ jobs:
           label: "Benchexec Test"
           status: "Failure"
           color: "red"
-          path: "badges/benchexec"
+          path: "badges/benchexec-${{ matrix.task }}"
   
   javadoc:
     needs: build
