@@ -116,30 +116,4 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
         return nodes.iterator();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ArgTrace<?, ?> argTrace = (ArgTrace<?, ?>) o;
-        return states.equals(argTrace.states); // && edges.equals(argTrace.edges);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + states.hashCode();
-            result = 31 * result + edges.hashCode();
-            hashCode = result;
-        }
-        return result;
-        // return Objects.hash(states, edges);
-    }
-    ////
-
 }
