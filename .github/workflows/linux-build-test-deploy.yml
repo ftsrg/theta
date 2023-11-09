@@ -76,7 +76,7 @@ jobs:
           unzip theta.zip
       - name: Run benchexec
         run: |
-          benchexec xml/theta.xml --no-container
+          benchexec xml/theta.xml --no-container --tool-directory theta
       - name: Positive outcome badge
         uses: ./.github/actions/badge-creation
         with:
