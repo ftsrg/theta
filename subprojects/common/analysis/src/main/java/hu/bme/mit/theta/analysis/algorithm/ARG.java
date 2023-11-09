@@ -21,7 +21,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Stream;
@@ -220,19 +219,5 @@ public final class ARG<S extends State, A extends Action> {
         final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(ArgNode::isExpanded);
         final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
         return mean;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ARG<?, ?> arg = (ARG<?, ?>) o;
-        return initialized == arg.initialized &&
-                initNodes.equals(arg.initNodes);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(initNodes, initialized, partialOrd);
     }
 }

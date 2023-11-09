@@ -20,7 +20,9 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -269,29 +271,6 @@ public final class ArgNode<S extends State, A extends Action> {
     }
 
     ////
-
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + id;
-            hashCode = result;
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ArgNode<?, ?> argNode = (ArgNode<?, ?>) o;
-        return depth == argNode.depth &&
-                state.equals(argNode.state) &&
-                coveringNode.equals(argNode.coveringNode) &&
-                Set.copyOf(outEdges).equals(Set.copyOf(argNode.outEdges)) &&
-                target == argNode.target;
-    }
 
     @Override
     public String toString() {
