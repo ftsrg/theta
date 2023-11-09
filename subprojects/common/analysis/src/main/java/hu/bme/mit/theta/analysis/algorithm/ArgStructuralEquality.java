@@ -40,24 +40,24 @@ import static com.google.common.base.Objects.equal;
 public final class ArgStructuralEquality {
     private static final Map<Object, Integer> hashCodeCache = new LinkedHashMap<>();
 
-    private ArgStructuralEquality(){
+    private ArgStructuralEquality() {
     }
 
     public static boolean equals(final ArgNode<? extends State, ? extends Action> n1,
                                  final ArgNode<? extends State, ? extends Action> n2) {
 
         // if one node has a parent but the other one does not, nodes are not equal
-        if(n1.inEdge.isPresent() != n2.inEdge.isPresent()) {
+        if (n1.inEdge.isPresent() != n2.inEdge.isPresent()) {
             return false;
         }
 
         // if in edge is not same, nodes are not equal
-        if(n1.inEdge.isPresent() && !equals(n1.inEdge.get(), n2.inEdge.get())) {
+        if (n1.inEdge.isPresent() && !equals(n1.inEdge.get(), n2.inEdge.get())) {
             return false;
         }
 
         // if wrapped state is not same, nodes are not equal
-        if(!n1.getState().equals(n2.getState())) {
+        if (!n1.getState().equals(n2.getState())) {
             return false;
         }
 
@@ -68,12 +68,12 @@ public final class ArgStructuralEquality {
                                  final ArgEdge<? extends State, ? extends Action> e2) {
 
         // if source node is not same, edges are not equal
-        if(!equals(e1.getSource(), e2.getSource())) {
+        if (!equals(e1.getSource(), e2.getSource())) {
             return false;
         }
 
         // if wrapped action is not same, edges are not equal
-        if(!e1.getAction().equals(e2.getAction())) {
+        if (!e1.getAction().equals(e2.getAction())) {
             return false;
         }
 
@@ -87,14 +87,14 @@ public final class ArgStructuralEquality {
         Set<ArgNode<? extends State, ? extends Action>> leaves2 = a2.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
 
         // if the two ARGs contain a different number of leaf nodes, they are not equal
-        if(leaves1.size() != leaves2.size()) {
+        if (leaves1.size() != leaves2.size()) {
             return false;
         }
 
         leaves1loop:
         for (ArgNode<? extends State, ? extends Action> n1 : leaves1) {
             for (ArgNode<? extends State, ? extends Action> n2 : leaves2) {
-                if(equals(n1, n2)) {
+                if (equals(n1, n2)) {
                     continue leaves1loop;
                 }
             }
@@ -112,10 +112,10 @@ public final class ArgStructuralEquality {
 
 
     public static int hashCode(final ArgNode<? extends State, ? extends Action> n) {
-        if(!hashCodeCache.containsKey(n)) {
+        if (!hashCodeCache.containsKey(n)) {
             int hashcode = 0;
 
-            if(n.inEdge.isPresent()) {
+            if (n.inEdge.isPresent()) {
                 hashcode += hashCode(n.inEdge.get());
             }
 
@@ -126,7 +126,7 @@ public final class ArgStructuralEquality {
     }
 
     public static int hashCode(final ArgEdge<? extends State, ? extends Action> e) {
-        if(!hashCodeCache.containsKey(e)) {
+        if (!hashCodeCache.containsKey(e)) {
             int hashcode = 0;
 
             hashcode += hashCode(e.getSource());
@@ -151,7 +151,7 @@ public final class ArgStructuralEquality {
     }
 
     public static int hashCode(final ArgTrace<? extends State, ? extends Action> t) {
-        if(!hashCodeCache.containsKey(t)) {
+        if (!hashCodeCache.containsKey(t)) {
             int hashcode = hashCode(t.node(t.length()));
             hashCodeCache.put(t, hashcode);
         }
