@@ -77,6 +77,11 @@ jobs:
       - name: Run benchexec
         run: |
           benchexec xml/theta.xml --no-container --tool-directory theta
+      - name: Upload results
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: BenchexecResults
+          path: results
       - name: Positive outcome badge
         uses: ./.github/actions/badge-creation
         with:
