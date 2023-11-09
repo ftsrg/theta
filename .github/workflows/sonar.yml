@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency: 
+  group: sonar-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   run-sonar:
     runs-on: ubuntu-latest

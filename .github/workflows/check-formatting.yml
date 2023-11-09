@@ -6,6 +6,10 @@ on:
 
 permissions: write-all
 
+concurrency: 
+  group: formatting-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   check-formatting:
     runs-on: ubuntu-latest

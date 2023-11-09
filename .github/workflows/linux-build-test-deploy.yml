@@ -12,6 +12,9 @@ on:
 
 permissions: write-all
 
+concurrency: 
+  group: deploy-${{ github.head_ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -41,6 +44,48 @@ jobs:
           status: "Failure"
           color: "red"
           path: "badges/build-${{ runner.os }}"
+
+
+  test-benchexec:
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Checkout repository
+      #   uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      # - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+      #   with:
+      #     name: ThetaJars
+      #     path: jar/
+      - name: Install benchexec
+        run: |
+          sudo add-apt-repository ppa:sosy-lab/benchmarking
+          sudo apt install benchexec
+          echo "Testing benchexec cgroup support"
+          python3 -m benchexec.check_cgroups
+      - name: Get benchmark definition file
+        run: |
+          mkdir -p xml
+          wget https://gitlab.com/sosy-lab/sv-comp/bench-defs/-/raw/main/benchmark-defs/theta.xml -P xml
+      - name: Get sv-benchmarks
+        run: |
+          git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
+          cd sv-benchmarks
+          git sparse-checkout add c
+          git checkout
+      - name: Positive outcome badge
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "Benchexec Test"
+          status: "Success"
+          color: "green"
+          path: "badges/benchexec"
+      - name: Negative outcome badge
+        if: ${{ failure() }}
+        uses: ./.github/actions/badge-creation
+        with:
+          label: "Benchexec Test"
+          status: "Failure"
+          color: "red"
+          path: "badges/benchexec"
   
   javadoc:
     needs: build
