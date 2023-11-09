@@ -59,6 +59,7 @@ jobs:
         run: |
           sudo add-apt-repository ppa:sosy-lab/benchmarking
           sudo apt install benchexec
+          echo +cpuset | sudo tee /sys/fs/cgroup/user.slice/user-1001.slice/user@1001.service/cgroup.subtree_control
           echo "Testing benchexec cgroup support"
           python3 -m benchexec.check_cgroups
       - name: Get benchmark definition file
