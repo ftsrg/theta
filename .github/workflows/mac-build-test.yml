@@ -6,6 +6,10 @@ on:
 
 permissions: write-all
 
+concurrency: 
+  group: mac-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   test-mac:
     strategy:

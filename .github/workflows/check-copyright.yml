@@ -6,6 +6,10 @@ on:
 
 permissions: write-all
 
+concurrency: 
+  group: copyright-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   check-copyright:
     runs-on: ubuntu-latest
