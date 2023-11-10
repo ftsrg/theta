@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.*
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
@@ -77,8 +78,8 @@ class XcfaCliVerifyTest {
         fun chcFiles(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.FORWARD, "--domain PRED_CART"),
-//                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD,
-//                    "--domain PRED_CART"),
+                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD,
+                    "--domain PRED_CART"),
             )
         }
     }
