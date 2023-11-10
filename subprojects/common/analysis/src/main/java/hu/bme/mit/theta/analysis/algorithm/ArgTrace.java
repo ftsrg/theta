@@ -34,9 +34,6 @@ import static java.util.stream.Collectors.toList;
  */
 public final class ArgTrace<S extends State, A extends Action> implements Iterable<ArgNode<S, A>> {
 
-    private static final int HASH_SEED = 7653;
-    private volatile int hashCode = 0;
-
     private final List<ArgNode<S, A>> nodes;
     private final List<ArgEdge<S, A>> edges;
     private final Collection<State> states;

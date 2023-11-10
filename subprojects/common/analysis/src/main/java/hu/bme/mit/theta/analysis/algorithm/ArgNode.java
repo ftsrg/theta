@@ -30,9 +30,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ArgNode<S extends State, A extends Action> {
 
-    private static final int HASH_SEED = 8543;
-    private volatile int hashCode = 0;
-
     final ARG<S, A> arg;
 
     private final int id;
