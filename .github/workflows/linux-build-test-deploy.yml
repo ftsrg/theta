@@ -83,6 +83,11 @@ jobs:
         run: |
           mv jar/xcfa/xcfa-cli/build/libs/*-all.jar theta/theta.jar
           ls -l theta
+      - name: Cut setfile if too long
+        run: |
+          cd sv-benchmarks/c
+          for i in $(sed 's/#.*$//g' ${{ matrix.task }}.set); do find . -wholename ./$i; done | while read line; do echo  $(echo $line | sha1sum | awk ' { print $1 } ') $line ; done | sort -k1 | awk ' { $1=""; print $0 } ' | awk '{$1=$1};1' > all-files.txt
+          head -n100 all-files.txt > ${{ matrix.task }}.set
       - name: Run benchexec
         run: |
           benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ matrix.task }}
