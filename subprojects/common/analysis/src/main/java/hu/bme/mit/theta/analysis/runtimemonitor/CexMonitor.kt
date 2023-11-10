@@ -32,7 +32,7 @@ import java.lang.RuntimeException
  * However, if you think analysis should NOT be stopped by this monitor, disable it and check results.
  */
 class CexMonitor<S : State?, A : Action?> constructor(
-    private val mitigate: Boolean, private val logger: Logger, private val arg: ARG<S, A>
+    private val logger: Logger, private val arg: ARG<S, A>
 ) : Monitor {
 
     private val cexHashStorage = CexHashStorage<S, A>()
