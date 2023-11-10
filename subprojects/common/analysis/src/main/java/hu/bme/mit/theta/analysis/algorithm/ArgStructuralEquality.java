@@ -19,6 +19,8 @@ package hu.bme.mit.theta.analysis.algorithm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,11 +33,13 @@ import static com.google.common.base.Objects.equal;
  * An ARG is uniquely identifiable using its leaf nodes.
  * An ArgTrace is uniquely identifiable using its last node.
  * <p>
- * We don't perform caching for the hash codes, and equals() checks will always traverse the
- * ancestors of a node (and edge). However, this traversal only goes towards the root, rather than
- * in all directions.
+ * We perform caching for the hash codes, but equals() checks will always traverse the ancestors of
+ * a node (and edge). However, this traversal only goes towards the root, rather than in all
+ * directions.
  */
 public final class ArgStructuralEquality {
+    private static final Map<Object, Integer> hashCodeCache = new LinkedHashMap<>();
+
     private ArgStructuralEquality() {
     }
 
@@ -108,26 +112,33 @@ public final class ArgStructuralEquality {
 
 
     public static int hashCode(final ArgNode<? extends State, ? extends Action> n) {
-        int hashcode = 0;
+        if (!hashCodeCache.containsKey(n)) {
+            int hashcode = 0;
 
-        if (n.inEdge.isPresent()) {
-            hashcode += hashCode(n.inEdge.get());
+            if (n.inEdge.isPresent()) {
+                hashcode += hashCode(n.inEdge.get());
+            }
+
+            hashcode += n.getState().hashCode();
+            hashCodeCache.put(n, hashcode);
         }
-
-        hashcode += n.getState().hashCode();
-        return hashcode;
+        return hashCodeCache.get(n);
     }
 
     public static int hashCode(final ArgEdge<? extends State, ? extends Action> e) {
-        int hashcode = 0;
+        if (!hashCodeCache.containsKey(e)) {
+            int hashcode = 0;
 
-        hashcode += hashCode(e.getSource());
+            hashcode += hashCode(e.getSource());
 
-        hashcode += e.getAction().hashCode();
+            hashcode += e.getAction().hashCode();
 
-        return hashcode;
+            hashCodeCache.put(e, hashcode);
+        }
+        return hashCodeCache.get(e);
     }
 
+    // ARG is not immutable, so we don't cache
     public static int hashCode(final ARG<? extends State, ? extends Action> a) {
         int hashcode = 0;
 
@@ -140,7 +151,11 @@ public final class ArgStructuralEquality {
     }
 
     public static int hashCode(final ArgTrace<? extends State, ? extends Action> t) {
-        return hashCode(t.node(t.length()));
+        if (!hashCodeCache.containsKey(t)) {
+            int hashcode = hashCode(t.node(t.length()));
+            hashCodeCache.put(t, hashcode);
+        }
+        return hashCodeCache.get(t);
     }
 
 }
