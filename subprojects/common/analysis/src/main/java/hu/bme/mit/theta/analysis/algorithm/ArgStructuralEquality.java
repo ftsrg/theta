@@ -46,6 +46,16 @@ public final class ArgStructuralEquality {
     public static boolean equals(final ArgNode<? extends State, ? extends Action> n1,
                                  final ArgNode<? extends State, ? extends Action> n2) {
 
+        // if references are the same, the two nodes are equal
+        if (n1 == n2) {
+            return true;
+        }
+
+        // if wrapped state is not same, nodes are not equal
+        if (!n1.getState().equals(n2.getState())) {
+            return false;
+        }
+
         // if one node has a parent but the other one does not, nodes are not equal
         if (n1.inEdge.isPresent() != n2.inEdge.isPresent()) {
             return false;
@@ -56,24 +66,24 @@ public final class ArgStructuralEquality {
             return false;
         }
 
-        // if wrapped state is not same, nodes are not equal
-        if (!n1.getState().equals(n2.getState())) {
-            return false;
-        }
-
         return true;
     }
 
     public static boolean equals(final ArgEdge<? extends State, ? extends Action> e1,
                                  final ArgEdge<? extends State, ? extends Action> e2) {
 
-        // if source node is not same, edges are not equal
-        if (!equals(e1.getSource(), e2.getSource())) {
-            return false;
+        // if references are the same, the two edges are equal
+        if (e1 == e2) {
+            return true;
         }
 
         // if wrapped action is not same, edges are not equal
         if (!e1.getAction().equals(e2.getAction())) {
+            return false;
+        }
+
+        // if source node is not same, edges are not equal
+        if (!equals(e1.getSource(), e2.getSource())) {
             return false;
         }
 
@@ -82,6 +92,11 @@ public final class ArgStructuralEquality {
 
     public static boolean equals(final ARG<? extends State, ? extends Action> a1,
                                  final ARG<? extends State, ? extends Action> a2) {
+
+        // if references are the same, the two edges are equal
+        if (a1 == a2) {
+            return true;
+        }
 
         Set<ArgNode<? extends State, ? extends Action>> leaves1 = a1.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
         Set<ArgNode<? extends State, ? extends Action>> leaves2 = a2.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
