@@ -24,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ArgStructuralEqualityTest {
-    
+
     private static ARG<State, Action> createArg(boolean variant) {
         ARG<State, Action> arg = ARG.create(new PartialOrdStub());
         Action act = new ActionStub("A");
@@ -38,7 +38,7 @@ public class ArgStructuralEqualityTest {
                 false);
         ArgNode<State, Action> s11 = arg.createSuccNode(s0, act, new StateStub("s11"),
                 true);
-        if(variant) {
+        if (variant) {
             ArgNode<State, Action> s12a = arg.createSuccNode(s0, act, new StateStub("s12a"),
                     false);
         } else {
