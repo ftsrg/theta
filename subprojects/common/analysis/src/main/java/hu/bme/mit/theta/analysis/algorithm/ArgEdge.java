@@ -19,9 +19,6 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 
 public final class ArgEdge<S extends State, A extends Action> {
-    private static final int HASH_SEED = 3653;
-    private volatile int hashCode = 0;
-
     private final ArgNode<S, A> source;
     private final ArgNode<S, A> target;
     private final A action;
