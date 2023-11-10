@@ -51,6 +51,11 @@ public final class ArgStructuralEquality {
             return true;
         }
 
+        // if one is null, the two nodes are not equal
+        if (n1 == null || n2 == null) {
+            return false;
+        }
+
         // if wrapped state is not same, nodes are not equal
         if (!n1.getState().equals(n2.getState())) {
             return false;
@@ -77,6 +82,12 @@ public final class ArgStructuralEquality {
             return true;
         }
 
+        // if one is null, the two edges are not equal
+        if (e1 == null || e2 == null) {
+            return false;
+        }
+
+
         // if wrapped action is not same, edges are not equal
         if (!e1.getAction().equals(e2.getAction())) {
             return false;
@@ -96,6 +107,11 @@ public final class ArgStructuralEquality {
         // if references are the same, the two edges are equal
         if (a1 == a2) {
             return true;
+        }
+
+        // if one is null, the two args are not equal
+        if (a1 == null || a2 == null) {
+            return false;
         }
 
         Set<ArgNode<? extends State, ? extends Action>> leaves1 = a1.getNodes().filter(ArgNode::isLeaf).collect(Collectors.toUnmodifiableSet());
