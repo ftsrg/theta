@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Collection;
@@ -109,6 +110,7 @@ public final class ARG<S extends State, A extends Action> {
         checkNotNull(initState);
         final ArgNode<S, A> initNode = createNode(initState, 0, target);
         initNodes.add(initNode);
+        ARGWebDebugger.create(initNode);
         return initNode;
     }
 
@@ -134,6 +136,7 @@ public final class ARG<S extends State, A extends Action> {
         final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
         source.outEdges.add(edge);
         target.inEdge = Optional.of(edge);
+        ARGWebDebugger.add(source, action, target);
         return edge;
     }
 
@@ -147,6 +150,7 @@ public final class ARG<S extends State, A extends Action> {
             final ArgEdge<S, A> edge = node.getInEdge().get();
             final ArgNode<S, A> parent = edge.getSource();
             parent.outEdges.remove(edge);
+            ARGWebDebugger.remove(edge);
             parent.expanded = false;
         } else {
             assert initNodes.contains(node);
