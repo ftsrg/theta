@@ -17,6 +17,8 @@ package hu.bme.mit.theta.analysis.stubs;
 
 import hu.bme.mit.theta.analysis.State;
 
+import java.util.Objects;
+
 public class StateStub implements State {
 
     private final String label;
@@ -35,4 +37,16 @@ public class StateStub implements State {
         return label;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StateStub stateStub = (StateStub) o;
+        return Objects.equals(label, stateStub.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(label);
+    }
 }

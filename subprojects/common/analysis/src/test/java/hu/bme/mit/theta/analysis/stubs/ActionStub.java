@@ -17,6 +17,8 @@ package hu.bme.mit.theta.analysis.stubs;
 
 import hu.bme.mit.theta.analysis.Action;
 
+import java.util.Objects;
+
 public class ActionStub implements Action {
 
     private final String label;
@@ -28,5 +30,18 @@ public class ActionStub implements Action {
     @Override
     public String toString() {
         return label;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ActionStub that = (ActionStub) o;
+        return Objects.equals(label, that.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(label);
     }
 }
