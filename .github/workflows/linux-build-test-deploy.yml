@@ -128,6 +128,8 @@ jobs:
               echo "<details><summary>${i#BenchexecResults-}</summary>" >> $GITHUB_OUTPUT
               tail -n9 *.txt  >> $GITHUB_OUTPUT
               echo "</details>" >> $GITHUB_OUTPUT
+              echo >> $GITHUB_OUTPUT
+              echo >> $GITHUB_OUTPUT
             fi
             popd
           done
@@ -141,6 +143,7 @@ jobs:
         run: |
           echo "${{ steps.generate.outputs.Message }}"
       - name: Comment on PR
+        if: github.event_name == 'pull_request'
         uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
         with: 
           comment_tag: 'diffcheck'
