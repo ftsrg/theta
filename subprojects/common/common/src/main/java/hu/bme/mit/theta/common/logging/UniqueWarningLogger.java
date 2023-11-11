@@ -16,18 +16,25 @@
 package hu.bme.mit.theta.common.logging;
 
 import java.io.PrintStream;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
-public final class StderrLogger extends BaseLogger {
+public final class UniqueWarningLogger extends BaseLogger {
 
     private static final PrintStream CONSOLE = System.err;
+    private final Set<String> messages;
 
-    public StderrLogger(final Level minLevel) {
+    public UniqueWarningLogger(final Level minLevel) {
         super(minLevel);
+        messages = new LinkedHashSet<>();
     }
 
     @Override
     protected void writeStr(final String str) {
-        CONSOLE.print(str);
+        if (!messages.contains(str)) {
+            messages.add(str);
+            CONSOLE.print(str);
+        }
     }
 
 }

@@ -31,6 +31,7 @@ import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -186,7 +187,8 @@ class XcfaCli(private val args: Array<String>) {
         val stopwatch = Stopwatch.createStarted()
         val gsonForOutput = getGson()
         val logger = ConsoleLogger(logLevel)
-        val explicitProperty: ErrorDetection = getExplicitProperty()
+        val uniqueWarningLogger = UniqueWarningLogger(logLevel)
+        val explicitProperty: ErrorDetection = getExplicitProperty(uniqueWarningLogger)
 
         // propagating input variables
         LbePass.level = lbeLevel
@@ -203,7 +205,7 @@ class XcfaCli(private val args: Array<String>) {
 
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
         val parseContext = ParseContext()
-        val xcfa = getXcfa(logger, explicitProperty, parseContext)
+        val xcfa = getXcfa(logger, explicitProperty, parseContext, uniqueWarningLogger)
         ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
         logger.write(Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
@@ -346,17 +348,18 @@ class XcfaCli(private val args: Array<String>) {
         }
     }
 
-    private fun getXcfa(logger: ConsoleLogger, explicitProperty: ErrorDetection, parseContext: ParseContext) =
+    private fun getXcfa(logger: ConsoleLogger, explicitProperty: ErrorDetection, parseContext: ParseContext,
+        uniqueWarningLogger: Logger) =
         try {
             when (inputType) {
                 InputType.CHC -> {
-                    parseChc(logger, parseContext)
+                    parseChc(logger, parseContext, uniqueWarningLogger)
                 }
 
                 InputType.C -> {
                     val stream = FileInputStream(input!!)
                     val xcfaFromC = getXcfaFromC(stream, parseContext, false,
-                        explicitProperty == ErrorDetection.OVERFLOW).first
+                        explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
                     logger.write(Logger.Level.RESULT,
                         "Arithmetic: ${parseContext.arithmetic}\n")
                     xcfaFromC
@@ -381,25 +384,28 @@ class XcfaCli(private val args: Array<String>) {
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
 
-    private fun parseChc(logger: ConsoleLogger, parseContext: ParseContext): XCFA {
+    private fun parseChc(logger: ConsoleLogger, parseContext: ParseContext, uniqueWarningLogger: Logger): XCFA {
         var chcFrontend: ChcFrontend
         val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.PORTFOLIO) { // try forward, fallback to backward
             chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.FORWARD)
             try {
-                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)), ChcPasses(parseContext))
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
+                    ChcPasses(parseContext, uniqueWarningLogger))
             } catch (e: UnsupportedOperationException) {
                 logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...")
                 chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
-                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)), ChcPasses(parseContext))
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
+                    ChcPasses(parseContext, uniqueWarningLogger))
             }
         } else {
             chcFrontend = ChcFrontend(chcTransformation)
-            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)), ChcPasses(parseContext))
+            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
+                ChcPasses(parseContext, uniqueWarningLogger))
         }
         return xcfaBuilder.build()
     }
 
-    private fun getExplicitProperty() = if (property != null) {
+    private fun getExplicitProperty(uniqueWarningLogger: Logger) = if (property != null) {
         remainingFlags.add("--error-detection")
         when {
             property!!.name.endsWith("unreach-call.prp") -> {
@@ -410,7 +416,7 @@ class XcfaCli(private val args: Array<String>) {
             property!!.name.endsWith("no-data-race.prp") -> {
                 remainingFlags.add(ErrorDetection.DATA_RACE.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
-                    System.err.println(
+                    uniqueWarningLogger.write(Logger.Level.INFO,
                         "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
@@ -420,7 +426,7 @@ class XcfaCli(private val args: Array<String>) {
             property!!.name.endsWith("no-overflow.prp") -> {
                 remainingFlags.add(ErrorDetection.OVERFLOW.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
-                    System.err.println(
+                    uniqueWarningLogger.write(Logger.Level.INFO,
                         "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
@@ -429,7 +435,7 @@ class XcfaCli(private val args: Array<String>) {
 
             else -> {
                 remainingFlags.add(ErrorDetection.NO_ERROR.toString())
-                System.err.println(
+                uniqueWarningLogger.write(Logger.Level.INFO,
                     "Unknown property $property, using full state space exploration (no refinement)")
                 ErrorDetection.NO_ERROR
             }

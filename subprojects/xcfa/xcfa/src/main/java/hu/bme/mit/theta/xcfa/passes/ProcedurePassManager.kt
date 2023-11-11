@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 
 open class ProcedurePassManager(vararg passes: List<ProcedurePass>) {
@@ -23,7 +24,7 @@ open class ProcedurePassManager(vararg passes: List<ProcedurePass>) {
     val passes: List<List<ProcedurePass>> = passes.toList()
 }
 
-class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePassManager(
+class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(
     listOf(
         // formatting
         NormalizePass(parseContext),
@@ -57,11 +58,11 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext) : ProcedurePas
         DeterministicPass(parseContext), // needed after lbe, TODO
         HavocPromotionAndRange(parseContext),
         // Final cleanup
-        UnusedVarPass(parseContext),
+        UnusedVarPass(parseContext, uniqueWarningLogger),
     )
 )
 
-class ChcPasses(parseContext: ParseContext) : ProcedurePassManager(listOf(
+class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(listOf(
     // formatting
     NormalizePass(parseContext),
     DeterministicPass(parseContext),
@@ -88,7 +89,7 @@ class ChcPasses(parseContext: ParseContext) : ProcedurePassManager(listOf(
     DeterministicPass(parseContext), // needed after lbe, TODO
 //        HavocPromotionAndRange(),
     // Final cleanup
-    UnusedVarPass(parseContext),
+    UnusedVarPass(parseContext, uniqueWarningLogger),
 ))
 
 class LitmusPasses : ProcedurePassManager()

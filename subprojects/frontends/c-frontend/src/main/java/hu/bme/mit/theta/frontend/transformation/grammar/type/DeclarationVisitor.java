@@ -18,6 +18,8 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -38,12 +40,14 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     private final FunctionVisitor functionVisitor;
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
+    private final Logger uniqueWarningLogger;
 
-    public DeclarationVisitor(ParseContext parseContext, FunctionVisitor functionVisitor) {
+    public DeclarationVisitor(ParseContext parseContext, FunctionVisitor functionVisitor, Logger uniqueWarningLogger) {
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
+        this.uniqueWarningLogger = uniqueWarningLogger;
         this.typedefVisitor = new TypedefVisitor(this);
-        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext);
+        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext, uniqueWarningLogger);
     }
 
     public TypedefVisitor getTypedefVisitor() {
@@ -196,7 +200,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
             CParser.DirectDeclaratorFunctionDeclContext ctx) {
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
-            System.err.println("WARNING: variable args are not supported!");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!");
             decl.setFunc(true);
             return decl;
         }

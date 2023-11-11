@@ -18,7 +18,7 @@ private:
     std::string clangCli;
     std::unique_ptr <llvm::Module> module = nullptr; // parsed from .bc at the end of executeClang
 
-    void executeClang();
+    bool executeClang();
 
     void executeOptimizationPasses();
 

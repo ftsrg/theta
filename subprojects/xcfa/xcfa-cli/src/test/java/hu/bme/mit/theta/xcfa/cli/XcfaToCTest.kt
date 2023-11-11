@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.chc.ChcFrontend.ChcTransformation
@@ -54,7 +55,7 @@ class XcfaToCTest {
         val chcFrontend = ChcFrontend(chcTransformation)
         val xcfa = chcFrontend.buildXcfa(
             CharStreams.fromStream(FileInputStream(javaClass.getResource(filePath)!!.path)), ChcPasses(
-            ParseContext())).build()
+            ParseContext(), NullLogger.getInstance())).build()
         val temp = createTempDirectory()
         val file = temp.resolve("${filePath.split("/").last()}.c").also {
             it.toFile().writeText(xcfa.toC(ParseContext(),

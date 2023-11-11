@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 
@@ -48,8 +49,8 @@ public class CSimpleTypeFactory {
         return Typedef.instance;
     }
 
-    public static NamedType NamedType(final String namedType, ParseContext parseContext) {
-        return new NamedType(parseContext, namedType);
+    public static NamedType NamedType(final String namedType, ParseContext parseContext, Logger uniqueWarningLogger) {
+        return new NamedType(parseContext, namedType, uniqueWarningLogger);
     }
 
     public static DeclaredName DeclaredName(final String declaredName) {
@@ -60,8 +61,8 @@ public class CSimpleTypeFactory {
         return new Enum(id, fields);
     }
 
-    public static Struct Struct(final String name, ParseContext parseContext) {
-        return new Struct(name, parseContext);
+    public static Struct Struct(final String name, ParseContext parseContext, Logger uniqueWarningLogger) {
+        return new Struct(name, parseContext, uniqueWarningLogger);
     }
 
     public static ThreadLocal ThreadLocal() {

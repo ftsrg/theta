@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -30,7 +31,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -451,7 +453,7 @@ class PassTests {
                 passes = listOf(
                     NormalizePass(parseContext),
                     DeterministicPass(parseContext),
-                    UnusedVarPass(parseContext)
+                    UnusedVarPass(parseContext, NullLogger.getInstance())
                 ),
                 input = {
                     "tmp" type Int()
@@ -533,7 +535,7 @@ class PassTests {
     @Test
     fun testCPipeline() {
         val xcfaSource = xcfa("example") {
-            procedure("main", CPasses(false, parseContext)) {
+            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
                 (init to final) {
                     "proc1"()
                 }
@@ -554,7 +556,7 @@ class PassTests {
     fun testSplit() {
         lateinit var edge: XcfaEdge
         val xcfaSource = xcfa("example") {
-            procedure("main", CPasses(false, parseContext)) {
+            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
                 edge = (init to final) {
                     assume("true")
                     "proc1"()
