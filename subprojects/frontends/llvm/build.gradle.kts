@@ -28,23 +28,23 @@ val llvmConfigBinary = try {
     val major = version[0]
     val minor = version[1]
     val patch = version[2]
-    if (major == "14")
+    if (major == "15")
         "llvm-config"
     else
         throw IOException()
 } catch (e: IOException) {
     try {
-        val output = runCommandForOutput("llvm-config-14", "--version")
+        val output = runCommandForOutput("llvm-config-15", "--version")
         val version = output[0].split('.')
         val major = version[0]
         val minor = version[1]
         val patch = version[2]
-        if (major == "14")
-            "llvm-config-14"
+        if (major == "15")
+            "llvm-config-15"
         else
             throw IOException()
     } catch (e: IOException) {
-        println("LLVM-14 not installed, not building native library.")
+        println("LLVM-15 not installed, not building native library.")
         null
     }
 }
