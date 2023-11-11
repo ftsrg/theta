@@ -53,8 +53,6 @@ public final class ARGWebDebugger {
         Configuration config = new Configuration();
         config.setPort(PORT);
 
-        config.setOrigin("http://localhost:3000");
-
         server = new SocketIOServer(config);
         server.addEventListener("continue", String.class, (client, data, ackSender) -> {
             received = true;
