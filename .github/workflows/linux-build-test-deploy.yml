@@ -112,17 +112,44 @@ jobs:
         with:
           path: artifacts
       - name: Generate tables
+        id: generate
         run: |
           cd artifacts
-          table-generator -d -o results */*xml.bz2
-          for i in *; do pushd $i; unzip *.zip; popd; done
-          cd results
-          sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "Message<<$EOF" >> $GITHUB_OUTPUT
+          for i in *
+          do 
+            pushd $i
+            if (ls *.txt >/dev/null 2>/dev/null)
+            then
+              table-generator -d *xml.bz2
+              sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
+              unzip *.zip
+              echo "<details><summary>${i#BenchexecResults-}</summary>" >> $GITHUB_OUTPUT
+              tail -n9 *.txt  >> $GITHUB_OUTPUT
+              echo "</details>" >> $GITHUB_OUTPUT
+            fi
+            popd
+          done
+          echo "$EOF" >> $GITHUB_OUTPUT
       - name: Upload results
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: BenchexecResults-${{ matrix.task }}
           path: results
+      - name: See PR message
+        run: |
+          echo "${{ steps.generate.outputs.Message }}"
+      - name: Comment on PR
+        uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
+        with: 
+          comment_tag: 'diffcheck'
+          mode: 'recreate'
+          message: |
+            Benchexec test report for a selection of SV-Benchmarks:
+
+            ${{ steps.generate.outputs.Message }}
+
 
   javadoc:
     needs: build
