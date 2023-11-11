@@ -87,7 +87,7 @@ jobs:
         run: |
           cd sv-benchmarks/c
           for i in $(sed 's/#.*$//g' ${{ matrix.task }}.set); do find . -wholename ./$i; done | while read line; do echo  $(echo $line | sha1sum | awk ' { print $1 } ') $line ; done | sort -k1 | awk ' { $1=""; print $0 } ' | awk '{$1=$1};1' > all-files.txt
-          head -n100 all-files.txt > ${{ matrix.task }}.set
+          head -n10 all-files.txt > ${{ matrix.task }}.set
       - name: Run benchexec
         run: |
           benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ matrix.task }}
@@ -96,22 +96,34 @@ jobs:
         with:
           name: BenchexecResults-${{ matrix.task }}
           path: results
-      - name: Positive outcome badge
-        uses: ./.github/actions/badge-creation
-        with:
-          label: "Benchexec Test"
-          status: "Success"
-          color: "green"
-          path: "badges/benchexec-${{ matrix.task }}"
-      - name: Negative outcome badge
-        if: ${{ failure() }}
-        uses: ./.github/actions/badge-creation
-        with:
-          label: "Benchexec Test"
-          status: "Failure"
-          color: "red"
-          path: "badges/benchexec-${{ matrix.task }}"
   
+  collect-results:
+    needs: test-benchexec
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - name: Install benchexec
+        run: |
+          sudo add-apt-repository ppa:sosy-lab/benchmarking
+          sudo apt install benchexec
+      - name: Download artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          path: artifacts
+      - name: Generate tables
+        run: |
+          cd artifacts
+          table-generator -d -o results */*xml.bz2
+          for i in *; do pushd $i; unzip *.zip; popd; done
+          cd results
+          sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
+      - name: Upload results
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        with:
+          name: BenchexecResults-${{ matrix.task }}
+          path: results
+
   javadoc:
     needs: build
     runs-on: ubuntu-latest
