@@ -31,7 +31,7 @@ data class WitnessEdge(
     val startoffsetRange: Pair<Int, Int>?,
     val endoffsetRange: Pair<Int, Int>?,
     val assumption: Regex?,
-    )
+)
 
 class XcfaCliWitnessTest {
     companion object {
@@ -70,10 +70,10 @@ class XcfaCliWitnessTest {
         val witnessContents = temp.resolve("witness.graphml").toFile().readText()
         val edges = mutableListOf<Map<String, String>>()
         val edgeMatcher = Regex("(?s)<edge.*?</edge")
-        for(match in edgeMatcher.findAll(witnessContents)) {
+        for (match in edgeMatcher.findAll(witnessContents)) {
             val dataMatcher = Regex("<data key=\"(.*)\">(.*)</data>")
             val data = mutableMapOf<String, String>()
-            for(dataMatch in dataMatcher.findAll(match.value)) {
+            for (dataMatch in dataMatcher.findAll(match.value)) {
                 val (key, value) = dataMatch.destructured
                 data.put(key, value)
             }
@@ -82,11 +82,31 @@ class XcfaCliWitnessTest {
         for (expectedWitnessEdge in expectedWitnessEdges) {
             Assertions.assertFalse(
                 edges.none { edge ->
-                    val startline = expectedWitnessEdge.startlineRange?.let {edge["startline"]?.let{v -> Pair(it, Integer.parseInt(v)) } }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val endline = expectedWitnessEdge.endlineRange?.let {edge["endline"]?.let{v -> Pair(it, Integer.parseInt(v)) } }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val startoffset = expectedWitnessEdge.startoffsetRange?.let {edge["startoffset"]?.let{v -> Pair(it, Integer.parseInt(v)) } }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val endoffset = expectedWitnessEdge.endoffsetRange?.let {edge["endoffset"]?.let{v -> Pair(it, Integer.parseInt(v)) } }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
-                    val assumption = expectedWitnessEdge.assumption?.let {edge["assumption"]?.let{v -> Pair(it, v) } }?.let { it.first.matches(it.second) } ?: false
+                    val startline = expectedWitnessEdge.startlineRange?.let {
+                        edge["startline"]?.let { v ->
+                            Pair(it, Integer.parseInt(v))
+                        }
+                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+                    val endline = expectedWitnessEdge.endlineRange?.let {
+                        edge["endline"]?.let { v ->
+                            Pair(it, Integer.parseInt(v))
+                        }
+                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+                    val startoffset = expectedWitnessEdge.startoffsetRange?.let {
+                        edge["startoffset"]?.let { v ->
+                            Pair(it, Integer.parseInt(v))
+                        }
+                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+                    val endoffset = expectedWitnessEdge.endoffsetRange?.let {
+                        edge["endoffset"]?.let { v ->
+                            Pair(it, Integer.parseInt(v))
+                        }
+                    }?.let { it.first.first <= it.second && it.second <= it.first.second } ?: false
+                    val assumption = expectedWitnessEdge.assumption?.let {
+                        edge["assumption"]?.let { v ->
+                            Pair(it, v)
+                        }
+                    }?.let { it.first.matches(it.second) } ?: false
                     startline && endline && startoffset && endoffset && assumption
                 },
                 "Expected witness edge not found: $expectedWitnessEdge"
