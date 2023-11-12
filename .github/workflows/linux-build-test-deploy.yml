@@ -63,7 +63,7 @@ jobs:
         run: |
           mkdir -p xml
           wget https://gitlab.com/sosy-lab/sv-comp/bench-defs/-/raw/main/benchmark-defs/theta.xml -P xml
-          sed -i 's/<benchmark tool="theta" timelimit="990 s" hardtimelimit="1050 s" memlimit="15 GB" cpuCores="4">/<benchmark tool="theta" timelimit="60 s" hardtimelimit="90 s">/g' xml/theta.xml
+          sed -i 's/<benchmark tool="theta" timelimit="990 s" hardtimelimit="1050 s" memlimit="15 GB" cpuCores="4">/<benchmark tool="theta" timelimit="120 s" hardtimelimit="130 s">/g' xml/theta.xml
       - name: Get sv-benchmarks
         run: |
           git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
@@ -126,7 +126,9 @@ jobs:
               sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
               unzip *.zip
               echo "<details><summary>${i#BenchexecResults-}</summary>" >> $GITHUB_OUTPUT
+              echo "```"  >> $GITHUB_OUTPUT
               tail -n9 *.txt  >> $GITHUB_OUTPUT
+              echo "```"  >> $GITHUB_OUTPUT
               echo "</details>" >> $GITHUB_OUTPUT
               echo >> $GITHUB_OUTPUT
               echo >> $GITHUB_OUTPUT
