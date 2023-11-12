@@ -59,7 +59,7 @@ jobs:
         uses: ./.github/actions/benchexec-test
         with:
           task: ${{ matrix.task }}
-          test_number: 5
+          test_number: 10
   
   collect-results:
     needs: test-benchexec
