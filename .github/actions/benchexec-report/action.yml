@@ -29,6 +29,7 @@ runs:
             table-generator -d *xml.bz2
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
             unzip *.zip
+            rm *.zip
             correct=$(tail -n9 *.txt | grep '  correct:' | awk ' { print $2 } ')
             incorrect=$(tail -n9 *.txt | grep '  incorrect:' | awk ' { print $2 } ')
             all=$(tail -n9 *.txt | grep 'Statistics:' | awk ' { print $2 } ')
@@ -37,6 +38,8 @@ runs:
             [ $incorrect -eq 0 ] || emoji=":exclamation:"
             echo "<details><summary> $emoji ${i#BenchexecResults-} ($correct / $incorrect / $all)</summary>" >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
+            echo '`table-generator`'" output: [HTML](https://theta.mit.bme.hu/benchmark-results/${{ github.ref_name }}/$i/$(ls *.html))/[CSV](https://theta.mit.bme.hu/benchmark-results/${{ github.ref_name }}/$i/$(ls *.csv))"
+            echo >> $GITHUB_OUTPUT
             echo '```'  >> $GITHUB_OUTPUT
             cat *.txt  >> $GITHUB_OUTPUT
             echo '```'  >> $GITHUB_OUTPUT
@@ -44,6 +47,8 @@ runs:
             echo >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
             popd
+          else
+            rm -rf $i
           fi
         done
         echo "$EOF" >> $GITHUB_OUTPUT
@@ -52,6 +57,13 @@ runs:
       with:
         name: BenchexecResults
         path: artifacts
+    - name: Deploy to GHPages
+      uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+      with:
+        branch: gh-pages
+        folder: artifacts
+        target-folder: benchmark-results/${{ github.ref_name }}/
+        single-commit: true
     - name: Comment on PR
       if: github.event_name == 'pull_request'
       uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
