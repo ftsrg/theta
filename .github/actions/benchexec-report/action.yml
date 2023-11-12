@@ -24,7 +24,7 @@ runs:
         for i in *
         do 
           pushd $i
-          if (ls *.txt >/dev/null 2>/dev/null)
+          if (ls *xml.bz2 >/dev/null 2>/dev/null)
           then
             table-generator -d *xml.bz2
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
