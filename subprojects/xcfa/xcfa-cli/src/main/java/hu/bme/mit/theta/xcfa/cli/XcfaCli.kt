@@ -99,7 +99,7 @@ class XcfaCli(private val args: Array<String>) {
     var backend: Backend = Backend.CEGAR
 
     @Parameter(names = ["--strategy"], description = "Execution strategy")
-    var strategy: Strategy = Strategy.DIRECT
+    var strategy: Strategy = Strategy.PORTFOLIO
 
     @Parameter(names = ["--portfolio"],
         description = "Portfolio type (only valid with --strategy PORTFOLIO)")
@@ -271,7 +271,7 @@ class XcfaCli(private val args: Array<String>) {
 
     private fun runPortfolio(xcfa: XCFA, explicitProperty: ErrorDetection,
         logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false): SafetyResult<*, *> {
-        val portfolioDescriptor = portfolio
+        val portfolioDescriptor = portfolio.toString().lowercase() + ".kts"
         val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
         return try {
             val bindings: Bindings = kotlinEngine.createBindings()
