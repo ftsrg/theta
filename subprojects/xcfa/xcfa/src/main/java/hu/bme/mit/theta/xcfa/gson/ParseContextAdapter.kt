@@ -20,7 +20,11 @@ import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.CStmtCounter
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption
 
 class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseContext>() {
 
@@ -28,15 +32,63 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
     override fun write(writer: JsonWriter, value: ParseContext) {
         initGson()
         writer.beginObject()
+
+        writer.name("bitwiseOption").value(value.bitwiseOption.name)
+        writer.name("architecture").value(value.architecture.name)
+        writer.name("arithmetic").value(value.arithmetic.name)
+        writer.name("multiThreading").value(value.multiThreading)
+
+        writer.name("cStmtCounter")
+        gson.toJson(gson.toJsonTree(value.cStmtCounter), writer)
+
+        writer.name("metadata")
+        gson.toJson(gson.toJsonTree(value.metadata), writer)
+
         writer.endObject()
     }
 
     override fun read(reader: JsonReader): ParseContext {
         initGson()
 
+        var metadata: FrontendMetadata? = null
+        var cStmtCounter: CStmtCounter? = null
+        var bitwiseOption: BitwiseOption? = null
+        var architecture: ArchitectureConfig.ArchitectureType? = null
+        var multiThreading: Boolean? = null
+        var arithmetic: ArchitectureConfig.ArithmeticType? = null
+
         reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "metadata" -> {
+                    metadata = gson.fromJson(reader, FrontendMetadata::class.java)
+                }
+                "cStmtCounter" -> {
+                    cStmtCounter = gson.fromJson(reader, CStmtCounter::class.java)
+                }
+                "bitwiseOption" -> {
+                    val optionName = reader.nextString()
+                    bitwiseOption = BitwiseOption.valueOf(optionName)
+                }
+                "architecture" -> {
+                    val architectureName = reader.nextString()
+                    architecture = ArchitectureConfig.ArchitectureType.valueOf(architectureName)
+                }
+                "multiThreading" -> {
+                    multiThreading = reader.nextBoolean()
+                }
+                "arithmetic" -> {
+                    val arithmeticName = reader.nextString()
+                    arithmetic = ArchitectureConfig.ArithmeticType.valueOf(arithmeticName)
+                }
+                else -> {
+                    reader.skipValue()
+                }
+            }
+        }
         reader.endObject()
-        return ParseContext()
+
+        return ParseContext(metadata, cStmtCounter, bitwiseOption, architecture, multiThreading, arithmetic)
     }
 
     private fun initGson() {

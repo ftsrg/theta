@@ -128,9 +128,7 @@ class XcfaCegarServer {
                         logger.write(Logger.Level.INFO, "Parsed config.\n");
                         ParseContext parseContext;
                         try {
-//                            parseContext = gson.fromJson(parseStr, ParseContext.class);
-                            // TODO: add support for json
-                            parseContext = new ParseContext();
+                            parseContext = gson.fromJson(parseStr, ParseContext.class);
                         } catch (Exception e) {
                             File tempFile = File.createTempFile("parsecontext", ".json");
                             try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {

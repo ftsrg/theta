@@ -34,6 +34,22 @@ public class ParseContext {
         cStmtCounter = new CStmtCounter();
     }
 
+    public ParseContext(
+            final FrontendMetadata metadata,
+            final CStmtCounter cStmtCounter,
+            final BitwiseOption bitwiseOption,
+            final ArchitectureType architecture,
+            final Boolean multiThreading,
+            final ArithmeticType arithmetic
+    ) {
+        this.metadata = metadata;
+        this.cStmtCounter = cStmtCounter;
+        this.bitwiseOption = bitwiseOption;
+        this.architecture = architecture;
+        this.multiThreading = multiThreading;
+        this.arithmetic = arithmetic;
+    }
+
     public FrontendMetadata getMetadata() {
         return metadata;
     }
