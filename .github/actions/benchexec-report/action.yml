@@ -6,6 +6,7 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Install benchexec
+      shell: bash
       run: |
         sudo add-apt-repository ppa:sosy-lab/benchmarking
         sudo apt install benchexec
@@ -15,6 +16,7 @@ runs:
         path: artifacts
     - name: Generate tables
       id: generate
+      shell: bash
       run: |
         cd artifacts
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
@@ -44,6 +46,7 @@ runs:
         name: BenchexecResults-${{ matrix.task }}
         path: results
     - name: See PR message
+      shell: bash
       run: |
         echo "${{ steps.generate.outputs.Message }}"
     - name: Comment on PR
