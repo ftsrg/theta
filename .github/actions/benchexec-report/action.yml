@@ -27,7 +27,7 @@ runs:
             table-generator -d *xml.bz2
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
             unzip *.zip
-            echo "<details><summary>${i#BenchexecResults-}</summary>" >> $GITHUB_OUTPUT
+            echo "<details><summary>${i#BenchexecResults-} ($(echo $(tail -n9 *.txt | grep Score | awk ' { $1=""; print $0 } ')))</summary>" >> $GITHUB_OUTPUT
             echo '```'  >> $GITHUB_OUTPUT
             tail -n9 *.txt  >> $GITHUB_OUTPUT
             echo '```'  >> $GITHUB_OUTPUT
