@@ -140,8 +140,8 @@ private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: Xcf
 
         startline = xcfaLabel.getCMetaData()?.lineNumberStart,
         endline = xcfaLabel.getCMetaData()?.lineNumberStop,
-        startoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
-        endoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
+        startoffset = xcfaLabel.getCMetaData()?.offsetStart,
+        endoffset = xcfaLabel.getCMetaData()?.offsetEnd,
 
         threadId = if (pid != null) "$pid" else null,
 

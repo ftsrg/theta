@@ -60,6 +60,7 @@ import org.antlr.v4.runtime.CharStreams
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
+import java.nio.file.FileSystems
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.script.Bindings
@@ -340,10 +341,15 @@ class XcfaCli(private val args: Array<String>) {
                     val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
                     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
                 }
+                val witnessFile = File(resultFolder, "witness.graphml")
+                XcfaWitnessWriter().writeWitness(safetyResult, input!!,
+                    getSolver(concretizerSolver, validateConcretizerSolver), parseContext, witnessFile)
 
             } else {
+                val workdir = FileSystems.getDefault().getPath("").toAbsolutePath()
+                val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")
                 XcfaWitnessWriter().writeWitness(safetyResult, input!!,
-                    getSolver(concretizerSolver, validateConcretizerSolver), parseContext)
+                    getSolver(concretizerSolver, validateConcretizerSolver), parseContext, witnessfile)
             }
         }
     }

@@ -42,7 +42,9 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.*
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.BufferedReader
@@ -52,6 +54,7 @@ import java.io.PrintWriter
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPOutputStream
 import kotlin.system.exitProcess
 
 
@@ -221,15 +224,15 @@ data class XcfaCegarConfig(
         val pb = NuProcessBuilder(listOf(
             getJavaExecutable(),
             "-cp",
-            File(
-                XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
+            File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
             XcfaCegarServer::class.qualifiedName,
             "--smt-home",
             smtHome,
             "--return-safety-result",
             "" + !writeWitness,
             "--input",
-            sourceFileName
+            sourceFileName,
+            "--gzip"
         ))
         val processHandler = ProcessHandler(logger)
         pb.setProcessListener(processHandler)
@@ -256,7 +259,7 @@ data class XcfaCegarConfig(
             val gson = getGson(xcfa, { domain },
                 { getSolver(abstractionSolver, validateAbstractionSolver).createSolver() })
             clientSocket.use {
-                val writer = PrintWriter(clientSocket.getOutputStream(), true)
+                val writer = PrintWriter(GZIPOutputStream(clientSocket.getOutputStream()), true)
                 val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
                 writer.println(gson.toJson(this))
                 writer.println(gson.toJson(xcfa))

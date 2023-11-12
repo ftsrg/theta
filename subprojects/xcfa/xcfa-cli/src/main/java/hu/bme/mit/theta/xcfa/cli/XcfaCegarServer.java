@@ -36,10 +36,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.FileSystems;
+import java.util.zip.GZIPInputStream;
 
 import static hu.bme.mit.theta.xcfa.cli.ExitCodesKt.exitOnError;
 import static hu.bme.mit.theta.xcfa.cli.GsonUtilsKt.getGson;
@@ -73,6 +76,9 @@ class XcfaCegarServer {
     @Parameter(names = "--debug", description = "Debug mode (will not create a socket)")
     Boolean debug = false;
 
+    @Parameter(names = "--gzip", description = "Expect stdin to contain gzipped text")
+    Boolean gzip = false;
+
     private void run(String[] args) {
         try {
             JCommander.newBuilder().addObject(this).build().parse(args);
@@ -93,7 +99,11 @@ class XcfaCegarServer {
                 do {
                     try (final Socket clientSocket = debug ? null : socket.accept()) {
                         final PrintWriter out = new PrintWriter(debug ? System.out : clientSocket.getOutputStream(), true);
-                        final BufferedReader in = new BufferedReader(new InputStreamReader(debug ? System.in : clientSocket.getInputStream()));
+                        InputStream stream = debug ? System.in : clientSocket.getInputStream();
+                        if (gzip) {
+                            stream = new GZIPInputStream(stream);
+                        }
+                        final BufferedReader in = new BufferedReader(new InputStreamReader(stream));
 
                         final String configStr = this.configStr == null ? in.readLine() : this.configStr;
                         final String xcfaStr = this.xcfaStr == null ? in.readLine() : this.xcfaStr;
@@ -146,7 +156,9 @@ class XcfaCegarServer {
                             String s = gson.toJson(check);
                             out.println(s);
                         } else {
-                            new XcfaWitnessWriter().writeWitness(check, new File(inputFileName), getSolver(xcfaCegarConfig.getRefinementSolver(), xcfaCegarConfig.getValidateRefinementSolver()), parseContext);
+                            var workdir = FileSystems.getDefault().getPath("").toAbsolutePath();
+                            var witnessfile = new File(workdir.toString() + File.separator + "witness.graphml");
+                            new XcfaWitnessWriter().writeWitness(check, new File(inputFileName), getSolver(xcfaCegarConfig.getRefinementSolver(), xcfaCegarConfig.getValidateRefinementSolver()), parseContext, witnessfile);
                         }
                         logger.write(Logger.Level.INFO, "Server exiting.\n");
                     }
