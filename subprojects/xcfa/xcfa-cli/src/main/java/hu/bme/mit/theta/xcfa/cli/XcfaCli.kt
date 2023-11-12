@@ -294,8 +294,8 @@ class XcfaCli(private val args: Array<String>) {
                 "Loaded script engine (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
             stopwatch.reset().start()
 
-            kotlinEngine.context.setBindings(bindings,
-                100) // 100 seems to be a safe default, based on AbstractScriptEngine
+            // 100 seems to be a safe default, based on AbstractScriptEngine
+            kotlinEngine.context.setBindings(bindings, 100)
             val compiled = kotlinEngine.compile(FileReader(portfolioDescriptor))
             logger.write(Logger.Level.INFO, "Compiled portfolio (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
 
@@ -405,7 +405,8 @@ class XcfaCli(private val args: Array<String>) {
             }
         } catch (e: Exception) {
             if (stacktrace) e.printStackTrace()
-            logger.write(Logger.Level.RESULT, "Frontend failed!\n")
+            val location = e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
+            logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
 

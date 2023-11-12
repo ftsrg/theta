@@ -45,36 +45,41 @@ private fun exitProcess(debug: Boolean, e: Throwable, code: Int): Nothing {
     } else exitProcess(code)
 }
 
+private fun Throwable.printCauseAndTrace(stacktrace: Boolean) {
+    if (stacktrace) printStackTrace()
+    val location = stackTrace.first { it.className.startsWith("hu.bme.mit.theta") }.toString()
+    System.err.println("Process failed! ($location, $this)")
+}
 
 fun <T> exitOnError(stacktrace: Boolean, debug: Boolean, body: () -> T): T {
     try {
         return body()
     } catch (e: SmtLibSolverException) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code)
     } catch (e: SolverValidationException) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
     } catch (e: Z3Exception) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
     } catch (e: ClassCastException) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         if (e.message?.contains("com.microsoft.z3") == true)
             exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
         else
             exitProcess(debug, e, ExitCodes.GENERIC_ERROR.code);
     } catch (e: NotSolvableException) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.VERIFICATION_STUCK.code);
     } catch (e: OutOfMemoryError) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.OUT_OF_MEMORY.code);
     } catch (e: RuntimeException) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.SERVER_ERROR.code);
     } catch (e: Exception) {
-        if (stacktrace) e.printStackTrace();
+        e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.GENERIC_ERROR.code);
     }
 }
