@@ -53,12 +53,12 @@ runs:
         echo "length=$(cat ${{ inputs.task }}.set | wc -l)" >> "$GITHUB_OUTPUT"
     - name: Run benchexec
       shell: bash
-      if: ${{ steps.setfile.outputs.length != "0" }}
+      if: steps.setfile.outputs.length != "0"
       run: |
         benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ inputs.task }}
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-      if: ${{ steps.setfile.outputs.length != "0" }}
+      if: steps.setfile.outputs.length != "0"
       with:
         name: BenchexecResults-${{ inputs.task }}
         path: results
