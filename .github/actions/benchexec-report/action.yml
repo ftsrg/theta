@@ -29,9 +29,17 @@ runs:
             table-generator -d *xml.bz2
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
             unzip *.zip
-            echo "<details><summary>${i#BenchexecResults-} ($(echo $(tail -n9 *.txt | grep Score | awk ' { $1=""; print $0 } ')))</summary>" >> $GITHUB_OUTPUT
+            correct=$(tail -n9 *.txt | grep '  correct:' | awk ' { print $2 } ')
+            incorrect=$(tail -n9 *.txt | grep '  incorrect:' | awk ' { print $2 } ')
+            all=$(tail -n9 *.txt | grep 'Statistics:' | awk ' { print $2 } ')
+            emoji=":ballot_box_with_check:"
+            [ $correct -eq 0 ] && emoji=":question:"
+            [ $incorrect -eq 0 ] || emoji=":exclamation:"
+            [ $correct -eq $all ] && emoji=":white_check_mark:"
+            echo "<details><summary>${i#BenchexecResults-} ($correct / $incorrect / $all) $emoji</summary>" >> $GITHUB_OUTPUT
+            echo >> $GITHUB_OUTPUT
             echo '```'  >> $GITHUB_OUTPUT
-            tail -n9 *.txt  >> $GITHUB_OUTPUT
+            cat *.txt  >> $GITHUB_OUTPUT
             echo '```'  >> $GITHUB_OUTPUT
             echo "</details>" >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
@@ -43,8 +51,8 @@ runs:
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
-        name: BenchexecResults-${{ matrix.task }}
-        path: results
+        name: BenchexecResults
+        path: artifacts
     - name: See PR message
       shell: bash
       run: |
@@ -56,6 +64,6 @@ runs:
         comment_tag: 'diffcheck'
         mode: 'recreate'
         message: |
-          Benchexec test report for a selection of SV-Benchmarks:
+          Benchexec test report for a selection of SV-Benchmarks (correct / incorrect / all):
 
           ${{ steps.generate.outputs.Message }}
