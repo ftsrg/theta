@@ -48,6 +48,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
+import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -103,7 +104,7 @@ class XcfaCli(private val args: Array<String>) {
 
     @Parameter(names = ["--portfolio"],
         description = "Portfolio type (only valid with --strategy PORTFOLIO)")
-    var portfolio: File = File("complex.kts")
+    var portfolio: String = "COMPLEX"
 
     @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
     var solverHome: String = SmtLibSolverManager.HOME.toAbsolutePath().toString()
@@ -271,35 +272,43 @@ class XcfaCli(private val args: Array<String>) {
 
     private fun runPortfolio(xcfa: XCFA, explicitProperty: ErrorDetection,
         logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false): SafetyResult<*, *> {
-        val portfolioDescriptor = portfolio.toString().lowercase() + ".kts"
-        val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
         return try {
-            val bindings: Bindings = kotlinEngine.createBindings()
-            bindings["xcfa"] = xcfa
-            bindings["parseContext"] = parseContext
-            bindings["property"] = explicitProperty
-            bindings["cFileName"] = input!!.absolutePath
-            bindings["logger"] = logger
-            bindings["smtHome"] = solverHome
-            bindings["traits"] = VerificationTraits(
-                multithreaded = parseContext.multiThreading,
-                arithmetic = parseContext.bitwiseOption,
-            )
+            val portfolioResult = if (File(portfolio).exists()) {
+                val portfolioDescriptor = portfolio.lowercase() + ".kts"
+                val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
+                val bindings: Bindings = kotlinEngine.createBindings()
+                bindings["xcfa"] = xcfa
+                bindings["parseContext"] = parseContext
+                bindings["property"] = explicitProperty
+                bindings["cFileName"] = input!!.absolutePath
+                bindings["logger"] = logger
+                bindings["smtHome"] = solverHome
+                bindings["traits"] = VerificationTraits(
+                    multithreaded = parseContext.multiThreading,
+                    arithmetic = parseContext.bitwiseOption,
+                )
 
-            kotlinEngine as Compilable
-            val stopwatch = Stopwatch.createStarted()
+                kotlinEngine as Compilable
+                val stopwatch = Stopwatch.createStarted()
 
-            kotlinEngine.eval("true") as Boolean
-            logger.write(Logger.Level.INFO,
-                "Loaded script engine (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
-            stopwatch.reset().start()
+                kotlinEngine.eval("true") as Boolean
+                logger.write(Logger.Level.INFO,
+                    "Loaded script engine (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                stopwatch.reset().start()
 
-            // 100 seems to be a safe default, based on AbstractScriptEngine
-            kotlinEngine.context.setBindings(bindings, 100)
-            val compiled = kotlinEngine.compile(FileReader(portfolioDescriptor))
-            logger.write(Logger.Level.INFO, "Compiled portfolio (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                // 100 seems to be a safe default, based on AbstractScriptEngine
+                kotlinEngine.context.setBindings(bindings, 100)
+                val compiled = kotlinEngine.compile(FileReader(portfolioDescriptor))
+                logger.write(Logger.Level.INFO,
+                    "Compiled portfolio (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
 
-            val portfolioResult = compiled.eval() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+                compiled.eval() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+            } else if (portfolio == "COMPLEX") {
+                complexPortfolio(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
+                    multithreaded = parseContext.multiThreading,
+                    arithmetic = parseContext.bitwiseOption,
+                ), explicitProperty, parseContext)
+            } else throw Exception("No known portfolio $portfolio")
 
             concretizerSolver = portfolioResult.first.refinementSolver
             validateConcretizerSolver = portfolioResult.first.validateRefinementSolver
@@ -311,7 +320,7 @@ class XcfaCli(private val args: Array<String>) {
         } catch (e: Exception) {
             if (debug) throw e
             logger.write(Logger.Level.RESULT,
-                "Portfolio from $portfolioDescriptor could not be executed.\n")
+                "Portfolio '$portfolio' could not be executed.\n")
             e.printStackTrace()
             exitProcess(ExitCodes.PORTFOLIO_ERROR.code)
         }
