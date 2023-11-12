@@ -39,14 +39,9 @@ class XcfaCliVerifyTest {
                 Arguments.of("/c/litmustest/singlethread/02types.c", null),
                 Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
                 Arguments.of("/c/litmustest/singlethread/04real.c", null),
-//                Arguments.of("/c/litmustest/singlethread/05math.c", null), // too resource-intensive
                 Arguments.of("/c/litmustest/singlethread/06arrays.c", null),
                 Arguments.of("/c/litmustest/singlethread/07arrayinit.c", null),
                 Arguments.of("/c/litmustest/singlethread/08vararray.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/09struct.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/10ptr.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/11ptrs.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/12ptrtypes.c", null),
                 Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
                 Arguments.of("/c/litmustest/singlethread/14ushort.c", null),
                 Arguments.of("/c/litmustest/singlethread/15addition.c", null),
@@ -77,8 +72,8 @@ class XcfaCliVerifyTest {
         fun chcFiles(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.FORWARD, "--domain PRED_CART"),
-//                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD,
-//                    "--domain PRED_CART"),
+                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD,
+                    "--domain PRED_CART --search BFS"),
             )
         }
     }
@@ -91,6 +86,7 @@ class XcfaCliVerifyTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--debug"
         )
         main(params)
     }
@@ -104,6 +100,7 @@ class XcfaCliVerifyTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--debug"
         )
         try {
             main(params)
@@ -120,10 +117,10 @@ class XcfaCliVerifyTest {
         val params = arrayOf(
             "--input-type", "C",
             "--strategy", "PORTFOLIO",
-            "--debug",
             "--portfolio", javaClass.getResource("/simple.kts")!!.path,
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
+            "--debug",
         )
         try {
             main(params)
@@ -144,7 +141,8 @@ class XcfaCliVerifyTest {
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
             "--output-results",
-            "--output-directory", temp.absolutePathString()
+            "--output-directory", temp.absolutePathString(),
+            "--debug"
         )
         main(params)
         Assertions.assertTrue(temp.resolve("xcfa.json").exists())
@@ -161,6 +159,7 @@ class XcfaCliVerifyTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--debug"
         ))
     }
 
