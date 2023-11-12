@@ -23,20 +23,19 @@ runs:
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
         for i in *
         do 
-          pushd $i
-          if (ls *xml.bz2 >/dev/null 2>/dev/null)
+          if (ls $i/*xml.bz2 >/dev/null 2>/dev/null)
           then
+            pushd $i
             table-generator -d *xml.bz2
             sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
             unzip *.zip
             correct=$(tail -n9 *.txt | grep '  correct:' | awk ' { print $2 } ')
             incorrect=$(tail -n9 *.txt | grep '  incorrect:' | awk ' { print $2 } ')
             all=$(tail -n9 *.txt | grep 'Statistics:' | awk ' { print $2 } ')
-            emoji=":ballot_box_with_check:"
+            emoji=":white_check_mark:"
             [ $correct -eq 0 ] && emoji=":question:"
             [ $incorrect -eq 0 ] || emoji=":exclamation:"
-            [ $correct -eq $all ] && emoji=":white_check_mark:"
-            echo "<details><summary>${i#BenchexecResults-} ($correct / $incorrect / $all) $emoji</summary>" >> $GITHUB_OUTPUT
+            echo "<details><summary> $emoji ${i#BenchexecResults-} ($correct / $incorrect / $all)</summary>" >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
             echo '```'  >> $GITHUB_OUTPUT
             cat *.txt  >> $GITHUB_OUTPUT
@@ -44,8 +43,8 @@ runs:
             echo "</details>" >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
+            popd
           fi
-          popd
         done
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Upload results
@@ -53,10 +52,6 @@ runs:
       with:
         name: BenchexecResults
         path: artifacts
-    - name: See PR message
-      shell: bash
-      run: |
-        echo "${{ steps.generate.outputs.Message }}"
     - name: Comment on PR
       if: github.event_name == 'pull_request'
       uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
