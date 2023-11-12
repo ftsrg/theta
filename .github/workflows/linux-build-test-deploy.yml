@@ -55,47 +55,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Install benchexec and dependencies
-        run: |
-          sudo add-apt-repository ppa:sosy-lab/benchmarking
-          sudo apt install benchexec openjdk-17-jre-headless libgomp1 libmpfr-dev
-      - name: Get benchmark definition file
-        run: |
-          mkdir -p xml
-          wget https://gitlab.com/sosy-lab/sv-comp/bench-defs/-/raw/main/benchmark-defs/theta.xml -P xml
-          sed -i 's/<benchmark tool="theta" timelimit="990 s" hardtimelimit="1050 s" memlimit="15 GB" cpuCores="4">/<benchmark tool="theta" timelimit="120 s" hardtimelimit="130 s">/g' xml/theta.xml
-      - name: Get sv-benchmarks
-        run: |
-          git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
-          cd sv-benchmarks
-          git sparse-checkout add c
-          git checkout
-      - name: Get archive
-        run: |
-          wget https://github.com/ftsrg/theta/releases/download/svcomp23/theta.zip
-          unzip theta.zip
-      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-        name: Get JAR
-        with:
-          name: ThetaJars
-          path: jar/
-      - name: Add new jar to archive
-        run: |
-          mv jar/xcfa/xcfa-cli/build/libs/*-all.jar theta/theta.jar
-          ls -l theta
-      - name: Cut setfile if too long
-        run: |
-          cd sv-benchmarks/c
-          for i in $(sed 's/#.*$//g' ${{ matrix.task }}.set); do find . -wholename ./$i; done | while read line; do echo  $(echo $line | sha1sum | awk ' { print $1 } ') $line ; done | sort -k1 | awk ' { $1=""; print $0 } ' | awk '{$1=$1};1' > all-files.txt
-          head -n25 all-files.txt > ${{ matrix.task }}.set
       - name: Run benchexec
-        run: |
-          benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ matrix.task }}
-      - name: Upload results
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+        uses: ./.github/actions/benchexec-test
         with:
-          name: BenchexecResults-${{ matrix.task }}
-          path: results
+          task: ${{ matrix.task }}
+          test_number: 5
   
   collect-results:
     needs: test-benchexec
@@ -103,57 +67,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - name: Install benchexec
-        run: |
-          sudo add-apt-repository ppa:sosy-lab/benchmarking
-          sudo apt install benchexec
-      - name: Download artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-        with:
-          path: artifacts
-      - name: Generate tables
-        id: generate
-        run: |
-          cd artifacts
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "Message<<$EOF" >> $GITHUB_OUTPUT
-          for i in *
-          do 
-            pushd $i
-            if (ls *.txt >/dev/null 2>/dev/null)
-            then
-              table-generator -d *xml.bz2
-              sed -i 's/\.\.\/sv-benchmarks/https:\/\/gitlab\.com\/sosy-lab\/benchmarking\/sv-benchmarks\/-\/raw\/main/g' *.html
-              unzip *.zip
-              echo "<details><summary>${i#BenchexecResults-}</summary>" >> $GITHUB_OUTPUT
-              echo "```"  >> $GITHUB_OUTPUT
-              tail -n9 *.txt  >> $GITHUB_OUTPUT
-              echo "```"  >> $GITHUB_OUTPUT
-              echo "</details>" >> $GITHUB_OUTPUT
-              echo >> $GITHUB_OUTPUT
-              echo >> $GITHUB_OUTPUT
-            fi
-            popd
-          done
-          echo "$EOF" >> $GITHUB_OUTPUT
-      - name: Upload results
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-        with:
-          name: BenchexecResults-${{ matrix.task }}
-          path: results
-      - name: See PR message
-        run: |
-          echo "${{ steps.generate.outputs.Message }}"
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
-        with: 
-          comment_tag: 'diffcheck'
-          mode: 'recreate'
-          message: |
-            Benchexec test report for a selection of SV-Benchmarks:
-
-            ${{ steps.generate.outputs.Message }}
+      - name: Run benchexec
+        uses: ./.github/actions/benchexec-report
 
 
   javadoc:
