@@ -63,24 +63,30 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
                 "metadata" -> {
                     metadata = gson.fromJson(reader, FrontendMetadata::class.java)
                 }
+
                 "cStmtCounter" -> {
                     cStmtCounter = gson.fromJson(reader, CStmtCounter::class.java)
                 }
+
                 "bitwiseOption" -> {
                     val optionName = reader.nextString()
                     bitwiseOption = BitwiseOption.valueOf(optionName)
                 }
+
                 "architecture" -> {
                     val architectureName = reader.nextString()
                     architecture = ArchitectureConfig.ArchitectureType.valueOf(architectureName)
                 }
+
                 "multiThreading" -> {
                     multiThreading = reader.nextBoolean()
                 }
+
                 "arithmetic" -> {
                     val arithmeticName = reader.nextString()
                     arithmetic = ArchitectureConfig.ArithmeticType.valueOf(arithmeticName)
                 }
+
                 else -> {
                     reader.skipValue()
                 }

@@ -36,10 +36,10 @@ class FrontendMetadataAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<Fronte
             writer.name("values").beginArray()
             for ((key, _val) in tup.entries) {
                 writer.beginObject()
-                if(_val is String) {
+                if (_val is String) {
                     writer.name(key).value(_val)
                 }
-                if(_val is Boolean) {
+                if (_val is Boolean) {
                     writer.name(key).value(_val)
                 }
                 writer.endObject()
@@ -68,9 +68,11 @@ class FrontendMetadataAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<Fronte
                     "owner" -> {
                         owner = reader.nextInt()
                     }
+
                     "values" -> {
                         values = readValuesArray(reader)
                     }
+
                     else -> {
                         reader.skipValue()
                     }
@@ -103,9 +105,11 @@ class FrontendMetadataAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<Fronte
                     "key" -> {
                         key = reader.nextString()
                     }
+
                     "value" -> {
                         value = readValue(reader)
                     }
+
                     else -> {
                         reader.skipValue()
                     }
