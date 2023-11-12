@@ -44,17 +44,21 @@ runs:
         mv jar/xcfa/xcfa-cli/build/libs/*-all.jar theta/theta.jar
         ls -l theta
     - name: Cut setfile if too long
+      id: setfile 
       shell: bash
       run: |
         cd sv-benchmarks/c
         for i in $(sed 's/#.*$//g' ${{ inputs.task }}.set); do find . -wholename ./$i; done | while read line; do grep "$line" $GITHUB_ACTION_PATH/unsupported.txt >/dev/null 2>/dev/null || echo  $(echo $line | sha1sum | awk ' { print $1 } ') $line ; done | sort -k1 | awk ' { $1=""; print $0 } ' | awk '{$1=$1};1' > all-files.txt
         head -n${{ inputs.test_number }} all-files.txt > ${{ inputs.task }}.set
+        echo "length=$(cat ${{ inputs.task }}.set | wc -l)" >> "$GITHUB_OUTPUT"
     - name: Run benchexec
       shell: bash
+      if: ${{ steps.setfile.outputs.length != "0" }}
       run: |
         benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ inputs.task }}
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      if: ${{ steps.setfile.outputs.length != "0" }}
       with:
         name: BenchexecResults-${{ inputs.task }}
         path: results
