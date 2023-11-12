@@ -469,7 +469,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitUnaryExpressionSizeOrAlignOf(CParser.UnaryExpressionSizeOrAlignOfContext ctx) {
         if (ctx.Alignof() != null) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: alignof is not yet implemented, using a literal 0 instead.");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: alignof is not yet implemented, using a literal 0 instead.\n");
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             LitExpr<?> zero = signedInt.getNullValue();
             parseContext.getMetadata().create(zero, "cType", signedInt);
@@ -480,7 +480,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + parseContext.getArchitecture().getBitWidth(type.get().getTypeName()) / 8);
                 return value;
             } else {
-                uniqueWarningLogger.write(Level.INFO, "WARNING: sizeof got unknown type, using a literal 0 instead.");
+                uniqueWarningLogger.write(Level.INFO, "WARNING: sizeof got unknown type, using a literal 0 instead.\n");
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
                 LitExpr<?> zero = signedInt.getNullValue();
                 parseContext.getMetadata().create(zero, "cType", signedInt);
@@ -652,7 +652,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitGccPrettyFunc(CParser.GccPrettyFuncContext ctx) {
-        uniqueWarningLogger.write(Level.INFO, "WARNING: gcc intrinsic encountered in place of an expression, using a literal 0 instead.");
+        uniqueWarningLogger.write(Level.INFO, "WARNING: gcc intrinsic encountered in place of an expression, using a literal 0 instead.\n");
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         LitExpr<?> zero = signedInt.getNullValue();
         parseContext.getMetadata().create(zero, "cType", signedInt);
@@ -755,7 +755,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         Expr<?> ret = signedInt.getUnitValue();
-        uniqueWarningLogger.write(Level.INFO, "Warning: using int(1) as a string constant");
+        uniqueWarningLogger.write(Level.INFO, "WARNING: using int(1) as a string constant\n");
         parseContext.getMetadata().create(ret, "cType", signedInt);
         return ret;
     }

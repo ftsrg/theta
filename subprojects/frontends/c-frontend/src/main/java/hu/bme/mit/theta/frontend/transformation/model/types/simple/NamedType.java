@@ -102,7 +102,7 @@ public class NamedType extends CSimpleType {
                 type = new CVoid(this, parseContext);
                 break;
             default: {
-                uniqueWarningLogger.write(Level.INFO, "WARNING: Unknown simple type " + namedType);
+                uniqueWarningLogger.write(Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
                 type = new CVoid(this, parseContext);
                 break;
             }

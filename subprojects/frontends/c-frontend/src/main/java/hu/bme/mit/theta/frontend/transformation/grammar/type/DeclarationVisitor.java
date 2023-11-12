@@ -200,7 +200,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
             CParser.DirectDeclaratorFunctionDeclContext ctx) {
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!\n");
             decl.setFunc(true);
             return decl;
         }

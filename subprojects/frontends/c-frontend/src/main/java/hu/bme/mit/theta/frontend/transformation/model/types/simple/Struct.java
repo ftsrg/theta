@@ -56,7 +56,7 @@ public class Struct extends NamedType {
     @Override
     public CComplexType getActualType() {
         if (currentlyBeingBuilt) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder\n");
             return CComplexType.getSignedInt(parseContext);
         }
         currentlyBeingBuilt = true;

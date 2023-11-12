@@ -85,7 +85,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
         List<CSimpleType> enums = cSimpleTypes.stream().filter(cType -> cType instanceof Enum)
                 .collect(Collectors.toList());
         if (enums.size() > 0) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: enums are not yet supported! Using int instead.");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: enums are not yet supported! Using int instead.\n");
             cSimpleTypes.add(NamedType("int", parseContext, uniqueWarningLogger));
             cSimpleTypes.removeAll(enums);
         }
@@ -106,7 +106,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
         if (type.isSigned() == null) {
             if (type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
                 uniqueWarningLogger.write(Level.INFO,
-                        "WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.");
+                        "WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.\n");
             }
             type.setSigned(true);
         }
@@ -213,7 +213,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             }
             return struct;
         } else {
-            uniqueWarningLogger.write(Level.INFO, "Warning: CompoundDefinitions are not yet implemented!");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: CompoundDefinitions are not yet implemented!\n");
             return NamedType("int", parseContext, uniqueWarningLogger);
         }
     }

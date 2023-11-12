@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import com.beust.jcommander.Parameter
+import com.google.common.base.Stopwatch
 import com.google.gson.reflect.TypeToken
 import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
@@ -259,11 +260,17 @@ data class XcfaCegarConfig(
             val gson = getGson(xcfa, { domain },
                 { getSolver(abstractionSolver, validateAbstractionSolver).createSolver() })
             clientSocket.use {
-                val writer = PrintWriter(GZIPOutputStream(clientSocket.getOutputStream()), true)
                 val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
-                writer.println(gson.toJson(this))
-                writer.println(gson.toJson(xcfa))
-                writer.println(gson.toJson(parseContext))
+                run {
+                    val writer = PrintWriter(GZIPOutputStream(clientSocket.getOutputStream(), 65536, true), true)
+                    val sw = Stopwatch.createStarted()
+                    writer.println(gson.toJson(this))
+                    writer.println(gson.toJson(xcfa))
+                    writer.println(gson.toJson(parseContext))
+                    logger.write(Logger.Level.RESULT,
+                        "Serialized Config, XCFA and ParseContext in ${sw.elapsed(TimeUnit.MILLISECONDS)}ms\n")
+                    writer.close()
+                }
                 val retCode = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
                 if (retCode == Int.MIN_VALUE) {
                     if (!processHandler.writingSafetyResult) {
@@ -330,7 +337,7 @@ private class ProcessHandler(
                 }
             }
             stdoutBuffer += str
-            val matchResults = Regex("([a-zA-Z]*)\t\\{([^}]*)}").findAll(stdoutBuffer)
+            val matchResults = Regex("(?s)([a-zA-Z]*)\t\\{([^}]*)}").findAll(stdoutBuffer)
             var length = 0
             for (matchResult in matchResults) {
                 val (level, message) = matchResult.destructured

@@ -130,7 +130,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {
-            uniqueWarningLogger.write(Level.INFO, "WARNING: Variable already exists: " + name);
+            uniqueWarningLogger.write(Level.INFO, "WARNING: Variable already exists: " + name + "\n");
             varDecl = peek.get2().get(name);
         }
         peek.get2().put(name, varDecl);

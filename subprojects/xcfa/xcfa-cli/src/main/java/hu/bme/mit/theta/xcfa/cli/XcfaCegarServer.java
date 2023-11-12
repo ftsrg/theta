@@ -19,12 +19,14 @@ package hu.bme.mit.theta.xcfa.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.google.common.base.Stopwatch;
 import com.google.gson.Gson;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLabelledLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter;
@@ -42,6 +44,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.FileSystems;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
 import static hu.bme.mit.theta.xcfa.cli.ExitCodesKt.exitOnError;
@@ -90,24 +93,33 @@ class XcfaCegarServer {
         }
 
         final Logger logger = new ConsoleLabelledLogger();
-        logger.write(Logger.Level.INFO, "Server started on port " + port + ".\n");
 
-        exitOnError(false, debug, () -> {
+        exitOnError(true, debug, () -> {
             SolverRegistrationKt.registerAllSolverManagers(solverHome, logger);
             try (final ServerSocket socket = new ServerSocket(port)) {
+                logger.write(Logger.Level.INFO, "Server started on port " + socket.getLocalPort() + ".\n");
                 System.out.println("Port=(" + socket.getLocalPort() + ")");
                 do {
                     try (final Socket clientSocket = debug ? null : socket.accept()) {
                         final PrintWriter out = new PrintWriter(debug ? System.out : clientSocket.getOutputStream(), true);
                         InputStream stream = debug ? System.in : clientSocket.getInputStream();
                         if (gzip) {
-                            stream = new GZIPInputStream(stream);
+                            stream = new GZIPInputStream(stream, 65536);
+                            logger.write(Level.INFO, "Using GZIP compression\n");
                         }
                         final BufferedReader in = new BufferedReader(new InputStreamReader(stream));
 
+                        final Stopwatch sw = Stopwatch.createStarted();
+
                         final String configStr = this.configStr == null ? in.readLine() : this.configStr;
+                        logger.write(Level.INFO, "Read config in " + sw.elapsed(TimeUnit.MILLISECONDS) + "ms\n");
+                        sw.reset().start();
                         final String xcfaStr = this.xcfaStr == null ? in.readLine() : this.xcfaStr;
+                        logger.write(Level.INFO, "Read XCFA in " + sw.elapsed(TimeUnit.MILLISECONDS) + "ms\n");
+                        sw.reset().start();
                         final String parseStr = this.parseContext == null ? in.readLine() : this.parseContext;
+                        logger.write(Level.INFO, "Read ParseContext in " + sw.elapsed(TimeUnit.MILLISECONDS) + "ms\n");
+                        sw.reset().start();
                         final Gson gson = getGson();
 
                         XCFA xcfa;
@@ -149,6 +161,9 @@ class XcfaCegarServer {
                         }
 
                         logger.write(Logger.Level.INFO, "Parsed parsecontext.\n");
+
+                        logger.write(Level.INFO, "Parsed config, XCFA and ParseContext in " + sw.elapsed(TimeUnit.MILLISECONDS) + "ms\n");
+                        sw.reset();
 
                         SafetyResult<ExprState, ExprAction> check = xcfaCegarConfig.check(xcfa, logger);
                         logger.write(Logger.Level.INFO, "Safety check done.\n");

@@ -64,9 +64,9 @@ import java.nio.file.FileSystems
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.script.Bindings
+import javax.script.Compilable
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
-import javax.script.SimpleBindings
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
@@ -204,7 +204,7 @@ class XcfaCli(private val args: Array<String>) {
         }
         LoopUnrollPass.UNROLL_LIMIT = loopUnroll
 
-        logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
+        logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType\n")
         val parseContext = ParseContext()
         val xcfa = getXcfa(logger, explicitProperty, parseContext, uniqueWarningLogger)
         ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
@@ -215,17 +215,23 @@ class XcfaCli(private val args: Array<String>) {
         preVerificationLogging(logger, xcfa, gsonForOutput, parseContext)
 
         if (noAnalysis) {
-            logger.write(Logger.Level.RESULT, "ParsingResult Success")
+            logger.write(Logger.Level.RESULT, "ParsingResult Success\n")
             return
         }
         // verification
         stopwatch.reset().start()
-        logger.write(Logger.Level.INFO, "Starting verification of ${xcfa.name} using $backend")
+        logger.write(Logger.Level.INFO,
+            "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
         registerAllSolverManagers(solverHome, logger)
+        logger.write(Logger.Level.INFO,
+            "Registered solver managers successfully (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+        stopwatch.reset().start()
         val config = parseConfigFromCli()
         if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
             printConfigFile!!.writeText(gsonForOutput.toJson(config))
         }
+        logger.write(Logger.Level.INFO, "Parsed config (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+        stopwatch.reset().start()
         val safetyResult: SafetyResult<*, *> =
             when (strategy) {
                 Strategy.DIRECT -> runDirect(xcfa, config, logger)
@@ -268,7 +274,7 @@ class XcfaCli(private val args: Array<String>) {
         val portfolioDescriptor = portfolio
         val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
         return try {
-            val bindings: Bindings = SimpleBindings()
+            val bindings: Bindings = kotlinEngine.createBindings()
             bindings["xcfa"] = xcfa
             bindings["parseContext"] = parseContext
             bindings["property"] = explicitProperty
@@ -279,8 +285,21 @@ class XcfaCli(private val args: Array<String>) {
                 multithreaded = parseContext.multiThreading,
                 arithmetic = parseContext.bitwiseOption,
             )
-            val portfolioResult = kotlinEngine.eval(FileReader(portfolioDescriptor),
-                bindings) as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+
+            kotlinEngine as Compilable
+            val stopwatch = Stopwatch.createStarted()
+
+            kotlinEngine.eval("true") as Boolean
+            logger.write(Logger.Level.INFO,
+                "Loaded script engine (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+            stopwatch.reset().start()
+
+            kotlinEngine.context.setBindings(bindings,
+                100) // 100 seems to be a safe default, based on AbstractScriptEngine
+            val compiled = kotlinEngine.compile(FileReader(portfolioDescriptor))
+            logger.write(Logger.Level.INFO, "Compiled portfolio (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+
+            val portfolioResult = compiled.eval() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
 
             concretizerSolver = portfolioResult.first.refinementSolver
             validateConcretizerSolver = portfolioResult.first.validateRefinementSolver
@@ -292,7 +311,7 @@ class XcfaCli(private val args: Array<String>) {
         } catch (e: Exception) {
             if (debug) throw e
             logger.write(Logger.Level.RESULT,
-                "Portfolio from $portfolioDescriptor could not be executed.")
+                "Portfolio from $portfolioDescriptor could not be executed.\n")
             e.printStackTrace()
             exitProcess(ExitCodes.PORTFOLIO_ERROR.code)
         }
@@ -304,7 +323,7 @@ class XcfaCli(private val args: Array<String>) {
             resultFolder.mkdirs()
 
             logger.write(Logger.Level.INFO,
-                "Writing results to directory ${resultFolder.absolutePath}")
+                "Writing results to directory ${resultFolder.absolutePath}\n")
 
             val xcfaDotFile = File(resultFolder, "xcfa.dot")
             xcfaDotFile.writeText(xcfa.toDot())
@@ -313,7 +332,7 @@ class XcfaCli(private val args: Array<String>) {
                 val xcfaCFile = File(resultFolder, "xcfa.c")
                 xcfaCFile.writeText(xcfa.toC(parseContext, useArr, useExArr, useRange))
             } catch (e: Throwable) {
-                logger.write(Logger.Level.VERBOSE, "Could not emit C file")
+                logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
             }
 
             val xcfaJsonFile = File(resultFolder, "xcfa.json")
@@ -398,7 +417,7 @@ class XcfaCli(private val args: Array<String>) {
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
                     ChcPasses(parseContext, uniqueWarningLogger))
             } catch (e: UnsupportedOperationException) {
-                logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...")
+                logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...\n")
                 chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
                 chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
                     ChcPasses(parseContext, uniqueWarningLogger))
@@ -423,7 +442,7 @@ class XcfaCli(private val args: Array<String>) {
                 remainingFlags.add(ErrorDetection.DATA_RACE.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
                     uniqueWarningLogger.write(Logger.Level.INFO,
-                        "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
+                        "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise\n")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
                 ErrorDetection.DATA_RACE
@@ -433,7 +452,7 @@ class XcfaCli(private val args: Array<String>) {
                 remainingFlags.add(ErrorDetection.OVERFLOW.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
                     uniqueWarningLogger.write(Logger.Level.INFO,
-                        "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
+                        "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise\n")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
                 ErrorDetection.OVERFLOW
@@ -442,7 +461,7 @@ class XcfaCli(private val args: Array<String>) {
             else -> {
                 remainingFlags.add(ErrorDetection.NO_ERROR.toString())
                 uniqueWarningLogger.write(Logger.Level.INFO,
-                    "Unknown property $property, using full state space exploration (no refinement)")
+                    "Unknown property $property, using full state space exploration (no refinement)\n")
                 ErrorDetection.NO_ERROR
             }
         }
