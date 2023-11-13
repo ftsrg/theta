@@ -57,9 +57,9 @@ public class FrontendMetadata {
         checkNotNull(value);
         if (owner instanceof Expr<?> && key.equals("cType") && value instanceof CComplexType) {
             Tuple2<Expr<?>, Integer> pair = Tuple2.of((Expr<?>) owner, System.identityHashCode(owner));
-            if (types.containsKey(pair) && types.get(pair).getClass() != value.getClass()) {
-                throw new RuntimeException("Expression (" + owner + ") already has a different type: " + types.get(pair) + ". New type: " + value);
-            }
+//            if (types.containsKey(pair) && types.get(pair).getClass() != value.getClass()) {
+//                throw new RuntimeException("Expression (" + owner + ") already has a different type: " + types.get(pair) + ". New type: " + value);
+//            }
             types.put(pair, (CComplexType) value);
         } else {
             Map<String, Object> keyvalues = lookupKeyValue.getOrDefault(getHashCode(owner), new LinkedHashMap<>());
