@@ -100,11 +100,11 @@ class XcfaCli(private val args: Array<String>) {
     var backend: Backend = Backend.CEGAR
 
     @Parameter(names = ["--strategy"], description = "Execution strategy")
-    var strategy: Strategy = Strategy.PORTFOLIO
+    var strategy: Strategy = Strategy.DIRECT
 
     @Parameter(names = ["--portfolio"],
         description = "Portfolio type (only valid with --strategy PORTFOLIO)")
-    var portfolio: String = "COMPLEX"
+    var portfolio: String? = null
 
     @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
     var solverHome: String = SmtLibSolverManager.HOME.toAbsolutePath().toString()
@@ -191,6 +191,7 @@ class XcfaCli(private val args: Array<String>) {
         val logger = ConsoleLogger(logLevel)
         val uniqueWarningLogger = UniqueWarningLogger(logLevel)
         val explicitProperty: ErrorDetection = getExplicitProperty(uniqueWarningLogger)
+        portfolio?.run { strategy = Strategy.PORTFOLIO }
 
         // propagating input variables
         LbePass.level = lbeLevel
@@ -274,7 +275,7 @@ class XcfaCli(private val args: Array<String>) {
         logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false): SafetyResult<*, *> {
         return try {
             val portfolioResult = if (File(portfolio).exists()) {
-                val portfolioDescriptor = portfolio.lowercase() + ".kts"
+                val portfolioDescriptor = portfolio!!.lowercase() + ".kts"
                 val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
                 val bindings: Bindings = kotlinEngine.createBindings()
                 bindings["xcfa"] = xcfa
