@@ -220,7 +220,7 @@ public abstract class CComplexType {
 
     public static class CComplexTypeVisitor<T, R> {
         public R visit(CComplexType type, T param) {
-            throw new UnsupportedOperationException("Not (yet) implemented");
+            throw new UnsupportedOperationException("Not (yet) implemented (" + type.getClass().getSimpleName() + " in " + this.getClass().getName() + ")");
         }
 
         public R visit(CVoid type, T param) {

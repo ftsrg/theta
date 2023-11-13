@@ -124,7 +124,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpRoundToIntegralExpr.of(FpRoundingMode.RTZ, callStmt.params[1] as Expr<FpType?>))
+            FpRoundToIntegralExpr.of(FpRoundingMode.RTZ,
+                CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
@@ -136,7 +137,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpRoundToIntegralExpr.of(FpRoundingMode.RTP, callStmt.params[1] as Expr<FpType?>))
+            FpRoundToIntegralExpr.of(FpRoundingMode.RTP,
+                CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
@@ -151,7 +153,9 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val assign: AssignStmt<*> = Stmts.Assign(
             TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
             TypeUtils.cast(AbstractExprs.Ite<Type>(
-                FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>), type.unitValue, type.nullValue),
+                FpIsInfiniteExpr.of(
+                    CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>),
+                type.unitValue, type.nullValue),
                 type.smtType))
         parseContext.metadata.create(assign.expr, "cType", type)
         return StmtLabel(assign, metadata = callStmt.metadata)
@@ -166,7 +170,9 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val assign: AssignStmt<*> = Stmts.Assign(
             TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
             TypeUtils.cast(AbstractExprs.Ite<Type>(
-                FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>), type.nullValue, type.unitValue),
+                FpIsInfiniteExpr.of(
+                    CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>),
+                type.nullValue, type.unitValue),
                 type.smtType))
         parseContext.metadata.create(assign.expr, "cType", type)
         return StmtLabel(assign, metadata = callStmt.metadata)
@@ -191,7 +197,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             val assign: AssignStmt<*> = Stmts.Assign(
                 TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
                 TypeUtils.cast(
-                    AbstractExprs.Ite<Type>(FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>),
+                    AbstractExprs.Ite<Type>(FpIsNanExpr.of(
+                        CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>),
                         type.unitValue, type.nullValue), type.smtType))
             parseContext.getMetadata().create(assign.expr, "cType", type)
             return StmtLabel(assign, metadata = callStmt.metadata)
@@ -205,7 +212,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpRoundToIntegralExpr.of(FpRoundingMode.RNA, callStmt.params[1] as Expr<FpType?>))
+            FpRoundToIntegralExpr.of(FpRoundingMode.RNA,
+                CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
@@ -217,7 +225,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpSqrtExpr.of(FpRoundingMode.RNE, callStmt.params[1] as Expr<FpType?>))
+            FpSqrtExpr.of(FpRoundingMode.RNE,
+                CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
@@ -234,8 +243,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpMinExpr.of(callStmt.params[1] as Expr<FpType?>,
-                callStmt.params[2] as Expr<FpType?>))
+            FpMinExpr.of(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>,
+                CComplexType.getType(expr, parseContext).castTo(callStmt.params[2]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
@@ -248,8 +257,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpMaxExpr.of(callStmt.params[1] as Expr<FpType?>,
-                callStmt.params[2] as Expr<FpType?>))
+            FpMaxExpr.of(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>,
+                CComplexType.getType(expr, parseContext).castTo(callStmt.params[2]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
@@ -261,7 +270,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpRoundToIntegralExpr.of(FpRoundingMode.RTN, callStmt.params[1] as Expr<FpType?>))
+            FpRoundToIntegralExpr.of(FpRoundingMode.RTN,
+                CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
@@ -273,7 +283,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
-            FpAbsExpr.of(callStmt.params[1] as Expr<FpType?>))
+            FpAbsExpr.of(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]) as Expr<FpType?>))
         if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
             parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
