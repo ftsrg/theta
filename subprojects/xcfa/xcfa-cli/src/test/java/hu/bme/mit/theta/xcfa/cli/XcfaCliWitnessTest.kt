@@ -78,6 +78,7 @@ class XcfaCliWitnessTest {
                 data.put(key, value)
             }
             edges.add(data)
+            print("Found edge containing data: ${data.entries.map { "${it.key}: ${it.value}" }.joinToString(", ")}")
         }
         for (expectedWitnessEdge in expectedWitnessEdges) {
             Assertions.assertFalse(
