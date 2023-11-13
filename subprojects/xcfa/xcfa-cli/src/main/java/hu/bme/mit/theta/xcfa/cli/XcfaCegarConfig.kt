@@ -221,7 +221,7 @@ data class XcfaCegarConfig(
         ProcessHandle.current().info().command().orElse("java")
 
     fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String,
-        logger: Logger, parseContext: ParseContext): () -> SafetyResult<*, *> {
+        logger: Logger, parseContext: ParseContext, argdebug: Boolean): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
             getJavaExecutable(),
             "-cp",
@@ -233,8 +233,9 @@ data class XcfaCegarConfig(
             "" + !writeWitness,
             "--input",
             sourceFileName,
-            "--gzip"
-        ))
+            "--gzip",
+            if (argdebug) "--arg-debug" else null,
+        ).filterNotNull())
         val processHandler = ProcessHandler(logger)
         pb.setProcessListener(processHandler)
         val process: NuProcess = pb.start()

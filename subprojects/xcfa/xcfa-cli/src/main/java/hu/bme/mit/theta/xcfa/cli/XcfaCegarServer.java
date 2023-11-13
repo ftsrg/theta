@@ -22,6 +22,7 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import com.google.gson.Gson;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.logging.ConsoleLabelledLogger;
@@ -29,6 +30,9 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiKt;
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread;
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread;
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 
@@ -79,6 +83,11 @@ class XcfaCegarServer {
     @Parameter(names = "--debug", description = "Debug mode (will not create a socket)")
     Boolean debug = false;
 
+
+    @Parameter(names = "--arg-debug", description = "ARG debug mode (use the web-based debugger for ARG visualization)")
+    Boolean argdebug = false;
+
+
     @Parameter(names = "--gzip", description = "Expect stdin to contain gzipped text")
     Boolean gzip = false;
 
@@ -91,6 +100,8 @@ class XcfaCegarServer {
             ex.usage();
             System.exit(ExitCodes.INVALID_PARAM.getCode());
         }
+
+        if (argdebug) ARGWebDebugger.on = true;
 
         final Logger logger = new ConsoleLabelledLogger();
 
@@ -159,6 +170,10 @@ class XcfaCegarServer {
                             System.err.println("Erroneous parsecontext, see file " + tempFile.getAbsolutePath());
                             throw e;
                         }
+                        XcfaCoiKt.ConeOfInfluence =
+                                (parseContext.getMultiThreading()) ?
+                                        new XcfaCoiMultiThread(xcfa) :
+                                        new XcfaCoiSingleThread(xcfa);
 
                         logger.write(Logger.Level.INFO, "Parsed parsecontext.\n");
 

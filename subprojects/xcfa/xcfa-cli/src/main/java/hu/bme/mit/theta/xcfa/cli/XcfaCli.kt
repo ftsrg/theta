@@ -24,6 +24,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
@@ -111,6 +112,10 @@ class XcfaCli(private val args: Array<String>) {
 
     @Parameter(names = ["--debug"], description = "Debug mode (not exiting when encountering an exception)")
     var debug: Boolean = false
+
+    @Parameter(names = ["--arg-debug"],
+        description = "ARG debug mode (use the web-based debugger for ARG visualization)")
+    var argdebug: Boolean = false
 
     //////////// debug options ////////////
     @Parameter(names = ["--stacktrace"],
@@ -205,6 +210,7 @@ class XcfaCli(private val args: Array<String>) {
             WebDebuggerLogger.getInstance().setTitle(input?.name)
         }
         LoopUnrollPass.UNROLL_LIMIT = loopUnroll
+        ARGWebDebugger.on = argdebug
 
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType\n")
         val parseContext = ParseContext()
@@ -237,9 +243,9 @@ class XcfaCli(private val args: Array<String>) {
         val safetyResult: SafetyResult<*, *> =
             when (strategy) {
                 Strategy.DIRECT -> runDirect(xcfa, config, logger)
-                Strategy.SERVER -> runServer(xcfa, config, logger, parseContext)
+                Strategy.SERVER -> runServer(xcfa, config, logger, parseContext, argdebug)
                 Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
-                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug)
+                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug, argdebug)
             }
         // post verification
         postVerificationLogging(safetyResult, parseContext)
@@ -250,9 +256,9 @@ class XcfaCli(private val args: Array<String>) {
         exitOnError(stacktrace, debug) { config.check(xcfa, logger) }
 
     private fun runServer(xcfa: XCFA, config: XcfaCegarConfig,
-        logger: ConsoleLogger, parseContext: ParseContext): SafetyResult<*, *> {
+        logger: ConsoleLogger, parseContext: ParseContext, argdebug: Boolean): SafetyResult<*, *> {
         val safetyResultSupplier = config.checkInProcess(xcfa, solverHome, true,
-            input!!.absolutePath, logger, parseContext)
+            input!!.absolutePath, logger, parseContext, argdebug)
         return try {
             safetyResultSupplier()
         } catch (e: ErrorCodeException) {
@@ -272,10 +278,11 @@ class XcfaCli(private val args: Array<String>) {
     }
 
     private fun runPortfolio(xcfa: XCFA, explicitProperty: ErrorDetection,
-        logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false): SafetyResult<*, *> {
+        logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false,
+        argdebug: Boolean): SafetyResult<*, *> {
         return try {
             val portfolioResult = if (File(portfolio).exists()) {
-                val portfolioDescriptor = portfolio!!.lowercase() + ".kts"
+                val portfolioDescriptor = portfolio!!
                 val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
                 val bindings: Bindings = kotlinEngine.createBindings()
                 bindings["xcfa"] = xcfa
@@ -288,6 +295,7 @@ class XcfaCli(private val args: Array<String>) {
                     multithreaded = parseContext.multiThreading,
                     arithmetic = parseContext.bitwiseOption,
                 )
+                bindings["argdebug"] = argdebug
 
                 kotlinEngine as Compilable
                 val stopwatch = Stopwatch.createStarted()
@@ -308,7 +316,7 @@ class XcfaCli(private val args: Array<String>) {
                 complexPortfolio(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
                     multithreaded = parseContext.multiThreading,
                     arithmetic = parseContext.bitwiseOption,
-                ), explicitProperty, parseContext)
+                ), explicitProperty, parseContext, argdebug)
             } else throw Exception("No known portfolio $portfolio")
 
             concretizerSolver = portfolioResult.first.refinementSolver

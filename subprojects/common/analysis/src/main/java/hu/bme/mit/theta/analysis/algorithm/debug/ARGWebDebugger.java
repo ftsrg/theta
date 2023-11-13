@@ -33,7 +33,7 @@ import java.util.List;
  */
 
 public final class ARGWebDebugger {
-    private static final boolean debug = false;
+    public static boolean on = false;
     private static final Integer PORT = 8080;
 
     private static SocketIOServer server;
@@ -49,7 +49,7 @@ public final class ARGWebDebugger {
     }
 
     private static void startServer() {
-        if (!debug) return;
+        if (!on) return;
         Configuration config = new Configuration();
         config.setPort(PORT);
 
@@ -107,7 +107,7 @@ public final class ARGWebDebugger {
     }
 
     public static void create(ArgNode<? extends State, ? extends Action> initNode) {
-        if (!debug) {
+        if (!on) {
             return;
         }
         replayLog.clear();
@@ -118,7 +118,7 @@ public final class ARGWebDebugger {
     public static <A extends Action> void add(ArgNode<? extends State, ? extends Action> parent,
                                               A action,
                                               ArgNode<? extends State, ? extends Action> child) {
-        if (!debug) {
+        if (!on) {
             return;
         }
         send("{\"method\": \"add\", \"parent\": " + parent.getId() + ", \"child\": " + nodeToString(child, action) + "}", true);
@@ -126,7 +126,7 @@ public final class ARGWebDebugger {
     }
 
     public static <A extends Action> void remove(ArgEdge<? extends State, ? extends Action> edge) {
-        if (!debug) {
+        if (!on) {
             return;
         }
         send("{\"method\": \"delete\", \"parent\": " + edge.getSource().getId() + ", \"child\": " + edge.getTarget().getId() + "}", true);

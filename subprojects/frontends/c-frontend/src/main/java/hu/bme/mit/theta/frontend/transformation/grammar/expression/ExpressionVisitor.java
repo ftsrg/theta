@@ -393,6 +393,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     case "%":
                         if (leftExpr.getType() instanceof IntType && rightExpr.getType() instanceof IntType) {
                             expr = createIntMod(leftExpr, rightExpr);
+                        } else if (leftExpr.getType() instanceof BvType && rightExpr.getType() instanceof BvType) {
+                            expr = AbstractExprs.Rem(leftExpr, rightExpr);
                         } else {
                             expr = AbstractExprs.Mod(leftExpr, rightExpr);
                         }

@@ -27,11 +27,13 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun complexPortfolio(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logger, smtHomeTyped: String,
     traitsTyped: VerificationTraits, propertyTyped: ErrorDetection,
-    parseContextTyped: ParseContext): Pair<XcfaCegarConfig, SafetyResult<*, *>> {
+    parseContextTyped: ParseContext,
+    argdebug: Boolean): Pair<XcfaCegarConfig, SafetyResult<*, *>> {
 
     val checker = { p: Boolean, config: XcfaCegarConfig ->
         if (p)
-            config.checkInProcess(xcfaTyped, smtHomeTyped, true, cFileNameTyped, loggerTyped, parseContextTyped)()
+            config.checkInProcess(xcfaTyped, smtHomeTyped, true, cFileNameTyped, loggerTyped, parseContextTyped,
+                argdebug)()
         else config.check(xcfaTyped, loggerTyped)
     }
 
