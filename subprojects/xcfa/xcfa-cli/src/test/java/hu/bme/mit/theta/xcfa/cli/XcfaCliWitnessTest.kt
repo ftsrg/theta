@@ -43,8 +43,8 @@ class XcfaCliWitnessTest {
                     WitnessEdge(
                         startlineRange = Pair(5, 5),
                         endlineRange = Pair(5, 5),
-                        startoffsetRange = Pair(79, 91),
-                        endoffsetRange = Pair(110, 115),
+                        startoffsetRange = Pair(79, 95),
+                        endoffsetRange = Pair(110, 125),
                         assumption = Regex("i *== *-1"),
                     ),
                 )),
@@ -78,7 +78,7 @@ class XcfaCliWitnessTest {
                 data.put(key, value)
             }
             edges.add(data)
-            print("Found edge containing data: ${data.entries.map { "${it.key}: ${it.value}" }.joinToString(", ")}")
+            println("Found edge containing data: ${data.entries.map { "${it.key}: ${it.value}" }.joinToString(", ")}")
         }
         for (expectedWitnessEdge in expectedWitnessEdges) {
             Assertions.assertFalse(
