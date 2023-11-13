@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
@@ -54,6 +55,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getCastVisitor;
@@ -154,7 +156,29 @@ public abstract class CComplexType {
             return new CArray(null, getType(aType.getElemType(), parseContext), parseContext);
         } else if (type instanceof BoolType) {
             return new CBool(null, parseContext);
-        } else throw new RuntimeException("Not yet implemented for type: " + type);
+        } else if (type instanceof BvType) {
+            for (Entry<String, Integer> entry : parseContext.getArchitecture().standardTypeSizes.entrySet()) {
+                String s = entry.getKey();
+                Integer integer = entry.getValue();
+                if (integer == ((BvType) type).getSize()) {
+                    switch (s) {
+                        case "bool":
+                            return new CBool(null, parseContext);
+                        case "short":
+                            return ((BvType) type).getSigned() ? new CSignedShort(null, parseContext) : new CUnsignedShort(null, parseContext);
+                        case "int":
+                            return ((BvType) type).getSigned() ? new CSignedInt(null, parseContext) : new CUnsignedInt(null, parseContext);
+                        case "long":
+                            return ((BvType) type).getSigned() ? new CSignedLong(null, parseContext) : new CUnsignedLong(null, parseContext);
+                        case "longlong":
+                            return ((BvType) type).getSigned() ? new CSignedLongLong(null, parseContext) : new CUnsignedLongLong(null, parseContext);
+                    }
+                }
+            }
+            throw new RuntimeException("No suitable width found for type: " + type);
+        } else {
+            throw new RuntimeException("Not yet implemented for type: " + type);
+        }
     }
 
 

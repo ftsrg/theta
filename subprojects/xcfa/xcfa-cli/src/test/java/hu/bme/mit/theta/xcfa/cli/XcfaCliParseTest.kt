@@ -170,7 +170,8 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only", "--stacktrace"
+            "--parse-only", "--stacktrace",
+            "--debug"
         ))
     }
 
@@ -195,6 +196,7 @@ class XcfaCliParseTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--parse-only",
             "--stacktrace",
+            "--debug"
         ))
     }
 
@@ -206,6 +208,7 @@ class XcfaCliParseTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--parse-only",
             "--stacktrace",
+            "--debug"
         ))
     }
 
@@ -217,6 +220,7 @@ class XcfaCliParseTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--parse-only",
             "--stacktrace",
+            "--debug"
         ))
     }
 
@@ -231,6 +235,7 @@ class XcfaCliParseTest {
             "--stacktrace",
             "--output-results",
             "--output-directory", temp.toAbsolutePath().toString(),
+            "--debug"
         ))
         val xcfaJson = temp.resolve("xcfa.json").toFile()
         main(arrayOf(
@@ -238,6 +243,7 @@ class XcfaCliParseTest {
             "--input", xcfaJson.absolutePath.toString(),
             "--parse-only",
             "--stacktrace",
+            "--debug"
         ))
         temp.toFile().deleteRecursively()
     }
@@ -253,6 +259,7 @@ class XcfaCliParseTest {
             "--stacktrace",
             "--output-results",
             "--output-directory", temp.toAbsolutePath().toString(),
+            "--debug"
         ))
         val xcfaC = temp.resolve("xcfa.c").toFile()
         main(arrayOf(
@@ -260,6 +267,7 @@ class XcfaCliParseTest {
             "--input", xcfaC.absolutePath.toString(),
             "--parse-only",
             "--stacktrace",
+            "--debug"
         ))
         temp.toFile().deleteRecursively()
     }
