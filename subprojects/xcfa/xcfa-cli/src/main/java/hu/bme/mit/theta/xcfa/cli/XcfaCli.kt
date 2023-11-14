@@ -38,6 +38,7 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
@@ -400,9 +401,21 @@ class XcfaCli(private val args: Array<String>) {
                 }
 
                 InputType.C -> {
-                    val stream = FileInputStream(input!!)
-                    val xcfaFromC = getXcfaFromC(stream, parseContext, false,
-                        explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+                    val xcfaFromC = try {
+                        val stream = FileInputStream(input!!)
+                        getXcfaFromC(stream, parseContext, false,
+                            explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+                    } catch (e: Throwable) {
+                        if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+                            parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+                            logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
+                            val stream = FileInputStream(input!!)
+                            getXcfaFromC(stream, parseContext, false,
+                                explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+                        } else {
+                            throw e
+                        }
+                    }
                     logger.write(Logger.Level.RESULT,
                         "Arithmetic: ${parseContext.arithmetic}\n")
                     xcfaFromC
