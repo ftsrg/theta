@@ -48,7 +48,7 @@ runs:
       shell: bash
       run: |
         cd sv-benchmarks/c
-        for i in $(sed 's/#.*$//g' ${{ inputs.task }}.set); do find . -wholename ./$i; done | while read line; do grep "$line" $GITHUB_ACTION_PATH/supported.txt >/dev/null 2>/dev/null && test -z $(yq e '.properties.[] | select(.property_file == "../properties/unreach-call.prp")' $line) >/dev/null 2>/dev/null || echo  $(echo $line | sha1sum | awk ' { print $1 } ') $line ; done | sort -k1 | awk ' { $1=""; print $0 } ' | awk '{$1=$1};1' > all-files.txt
+        for i in $(sed 's/#.*$//g' ${{ inputs.task }}.set); do find . -wholename ./$i; done | while read line; do grep "${line#./}" $GITHUB_ACTION_PATH/unsupported.txt >/dev/null 2>/dev/null || test -z $(yq e '.properties.[] | select(.property_file == "../properties/unreach-call.prp")' $line) >/dev/null 2>/dev/null || echo  $(echo $line | sha1sum | awk ' { print $1 } ') $line ; done | sort -k1 | awk ' { $1=""; print $0 } ' | awk '{$1=$1};1' > all-files.txt
         head -n${{ inputs.test_number }} all-files.txt > ${{ inputs.task }}.set
         echo "length=$(cat ${{ inputs.task }}.set | wc -l)" >> "$GITHUB_OUTPUT"
         cat ${{ inputs.task }}.set

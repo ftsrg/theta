@@ -417,7 +417,7 @@ class XcfaCli(private val args: Array<String>) {
                         }
                     }
                     logger.write(Logger.Level.RESULT,
-                        "Arithmetic: ${parseContext.arithmetic}\n")
+                        "Arithmetic: ${parseContext.bitwiseOption}\n")
                     xcfaFromC
                 }
 
