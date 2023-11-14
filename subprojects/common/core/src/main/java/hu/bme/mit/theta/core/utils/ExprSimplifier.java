@@ -145,7 +145,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.SimplifierLevel.*;
+import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
 
 public final class ExprSimplifier {
 
@@ -2004,10 +2004,6 @@ public final class ExprSimplifier {
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
             return Bool(leftOp.equals(rightOp));
-        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-                return True();
-            }
         }
 
         return expr.with(leftOp, rightOp);
