@@ -42,9 +42,9 @@ class UnusedVarPass(val parseContext: ParseContext, val uniqueWarningLogger: Log
             uniqueWarningLogger.write(Logger.Level.INFO,
                 "WARNING: There are some used variables not present as declarations: " +
                     "${
-                    usedVars.filter {
-                        !varsAndParams.contains(it)
-                    }
+                        usedVars.filter {
+                            !varsAndParams.contains(it)
+                        }
                     }\n")
         }
 
