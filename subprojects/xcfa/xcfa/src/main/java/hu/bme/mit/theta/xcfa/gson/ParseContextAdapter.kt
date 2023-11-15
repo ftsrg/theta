@@ -19,12 +19,13 @@ package hu.bme.mit.theta.xcfa.gson
 import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 
 class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseContext>() {
 
@@ -33,7 +34,12 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
         initGson()
         writer.beginObject()
 
-        writer.name("bitwiseOption").value(value.bitwiseOption.name)
+        writer.name("arithmeticTraits")
+        writer.beginArray()
+        for (arithmeticTrait in value.arithmeticTraits) {
+            writer.value(arithmeticTrait.name)
+        }
+        writer.endArray()
         writer.name("architecture").value(value.architecture.name)
         writer.name("arithmetic").value(value.arithmetic.name)
         writer.name("multiThreading").value(value.multiThreading)
@@ -52,7 +58,7 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
 
         var metadata: FrontendMetadata? = null
         var cStmtCounter: CStmtCounter? = null
-        var bitwiseOption: BitwiseOption? = null
+        var arithmeticTraits: MutableSet<ArithmeticTrait> = mutableSetOf()
         var architecture: ArchitectureConfig.ArchitectureType? = null
         var multiThreading: Boolean? = null
         var arithmetic: ArchitectureConfig.ArithmeticType? = null
@@ -69,8 +75,12 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
                 }
 
                 "bitwiseOption" -> {
-                    val optionName = reader.nextString()
-                    bitwiseOption = BitwiseOption.valueOf(optionName)
+                    reader.beginArray()
+                    while (reader.peek() != JsonToken.END_ARRAY) {
+                        val optionName = reader.nextString()
+                        arithmeticTraits.add(ArithmeticTrait.valueOf(optionName))
+                    }
+                    reader.endArray()
                 }
 
                 "architecture" -> {
@@ -94,7 +104,7 @@ class ParseContextAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<ParseConte
         }
         reader.endObject()
 
-        return ParseContext(metadata, cStmtCounter, bitwiseOption, architecture, multiThreading, arithmetic)
+        return ParseContext(metadata, cStmtCounter, arithmeticTraits, architecture, multiThreading, arithmetic)
     }
 
     private fun initGson() {

@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.*
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -341,11 +341,10 @@ fun complexPortfolio(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logge
         return STM(inProcess, setOf(fallbackEdge))
     }
 
-    val stm = when (traitsTyped.arithmetic) {
-        BitwiseOption.INTEGER -> integerStm()
-        BitwiseOption.BITWISE -> bitwiseStm()
-        BitwiseOption.BITWISE_FLOAT -> floatsStm()
-    }
+    val stm =
+        if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) floatsStm()
+        else if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.BITWISE)) bitwiseStm()
+        else integerStm()
 
     return stm.execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
 }

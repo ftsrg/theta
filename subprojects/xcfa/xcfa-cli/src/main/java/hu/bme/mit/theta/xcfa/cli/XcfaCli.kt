@@ -235,7 +235,7 @@ class XcfaCli(private val args: Array<String>) {
         logger.write(Logger.Level.INFO,
             "Registered solver managers successfully (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
         stopwatch.reset().start()
-        val config = parseConfigFromCli()
+        val config = parseConfigFromCli(parseContext)
         if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
             printConfigFile!!.writeText(gsonForOutput.toJson(config))
         }
@@ -294,7 +294,7 @@ class XcfaCli(private val args: Array<String>) {
                 bindings["smtHome"] = solverHome
                 bindings["traits"] = VerificationTraits(
                     multithreaded = parseContext.multiThreading,
-                    arithmetic = parseContext.bitwiseOption,
+                    arithmeticTraits = parseContext.arithmeticTraits,
                 )
                 bindings["argdebug"] = argdebug
 
@@ -316,7 +316,7 @@ class XcfaCli(private val args: Array<String>) {
             } else if (portfolio == "COMPLEX") {
                 complexPortfolio(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
                     multithreaded = parseContext.multiThreading,
-                    arithmetic = parseContext.bitwiseOption,
+                    arithmeticTraits = parseContext.arithmeticTraits,
                 ), explicitProperty, parseContext, argdebug)
             } else throw Exception("No known portfolio $portfolio")
 
@@ -417,7 +417,7 @@ class XcfaCli(private val args: Array<String>) {
                         }
                     }
                     logger.write(Logger.Level.RESULT,
-                        "Arithmetic: ${parseContext.bitwiseOption}\n")
+                        "Arithmetic: ${parseContext.arithmeticTraits}\n")
                     xcfaFromC
                 }
 
@@ -499,7 +499,7 @@ class XcfaCli(private val args: Array<String>) {
         }
     } else ErrorDetection.ERROR_LOCATION
 
-    private fun parseConfigFromCli(): XcfaCegarConfig {
+    private fun parseConfigFromCli(parseContext: ParseContext): XcfaCegarConfig {
         val cegarConfig = XcfaCegarConfig()
         try {
             JCommander.newBuilder().addObject(cegarConfig).programName(JAR_NAME).build()
@@ -509,6 +509,9 @@ class XcfaCli(private val args: Array<String>) {
             ex.printStackTrace()
             ex.usage()
             exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        if (parseContext.multiThreading && cegarConfig.search == Search.ERR) {
+            cegarConfig.search = Search.DFS;
         }
         return cegarConfig
     }

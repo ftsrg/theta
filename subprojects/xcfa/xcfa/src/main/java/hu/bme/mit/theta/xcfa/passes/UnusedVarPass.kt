@@ -40,11 +40,12 @@ class UnusedVarPass(val parseContext: ParseContext, val uniqueWarningLogger: Log
         val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
         if (!varsAndParams.containsAll(usedVars)) {
             uniqueWarningLogger.write(Logger.Level.INFO,
-                "WARNING: There are some used variables not present as declarations: \n${
+                "WARNING: There are some used variables not present as declarations: " +
+                    "${
                     usedVars.filter {
                         !varsAndParams.contains(it)
                     }
-                }")
+                    }\n")
         }
 
         val list = builder.getVars().filter { !usedVars.contains(it) }.toList()

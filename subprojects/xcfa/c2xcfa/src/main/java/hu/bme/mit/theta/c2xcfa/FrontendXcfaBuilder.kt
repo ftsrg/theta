@@ -87,7 +87,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
             if (type is CVoid || type is CStruct) {
                 uniqueWarningLogger.write(Level.INFO,
-                    "WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable")
+                    "WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable\n")
                 continue
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))

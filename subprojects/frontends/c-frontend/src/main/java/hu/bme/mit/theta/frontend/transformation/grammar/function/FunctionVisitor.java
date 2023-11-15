@@ -28,9 +28,10 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
@@ -72,6 +73,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -167,8 +169,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
         // if arithemetic is set on efficient, we change it to either bv or int arithmetic here
         if (parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
-            BitwiseOption bitwiseOption = BitwiseChecker.checkIfBitwise(parseContext, globalUsages);
-            parseContext.setArithmetic((bitwiseOption == BitwiseOption.INTEGER) ? ArchitectureConfig.ArithmeticType.integer : ArchitectureConfig.ArithmeticType.bitvector);
+            Set<ArithmeticTrait> arithmeticTraits = BitwiseChecker.gatherArithmeticTraits(parseContext, globalUsages);
+            parseContext.setArithmetic(
+                    arithmeticTraits.contains(ArithmeticTrait.BITWISE) || arithmeticTraits.contains(ArithmeticTrait.FLOAT) ?
+                            ArithmeticType.bitvector : ArithmeticType.integer);
         }
 
         CProgram program = new CProgram(parseContext);
