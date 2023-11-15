@@ -477,7 +477,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             parseContext.getMetadata().create(zero, "cType", signedInt);
             return zero;
         } else {
-            Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText());
+            final Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText())
+                    .or(() -> Optional.ofNullable(CComplexType.getType(getVar(ctx.typeName().getText()).getRef(), parseContext)));
+
             if (type.isPresent()) {
                 LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + parseContext.getArchitecture().getBitWidth(type.get().getTypeName()) / 8);
                 return value;
