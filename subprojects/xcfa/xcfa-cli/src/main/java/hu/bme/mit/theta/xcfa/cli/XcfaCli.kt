@@ -278,10 +278,11 @@ class XcfaCli(private val args: Array<String>) {
             logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
         } else {
             val transFunc = XcfaTransFunc.create(xcfa)
+            registerAllSolverManagers(solverHome, logger)
             val checker = if (algorithm == Algorithm.KINDUCTION) {
-                KIndChecker2(transFunc, Int.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr))
+                KIndChecker2(transFunc, Int.MAX_VALUE, getSolver(concretizerSolver, validateConcretizerSolver).createSolver(), getSolver(concretizerSolver, validateConcretizerSolver).createSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr))
             } else {
-                ImcChecker<ExplState, StmtAction>(transFunc, Int.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr), true)
+                ImcChecker<ExplState, StmtAction>(transFunc, Int.MAX_VALUE, getSolver(concretizerSolver, validateConcretizerSolver).createItpSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr), true)
             }
             val result = checker.check(null)
             logger.write(Logger.Level.RESULT,result.toString() + "\n")
