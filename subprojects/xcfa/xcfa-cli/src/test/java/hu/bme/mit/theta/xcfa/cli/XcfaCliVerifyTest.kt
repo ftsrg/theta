@@ -163,4 +163,18 @@ class XcfaCliVerifyTest {
         ))
     }
 
+    @ParameterizedTest
+    @MethodSource("cFiles")
+    fun testCVerifyKind(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--algorithm", "KINDUCTION",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--debug"
+        )
+        main(params)
+    }
+
 }

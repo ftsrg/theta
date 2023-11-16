@@ -45,20 +45,24 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 
 public class KIndChecker<S extends ExprState, A extends ExprAction> implements SafetyChecker<S, A, UnitPrec> {
-    final Expr<BoolType> trans;
-    final Expr<BoolType> init;
-    final Expr<BoolType> prop;
-    final int upperBound;
-    Solver solver1;
-    Solver solver2;
-    final VarIndexing firstIndexing;
-    final VarIndexing offset;
-    final Function<Valuation, S> valToState;
-    final Collection<VarDecl<?>> vars;
+    private final Expr<BoolType> trans;
+    private final Expr<BoolType> init;
+    private final Expr<BoolType> prop;
+    private final int upperBound;
+    private final int inductionStartBound;
+    private final int inductionFrequency;
+    private Solver solver1;
+    private Solver solver2;
+    private final VarIndexing firstIndexing;
+    private final VarIndexing offset;
+    private final Function<Valuation, S> valToState;
+    private final Collection<VarDecl<?>> vars;
 
 
     public KIndChecker(MonolithicTransFunc transFunc,
                        int upperBound,
+                       int inductionStartBound,
+                       int inductionFrequency,
                        Solver solver1,
                        Solver solver2,
                        Function<Valuation, S> valToState,
@@ -67,6 +71,8 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
         this.init = transFunc.getInitExpr();
         this.prop = transFunc.getPropExpr();
         this.upperBound = upperBound;
+        this.inductionStartBound = inductionStartBound;
+        this.inductionFrequency = inductionFrequency;
         this.solver1 = solver1;
         this.solver2 = solver2;
         this.firstIndexing = transFunc.getInitIndexing();
@@ -78,32 +84,24 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
 
     @Override
     public SafetyResult<S, A> check(UnitPrec prec) {
-        //var trans = action.toExpr();
-        //var offset = action.nextIndexing();
-
         int i = 0;
         var currIndex = firstIndexing;
 
 
-        var exprsFromStart = new ArrayList<Expr<BoolType>>();
-        var exprsForInductivity = new ArrayList<Expr<BoolType>>();
         var listOfIndexes = new ArrayList<VarIndexing>();
 
-        solver1.add(PathUtils.unfold(init, VarIndexingFactory.indexing(0))); // VarIndexingFactory.indexing(0)?
+        solver1.add(PathUtils.unfold(init, VarIndexingFactory.indexing(0)));
         var eqList = new ArrayList<Expr<BoolType>>();
         while (i < upperBound) {
 
 
             solver1.add(PathUtils.unfold(trans, currIndex));
 
-            // külső lista üres
             var finalList = new ArrayList<Expr<BoolType>>();
 
             for (int j = 0; j < listOfIndexes.size(); j++) {
-                // új belső lista az adott indexű állapothoz
                 var tempList = new ArrayList<Expr<BoolType>>();
                 for (var v : vars) {
-                    // a mostani listához adom az Eq-et
                     tempList.add(Eq(PathUtils.unfold(v.getRef(), currIndex), PathUtils.unfold(v.getRef(), listOfIndexes.get(j))));
                 }
                 finalList.add(Not(And(tempList)));

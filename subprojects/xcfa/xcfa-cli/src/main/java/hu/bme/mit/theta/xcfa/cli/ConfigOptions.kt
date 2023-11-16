@@ -59,7 +59,8 @@ enum class InputType {
 
 enum class Backend {
     CEGAR,
-    BMC,
+    KIND,
+    IMC,
     LAZY
 }
 

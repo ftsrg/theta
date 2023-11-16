@@ -25,10 +25,7 @@ import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
-import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
@@ -39,7 +36,6 @@ import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
-import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
@@ -48,7 +44,6 @@ import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaMonolithicTransFunc
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
@@ -83,16 +78,6 @@ class XcfaCli(private val args: Array<String>) {
 
     //////////// CONFIGURATION OPTIONS BEGIN ////////////
     //////////// input task ////////////
-    public enum class Algorithm {
-
-        CEGAR,
-        KINDUCTION,
-        IMC
-    }
-
-    @Parameter(names = ["--algorithm"], description = "Algorithm")
-    var algorithm: Algorithm = Algorithm.CEGAR
-
     @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
     var input: File? = null
 
@@ -172,6 +157,10 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
     var concretizerSolver: String = "Z3"
 
+    @Parameter(names = ["--validate-cex-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
+    var validateConcretizerSolver: Boolean = false
+
     @Parameter(names = ["--to-c-use-arrays"])
     var useArr: Boolean = false
 
@@ -180,10 +169,6 @@ class XcfaCli(private val args: Array<String>) {
 
     @Parameter(names = ["--to-c-use-ranges"])
     var useRange: Boolean = false
-
-    @Parameter(names = ["--validate-cex-solver"],
-        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
-    var validateConcretizerSolver: Boolean = false
 
     @Parameter(names = ["--seed"], description = "Random seed used for DPOR")
     var randomSeed: Int = -1
@@ -250,21 +235,21 @@ class XcfaCli(private val args: Array<String>) {
         // verification
         stopwatch.reset().start()
 
+        val safetyResult: SafetyResult<*, *> =
+            if (backend == Backend.CEGAR) {
+                logger.write(Logger.Level.INFO,
+                    "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
+                registerAllSolverManagers(solverHome, logger)
+                logger.write(Logger.Level.INFO,
+                    "Registered solver managers successfully (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                stopwatch.reset().start()
+                val config = parseCEGARConfigFromCli(parseContext)
+                if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
+                    printConfigFile!!.writeText(gsonForOutput.toJson(config))
+                }
+                logger.write(Logger.Level.INFO, "Parsed config (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                stopwatch.reset().start()
 
-        if (algorithm == Algorithm.CEGAR) {
-            logger.write(Logger.Level.INFO,
-                "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
-            registerAllSolverManagers(solverHome, logger)
-            logger.write(Logger.Level.INFO,
-                "Registered solver managers successfully (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
-            stopwatch.reset().start()
-            val config = parseConfigFromCli(parseContext)
-            if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
-                printConfigFile!!.writeText(gsonForOutput.toJson(config))
-            }
-            logger.write(Logger.Level.INFO, "Parsed config (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
-            stopwatch.reset().start()
-            val safetyResult: SafetyResult<*, *> =
                 when (strategy) {
                     Strategy.DIRECT -> runDirect(xcfa, config, logger)
                     Strategy.SERVER -> runServer(xcfa, config, logger, parseContext, argdebug)
@@ -272,25 +257,22 @@ class XcfaCli(private val args: Array<String>) {
                     Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug,
                         argdebug)
                 }
-            // post verification
-            postVerificationLogging(safetyResult, parseContext)
-            logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
-        } else {
-            val transFunc = XcfaMonolithicTransFunc.create(xcfa)
-            registerAllSolverManagers(solverHome, logger)
-            val checker = if (algorithm == Algorithm.KINDUCTION) {
-                KIndChecker(transFunc, Int.MAX_VALUE,
-                    getSolver(concretizerSolver, validateConcretizerSolver).createSolver(),
-                    getSolver(concretizerSolver, validateConcretizerSolver).createSolver(), ExplState::of,
-                    ExprUtils.getVars(transFunc.transExpr))
             } else {
-                ImcChecker<ExplState, StmtAction>(transFunc, Int.MAX_VALUE,
-                    getSolver(concretizerSolver, validateConcretizerSolver).createItpSolver(), ExplState::of,
-                    ExprUtils.getVars(transFunc.transExpr), true)
+                registerAllSolverManagers(solverHome, logger)
+                val checker = if (backend == Backend.KIND) {
+                    val kindConfig = parseKindConfigFromCli()
+                    kindConfig.getKindChecker(xcfa)
+                } else if (backend == Backend.IMC) {
+                    val kindConfig = parseIMCConfigFromCli()
+                    kindConfig.getIMCChecker(xcfa)
+                } else {
+                    error("Backend $backend not supported")
+                }
+                checker.check(null)
             }
-            val result = checker.check(null)
-            logger.write(Logger.Level.RESULT, result.toString() + "\n")
-        }
+        // post verification
+        postVerificationLogging(safetyResult, parseContext)
+        logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
     }
 
     private fun runDirect(xcfa: XCFA, config: XcfaCegarConfig, logger: ConsoleLogger) =
@@ -539,7 +521,35 @@ class XcfaCli(private val args: Array<String>) {
         }
     } else ErrorDetection.ERROR_LOCATION
 
-    private fun parseConfigFromCli(parseContext: ParseContext): XcfaCegarConfig {
+    private fun parseIMCConfigFromCli(): XcfaImcConfig {
+        val imcConfig = XcfaImcConfig()
+        try {
+            JCommander.newBuilder().addObject(imcConfig).programName(JAR_NAME).build()
+                .parse(*remainingFlags.toTypedArray())
+        } catch (ex: ParameterException) {
+            println("Invalid parameters, details:")
+            ex.printStackTrace()
+            ex.usage()
+            exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        return imcConfig
+    }
+
+    private fun parseKindConfigFromCli(): XcfaKindConfig {
+        val kindConfig = XcfaKindConfig()
+        try {
+            JCommander.newBuilder().addObject(kindConfig).programName(JAR_NAME).build()
+                .parse(*remainingFlags.toTypedArray())
+        } catch (ex: ParameterException) {
+            println("Invalid parameters, details:")
+            ex.printStackTrace()
+            ex.usage()
+            exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        return kindConfig
+    }
+
+    private fun parseCEGARConfigFromCli(parseContext: ParseContext): XcfaCegarConfig {
         val cegarConfig = XcfaCegarConfig()
         try {
             JCommander.newBuilder().addObject(cegarConfig).programName(JAR_NAME).build()
