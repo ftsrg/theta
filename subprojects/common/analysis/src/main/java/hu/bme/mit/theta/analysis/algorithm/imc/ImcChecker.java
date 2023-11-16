@@ -1,4 +1,5 @@
 package hu.bme.mit.theta.analysis.algorithm.imc;
+
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.MonolithicTransFunc;
@@ -27,7 +28,7 @@ import java.util.function.Function;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
 
 
-public class ImcChecker<S  extends ExprState, A extends StmtAction> implements SafetyChecker<S, A, UnitPrec> {
+public class ImcChecker<S extends ExprState, A extends StmtAction> implements SafetyChecker<S, A, UnitPrec> {
     final Expr<BoolType> trans;
     final Expr<BoolType> init;
     final Expr<BoolType> prop;
@@ -42,7 +43,7 @@ public class ImcChecker<S  extends ExprState, A extends StmtAction> implements S
     public ImcChecker(MonolithicTransFunc transFunc,
                       int upperBound,
                       ItpSolver solver,
-                      Function<Valuation,S> valToState,
+                      Function<Valuation, S> valToState,
                       Collection<VarDecl<?>> vars,
                       boolean interpolateForward1) {
         this.trans = transFunc.getTransExpr();
@@ -54,63 +55,62 @@ public class ImcChecker<S  extends ExprState, A extends StmtAction> implements S
         this.offset = transFunc.getOffsetIndexing();
         this.valToState = valToState;
         this.vars = vars;
-        interpolateForward =interpolateForward1;
+        interpolateForward = interpolateForward1;
     }
-
 
 
     @Override
     public SafetyResult<S, A> check(UnitPrec prec) {
-        int i=0;
-        var exprsFromStart=new ArrayList<>(List.of(PathUtils.unfold(init,VarIndexingFactory.indexing(0))));
+        int i = 0;
+        var exprsFromStart = new ArrayList<>(List.of(PathUtils.unfold(init, VarIndexingFactory.indexing(0))));
         var listOfIndexes = new ArrayList<>(List.of(firstIndexing));
 
         final ItpMarker a = solver.createMarker();
         final ItpMarker b = solver.createMarker();
         final ItpPattern pattern = solver.createBinPattern(a, b);
 
-        while(i<upperBound){
+        while (i < upperBound) {
             i++;
-            var newIndex = listOfIndexes.get(i-1).add(offset);
-            var expression = PathUtils.unfold(trans,listOfIndexes.get(i-1));
+            var newIndex = listOfIndexes.get(i - 1).add(offset);
+            var expression = PathUtils.unfold(trans, listOfIndexes.get(i - 1));
 
             exprsFromStart.add(expression);
             listOfIndexes.add(newIndex);
 
-            var unfoldedProp = Not(PathUtils.unfold(prop,newIndex));
+            var unfoldedProp = Not(PathUtils.unfold(prop, newIndex));
 
             solver.push();
-            solver.add(a,And(exprsFromStart.subList(0, 2)));
-            solver.add(b,And(And(exprsFromStart.subList(2, exprsFromStart.size())), unfoldedProp));
+            solver.add(a, And(exprsFromStart.subList(0, 2)));
+            solver.add(b, And(And(exprsFromStart.subList(2, exprsFromStart.size())), unfoldedProp));
 
 
             var img = exprsFromStart.get(0);
 
             var status = solver.check();
-            if(status.isSat()){
+            if (status.isSat()) {
                 S initial = null;
                 for (int j = 0; j < listOfIndexes.size(); j++) {
                     var valuation = PathUtils.extractValuation(solver.getModel(), listOfIndexes.get(j), vars);
 
                     S st = valToState.apply(valuation);
-                    if(initial == null)
+                    if (initial == null)
                         initial = st;
                 }
                 Trace<S, A> trace = Trace.of(List.of(initial), List.of());
-                return SafetyResult.unsafe(trace,ARG.create(null));
+                return SafetyResult.unsafe(trace, ARG.create(null));
             }
             // reached fixed point
-            while(status.isUnsat()){
+            while (status.isUnsat()) {
                 var interpolant = solver.getInterpolant(pattern);
-                var itpFormula = PathUtils.unfold(PathUtils.foldin(interpolant.eval(a), listOfIndexes.get(1)),listOfIndexes.get(0));
+                var itpFormula = PathUtils.unfold(PathUtils.foldin(interpolant.eval(a), listOfIndexes.get(1)), listOfIndexes.get(0));
                 solver.pop();
-                try (var pps = new WithPushPop(solver)){
-                    solver.add(a,And(itpFormula,Not(img)));
-                    if(solver.check().isUnsat()){
+                try (var pps = new WithPushPop(solver)) {
+                    solver.add(a, And(itpFormula, Not(img)));
+                    if (solver.check().isUnsat()) {
                         return SafetyResult.safe(ARG.create((state1, state2) -> false));
                     }
                 }
-                img = Or(img,itpFormula);
+                img = Or(img, itpFormula);
 
                 solver.push();
                 solver.add(a, And(itpFormula, exprsFromStart.get(1)));

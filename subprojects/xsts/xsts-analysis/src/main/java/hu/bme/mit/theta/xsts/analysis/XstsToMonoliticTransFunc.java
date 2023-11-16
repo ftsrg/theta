@@ -23,9 +23,9 @@ import java.util.function.Function;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 public class XstsToMonoliticTransFunc extends AbstractMonolithicTransFunc {
-    private XstsToMonoliticTransFunc(XSTS xsts){
+    private XstsToMonoliticTransFunc(XSTS xsts) {
         final StmtUnfoldResult initUnfoldResult = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
-        initExpr  = And(And(initUnfoldResult.getExprs()), xsts.getInitFormula());
+        initExpr = And(And(initUnfoldResult.getExprs()), xsts.getInitFormula());
         firstIndex = initUnfoldResult.getIndexing();
         final var envTran = Stmts.SequenceStmt(List.of(xsts.getEnv(), xsts.getTran()));
         final StmtUnfoldResult envTranUnfoldResult = StmtUtils.toExpr(envTran, VarIndexingFactory.indexing(0));
@@ -34,7 +34,8 @@ public class XstsToMonoliticTransFunc extends AbstractMonolithicTransFunc {
         propExpr = xsts.getProp();
 
     }
-    public static MonolithicTransFunc create(XSTS xsts){
+
+    public static MonolithicTransFunc create(XSTS xsts) {
         return new XstsToMonoliticTransFunc(xsts);
     }
 }

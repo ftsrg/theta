@@ -83,13 +83,16 @@ class XcfaCli(private val args: Array<String>) {
 
     //////////// CONFIGURATION OPTIONS BEGIN ////////////
     //////////// input task ////////////
-    public enum class Algorithm{
+    public enum class Algorithm {
+
         CEGAR,
         KINDUCTION,
         IMC
     }
+
     @Parameter(names = ["--algorithm"], description = "Algorithm")
     var algorithm: Algorithm = Algorithm.CEGAR
+
     @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
     var input: File? = null
 
@@ -248,7 +251,7 @@ class XcfaCli(private val args: Array<String>) {
         stopwatch.reset().start()
 
 
-        if(algorithm == Algorithm.CEGAR) {
+        if (algorithm == Algorithm.CEGAR) {
             logger.write(Logger.Level.INFO,
                 "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
             registerAllSolverManagers(solverHome, logger)
@@ -262,13 +265,13 @@ class XcfaCli(private val args: Array<String>) {
             logger.write(Logger.Level.INFO, "Parsed config (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
             stopwatch.reset().start()
             val safetyResult: SafetyResult<*, *> =
-                    when (strategy) {
-                        Strategy.DIRECT -> runDirect(xcfa, config, logger)
-                        Strategy.SERVER -> runServer(xcfa, config, logger, parseContext, argdebug)
-                        Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
-                        Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug,
-                            argdebug)
-                    }
+                when (strategy) {
+                    Strategy.DIRECT -> runDirect(xcfa, config, logger)
+                    Strategy.SERVER -> runServer(xcfa, config, logger, parseContext, argdebug)
+                    Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
+                    Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug,
+                        argdebug)
+                }
             // post verification
             postVerificationLogging(safetyResult, parseContext)
             logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
@@ -281,10 +284,12 @@ class XcfaCli(private val args: Array<String>) {
                     getSolver(concretizerSolver, validateConcretizerSolver).createSolver(), ExplState::of,
                     ExprUtils.getVars(transFunc.transExpr))
             } else {
-                ImcChecker<ExplState, StmtAction>(transFunc, Int.MAX_VALUE, getSolver(concretizerSolver, validateConcretizerSolver).createItpSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr), true)
+                ImcChecker<ExplState, StmtAction>(transFunc, Int.MAX_VALUE,
+                    getSolver(concretizerSolver, validateConcretizerSolver).createItpSolver(), ExplState::of,
+                    ExprUtils.getVars(transFunc.transExpr), true)
             }
             val result = checker.check(null)
-            logger.write(Logger.Level.RESULT,result.toString() + "\n")
+            logger.write(Logger.Level.RESULT, result.toString() + "\n")
         }
     }
 

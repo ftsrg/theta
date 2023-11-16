@@ -80,11 +80,11 @@ public class CfaCli {
     private static final String JAR_NAME = "theta-cfa-cli.jar";
     private final String[] args;
     private final TableWriter writer;
-	@Parameter(names = {"--algorithm"}, description = "Algorithm")
-	Algorithm algorithm = Algorithm.CEGAR;
+    @Parameter(names = {"--algorithm"}, description = "Algorithm")
+    Algorithm algorithm = Algorithm.CEGAR;
 
-	@Parameter(names = "--domain", description = "Abstract domain")
-	Domain domain = Domain.PRED_CART;
+    @Parameter(names = "--domain", description = "Abstract domain")
+    Domain domain = Domain.PRED_CART;
 
     @Parameter(names = "--refinement", description = "Refinement strategy")
     Refinement refinement = Refinement.SEQ_ITP;
@@ -236,7 +236,7 @@ public class CfaCli {
                 refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
             }
 
-			final SafetyResult<?, ?> status;
+            final SafetyResult<?, ?> status;
             if (algorithm == Algorithm.CEGAR) {
                 final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
                 status = check(configuration);
@@ -254,18 +254,18 @@ public class CfaCli {
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();
             } else {
-				throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
-			}
+                throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+            }
 
-			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
-				writeCex(status.asUnsafe());
-			}
-		} catch (final Throwable ex) {
-			printError(ex);
-			System.exit(1);
-		}
-	}
+            printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
+            if (status.isUnsafe() && cexfile != null) {
+                writeCex(status.asUnsafe());
+            }
+        } catch (final Throwable ex) {
+            printError(ex);
+            System.exit(1);
+        }
+    }
 
     private void printHeader() {
         Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
@@ -308,27 +308,27 @@ public class CfaCli {
         }
     }
 
-	private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
-		final CegarStatistics stats = (CegarStatistics)
-				status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
-		if (benchmarkMode) {
-			writer.cell(status.isSafe());
-			writer.cell(totalTimeMs);
-			writer.cell(stats.getAlgorithmTimeMs());
-			writer.cell(stats.getAbstractorTimeMs());
-			writer.cell(stats.getRefinerTimeMs());
-			writer.cell(stats.getIterations());
-			writer.cell(status.getArg().size());
-			writer.cell(status.getArg().getDepth());
-			writer.cell(status.getArg().getMeanBranchingFactor());
-			if (status.isUnsafe()) {
-				writer.cell(status.asUnsafe().getTrace().length() + "");
-			} else {
-				writer.cell("");
-			}
-			writer.newRow();
-		}
-	}
+    private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
+        if (benchmarkMode) {
+            writer.cell(status.isSafe());
+            writer.cell(totalTimeMs);
+            writer.cell(stats.getAlgorithmTimeMs());
+            writer.cell(stats.getAbstractorTimeMs());
+            writer.cell(stats.getRefinerTimeMs());
+            writer.cell(stats.getIterations());
+            writer.cell(status.getArg().size());
+            writer.cell(status.getArg().getDepth());
+            writer.cell(status.getArg().getMeanBranchingFactor());
+            if (status.isUnsafe()) {
+                writer.cell(status.asUnsafe().getTrace().length() + "");
+            } else {
+                writer.cell("");
+            }
+            writer.newRow();
+        }
+    }
 
     private void printError(final Throwable ex) {
         final String message = ex.getMessage() == null ? "" : ex.getMessage();
