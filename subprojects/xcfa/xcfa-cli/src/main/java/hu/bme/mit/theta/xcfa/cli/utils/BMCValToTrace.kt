@@ -33,12 +33,12 @@ fun valToAction(xcfa: XCFA, val1: Valuation, val2: Valuation): XcfaAction {
     val val2Map = val2.toMap()
     var i = 0
     val map: MutableMap<XcfaLocation, Int> = HashMap()
-    for (x in xcfa.procedures.first().locs) {
+    for (x in xcfa.procedures.first { it.name == "main" }.locs) {
         map[x] = i++
     }
     return XcfaAction(
         pid = 0,
-        edge = xcfa.procedures.first().edges.first { edge ->
+        edge = xcfa.procedures.first { it.name == "main" }.edges.first { edge ->
             map[edge.source] == (val1Map[val1Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt() &&
                 map[edge.target] == (val2Map[val2Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()
         })
@@ -48,7 +48,7 @@ fun valToState(xcfa: XCFA, val1: Valuation): XcfaState<ExplState> {
     val valMap = val1.toMap()
     var i = 0
     val map: MutableMap<Int, XcfaLocation> = HashMap()
-    for (x in xcfa.procedures.first().locs) {
+    for (x in xcfa.procedures.first { it.name == "main" }.locs) {
         map[i++] = x
     }
     return XcfaState(
