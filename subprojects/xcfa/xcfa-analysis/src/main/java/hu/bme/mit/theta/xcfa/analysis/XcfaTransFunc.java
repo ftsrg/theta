@@ -34,32 +34,33 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class XcfaTransFunc extends AbstractMonolithicTransFunc {
-    private XcfaTransFunc(XCFA xcfa){
-            Preconditions.checkArgument(xcfa.getInitProcedures().size() == 1);
-            var proc = xcfa.getInitProcedures().stream().findFirst().orElse(null).getFirst();
-            assert proc != null;
-            Preconditions.checkArgument(proc.getEdges().stream().map(UtilsKt::getFlatLabels).noneMatch(it -> it.stream().anyMatch(i -> !(i instanceof StmtLabel))));
-            Preconditions.checkArgument(proc.getErrorLoc().isPresent());
-            int i=0;
-            final Map<XcfaLocation,Integer> map = new HashMap<>();
-            for(var x : proc.getLocs()){
-                map.put(x,i++);
-            }
-            var locVar = Decls.Var("loc",Int());
-            List<Stmt> tranList = proc.getEdges().stream().map(e-> SequenceStmt.of(List.of(
-                    AssumeStmt.of(Eq(locVar.getRef(),Int(map.get(e.getSource())))),
-                    e.getLabel().toStmt(),
-                    AssignStmt.of(locVar, Int(map.get(e.getTarget())))
-            ))).collect(Collectors.toList());
-            final var trans = NonDetStmt.of(tranList);
-            var transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0));
-            transExpr = And(transUnfold.getExprs());
-            initExpr = Eq(locVar.getRef(), Int(map.get(proc.getInitLoc())));
-            firstIndex = VarIndexingFactory.indexing(0);
-            offsetIndex = transUnfold.getIndexing();
-            propExpr = Neq(locVar.getRef(), Int(map.get(proc.getErrorLoc().get())));
+    private XcfaTransFunc(XCFA xcfa) {
+        Preconditions.checkArgument(xcfa.getInitProcedures().size() == 1);
+        var proc = xcfa.getInitProcedures().stream().findFirst().orElse(null).getFirst();
+        assert proc != null;
+        Preconditions.checkArgument(proc.getEdges().stream().map(UtilsKt::getFlatLabels).noneMatch(it -> it.stream().anyMatch(i -> !(i instanceof StmtLabel))));
+        Preconditions.checkArgument(proc.getErrorLoc().isPresent());
+        int i = 0;
+        final Map<XcfaLocation, Integer> map = new HashMap<>();
+        for (var x : proc.getLocs()) {
+            map.put(x, i++);
+        }
+        var locVar = Decls.Var("loc", Int());
+        List<Stmt> tranList = proc.getEdges().stream().map(e -> SequenceStmt.of(List.of(
+                AssumeStmt.of(Eq(locVar.getRef(), Int(map.get(e.getSource())))),
+                e.getLabel().toStmt(),
+                AssignStmt.of(locVar, Int(map.get(e.getTarget())))
+        ))).collect(Collectors.toList());
+        final var trans = NonDetStmt.of(tranList);
+        var transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0));
+        transExpr = And(transUnfold.getExprs());
+        initExpr = Eq(locVar.getRef(), Int(map.get(proc.getInitLoc())));
+        firstIndex = VarIndexingFactory.indexing(0);
+        offsetIndex = transUnfold.getIndexing();
+        propExpr = Neq(locVar.getRef(), Int(map.get(proc.getErrorLoc().get())));
     }
-    public static MonolithicTransFunc create(XCFA xcfa){
-            return new XcfaTransFunc(xcfa);
+
+    public static MonolithicTransFunc create(XCFA xcfa) {
+        return new XcfaTransFunc(xcfa);
     }
 }

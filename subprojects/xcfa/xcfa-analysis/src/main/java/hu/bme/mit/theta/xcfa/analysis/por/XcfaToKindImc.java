@@ -48,30 +48,30 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 
 public class XcfaToKindImc {
-     Expr<BoolType> transExpr;
-     Expr<BoolType> initExpr;
-     Expr<BoolType> propExpr;
-     int upperBound;
-     SolverFactory solverFactory1;
-     Set<VarDecl<?>> vars;
-     StmtUnfoldResult transUnfold;
-    
-     
-    public XcfaToKindImc(XCFA xcfa,int bound,SolverFactory solverFactory) {
+    Expr<BoolType> transExpr;
+    Expr<BoolType> initExpr;
+    Expr<BoolType> propExpr;
+    int upperBound;
+    SolverFactory solverFactory1;
+    Set<VarDecl<?>> vars;
+    StmtUnfoldResult transUnfold;
+
+
+    public XcfaToKindImc(XCFA xcfa, int bound, SolverFactory solverFactory) {
         Preconditions.checkArgument(xcfa.getInitProcedures().size() == 1);
 
         var proc = xcfa.getInitProcedures().stream().findFirst().orElse(null).getFirst();
         assert proc != null;
         Preconditions.checkArgument(proc.getEdges().stream().map(UtilsKt::getFlatLabels).noneMatch(it -> it.stream().anyMatch(i -> !(i instanceof StmtLabel))));
         Preconditions.checkArgument(proc.getErrorLoc().isPresent());
-        int i=0;
-        final Map<XcfaLocation,Integer> map = new HashMap<>();
-        for(var x : proc.getLocs()){
-            map.put(x,i++);
+        int i = 0;
+        final Map<XcfaLocation, Integer> map = new HashMap<>();
+        for (var x : proc.getLocs()) {
+            map.put(x, i++);
         }
-        var locVar = Decls.Var("loc",Int());
-        List<Stmt> tranList = proc.getEdges().stream().map(e-> SequenceStmt.of(List.of(
-                AssumeStmt.of(Eq(locVar.getRef(),Int(map.get(e.getSource())))),
+        var locVar = Decls.Var("loc", Int());
+        List<Stmt> tranList = proc.getEdges().stream().map(e -> SequenceStmt.of(List.of(
+                AssumeStmt.of(Eq(locVar.getRef(), Int(map.get(e.getSource())))),
                 e.getLabel().toStmt(),
                 AssignStmt.of(locVar, Int(map.get(e.getTarget())))
         ))).collect(Collectors.toList());

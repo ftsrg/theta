@@ -82,7 +82,7 @@ public class XstsCli {
     private final TableWriter writer;
 
     @Parameter(names = {"--algorithm"}, description = "Algorithm")
-    Algorithm  algorithm = Algorithm.CEGAR;
+    Algorithm algorithm = Algorithm.CEGAR;
 
     @Parameter(names = {"--domain"}, description = "Abstract domain")
     Domain domain = Domain.PRED_CART;

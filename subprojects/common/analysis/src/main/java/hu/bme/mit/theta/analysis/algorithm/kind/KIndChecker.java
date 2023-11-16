@@ -44,7 +44,7 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 
-public class KIndChecker<S  extends ExprState, A extends ExprAction> implements SafetyChecker<S, A, UnitPrec> {
+public class KIndChecker<S extends ExprState, A extends ExprAction> implements SafetyChecker<S, A, UnitPrec> {
     final Expr<BoolType> trans;
     final Expr<BoolType> init;
     final Expr<BoolType> prop;
@@ -61,7 +61,7 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
                        int upperBound,
                        Solver solver1,
                        Solver solver2,
-                       Function<Valuation,S> valToState,
+                       Function<Valuation, S> valToState,
                        Collection<VarDecl<?>> vars) {
         this.trans = transFunc.getTransExpr();
         this.init = transFunc.getInitExpr();
@@ -76,23 +76,22 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
     }
 
 
-
     @Override
     public SafetyResult<S, A> check(UnitPrec prec) {
         //var trans = action.toExpr();
         //var offset = action.nextIndexing();
 
-        int i=0;
+        int i = 0;
         var currIndex = firstIndexing;
 
 
-        var exprsFromStart=new ArrayList<Expr<BoolType>>();
-        var exprsForInductivity=new ArrayList<Expr<BoolType>>();
+        var exprsFromStart = new ArrayList<Expr<BoolType>>();
+        var exprsForInductivity = new ArrayList<Expr<BoolType>>();
         var listOfIndexes = new ArrayList<VarIndexing>();
 
         solver1.add(PathUtils.unfold(init, VarIndexingFactory.indexing(0))); // VarIndexingFactory.indexing(0)?
-        var eqList= new ArrayList<Expr<BoolType>>();
-        while(i<upperBound){
+        var eqList = new ArrayList<Expr<BoolType>>();
+        while (i < upperBound) {
 
 
             solver1.add(PathUtils.unfold(trans, currIndex));
@@ -125,30 +124,30 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
 
             if (solver1.check().isUnsat()) {
 
-                    return SafetyResult.safe(ARG.create(null));
-                }
+                return SafetyResult.safe(ARG.create(null));
+            }
             solver1.pop();
 
             // Counterexample feasibility check
 
-                // I1 and T1-2 and T2-3 and ... and Tk-1-k
+            // I1 and T1-2 and T2-3 and ... and Tk-1-k
 
-                // Not Pk
+            // Not Pk
             solver1.push();
             solver1.add(PathUtils.unfold(Not(prop), currIndex));
 
             if (solver1.check().isSat()) {
-                    S initial = null;
-                    for (int j = 0; j < listOfIndexes.size(); j++) {
-                        var valuation = PathUtils.extractValuation(solver1.getModel(), listOfIndexes.get(j), vars);
+                S initial = null;
+                for (int j = 0; j < listOfIndexes.size(); j++) {
+                    var valuation = PathUtils.extractValuation(solver1.getModel(), listOfIndexes.get(j), vars);
 
-                        S st = valToState.apply(valuation);
-                        if(initial == null)
-                            initial = st;
-                    }
-                    Trace<S, A> trace = Trace.of(List.of(initial), List.of());
-                    return SafetyResult.unsafe(trace,ARG.create(null));
+                    S st = valToState.apply(valuation);
+                    if (initial == null)
+                        initial = st;
                 }
+                Trace<S, A> trace = Trace.of(List.of(initial), List.of());
+                return SafetyResult.unsafe(trace, ARG.create(null));
+            }
             solver1.pop();
 
 
@@ -161,8 +160,8 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
             solver2.add(PathUtils.unfold(Not(prop), currIndex.sub(firstIndexing)));
 
             if (solver2.check().isUnsat()) {
-                    return SafetyResult.safe(ARG.create(null));
-                }
+                return SafetyResult.safe(ARG.create(null));
+            }
             solver2.pop();
             i++;
         }

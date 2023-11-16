@@ -77,18 +77,18 @@ public class StsCli {
     private final TableWriter writer;
 
     enum Algorithm {
-		CEGAR,
-		KINDUCTION,
+        CEGAR,
+        KINDUCTION,
         IMC
-	}
+    }
 
-	@Parameter(names = {"--domain"}, description = "Abstract domain")
-	Domain domain = Domain.PRED_CART;
+    @Parameter(names = {"--domain"}, description = "Abstract domain")
+    Domain domain = Domain.PRED_CART;
 
     @Parameter(names = {"--algorithm"}, description = "Algorithm")
-	Algorithm algorithm = Algorithm.CEGAR;
+    Algorithm algorithm = Algorithm.CEGAR;
 
-	@Parameter(names = {"--refinement"}, description = "Refinement strategy")
+    @Parameter(names = {"--refinement"}, description = "Refinement strategy")
     Refinement refinement = Refinement.SEQ_ITP;
 
     @Parameter(names = {"--search"}, description = "Search strategy")
@@ -158,14 +158,14 @@ public class StsCli {
             return;
         }
 
-		try {
-			final Stopwatch sw = Stopwatch.createStarted();
-			final STS sts = loadModel();
+        try {
+            final Stopwatch sw = Stopwatch.createStarted();
+            final STS sts = loadModel();
 
-			SafetyResult<?, ?> status = null;
+            SafetyResult<?, ?> status = null;
             if (algorithm.equals(Algorithm.CEGAR)) {
-				final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-				status = check(configuration);
+                final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
+                status = check(configuration);
             } else if (algorithm.equals(Algorithm.KINDUCTION)) {
                 var transFunc = StsToMonoliticTransFunc.create(sts);
                 var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, sts.getVars());
@@ -175,16 +175,16 @@ public class StsCli {
                 var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, sts.getVars(), true);
                 status = checker.check(null);
             }
-			sw.stop();
-			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
-				writeCex(sts, status.asUnsafe());
-			}
-		} catch (final Throwable ex) {
-			printError(ex);
-			System.exit(1);
-		}
-	}
+            sw.stop();
+            printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
+            if (status.isUnsafe() && cexfile != null) {
+                writeCex(sts, status.asUnsafe());
+            }
+        } catch (final Throwable ex) {
+            printError(ex);
+            System.exit(1);
+        }
+    }
 
     private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
         try {
