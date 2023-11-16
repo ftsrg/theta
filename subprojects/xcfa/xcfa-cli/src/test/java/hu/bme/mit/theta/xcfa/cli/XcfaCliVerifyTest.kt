@@ -57,6 +57,28 @@ class XcfaCliVerifyTest {
         }
 
         @JvmStatic
+        fun singleThreadedCFiles(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
+                Arguments.of("/c/litmustest/singlethread/01cast.c", null),
+                Arguments.of("/c/litmustest/singlethread/02types.c", null),
+                Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
+                Arguments.of("/c/litmustest/singlethread/04real.c", null),
+                Arguments.of("/c/litmustest/singlethread/06arrays.c", null),
+                Arguments.of("/c/litmustest/singlethread/07arrayinit.c", null),
+                Arguments.of("/c/litmustest/singlethread/08vararray.c", null),
+                Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
+                Arguments.of("/c/litmustest/singlethread/14ushort.c", null),
+                Arguments.of("/c/litmustest/singlethread/15addition.c", null),
+                Arguments.of("/c/litmustest/singlethread/16loop.c", null),
+                Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
+                Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
+                Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
+                Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+            )
+        }
+
+        @JvmStatic
         fun cFilesShort(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of("/c/dekker.i", "--search DFS --por-level SPOR"),
@@ -164,14 +186,13 @@ class XcfaCliVerifyTest {
     }
 
     @ParameterizedTest
-    @MethodSource("cFiles")
+    @MethodSource("singleThreadedCFiles")
     fun testCVerifyKind(filePath: String, extraArgs: String?) {
         val params = arrayOf(
-            "--algorithm", "KINDUCTION",
+            "--backend", "KIND",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
-            *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
             "--debug"
         )
         main(params)

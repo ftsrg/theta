@@ -205,7 +205,7 @@ public class XstsCli {
                 sw.stop();
             } else if (algorithm.equals(Algorithm.KINDUCTION)) {
                 var transFunc = XstsToMonoliticTransFunc.create(xsts);
-                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, inductionStartBound, inductionFrequency, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
+                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();

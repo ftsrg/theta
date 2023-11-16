@@ -168,7 +168,7 @@ public class StsCli {
                 status = check(configuration);
             } else if (algorithm.equals(Algorithm.KINDUCTION)) {
                 var transFunc = StsToMonoliticTransFunc.create(sts);
-                var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, inductionStartBound, inductionFrequency, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, sts.getVars());
+                var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, sts.getVars());
                 status = checker.check(null);
             } else if (algorithm.equals(Algorithm.IMC)) {
                 var transFunc = StsToMonoliticTransFunc.create(sts);
