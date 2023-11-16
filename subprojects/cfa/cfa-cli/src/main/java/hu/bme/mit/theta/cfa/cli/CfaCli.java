@@ -243,13 +243,13 @@ public class CfaCli {
                 sw.stop();
             } else if (algorithm == Algorithm.KINDUCTION) {
                 var transFunc = CfaToMonoliticTransFunc.create(cfa);
-                var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, cfa.getVars());
+                var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, null, cfa.getVars());
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();
             } else if (algorithm == Algorithm.IMC) {
                 var transFunc = CfaToMonoliticTransFunc.create(cfa);
-                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, cfa.getVars());
+                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, cfa.getVars(), null);
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();
