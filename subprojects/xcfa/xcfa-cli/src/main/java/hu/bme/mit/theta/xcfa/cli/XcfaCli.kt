@@ -48,8 +48,8 @@ import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaMonolithicTransFunc
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.XcfaTransFunc
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
@@ -276,7 +276,7 @@ class XcfaCli(private val args: Array<String>) {
             postVerificationLogging(safetyResult, parseContext)
             logger.write(Logger.Level.RESULT, safetyResult.toString() + "\n")
         } else {
-            val transFunc = XcfaTransFunc.create(xcfa)
+            val transFunc = XcfaMonolithicTransFunc.create(xcfa)
             registerAllSolverManagers(solverHome, logger)
             val checker = if (algorithm == Algorithm.KINDUCTION) {
                 KIndChecker(transFunc, Int.MAX_VALUE,
