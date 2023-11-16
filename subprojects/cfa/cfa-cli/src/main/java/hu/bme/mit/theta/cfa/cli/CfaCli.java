@@ -15,32 +15,23 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.*;
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.cfa.analysis.CfaToMonoliticTransFunc;
+import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Algorithm;
@@ -63,21 +54,23 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.stmt.NonDetStmt;
-import hu.bme.mit.theta.core.stmt.Stmts;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
-import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
@@ -250,7 +243,7 @@ public class CfaCli {
                 sw.stop();
             } else if (algorithm == Algorithm.KINDUCTION) {
                 var transFunc = CfaToMonoliticTransFunc.create(cfa);
-                var checker = new KIndChecker2<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, cfa.getVars());
+                var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, cfa.getVars());
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();

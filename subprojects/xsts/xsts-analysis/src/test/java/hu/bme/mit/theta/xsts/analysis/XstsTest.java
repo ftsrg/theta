@@ -16,26 +16,14 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.Stmts;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
-import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,12 +32,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
