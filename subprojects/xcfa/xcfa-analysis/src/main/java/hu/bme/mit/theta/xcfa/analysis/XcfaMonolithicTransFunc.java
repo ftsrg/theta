@@ -53,7 +53,7 @@ public class XcfaMonolithicTransFunc extends AbstractMonolithicTransFunc {
         for (var x : proc.getLocs()) {
             map.put(x, i++);
         }
-        var locVar = Decls.Var("loc", Int());
+        var locVar = Decls.Var("__loc_", Int());
         List<Stmt> tranList = proc.getEdges().stream().map(e -> SequenceStmt.of(List.of(
                 AssumeStmt.of(Eq(locVar.getRef(), Int(map.get(e.getSource())))),
                 e.getLabel().toStmt(),
