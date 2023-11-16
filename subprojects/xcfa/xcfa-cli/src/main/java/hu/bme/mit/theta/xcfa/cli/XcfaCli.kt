@@ -23,15 +23,12 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker2
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.StmtAction
-import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
@@ -49,18 +46,16 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.XcfaTransFunc
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
-import hu.bme.mit.theta.xcfa.analysis.XcfaTransFunc
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio
-import hu.bme.mit.theta.xcfa.analysis.por.XcfaToKindImc
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -269,9 +264,10 @@ class XcfaCli(private val args: Array<String>) {
             val safetyResult: SafetyResult<*, *> =
                     when (strategy) {
                         Strategy.DIRECT -> runDirect(xcfa, config, logger)
-                        Strategy.SERVER -> runServer(xcfa, config, logger, parseContext)
+                        Strategy.SERVER -> runServer(xcfa, config, logger, parseContext, argdebug)
                         Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
-                        Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug)
+                        Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug,
+                            argdebug)
                     }
             // post verification
             postVerificationLogging(safetyResult, parseContext)
@@ -280,7 +276,10 @@ class XcfaCli(private val args: Array<String>) {
             val transFunc = XcfaTransFunc.create(xcfa)
             registerAllSolverManagers(solverHome, logger)
             val checker = if (algorithm == Algorithm.KINDUCTION) {
-                KIndChecker2(transFunc, Int.MAX_VALUE, getSolver(concretizerSolver, validateConcretizerSolver).createSolver(), getSolver(concretizerSolver, validateConcretizerSolver).createSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr))
+                KIndChecker(transFunc, Int.MAX_VALUE,
+                    getSolver(concretizerSolver, validateConcretizerSolver).createSolver(),
+                    getSolver(concretizerSolver, validateConcretizerSolver).createSolver(), ExplState::of,
+                    ExprUtils.getVars(transFunc.transExpr))
             } else {
                 ImcChecker<ExplState, StmtAction>(transFunc, Int.MAX_VALUE, getSolver(concretizerSolver, validateConcretizerSolver).createItpSolver(), ExplState::of, ExprUtils.getVars(transFunc.transExpr), true)
             }

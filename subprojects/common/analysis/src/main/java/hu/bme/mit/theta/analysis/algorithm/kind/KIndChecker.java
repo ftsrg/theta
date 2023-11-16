@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2023 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.analysis.algorithm.kind;
 
 
@@ -6,7 +22,6 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.MonolithicTransFunc;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -18,7 +33,6 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +49,8 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
     final Expr<BoolType> init;
     final Expr<BoolType> prop;
     final int upperBound;
-    Solver solver;
+    Solver solver1;
+    Solver solver2;
     final VarIndexing firstIndexing;
     final VarIndexing offset;
     final Function<Valuation, S> valToState;
@@ -44,14 +59,16 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
 
     public KIndChecker(MonolithicTransFunc transFunc,
                        int upperBound,
-                       Solver solver,
+                       Solver solver1,
+                       Solver solver2,
                        Function<Valuation,S> valToState,
                        Collection<VarDecl<?>> vars) {
         this.trans = transFunc.getTransExpr();
         this.init = transFunc.getInitExpr();
         this.prop = transFunc.getPropExpr();
         this.upperBound = upperBound;
-        this.solver = solver;
+        this.solver1 = solver1;
+        this.solver2 = solver2;
         this.firstIndexing = transFunc.getInitIndexing();
         this.offset = transFunc.getOffsetIndexing();
         this.valToState = valToState;
@@ -73,55 +90,57 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
         var exprsForInductivity=new ArrayList<Expr<BoolType>>();
         var listOfIndexes = new ArrayList<VarIndexing>();
 
-        exprsFromStart.add(PathUtils.unfold(init,VarIndexingFactory.indexing(0))); // VarIndexingFactory.indexing(0)?
+        solver1.add(PathUtils.unfold(init, VarIndexingFactory.indexing(0))); // VarIndexingFactory.indexing(0)?
         var eqList= new ArrayList<Expr<BoolType>>();
         while(i<upperBound){
 
 
-                exprsFromStart.add(PathUtils.unfold(trans,currIndex));
+            solver1.add(PathUtils.unfold(trans, currIndex));
 
-                // külső lista üres
-                var finalList= new ArrayList<Expr<BoolType>>();
+            // külső lista üres
+            var finalList = new ArrayList<Expr<BoolType>>();
 
-                for(int j = 0; j < listOfIndexes.size(); j++) {
-                    // új belső lista az adott indexű állapothoz
-                    var tempList = new ArrayList<Expr<BoolType>>();
-                    for (var v : vars) {
-                        // a mostani listához adom az Eq-et
-                        tempList.add(Eq(PathUtils.unfold(v.getRef(),currIndex), PathUtils.unfold(v.getRef(), listOfIndexes.get(j))));
-                    }
-                     finalList.add(Not(And(tempList)));
+            for (int j = 0; j < listOfIndexes.size(); j++) {
+                // új belső lista az adott indexű állapothoz
+                var tempList = new ArrayList<Expr<BoolType>>();
+                for (var v : vars) {
+                    // a mostani listához adom az Eq-et
+                    tempList.add(Eq(PathUtils.unfold(v.getRef(), currIndex), PathUtils.unfold(v.getRef(), listOfIndexes.get(j))));
                 }
-                eqList.addAll(finalList);
-                listOfIndexes.add(currIndex);
+                finalList.add(Not(And(tempList)));
+            }
+            eqList.addAll(finalList);
+            listOfIndexes.add(currIndex);
 
 
-                exprsForInductivity.add(PathUtils.unfold(prop,currIndex.sub(firstIndexing))); //0-ról indítva
-                exprsForInductivity.add(PathUtils.unfold(trans,currIndex.sub(firstIndexing)));
+            solver2.add(PathUtils.unfold(prop, currIndex.sub(firstIndexing))); //0-ról indítva
+            solver2.add(PathUtils.unfold(trans, currIndex.sub(firstIndexing)));
 
-                currIndex=currIndex.add(offset);
+            currIndex = currIndex.add(offset);
 
             // Checking loop free path of length i
-            try (var s = new WithPushPop(solver)) {
-                solver.add(And(exprsFromStart));
-                solver.add(eqList);
 
-                if(solver.check().isUnsat()){
-                    var x=0;
+            solver1.push();
+            solver1.add(eqList);
+
+            if (solver1.check().isUnsat()) {
+
                     return SafetyResult.safe(ARG.create(null));
                 }
-            }
-            // Counterexample feasibility check
-            try (var s = new WithPushPop(solver)) {
-                // I1 and T1-2 and T2-3 and ... and Tk-1-k
-                solver.add(And(exprsFromStart));
-                // Not Pk
-                solver.add(PathUtils.unfold(Not(prop),currIndex));
+            solver1.pop();
 
-                if (solver.check().isSat()) {
+            // Counterexample feasibility check
+
+                // I1 and T1-2 and T2-3 and ... and Tk-1-k
+
+                // Not Pk
+            solver1.push();
+            solver1.add(PathUtils.unfold(Not(prop), currIndex));
+
+            if (solver1.check().isSat()) {
                     S initial = null;
                     for (int j = 0; j < listOfIndexes.size(); j++) {
-                        var valuation = PathUtils.extractValuation(solver.getModel(), listOfIndexes.get(j), vars);
+                        var valuation = PathUtils.extractValuation(solver1.getModel(), listOfIndexes.get(j), vars);
 
                         S st = valToState.apply(valuation);
                         if(initial == null)
@@ -130,19 +149,21 @@ public class KIndChecker<S  extends ExprState, A extends ExprAction> implements 
                     Trace<S, A> trace = Trace.of(List.of(initial), List.of());
                     return SafetyResult.unsafe(trace,ARG.create(null));
                 }
-            }
+            solver1.pop();
+
 
             // Property k-inductivity check
-            try (var s = new WithPushPop(solver)) {
-                // P1 and T1-2 and P2 and ... and Tk-k+1
-                solver.add(And(exprsForInductivity));
-                // Not Pk+1
-                solver.add(PathUtils.unfold(Not(prop),currIndex.sub(firstIndexing)));
 
-                if (solver.check().isUnsat()) {
+            // P1 and T1-2 and P2 and ... and Tk-k+1
+
+            // Not Pk+1
+            solver2.push();
+            solver2.add(PathUtils.unfold(Not(prop), currIndex.sub(firstIndexing)));
+
+            if (solver2.check().isUnsat()) {
                     return SafetyResult.safe(ARG.create(null));
                 }
-            }
+            solver2.pop();
             i++;
         }
         return null;
