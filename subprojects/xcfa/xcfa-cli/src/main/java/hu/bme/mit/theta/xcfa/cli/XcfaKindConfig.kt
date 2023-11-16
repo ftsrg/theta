@@ -19,10 +19,12 @@ package hu.bme.mit.theta.xcfa.cli
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaMonolithicTransFunc
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.utils.valToAction
+import hu.bme.mit.theta.xcfa.cli.utils.valToState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 data class XcfaKindConfig(
@@ -49,16 +51,17 @@ data class XcfaKindConfig(
     var remainingFlags: MutableList<String> = ArrayList()
 ) {
 
-    fun getKindChecker(xcfa: XCFA): KIndChecker<ExprState, ExprAction> {
+    fun getKindChecker(xcfa: XCFA): KIndChecker<XcfaState<ExplState>, XcfaAction> {
         val transFunc = XcfaMonolithicTransFunc.create(xcfa)
-        return KIndChecker<ExprState, ExprAction>(
+        return KIndChecker<XcfaState<ExplState>, XcfaAction>(
             transFunc,
             maxBound,
             indMinBound,
             indFreq,
             getSolver(bmcSolver, validateBMCSolver).createSolver(),
             getSolver(indSolver, validateIndSolver).createSolver(),
-            ExplState::of,
+            { val1 -> valToState(xcfa, val1) },
+            { val1, val2 -> valToAction(xcfa, val1, val2) },
             ExprUtils.getVars(transFunc.transExpr))
     }
 

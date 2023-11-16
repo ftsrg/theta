@@ -37,6 +37,7 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -205,13 +206,13 @@ public class XstsCli {
                 sw.stop();
             } else if (algorithm.equals(Algorithm.KINDUCTION)) {
                 var transFunc = XstsToMonoliticTransFunc.create(xsts);
-                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
+                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), (val1, val2) -> XstsAction.create(SkipStmt.getInstance()), xsts.getVars());
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();
             } else if (algorithm.equals(Algorithm.IMC)) {
                 var transFunc = XstsToMonoliticTransFunc.create(xsts);
-                var checker = new ImcChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
+                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars(), null);
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();

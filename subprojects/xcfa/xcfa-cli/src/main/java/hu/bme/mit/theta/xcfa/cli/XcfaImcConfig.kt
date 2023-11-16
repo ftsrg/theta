@@ -19,10 +19,12 @@ package hu.bme.mit.theta.xcfa.cli
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaMonolithicTransFunc
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.utils.valToAction
+import hu.bme.mit.theta.xcfa.cli.utils.valToState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 data class XcfaImcConfig(
@@ -38,13 +40,14 @@ data class XcfaImcConfig(
     var remainingFlags: MutableList<String> = ArrayList()
 ) {
 
-    fun getIMCChecker(xcfa: XCFA, timeout: Int = 0): ImcChecker<ExprState, StmtAction> {
+    fun getIMCChecker(xcfa: XCFA, timeout: Int = 0): ImcChecker<XcfaState<ExplState>, XcfaAction> {
         val transFunc = XcfaMonolithicTransFunc.create(xcfa)
-        return ImcChecker<ExprState, StmtAction>(
+        return ImcChecker<XcfaState<ExplState>, XcfaAction>(
             transFunc,
             maxBound,
             getSolver(imcSolver, validateIMCSolver).createItpSolver(),
-            ExplState::of,
+            { val1 -> valToState(xcfa, val1) },
+            { val1, val2 -> valToAction(xcfa, val1, val2) },
             ExprUtils.getVars(transFunc.transExpr),
             timeout)
     }

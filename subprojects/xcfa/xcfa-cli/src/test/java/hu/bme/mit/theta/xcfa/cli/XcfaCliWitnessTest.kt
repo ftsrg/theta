@@ -39,7 +39,25 @@ class XcfaCliWitnessTest {
         @JvmStatic
         fun cFiles(): Stream<Arguments> {
             return Stream.of(
-                Arguments.of("/c/litmustest/singlethread/witness_test.c", listOf(
+                Arguments.of("/c/litmustest/singlethread/witness_test.c", null, listOf(
+                    WitnessEdge(
+                        startlineRange = Pair(5, 5),
+                        endlineRange = Pair(5, 5),
+                        startoffsetRange = Pair(79, 95),
+                        endoffsetRange = Pair(110, 125),
+                        assumption = Regex("i *== *-1"),
+                    ),
+                )),
+                Arguments.of("/c/litmustest/singlethread/witness_test.c", "--backend KIND", listOf(
+                    WitnessEdge(
+                        startlineRange = Pair(5, 5),
+                        endlineRange = Pair(5, 5),
+                        startoffsetRange = Pair(79, 95),
+                        endoffsetRange = Pair(110, 125),
+                        assumption = Regex("i *== *-1"),
+                    ),
+                )),
+                Arguments.of("/c/litmustest/singlethread/witness_test.c", "--backend IMC", listOf(
                     WitnessEdge(
                         startlineRange = Pair(5, 5),
                         endlineRange = Pair(5, 5),
@@ -55,11 +73,12 @@ class XcfaCliWitnessTest {
 
     @ParameterizedTest
     @MethodSource("cFiles")
-    fun testCWitness(filePath: String, expectedWitnessEdges: List<WitnessEdge>) {
+    fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
         val temp = createTempDirectory()
         val params = arrayOf(
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
+            *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
             "--stacktrace",
             "--output-results",
             "--output-directory", temp.absolutePathString(),

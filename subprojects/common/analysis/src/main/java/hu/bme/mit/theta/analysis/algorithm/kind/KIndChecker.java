@@ -36,7 +36,8 @@ import hu.bme.mit.theta.solver.Solver;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
@@ -51,11 +52,12 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
     private final int upperBound;
     private final int inductionStartBound;
     private final int inductionFrequency;
-    private Solver solver1;
-    private Solver solver2;
+    private final Solver solver1;
+    private final Solver solver2;
     private final VarIndexing firstIndexing;
     private final VarIndexing offset;
     private final Function<Valuation, S> valToState;
+    private final BiFunction<Valuation, Valuation, A> valsToAction;
     private final Collection<VarDecl<?>> vars;
 
 
@@ -66,6 +68,7 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
                        Solver solver1,
                        Solver solver2,
                        Function<Valuation, S> valToState,
+                       BiFunction<Valuation, Valuation, A> valsToAction,
                        Collection<VarDecl<?>> vars) {
         this.trans = transFunc.getTransExpr();
         this.init = transFunc.getInitExpr();
@@ -78,6 +81,7 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
         this.firstIndexing = transFunc.getInitIndexing();
         this.offset = transFunc.getOffsetIndexing();
         this.valToState = valToState;
+        this.valsToAction = valsToAction;
         this.vars = vars;
     }
 
@@ -109,6 +113,8 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
             eqList.addAll(finalList);
             listOfIndexes.add(currIndex);
 
+            var lastIndex = currIndex;
+
             currIndex = currIndex.add(offset);
 
             // Checking loop free path of length i
@@ -131,15 +137,23 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
             solver1.add(PathUtils.unfold(Not(prop), currIndex));
 
             if (solver1.check().isSat()) {
-                S initial = null;
-                for (int j = 0; j < listOfIndexes.size(); j++) {
-                    var valuation = PathUtils.extractValuation(solver1.getModel(), listOfIndexes.get(j), vars);
-
-                    S st = valToState.apply(valuation);
-                    if (initial == null)
-                        initial = st;
+                // otherwise trace is cut off before last action
+                listOfIndexes.add(currIndex);
+                var stateList = new LinkedList<S>();
+                var actionList = new LinkedList<A>();
+                if (valToState != null && valsToAction != null) {
+                    Valuation lastValuation = null;
+                    for (int j = 0; j < listOfIndexes.size(); j++) {
+                        VarIndexing listOfIndex = listOfIndexes.get(j);
+                        var valuation = PathUtils.extractValuation(solver1.getModel(), listOfIndex, vars);
+                        stateList.add(valToState.apply(valuation));
+                        if (j > 0) {
+                            actionList.add(valsToAction.apply(lastValuation, valuation));
+                        }
+                        lastValuation = valuation;
+                    }
                 }
-                Trace<S, A> trace = Trace.of(List.of(initial), List.of());
+                Trace<S, A> trace = Trace.of(stateList, actionList);
                 return SafetyResult.unsafe(trace, ARG.create(null));
             }
             solver1.pop();
@@ -148,8 +162,8 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
 
             // P1 and T1-2 and P2 and ... and Tk-k+1
 
-            solver2.add(PathUtils.unfold(prop, currIndex.sub(firstIndexing)));
-            solver2.add(PathUtils.unfold(trans, currIndex.sub(firstIndexing)));
+            solver2.add(PathUtils.unfold(prop, lastIndex.sub(firstIndexing)));
+            solver2.add(PathUtils.unfold(trans, lastIndex.sub(firstIndexing)));
 
             // Not Pk+1
             if (i >= inductionStartBound && (i - inductionStartBound) % inductionFrequency == 0) {

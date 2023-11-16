@@ -38,8 +38,10 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
@@ -52,10 +54,11 @@ public class ImcChecker<S extends ExprState, A extends StmtAction> implements Sa
     private final Expr<BoolType> init;
     private final Expr<BoolType> prop;
     private final int upperBound;
-    private ItpSolver solver;
+    private final ItpSolver solver;
     private final VarIndexing firstIndexing;
     private final VarIndexing offset;
     private final Function<Valuation, S> valToState;
+    private final BiFunction<Valuation, Valuation, A> valsToAction;
     private final Collection<VarDecl<?>> vars;
     private final int timeout;
 
@@ -63,14 +66,16 @@ public class ImcChecker<S extends ExprState, A extends StmtAction> implements Sa
                       int upperBound,
                       ItpSolver solver,
                       Function<Valuation, S> valToState,
-                      Collection<VarDecl<?>> vars) {
-        this(transFunc, upperBound, solver, valToState, vars, 0);
+                      Collection<VarDecl<?>> vars,
+                      BiFunction<Valuation, Valuation, A> valsToAction) {
+        this(transFunc, upperBound, solver, valToState, valsToAction, vars, 0);
     }
 
     public ImcChecker(MonolithicTransFunc transFunc,
                       int upperBound,
                       ItpSolver solver,
                       Function<Valuation, S> valToState,
+                      BiFunction<Valuation, Valuation, A> valsToAction,
                       Collection<VarDecl<?>> vars,
                       int timeout) {
         this.trans = transFunc.getTransExpr();
@@ -81,6 +86,7 @@ public class ImcChecker<S extends ExprState, A extends StmtAction> implements Sa
         this.firstIndexing = transFunc.getInitIndexing();
         this.offset = transFunc.getOffsetIndexing();
         this.valToState = valToState;
+        this.valsToAction = valsToAction;
         this.vars = vars;
         this.timeout = timeout;
     }
@@ -121,15 +127,21 @@ public class ImcChecker<S extends ExprState, A extends StmtAction> implements Sa
             }
 
             if (status.isSat()) {
-                S initial = null;
-                for (int j = 0; j < listOfIndexes.size(); j++) {
-                    var valuation = PathUtils.extractValuation(solver.getModel(), listOfIndexes.get(j), vars);
-
-                    S st = valToState.apply(valuation);
-                    if (initial == null)
-                        initial = st;
+                var stateList = new LinkedList<S>();
+                var actionList = new LinkedList<A>();
+                if (valToState != null && valsToAction != null) {
+                    Valuation lastValuation = null;
+                    for (int j = 0; j < listOfIndexes.size(); j++) {
+                        VarIndexing listOfIndex = listOfIndexes.get(j);
+                        var valuation = PathUtils.extractValuation(solver.getModel(), listOfIndex, vars);
+                        stateList.add(valToState.apply(valuation));
+                        if (j > 0) {
+                            actionList.add(valsToAction.apply(lastValuation, valuation));
+                        }
+                        lastValuation = valuation;
+                    }
                 }
-                Trace<S, A> trace = Trace.of(List.of(initial), List.of());
+                Trace<S, A> trace = Trace.of(stateList, actionList);
                 return SafetyResult.unsafe(trace, ARG.create(null));
             }
             // reached fixed point
