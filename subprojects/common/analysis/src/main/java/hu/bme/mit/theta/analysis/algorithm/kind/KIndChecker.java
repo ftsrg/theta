@@ -93,7 +93,7 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
         solver1.add(PathUtils.unfold(init, VarIndexingFactory.indexing(0)));
         var eqList = new ArrayList<Expr<BoolType>>();
         while (i < upperBound) {
-
+            // BMC part
 
             solver1.add(PathUtils.unfold(trans, currIndex));
 
@@ -108,10 +108,6 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
             }
             eqList.addAll(finalList);
             listOfIndexes.add(currIndex);
-
-
-            solver2.add(PathUtils.unfold(prop, currIndex.sub(firstIndexing))); //0-ról indítva
-            solver2.add(PathUtils.unfold(trans, currIndex.sub(firstIndexing)));
 
             currIndex = currIndex.add(offset);
 
@@ -148,19 +144,23 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
             }
             solver1.pop();
 
-
-            // Property k-inductivity check
+            // KIND part
 
             // P1 and T1-2 and P2 and ... and Tk-k+1
 
-            // Not Pk+1
-            solver2.push();
-            solver2.add(PathUtils.unfold(Not(prop), currIndex.sub(firstIndexing)));
+            solver2.add(PathUtils.unfold(prop, currIndex.sub(firstIndexing)));
+            solver2.add(PathUtils.unfold(trans, currIndex.sub(firstIndexing)));
 
-            if (solver2.check().isUnsat()) {
-                return SafetyResult.safe(ARG.create(null));
+            // Not Pk+1
+            if (i >= inductionStartBound && (i - inductionStartBound) % inductionFrequency == 0) {
+                solver2.push();
+                solver2.add(PathUtils.unfold(Not(prop), currIndex.sub(firstIndexing)));
+
+                if (solver2.check().isUnsat()) {
+                    return SafetyResult.safe(ARG.create(null));
+                }
+                solver2.pop();
             }
-            solver2.pop();
             i++;
         }
         return null;
