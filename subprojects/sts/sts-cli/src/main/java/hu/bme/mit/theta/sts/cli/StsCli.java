@@ -172,7 +172,7 @@ public class StsCli {
                 status = checker.check(null);
             } else if (algorithm.equals(Algorithm.IMC)) {
                 var transFunc = StsToMonoliticTransFunc.create(sts);
-                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, sts.getVars(), true);
+                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, sts.getVars());
                 status = checker.check(null);
             }
             sw.stop();

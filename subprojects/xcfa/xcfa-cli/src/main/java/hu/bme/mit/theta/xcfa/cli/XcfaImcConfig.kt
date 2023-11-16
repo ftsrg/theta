@@ -34,9 +34,11 @@ data class XcfaImcConfig(
     @Parameter(names = ["--max-bound"],
         description = "How many successors to enumerate in a transition. Only relevant to the explicit domain. Use 0 for no limit.")
     var maxBound: Int = Int.MAX_VALUE,
+    @Parameter
+    var remainingFlags: MutableList<String> = ArrayList()
 ) {
 
-    fun getIMCChecker(xcfa: XCFA): ImcChecker<ExprState, StmtAction> {
+    fun getIMCChecker(xcfa: XCFA, timeout: Int = 0): ImcChecker<ExprState, StmtAction> {
         val transFunc = XcfaMonolithicTransFunc.create(xcfa)
         return ImcChecker<ExprState, StmtAction>(
             transFunc,
@@ -44,7 +46,7 @@ data class XcfaImcConfig(
             getSolver(imcSolver, validateIMCSolver).createItpSolver(),
             ExplState::of,
             ExprUtils.getVars(transFunc.transExpr),
-            true)
+            timeout)
     }
 
 }

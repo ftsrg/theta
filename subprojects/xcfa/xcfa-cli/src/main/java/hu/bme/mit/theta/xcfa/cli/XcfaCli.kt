@@ -22,10 +22,14 @@ import com.google.common.base.Stopwatch
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
+import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
@@ -263,8 +267,31 @@ class XcfaCli(private val args: Array<String>) {
                     val kindConfig = parseKindConfigFromCli()
                     kindConfig.getKindChecker(xcfa)
                 } else if (backend == Backend.IMC) {
-                    val kindConfig = parseIMCConfigFromCli()
-                    kindConfig.getIMCChecker(xcfa)
+                    val imcConfig = parseIMCConfigFromCli()
+                    imcConfig.getIMCChecker(xcfa)
+                } else if (backend == Backend.IMC_THEN_KIND) {
+                    SafetyChecker<ExprState, ExprAction, Prec> {
+                        val safetyResult = try {
+                            val imcConfig = parseIMCConfigFromCli()
+                            logger.write(Logger.Level.SUBSTEP, "Starting IMC with config $imcConfig...\n")
+                            val ret = imcConfig.getIMCChecker(xcfa, 60).check(null)
+                            logger.write(Logger.Level.SUBSTEP, "IMC ended\n")
+                            ret
+                        } catch (e: Throwable) {
+                            logger.write(Logger.Level.SUBSTEP, "IMC threw exception: $e\n")
+                            null
+                            // do not do anything, kind will run
+                        }
+                        if (safetyResult == null) {
+                            val kindConfig = parseKindConfigFromCli()
+                            logger.write(Logger.Level.SUBSTEP, "Starting KIND with config $kindConfig\n")
+                            val ret = kindConfig.getKindChecker(xcfa).check(null) as SafetyResult<ExprState, ExprAction>
+                            logger.write(Logger.Level.SUBSTEP, "KIND ended\n")
+                            ret
+                        } else {
+                            safetyResult as SafetyResult<ExprState, ExprAction>
+                        }
+                    }
                 } else {
                     error("Backend $backend not supported")
                 }
