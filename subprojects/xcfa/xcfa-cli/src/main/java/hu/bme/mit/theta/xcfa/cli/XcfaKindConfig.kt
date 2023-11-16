@@ -31,7 +31,7 @@ data class XcfaKindConfig(
     @Parameter(names = ["--validate-bmc-solver"],
         description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateBMCSolver: Boolean = false,
-    @Parameter(names = ["--induction-solver"], description = "Induction solver name")
+    @Parameter(names = ["--induction-solver", "--ind-solver"], description = "Induction solver name")
     var indSolver: String = "Z3",
     @Parameter(names = ["--validate-induction-solver"],
         description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
@@ -45,6 +45,8 @@ data class XcfaKindConfig(
     @Parameter(names = ["--ind-frequency"],
         description = "Frequency of induction check")
     var indFreq: Int = 1,
+    @Parameter
+    var remainingFlags: MutableList<String> = ArrayList()
 ) {
 
     fun getKindChecker(xcfa: XCFA): KIndChecker<ExprState, ExprAction> {

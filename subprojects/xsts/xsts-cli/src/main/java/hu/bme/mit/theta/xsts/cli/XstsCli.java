@@ -211,7 +211,7 @@ public class XstsCli {
                 sw.stop();
             } else if (algorithm.equals(Algorithm.IMC)) {
                 var transFunc = XstsToMonoliticTransFunc.create(xsts);
-                var checker = new ImcChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars(), true);
+                var checker = new ImcChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars());
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();

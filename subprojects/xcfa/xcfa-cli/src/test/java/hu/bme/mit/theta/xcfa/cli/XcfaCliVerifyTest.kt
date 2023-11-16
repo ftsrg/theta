@@ -198,4 +198,17 @@ class XcfaCliVerifyTest {
         main(params)
     }
 
+    @ParameterizedTest
+    @MethodSource("singleThreadedCFiles")
+    fun testCVerifyIMC(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--backend", "IMC",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
+    }
+
 }

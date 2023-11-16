@@ -61,6 +61,7 @@ enum class Backend {
     CEGAR,
     KIND,
     IMC,
+    IMC_THEN_KIND,
     LAZY
 }
 
