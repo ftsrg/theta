@@ -38,21 +38,13 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
-
-//        val varEdgeLut = LinkedHashMap<VarDecl<*>, MutableList<XcfaEdge>>()
-//        builder.getEdges().forEach { it.label.collectVars().forEach { v ->
-//            varEdgeLut.putIfAbsent(v, ArrayList())
-//            varEdgeLut[v]!!.add(it)
-//        } }
-
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
             var candidates = (edge.label as SequenceLabel).labels
                 .mapIndexed { index, it -> Pair(index, it) }
                 .filter {
                     it.second is StmtLabel &&
-                        (it.second as StmtLabel).stmt is HavocStmt<*> //&&
-//                        varEdgeLut[((it.second as StmtLabel).stmt as HavocStmt<*>).varDecl]!!.size == 1
+                        (it.second as StmtLabel).stmt is HavocStmt<*>
                 }
             if (candidates.isNotEmpty()) {
                 val labelEdgeLut = LinkedHashMap<VarDecl<*>, MutableList<XcfaLabel>>()

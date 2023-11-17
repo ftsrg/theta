@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.AssumeStmt
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -63,6 +65,8 @@ class NormalizePass(val parseContext: ParseContext) : ProcedurePass {
             }
 
             is NopLabel -> {}
+            is StmtLabel -> if (!(label.stmt is AssumeStmt && label.stmt.cond.equals(
+                    True()))) collector.forEach { it.add(label) }
             else -> collector.forEach { it.add(label) }
         }
     }
