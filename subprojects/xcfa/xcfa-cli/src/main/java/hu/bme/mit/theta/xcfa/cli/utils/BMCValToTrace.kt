@@ -52,9 +52,10 @@ fun valToState(xcfa: XCFA, val1: Valuation): XcfaState<ExplState> {
         map[i++] = x
     }
     return XcfaState(
-        xcfa=xcfa,
+        xcfa = xcfa,
         processes = mapOf(Pair(0, XcfaProcessState(
-            locs = LinkedList(listOf(map[(valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()])),
+            locs = LinkedList(
+                listOf(map[(valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()])),
             varLookup = LinkedList(),
         ))),
         ExplState.of(
