@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.xcfa.cli.XcfaCegarConfig
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 
 abstract class Node(val name: String) {
 
@@ -36,6 +38,32 @@ ${innerSTM.visualize()}
 }""".trimIndent()
 }
 
+class OrthogonalNode(name: String, vararg val innerSTMs: STM) : Node(name) {
+
+    override fun execute(): Pair<Any, Any> {
+        val executor = Executors.newFixedThreadPool(innerSTMs.size)
+        for (i in 1..innerSTMs.size) {
+            try {
+                val ret = CompletableFuture.anyOf(
+                    *(innerSTMs.map { stm -> CompletableFuture.supplyAsync({ stm.execute() }, executor) }
+                        .toTypedArray()))
+                    .get() as Pair<Any, Any>
+                executor.shutdown()
+                return ret
+            } catch (e: Throwable) {
+                if (i == innerSTMs.size) {
+                    throw e
+                }
+            }
+        }
+        error("All stms finished, yet not returned")
+    }
+
+    override fun visualize(): String = "state $name {\n" + innerSTMs.map { it.visualize() }
+        .joinToString("\n--\n") + "\n}"
+
+}
+
 class ConfigNode(name: String, private val config: XcfaCegarConfig,
     private val check: (inProcess: Boolean, config: XcfaCegarConfig) -> SafetyResult<*, *>,
     private val inProcess: Boolean) : Node(name) {
@@ -46,7 +74,7 @@ class ConfigNode(name: String, private val config: XcfaCegarConfig,
     }
 
     override fun visualize(): String = config.visualize(inProcess).lines()
-        .map { "state $name: $it" }.reduce { a, b -> "$a\n$b" }
+        .map { "state $name: $it" }.reduceOrNull { a, b -> "$a\n$b" } ?: ""
 }
 
 data class Edge(val source: Node,
@@ -94,13 +122,13 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
     }
 
     private fun visualizeNodes(): String = edges.map { listOf(it.source, it.target) }.flatten()
-        .toSet().map { it.visualize() }.reduce { a, b -> "$a\n$b" }
+        .toSet().union(listOf(initNode)).map { it.visualize() }.reduceOrNull { a, b -> "$a\n$b" } ?: ""
 
     fun visualize(): String = """
 ${visualizeNodes()}
 
 [*] --> ${initNode.name}
-${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
+${edges.map { it.visualize() }.reduceOrNull { a, b -> "$a\n$b" } ?: ""}
 """.trimMargin()
 
     fun execute(): Pair<Any, Any> {

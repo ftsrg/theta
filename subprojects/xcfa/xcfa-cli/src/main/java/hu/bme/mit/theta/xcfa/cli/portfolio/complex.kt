@@ -346,5 +346,7 @@ fun complexPortfolio(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logge
         else if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.BITWISE)) bitwiseStm()
         else integerStm()
 
+    loggerTyped.write(Logger.Level.INFO, "Used portfolio:\n${stm.visualize()}\n")
+
     return stm.execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
 }

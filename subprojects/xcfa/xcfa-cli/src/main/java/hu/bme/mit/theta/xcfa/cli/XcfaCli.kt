@@ -51,6 +51,7 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio
+import hu.bme.mit.theta.xcfa.cli.portfolio.parallel
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -320,6 +321,11 @@ class XcfaCli(private val args: Array<String>) {
                 compiled.eval() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
             } else if (portfolio == "COMPLEX") {
                 complexPortfolio(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
+                    multithreaded = parseContext.multiThreading,
+                    arithmeticTraits = parseContext.arithmeticTraits,
+                ), explicitProperty, parseContext, argdebug)
+            } else if (portfolio == "PARALLEL") {
+                parallel(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
                     multithreaded = parseContext.multiThreading,
                     arithmeticTraits = parseContext.arithmeticTraits,
                 ), explicitProperty, parseContext, argdebug)

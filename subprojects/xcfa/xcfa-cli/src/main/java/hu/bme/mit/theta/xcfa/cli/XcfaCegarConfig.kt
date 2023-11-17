@@ -272,9 +272,14 @@ data class XcfaCegarConfig(
                         "Serialized Config, XCFA and ParseContext in ${sw.elapsed(TimeUnit.MILLISECONDS)}ms\n")
                     writer.close()
                 }
-                val retCode = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+                val retCode = try {
+                    process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+                } catch (e: InterruptedException) {
+                    Int.MIN_VALUE
+                }
                 if (retCode == Int.MIN_VALUE) {
                     if (!processHandler.writingSafetyResult) {
+                        logger.write(Logger.Level.RESULT, "Config timed out: $this")
                         process.destroy(true)
                         throw ErrorCodeException(ExitCodes.TIMEOUT.code)
                     } else {
@@ -348,6 +353,7 @@ private class ProcessHandler(
                     Logger.Level.VERBOSE
                 }
                 logger.write(logLevel, message)
+                Thread.sleep(100)
                 if (message.contains("(SafetyResult")) writingSafetyResult = true
                 length += matchResult.range.count()
             }
