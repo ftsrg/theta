@@ -67,6 +67,7 @@ class NormalizePass(val parseContext: ParseContext) : ProcedurePass {
             is NopLabel -> {}
             is StmtLabel -> if (!(label.stmt is AssumeStmt && label.stmt.cond.equals(
                     True()))) collector.forEach { it.add(label) }
+
             else -> collector.forEach { it.add(label) }
         }
     }
