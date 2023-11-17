@@ -351,9 +351,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             CComplexType smallestCommonType = CComplexType.getSmallestCommonType(types, parseContext);
             List<Expr<?>> collect = new ArrayList<>();
             for (int i = 0; i < exprs.size(); i++) {
-                Expr<?> expr = (i == 0 || ctx.signs.get(i - 1).getText().equals("+")) ? exprs.get(i) : AbstractExprs.Neg(exprs.get(i));
-                parseContext.getMetadata().create(expr, "cType", CComplexType.getType(exprs.get(i), parseContext));
-                Expr<?> castTo = smallestCommonType.castTo(expr);
+                parseContext.getMetadata().create(exprs.get(i), "cType", CComplexType.getType(exprs.get(i), parseContext));
+                Expr<?> castTo = smallestCommonType.castTo(exprs.get(i));
+                if (i != 0 && ctx.signs.get(i - 1).getText().equals("-")) {
+                    castTo = AbstractExprs.Neg(castTo);
+                }
                 collect.add(castTo);
             }
             Expr<?> add = AbstractExprs.Add(collect);

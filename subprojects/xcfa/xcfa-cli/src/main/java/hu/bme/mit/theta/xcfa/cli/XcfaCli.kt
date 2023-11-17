@@ -39,7 +39,7 @@ import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
@@ -87,6 +87,10 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--lbe"],
         description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ
+
+    @Parameter(names = ["--arithmetic"],
+        description = "Arithmetic type (efficient, bitvector, integer)")
+    var arithmetic: ArithmeticType = ArithmeticType.efficient
 
     @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll")
     var loopUnroll: Int = 50
@@ -215,6 +219,7 @@ class XcfaCli(private val args: Array<String>) {
 
         logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType\n")
         val parseContext = ParseContext()
+        parseContext.arithmetic = arithmetic
         val xcfa = getXcfa(logger, explicitProperty, parseContext, uniqueWarningLogger)
         ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
         logger.write(Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
@@ -421,7 +426,7 @@ class XcfaCli(private val args: Array<String>) {
                     xcfaFromC
                 }
 
-                InputType.LLVM -> fromFile(input!!, ArithmeticType.efficient)
+                InputType.LLVM -> fromFile(input!!, hu.bme.mit.theta.llvm2xcfa.ArithmeticType.efficient)
 
                 InputType.JSON -> {
                     val gson = getGson()
