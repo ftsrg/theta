@@ -96,7 +96,7 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L1" to final) {
                         assume("false")
@@ -104,7 +104,7 @@ class PassTests {
                 },
                 output = {
                     (init to final) {
-                        assume("true")
+                        assume("1 == 1")
                         assume("false")
                     }
                 },
@@ -119,10 +119,10 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L1" to "L2") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L2" to final) {
                         assume("false")
@@ -133,8 +133,8 @@ class PassTests {
                 },
                 output = {
                     (init to final) {
-                        assume("true")
-                        assume("true")
+                        assume("1 == 1")
+                        assume("1 == 1")
                         nondet {
                             assume("false")
                             assume("1 == 2")
@@ -343,10 +343,10 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     (init to "L2") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L2" to "L3") {
                         assume("false")
@@ -470,7 +470,7 @@ class PassTests {
                 ),
                 input = {
                     ("L1" to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                 },
                 output = null,
@@ -522,7 +522,7 @@ class PassTests {
             }
             procedure("proc1") {
                 (init to final) {
-                    assume("true")
+                    assume("1 == 1")
                 }
             }
         }
@@ -542,7 +542,7 @@ class PassTests {
             }
             procedure("proc1") {
                 (init to final) {
-                    assume("true")
+                    assume("1 == 1")
                 }
             }
         }
@@ -558,9 +558,9 @@ class PassTests {
         val xcfaSource = xcfa("example") {
             procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
                 edge = (init to final) {
-                    assume("true")
+                    assume("1 == 1")
                     "proc1"()
-                    assume("true")
+                    assume("1 == 1")
                 }
             }
         }
