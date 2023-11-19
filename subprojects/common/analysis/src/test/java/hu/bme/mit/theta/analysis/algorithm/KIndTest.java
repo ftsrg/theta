@@ -40,7 +40,7 @@ class KIndTest {
                         Assign(x, Add(x.getRef(), Int(1))),
                         Eq(x.getRef(), Int(0)),
                         Neq(x.getRef(), Int(5))
-                        ),
+                ),
                 Integer.MAX_VALUE,
                 0,
                 1,
@@ -49,7 +49,7 @@ class KIndTest {
                 valuation -> new ExprStateStub(valuation.toExpr()),
                 (valuation, valuation2) -> new ExprActionStub(List.of(Assume(valuation.toExpr()), Assume(valuation2.toExpr()))),
                 List.of(x)
-                );
+        );
 
         var result = checker.check(null);
         Assertions.assertTrue(result.isUnsafe());
