@@ -46,8 +46,13 @@ runs:
         do
           java -jar ${{ inputs.name }}/theta/theta-smtlib.jar --home ${{ inputs.name }}/theta/solvers install $i
         done
+    - name: ZIP archive
+      shell: bash
+      run: |
+        cd ${{ inputs.name }}
+        zip theta.zip theta -r
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
         name: ${{ inputs.name }}_SV-COMP
-        path: ${{ inputs.name }}
+        path: ${{ inputs.name }}/theta.zip

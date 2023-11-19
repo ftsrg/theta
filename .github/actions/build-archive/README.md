@@ -9,6 +9,7 @@ Theta can both serve as a model checking backend, and also includes ready-to-use
 The submitted version can be found under the `COMMIT_ID` commit in the [GitHub repository](https://github.com/ftsrg/theta/commit/COMMIT_ID).
 
 Minimal necessary packages for Ubuntu 22.04 LTS:
+
 * openjdk-17-jre-headless
 * libgomp1
 * libmpfr-dev
@@ -20,11 +21,7 @@ Minimal necessary packages for Ubuntu 22.04 LTS:
 ├── LIB_LICENSES.md - contains the licensing information for packaged dependencies
 ├── LICENSE - contains the license for TOOL_NAME
 ├── README.md - this file
-├── complex.kts - the portfolio script used this year
-├── lib - contains the library dependencies
-│   ├── libmpfr_java-1.0.so
-│   ├── libz3.so
-│   └── libz3java.so
+├── lib - contains the native library dependencies
 ├── solvers - contains further dependencies (SMT-solvers), each having their respective licenses 
 ├── theta-smtlib.jar - the jarfile for installing and managing smt solvers (not necessary unless different solver versions are required)
 ├── theta-start.sh - the starting script of TOOL_NAME
