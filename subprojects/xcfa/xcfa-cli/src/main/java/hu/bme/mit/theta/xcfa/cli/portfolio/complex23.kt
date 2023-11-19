@@ -16,7 +16,6 @@
 
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -28,7 +27,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logger, smtHomeTyped: String,
     traitsTyped: VerificationTraits, propertyTyped: ErrorDetection,
     parseContextTyped: ParseContext,
-    argdebug: Boolean): Pair<XcfaCegarConfig, SafetyResult<*, *>> {
+    argdebug: Boolean): STM {
 
     val checker = { p: Boolean, config: XcfaCegarConfig ->
         if (p)
@@ -343,10 +342,7 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
         return STM(inProcess, setOf(fallbackEdge))
     }
 
-    val stm =
-        if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) floatsStm()
-        else if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.BITWISE)) bitwiseStm()
-        else integerStm()
-
-    return stm.execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+    return if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) floatsStm()
+    else if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.BITWISE)) bitwiseStm()
+    else integerStm()
 }

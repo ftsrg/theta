@@ -41,6 +41,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
@@ -152,6 +153,18 @@ public class KIndChecker<S extends ExprState, A extends ExprAction> implements S
                         }
                         lastValuation = valuation;
                     }
+                } else {
+                    stateList.add((S) new ExprState() {
+                        @Override
+                        public Expr<BoolType> toExpr() {
+                            return True();
+                        }
+
+                        @Override
+                        public boolean isBottom() {
+                            return false;
+                        }
+                    });
                 }
                 Trace<S, A> trace = Trace.of(stateList, actionList);
                 return SafetyResult.unsafe(trace, ARG.create(null));

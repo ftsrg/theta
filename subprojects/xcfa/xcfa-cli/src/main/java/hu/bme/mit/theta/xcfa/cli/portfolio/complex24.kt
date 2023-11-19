@@ -16,7 +16,6 @@
 
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -33,7 +32,7 @@ fun complexPortfolio24(
     traitsTyped: VerificationTraits,
     propertyTyped: ErrorDetection,
     parseContextTyped: ParseContext,
-    argdebug: Boolean): Pair<XcfaCegarConfig, SafetyResult<*, *>> {
+    argdebug: Boolean): STM {
 
     val checker = { p: Boolean, config: XcfaCegarConfig ->
         if (p)
@@ -382,6 +381,5 @@ fun complexPortfolio24(
 
     val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
 
-    val stm = STM(inProcess, setOf(fallbackEdge))
-    return stm.execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+    return STM(inProcess, setOf(fallbackEdge))
 }
