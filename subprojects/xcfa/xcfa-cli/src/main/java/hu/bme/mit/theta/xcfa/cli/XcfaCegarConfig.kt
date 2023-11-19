@@ -176,6 +176,7 @@ data class XcfaCegarConfig(
     }
 
     private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
+        MonitorCheckpoint.reset()
         if (cexMonitor == CexMonitorOptions.CHECK) {
             val cm = CexMonitor(logger, cc.arg)
             MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")

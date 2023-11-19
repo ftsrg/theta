@@ -60,5 +60,13 @@ class MonitorCheckpoint internal constructor(private val name: String) {
             { "Checkpoint name $name was not registered (add it in MonitorCheckpoint.kt)" } // see checkpointNames above
             registeredCheckpoints[name]?.executeCheckpoint() ?: error("Checkpoint with name $name not found.")
         }
+
+        fun reset() {
+            registeredCheckpoints.values.forEach { it.reset() }
+        }
+    }
+
+    private fun reset() {
+        registeredMonitors.clear()
     }
 }
