@@ -74,7 +74,8 @@ class XcfaCliPortfolioTest {
         parseContextTyped: ParseContext,
         argdebug: Boolean) -> STM) {
 
-        val stm = portfolio(XCFA("name", setOf()), "", NullLogger.getInstance(), "", VerificationTraits(), ErrorDetection.ERROR_LOCATION, ParseContext(), false)
+        val stm = portfolio(XCFA("name", setOf()), "", NullLogger.getInstance(), "", VerificationTraits(),
+            ErrorDetection.ERROR_LOCATION, ParseContext(), false)
 
         Assertions.assertTrue(stm.visualize().isNotEmpty())
 

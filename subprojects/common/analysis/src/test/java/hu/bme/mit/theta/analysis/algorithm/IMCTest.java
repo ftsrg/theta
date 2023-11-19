@@ -40,14 +40,14 @@ class IMCTest {
                         Assign(x, Add(x.getRef(), Int(1))),
                         Eq(x.getRef(), Int(0)),
                         Neq(x.getRef(), Int(5))
-                        ),
+                ),
                 Integer.MAX_VALUE,
                 Z3SolverFactory.getInstance().createItpSolver(),
                 valuation -> new ExprStateStub(valuation.toExpr()),
                 (valuation, valuation2) -> new ExprActionStub(List.of(Assume(valuation.toExpr()), Assume(valuation2.toExpr()))),
                 List.of(x),
                 0
-                );
+        );
 
         var result = checker.check(null);
         Assertions.assertTrue(result.isUnsafe());
