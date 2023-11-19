@@ -27,7 +27,7 @@ runs:
         cp scripts/theta-start.sh ${{ inputs.name }}/theta/theta-start.sh
         chmod +x ${{ inputs.name }}/theta/theta-start.sh
         sed "s/COMMIT_ID/$GITHUB_SHA/g" $GITHUB_ACTION_PATH/README.md > ${{ inputs.name }}/theta/README.md 
-        sed -i 's/TOOL_NAME/${{ inputs.name }}/theta/g' ${{ inputs.name }}/theta/README.md
+        sed -i 's/TOOL_NAME/${{ inputs.name }}/g' ${{ inputs.name }}/theta/README.md
         sed -i 's/INPUT_FLAG/${{ inputs.inputflag }}/g' ${{ inputs.name }}/theta/README.md
     - name: Extract theta-xcfa-cli and theta-smtlib-cli
       shell: bash
