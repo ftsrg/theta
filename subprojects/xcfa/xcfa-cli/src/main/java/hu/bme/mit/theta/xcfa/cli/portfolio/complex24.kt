@@ -96,13 +96,14 @@ fun complexPortfolio24(
 
     fun getStm(trait: ArithmeticTrait, inProcess: Boolean): STM {
         val edges = LinkedHashSet<Edge>()
-        val config_BITWISE_EXPL_NWT_IT_WP_cvc5 = ConfigNode("BITWISE_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "cvc5:1.0.8",
-            refinementSolver = "cvc5:1.0.8",
-            refinement = Refinement.NWT_IT_WP,
-            timeoutMs = 100000
-        ), checker, inProcess)
+        val config_BITWISE_EXPL_NWT_IT_WP_cvc5 = ConfigNode("BITWISE_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "cvc5:1.0.8",
+                refinementSolver = "cvc5:1.0.8",
+                refinement = Refinement.NWT_IT_WP,
+                timeoutMs = 100000
+            ), checker, inProcess)
         val config_BITWISE_EXPL_NWT_IT_WP_Z3 = ConfigNode("BITWISE_EXPL_NWT_IT_WP_Z3-$inProcess", baseConfig.copy(
             domain = Domain.EXPL,
             abstractionSolver = "Z3",
@@ -111,41 +112,50 @@ fun complexPortfolio24(
             timeoutMs = 100000
         ), checker, inProcess)
         edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_cvc5, config_BITWISE_EXPL_NWT_IT_WP_Z3, solverError))
-        val config_BITWISE_EXPL_NWT_IT_WP_mathsat = ConfigNode("BITWISE_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.NWT_IT_WP,
-            timeoutMs = 100000
-        ), checker, inProcess)
+        val config_BITWISE_EXPL_NWT_IT_WP_mathsat = ConfigNode("BITWISE_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.NWT_IT_WP,
+                timeoutMs = 100000
+            ), checker, inProcess)
         edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_Z3, config_BITWISE_EXPL_NWT_IT_WP_mathsat, solverError))
-        val config_BITWISE_PRED_CART_SEQ_ITP_mathsat = ConfigNode("BITWISE_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.PRED_CART,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
-        edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_cvc5, config_BITWISE_PRED_CART_SEQ_ITP_mathsat, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_Z3, config_BITWISE_PRED_CART_SEQ_ITP_mathsat, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_mathsat, config_BITWISE_PRED_CART_SEQ_ITP_mathsat, if(inProcess) timeoutOrSolverError else anyError))
-        val config_BITWISE_PRED_CART_SEQ_ITP_cvc5 = ConfigNode("BITWISE_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess", baseConfig.copy(
-            domain = Domain.PRED_CART,
-            abstractionSolver = "cvc5:1.0.8",
-            refinementSolver = "cvc5:1.0.8",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
+        val config_BITWISE_PRED_CART_SEQ_ITP_mathsat = ConfigNode("BITWISE_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_cvc5, config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_Z3, config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_BITWISE_EXPL_NWT_IT_WP_mathsat, config_BITWISE_PRED_CART_SEQ_ITP_mathsat,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_BITWISE_PRED_CART_SEQ_ITP_cvc5 = ConfigNode("BITWISE_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "cvc5:1.0.8",
+                refinementSolver = "cvc5:1.0.8",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
         edges.add(Edge(config_BITWISE_PRED_CART_SEQ_ITP_mathsat, config_BITWISE_PRED_CART_SEQ_ITP_cvc5, solverError))
-        val config_BITWISE_EXPL_SEQ_ITP_mathsat = ConfigNode("BITWISE_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
-        edges.add(Edge(config_BITWISE_PRED_CART_SEQ_ITP_mathsat, config_BITWISE_EXPL_SEQ_ITP_mathsat, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_BITWISE_PRED_CART_SEQ_ITP_cvc5, config_BITWISE_EXPL_SEQ_ITP_mathsat, if(inProcess) timeoutOrSolverError else anyError))
+        val config_BITWISE_EXPL_SEQ_ITP_mathsat = ConfigNode("BITWISE_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(Edge(config_BITWISE_PRED_CART_SEQ_ITP_mathsat, config_BITWISE_EXPL_SEQ_ITP_mathsat,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_BITWISE_PRED_CART_SEQ_ITP_cvc5, config_BITWISE_EXPL_SEQ_ITP_mathsat,
+            if (inProcess) timeoutOrSolverError else anyError))
         val config_BITWISE_EXPL_SEQ_ITP_cvc5 = ConfigNode("BITWISE_EXPL_SEQ_ITP_cvc5:1.0.8-$inProcess", baseConfig.copy(
             domain = Domain.EXPL,
             abstractionSolver = "cvc5:1.0.8",
@@ -169,41 +179,50 @@ fun complexPortfolio24(
             timeoutMs = 200000
         ), checker, inProcess)
         edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_cvc5, config_FLOAT_EXPL_NWT_IT_WP_Z3, solverError))
-        val config_FLOAT_EXPL_NWT_IT_WP_mathsat = ConfigNode("FLOAT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.NWT_IT_WP,
-            timeoutMs = 200000
-        ), checker, inProcess)
+        val config_FLOAT_EXPL_NWT_IT_WP_mathsat = ConfigNode("FLOAT_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.NWT_IT_WP,
+                timeoutMs = 200000
+            ), checker, inProcess)
         edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_Z3, config_FLOAT_EXPL_NWT_IT_WP_mathsat, solverError))
-        val config_FLOAT_PRED_CART_SEQ_ITP_mathsat = ConfigNode("FLOAT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.PRED_CART,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
-        edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_cvc5, config_FLOAT_PRED_CART_SEQ_ITP_mathsat, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_Z3, config_FLOAT_PRED_CART_SEQ_ITP_mathsat, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_mathsat, config_FLOAT_PRED_CART_SEQ_ITP_mathsat, if(inProcess) timeoutOrSolverError else anyError))
-        val config_FLOAT_PRED_CART_SEQ_ITP_cvc5 = ConfigNode("FLOAT_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess", baseConfig.copy(
-            domain = Domain.PRED_CART,
-            abstractionSolver = "cvc5:1.0.8",
-            refinementSolver = "cvc5:1.0.8",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
+        val config_FLOAT_PRED_CART_SEQ_ITP_mathsat = ConfigNode("FLOAT_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_cvc5, config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_Z3, config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_FLOAT_EXPL_NWT_IT_WP_mathsat, config_FLOAT_PRED_CART_SEQ_ITP_mathsat,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_FLOAT_PRED_CART_SEQ_ITP_cvc5 = ConfigNode("FLOAT_PRED_CART_SEQ_ITP_cvc5:1.0.8-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "cvc5:1.0.8",
+                refinementSolver = "cvc5:1.0.8",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
         edges.add(Edge(config_FLOAT_PRED_CART_SEQ_ITP_mathsat, config_FLOAT_PRED_CART_SEQ_ITP_cvc5, solverError))
-        val config_FLOAT_EXPL_SEQ_ITP_mathsat = ConfigNode("FLOAT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
-        edges.add(Edge(config_FLOAT_PRED_CART_SEQ_ITP_mathsat, config_FLOAT_EXPL_SEQ_ITP_mathsat, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_FLOAT_PRED_CART_SEQ_ITP_cvc5, config_FLOAT_EXPL_SEQ_ITP_mathsat, if(inProcess) timeoutOrSolverError else anyError))
+        val config_FLOAT_EXPL_SEQ_ITP_mathsat = ConfigNode("FLOAT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(Edge(config_FLOAT_PRED_CART_SEQ_ITP_mathsat, config_FLOAT_EXPL_SEQ_ITP_mathsat,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_FLOAT_PRED_CART_SEQ_ITP_cvc5, config_FLOAT_EXPL_SEQ_ITP_mathsat,
+            if (inProcess) timeoutOrSolverError else anyError))
         val config_FLOAT_EXPL_SEQ_ITP_cvc5 = ConfigNode("FLOAT_EXPL_SEQ_ITP_cvc5:1.0.8-$inProcess", baseConfig.copy(
             domain = Domain.EXPL,
             abstractionSolver = "cvc5:1.0.8",
@@ -212,13 +231,14 @@ fun complexPortfolio24(
             timeoutMs = 0
         ), checker, inProcess)
         edges.add(Edge(config_FLOAT_EXPL_SEQ_ITP_mathsat, config_FLOAT_EXPL_SEQ_ITP_cvc5, solverError))
-        val config_LIN_EXPL_NWT_IT_WP_mathsat = ConfigNode("LIN_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.NWT_IT_WP,
-            timeoutMs = 100000
-        ), checker, inProcess)
+        val config_LIN_EXPL_NWT_IT_WP_mathsat = ConfigNode("LIN_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.NWT_IT_WP,
+                timeoutMs = 100000
+            ), checker, inProcess)
         val config_LIN_EXPL_NWT_IT_WP_Z3 = ConfigNode("LIN_EXPL_NWT_IT_WP_Z3-$inProcess", baseConfig.copy(
             domain = Domain.EXPL,
             abstractionSolver = "Z3",
@@ -234,8 +254,10 @@ fun complexPortfolio24(
             refinement = Refinement.SEQ_ITP,
             timeoutMs = 300000
         ), checker, inProcess)
-        edges.add(Edge(config_LIN_EXPL_NWT_IT_WP_mathsat, config_LIN_EXPL_SEQ_ITP_Z3, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_LIN_EXPL_NWT_IT_WP_Z3, config_LIN_EXPL_SEQ_ITP_Z3, if(inProcess) timeoutOrSolverError else anyError))
+        edges.add(Edge(config_LIN_EXPL_NWT_IT_WP_mathsat, config_LIN_EXPL_SEQ_ITP_Z3,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_LIN_EXPL_NWT_IT_WP_Z3, config_LIN_EXPL_SEQ_ITP_Z3,
+            if (inProcess) timeoutOrSolverError else anyError))
         val config_LIN_EXPL_SEQ_ITP_mathsat = ConfigNode("LIN_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
             domain = Domain.EXPL,
             abstractionSolver = "mathsat:5.6.10",
@@ -251,15 +273,18 @@ fun complexPortfolio24(
             refinement = Refinement.SEQ_ITP,
             timeoutMs = 0
         ), checker, inProcess)
-        edges.add(Edge(config_LIN_EXPL_SEQ_ITP_Z3, config_LIN_PRED_CART_SEQ_ITP_Z3, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_LIN_EXPL_SEQ_ITP_mathsat, config_LIN_PRED_CART_SEQ_ITP_Z3, if(inProcess) timeoutOrSolverError else anyError))
-        val config_LIN_PRED_CART_SEQ_ITP_mathsat = ConfigNode("LIN_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.PRED_CART,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
+        edges.add(Edge(config_LIN_EXPL_SEQ_ITP_Z3, config_LIN_PRED_CART_SEQ_ITP_Z3,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_LIN_EXPL_SEQ_ITP_mathsat, config_LIN_PRED_CART_SEQ_ITP_Z3,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_LIN_PRED_CART_SEQ_ITP_mathsat = ConfigNode("LIN_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
         edges.add(Edge(config_LIN_PRED_CART_SEQ_ITP_Z3, config_LIN_PRED_CART_SEQ_ITP_mathsat, solverError))
         val config_LIN_PRED_CART_SEQ_ITP_z3 = ConfigNode("LIN_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess", baseConfig.copy(
             domain = Domain.PRED_CART,
@@ -276,13 +301,14 @@ fun complexPortfolio24(
             refinement = Refinement.NWT_IT_WP,
             timeoutMs = 100000
         ), checker, inProcess)
-        val config_NONLIN_EXPL_NWT_IT_WP_mathsat = ConfigNode("NONLIN_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.NWT_IT_WP,
-            timeoutMs = 100000
-        ), checker, inProcess)
+        val config_NONLIN_EXPL_NWT_IT_WP_mathsat = ConfigNode("NONLIN_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.NWT_IT_WP,
+                timeoutMs = 100000
+            ), checker, inProcess)
         edges.add(Edge(config_NONLIN_EXPL_NWT_IT_WP_Z3, config_NONLIN_EXPL_NWT_IT_WP_mathsat, solverError))
         val config_NONLIN_EXPL_SEQ_ITP_Z3 = ConfigNode("NONLIN_EXPL_SEQ_ITP_Z3-$inProcess", baseConfig.copy(
             domain = Domain.EXPL,
@@ -291,45 +317,53 @@ fun complexPortfolio24(
             refinement = Refinement.SEQ_ITP,
             timeoutMs = 100000
         ), checker, inProcess)
-        edges.add(Edge(config_NONLIN_EXPL_NWT_IT_WP_Z3, config_NONLIN_EXPL_SEQ_ITP_Z3, if(inProcess) timeoutTrigger else anyError))
-        edges.add(Edge(config_NONLIN_EXPL_NWT_IT_WP_mathsat, config_NONLIN_EXPL_SEQ_ITP_Z3, if(inProcess) timeoutOrSolverError else anyError))
-        val config_NONLIN_EXPL_SEQ_ITP_mathsat = ConfigNode("NONLIN_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 200000
-        ), checker, inProcess)
-        edges.add(Edge(config_NONLIN_EXPL_SEQ_ITP_Z3, config_NONLIN_EXPL_SEQ_ITP_mathsat, if(inProcess) timeoutOrSolverError else anyError))
-        val config_NONLIN_PRED_CART_SEQ_ITP_mathsat = ConfigNode("NONLIN_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
-            domain = Domain.PRED_CART,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
-        edges.add(Edge(config_NONLIN_EXPL_SEQ_ITP_mathsat, config_NONLIN_PRED_CART_SEQ_ITP_mathsat, if(inProcess) timeoutOrSolverError else anyError))
-        val config_NONLIN_EXPL_NWT_IT_WP_cvc5 = ConfigNode("NONLIN_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess", baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "cvc5:1.0.8",
-            refinementSolver = "cvc5:1.0.8",
-            refinement = Refinement.NWT_IT_WP,
-            timeoutMs = 0
-        ), checker, inProcess)
-        edges.add(Edge(config_NONLIN_PRED_CART_SEQ_ITP_mathsat, config_NONLIN_EXPL_NWT_IT_WP_cvc5, if(inProcess) timeoutOrSolverError else anyError))
-        if(trait == ArithmeticTrait.BITWISE) {
+        edges.add(Edge(config_NONLIN_EXPL_NWT_IT_WP_Z3, config_NONLIN_EXPL_SEQ_ITP_Z3,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_NONLIN_EXPL_NWT_IT_WP_mathsat, config_NONLIN_EXPL_SEQ_ITP_Z3,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_NONLIN_EXPL_SEQ_ITP_mathsat = ConfigNode("NONLIN_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 200000
+            ), checker, inProcess)
+        edges.add(Edge(config_NONLIN_EXPL_SEQ_ITP_Z3, config_NONLIN_EXPL_SEQ_ITP_mathsat,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_NONLIN_PRED_CART_SEQ_ITP_mathsat = ConfigNode("NONLIN_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(Edge(config_NONLIN_EXPL_SEQ_ITP_mathsat, config_NONLIN_PRED_CART_SEQ_ITP_mathsat,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_NONLIN_EXPL_NWT_IT_WP_cvc5 = ConfigNode("NONLIN_EXPL_NWT_IT_WP_cvc5:1.0.8-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "cvc5:1.0.8",
+                refinementSolver = "cvc5:1.0.8",
+                refinement = Refinement.NWT_IT_WP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(Edge(config_NONLIN_PRED_CART_SEQ_ITP_mathsat, config_NONLIN_EXPL_NWT_IT_WP_cvc5,
+            if (inProcess) timeoutOrSolverError else anyError))
+        if (trait == ArithmeticTrait.BITWISE) {
             return STM(config_BITWISE_EXPL_NWT_IT_WP_cvc5, edges)
         }
 
-        if(trait == ArithmeticTrait.FLOAT) {
+        if (trait == ArithmeticTrait.FLOAT) {
             return STM(config_FLOAT_EXPL_NWT_IT_WP_cvc5, edges)
         }
 
-        if(trait == ArithmeticTrait.LIN_INT) {
+        if (trait == ArithmeticTrait.LIN_INT) {
             return STM(config_LIN_EXPL_NWT_IT_WP_mathsat, edges)
         }
 
-        if(trait == ArithmeticTrait.NONLIN_INT) {
+        if (trait == ArithmeticTrait.NONLIN_INT) {
             return STM(config_NONLIN_EXPL_NWT_IT_WP_Z3, edges)
         }
 
@@ -338,7 +372,7 @@ fun complexPortfolio24(
 
     val mainTrait =
         if (ArithmeticTrait.FLOAT in traitsTyped.arithmeticTraits) ArithmeticTrait.FLOAT
-        else if(ArithmeticTrait.ARR in traitsTyped.arithmeticTraits) ArithmeticTrait.ARR
+        else if (ArithmeticTrait.ARR in traitsTyped.arithmeticTraits) ArithmeticTrait.ARR
         else if (ArithmeticTrait.BITWISE in traitsTyped.arithmeticTraits) ArithmeticTrait.BITWISE
         else if (ArithmeticTrait.NONLIN_INT in traitsTyped.arithmeticTraits) ArithmeticTrait.NONLIN_INT
         else ArithmeticTrait.LIN_INT
