@@ -22,6 +22,10 @@ plugins {
     id("cpp-library")
 }
 
+/**
+ * This subproject builds the lib/libtheta-llvm.so if the necessary pre-requisites are met (LLVM-15 is available)
+ */
+
 val llvmConfigBinary = try {
     val output = runCommandForOutput("llvm-config", "--version")
     val version = output[0].split('.')
@@ -72,7 +76,7 @@ fun llvmConfigFlags(vararg args: String): Array<String> {
     } catch (e: IOException) {
         e.printStackTrace()
         arrayOf()
-    }//.also { println("LLVM flags (${args.toList()}): ${it.toList()}") }
+    }
 }
 
 fun jniConfigFlags(): Array<String> {
@@ -87,7 +91,7 @@ fun jniConfigFlags(): Array<String> {
     return arrayOf(
         "-I${mainInclude.absolutePath}",
         "-I${linuxInclude.absolutePath}",
-    )//.also { println("JNI flags: ${it.toList()}") }
+    )
 }
 
 library {
