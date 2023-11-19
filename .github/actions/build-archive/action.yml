@@ -1,0 +1,48 @@
+name: 'Create SV-COMP binary'
+inputs:
+    name:
+        required: true
+    inputflag:
+        required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+      name: Get JAR
+      with:
+        name: ThetaJars
+        path: jar/
+    - name: Create folder structure
+      run: |
+        mkdir -p ${{ inputs.name }}
+        mkdir -p ${{ inputs.name }}/solvers
+        cp lib ${{ inputs.name }}/lib -r
+        cp CONTRIBUTORS.md ${{ inputs.name }}/
+        cp lib/README.md ${{ inputs.name }}/LIB_LICENSES.md
+        cp LICENSE ${{ inputs.name }}/
+        cp README.md ${{ inputs.name }}/GENERAL_README.md
+        cp scripts/theta-start.sh ${{ inputs.name }}/theta-start.sh
+        chmod +x ${{ inputs.name }}/theta-start.sh
+        sed "s/COMMIT_ID/$GITHUB_SHA/g" $GITHUB_ACTION_PATH/README.md > 
+        sed -i 's/TOOL_NAME/${{ inputs.name }}/g' ${{ inputs.name }}/README.md
+        sed -i 's/INPUT_FLAG/${{ inputs.inputflag }}/g' ${{ inputs.name }}/README.md
+    - name: Extract theta-xcfa-cli and theta-smtlib-cli
+      shell: bash
+      run: |
+        mv jar/xcfa/xcfa-cli/build/libs/*-all.jar ${{ inputs.name }}/theta.jar
+        mv jar/solver/solver-smtlib-cli/build/libs/*-all.jar ${{ inputs.name }}/theta-smtlib.jar
+    - name: Install solvers
+      shell: bash
+      run: |
+        for i in $(cat $GITHUB_ACTION_PATH/necessary-solvers.txt)
+        do
+          java -jar ${{ inputs.name }}/theta-smtlib.jar --home ${{ inputs.name }}/solvers install $i
+        done
+    - name: Upload results
+      uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      if: steps.setfile.outputs.length != '0'
+      with:
+        name: ${{ inputs.name }}_SV-COMP
+        path: ${{ inputs.name }}
