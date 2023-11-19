@@ -312,5 +312,5 @@ fun XcfaBuilder.procedure(name: String, passManager: ProcedurePassManager,
 
 fun XcfaBuilder.procedure(name: String,
     lambda: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilderContext {
-    return procedure(name, ProcedurePassManager(emptyList()), lambda)
+    return procedure(name, ProcedurePassManager(), lambda)
 }

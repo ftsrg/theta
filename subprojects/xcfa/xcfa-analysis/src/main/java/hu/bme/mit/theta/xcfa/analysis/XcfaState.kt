@@ -350,7 +350,7 @@ data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: L
 
     override fun hashCode(): Int {
         var result = locs.hashCode()
-        result = 31 * result + paramsInitialized.hashCode() // TODO FRICKIN INNER STATE HASH
+        result = 31 * result + paramsInitialized.hashCode()
         return result
     }
 

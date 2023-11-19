@@ -126,7 +126,8 @@ private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: Xcf
             val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl
             val eval = valuation.eval(varDecl)
             val splitName = varDecl.name.split("::")
-            val rootName = splitName.subList(2, splitName.size).joinToString("::")
+            val rootName = if (splitName[0].matches(Regex("T[0-9]*"))) splitName.subList(2, splitName.size)
+                .joinToString("::") else varDecl.name
             if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent && eval.isPresent)
                 "${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
                     printLit(eval.get())
@@ -140,8 +141,8 @@ private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: Xcf
 
         startline = xcfaLabel.getCMetaData()?.lineNumberStart,
         endline = xcfaLabel.getCMetaData()?.lineNumberStop,
-        startoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
-        endoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
+        startoffset = xcfaLabel.getCMetaData()?.offsetStart,
+        endoffset = xcfaLabel.getCMetaData()?.offsetEnd,
 
         threadId = if (pid != null) "$pid" else null,
 

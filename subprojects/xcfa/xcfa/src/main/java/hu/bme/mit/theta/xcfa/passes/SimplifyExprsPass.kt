@@ -33,7 +33,10 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.isRead
 import hu.bme.mit.theta.xcfa.model.*
+import java.lang.UnsupportedOperationException
 
 /**
  * This pass simplifies the expressions inside statements and substitutes the values of constant variables
@@ -46,6 +49,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
+        removeUnusedGlobalVarWrites(builder)
         // TODO: this does not work if the program contains deRefWrites
         // e.g. x = 1; y = &x; *y = 2;
         // Maybe we should run a static analysis on the xcfa first, to find out which variables are constant
@@ -86,6 +90,25 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         return builder
     }
 
+    private fun removeUnusedGlobalVarWrites(builder: XcfaProcedureBuilder) {
+        val usedVars = mutableSetOf<VarDecl<*>>()
+        val xcfaBuilder = builder.parent
+        xcfaBuilder.getProcedures().flatMap { it.getEdges() }.forEach {
+            it.label.collectVarsWithAccessType().forEach { (varDecl, access) ->
+                if (access.isRead) usedVars.add(varDecl)
+            }
+        }
+        val unusedVars = xcfaBuilder.getVars().map { it.wrappedVar } union builder.getVars() subtract
+            usedVars subtract builder.getParams().map { it.first }.toSet()
+        xcfaBuilder.getProcedures().forEach { b ->
+            b.getEdges().toList().forEach { edge ->
+                val newLabel = edge.label.removeUnusedWrites(unusedVars)
+                b.removeEdge(edge)
+                b.addEdge(edge.withLabel(newLabel))
+            }
+        }
+    }
+
     private fun findConstVariables(builder: XcfaProcedureBuilder): Valuation {
         val valuation = MutableValuation()
         builder.parent.getProcedures()
@@ -104,7 +127,10 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
             }
             .filterNotNull()
             .forEach { assignment ->
-                valuation.put(assignment.varDecl, assignment.expr.eval(ImmutableValuation.empty()))
+                try {
+                    valuation.put(assignment.varDecl, assignment.expr.eval(ImmutableValuation.empty()))
+                } catch (_: UnsupportedOperationException) {
+                }
             }
         return valuation
     }

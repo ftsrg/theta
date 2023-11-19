@@ -33,6 +33,9 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint
 import hu.bme.mit.theta.graphsolver.solvers.GraphSolver
 import java.util.*
 
+/**
+ * WiP checker for finite-state systems
+ */
 class FiniteStateChecker<S : ExplState, A : StmtAction, T>(
     private val mcm: Collection<GraphConstraint>,
     private val initFunc: InitFunc<S, ExplPrec>,

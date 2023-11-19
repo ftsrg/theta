@@ -34,9 +34,6 @@ import static java.util.stream.Collectors.toList;
  */
 public final class ArgTrace<S extends State, A extends Action> implements Iterable<ArgNode<S, A>> {
 
-    private static final int HASH_SEED = 7653;
-    private volatile int hashCode = 0;
-
     private final List<ArgNode<S, A>> nodes;
     private final List<ArgEdge<S, A>> edges;
     private final Collection<State> states;
@@ -115,31 +112,5 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
     public Iterator<ArgNode<S, A>> iterator() {
         return nodes.iterator();
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ArgTrace<?, ?> argTrace = (ArgTrace<?, ?>) o;
-        return states.equals(argTrace.states); // && edges.equals(argTrace.edges);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + states.hashCode();
-            result = 31 * result + edges.hashCode();
-            hashCode = result;
-        }
-        return result;
-        // return Objects.hash(states, edges);
-    }
-    ////
 
 }

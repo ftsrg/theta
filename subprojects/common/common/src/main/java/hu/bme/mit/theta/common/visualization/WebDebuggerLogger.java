@@ -74,7 +74,9 @@ public class WebDebuggerLogger {
         for (String trace : traces) {
             sb.append("\"").append(trace).append("\"").append(",\n");
         }
-        if (!traces.isEmpty()) sb.deleteCharAt(sb.length() - 1);
+        if (!traces.isEmpty()) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
         sb.append("]").append(System.lineSeparator());
         sb.append("}");
         return sb.toString();

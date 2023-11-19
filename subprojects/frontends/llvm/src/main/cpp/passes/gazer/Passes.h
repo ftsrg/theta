@@ -22,16 +22,6 @@
 
 namespace gazer {
 
-/// InlineGlobalVariables - This pass inlines all global variables into
-/// the main function of the program.
-//    llvm::Pass *createInlineGlobalVariablesPass();
-
-/// This pass combines each 'gazer.error_code' call within the function
-/// into a single one.
-//    llvm::Pass* createLiftErrorCallsPass(llvm::Function& entry);
-
-/// This pass normalizes some known verifier calls into a uniform format.
-//    llvm::Pass* createNormalizeVerifierCallsPass();
 
 // Added from LLVMFrontendSettings.h
     enum class InlineLevel {
@@ -42,8 +32,6 @@ namespace gazer {
 
 /// A simpler (and more restricted) inlining pass.
     llvm::Pass *createSimpleInlinerPass(llvm::Function &entry, InlineLevel level);
-
-//  llvm::Pass* createCanonizeLoopExitsPass();
 
 }
 

@@ -98,7 +98,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (level == LbeLevel.NO_LBE) return builder
 
-        if (level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL && parseContext.multiThreading) {
+        if ((level == LbeLevel.LBE_SEQ || level == LbeLevel.LBE_FULL) && parseContext.multiThreading) {
             level = LbeLevel.LBE_LOCAL
         }
 
@@ -125,9 +125,6 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
         //}
         return builder
     }
-
-    val isPostInlining: Boolean
-        get() = true
 
     /**
      * Collapses atomic blocks sequentially.
@@ -308,7 +305,10 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
     private fun isNotLocal(edge: XcfaEdge): Boolean {
         return !edge.getFlatLabels().all { label ->
             !(label is StartLabel || label is JoinLabel) && label.collectVars().all(builder.getVars()::contains) &&
-                !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr)
+                !(label is StmtLabel && label.stmt is AssumeStmt && label.stmt.cond is FalseExpr) &&
+                !(label is FenceLabel && label.labels.any { name ->
+                    listOf("ATOMIC_BEGIN", "mutex_lock", "cond_wait").any { name.startsWith(it) }
+                })
         }
     }
 }

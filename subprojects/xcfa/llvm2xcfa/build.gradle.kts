@@ -33,6 +33,7 @@ tasks.test {
         dependsOn(nativeLibTasks.build)
 
         val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
-        systemProperty("java.library.path", linkTask.linkedFile.get().asFile.parent)
+        systemProperty("java.library.path",
+            linkTask.linkedFile.get().asFile.parent + ":/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib")
     }
 }

@@ -14,8 +14,23 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
+package hu.bme.mit.theta.analysis.algorithm;
 
-public enum BitwiseOption {
-    INTEGER, BITWISE, BITWISE_FLOAT
+import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.core.stmt.Stmt;
+
+import java.util.List;
+
+class ExprActionStub extends StmtAction {
+
+    private final List<Stmt> stmts;
+
+    ExprActionStub(List<Stmt> stmts) {
+        this.stmts = stmts;
+    }
+
+    @Override
+    public List<Stmt> getStmts() {
+        return null;
+    }
 }

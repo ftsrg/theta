@@ -85,7 +85,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
                         Int(type.width()));
             } else {
-                return param.withOps(param.getOps());
+                return BvExprs.Pos((Expr<BvType>) param);
             }
         } else {
             throw new IllegalStateException("Compound types are not directly supported!");
@@ -111,8 +111,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
                         Int(type.width()));
-            } else {
-                return param.withOps(param.getOps());
+            } else { // width equals
+                if (that instanceof Signed) {
+                    return BvExprs.Add(List.of((Expr<BvType>) param, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TWO.pow(type.width()).subtract(BigInteger.ONE), type.width()), (Expr<BvType>) type.getUnitValue()));
+                } else {
+                    return param;
+                }
             }
         } else {
             throw new IllegalStateException("Compound types are not directly supported!");

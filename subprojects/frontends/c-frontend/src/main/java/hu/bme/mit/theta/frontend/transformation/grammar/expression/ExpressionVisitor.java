@@ -19,6 +19,8 @@ package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -33,7 +35,11 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.*;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.BvUtils;
@@ -44,7 +50,11 @@ import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-import hu.bme.mit.theta.frontend.transformation.model.statements.*;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCall;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -53,11 +63,22 @@ import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mod;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -71,14 +92,16 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private final FunctionVisitor functionVisitor;
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
+    private final Logger uniqueWarningLogger;
 
-    public ExpressionVisitor(ParseContext parseContext, FunctionVisitor functionVisitor, Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables, Map<VarDecl<?>, CDeclaration> functions, TypedefVisitor typedefVisitor, TypeVisitor typeVisitor) {
+    public ExpressionVisitor(ParseContext parseContext, FunctionVisitor functionVisitor, Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables, Map<VarDecl<?>, CDeclaration> functions, TypedefVisitor typedefVisitor, TypeVisitor typeVisitor, Logger uniqueWarningLogger) {
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
         this.variables = variables;
         this.functions = functions;
         this.typedefVisitor = typedefVisitor;
         this.typeVisitor = typeVisitor;
+        this.uniqueWarningLogger = uniqueWarningLogger;
     }
 
     protected VarDecl<?> getVar(String name) {
@@ -330,9 +353,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             CComplexType smallestCommonType = CComplexType.getSmallestCommonType(types, parseContext);
             List<Expr<?>> collect = new ArrayList<>();
             for (int i = 0; i < exprs.size(); i++) {
-                Expr<?> expr = (i == 0 || ctx.signs.get(i - 1).getText().equals("+")) ? exprs.get(i) : AbstractExprs.Neg(exprs.get(i));
-                parseContext.getMetadata().create(expr, "cType", CComplexType.getType(exprs.get(i), parseContext));
-                Expr<?> castTo = smallestCommonType.castTo(expr);
+                parseContext.getMetadata().create(exprs.get(i), "cType", CComplexType.getType(exprs.get(i), parseContext));
+                Expr<?> castTo = smallestCommonType.castTo(exprs.get(i));
+                if (i != 0 && ctx.signs.get(i - 1).getText().equals("-")) {
+                    castTo = AbstractExprs.Neg(castTo);
+                }
                 collect.add(castTo);
             }
             Expr<?> add = AbstractExprs.Add(collect);
@@ -372,6 +397,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     case "%":
                         if (leftExpr.getType() instanceof IntType && rightExpr.getType() instanceof IntType) {
                             expr = createIntMod(leftExpr, rightExpr);
+                        } else if (leftExpr.getType() instanceof BvType && rightExpr.getType() instanceof BvType) {
+                            expr = AbstractExprs.Rem(leftExpr, rightExpr);
                         } else {
                             expr = AbstractExprs.Mod(leftExpr, rightExpr);
                         }
@@ -390,6 +417,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     /**
      * Conversion from C (/) semantics to solver (div) semantics.
+     *
      * @param a dividend
      * @param b divisor
      * @return expression representing C division semantics with solver operations
@@ -397,21 +425,22 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private Expr<?> createIntDiv(Expr<?> a, Expr<?> b) {
         DivExpr<?> aDivB = Div(a, b);
         return Ite(Geq(a, Int(0)),          // if (a >= 0)
-            aDivB,                                //   a div b
-                                                  // else
-            Ite(Neq(Mod(a, b), Int(0)),     //   if (a mod b != 0)
-                Ite(Geq(b, Int(0)),         //     if (b >= 0)
-                    Add(aDivB, Int(1)),     //       a div b + 1
-                                                  //     else
-                    Sub(aDivB, Int(1))      //       a div b - 1
-                ),                                //   else
-                aDivB                             //     a div b
-            )
+                aDivB,                                //   a div b
+                // else
+                Ite(Neq(Mod(a, b), Int(0)),     //   if (a mod b != 0)
+                        Ite(Geq(b, Int(0)),         //     if (b >= 0)
+                                Add(aDivB, Int(1)),     //       a div b + 1
+                                //     else
+                                Sub(aDivB, Int(1))      //       a div b - 1
+                        ),                                //   else
+                        aDivB                             //     a div b
+                )
         );
     }
 
     /**
      * Conversion from C (%) semantics to solver (mod) semantics.
+     *
      * @param a dividend
      * @param b divisor
      * @return expression representing C modulo semantics with solver operations
@@ -419,12 +448,12 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private Expr<?> createIntMod(Expr<?> a, Expr<?> b) {
         ModExpr<?> aModB = Mod(a, b);
         return Ite(Geq(a, Int(0)),  // if (a >= 0)
-            aModB,                        //   a mod b
-                                          // else
-            Ite(Geq(b, Int(0)),     //   if (b >= 0)
-                Sub(aModB, b),            //     a mod b - b
-                Add(aModB, b)             //     a mod b + b
-            )
+                aModB,                        //   a mod b
+                // else
+                Ite(Geq(b, Int(0)),     //   if (b >= 0)
+                        Sub(aModB, b),            //     a mod b - b
+                        Add(aModB, b)             //     a mod b + b
+                )
         );
     }
 
@@ -446,18 +475,20 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     @Override
     public Expr<?> visitUnaryExpressionSizeOrAlignOf(CParser.UnaryExpressionSizeOrAlignOfContext ctx) {
         if (ctx.Alignof() != null) {
-            System.err.println("WARNING: alignof is not yet implemented, using a literal 0 instead.");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: alignof is not yet implemented, using a literal 0 instead.\n");
             CComplexType signedInt = CComplexType.getSignedInt(parseContext);
             LitExpr<?> zero = signedInt.getNullValue();
             parseContext.getMetadata().create(zero, "cType", signedInt);
             return zero;
         } else {
-            Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText());
+            final Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText())
+                    .or(() -> Optional.ofNullable(CComplexType.getType(getVar(ctx.typeName().getText()).getRef(), parseContext)));
+
             if (type.isPresent()) {
                 LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + parseContext.getArchitecture().getBitWidth(type.get().getTypeName()) / 8);
                 return value;
             } else {
-                System.err.println("WARNING: sizeof got unknown type, using a literal 0 instead.");
+                uniqueWarningLogger.write(Level.INFO, "WARNING: sizeof got unknown type, using a literal 0 instead.\n");
                 CComplexType signedInt = CComplexType.getSignedInt(parseContext);
                 LitExpr<?> zero = signedInt.getNullValue();
                 parseContext.getMetadata().create(zero, "cType", signedInt);
@@ -628,6 +659,15 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     }
 
     @Override
+    public Expr<?> visitGccPrettyFunc(CParser.GccPrettyFuncContext ctx) {
+        uniqueWarningLogger.write(Level.INFO, "WARNING: gcc intrinsic encountered in place of an expression, using a literal 0 instead.\n");
+        CComplexType signedInt = CComplexType.getSignedInt(parseContext);
+        LitExpr<?> zero = signedInt.getNullValue();
+        parseContext.getMetadata().create(zero, "cType", signedInt);
+        return zero;
+    }
+
+    @Override
     public Expr<?> visitPrimaryExpressionId(CParser.PrimaryExpressionIdContext ctx) {
         return getVar(ctx.Identifier().getText()).getRef();
     }
@@ -683,6 +723,10 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 bigInteger = new BigInteger(text.substring(2), 2);
             } else if (text.startsWith("0") && text.length() > 1) {
                 bigInteger = new BigInteger(text.substring(1), 8);
+            } else if (text.startsWith("'\\x")) { // char c = '\x0'
+                bigInteger = new BigInteger(text.substring(3, text.length() - 1), 8);
+            } else if (text.startsWith("'\\")) { // char c = '\0'
+                bigInteger = new BigInteger(text.substring(2, text.length() - 1), 10);
             } else {
                 bigInteger = new BigInteger(text, 10);
             }
@@ -723,7 +767,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     public Expr<?> visitPrimaryExpressionStrings(CParser.PrimaryExpressionStringsContext ctx) {
         CComplexType signedInt = CComplexType.getSignedInt(parseContext);
         Expr<?> ret = signedInt.getUnitValue();
-        System.err.println("Warning: using int(1) as a string constant");
+        uniqueWarningLogger.write(Level.INFO, "WARNING: using int(1) as a string constant\n");
         parseContext.getMetadata().create(ret, "cType", signedInt);
         return ret;
     }

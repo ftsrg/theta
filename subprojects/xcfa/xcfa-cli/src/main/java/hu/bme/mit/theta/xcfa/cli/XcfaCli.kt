@@ -22,44 +22,59 @@ import com.google.common.base.Stopwatch
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
+import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.CliUtils
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.UniqueWarningLogger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
-import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
+import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
+import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
+import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.toC
 import org.antlr.v4.runtime.CharStreams
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileReader
+import java.nio.file.FileSystems
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.script.Bindings
+import javax.script.Compilable
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
-import javax.script.SimpleBindings
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
@@ -77,6 +92,10 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--lbe"],
         description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ
+
+    @Parameter(names = ["--arithmetic"],
+        description = "Arithmetic type (efficient, bitvector, integer)")
+    var arithmetic: ArithmeticType = ArithmeticType.efficient
 
     @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll")
     var loopUnroll: Int = 50
@@ -96,13 +115,17 @@ class XcfaCli(private val args: Array<String>) {
 
     @Parameter(names = ["--portfolio"],
         description = "Portfolio type (only valid with --strategy PORTFOLIO)")
-    var portfolio: File = File("complex.kts")
+    var portfolio: String? = null
 
     @Parameter(names = ["--smt-home"], description = "The path of the solver registry")
     var solverHome: String = SmtLibSolverManager.HOME.toAbsolutePath().toString()
 
     @Parameter(names = ["--debug"], description = "Debug mode (not exiting when encountering an exception)")
     var debug: Boolean = false
+
+    @Parameter(names = ["--arg-debug"],
+        description = "ARG debug mode (use the web-based debugger for ARG visualization)")
+    var argdebug: Boolean = false
 
     //////////// debug options ////////////
     @Parameter(names = ["--stacktrace"],
@@ -143,10 +166,20 @@ class XcfaCli(private val args: Array<String>) {
         description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues.")
     var validateConcretizerSolver: Boolean = false
 
+    @Parameter(names = ["--to-c-use-arrays"])
+    var useArr: Boolean = false
+
+    @Parameter(names = ["--to-c-use-exact-arrays"])
+    var useExArr: Boolean = false
+
+    @Parameter(names = ["--to-c-use-ranges"])
+    var useRange: Boolean = false
+
     @Parameter(names = ["--seed"], description = "Random seed used for DPOR")
     var randomSeed: Int = -1
 
-    @Parameter(names = ["--arg-to-file"], description = "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/")
+    @Parameter(names = ["--arg-to-file"],
+        description = "Visualize the resulting file here: https://ftsrg-edu.github.io/student-sisak-argviz/")
     var argToFile: Boolean = false
 
     @Parameter
@@ -171,48 +204,99 @@ class XcfaCli(private val args: Array<String>) {
         val stopwatch = Stopwatch.createStarted()
         val gsonForOutput = getGson()
         val logger = ConsoleLogger(logLevel)
-        val explicitProperty: ErrorDetection = getExplicitProperty()
+        val uniqueWarningLogger = UniqueWarningLogger(logLevel)
+        val explicitProperty: ErrorDetection = getExplicitProperty(uniqueWarningLogger)
+        portfolio?.run { strategy = Strategy.PORTFOLIO }
 
         // propagating input variables
         LbePass.level = lbeLevel
-        if (randomSeed >= 0){
-            XcfaSporLts.random = Random(randomSeed)
-            XcfaDporLts.random = Random(randomSeed)
+        if (randomSeed >= 0) {
+            val random = Random(randomSeed)
+            XcfaSporLts.random = random
+            XcfaDporLts.random = random
         }
         if (argToFile) {
             WebDebuggerLogger.enableWebDebuggerLogger()
             WebDebuggerLogger.getInstance().setTitle(input?.name)
         }
         LoopUnrollPass.UNROLL_LIMIT = loopUnroll
+        ARGWebDebugger.on = argdebug
 
-
-        logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType")
+        logger.write(Logger.Level.INFO, "Parsing the input $input as $inputType\n")
         val parseContext = ParseContext()
-        val xcfa = getXcfa(logger, explicitProperty, parseContext)
+        parseContext.arithmetic = arithmetic
+        val xcfa = getXcfa(logger, explicitProperty, parseContext, uniqueWarningLogger)
+        ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
         logger.write(Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
             stopwatch.elapsed(TimeUnit.MILLISECONDS)
         } ms)\n")
 
-        preVerificationLogging(logger, xcfa, gsonForOutput)
+        preVerificationLogging(logger, xcfa, gsonForOutput, parseContext)
 
         if (noAnalysis) {
-            logger.write(Logger.Level.RESULT, "ParsingResult Success")
+            logger.write(Logger.Level.RESULT, "ParsingResult Success\n")
             return
         }
         // verification
         stopwatch.reset().start()
-        logger.write(Logger.Level.INFO, "Starting verification of ${xcfa.name} using $backend")
-        registerAllSolverManagers(solverHome, logger)
-        val config = parseConfigFromCli()
-        if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
-            printConfigFile!!.writeText(gsonForOutput.toJson(config))
-        }
+
         val safetyResult: SafetyResult<*, *> =
-            when (strategy) {
-                Strategy.DIRECT -> runDirect(xcfa, config, logger)
-                Strategy.SERVER -> runServer(xcfa, config, logger, parseContext)
-                Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
-                Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug)
+            if (backend == Backend.CEGAR) {
+                logger.write(Logger.Level.INFO,
+                    "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
+                registerAllSolverManagers(solverHome, logger)
+                logger.write(Logger.Level.INFO,
+                    "Registered solver managers successfully (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                stopwatch.reset().start()
+                val config = parseCEGARConfigFromCli(parseContext)
+                if (strategy != Strategy.PORTFOLIO && printConfigFile != null) {
+                    printConfigFile!!.writeText(gsonForOutput.toJson(config))
+                }
+                logger.write(Logger.Level.INFO, "Parsed config (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                stopwatch.reset().start()
+
+                when (strategy) {
+                    Strategy.DIRECT -> runDirect(xcfa, config, logger)
+                    Strategy.SERVER -> runServer(xcfa, config, logger, parseContext, argdebug)
+                    Strategy.SERVER_DEBUG -> runServerDebug(xcfa, config, logger, parseContext)
+                    Strategy.PORTFOLIO -> runPortfolio(xcfa, explicitProperty, logger, parseContext, debug,
+                        argdebug)
+                }
+            } else {
+                registerAllSolverManagers(solverHome, logger)
+                val checker = if (backend == Backend.KIND) {
+                    val kindConfig = parseKindConfigFromCli()
+                    kindConfig.getKindChecker(xcfa)
+                } else if (backend == Backend.IMC) {
+                    val imcConfig = parseIMCConfigFromCli()
+                    imcConfig.getIMCChecker(xcfa)
+                } else if (backend == Backend.IMC_THEN_KIND) {
+                    SafetyChecker<ExprState, ExprAction, Prec> {
+                        val safetyResult = try {
+                            val imcConfig = parseIMCConfigFromCli()
+                            logger.write(Logger.Level.SUBSTEP, "Starting IMC with config $imcConfig...\n")
+                            val ret = imcConfig.getIMCChecker(xcfa, 60).check(null)
+                            logger.write(Logger.Level.SUBSTEP, "IMC ended\n")
+                            ret
+                        } catch (e: Throwable) {
+                            logger.write(Logger.Level.SUBSTEP, "IMC threw exception: $e\n")
+                            null
+                            // do not do anything, kind will run
+                        }
+                        if (safetyResult == null) {
+                            val kindConfig = parseKindConfigFromCli()
+                            logger.write(Logger.Level.SUBSTEP, "Starting KIND with config $kindConfig\n")
+                            val ret = kindConfig.getKindChecker(xcfa).check(null) as SafetyResult<ExprState, ExprAction>
+                            logger.write(Logger.Level.SUBSTEP, "KIND ended\n")
+                            ret
+                        } else {
+                            safetyResult as SafetyResult<ExprState, ExprAction>
+                        }
+                    }
+                } else {
+                    error("Backend $backend not supported")
+                }
+                checker.check(null)
             }
         // post verification
         postVerificationLogging(safetyResult, parseContext)
@@ -223,9 +307,9 @@ class XcfaCli(private val args: Array<String>) {
         exitOnError(stacktrace, debug) { config.check(xcfa, logger) }
 
     private fun runServer(xcfa: XCFA, config: XcfaCegarConfig,
-        logger: ConsoleLogger, parseContext: ParseContext): SafetyResult<*, *> {
+        logger: ConsoleLogger, parseContext: ParseContext, argdebug: Boolean): SafetyResult<*, *> {
         val safetyResultSupplier = config.checkInProcess(xcfa, solverHome, true,
-            input!!.absolutePath, logger, parseContext)
+            input!!.absolutePath, logger, parseContext, argdebug)
         return try {
             safetyResultSupplier()
         } catch (e: ErrorCodeException) {
@@ -245,23 +329,53 @@ class XcfaCli(private val args: Array<String>) {
     }
 
     private fun runPortfolio(xcfa: XCFA, explicitProperty: ErrorDetection,
-        logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false): SafetyResult<*, *> {
-        val portfolioDescriptor = portfolio
-        val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
+        logger: ConsoleLogger, parseContext: ParseContext, debug: Boolean = false,
+        argdebug: Boolean): SafetyResult<*, *> {
         return try {
-            val bindings: Bindings = SimpleBindings()
-            bindings["xcfa"] = xcfa
-            bindings["parseContext"] = parseContext
-            bindings["property"] = explicitProperty
-            bindings["cFileName"] = input!!.absolutePath
-            bindings["logger"] = logger
-            bindings["smtHome"] = solverHome
-            bindings["traits"] = VerificationTraits(
-                multithreaded = parseContext.multiThreading,
-                arithmetic = parseContext.bitwiseOption,
-            )
-            val portfolioResult = kotlinEngine.eval(FileReader(portfolioDescriptor),
-                bindings) as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+            val portfolioResult = if (File(portfolio).exists()) {
+                val portfolioDescriptor = portfolio!!
+                val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
+                val bindings: Bindings = kotlinEngine.createBindings()
+                bindings["xcfa"] = xcfa
+                bindings["parseContext"] = parseContext
+                bindings["property"] = explicitProperty
+                bindings["cFileName"] = input!!.absolutePath
+                bindings["logger"] = logger
+                bindings["smtHome"] = solverHome
+                bindings["traits"] = VerificationTraits(
+                    multithreaded = parseContext.multiThreading,
+                    arithmeticTraits = parseContext.arithmeticTraits,
+                )
+                bindings["argdebug"] = argdebug
+
+                kotlinEngine as Compilable
+                val stopwatch = Stopwatch.createStarted()
+
+                kotlinEngine.eval("true") as Boolean
+                logger.write(Logger.Level.INFO,
+                    "Loaded script engine (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+                stopwatch.reset().start()
+
+                // 100 seems to be a safe default, based on AbstractScriptEngine
+                kotlinEngine.context.setBindings(bindings, 100)
+                val compiled = kotlinEngine.compile(FileReader(portfolioDescriptor))
+                logger.write(Logger.Level.INFO,
+                    "Compiled portfolio (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
+
+                compiled.eval() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+            } else if (portfolio == "COMPLEX23") {
+                complexPortfolio23(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
+                    multithreaded = parseContext.multiThreading,
+                    arithmeticTraits = parseContext.arithmeticTraits,
+                ), explicitProperty, parseContext, debug,
+                    argdebug).execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+            } else if (portfolio == "COMPLEX" || portfolio == "COMPLEX24") {
+                complexPortfolio24(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
+                    multithreaded = parseContext.multiThreading,
+                    arithmeticTraits = parseContext.arithmeticTraits,
+                ), explicitProperty, parseContext, debug,
+                    argdebug).execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+            } else throw Exception("No known portfolio $portfolio")
 
             concretizerSolver = portfolioResult.first.refinementSolver
             validateConcretizerSolver = portfolioResult.first.validateRefinementSolver
@@ -273,21 +387,29 @@ class XcfaCli(private val args: Array<String>) {
         } catch (e: Exception) {
             if (debug) throw e
             logger.write(Logger.Level.RESULT,
-                "Portfolio from $portfolioDescriptor could not be executed.")
+                "Portfolio '$portfolio' could not be executed.\n")
             e.printStackTrace()
             exitProcess(ExitCodes.PORTFOLIO_ERROR.code)
         }
     }
 
-    private fun preVerificationLogging(logger: ConsoleLogger, xcfa: XCFA, gsonForOutput: Gson) {
+    private fun preVerificationLogging(logger: ConsoleLogger, xcfa: XCFA, gsonForOutput: Gson,
+        parseContext: ParseContext) {
         if (outputResults && !svcomp) {
             resultFolder.mkdirs()
 
             logger.write(Logger.Level.INFO,
-                "Writing results to directory ${resultFolder.absolutePath}")
+                "Writing results to directory ${resultFolder.absolutePath}\n")
 
             val xcfaDotFile = File(resultFolder, "xcfa.dot")
             xcfaDotFile.writeText(xcfa.toDot())
+
+            try {
+                val xcfaCFile = File(resultFolder, "xcfa.c")
+                xcfaCFile.writeText(xcfa.toC(parseContext, useArr, useExArr, useRange))
+            } catch (e: Throwable) {
+                logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
+            }
 
             val xcfaJsonFile = File(resultFolder, "xcfa.json")
             val uglyJson = gsonForOutput.toJson(xcfa)
@@ -314,31 +436,49 @@ class XcfaCli(private val args: Array<String>) {
                     val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
                     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
                 }
+                val witnessFile = File(resultFolder, "witness.graphml")
+                XcfaWitnessWriter().writeWitness(safetyResult, input!!,
+                    getSolver(concretizerSolver, validateConcretizerSolver), parseContext, witnessFile)
 
             } else {
+                val workdir = FileSystems.getDefault().getPath("").toAbsolutePath()
+                val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")
                 XcfaWitnessWriter().writeWitness(safetyResult, input!!,
-                    getSolver(concretizerSolver, validateConcretizerSolver), parseContext)
+                    getSolver(concretizerSolver, validateConcretizerSolver), parseContext, witnessfile)
             }
         }
     }
 
-    private fun getXcfa(logger: ConsoleLogger, explicitProperty: ErrorDetection, parseContext: ParseContext) =
+    private fun getXcfa(logger: ConsoleLogger, explicitProperty: ErrorDetection, parseContext: ParseContext,
+        uniqueWarningLogger: Logger) =
         try {
             when (inputType) {
                 InputType.CHC -> {
-                    parseChc(logger)
+                    parseChc(logger, parseContext, uniqueWarningLogger)
                 }
 
                 InputType.C -> {
-                    val stream = FileInputStream(input!!)
-                    val xcfaFromC = getXcfaFromC(stream, parseContext, false,
-                        explicitProperty == ErrorDetection.OVERFLOW).first
+                    val xcfaFromC = try {
+                        val stream = FileInputStream(input!!)
+                        getXcfaFromC(stream, parseContext, false,
+                            explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+                    } catch (e: Throwable) {
+                        if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
+                            parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
+                            logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
+                            val stream = FileInputStream(input!!)
+                            getXcfaFromC(stream, parseContext, false,
+                                explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+                        } else {
+                            throw e
+                        }
+                    }
                     logger.write(Logger.Level.RESULT,
-                        "Arithmetic: ${parseContext.arithmetic}\n")
+                        "Arithmetic: ${parseContext.arithmeticTraits}\n")
                     xcfaFromC
                 }
 
-                InputType.LLVM -> fromFile(input!!, ArithmeticType.efficient)
+                InputType.LLVM -> fromFile(input!!, hu.bme.mit.theta.llvm2xcfa.ArithmeticType.efficient)
 
                 InputType.JSON -> {
                     val gson = getGson()
@@ -353,29 +493,33 @@ class XcfaCli(private val args: Array<String>) {
             }
         } catch (e: Exception) {
             if (stacktrace) e.printStackTrace()
-            logger.write(Logger.Level.RESULT, "Frontend failed!\n")
+            val location = e.stackTrace.filter { it.className.startsWith("hu.bme.mit.theta") }.first().toString()
+            logger.write(Logger.Level.RESULT, "Frontend failed! ($location, $e)\n")
             exitProcess(ExitCodes.FRONTEND_FAILED.code)
         }
 
-    private fun parseChc(logger: ConsoleLogger): XCFA {
+    private fun parseChc(logger: ConsoleLogger, parseContext: ParseContext, uniqueWarningLogger: Logger): XCFA {
         var chcFrontend: ChcFrontend
         val xcfaBuilder = if (chcTransformation == ChcFrontend.ChcTransformation.PORTFOLIO) { // try forward, fallback to backward
             chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.FORWARD)
             try {
-                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
+                    ChcPasses(parseContext, uniqueWarningLogger))
             } catch (e: UnsupportedOperationException) {
-                logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...")
+                logger.write(Logger.Level.INFO, "Non-linear CHC found, retrying using backward transformation...\n")
                 chcFrontend = ChcFrontend(ChcFrontend.ChcTransformation.BACKWARD)
-                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+                chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
+                    ChcPasses(parseContext, uniqueWarningLogger))
             }
         } else {
             chcFrontend = ChcFrontend(chcTransformation)
-            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)))
+            chcFrontend.buildXcfa(CharStreams.fromStream(FileInputStream(input!!)),
+                ChcPasses(parseContext, uniqueWarningLogger))
         }
         return xcfaBuilder.build()
     }
 
-    private fun getExplicitProperty() = if (property != null) {
+    private fun getExplicitProperty(uniqueWarningLogger: Logger) = if (property != null) {
         remainingFlags.add("--error-detection")
         when {
             property!!.name.endsWith("unreach-call.prp") -> {
@@ -386,8 +530,8 @@ class XcfaCli(private val args: Array<String>) {
             property!!.name.endsWith("no-data-race.prp") -> {
                 remainingFlags.add(ErrorDetection.DATA_RACE.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
-                    System.err.println(
-                        "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise")
+                    uniqueWarningLogger.write(Logger.Level.INFO,
+                        "Changing LBE type to NO_LBE because the DATA_RACE property will be erroneous otherwise\n")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
                 ErrorDetection.DATA_RACE
@@ -396,8 +540,8 @@ class XcfaCli(private val args: Array<String>) {
             property!!.name.endsWith("no-overflow.prp") -> {
                 remainingFlags.add(ErrorDetection.OVERFLOW.toString())
                 if (lbeLevel != LbePass.LbeLevel.NO_LBE) {
-                    System.err.println(
-                        "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise")
+                    uniqueWarningLogger.write(Logger.Level.INFO,
+                        "Changing LBE type to NO_LBE because the OVERFLOW property will be erroneous otherwise\n")
                     lbeLevel = LbePass.LbeLevel.NO_LBE
                 }
                 ErrorDetection.OVERFLOW
@@ -405,14 +549,42 @@ class XcfaCli(private val args: Array<String>) {
 
             else -> {
                 remainingFlags.add(ErrorDetection.NO_ERROR.toString())
-                System.err.println(
-                    "Unknown property $property, using full state space exploration (no refinement)")
+                uniqueWarningLogger.write(Logger.Level.INFO,
+                    "Unknown property $property, using full state space exploration (no refinement)\n")
                 ErrorDetection.NO_ERROR
             }
         }
     } else ErrorDetection.ERROR_LOCATION
 
-    private fun parseConfigFromCli(): XcfaCegarConfig {
+    private fun parseIMCConfigFromCli(): XcfaImcConfig {
+        val imcConfig = XcfaImcConfig()
+        try {
+            JCommander.newBuilder().addObject(imcConfig).programName(JAR_NAME).build()
+                .parse(*remainingFlags.toTypedArray())
+        } catch (ex: ParameterException) {
+            println("Invalid parameters, details:")
+            ex.printStackTrace()
+            ex.usage()
+            exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        return imcConfig
+    }
+
+    private fun parseKindConfigFromCli(): XcfaKindConfig {
+        val kindConfig = XcfaKindConfig()
+        try {
+            JCommander.newBuilder().addObject(kindConfig).programName(JAR_NAME).build()
+                .parse(*remainingFlags.toTypedArray())
+        } catch (ex: ParameterException) {
+            println("Invalid parameters, details:")
+            ex.printStackTrace()
+            ex.usage()
+            exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        return kindConfig
+    }
+
+    private fun parseCEGARConfigFromCli(parseContext: ParseContext): XcfaCegarConfig {
         val cegarConfig = XcfaCegarConfig()
         try {
             JCommander.newBuilder().addObject(cegarConfig).programName(JAR_NAME).build()
@@ -422,6 +594,9 @@ class XcfaCli(private val args: Array<String>) {
             ex.printStackTrace()
             ex.usage()
             exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+        if (parseContext.multiThreading && cegarConfig.search == Search.ERR) {
+            cegarConfig.search = Search.DFS;
         }
         return cegarConfig
     }

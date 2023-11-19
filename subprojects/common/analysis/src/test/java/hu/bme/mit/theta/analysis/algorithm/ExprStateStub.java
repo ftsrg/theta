@@ -13,21 +13,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common.logging;
 
-import java.io.PrintStream;
+package hu.bme.mit.theta.analysis.algorithm;
 
-public final class StderrLogger extends BaseLogger {
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-    private static final PrintStream CONSOLE = System.err;
+record ExprStateStub(Expr<BoolType> expr) implements ExprState {
 
-    public StderrLogger(final Level minLevel) {
-        super(minLevel);
+    @Override
+    public boolean isBottom() {
+        return false;
     }
 
     @Override
-    protected void writeStr(final String str) {
-        CONSOLE.print(str);
+    public Expr<BoolType> toExpr() {
+        return expr;
     }
-
 }

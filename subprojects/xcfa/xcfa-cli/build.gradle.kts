@@ -36,22 +36,10 @@ dependencies {
     implementation(project(":theta-grammar"))
     implementation(project(":theta-llvm2xcfa"))
     implementation("com.zaxxer:nuprocess:2.0.5")
-    runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.7.10")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
 }
 
 application {
     mainClassName = "hu.bme.mit.theta.xcfa.cli.XcfaCli"
 }
-
-//tasks.test {
-//    if (OperatingSystem.current().isLinux) {
-//        val nativeLibTasks = project(":theta-llvm").tasks
-//        dependsOn(nativeLibTasks.build)
-//
-//        val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
-//        val existingLibraryPath = systemProperties["java.library.path"]
-//        val newLibraryPath = "${existingLibraryPath}:${linkTask.linkedFile.get().asFile.parent}"
-//        systemProperty("java.library.path", newLibraryPath)
-//    }
-//}
 

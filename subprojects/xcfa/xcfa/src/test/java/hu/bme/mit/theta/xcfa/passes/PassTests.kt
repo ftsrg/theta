@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -30,7 +31,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -94,7 +96,7 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L1" to final) {
                         assume("false")
@@ -102,7 +104,7 @@ class PassTests {
                 },
                 output = {
                     (init to final) {
-                        assume("true")
+                        assume("1 == 1")
                         assume("false")
                     }
                 },
@@ -117,10 +119,10 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L1" to "L2") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L2" to final) {
                         assume("false")
@@ -131,8 +133,8 @@ class PassTests {
                 },
                 output = {
                     (init to final) {
-                        assume("true")
-                        assume("true")
+                        assume("1 == 1")
+                        assume("1 == 1")
                         nondet {
                             assume("false")
                             assume("1 == 2")
@@ -206,6 +208,56 @@ class PassTests {
                     (init to "L1") { skip() }
                     ("L1" to final) {
                         assume("false")
+                    }
+                },
+            ),
+            PassTestData(
+                global = { "x" type Int() init "0"; },
+                passes = listOf(
+                    LoopUnrollPass()
+                ),
+                input = {
+                    (init to "L1") {
+                        "x".assign("0")
+                    }
+                    ("L1" to "L2") {
+                        assume("(< x 3)")
+                        "x".assign("(+ x 1)")
+                    }
+                    ("L2" to "L1") {
+                        skip()
+                    }
+                    ("L1" to final) {
+                        assume("(= x 3)")
+                    }
+                },
+                output = {
+                    (init to "L1") {
+                        "x".assign("0")
+                    }
+                    ("L1" to "loop0_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop0_L2" to "loop0_L1") {
+                        skip()
+                    }
+                    ("loop0_L1" to "loop1_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop1_L2" to "loop1_L1") {
+                        skip()
+                    }
+                    ("loop1_L1" to "loop2_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop2_L2" to "loop2_L1") {
+                        skip()
+                    }
+                    ("loop2_L1" to final) {
+                        nop()
                     }
                 },
             ),
@@ -341,10 +393,10 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     (init to "L2") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L2" to "L3") {
                         assume("false")
@@ -373,7 +425,7 @@ class PassTests {
                 passes = listOf(
                     NormalizePass(parseContext),
                     DeterministicPass(parseContext),
-                    PthreadFunctionsPass(parseContext),
+                    CLibraryFunctionsPass(parseContext),
                 ),
                 input = {
                     (init to "L1") {
@@ -451,7 +503,7 @@ class PassTests {
                 passes = listOf(
                     NormalizePass(parseContext),
                     DeterministicPass(parseContext),
-                    UnusedVarPass(parseContext)
+                    UnusedVarPass(parseContext, NullLogger.getInstance())
                 ),
                 input = {
                     "tmp" type Int()
@@ -468,7 +520,7 @@ class PassTests {
                 ),
                 input = {
                     ("L1" to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                 },
                 output = null,
@@ -520,7 +572,7 @@ class PassTests {
             }
             procedure("proc1") {
                 (init to final) {
-                    assume("true")
+                    assume("1 == 1")
                 }
             }
         }
@@ -533,14 +585,14 @@ class PassTests {
     @Test
     fun testCPipeline() {
         val xcfaSource = xcfa("example") {
-            procedure("main", CPasses(false, parseContext)) {
+            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
                 (init to final) {
                     "proc1"()
                 }
             }
             procedure("proc1") {
                 (init to final) {
-                    assume("true")
+                    assume("1 == 1")
                 }
             }
         }
@@ -554,11 +606,11 @@ class PassTests {
     fun testSplit() {
         lateinit var edge: XcfaEdge
         val xcfaSource = xcfa("example") {
-            procedure("main", CPasses(false, parseContext)) {
+            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
                 edge = (init to final) {
-                    assume("true")
+                    assume("1 == 1")
                     "proc1"()
-                    assume("true")
+                    assume("1 == 1")
                 }
             }
         }

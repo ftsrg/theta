@@ -20,6 +20,6 @@ bin
 *.dot
 .vscode
 
-# Temporary
-wdl-output*.json
-_ptrs*.c
+# Other
+wdl-output.json
+witness.graphml

@@ -16,9 +16,9 @@
 
 package hu.bme.mit.theta.xcfa.cli
 
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 
 data class VerificationTraits(
     val multithreaded: Boolean = false,
-    val arithmetic: BitwiseOption = BitwiseOption.INTEGER,
+    val arithmeticTraits: Set<ArithmeticTrait> = LinkedHashSet(),
 )

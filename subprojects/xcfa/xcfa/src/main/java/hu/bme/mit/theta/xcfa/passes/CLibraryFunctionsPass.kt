@@ -27,12 +27,22 @@ import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
- * Transforms the following pthread procedure calls into model elements:
- *      - pthread_create()
- *      - pthread_join()
+ * Transforms the library procedure calls with names in supportedFunctions into model elements.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+
+    private val supportedFunctions = setOf(
+        "printf",
+        "pthread_join",
+        "pthread_create",
+        "pthread_mutex_lock",
+        "pthread_mutex_unlock",
+        "pthread_cond_wait",
+        "pthread_cond_signal",
+        "pthread_mutex_init",
+        "pthread_cond_init"
+    )
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -44,7 +54,8 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
                         val metadata = invokeLabel.metadata
-                        val fences: List<XcfaLabel> = when (invokeLabel.name) {
+                        val labels: List<XcfaLabel> = when (invokeLabel.name) {
+                            "printf" -> listOf(NopLabel)
                             "pthread_join" -> {
                                 var handle = invokeLabel.params[1]
                                 while (handle is Reference<*, *> || handle is AddrOfExpr<*>) handle = (handle as UnaryExpr<*, *>).op
@@ -109,10 +120,10 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_mutex_init", "pthread_cond_init" -> listOf(NopLabel)
 
-                            else -> error("Unknown pthread function ${invokeLabel.name}")
+                            else -> error("Unsupported library function ${invokeLabel.name}")
                         }
-                        edge.withLabel(SequenceLabel(fences)).splitIf { fence ->
-                            fence is FenceLabel && fence.labels.any { l -> l.startsWith("start_cond_wait") }
+                        edge.withLabel(SequenceLabel(labels)).splitIf { label ->
+                            label is FenceLabel && label.labels.any { l -> l.startsWith("start_cond_wait") }
                         }.forEach(builder::addEdge)
                     } else {
                         builder.addEdge(edge.withLabel(SequenceLabel(it.label.labels)))
@@ -124,6 +135,6 @@ class PthreadFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && it.name.startsWith("pthread_")
+        return it is InvokeLabel && it.name in supportedFunctions
     }
 }

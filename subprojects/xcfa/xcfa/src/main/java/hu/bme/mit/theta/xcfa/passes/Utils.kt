@@ -30,12 +30,6 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 
-fun label2edge(edge: XcfaEdge, label: XcfaLabel) {
-    val source = edge.source
-    val target = edge.target
-
-}
-
 /**
  * XcfaEdge must be in a `deterministic` ProcedureBuilder
  */
@@ -195,4 +189,34 @@ private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
     tally.pop()
     metaData[if (recursive) "recursive" else "canInline"] = Unit
     return !recursive
+}
+
+internal fun XcfaLabel.removeUnusedWrites(unusedVars: Set<VarDecl<*>>): XcfaLabel {
+    return when (this) {
+        is SequenceLabel -> {
+            val newLabels = mutableListOf<XcfaLabel>()
+            this.labels.forEach { label ->
+                val newLabel = label.removeUnusedWrites(unusedVars)
+                if (newLabel !is NopLabel) newLabels.add(newLabel)
+            }
+            SequenceLabel(newLabels)
+        }
+
+        is NondetLabel -> {
+            val newLabels = mutableSetOf<XcfaLabel>()
+            this.labels.forEach { label ->
+                val newLabel = label.removeUnusedWrites(unusedVars)
+                if (newLabel !is NopLabel) newLabels.add(newLabel)
+            }
+            NondetLabel(newLabels)
+        }
+
+        is StmtLabel -> when (this.stmt) {
+            is AssignStmt<*> -> if (unusedVars.contains(this.stmt.varDecl)) NopLabel else this
+            is HavocStmt<*> -> if (unusedVars.contains(this.stmt.varDecl)) NopLabel else this
+            else -> this
+        }
+
+        else -> this
+    }
 }
