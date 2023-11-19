@@ -15,6 +15,7 @@ runs:
         name: ThetaJars
         path: jar/
     - name: Create folder structure
+      shell: bash
       run: |
         mkdir -p ${{ inputs.name }}
         mkdir -p ${{ inputs.name }}/solvers
