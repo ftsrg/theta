@@ -77,7 +77,11 @@ fun <T> exitOnError(stacktrace: Boolean, debug: Boolean, body: () -> T): T {
         exitProcess(debug, e, ExitCodes.OUT_OF_MEMORY.code);
     } catch (e: RuntimeException) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.SERVER_ERROR.code);
+        if (e.message?.contains("Solver problem") == true) {
+            exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
+        } else {
+            exitProcess(debug, e, ExitCodes.SERVER_ERROR.code);
+        }
     } catch (e: Exception) {
         e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.GENERIC_ERROR.code);
