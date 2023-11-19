@@ -32,6 +32,7 @@ fun complexPortfolio24(
     traitsTyped: VerificationTraits,
     propertyTyped: ErrorDetection,
     parseContextTyped: ParseContext,
+    debug: Boolean,
     argdebug: Boolean): STM {
 
     val checker = { p: Boolean, config: XcfaCegarConfig ->
@@ -381,5 +382,5 @@ fun complexPortfolio24(
 
     val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
 
-    return STM(inProcess, setOf(fallbackEdge))
+    return if (debug) getStm(mainTrait, false) else STM(inProcess, setOf(fallbackEdge))
 }

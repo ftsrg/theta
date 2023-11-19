@@ -26,7 +26,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logger, smtHomeTyped: String,
     traitsTyped: VerificationTraits, propertyTyped: ErrorDetection,
-    parseContextTyped: ParseContext,
+    parseContextTyped: ParseContext, debug: Boolean,
     argdebug: Boolean): STM {
 
     val checker = { p: Boolean, config: XcfaCegarConfig ->
@@ -158,7 +158,8 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
             return STM(config_1_1, timeouts union solverExceptions)
         }
 
-        val inProcess = HierarchicalNode("InProcess", getStm(true))
+        val inProcess = HierarchicalNode("InProcess",
+            getStm(!debug)) // if not debug, then in process, else not in process
         val notInProcess = HierarchicalNode("NotInprocess", getStm(false))
 
         val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
@@ -226,7 +227,8 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
             return STM(config_1_1, timeouts union solverExceptions)
         }
 
-        val inProcess = HierarchicalNode("InProcess", getStm(true))
+        val inProcess = HierarchicalNode("InProcess",
+            getStm(!debug)) // if not debug, then in process, else not in process
         val notInProcess = HierarchicalNode("NotInprocess", getStm(false))
 
         val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
@@ -334,7 +336,8 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
             return STM(config_1_1, timeouts union solverExceptions)
         }
 
-        val inProcess = HierarchicalNode("InProcess", getStm(true))
+        val inProcess = HierarchicalNode("InProcess",
+            getStm(!debug)) // if not debug, then in process, else not in process
         val notInProcess = HierarchicalNode("NotInprocess", getStm(false))
 
         val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))

@@ -212,6 +212,56 @@ class PassTests {
                 },
             ),
             PassTestData(
+                global = { "x" type Int() init "0"; },
+                passes = listOf(
+                    LoopUnrollPass()
+                ),
+                input = {
+                    (init to "L1") {
+                        "x".assign("0")
+                    }
+                    ("L1" to "L2") {
+                        assume("(< x 3)")
+                        "x".assign("(+ x 1)")
+                    }
+                    ("L2" to "L1") {
+                        skip()
+                    }
+                    ("L1" to final) {
+                        assume("(= x 3)")
+                    }
+                },
+                output = {
+                    (init to "L1") {
+                        "x".assign("0")
+                    }
+                    ("L1" to "loop0_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop0_L2" to "loop0_L1") {
+                        skip()
+                    }
+                    ("loop0_L1" to "loop1_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop1_L2" to "loop1_L1") {
+                        skip()
+                    }
+                    ("loop1_L1" to "loop2_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop2_L2" to "loop2_L1") {
+                        skip()
+                    }
+                    ("loop2_L1" to final) {
+                        nop()
+                    }
+                },
+            ),
+            PassTestData(
                 global = {
                     "y" type BvType(32) init "0"
                     ("x" type FpType(8, 24) init "0.0f").also {

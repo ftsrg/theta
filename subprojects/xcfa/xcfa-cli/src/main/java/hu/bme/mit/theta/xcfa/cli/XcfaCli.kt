@@ -367,12 +367,14 @@ class XcfaCli(private val args: Array<String>) {
                 complexPortfolio23(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
                     multithreaded = parseContext.multiThreading,
                     arithmeticTraits = parseContext.arithmeticTraits,
-                ), explicitProperty, parseContext, argdebug).execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+                ), explicitProperty, parseContext, debug,
+                    argdebug).execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
             } else if (portfolio == "COMPLEX" || portfolio == "COMPLEX24") {
                 complexPortfolio24(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
                     multithreaded = parseContext.multiThreading,
                     arithmeticTraits = parseContext.arithmeticTraits,
-                ), explicitProperty, parseContext, argdebug).execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
+                ), explicitProperty, parseContext, debug,
+                    argdebug).execute() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
             } else throw Exception("No known portfolio $portfolio")
 
             concretizerSolver = portfolioResult.first.refinementSolver

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.portfolio.STM
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
@@ -45,7 +46,7 @@ class XcfaCliPortfolioTest {
                     parseContextTyped: ParseContext,
                     argdebug: Boolean ->
                     complexPortfolio23(xcfaTyped, cFileNameTyped, loggerTyped, smtHomeTyped, traitsTyped, propertyTyped,
-                        parseContextTyped, argdebug)
+                        parseContextTyped, true, argdebug)
                 }),
                 Arguments.of({ xcfaTyped: XCFA,
                     cFileNameTyped: String,
@@ -56,7 +57,7 @@ class XcfaCliPortfolioTest {
                     parseContextTyped: ParseContext,
                     argdebug: Boolean ->
                     complexPortfolio24(xcfaTyped, cFileNameTyped, loggerTyped, smtHomeTyped, traitsTyped, propertyTyped,
-                        parseContextTyped, argdebug)
+                        parseContextTyped, true, argdebug)
                 }),
             )
         }
@@ -74,10 +75,14 @@ class XcfaCliPortfolioTest {
         parseContextTyped: ParseContext,
         argdebug: Boolean) -> STM) {
 
-        val stm = portfolio(XCFA("name", setOf()), "", NullLogger.getInstance(), "", VerificationTraits(),
-            ErrorDetection.ERROR_LOCATION, ParseContext(), false)
+        for (value in ArithmeticTrait.values()) {
 
-        Assertions.assertTrue(stm.visualize().isNotEmpty())
+            val stm = portfolio(XCFA("name", setOf()), "", NullLogger.getInstance(), "",
+                VerificationTraits(arithmeticTraits = setOf(value)),
+                ErrorDetection.ERROR_LOCATION, ParseContext(), false)
+
+            Assertions.assertTrue(stm.visualize().isNotEmpty())
+        }
 
     }
 

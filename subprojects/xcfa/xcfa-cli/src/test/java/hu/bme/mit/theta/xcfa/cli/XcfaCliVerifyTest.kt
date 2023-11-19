@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -150,6 +151,25 @@ class XcfaCliVerifyTest {
         }
     }
 
+    @Test
+    fun testCVerifyBuiltInPortfolio() {
+        val params = arrayOf(
+            "--input-type", "C",
+            "--strategy", "PORTFOLIO",
+            "--portfolio", "COMPLEX",
+            "--input", javaClass.getResource("/c/dekker.i")!!.path,
+            "--stacktrace",
+            "--debug",
+        )
+        try {
+            main(params)
+        } catch (e: Throwable) {
+            if (!e.toString().contains("Done debugging")) {
+                throw e
+            }
+        }
+    }
+
     @ParameterizedTest
     @MethodSource("cFiles")
     fun testCWitness(filePath: String, extraArgs: String?) {
@@ -200,6 +220,19 @@ class XcfaCliVerifyTest {
     fun testCVerifyIMC(filePath: String, extraArgs: String?) {
         val params = arrayOf(
             "--backend", "IMC",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
+    }
+
+    @ParameterizedTest
+    @MethodSource("singleThreadedCFiles")
+    fun testCVerifyIMCThenKind(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--backend", "IMC_THEN_KIND",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
