@@ -260,12 +260,12 @@ fun complexPortfolio24(
             if (inProcess) timeoutOrSolverError else anyError))
         val config_LIN_INT_EXPL_SEQ_ITP_mathsat = ConfigNode("LIN_INT_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
             baseConfig.copy(
-            domain = Domain.EXPL,
-            abstractionSolver = "mathsat:5.6.10",
-            refinementSolver = "mathsat:5.6.10",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 300000
-        ), checker, inProcess)
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 300000
+            ), checker, inProcess)
         edges.add(Edge(config_LIN_INT_EXPL_SEQ_ITP_Z3, config_LIN_INT_EXPL_SEQ_ITP_mathsat, solverError))
         val config_LIN_INT_PRED_CART_SEQ_ITP_Z3 = ConfigNode("LIN_INT_PRED_CART_SEQ_ITP_Z3-$inProcess", baseConfig.copy(
             domain = Domain.PRED_CART,
@@ -289,12 +289,12 @@ fun complexPortfolio24(
         edges.add(Edge(config_LIN_INT_PRED_CART_SEQ_ITP_Z3, config_LIN_INT_PRED_CART_SEQ_ITP_mathsat, solverError))
         val config_LIN_INT_PRED_CART_SEQ_ITP_z3 = ConfigNode("LIN_INT_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
             baseConfig.copy(
-            domain = Domain.PRED_CART,
-            abstractionSolver = "z3:4.12.2",
-            refinementSolver = "z3:4.12.2",
-            refinement = Refinement.SEQ_ITP,
-            timeoutMs = 0
-        ), checker, inProcess)
+                domain = Domain.PRED_CART,
+                abstractionSolver = "z3:4.12.2",
+                refinementSolver = "z3:4.12.2",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
         edges.add(Edge(config_LIN_INT_PRED_CART_SEQ_ITP_mathsat, config_LIN_INT_PRED_CART_SEQ_ITP_z3, solverError))
         val config_NONLIN_INT_EXPL_NWT_IT_WP_Z3 = ConfigNode("NONLIN_INT_EXPL_NWT_IT_WP_Z3-$inProcess", baseConfig.copy(
             domain = Domain.EXPL,
