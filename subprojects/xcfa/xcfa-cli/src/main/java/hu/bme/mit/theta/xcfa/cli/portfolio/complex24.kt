@@ -367,6 +367,10 @@ fun complexPortfolio24(
             return STM(config_NONLIN_EXPL_NWT_IT_WP_Z3, edges)
         }
 
+        if (trait == ArithmeticTrait.ARR) {
+            return STM(config_BITWISE_EXPL_NWT_IT_WP_cvc5, edges)
+        }
+
         error("Unknown trait!")
     }
 
