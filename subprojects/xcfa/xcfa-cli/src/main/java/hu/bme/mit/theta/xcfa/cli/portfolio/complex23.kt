@@ -25,7 +25,7 @@ import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun complexPortfolio(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logger, smtHomeTyped: String,
+fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logger, smtHomeTyped: String,
     traitsTyped: VerificationTraits, propertyTyped: ErrorDetection,
     parseContextTyped: ParseContext,
     argdebug: Boolean): Pair<XcfaCegarConfig, SafetyResult<*, *>> {
@@ -46,6 +46,7 @@ fun complexPortfolio(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logge
         search = Search.ERR,
         initPrec = InitPrec.EMPTY,
         porLevel = POR.NOPOR,
+        coi = ConeOfInfluenceMode.COI,
         refinementSolver = "Z3",
         validateRefinementSolver = false,
         refinement = Refinement.SEQ_ITP,
@@ -56,7 +57,8 @@ fun complexPortfolio(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logge
     )
 
     if (traitsTyped.multithreaded) {
-        baseConfig = baseConfig.copy(search = Search.BFS, porLevel = POR.AASPOR, pruneStrategy = PruneStrategy.LAZY)
+        baseConfig = baseConfig.copy(search = Search.BFS, porLevel = POR.AASPOR, pruneStrategy = PruneStrategy.LAZY,
+            coi = ConeOfInfluenceMode.COI)
 
         if (propertyTyped == ErrorDetection.DATA_RACE) {
             baseConfig = baseConfig.copy(porLevel = POR.SPOR)
