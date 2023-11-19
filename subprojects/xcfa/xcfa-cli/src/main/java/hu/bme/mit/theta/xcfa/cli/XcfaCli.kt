@@ -54,7 +54,8 @@ import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
-import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio
+import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
+import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
 import hu.bme.mit.theta.xcfa.cli.utils.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -362,8 +363,13 @@ class XcfaCli(private val args: Array<String>) {
                     "Compiled portfolio (in ${stopwatch.elapsed(TimeUnit.MILLISECONDS)} ms)\n")
 
                 compiled.eval() as Pair<XcfaCegarConfig, SafetyResult<*, *>>
-            } else if (portfolio == "COMPLEX") {
-                complexPortfolio(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
+            } else if (portfolio == "COMPLEX23") {
+                complexPortfolio23(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
+                    multithreaded = parseContext.multiThreading,
+                    arithmeticTraits = parseContext.arithmeticTraits,
+                ), explicitProperty, parseContext, argdebug)
+            } else if (portfolio == "COMPLEX" || portfolio == "COMPLEX24") {
+                complexPortfolio24(xcfa, input!!.absolutePath, logger, solverHome, VerificationTraits(
                     multithreaded = parseContext.multiThreading,
                     arithmeticTraits = parseContext.arithmeticTraits,
                 ), explicitProperty, parseContext, argdebug)
