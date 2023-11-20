@@ -169,10 +169,11 @@ fun getXcfaErrorPredicate(
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
-        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
+        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(
+            s1.sGlobal, s2.sGlobal)
     }
 
-private fun<S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.processes.keys.all { pid ->
+private fun <S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.processes.keys.all { pid ->
     s1.processes[pid]?.let { ps1 ->
         val ps2 = s2.processes.getValue(pid)
         ps1.locs.peek() == ps2.locs.peek() && ps1.paramsInitialized && ps2.paramsInitialized
@@ -181,7 +182,8 @@ private fun<S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.p
 
 fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
-        s1.processes.size == s2.processes.size && stackIsLeq(s1, s2) && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
+        s1.processes.size == s2.processes.size && stackIsLeq(s1,
+            s2) && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
             && partialOrd.isLeq(s1.withGeneralizedVars(), s2.withGeneralizedVars())
     }
 
@@ -189,7 +191,7 @@ private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBui
     analysis: Analysis<S, XcfaAction, P>,
     lts: LTS<XcfaState<out ExprState>, XcfaAction>,
     errorDetection: ErrorDetection)
-        : ArgBuilder<S, XcfaAction, P> =
+    : ArgBuilder<S, XcfaAction, P> =
     ArgBuilder.create(
         lts,
         analysis,
@@ -216,7 +218,7 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
 /// EXPL
 
 private fun getExplXcfaInitFunc(xcfa: XCFA,
-                                solver: Solver): (XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
+    solver: Solver): (XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
@@ -230,7 +232,7 @@ private fun getExplXcfaInitFunc(xcfa: XCFA,
 }
 
 private fun getExplXcfaTransFunc(solver: Solver,
-                                 maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
+    maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
     val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
@@ -241,7 +243,7 @@ private fun getExplXcfaTransFunc(solver: Solver,
 }
 
 class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int,
-                       partialOrd: PartialOrd<XcfaState<ExplState>>) : XcfaAnalysis<ExplState, ExplPrec>(
+    partialOrd: PartialOrd<XcfaState<ExplState>>) : XcfaAnalysis<ExplState, ExplPrec>(
     corePartialOrd = partialOrd,
     coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
     coreTransFunc = getExplXcfaTransFunc(solver, maxEnum)
@@ -250,7 +252,7 @@ class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int,
 /// PRED
 
 private fun getPredXcfaInitFunc(xcfa: XCFA,
-                                predAbstractor: PredAbstractor): (XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
+    predAbstractor: PredAbstractor): (XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
@@ -275,7 +277,7 @@ private fun getPredXcfaTransFunc(
 }
 
 class PredXcfaAnalysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor,
-                       partialOrd: PartialOrd<XcfaState<PredState>>) : XcfaAnalysis<PredState, PredPrec>(
+    partialOrd: PartialOrd<XcfaState<PredState>>) : XcfaAnalysis<PredState, PredPrec>(
     corePartialOrd = partialOrd,
     coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
     coreTransFunc = getPredXcfaTransFunc(predAbstractor)

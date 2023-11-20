@@ -44,11 +44,13 @@ internal fun <S : ExprState> XcfaState<S>.withGeneralizedVars(): S {
     return when (sGlobal) {
         is ExplState -> ExplState.of(sGlobal.getVal().changeVars(varLookup))
         is PredState -> PredState.of(sGlobal.preds.map { p -> p.changeVars(varLookup) })
-        else -> throw NotImplementedError("Generalizing variable instances is not implemented for data states that are not explicit or predicate.")
+        else -> throw NotImplementedError(
+            "Generalizing variable instances is not implemented for data states that are not explicit or predicate.")
     } as S
 }
 
 class LazyDelegate<T, P : Any>(val getProperty: T.() -> P) {
+
     private var calculated = false
     private lateinit var property: P
 
@@ -62,7 +64,11 @@ class LazyDelegate<T, P : Any>(val getProperty: T.() -> P) {
 }
 
 val XCFA.isInlined: Boolean by LazyDelegate {
-    !this.procedures.any { p -> p.edges.any { e -> e.getFlatLabels().any { l ->
-        l is InvokeLabel && this.procedures.any { it.name == l.name }
-    } } }
+    !this.procedures.any { p ->
+        p.edges.any { e ->
+            e.getFlatLabels().any { l ->
+                l is InvokeLabel && this.procedures.any { it.name == l.name }
+            }
+        }
+    }
 }

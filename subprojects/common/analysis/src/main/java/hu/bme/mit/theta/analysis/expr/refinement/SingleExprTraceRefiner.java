@@ -45,8 +45,8 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
     protected final Logger logger;
 
     protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-                                   final PrecRefiner<S, A, P, R> precRefiner,
-                                   final PruneStrategy pruneStrategy, final Logger logger) {
+                                     final PrecRefiner<S, A, P, R> precRefiner,
+                                     final PruneStrategy pruneStrategy, final Logger logger) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
@@ -55,9 +55,9 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
     }
 
     protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-                                   final PrecRefiner<S, A, P, R> precRefiner,
-                                   final PruneStrategy pruneStrategy, final Logger logger,
-                                   final NodePruner<S, A> nodePruner) {
+                                     final PrecRefiner<S, A, P, R> precRefiner,
+                                     final PruneStrategy pruneStrategy, final Logger logger,
+                                     final NodePruner<S, A> nodePruner) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);

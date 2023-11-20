@@ -29,6 +29,7 @@ import java.util.LinkedList
 
 class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Refutation> :
     SingleExprTraceRefiner<S, A, P, R> {
+
     private constructor(
         exprTraceChecker: ExprTraceChecker<R>,
         precRefiner: PrecRefiner<S, A, P, R>,
@@ -47,14 +48,15 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     private fun findPoppedState(trace: Trace<S, A>): Pair<Int, XcfaState<S>>? {
         trace.states.forEachIndexed { i, s ->
             val state = s as XcfaState<S>
-            state.processes.entries.find { (_, processState) -> processState.popped != null }?.let { (pid, processState) ->
-                val stackBeforePop = LinkedList(processState.locs)
-                stackBeforePop.push(processState.popped)
-                val processesBeforePop = state.processes.toMutableMap()
-                processesBeforePop[pid] = processState.copy(locs = stackBeforePop)
-                val stateBeforePop = state.copy(processes = processesBeforePop)
-                return Pair(i, stateBeforePop)
-            }
+            state.processes.entries.find { (_, processState) -> processState.popped != null }
+                ?.let { (pid, processState) ->
+                    val stackBeforePop = LinkedList(processState.locs)
+                    stackBeforePop.push(processState.popped)
+                    val processesBeforePop = state.processes.toMutableMap()
+                    processesBeforePop[pid] = processState.copy(locs = stackBeforePop)
+                    val stateBeforePop = state.copy(processes = processesBeforePop)
+                    return Pair(i, stateBeforePop)
+                }
         }
         return null
     }
@@ -94,6 +96,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
     }
 
     companion object {
+
         fun <S : ExprState, A : ExprAction, P : Prec, R : Refutation> create(
             exprTraceChecker: ExprTraceChecker<R>, precRefiner: PrecRefiner<S, A, P, R>,
             pruneStrategy: PruneStrategy, logger: Logger
