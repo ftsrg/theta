@@ -29,7 +29,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         nodePruner: NodePruner<S, A>
     ) : super(exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner)
 
-    private fun getAbstractedProcedureState(trace: Trace<S, A>): Pair<Int, XcfaState<S>>? {
+    private fun findPoppedState(trace: Trace<S, A>): Pair<Int, XcfaState<S>>? {
         trace.states.forEachIndexed { i, s ->
             val state = s as XcfaState<S>
             state.processes.entries.find { (_, processState) -> processState.popped != null }?.let { (pid, processState) ->
@@ -56,8 +56,9 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         val traceToConcretize = cexToConcretize.toTrace()
 
         val refinerResult = super.refine(arg, prec)
+        val checkForPop = !(traceToConcretize.states.first() as XcfaState<*>).xcfa!!.isInlined
 
-        return if (refinerResult.isUnsafe) getAbstractedProcedureState(traceToConcretize)?.let { (i, state) ->
+        return if (checkForPop && refinerResult.isUnsafe) findPoppedState(traceToConcretize)?.let { (i, state) ->
             when (pruneStrategy) {
                 PruneStrategy.LAZY -> {
                     logger.write(Logger.Level.SUBSTEP, "|  |  Pruning from index %d...", i)

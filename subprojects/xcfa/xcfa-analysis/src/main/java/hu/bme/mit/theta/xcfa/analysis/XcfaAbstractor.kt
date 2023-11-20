@@ -52,8 +52,12 @@ class XcfaAbstractor<S : State, A : Action, P : Prec>(
             while (!waitlist.isEmpty) {
                 val node = waitlist.remove()
                 var newNodes: Collection<ArgNode<S, A>>? = emptyList()
-                val expandProcedureCall = (node.state as XcfaState<*>) in (prec as XcfaPrec<P>).noPop
-                close(node, reachedSet[node], !expandProcedureCall)
+                if ((node.state as XcfaState<*>).xcfa!!.isInlined) {
+                    close(node, reachedSet[node])
+                } else {
+                    val expandProcedureCall = (node.state as XcfaState<*>) in (prec as XcfaPrec<P>).noPop
+                    closePop(node, reachedSet[node], !expandProcedureCall)
+                }
                 if (!node.isSubsumed && !node.isTarget) {
                     newNodes = argBuilder.expand(node, prec)
                     reachedSet.addAll(newNodes)
@@ -80,10 +84,7 @@ class XcfaAbstractor<S : State, A : Action, P : Prec>(
         }
     }
 
-    override fun close(node: ArgNode<S, A>, candidates: MutableCollection<ArgNode<S, A>>)
-        = close(node, candidates, true)
-
-    fun close(node: ArgNode<S, A>, candidates: Collection<ArgNode<S, A>>, popCovered: Boolean) {
+    fun closePop(node: ArgNode<S, A>, candidates: Collection<ArgNode<S, A>>, popCovered: Boolean) {
         if (!node.isLeaf) {
             return
         }

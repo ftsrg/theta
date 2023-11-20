@@ -30,11 +30,8 @@ import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.model.ImmutableValuation
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
@@ -166,7 +163,10 @@ fun getXcfaErrorPredicate(
     ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out ExprState>> { false }
 }
 
-private fun<K, V> Map<K, V>.reverseMapping() = this.entries.associate { it.value to it.key }
+fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
+    PartialOrd<XcfaState<S>> { s1, s2 ->
+        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
+    }
 
 private fun<S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.processes.keys.all { pid ->
     s1.processes[pid]?.let { ps1 ->
@@ -175,33 +175,10 @@ private fun<S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.p
     } ?: false
 }
 
-private fun Valuation.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Valuation {
-    val builder = ImmutableValuation.builder()
-    for (decl in this.decls) {
-        builder.put(decl.changeVars(varLut), this.eval(decl).get())
-    }
-    return builder.build()
-}
-
-private fun <S : ExprState> XcfaState<S>.withGeneralizedVarInstances(): S {
-    val varLookup = processes.mapNotNull { (_, process) -> process.varLookup.peek()?.reverseMapping() }
-                             .reduceOrNull(Map<VarDecl<*>, VarDecl<*>>::plus) ?: mapOf()
-    return when (sGlobal) {
-        is ExplState -> ExplState.of(sGlobal.getVal().changeVars(varLookup))
-        is PredState -> PredState.of(sGlobal.preds.map { p -> p.changeVars(varLookup) })
-        else -> throw NotImplementedError("Generalizing variable instances is not implemented for data states that are not explicit or predicate.")
-    } as S
-}
-
-fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
-    PartialOrd<XcfaState<S>> { s1, s2 ->
-        s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(s1.sGlobal, s2.sGlobal)
-    }
-
 fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
         s1.processes.size == s2.processes.size && stackIsLeq(s1, s2) && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
-            && partialOrd.isLeq(s1.withGeneralizedVarInstances(), s2.withGeneralizedVarInstances())
+            && partialOrd.isLeq(s1.withGeneralizedVars(), s2.withGeneralizedVars())
     }
 
 private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
@@ -226,7 +203,10 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
     XcfaAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
-        .projection { it.processes.map { (_, p) -> p.locs.peek() } }
+        .projection {
+            if (it.xcfa!!.isInlined) it.processes
+            else it.processes.map { (_, p) -> p.locs.peek() }
+        }
         .build() // TODO: can we do this nicely?
 
 /// EXPL
