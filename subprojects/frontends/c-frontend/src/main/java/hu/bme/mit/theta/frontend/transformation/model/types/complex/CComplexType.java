@@ -137,6 +137,35 @@ public abstract class CComplexType {
         return ret;
     }
 
+    public static CComplexType getType(String s, ParseContext parseContext) {
+        return switch (s) {
+            case "_Bool" -> new CBool(null, parseContext);
+            case "char", "signedchar" -> new CSignedChar(null, parseContext);
+            case "short", "signedshort" -> new CSignedShort(null, parseContext);
+            case "unsignedshort" -> new CUnsignedShort(null, parseContext);
+            case "unsignedchar" -> new CUnsignedChar(null, parseContext);
+            case "signed", "int", "signedint" -> new CSignedInt(null, parseContext);
+            case "unsigned", "unsignedint" -> new CUnsignedInt(null, parseContext);
+            case "long", "signedlong", "longint", "signedlongint" ->
+                    new CSignedLong(null, parseContext);
+            case "unsignedlong", "unsignedlongint" -> new CUnsignedLong(null, parseContext);
+            case "longlong", "signedlonglong", "lonlongint", "signedlonglongint" ->
+                    new CSignedLongLong(null, parseContext);
+            case "unsignedlonglong", "unsignedlonglongint" ->
+                    new CUnsignedLongLong(null, parseContext);
+            case "float" -> new CFloat(null, parseContext);
+            case "double" -> new CDouble(null, parseContext);
+            case "longdouble" -> new CLongDouble(null, parseContext);
+            default -> {
+                if (s.endsWith("*")) {
+                    yield new CPointer(null, null, parseContext);
+                } else {
+                    throw new RuntimeException("Type not known: " + s);
+                }
+            }
+        };
+    }
+
     public static CComplexType getType(Expr<?> expr, ParseContext parseContext) {
         Optional<Object> cTypeOptional = parseContext.getMetadata().getMetadataValue(expr, "cType");
         if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CComplexType) {

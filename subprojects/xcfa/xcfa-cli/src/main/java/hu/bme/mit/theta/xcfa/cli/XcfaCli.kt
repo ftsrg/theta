@@ -242,7 +242,7 @@ class XcfaCli(private val args: Array<String>) {
         stopwatch.reset().start()
 
         val safetyResult: SafetyResult<*, *> =
-            if (xcfa.procedures.all { it.errorLoc.isEmpty }) {
+            if (xcfa.procedures.all { it.errorLoc.isEmpty && explicitProperty != ErrorDetection.NO_ERROR }) {
                 registerAllSolverManagers(solverHome, logger)
                 SafetyResult.safe(ARG.create { _, _ -> false })
             } else if (backend == Backend.CEGAR) {

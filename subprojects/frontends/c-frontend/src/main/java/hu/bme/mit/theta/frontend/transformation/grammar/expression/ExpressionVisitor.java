@@ -480,6 +480,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             return zero;
         } else {
             final Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText())
+                    .or(() -> Optional.ofNullable(CComplexType.getType(ctx.typeName().getText(), parseContext)))
                     .or(() -> Optional.ofNullable(CComplexType.getType(getVar(ctx.typeName().getText()).getRef(), parseContext)));
 
             if (type.isPresent()) {
