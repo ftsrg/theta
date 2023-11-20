@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.cli
 
 import com.beust.jcommander.Parameter
+import com.google.common.base.Stopwatch
 import com.google.gson.reflect.TypeToken
 import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
@@ -52,6 +53,7 @@ import java.io.PrintWriter
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPOutputStream
 import kotlin.system.exitProcess
 
 
@@ -75,6 +77,8 @@ data class XcfaCegarConfig(
     var initPrec: InitPrec = InitPrec.EMPTY,
     @Parameter(names = ["--por-level"], description = "POR dependency level")
     var porLevel: POR = POR.NOPOR,
+    @Parameter(names = ["--coi"])
+    var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
     @Parameter(names = ["--refinement-solver"], description = "Refinement solver name")
     var refinementSolver: String = "Z3",
     @Parameter(names = ["--validate-refinement-solver"],
@@ -88,7 +92,9 @@ data class XcfaCegarConfig(
     @Parameter(names = ["--prunestrategy"],
         description = "Strategy for pruning the ARG after refinement")
     var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
-    @Parameter(names = ["--cex-monitor"])
+    @Parameter(names = ["--cex-monitor"],
+        description = "Warning: With some configurations (e.g. lazy pruning) it is POSSIBLE (but rare) that analysis is stopped, " +
+            "even though it could still progress. If in doubt, disable this monitor and check results.")
     var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
     @Parameter(names = ["--timeout-ms"],
         description = "Timeout for verification (only valid with --strategy SERVER), use 0 for no timeout")
@@ -105,9 +111,9 @@ data class XcfaCegarConfig(
 
         val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
 
-        val lts = porLevel.getLts(xcfa, ignoredVarRegistry)
+        val lts = coi.getLts(xcfa, ignoredVarRegistry, porLevel)
         val waitlist = if (porLevel.isDynamic) {
-            (lts as XcfaDporLts).waitlist
+            (coi.porLts as XcfaDporLts).waitlist
         } else {
             PriorityWaitlist.create<ArgNode<out XcfaState<out ExprState>, XcfaAction>>(
                 search.getComp(xcfa))
@@ -135,7 +141,7 @@ data class XcfaCegarConfig(
         ) as Abstractor<ExprState, ExprAction, Prec>
 
         val ref: ExprTraceChecker<Refutation> =
-            refinement.refiner(refinementSolverFactory)
+            refinement.refiner(refinementSolverFactory, cexMonitor)
                 as ExprTraceChecker<Refutation>
         val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
             domain.itpPrecRefiner(exprSplitter.exprSplitter)
@@ -155,19 +161,6 @@ data class XcfaCegarConfig(
                 else
                     XcfaSingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
-        /*
-        // set up stopping analysis if it is stuck on same ARGs and precisions
-        if (disableCexMonitor) {
-            ArgCexCheckHandler.instance.setArgCexCheck(false, false, mitigation)
-        } else {
-            if(checkArg) {
-                ArgCexCheckHandler.instance.setArgCexCheck(true, true, mitigation)
-            } else {
-                ArgCexCheckHandler.instance.setArgCexCheck(true, false, mitigation)
-            }
-        }
-        */
-
         val cegarChecker = if (porLevel == POR.AASPOR)
             CegarChecker.create(
                 abstractor,
@@ -183,14 +176,9 @@ data class XcfaCegarConfig(
     }
 
     private fun initializeMonitors(cc: CegarChecker<ExprState, ExprAction, Prec>, logger: Logger) {
-        if (cexMonitor != CexMonitorOptions.DISABLE) {
-            val cm = if (cexMonitor == CexMonitorOptions.MITIGATE) {
-                throw RuntimeException(
-                    "Mitigation is temporarily unusable, use DISABLE or CHECK instead")
-                // CexMonitor(true, logger, cc.arg)
-            } else { // CHECK
-                CexMonitor(false, logger, cc.arg)
-            }
+        MonitorCheckpoint.reset()
+        if (cexMonitor == CexMonitorOptions.CHECK) {
+            val cm = CexMonitor(logger, cc.arg)
             MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
         }
     }
@@ -234,20 +222,21 @@ data class XcfaCegarConfig(
         ProcessHandle.current().info().command().orElse("java")
 
     fun checkInProcess(xcfa: XCFA, smtHome: String, writeWitness: Boolean, sourceFileName: String,
-        logger: Logger, parseContext: ParseContext): () -> SafetyResult<*, *> {
+        logger: Logger, parseContext: ParseContext, argdebug: Boolean): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
             getJavaExecutable(),
             "-cp",
-            File(
-                XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
+            File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
             XcfaCegarServer::class.qualifiedName,
             "--smt-home",
             smtHome,
             "--return-safety-result",
             "" + !writeWitness,
             "--input",
-            sourceFileName
-        ))
+            sourceFileName,
+            "--gzip",
+            if (argdebug) "--arg-debug" else null,
+        ).filterNotNull())
         val processHandler = ProcessHandler(logger)
         pb.setProcessListener(processHandler)
         val process: NuProcess = pb.start()
@@ -273,11 +262,17 @@ data class XcfaCegarConfig(
             val gson = getGson(xcfa, { domain },
                 { getSolver(abstractionSolver, validateAbstractionSolver).createSolver() })
             clientSocket.use {
-                val writer = PrintWriter(clientSocket.getOutputStream(), true)
                 val reader = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
-                writer.println(gson.toJson(this))
-                writer.println(gson.toJson(xcfa))
-                writer.println(gson.toJson(parseContext))
+                run {
+                    val writer = PrintWriter(GZIPOutputStream(clientSocket.getOutputStream(), 65536, true), true)
+                    val sw = Stopwatch.createStarted()
+                    writer.println(gson.toJson(this))
+                    writer.println(gson.toJson(xcfa))
+                    writer.println(gson.toJson(parseContext))
+                    logger.write(Logger.Level.RESULT,
+                        "Serialized Config, XCFA and ParseContext in ${sw.elapsed(TimeUnit.MILLISECONDS)}ms\n")
+                    writer.close()
+                }
                 val retCode = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
                 if (retCode == Int.MIN_VALUE) {
                     if (!processHandler.writingSafetyResult) {
@@ -344,7 +339,7 @@ private class ProcessHandler(
                 }
             }
             stdoutBuffer += str
-            val matchResults = Regex("([a-zA-Z]*)\t\\{([^}]*)}").findAll(stdoutBuffer)
+            val matchResults = Regex("(?s)([a-zA-Z]*)\t\\{([^}]*)}").findAll(stdoutBuffer)
             var length = 0
             for (matchResult in matchResults) {
                 val (level, message) = matchResult.destructured

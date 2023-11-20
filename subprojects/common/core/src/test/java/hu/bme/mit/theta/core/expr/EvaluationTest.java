@@ -232,6 +232,19 @@ public class EvaluationTest {
     }
 
     @Test
+    public void testDiv() {
+        assertEquals(Int(1), evaluate(Div(Int(5), Int(3))));
+        assertEquals(Int(-1), evaluate(Div(Int(5), Int(-3))));
+        assertEquals(Int(-2), evaluate(Div(Int(-5), Int(3))));
+        assertEquals(Int(2), evaluate(Div(Int(-5), Int(-3))));
+
+        assertEquals(Int(2), evaluate(Div(Int(6), Int(3))));
+        assertEquals(Int(-2), evaluate(Div(Int(6), Int(-3))));
+        assertEquals(Int(-2), evaluate(Div(Int(-6), Int(3))));
+        assertEquals(Int(2), evaluate(Div(Int(-6), Int(-3))));
+    }
+
+    @Test
     public void testMod() {
         assertEquals(Int(2), evaluate(Mod(Int(2), Int(3))));
 

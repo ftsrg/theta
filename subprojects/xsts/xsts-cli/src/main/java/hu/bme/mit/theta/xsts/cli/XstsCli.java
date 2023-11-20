@@ -22,6 +22,9 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
+import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -34,6 +37,7 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -42,17 +46,32 @@ import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
+import hu.bme.mit.theta.xsts.analysis.XstsToMonoliticTransFunc;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Algorithm;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.AutoExpl;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.OptimizeStmts;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.SequenceInputStream;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -62,6 +81,9 @@ public class XstsCli {
     private static final String JAR_NAME = "theta-xsts-cli.jar";
     private final String[] args;
     private final TableWriter writer;
+
+    @Parameter(names = {"--algorithm"}, description = "Algorithm")
+    Algorithm algorithm = Algorithm.CEGAR;
 
     @Parameter(names = {"--domain"}, description = "Abstract domain")
     Domain domain = Domain.PRED_CART;
@@ -177,9 +199,27 @@ public class XstsCli {
                 return;
             }
 
-            final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-            final SafetyResult<?, ?> status = check(configuration);
-            sw.stop();
+            final SafetyResult<?, ?> status;
+            if (algorithm.equals(Algorithm.CEGAR)) {
+                final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+                status = check(configuration);
+                sw.stop();
+            } else if (algorithm.equals(Algorithm.KINDUCTION)) {
+                var transFunc = XstsToMonoliticTransFunc.create(xsts);
+                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), (val1, val2) -> XstsAction.create(SkipStmt.getInstance()), xsts.getVars());
+                status = checker.check(null);
+                logger.write(Logger.Level.RESULT, "%s%n", status);
+                sw.stop();
+            } else if (algorithm.equals(Algorithm.IMC)) {
+                var transFunc = XstsToMonoliticTransFunc.create(xsts);
+                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars(), null);
+                status = checker.check(null);
+                logger.write(Logger.Level.RESULT, "%s%n", status);
+                sw.stop();
+            } else {
+                throw new IllegalArgumentException("Unknown algorithm: " + algorithm);
+            }
+
             printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {
                 writeCex(status.asUnsafe(), xsts);
@@ -253,7 +293,8 @@ public class XstsCli {
     }
 
     private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);

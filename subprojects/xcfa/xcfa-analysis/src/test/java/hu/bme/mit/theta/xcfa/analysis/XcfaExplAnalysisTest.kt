@@ -32,6 +32,8 @@ import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -64,7 +66,8 @@ class XcfaExplAnalysisTest {
     fun testNoporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         println("Testing NOPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -107,7 +110,8 @@ class XcfaExplAnalysisTest {
     fun testSporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         println("Testing SPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -151,7 +155,8 @@ class XcfaExplAnalysisTest {
         XcfaDporLts.random = Random(seed)
         println("Testing DPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -193,7 +198,8 @@ class XcfaExplAnalysisTest {
     fun testAasporExpl(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         println("Testing AASPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
@@ -238,7 +244,8 @@ class XcfaExplAnalysisTest {
         XcfaDporLts.random = Random(seed)
         println("Testing AADPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false).first
+        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val analysis = ExplXcfaAnalysis(
             xcfa,

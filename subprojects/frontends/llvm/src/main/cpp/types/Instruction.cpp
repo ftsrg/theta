@@ -65,7 +65,7 @@ Instruction::Instruction(llvm::Instruction &inst) {
             std::cerr << "Instruction: " << std::endl;
             inst.print(llvm::errs());
             std::cerr << std::endl;
-            abort();
+//            abort();
         }
 
     }

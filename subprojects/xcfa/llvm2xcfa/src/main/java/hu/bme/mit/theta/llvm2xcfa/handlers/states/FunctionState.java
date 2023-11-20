@@ -58,7 +58,7 @@ public class FunctionState {
     public FunctionState(GlobalState globalState, Tuple3<String, Optional<String>, List<Tuple2<String, String>>> function) {
         this.globalState = globalState;
         this.function = function;
-        procedureBuilder = new XcfaProcedureBuilder(function.get1(), new ProcedurePassManager(List.of()));
+        procedureBuilder = new XcfaProcedureBuilder(function.get1(), new ProcedurePassManager());
 //        procedureBuilder.setName(function.get1());
         localVars = new HashMap<>();
         params = new HashSet<>();

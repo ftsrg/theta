@@ -46,7 +46,7 @@ class ConfigNode(name: String, private val config: XcfaCegarConfig,
     }
 
     override fun visualize(): String = config.visualize(inProcess).lines()
-        .map { "state $name: $it" }.reduce { a, b -> "$a\n$b" }
+        .map { "state ${name.replace(Regex("[:\\.-]+"), "_")}: $it" }.reduce { a, b -> "$a\n$b" }
 }
 
 data class Edge(val source: Node,
@@ -58,7 +58,9 @@ data class Edge(val source: Node,
         source.outEdges.add(this)
     }
 
-    fun visualize(): String = """${source.name} --> ${target.name} : $trigger """
+    fun visualize(): String = """${source.name.replace(Regex("[:\\.-]+"), "_")} --> ${
+        target.name.replace(Regex("[:\\.-]+"), "_")
+    } : $trigger """
 
 }
 
@@ -99,7 +101,7 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
     fun visualize(): String = """
 ${visualizeNodes()}
 
-[*] --> ${initNode.name}
+[*] --> ${initNode.name.replace(Regex("[:\\.-]+"), "_")}
 ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
 """.trimMargin()
 

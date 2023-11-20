@@ -50,7 +50,7 @@ public final class PredTransFunc<A extends ExprAction> implements
 
         final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
                 And(state.toExpr(), action.toExpr()), VarIndexingFactory.indexing(0), prec,
-                action.nextIndexing());
+                action.nextIndexing(), state, action);
         return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
     }
 

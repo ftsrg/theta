@@ -49,9 +49,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         Preconditions.checkNotNull<P>(prec)
         assert(!arg.isSafe) { "ARG must be unsafe" }
 
-        // TODO use CexMonitor lastCex somehow?
-        // TODO and maybe later smarten ArgTrace up a bit so monitor does not have to explicitly be here?
-        val optionalNewCex = arg.cexs.findFirst() //filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
+        val optionalNewCex = arg.cexs.findFirst()
         val cexToConcretize = optionalNewCex.get()
         val traceToConcretize = cexToConcretize.toTrace()
 

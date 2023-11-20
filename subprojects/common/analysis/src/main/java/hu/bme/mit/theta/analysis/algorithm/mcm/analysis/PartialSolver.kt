@@ -23,6 +23,9 @@ import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint
 import hu.bme.mit.theta.graphsolver.solvers.GraphSolver
 
+/**
+ * WiP solver for memory-model related tasks.
+ */
 class PartialSolver<T>(
     private val mcm: Collection<GraphConstraint>,
     private val partialGraph: CandidateExecutionGraph,

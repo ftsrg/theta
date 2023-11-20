@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.c2xcfa
 
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,7 +69,7 @@ class TestFrontendXcfaBuilder {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, ParseContext(), false, false)
+        getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance())
     }
 
     @Test
@@ -77,6 +78,6 @@ class TestFrontendXcfaBuilder {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, ParseContext(), false, true)
+        getXcfaFromC(stream!!, ParseContext(), false, true, NullLogger.getInstance())
     }
 }

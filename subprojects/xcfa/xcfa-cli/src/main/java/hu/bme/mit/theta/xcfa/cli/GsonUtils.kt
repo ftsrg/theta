@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
+import hu.bme.mit.theta.frontend.FrontendMetadata
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
@@ -125,6 +126,8 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: () ->
             { traceHelper(domain().stateType) }))
     gsonBuilder.registerTypeHierarchyAdapter(ParseContext::class.java,
         ParseContextAdapter { gson })
+    gsonBuilder.registerTypeHierarchyAdapter(FrontendMetadata::class.java,
+        FrontendMetadataAdapter { gson })
     gson = gsonBuilder.create()
     return gson
 }
