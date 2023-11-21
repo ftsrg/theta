@@ -39,11 +39,21 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
         Preconditions.checkNotNull(trace)
         Preconditions.checkNotNull<Any>(prec)
         Preconditions.checkNotNull<R>(refutation)
+        val checkForPop = !(trace.states.first() as XcfaState<*>).xcfa!!.isInlined
         var runningPrec: P = prec.p
         for (i in trace.states.indices) {
-            val tempLookup = if (i > 0) getTempLookup(trace.actions[i - 1].edge.label).entries
-                .associateBy({ it.value }) { it.key } else emptyMap()
-            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(tempLookup)
+            val reverseLookup = trace.states[i].processes.values.map {
+                it.varLookup.map {
+                    it.map {
+                        Pair(it.value, it.key)
+                    }
+                }.flatten()
+            }.flatten().toMap()
+            val additionalLookup = if (i > 0) getTempLookup(
+                trace.actions[i - 1].edge.label).entries.associateBy(
+                { it.value }) { it.key } else emptyMap()
+            val varLookup = if (checkForPop) additionalLookup else (reverseLookup + additionalLookup)
+            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(varLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
         }
         return prec.refine(runningPrec)

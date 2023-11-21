@@ -91,7 +91,7 @@ class XcfaPredAnalysisTest {
             ItpRefToPredPrec(ExprSplitters.whole()))
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
@@ -137,7 +137,7 @@ class XcfaPredAnalysisTest {
             ItpRefToPredPrec(ExprSplitters.whole()))
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
@@ -183,7 +183,7 @@ class XcfaPredAnalysisTest {
             ItpRefToPredPrec(ExprSplitters.whole()))
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
@@ -229,7 +229,7 @@ class XcfaPredAnalysisTest {
         val atomicNodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>()
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
@@ -274,7 +274,7 @@ class XcfaPredAnalysisTest {
         val precRefiner = XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(ExprSplitters.whole()))
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
