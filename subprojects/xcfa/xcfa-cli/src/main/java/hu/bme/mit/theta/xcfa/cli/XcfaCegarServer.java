@@ -165,7 +165,7 @@ class XcfaCegarServer {
                         } catch (Exception e) {
                             File tempFile = File.createTempFile("parsecontext", ".json");
                             try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
-                                bw.write(configStr);
+                                bw.write(parseStr);
                             }
                             System.err.println("Erroneous parsecontext, see file " + tempFile.getAbsolutePath());
                             throw e;
