@@ -192,7 +192,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CBool type, Expr<?> param) {
-        return Ite(Eq(param, Int(0)), Int(0), Int(1));
+        CComplexType that = CComplexType.getType(param, parseContext);
+        if (that instanceof CBool) {
+            return param;
+        } else {
+            return Ite(Eq(param, Int(0)), Int(0), Int(1));
+        }
     }
 
     @Override
