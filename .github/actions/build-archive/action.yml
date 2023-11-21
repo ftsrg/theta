@@ -17,23 +17,23 @@ runs:
     - name: Create folder structure
       shell: bash
       run: |
-        mkdir -p ${{ inputs.name }}/theta/
-        mkdir -p ${{ inputs.name }}/theta/solvers
-        cp lib ${{ inputs.name }}/theta/lib -r
-        cp CONTRIBUTORS.md ${{ inputs.name }}/theta/
-        cp lib/README.md ${{ inputs.name }}/theta/LIB_LICENSES.md
-        cp LICENSE ${{ inputs.name }}/theta/
-        cp README.md ${{ inputs.name }}/theta/GENERAL_README.md
-        cp scripts/theta-start.sh ${{ inputs.name }}/theta/theta-start.sh
-        chmod +x ${{ inputs.name }}/theta/theta-start.sh
-        sed "s/COMMIT_ID/$GITHUB_SHA/g" $GITHUB_ACTION_PATH/README.md > ${{ inputs.name }}/theta/README.md 
-        sed -i 's/TOOL_NAME/${{ inputs.name }}/g' ${{ inputs.name }}/theta/README.md
-        sed -i 's/INPUT_FLAG/${{ inputs.inputflag }}/g' ${{ inputs.name }}/theta/README.md
+        mkdir -p ${{ inputs.name }}/${{ inputs.name }}/
+        mkdir -p ${{ inputs.name }}/${{ inputs.name }}/solvers
+        cp lib ${{ inputs.name }}/${{ inputs.name }}/lib -r
+        cp CONTRIBUTORS.md ${{ inputs.name }}/${{ inputs.name }}/
+        cp lib/README.md ${{ inputs.name }}/${{ inputs.name }}/LIB_LICENSES.md
+        cp LICENSE ${{ inputs.name }}/${{ inputs.name }}/
+        cp README.md ${{ inputs.name }}/${{ inputs.name }}/GENERAL_README.md
+        cp scripts/theta-start.sh ${{ inputs.name }}/${{ inputs.name }}/theta-start.sh
+        chmod +x ${{ inputs.name }}/${{ inputs.name }}/theta-start.sh
+        sed "s/COMMIT_ID/$GITHUB_SHA/g" $GITHUB_ACTION_PATH/README.md > ${{ inputs.name }}/${{ inputs.name }}/README.md 
+        sed -i 's/TOOL_NAME/${{ inputs.name }}/g' ${{ inputs.name }}/${{ inputs.name }}/README.md
+        sed -i 's/INPUT_FLAG/${{ inputs.inputflag }}/g' ${{ inputs.name }}/${{ inputs.name }}/README.md
     - name: Extract theta-xcfa-cli and theta-smtlib-cli
       shell: bash
       run: |
-        mv jar/xcfa/xcfa-cli/build/libs/*-all.jar ${{ inputs.name }}/theta/theta.jar
-        mv jar/solver/solver-smtlib-cli/build/libs/*-all.jar ${{ inputs.name }}/theta/theta-smtlib.jar
+        mv jar/xcfa/xcfa-cli/build/libs/*-all.jar ${{ inputs.name }}/${{ inputs.name }}/theta.jar
+        mv jar/solver/solver-smtlib-cli/build/libs/*-all.jar ${{ inputs.name }}/${{ inputs.name }}/theta-smtlib.jar
     - name: Setup java 17
       uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2 # v3.11.0
       with:
@@ -44,15 +44,15 @@ runs:
       run: |
         for i in $(cat $GITHUB_ACTION_PATH/necessary-solvers.txt)
         do
-          java -jar ${{ inputs.name }}/theta/theta-smtlib.jar --home ${{ inputs.name }}/theta/solvers install $i
+          java -jar ${{ inputs.name }}/${{ inputs.name }}/theta-smtlib.jar --home ${{ inputs.name }}/${{ inputs.name }}/solvers install $i
         done
     - name: ZIP archive
       shell: bash
       run: |
         cd ${{ inputs.name }}
-        zip theta.zip theta -r
+        zip ${{ inputs.name }}.zip ${{ inputs.name }} -r
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
         name: ${{ inputs.name }}_SV-COMP
-        path: ${{ inputs.name }}/theta.zip
+        path: ${{ inputs.name }}/${{ inputs.name }}.zip
