@@ -33,6 +33,12 @@ public abstract class CReal extends CComplexType {
     }
 
     @Override
+    public int width() {
+        return parseContext.getArchitecture().getBitWidth(getTypeName() + "_s") +
+                parseContext.getArchitecture().getBitWidth(getTypeName() + "_e");
+    }
+
+    @Override
     public CComplexType getSmallestCommonType(CComplexType type) {
         if (!(type instanceof CReal) || ((CReal) type).rank <= rank) {
             return this;

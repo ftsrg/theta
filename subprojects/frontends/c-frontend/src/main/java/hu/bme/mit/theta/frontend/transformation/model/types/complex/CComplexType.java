@@ -160,7 +160,7 @@ public abstract class CComplexType {
                 if (s.endsWith("*")) {
                     yield new CPointer(null, null, parseContext);
                 } else {
-                    throw new RuntimeException("Type not known: " + s);
+                    yield null;
                 }
             }
         };
