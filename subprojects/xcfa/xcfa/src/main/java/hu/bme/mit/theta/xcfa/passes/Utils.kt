@@ -93,6 +93,7 @@ fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: Par
 
             is StmtLabel -> StmtLabel(stmt.changeVars(varLut, parseContext), metadata = metadata,
                 choiceType = this.choiceType)
+
             is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
                 metadata = metadata)
 
