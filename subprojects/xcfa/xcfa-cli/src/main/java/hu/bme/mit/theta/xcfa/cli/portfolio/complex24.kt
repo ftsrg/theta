@@ -62,7 +62,7 @@ fun complexPortfolio24(
     )
 
     if (traitsTyped.multithreaded) {
-        baseConfig = baseConfig.copy(search = Search.DFS, porLevel = POR.AASPOR, pruneStrategy = PruneStrategy.LAZY,
+        baseConfig = baseConfig.copy(search = Search.DFS, porLevel = POR.AASPOR, pruneStrategy = PruneStrategy.FULL,
             coi = ConeOfInfluenceMode.COI)
 
         if (propertyTyped == ErrorDetection.DATA_RACE) {
