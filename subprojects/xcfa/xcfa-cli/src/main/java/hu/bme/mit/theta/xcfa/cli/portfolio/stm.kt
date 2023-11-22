@@ -114,7 +114,7 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
                 println("Caught exception: $e")
                 val edge: Edge? = currentNode.outEdges.find { it.trigger(e) }
                 if (edge != null) {
-                    println("Handling exception as $edge")
+                    println("Handling exception as ${edge.trigger}")
                     currentNode = edge.target
                 } else {
                     println("Could not handle trigger $e (Available triggers: ${
