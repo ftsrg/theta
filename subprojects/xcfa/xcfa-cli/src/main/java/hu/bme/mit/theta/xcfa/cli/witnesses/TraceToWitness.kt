@@ -53,6 +53,7 @@ fun traceToWitness(
     for (i in 0 until trace.length()) {
         val state = trace.states[i]
         val nextState = trace.states[i + 1]
+        val newThreads = nextState.processes.keys - state.processes.keys
         val node = WitnessNode(
             id = "N${newStates.size}",
             entry = false,
@@ -77,8 +78,11 @@ fun traceToWitness(
         for (xcfaLabel in flattenedSequence) {
             val node = WitnessNode(id = "N${newStates.size}", entry = false, sink = false,
                 violation = false)
-            val edge = labelToEdge(lastNode, node, xcfaLabel, action.pid,
+            var edge = labelToEdge(lastNode, node, xcfaLabel, action.pid,
                 nextState.sGlobal.getVal(), parseContext)
+            if (newThreads.isNotEmpty() && xcfaLabel is StartLabel) {
+                edge = edge.copy(createThread = newThreads.joinToString(","))
+            }
             if (node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
                 newStates.add(node)
                 newActions.add(edge)

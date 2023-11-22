@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bi
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
@@ -84,8 +85,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
                         Int(type.width()));
-            } else {
-                return BvExprs.Pos((Expr<BvType>) param);
+            } else { // width equals
+                if (that instanceof Unsigned) {
+                    return BvSignChangeExpr.of((Expr<BvType>) param, BvType.of(((BvType) param.getType()).getSize(), true));
+                } else {
+                    return param;
+                }
             }
         } else {
             throw new IllegalStateException("Compound types are not directly supported!");
@@ -113,7 +118,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                         Int(type.width()));
             } else { // width equals
                 if (that instanceof Signed) {
-                    return BvExprs.Add(List.of((Expr<BvType>) param, BvUtils.bigIntegerToUnsignedBvLitExpr(BigInteger.TWO.pow(type.width()).subtract(BigInteger.ONE), type.width()), (Expr<BvType>) type.getUnitValue()));
+                    return BvSignChangeExpr.of((Expr<BvType>) param, BvType.of(((BvType) param.getType()).getSize(), false));
                 } else {
                     return param;
                 }

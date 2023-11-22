@@ -94,44 +94,32 @@ class FrontendMetadataAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<Fronte
         val values = mutableMapOf<String, Any>()
 
         reader.beginArray()
-        while (reader.hasNext()) {
+        while (reader.peek() != JsonToken.END_ARRAY) {
             reader.beginObject()
-
-            var key: String? = null
-            var value: Any? = null
-
-            while (reader.hasNext()) {
-                when (reader.nextName()) {
-                    "key" -> {
-                        key = reader.nextString()
-                    }
-
-                    "value" -> {
-                        value = readValue(reader)
-                    }
-
-                    else -> {
-                        reader.skipValue()
-                    }
+            if (reader.hasNext()) {
+                val key = reader.nextName()
+                val value = readValue(reader)
+                if (value != null) {
+                    values[key] = value
                 }
             }
 
             reader.endObject()
 
-            if (key != null && value != null) {
-                values[key] = value
-            }
         }
         reader.endArray()
 
         return values
     }
 
-    private fun readValue(reader: JsonReader): Any {
+    private fun readValue(reader: JsonReader): Any? {
         return when {
             reader.peek() == JsonToken.STRING -> reader.nextString()
             reader.peek() == JsonToken.BOOLEAN -> reader.nextBoolean()
-            else -> reader.skipValue()
+            else -> {
+                reader.skipValue()
+                null
+            }
         }
     }
 

@@ -640,19 +640,20 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val breakLoc = param.breakLoc
         val continueLoc = param.continueLoc
         val returnLoc = param.returnLoc
-        val expr = statement.expr ?: return lastLoc
+        val expr = statement.expr
         val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
         builder.addLoc(initLoc)
         val xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
         builder.addEdge(xcfaEdge)
-        val endExpr = expr.accept(this,
-            ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
+        val endExpr = expr?.accept(this,
+            ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc)) ?: initLoc
         val endLoc = getAnonymousLoc(builder, metadata = getMetadata(statement))
         builder.addLoc(endLoc)
         val key: VarDecl<*> = builder.getParams()[0].first
         check(returnLoc != null)
+        val type = CComplexType.getType(key.ref, parseContext)
         val edge = XcfaEdge(endExpr, returnLoc, StmtLabel(Stmts.Assign(cast(key, key.type),
-            cast(CComplexType.getType(key.ref, parseContext).castTo(expr.expression), key.type)),
+            cast(type.castTo(expr?.expression ?: type.nullValue), key.type)),
             metadata = getMetadata(statement)), metadata = getMetadata(statement))
         builder.addEdge(edge)
         return endLoc
