@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli
 
 import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException
+import hu.bme.mit.theta.solver.UnknownSolverStatusException
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import hu.bme.mit.theta.solver.validator.SolverValidationException
 import kotlin.system.exitProcess
@@ -75,9 +76,12 @@ fun <T> exitOnError(stacktrace: Boolean, debug: Boolean, body: () -> T): T {
     } catch (e: OutOfMemoryError) {
         e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.OUT_OF_MEMORY.code);
+    } catch (e: UnknownSolverStatusException) {
+        e.printCauseAndTrace(stacktrace)
+        exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
     } catch (e: RuntimeException) {
         e.printCauseAndTrace(stacktrace)
-        if (e.message?.contains("Solver problem") == true) {
+        if (e.message?.contains("Solver problem") == true || e.message?.contains("Z3") == true) {
             exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
         } else {
             exitProcess(debug, e, ExitCodes.SERVER_ERROR.code);

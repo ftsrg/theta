@@ -70,25 +70,22 @@ fun complexPortfolio24(
         }
     }
     val timeoutTrigger = ExceptionTrigger(
-        ErrorCodeException(ExitCodes.TIMEOUT.code),
-        ErrorCodeException(ExitCodes.VERIFICATION_STUCK.code),
-        ErrorCodeException(ExitCodes.OUT_OF_MEMORY.code),
-        ErrorCodeException(ExitCodes.GENERIC_ERROR.code),
+        fallthroughExceptions = setOf(
+            ErrorCodeException(ExitCodes.SOLVER_ERROR.code),
+            ErrorCodeException(ExitCodes.SERVER_ERROR.code),
+        ),
         label = "TimeoutOrGenericError"
     )
 
     val timeoutOrSolverError = ExceptionTrigger(
-        ErrorCodeException(ExitCodes.SOLVER_ERROR.code),
-        ErrorCodeException(ExitCodes.TIMEOUT.code),
-        ErrorCodeException(ExitCodes.VERIFICATION_STUCK.code),
-        ErrorCodeException(ExitCodes.OUT_OF_MEMORY.code),
-        ErrorCodeException(ExitCodes.GENERIC_ERROR.code),
+        fallthroughExceptions = setOf(
+            ErrorCodeException(ExitCodes.SERVER_ERROR.code),
+        ),
         label = "TimeoutOrSolverError"
     )
 
     val solverError = ExceptionTrigger(
         ErrorCodeException(ExitCodes.SOLVER_ERROR.code),
-        ErrorCodeException(ExitCodes.VERIFICATION_STUCK.code),
         label = "SolverError"
     )
 
