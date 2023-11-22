@@ -646,7 +646,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
         builder.addEdge(xcfaEdge)
         val endExpr = expr?.accept(this,
-            ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc)) ?: lastLoc
+            ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc)) ?: initLoc
         val endLoc = getAnonymousLoc(builder, metadata = getMetadata(statement))
         builder.addLoc(endLoc)
         val key: VarDecl<*> = builder.getParams()[0].first
