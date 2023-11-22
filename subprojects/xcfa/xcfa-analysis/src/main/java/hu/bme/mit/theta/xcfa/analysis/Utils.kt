@@ -41,7 +41,8 @@ fun Valuation.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Valuation {
 internal fun <S : ExprState> XcfaState<S>.withGeneralizedVars(): S {
     val varLookup = processes.mapNotNull { (_, process) -> process.varLookup.peek()?.reverseMapping() }
         .reduceOrNull(Map<VarDecl<*>, VarDecl<*>>::plus) ?: mapOf()
-    return when (sGlobal) {
+    return if (sGlobal.isBottom) sGlobal
+    else when (sGlobal) {
         is ExplState -> ExplState.of(sGlobal.getVal().changeVars(varLookup))
         is PredState -> PredState.of(sGlobal.preds.map { p -> p.changeVars(varLookup) })
         else -> throw NotImplementedError(
