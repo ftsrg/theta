@@ -17,5 +17,5 @@
 package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
 public enum ArithmeticTrait {
-    LIN_INT, NONLIN_INT, BITWISE, FLOAT, ARR,
+    LIN_INT, NONLIN_INT, BITWISE, FLOAT, ARR, MULTITHREAD
 }

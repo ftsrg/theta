@@ -408,6 +408,75 @@ fun complexPortfolio24(
                 timeoutMs = 500000
             ), checker, inProcess)
         edges.add(Edge(config_ARR_PRED_CART_SEQ_ITP_princess, config_ARR_PRED_CART_SEQ_ITP_cvc5, solverError))
+        val config_MULTITHREAD_EXPL_SEQ_ITP_Z3 = ConfigNode("MULTITHREAD_EXPL_SEQ_ITP_Z3-$inProcess", baseConfig.copy(
+            domain = Domain.EXPL,
+            abstractionSolver = "Z3",
+            refinementSolver = "Z3",
+            refinement = Refinement.SEQ_ITP,
+            timeoutMs = 150000
+        ), checker, inProcess)
+        val config_MULTITHREAD_EXPL_SEQ_ITP_mathsat = ConfigNode("MULTITHREAD_EXPL_SEQ_ITP_mathsat:5.6.10-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "mathsat:5.6.10",
+                refinementSolver = "mathsat:5.6.10",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 150000
+            ), checker, inProcess)
+        edges.add(Edge(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, config_MULTITHREAD_EXPL_SEQ_ITP_mathsat, solverError))
+        val config_MULTITHREAD_EXPL_NWT_IT_WP_z3 = ConfigNode("MULTITHREAD_EXPL_NWT_IT_WP_z3:4.12.2-$inProcess",
+            baseConfig.copy(
+                domain = Domain.EXPL,
+                abstractionSolver = "z3:4.12.2",
+                refinementSolver = "z3:4.12.2",
+                refinement = Refinement.NWT_IT_WP,
+                timeoutMs = 300000
+            ), checker, inProcess)
+        edges.add(Edge(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, config_MULTITHREAD_EXPL_NWT_IT_WP_z3,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_MULTITHREAD_EXPL_SEQ_ITP_mathsat, config_MULTITHREAD_EXPL_NWT_IT_WP_z3,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_MULTITHREAD_EXPL_NWT_IT_WP_mathsat = ConfigNode(
+            "MULTITHREAD_EXPL_NWT_IT_WP_mathsat:5.6.10-$inProcess", baseConfig.copy(
+            domain = Domain.EXPL,
+            abstractionSolver = "mathsat:5.6.10",
+            refinementSolver = "mathsat:5.6.10",
+            refinement = Refinement.NWT_IT_WP,
+            timeoutMs = 300000
+        ), checker, inProcess)
+        edges.add(Edge(config_MULTITHREAD_EXPL_NWT_IT_WP_z3, config_MULTITHREAD_EXPL_NWT_IT_WP_mathsat, solverError))
+        val config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3 = ConfigNode("MULTITHREAD_PRED_CART_SEQ_ITP_Z3-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "Z3",
+                refinementSolver = "Z3",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(Edge(config_MULTITHREAD_EXPL_NWT_IT_WP_z3, config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3,
+            if (inProcess) timeoutTrigger else anyError))
+        edges.add(Edge(config_MULTITHREAD_EXPL_NWT_IT_WP_mathsat, config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3,
+            if (inProcess) timeoutOrSolverError else anyError))
+        val config_MULTITHREAD_PRED_CART_SEQ_ITP_mathsat = ConfigNode(
+            "MULTITHREAD_PRED_CART_SEQ_ITP_mathsat:5.6.10-$inProcess", baseConfig.copy(
+            domain = Domain.PRED_CART,
+            abstractionSolver = "mathsat:5.6.10",
+            refinementSolver = "mathsat:5.6.10",
+            refinement = Refinement.SEQ_ITP,
+            timeoutMs = 0
+        ), checker, inProcess)
+        edges.add(
+            Edge(config_MULTITHREAD_PRED_CART_SEQ_ITP_Z3, config_MULTITHREAD_PRED_CART_SEQ_ITP_mathsat, solverError))
+        val config_MULTITHREAD_PRED_CART_SEQ_ITP_z3 = ConfigNode("MULTITHREAD_PRED_CART_SEQ_ITP_z3:4.12.2-$inProcess",
+            baseConfig.copy(
+                domain = Domain.PRED_CART,
+                abstractionSolver = "z3:4.12.2",
+                refinementSolver = "z3:4.12.2",
+                refinement = Refinement.SEQ_ITP,
+                timeoutMs = 0
+            ), checker, inProcess)
+        edges.add(
+            Edge(config_MULTITHREAD_PRED_CART_SEQ_ITP_mathsat, config_MULTITHREAD_PRED_CART_SEQ_ITP_z3, solverError))
         if (trait == ArithmeticTrait.BITWISE) {
             return STM(config_BITWISE_EXPL_NWT_IT_WP_cvc5, edges)
         }
@@ -428,15 +497,25 @@ fun complexPortfolio24(
             return STM(config_ARR_EXPL_NWT_IT_WP_cvc5, edges)
         }
 
+        if (trait == ArithmeticTrait.MULTITHREAD) {
+            return STM(config_MULTITHREAD_EXPL_SEQ_ITP_Z3, edges)
+        }
+
+
         error("Unknown trait!")
     }
 
     val mainTrait =
-        if (ArithmeticTrait.FLOAT in traitsTyped.arithmeticTraits) ArithmeticTrait.FLOAT
-        else if (ArithmeticTrait.ARR in traitsTyped.arithmeticTraits) ArithmeticTrait.ARR
-        else if (ArithmeticTrait.BITWISE in traitsTyped.arithmeticTraits) ArithmeticTrait.BITWISE
-        else if (ArithmeticTrait.NONLIN_INT in traitsTyped.arithmeticTraits) ArithmeticTrait.NONLIN_INT
-        else ArithmeticTrait.LIN_INT
+        when {
+            traitsTyped.multithreaded -> ArithmeticTrait.MULTITHREAD
+            ArithmeticTrait.FLOAT in traitsTyped.arithmeticTraits -> ArithmeticTrait.FLOAT
+            ArithmeticTrait.ARR in traitsTyped.arithmeticTraits -> ArithmeticTrait.ARR
+            ArithmeticTrait.BITWISE in traitsTyped.arithmeticTraits -> ArithmeticTrait.BITWISE
+            ArithmeticTrait.NONLIN_INT in traitsTyped.arithmeticTraits -> ArithmeticTrait.NONLIN_INT
+            else -> ArithmeticTrait.LIN_INT
+        }
+
+    loggerTyped.write(Logger.Level.RESULT, "Using portfolio $mainTrait\n")
 
     val inProcess = HierarchicalNode("InProcess", getStm(mainTrait, true))
     val notInProcess = HierarchicalNode("NotInprocess", getStm(mainTrait, false))
