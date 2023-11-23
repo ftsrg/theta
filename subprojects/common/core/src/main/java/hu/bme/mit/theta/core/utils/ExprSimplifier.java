@@ -68,6 +68,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
@@ -265,6 +266,8 @@ public final class ExprSimplifier {
             .addCase(BvSubExpr.class, this::simplifyBvSub)
 
             .addCase(BvPosExpr.class, this::simplifyBvPos)
+
+            .addCase(BvSignChangeExpr.class, this::simplifyBvSignChange)
 
             .addCase(BvNegExpr.class, this::simplifyBvNeg)
 
@@ -1332,6 +1335,10 @@ public final class ExprSimplifier {
     }
 
     private Expr<BvType> simplifyBvPos(final BvPosExpr expr, final Valuation val) {
+        return simplify(expr.getOp(), val);
+    }
+
+    private Expr<BvType> simplifyBvSignChange(final BvSignChangeExpr expr, final Valuation val) {
         return simplify(expr.getOp(), val);
     }
 

@@ -24,6 +24,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.ARG
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
@@ -44,6 +45,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils.fromFile
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
@@ -241,7 +243,10 @@ class XcfaCli(private val args: Array<String>) {
         stopwatch.reset().start()
 
         val safetyResult: SafetyResult<*, *> =
-            if (backend == Backend.CEGAR) {
+            if (xcfa.procedures.all { it.errorLoc.isEmpty && explicitProperty == ErrorDetection.ERROR_LOCATION }) {
+                registerAllSolverManagers(solverHome, logger)
+                SafetyResult.safe(ARG.create { _, _ -> false })
+            } else if (backend == Backend.CEGAR) {
                 logger.write(Logger.Level.INFO,
                     "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using $backend\n")
                 registerAllSolverManagers(solverHome, logger)
@@ -467,8 +472,10 @@ class XcfaCli(private val args: Array<String>) {
                             parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
                             logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
                             val stream = FileInputStream(input!!)
-                            getXcfaFromC(stream, parseContext, false,
+                            val xcfa = getXcfaFromC(stream, parseContext, false,
                                 explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+                            parseContext.arithmeticTraits.add(ArithmeticTrait.BITWISE)
+                            xcfa
                         } else {
                             throw e
                         }

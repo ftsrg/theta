@@ -30,4 +30,8 @@ public abstract class CCompound extends CComplexType {
         return visitor.visit(this, param);
     }
 
+    @Override
+    public int width() {
+        return parseContext.getArchitecture().getBitWidth("int");
+    }
 }

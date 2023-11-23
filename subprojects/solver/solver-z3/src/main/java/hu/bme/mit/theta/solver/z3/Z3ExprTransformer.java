@@ -78,6 +78,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
@@ -280,6 +281,8 @@ final class Z3ExprTransformer {
                 .addCase(BvSubExpr.class, this::transformBvSub)
 
                 .addCase(BvPosExpr.class, this::transformBvPos)
+
+                .addCase(BvSignChangeExpr.class, this::transformBvSignChange)
 
                 .addCase(BvNegExpr.class, this::transformBvNeg)
 
@@ -830,6 +833,10 @@ final class Z3ExprTransformer {
     }
 
     private com.microsoft.z3.Expr transformBvPos(final BvPosExpr expr) {
+        return toTerm(expr.getOp());
+    }
+
+    private com.microsoft.z3.Expr transformBvSignChange(final BvSignChangeExpr expr) {
         return toTerm(expr.getOp());
     }
 

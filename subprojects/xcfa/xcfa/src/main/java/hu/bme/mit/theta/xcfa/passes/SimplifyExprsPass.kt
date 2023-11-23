@@ -36,7 +36,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.isRead
 import hu.bme.mit.theta.xcfa.model.*
-import java.lang.UnsupportedOperationException
 
 /**
  * This pass simplifies the expressions inside statements and substitutes the values of constant variables
@@ -75,7 +74,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
                                 CComplexType.getType(it.stmt.cond, parseContext))
                         }
                         parseContext.metadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
-                        StmtLabel(Assume(simplified), metadata = it.metadata)
+                        StmtLabel(Assume(simplified), metadata = it.metadata, choiceType = it.choiceType)
                     }
 
                     else -> it

@@ -447,14 +447,15 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
      */
     private Expr<?> createIntMod(Expr<?> a, Expr<?> b) {
         ModExpr<?> aModB = Mod(a, b);
-        return Ite(Geq(a, Int(0)),  // if (a >= 0)
-                aModB,                        //   a mod b
-                // else
-                Ite(Geq(b, Int(0)),     //   if (b >= 0)
-                        Sub(aModB, b),            //     a mod b - b
-                        Add(aModB, b)             //     a mod b + b
-                )
-        );
+        return Ite(Eq(aModB, Int(0)), aModB,
+                Ite(Geq(a, Int(0)),  // if (a >= 0)
+                        aModB,                        //   a mod b
+                        // else
+                        Ite(Geq(b, Int(0)),     //   if (b >= 0)
+                                Sub(aModB, b),            //     a mod b - b
+                                Add(aModB, b)             //     a mod b + b
+                        )
+                ));
     }
 
     @Override
@@ -482,10 +483,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             return zero;
         } else {
             final Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText())
+                    .or(() -> Optional.ofNullable(CComplexType.getType(ctx.typeName().getText(), parseContext)))
                     .or(() -> Optional.ofNullable(CComplexType.getType(getVar(ctx.typeName().getText()).getRef(), parseContext)));
 
             if (type.isPresent()) {
-                LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + parseContext.getArchitecture().getBitWidth(type.get().getTypeName()) / 8);
+                LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + type.get().width() / 8);
                 return value;
             } else {
                 uniqueWarningLogger.write(Level.INFO, "WARNING: sizeof got unknown type, using a literal 0 instead.\n");

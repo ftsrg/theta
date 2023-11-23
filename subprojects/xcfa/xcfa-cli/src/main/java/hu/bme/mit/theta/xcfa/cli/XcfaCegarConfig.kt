@@ -225,6 +225,8 @@ data class XcfaCegarConfig(
         logger: Logger, parseContext: ParseContext, argdebug: Boolean): () -> SafetyResult<*, *> {
         val pb = NuProcessBuilder(listOf(
             getJavaExecutable(),
+            "-Xss120m",
+            "-Xmx14210m",
             "-cp",
             File(XcfaCegarServer::class.java.protectionDomain.codeSource.location.toURI()).absolutePath,
             XcfaCegarServer::class.qualifiedName,

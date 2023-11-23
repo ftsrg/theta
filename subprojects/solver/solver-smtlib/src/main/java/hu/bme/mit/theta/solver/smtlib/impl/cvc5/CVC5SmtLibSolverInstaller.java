@@ -34,7 +34,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static hu.bme.mit.theta.common.OsHelper.Architecture.X64;
-import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.*;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.LINUX;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.MAC;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.WINDOWS;
 
 public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     private final List<SemVer.VersionDecoder> versions;
@@ -65,6 +67,15 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
             installDir.resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
+        } catch (IOException e) {
+            throw new SmtLibSolverInstallerException(e);
+        }
+        try (
+                final var inputChannel = Channels.newChannel(getLicenseDownloadUrl().openStream());
+                final var outputChannel = new FileOutputStream(installDir.resolve("COPYING").toAbsolutePath().toString()).getChannel()
+        ) {
+            logger.write(Logger.Level.MAINSTEP, "Starting license download (%s)...\n", getLicenseDownloadUrl().toString());
+            outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
@@ -106,6 +117,10 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                 "https://github.com/cvc5/cvc5/releases/download/cvc5-%s/cvc5-%s",
                 version, getArchString(version)
         )).toURL();
+    }
+
+    private URL getLicenseDownloadUrl() throws SmtLibSolverInstallerException, MalformedURLException {
+        return URI.create("https://raw.githubusercontent.com/cvc5/cvc5/main/COPYING").toURL();
     }
 
     private String getArchString(final String version) throws SmtLibSolverInstallerException {

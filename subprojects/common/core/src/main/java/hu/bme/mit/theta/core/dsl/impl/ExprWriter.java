@@ -64,6 +64,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
@@ -254,6 +255,8 @@ public final class ExprWriter {
                 .addCase(BvSRemExpr.class, e -> infixBinary(e, " bvsrem "))
 
                 .addCase(BvPosExpr.class, e -> prefixUnary(e, "bvpos"))
+
+                .addCase(BvSignChangeExpr.class, e -> prefixUnary(e, "bvsign"))
 
                 .addCase(BvNegExpr.class, e -> prefixUnary(e, "bvneg"))
 
