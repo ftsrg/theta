@@ -43,9 +43,7 @@ import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.BufferedReader
@@ -122,8 +120,10 @@ data class XcfaCegarConfig(
         }
 
         val abstractionSolverInstance = abstractionSolverFactory.createSolver()
-        val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> = domain.partialOrd(
-            abstractionSolverInstance)
+        val globalStatePartialOrd: PartialOrd<out ExprState> = domain.partialOrd(abstractionSolverInstance)
+        val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> =
+            if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
+            else getStackPartialOrder(globalStatePartialOrd)
         val abstractor: Abstractor<ExprState, ExprAction, Prec> = domain.abstractor(
             xcfa,
             abstractionSolverInstance,
@@ -156,10 +156,10 @@ data class XcfaCegarConfig(
                     MultiExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
             else
                 if (porLevel == POR.AASPOR)
-                    SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger,
+                    XcfaSingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger,
                         atomicNodePruner)
                 else
-                    SingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
+                    XcfaSingleExprTraceRefiner.create(ref, precRefiner, pruneStrategy, logger)
 
         val cegarChecker = if (porLevel == POR.AASPOR)
             CegarChecker.create(

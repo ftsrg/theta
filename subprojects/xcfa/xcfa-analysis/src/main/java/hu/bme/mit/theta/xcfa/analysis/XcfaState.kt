@@ -235,6 +235,8 @@ data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: L
     val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(listOf(Pair(NopLabel, NopLabel))),
     val paramsInitialized: Boolean = false, val prefix: String = "") {
 
+    internal var popped: XcfaLocation? = null // stores if the stack was popped due to abstract stack covering
+
     fun withNewLoc(l: XcfaLocation): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         deque.pop()

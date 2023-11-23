@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
 import hu.bme.mit.theta.analysis.expl.ExplPrec
@@ -174,6 +173,20 @@ fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
             s1.sGlobal, s2.sGlobal)
     }
 
+private fun <S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.processes.keys.all { pid ->
+    s1.processes[pid]?.let { ps1 ->
+        val ps2 = s2.processes.getValue(pid)
+        ps1.locs.peek() == ps2.locs.peek() && ps1.paramsInitialized && ps2.paramsInitialized
+    } ?: false
+}
+
+fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<S>) =
+    PartialOrd<XcfaState<S>> { s1, s2 ->
+        s1.processes.size == s2.processes.size && stackIsLeq(s1,
+            s2) && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
+            && partialOrd.isLeq(s1.withGeneralizedVars(), s2.withGeneralizedVars())
+    }
+
 private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
     analysis: Analysis<S, XcfaAction, P>,
     lts: LTS<XcfaState<out ExprState>, XcfaAction>,
@@ -193,10 +206,13 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
     lts: LTS<XcfaState<out ExprState>, XcfaAction>,
     errorDetection: ErrorDetection
 ): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
-    BasicAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
+    XcfaAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
-        .projection { it.processes }
+        .projection {
+            if (it.xcfa!!.isInlined) it.processes
+            else it.processes.map { (_, p) -> p.locs.peek() }
+        }
         .build() // TODO: can we do this nicely?
 
 /// EXPL
