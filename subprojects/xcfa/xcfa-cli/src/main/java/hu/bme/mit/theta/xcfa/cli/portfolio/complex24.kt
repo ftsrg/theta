@@ -70,7 +70,7 @@ fun complexPortfolio24(
             coi = ConeOfInfluenceMode.COI)
 
         if (propertyTyped == ErrorDetection.DATA_RACE) {
-            baseConfig = baseConfig.copy(porLevel = POR.SPOR)
+            baseConfig = baseConfig.copy(porLevel = POR.SPOR, coi = ConeOfInfluenceMode.NO_COI)
         }
     }
     val timeoutTrigger = ExceptionTrigger(
