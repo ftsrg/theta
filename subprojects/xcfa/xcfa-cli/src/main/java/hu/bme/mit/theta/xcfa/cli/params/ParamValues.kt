@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.cli
+package hu.bme.mit.theta.xcfa.cli.params
 
 import com.google.gson.reflect.TypeToken
 import hu.bme.mit.theta.analysis.LTS
@@ -59,10 +59,10 @@ enum class InputType {
 
 enum class Backend {
     CEGAR,
-    KIND,
-    IMC,
-    IMC_THEN_KIND,
-    LAZY
+    BOUNDED,
+    LAZY,
+    PORTFOLIO,
+    NONE,
 }
 
 enum class POR(

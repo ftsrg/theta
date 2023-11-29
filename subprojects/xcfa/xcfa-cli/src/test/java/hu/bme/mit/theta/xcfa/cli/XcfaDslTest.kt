@@ -20,6 +20,8 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverManager
+import hu.bme.mit.theta.xcfa.cli.params.InitPrec
+import hu.bme.mit.theta.xcfa.cli.params.Search
 import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure

@@ -19,49 +19,79 @@ package hu.bme.mit.theta.xcfa.cli.portfolio
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
-import hu.bme.mit.theta.xcfa.cli.*
+import hu.bme.mit.theta.xcfa.cli.params.*
+import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.LbePass
+import java.nio.file.Paths
 
-fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Logger, smtHomeTyped: String,
-    traitsTyped: VerificationTraits, propertyTyped: ErrorDetection,
-    parseContextTyped: ParseContext, debug: Boolean,
-    argdebug: Boolean): STM {
+fun complexPortfolio23(xcfa: XCFA,
+    parseContext: ParseContext,
+    portfolioConfig: XcfaConfig<*, CegarConfig>,
+    logger: Logger,
+    uniqueLogger: Logger): STM {
 
-    val checker = { p: Boolean, config: XcfaCegarConfig ->
-        if (p)
-            config.checkInProcess(xcfaTyped, smtHomeTyped, true, cFileNameTyped, loggerTyped, parseContextTyped,
-                argdebug)()
-        else config.check(xcfaTyped, loggerTyped)
-    }
+    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger) }
 
-    var baseConfig = XcfaCegarConfig(
-        errorDetectionType = propertyTyped,
-        abstractionSolver = "Z3",
-        validateAbstractionSolver = false,
-        domain = Domain.EXPL,
-        maxEnum = 1,
-        search = Search.ERR,
-        initPrec = InitPrec.EMPTY,
-        porLevel = POR.NOPOR,
-        coi = ConeOfInfluenceMode.COI,
-        refinementSolver = "Z3",
-        validateRefinementSolver = false,
-        refinement = Refinement.SEQ_ITP,
-        exprSplitter = ExprSplitterOptions.WHOLE,
-        pruneStrategy = PruneStrategy.FULL,
-        cexMonitor = CexMonitorOptions.CHECK,
-        timeoutMs = 0
+    var baseConfig = XcfaConfig(
+        inputConfig = InputConfig(
+            input = null,
+            xcfaWCtx = Pair(xcfa, parseContext),
+            propertyFile = null,
+            property = portfolioConfig.inputConfig.property),
+        frontendConfig = FrontendConfig(
+            lbeLevel = LbePass.LbeLevel.LBE_SEQ,
+            loopUnroll = 50,
+            inputType = InputType.C,
+            specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient)),
+        backendConfig = BackendConfig(
+            backend = Backend.CEGAR,
+            solverHome = portfolioConfig.backendConfig.solverHome,
+            timeoutMs = 0,
+            inProcess = false,
+            specConfig = CegarConfig(
+                initPrec = InitPrec.EMPTY,
+                porLevel = POR.NOPOR,
+                porRandomSeed = -1,
+                coi = ConeOfInfluenceMode.NO_COI,
+                cexMonitor = CexMonitorOptions.CHECK,
+                abstractorConfig = CegarAbstractorConfig(
+                    abstractionSolver = "Z3",
+                    validateAbstractionSolver = false,
+                    domain = Domain.EXPL,
+                    maxEnum = 1,
+                    search = Search.ERR
+                ),
+                refinerConfig = CegarRefinerConfig(
+                    refinementSolver = "Z3",
+                    validateRefinementSolver = false,
+                    refinement = Refinement.SEQ_ITP,
+                    exprSplitter = ExprSplitterOptions.WHOLE,
+                    pruneStrategy = PruneStrategy.FULL
+                ))),
+        outputConfig = OutputConfig(
+            versionInfo = false,
+            resultFolder = Paths.get("").toFile(), // cwd
+            cOutputConfig = COutputConfig(disable = true),
+            witnessConfig = WitnessConfig(disable = false, concretizerSolver = "Z3", validateConcretizerSolver = false),
+            argConfig = ArgConfig(disable = true)
+        ),
+        debugConfig = portfolioConfig.debugConfig
     )
 
-    if (traitsTyped.multithreaded) {
-        baseConfig = baseConfig.copy(search = Search.BFS, porLevel = POR.AASPOR, pruneStrategy = PruneStrategy.LAZY,
-            coi = ConeOfInfluenceMode.COI)
-
-        if (propertyTyped == ErrorDetection.DATA_RACE) {
-            baseConfig = baseConfig.copy(porLevel = POR.SPOR)
-        }
+    if (parseContext.multiThreading) {
+        val baseCegarConfig = baseConfig.backendConfig.specConfig!!
+        val multiThreadedCegarConfig = baseCegarConfig.copy(
+            coi = ConeOfInfluenceMode.COI,
+            porLevel = if (baseConfig.inputConfig.property == ErrorDetection.DATA_RACE) POR.SPOR else POR.AASPOR,
+            abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.BFS),
+            refinerConfig = baseCegarConfig.refinerConfig.copy(pruneStrategy = PruneStrategy.LAZY)
+        )
+        baseConfig = baseConfig.copy(
+            backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig))
     }
 
     val timeoutTrigger = ExceptionTrigger(
@@ -81,46 +111,86 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
         label = "TimeoutOrSolverError"
     )
 
-    val quickExplConfig = baseConfig.copy(initPrec = InitPrec.ALLVARS, timeoutMs = 90_000)
-    val emptyExplConfig = baseConfig.copy(timeoutMs = 210_000)
-    val predConfig = baseConfig.copy(domain = Domain.PRED_CART, refinement = Refinement.BW_BIN_ITP)
+    fun XcfaConfig<*, CegarConfig>.adaptConfig(
+        initPrec: InitPrec = this.backendConfig.specConfig!!.initPrec,
+        timeoutMs: Long = this.backendConfig.timeoutMs,
+        domain: Domain = this.backendConfig.specConfig!!.abstractorConfig.domain,
+        refinement: Refinement = this.backendConfig.specConfig!!.refinerConfig.refinement,
+        abstractionSolver: String = this.backendConfig.specConfig!!.abstractorConfig.abstractionSolver,
+        validateAbstractionSolver: Boolean = this.backendConfig.specConfig!!.abstractorConfig.validateAbstractionSolver,
+        refinementSolver: String = this.backendConfig.specConfig!!.refinerConfig.refinementSolver,
+        validateRefinementSolver: Boolean = this.backendConfig.specConfig!!.refinerConfig.validateRefinementSolver,
+        inProcess: Boolean = this.backendConfig.inProcess
+    ): XcfaConfig<*, CegarConfig> {
+        return copy(backendConfig = backendConfig.copy(
+            timeoutMs = timeoutMs,
+            inProcess = inProcess,
+            specConfig = backendConfig.specConfig!!.copy(
+                initPrec = initPrec,
+                abstractorConfig = backendConfig.specConfig!!.abstractorConfig.copy(
+                    abstractionSolver = abstractionSolver,
+                    validateAbstractionSolver = validateAbstractionSolver,
+                    domain = domain,
+                ),
+                refinerConfig = backendConfig.specConfig!!.refinerConfig.copy(
+                    refinementSolver = refinementSolver,
+                    validateRefinementSolver = validateRefinementSolver,
+                    refinement = refinement,
+                )
+            )
+        ))
+    }
+
+    val quickExplConfig = baseConfig.adaptConfig(initPrec = InitPrec.ALLVARS, timeoutMs = 90_000)
+    val emptyExplConfig = baseConfig.adaptConfig(timeoutMs = 210_000)
+    val predConfig = baseConfig.adaptConfig(domain = Domain.PRED_CART, refinement = Refinement.BW_BIN_ITP)
 
     fun integerStm(): STM {
         fun getStm(inProcess: Boolean): STM {
             val config_1_1 = ConfigNode("QuickFullExpl_z3_4.10.1_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "z3:4.10.1", refinementSolver = "z3:4.10.1",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "z3:4.10.1",
+                    refinementSolver = "z3:4.10.1",
+                    refinement = Refinement.NWT_IT_WP), checker)
             val config_2_1 = ConfigNode("EmptyExpl_z3_4.10.1_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "z3:4.10.1", refinementSolver = "z3:4.10.1",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "z3:4.10.1",
+                    refinementSolver = "z3:4.10.1",
+                    refinement = Refinement.NWT_IT_WP), checker)
             val config_3_1 = ConfigNode("PredCart_z3_4.10.1_$inProcess",
-                predConfig.copy(abstractionSolver = "z3:4.10.1", refinementSolver = "z3:4.10.1"), checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "z3:4.10.1",
+                    refinementSolver = "z3:4.10.1"), checker)
 
-            val config_1_2 = ConfigNode("QuickFullExpl_Z3_$inProcess", quickExplConfig.copy(), checker, inProcess)
-            val config_2_2 = ConfigNode("EmptyExpl_Z3_$inProcess", emptyExplConfig.copy(), checker, inProcess)
-            val config_3_2 = ConfigNode("PredCart_Z3_$inProcess", predConfig.copy(), checker, inProcess)
+            val config_1_2 = ConfigNode("QuickFullExpl_Z3_$inProcess",
+                quickExplConfig.adaptConfig(inProcess = inProcess), checker)
+            val config_2_2 = ConfigNode("EmptyExpl_Z3_$inProcess", emptyExplConfig.adaptConfig(inProcess = inProcess),
+                checker)
+            val config_3_2 = ConfigNode("PredCart_Z3_$inProcess", predConfig.adaptConfig(inProcess = inProcess),
+                checker)
 
             val config_1_3 = ConfigNode("QuickFullExpl_princess_2022_07_01_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "princess:2022-07-01",
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "princess:2022-07-01",
                     refinementSolver = "princess:2022-07-01"),
-                checker, inProcess)
+                checker)
             val config_2_3 = ConfigNode("EmptyExpl_princess_2022_07_01_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "princess:2022-07-01",
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "princess:2022-07-01",
                     refinementSolver = "princess:2022-07-01"),
-                checker, inProcess)
+                checker)
             val config_3_3 = ConfigNode("PredCart_mathsat_5.6.8_$inProcess",
-                predConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8"), checker,
-                inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8"),
+                checker)
 
             val config_1_4 = ConfigNode("QuickFullExpl_mathsat_5.6.8_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8"), checker,
-                inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8"),
+                checker)
             val config_2_4 = ConfigNode("EmptyExpl_mathsat_5.6.8_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8"), checker,
-                inProcess)
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8"),
+                checker)
             val config_3_4 = ConfigNode("PredCart_princess_2022_07_01_$inProcess",
-                predConfig.copy(abstractionSolver = "princess:2022-07-01", refinementSolver = "princess:2022-07-01"),
-                checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "princess:2022-07-01",
+                    refinementSolver = "princess:2022-07-01"),
+                checker)
 
             val timeouts = setOf(
                 Edge(config_1_1, config_2_1, timeoutTrigger),
@@ -159,7 +229,7 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
         }
 
         val inProcess = HierarchicalNode("InProcess",
-            getStm(!debug)) // if not debug, then in process, else not in process
+            getStm(!portfolioConfig.debugConfig.debug)) // if not debug, then in process, else not in process
         val notInProcess = HierarchicalNode("NotInprocess", getStm(false))
 
         val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
@@ -170,32 +240,39 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
     fun bitwiseStm(): STM {
         fun getStm(inProcess: Boolean): STM {
             val config_1_1 = ConfigNode("QuickFullExpl_Z3_$inProcess",
-                quickExplConfig.copy(refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, refinement = Refinement.NWT_IT_WP), checker)
             val config_2_1 = ConfigNode("EmptyExpl_Z3_$inProcess",
-                emptyExplConfig.copy(refinement = Refinement.NWT_IT_WP),
-                checker, inProcess)
+                emptyExplConfig.adaptConfig(inProcess = inProcess, refinement = Refinement.NWT_IT_WP),
+                checker)
             val config_3_1 = ConfigNode("PredCart_mathsat_5.6.8_$inProcess",
-                predConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8"), checker,
-                inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8"),
+                checker)
 
             val config_1_2 = ConfigNode("QuickFullExpl_cvc5_1.0.2_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.NWT_IT_WP), checker)
             val config_2_2 = ConfigNode("EmptyExpl_cvc5_1.0.2_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.NWT_IT_WP), checker)
             val config_3_2 = ConfigNode("PredCart_z3_4.10.1_$inProcess",
-                predConfig.copy(abstractionSolver = "z3:4.10.1", refinementSolver = "z3:4.10.1"), checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "z3:4.10.1",
+                    refinementSolver = "z3:4.10.1"), checker)
 
             val config_1_3 = ConfigNode("QuickFullExpl_mathsat_5.6.8_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8",
+                    refinement = Refinement.NWT_IT_WP), checker)
             val config_2_3 = ConfigNode("EmptyExpl_mathsat_5.6.8_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8",
-                    refinement = Refinement.SEQ_ITP), checker, inProcess)
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8",
+                    refinement = Refinement.SEQ_ITP), checker)
             val config_3_3 = ConfigNode("PredCart_cvc5_1.0.2_$inProcess",
-                predConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.NWT_IT_WP), checker)
 
             val timeouts = setOf(
                 Edge(config_1_1, config_2_1, timeoutTrigger),
@@ -228,7 +305,7 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
         }
 
         val inProcess = HierarchicalNode("InProcess",
-            getStm(!debug)) // if not debug, then in process, else not in process
+            getStm(!portfolioConfig.debugConfig.debug)) // if not debug, then in process, else not in process
         val notInProcess = HierarchicalNode("NotInprocess", getStm(false))
 
         val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
@@ -239,60 +316,73 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
     fun floatsStm(): STM {
         fun getStm(inProcess: Boolean): STM {
             val config_1_1 = ConfigNode("QuickFullExpl_cvc5_1.0.2_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.NWT_IT_WP), checker)
             val config_2_1 = ConfigNode("EmptyExpl_cvc5_1.0.2_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.NWT_IT_WP), checker)
             val config_3_1 = ConfigNode("PredCart_mathsat_5.6.8_$inProcess",
-                predConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8"), checker,
-                inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8"),
+                checker)
 
             val config_1_2 = ConfigNode("QuickFullExpl_cvc5_1.0.2_seq_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.SEQ_ITP), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.SEQ_ITP), checker)
             val config_2_2 = ConfigNode("EmptyExpl_cvc5_1.0.2_seq_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.SEQ_ITP), checker, inProcess)
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.SEQ_ITP), checker)
             val config_3_2 = ConfigNode("PredCart_bitwuzla_latest_$inProcess",
-                predConfig.copy(abstractionSolver = "bitwuzla:latest", refinementSolver = "bitwuzla:latest",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "bitwuzla:latest",
+                    refinementSolver = "bitwuzla:latest",
+                    refinement = Refinement.NWT_IT_WP), checker)
 
             val config_1_3 = ConfigNode("QuickFullExpl_mathsat_5.6.8_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8",
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8",
                     validateAbstractionSolver = true, validateRefinementSolver = true,
                     refinement = Refinement.NWT_IT_WP),
-                checker, inProcess)
+                checker)
             val config_2_3 = ConfigNode("EmptyExpl_mathsat_5.6.8_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "mathsat:5.6.8", refinementSolver = "mathsat:5.6.8",
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:5.6.8",
+                    refinementSolver = "mathsat:5.6.8",
                     validateAbstractionSolver = true, validateRefinementSolver = true,
                     refinement = Refinement.NWT_IT_WP),
-                checker, inProcess)
+                checker)
             val config_3_3 = ConfigNode("PredCart_cvc5_1.0.2_$inProcess",
-                predConfig.copy(abstractionSolver = "cvc5:1.0.2", refinementSolver = "cvc5:1.0.2",
-                    refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "cvc5:1.0.2",
+                    refinementSolver = "cvc5:1.0.2",
+                    refinement = Refinement.NWT_IT_WP), checker)
 
             val config_1_4 = ConfigNode("QuickFullExpl_mathsat_fp_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "mathsat:fp", refinementSolver = "mathsat:fp",
-                    validateAbstractionSolver = true, validateRefinementSolver = true), checker, inProcess)
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:fp",
+                    refinementSolver = "mathsat:fp",
+                    validateAbstractionSolver = true, validateRefinementSolver = true), checker)
             val config_2_4 = ConfigNode("EmptyExpl_mathsat_fp_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "mathsat:fp", refinementSolver = "mathsat:fp",
-                    validateAbstractionSolver = true, validateRefinementSolver = true), checker, inProcess)
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:fp",
+                    refinementSolver = "mathsat:fp",
+                    validateAbstractionSolver = true, validateRefinementSolver = true), checker)
             val config_3_4 = ConfigNode("PredCart_mathsat_fp_$inProcess",
-                predConfig.copy(abstractionSolver = "mathsat:fp", refinementSolver = "mathsat:fp",
-                    validateAbstractionSolver = true, validateRefinementSolver = true), checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "mathsat:fp",
+                    refinementSolver = "mathsat:fp",
+                    validateAbstractionSolver = true, validateRefinementSolver = true), checker)
 
             val config_1_5 = ConfigNode("QuickFullExpl_Z3_$inProcess",
-                quickExplConfig.copy(abstractionSolver = "Z3", refinementSolver = "Z3",
+                quickExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "Z3", refinementSolver = "Z3",
                     validateAbstractionSolver = true,
-                    validateRefinementSolver = true, refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                    validateRefinementSolver = true, refinement = Refinement.NWT_IT_WP), checker)
             val config_2_5 = ConfigNode("EmptyExpl_Z3_$inProcess",
-                emptyExplConfig.copy(abstractionSolver = "Z3", refinementSolver = "Z3",
+                emptyExplConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "Z3", refinementSolver = "Z3",
                     validateAbstractionSolver = true,
-                    validateRefinementSolver = true, refinement = Refinement.NWT_IT_WP), checker, inProcess)
+                    validateRefinementSolver = true, refinement = Refinement.NWT_IT_WP), checker)
             val config_3_5 = ConfigNode("PredCart_Z3_$inProcess",
-                predConfig.copy(abstractionSolver = "Z3", refinementSolver = "Z3", refinement = Refinement.NWT_IT_WP),
-                checker, inProcess)
+                predConfig.adaptConfig(inProcess = inProcess, abstractionSolver = "Z3", refinementSolver = "Z3",
+                    refinement = Refinement.NWT_IT_WP),
+                checker)
 
             val timeouts = setOf(
                 Edge(config_1_1, config_2_1, timeoutTrigger),
@@ -337,7 +427,7 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
         }
 
         val inProcess = HierarchicalNode("InProcess",
-            getStm(!debug)) // if not debug, then in process, else not in process
+            getStm(!portfolioConfig.debugConfig.debug)) // if not debug, then in process, else not in process
         val notInProcess = HierarchicalNode("NotInprocess", getStm(false))
 
         val fallbackEdge = Edge(inProcess, notInProcess, ExceptionTrigger(label = "Anything"))
@@ -345,7 +435,7 @@ fun complexPortfolio23(xcfaTyped: XCFA, cFileNameTyped: String, loggerTyped: Log
         return STM(inProcess, setOf(fallbackEdge))
     }
 
-    return if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) floatsStm()
-    else if (traitsTyped.arithmeticTraits.contains(ArithmeticTrait.BITWISE)) bitwiseStm()
+    return if (parseContext.arithmeticTraits.contains(ArithmeticTrait.FLOAT)) floatsStm()
+    else if (parseContext.arithmeticTraits.contains(ArithmeticTrait.BITWISE)) bitwiseStm()
     else integerStm()
 }

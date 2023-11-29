@@ -15,26 +15,24 @@
  */
 package hu.bme.mit.theta.common.logging;
 
-import java.io.PrintStream;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public final class UniqueWarningLogger extends BaseLogger {
-
-    private static final PrintStream CONSOLE = System.err;
+public final class UniqueWarningLogger implements Logger {
     private final Set<String> messages;
+    private final Logger logger;
 
-    public UniqueWarningLogger(final Level minLevel) {
-        super(minLevel);
+    public UniqueWarningLogger(Logger logger) {
+        this.logger = logger;
         messages = new LinkedHashSet<>();
     }
 
     @Override
-    protected void writeStr(final String str) {
-        if (!messages.contains(str)) {
-            messages.add(str);
-            CONSOLE.print(str);
+    public Logger write(Level level, String pattern, Object... objects) {
+        if (!messages.contains(pattern)) {
+            messages.add(pattern);
+            logger.write(level, pattern, objects);
         }
+        return this;
     }
-
 }

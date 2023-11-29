@@ -19,8 +19,13 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 
+@FunctionalInterface
 public interface SafetyChecker<S extends State, A extends Action, P extends Prec> {
 
     SafetyResult<S, A> check(final P prec);
+
+    default SafetyResult<S, A> check() {
+        return check(null);
+    }
 
 }

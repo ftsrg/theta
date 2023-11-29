@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.cli
+package hu.bme.mit.theta.xcfa.cli.params
 
 import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException

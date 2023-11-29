@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Optional;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.Utils;
+
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SafetyResult<S extends State, A extends Action> {
 
@@ -34,6 +34,12 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         this.stats = checkNotNull(stats);
     }
 
+    private SafetyResult() {
+        this.arg = null;
+        this.stats = Optional.empty();
+    }
+
+
     public ARG<S, A> getArg() {
         return arg;
     }
@@ -44,6 +50,10 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 
     public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg) {
         return new Safe<>(arg, Optional.empty());
+    }
+
+    public static Safe<State, Action> safe() {
+        return new Safe<>();
     }
 
     public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
@@ -62,6 +72,10 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Unsafe<>(cex, arg, Optional.of(stats));
     }
 
+    public static Unknown unknown() {
+        return new Unknown();
+    }
+
     public abstract boolean isSafe();
 
     public abstract boolean isUnsafe();
@@ -76,6 +90,9 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 
         private Safe(final ARG<S, A> arg, final Optional<Statistics> stats) {
             super(arg, stats);
+        }
+
+        private Safe() {
         }
 
         @Override
@@ -149,6 +166,35 @@ public abstract class SafetyResult<S extends State, A extends Action> {
             return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
                     .add(Unsafe.class.getSimpleName())
                     .add("Trace length: " + cex.length()).toString();
+        }
+    }
+
+    public static final class Unknown extends SafetyResult<State, Action> {
+        @Override
+        public boolean isSafe() {
+            return false;
+        }
+
+        @Override
+        public boolean isUnsafe() {
+            return false;
+        }
+
+        @Override
+        public Safe<State, Action> asSafe() {
+            return null;
+        }
+
+        @Override
+        public Unsafe<State, Action> asUnsafe() {
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
+                    .add(Unknown.class.getSimpleName())
+                    .toString();
         }
     }
 

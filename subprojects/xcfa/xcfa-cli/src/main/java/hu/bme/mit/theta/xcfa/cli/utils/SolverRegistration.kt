@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.cli
+package hu.bme.mit.theta.xcfa.cli.utils
 
 import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.Logger

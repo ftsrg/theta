@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.cli
+package hu.bme.mit.theta.xcfa.cli.utils
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -44,6 +44,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaActionAdapter
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.XcfaStateAdapter
+import hu.bme.mit.theta.xcfa.cli.params.Domain
 import hu.bme.mit.theta.xcfa.getSymbols
 import hu.bme.mit.theta.xcfa.gson.*
 import hu.bme.mit.theta.xcfa.model.MetaData

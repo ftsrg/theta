@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.xcfa.cli.XcfaCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
 abstract class Node(val name: String) {
 
@@ -36,16 +36,15 @@ ${innerSTM.visualize()}
 }""".trimIndent()
 }
 
-class ConfigNode(name: String, private val config: XcfaCegarConfig,
-    private val check: (inProcess: Boolean, config: XcfaCegarConfig) -> SafetyResult<*, *>,
-    private val inProcess: Boolean) : Node(name) {
+class ConfigNode(name: String, private val config: XcfaConfig<*, *>,
+    private val check: (config: XcfaConfig<*, *>) -> SafetyResult<*, *>) : Node(name) {
 
     override fun execute(): Pair<Any, Any> {
-        println("Current configuration: $config (inProcess=$inProcess)")
-        return Pair(config, check(inProcess, config))
+        println("Current configuration: $config")
+        return Pair(config, check(config))
     }
 
-    override fun visualize(): String = config.visualize(inProcess).lines()
+    override fun visualize(): String = config.toString().lines() // TODO: reintroduce visualize()
         .map { "state ${name.replace(Regex("[:\\.-]+"), "_")}: $it" }.reduce { a, b -> "$a\n$b" }
 }
 
@@ -127,8 +126,8 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
     }
 }
 
-fun XcfaCegarConfig.visualize(inProcess: Boolean): String =
-    """solvers: $abstractionSolver, $refinementSolver
-    |domain: $domain, search: $search, initprec: $initPrec, por: $porLevel
-    |refinement: $refinement, pruneStrategy: $pruneStrategy
-    |timeout: $timeoutMs ms, inProcess: $inProcess""".trimMargin()
+//fun XcfaConfig<*, CegarConfig>.visualize(inProcess: Boolean): String =
+//    """solvers: $abstractionSolver, $refinementSolver
+//    |domain: $domain, search: $search, initprec: $initPrec, por: $porLevel
+//    |refinement: $refinement, pruneStrategy: $pruneStrategy
+//    |timeout: $timeoutMs ms, inProcess: $inProcess""".trimMargin()

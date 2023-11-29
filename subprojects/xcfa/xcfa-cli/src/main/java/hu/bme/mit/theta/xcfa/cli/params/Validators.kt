@@ -14,11 +14,12 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.cli
+package hu.bme.mit.theta.xcfa.cli.params
 
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import com.beust.jcommander.ParameterException
 
-data class VerificationTraits(
-    val multithreaded: Boolean = false,
-    val arithmeticTraits: Set<ArithmeticTrait> = LinkedHashSet(),
-)
+fun rule(name: String, test: ()->Boolean) {
+    if(test()) {
+        throw ParameterException("Validation failed for rule $name")
+    }
+}
