@@ -33,6 +33,7 @@ object CachingFileSerializer {
         } else {
             val str = func(obj)
             val file = File.createTempFile(key, "", Paths.get("./").toFile())
+            file.deleteOnExit()
             file.writeText(str)
             cache[Pair(key, obj)] = file
             file
