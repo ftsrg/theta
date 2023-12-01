@@ -22,9 +22,8 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
@@ -249,7 +248,7 @@ public class CfaCli {
                 sw.stop();
             } else if (algorithm == Algorithm.IMC) {
                 var transFunc = CfaToMonoliticTransFunc.create(cfa);
-                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, cfa.getVars(), null);
+                var checker = new BmcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, cfa.getVars(), null);
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();

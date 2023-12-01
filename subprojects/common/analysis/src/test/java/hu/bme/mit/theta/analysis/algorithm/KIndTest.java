@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

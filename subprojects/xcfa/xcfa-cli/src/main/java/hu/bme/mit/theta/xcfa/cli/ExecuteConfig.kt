@@ -19,6 +19,8 @@ package hu.bme.mit.theta.xcfa.cli
 import com.google.common.base.Stopwatch
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
+import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
@@ -135,7 +137,7 @@ private fun backend(xcfa: XCFA, parseContext: ParseContext, config: XcfaConfig<*
         SafetyResult.unknown()
     } else {
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
-            SafetyResult.safe()
+            SafetyResult.safe<State, Action>()
         } else {
             val stopwatch = Stopwatch.createStarted()
 

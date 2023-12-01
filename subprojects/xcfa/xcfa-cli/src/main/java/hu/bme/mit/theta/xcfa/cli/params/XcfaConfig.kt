@@ -229,7 +229,7 @@ data class BoundedConfig(
 
 data class BMCConfig(
     @Parameter(names = ["--no-bmc"], description = "Disable SAT check")
-    var enable: Boolean = false,
+    var disable: Boolean = false,
 
     @Parameter(names = ["--bmc-solver"], description = "BMC solver name")
     var bmcSolver: String = "Z3",
@@ -241,7 +241,7 @@ data class BMCConfig(
 
 data class InductionConfig(
     @Parameter(names = ["--no-induction"], description = "Disable induction check")
-    var enable: Boolean = false,
+    var disable: Boolean = false,
 
     @Parameter(names = ["--induction-solver", "--ind-solver"], description = "Induction solver name")
     var indSolver: String = "Z3",
@@ -261,7 +261,7 @@ data class InductionConfig(
 
 data class InterpolationConfig(
     @Parameter(names = ["--no-interpolation"], description = "Disable interpolation check")
-    var enable: Boolean = false,
+    var disable: Boolean = false,
 
     @Parameter(names = ["--interpolation-solver", "--itp-solver"], description = "Interpolation solver name")
     var itpSolver: String = "Z3",

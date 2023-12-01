@@ -21,9 +21,8 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
-import hu.bme.mit.theta.analysis.algorithm.kind.KIndChecker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -212,7 +211,7 @@ public class XstsCli {
                 sw.stop();
             } else if (algorithm.equals(Algorithm.IMC)) {
                 var transFunc = XstsToMonoliticTransFunc.create(xsts);
-                var checker = new ImcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars(), null);
+                var checker = new BmcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars(), null);
                 status = checker.check(null);
                 logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();

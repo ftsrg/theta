@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.algorithm.imc.ImcChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BmcChecker;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class IMCTest {
     @Test
     void testIMCFalse() {
         var x = Var("x", Int());
-        var checker = new ImcChecker<ExprStateStub, ExprActionStub>(
+        var checker = new BmcChecker<ExprStateStub, ExprActionStub>(
                 new MonolithicTransFuncStub(
                         Assign(x, Add(x.getRef(), Int(1))),
                         Eq(x.getRef(), Int(0)),
@@ -56,7 +56,7 @@ class IMCTest {
     @Test
     void testIMCTrue() {
         var x = Var("x", Int());
-        var checker = new ImcChecker<ExprStateStub, ExprActionStub>(
+        var checker = new BmcChecker<ExprStateStub, ExprActionStub>(
                 new MonolithicTransFuncStub(
                         Assign(x, Mul(x.getRef(), Int(2))),
                         Eq(x.getRef(), Int(0)),

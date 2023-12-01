@@ -52,7 +52,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Safe<>(arg, Optional.empty());
     }
 
-    public static Safe<State, Action> safe() {
+    public static <S extends State, A extends Action> Safe<S, A> safe() {
         return new Safe<>();
     }
 
@@ -70,6 +70,10 @@ public abstract class SafetyResult<S extends State, A extends Action> {
                                                                           final ARG<S, A> arg,
                                                                           final Statistics stats) {
         return new Unsafe<>(cex, arg, Optional.of(stats));
+    }
+
+    public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex) {
+        return new Unsafe<>(cex);
     }
 
     public static Unsafe<State, Action> unsafe() {
@@ -136,6 +140,10 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         private Unsafe(final Trace<S, A> cex, final ARG<S, A> arg,
                        final Optional<Statistics> stats) {
             super(arg, stats);
+            this.cex = checkNotNull(cex);
+        }
+
+        private Unsafe(final Trace<S, A> cex) {
             this.cex = checkNotNull(cex);
         }
 

@@ -19,6 +19,8 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import com.zaxxer.nuprocess.NuAbstractProcessHandler
 import com.zaxxer.nuprocess.NuProcess
 import com.zaxxer.nuprocess.NuProcessBuilder
+import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
@@ -111,7 +113,7 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
             }
 
         tempDir.toFile().listFiles()?.forEach {
-            it.copyTo(config.outputConfig.resultFolder)
+            it.copyTo(config.outputConfig.resultFolder.resolve(it.name), overwrite = true)
         }
         tempDir.toFile().deleteRecursively()
 
@@ -133,7 +135,7 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
 
                 stdoutRemainder += str
                 if(stdoutRemainder.contains("SafetyResult Safe")) {
-                    safetyResult = SafetyResult.safe()
+                    safetyResult = SafetyResult.safe<State, Action>()
                 }
                 if(stdoutRemainder.contains("SafetyResult Unsafe")) {
                     safetyResult = SafetyResult.unsafe()
