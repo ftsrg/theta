@@ -75,7 +75,7 @@ fun complexPortfolio24(
                 ))),
         outputConfig = OutputConfig(
             versionInfo = false,
-            resultFolder = Paths.get("").toFile(), // cwd
+            resultFolder = Paths.get("./").toFile(), // cwd
             cOutputConfig = COutputConfig(disable = true),
             witnessConfig = WitnessConfig(disable = false, concretizerSolver = "Z3", validateConcretizerSolver = false),
             argConfig = ArgConfig(disable = true)

@@ -19,6 +19,8 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
@@ -38,7 +40,8 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getCegarChecker(xcfa: XCFA, config: XcfaConfig<*,*>, logger: Logger): CegarChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+fun getCegarChecker(xcfa: XCFA, config: XcfaConfig<*, *>,
+    logger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
     val cegarConfig = config.backendConfig.specConfig as CegarConfig
     val abstractionSolverFactory: SolverFactory = getSolver(cegarConfig.abstractorConfig.abstractionSolver,
         cegarConfig.abstractorConfig.validateAbstractionSolver)
@@ -113,6 +116,13 @@ fun getCegarChecker(xcfa: XCFA, config: XcfaConfig<*,*>, logger: Logger): CegarC
         MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
     }
 
+    return object : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+        override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<*>, XcfaAction> {
+            return cegarChecker.check(prec) as SafetyResult<XcfaState<*>, XcfaAction>
+        }
 
-    return cegarChecker as CegarChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>>
+        override fun check(): SafetyResult<XcfaState<*>, XcfaAction> {
+            return check(cegarConfig.abstractorConfig.domain.initPrec(xcfa, cegarConfig.initPrec))
+        }
+    }
 }

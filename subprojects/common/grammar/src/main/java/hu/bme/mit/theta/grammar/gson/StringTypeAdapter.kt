@@ -23,13 +23,18 @@ import com.google.gson.stream.JsonWriter
 
 class StringTypeAdapter<T>(val fromString: (String) -> T) : TypeAdapter<T>() {
 
-    override fun write(writer: JsonWriter, value: T) {
+    override fun write(writer: JsonWriter, value: T?) {
         if (value != null) writer.value(value.toString())
+        else writer.nullValue()
     }
 
     override fun read(reader: JsonReader): T? {
-        check(reader.peek() == JsonToken.STRING)
-        return fromString(reader.nextString())
+        if (reader.peek() == JsonToken.NULL) {
+            return null
+        } else {
+            check(reader.peek() == JsonToken.STRING)
+            return fromString(reader.nextString())
+        }
     }
 
 }

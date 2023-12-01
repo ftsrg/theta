@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.cli
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.ParameterException
-import com.google.gson.GsonBuilder
 import com.google.gson.JsonIOException
 import com.google.gson.JsonSyntaxException
 import hu.bme.mit.theta.common.CliUtils
@@ -28,6 +27,7 @@ import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
 import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
 import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.utils.getGson
 import java.io.File
 import java.io.FileReader
 import kotlin.system.exitProcess
@@ -48,18 +48,20 @@ class XcfaCli(private val args: Array<String>) {
             JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(*args)
             val configFile = this.configFile
             if (configFile != null) {
-                val builder = GsonBuilder()
-                // if in the future the specialized classes become nested, this needs to be extended
-                XcfaConfig<SpecFrontendConfig, SpecBackendConfig>().registerRuntimeTypeAdapters(builder)
-
-                config = builder.create().fromJson(FileReader(configFile), XcfaConfig::class.java)
+                config = getGson().fromJson(FileReader(configFile), XcfaConfig::class.java)
+            } else {
+                config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
             }
-            while (remainingFlags.isNotEmpty() && config.update()) {
+            while (remainingFlags.isNotEmpty()) {
+                remainingFlags.clear()
                 val builder = JCommander.newBuilder().addObject(this)
                 for (obj in config.getObjects()) {
                     builder.addObject(obj)
                 }
                 builder.programName(JAR_NAME).build().parse(*args)
+                if (!config.update() && remainingFlags.isNotEmpty()) {
+                    throw ParameterException("Extraneous parameters: $remainingFlags")
+                }
             }
         } catch (ex: ParameterException) {
             println("Invalid parameters, details:")

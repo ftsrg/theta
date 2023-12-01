@@ -17,13 +17,11 @@
 package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.Parameter
-import com.google.gson.GsonBuilder
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.grammar.gson.RuntimeTypeAdapterFactory
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -36,7 +34,6 @@ interface Config {
 
     fun getObjects(): Set<Config> = setOf(this)
     fun update(): Boolean = false
-    fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder) {}
 }
 
 interface SpecializableConfig<T : Config> : Config {
@@ -44,8 +41,7 @@ interface SpecializableConfig<T : Config> : Config {
     val specConfig: T?
     override fun getObjects(): Set<Config> = setOf(this) union (specConfig?.getObjects() ?: setOf())
     fun createSpecConfig()
-    override fun update(): Boolean = specConfig?.update() ?: (createSpecConfig().run { specConfig?.update() ?: false })
-    override fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder)
+    override fun update(): Boolean = specConfig?.update() ?: createSpecConfig().let { specConfig != null }
 }
 
 data class XcfaConfig<F: SpecFrontendConfig, B: SpecBackendConfig>(
@@ -61,19 +57,20 @@ data class XcfaConfig<F: SpecFrontendConfig, B: SpecBackendConfig>(
     }
 
     override fun update(): Boolean =
-        listOf(inputConfig, frontendConfig, backendConfig, outputConfig, debugConfig).any { it.update() }
-
-    override fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder) {
-        listOf(inputConfig, frontendConfig, backendConfig, outputConfig,
-            debugConfig).forEach { it.registerRuntimeTypeAdapters(gsonBuilder) }
-    }
+        listOf(inputConfig, frontendConfig, backendConfig, outputConfig, debugConfig).map { it.update() }
+            .any { it == true }
 }
 
 data class InputConfig(
-    @Parameter(names = ["--input"], description = "Path of the input C program", required = true)
+    @Parameter(names = ["--input"], description = "Path of the input model", required = true)
     var input: File? = null,
 
-    @Parameter(names = ["--xcfa-w-ctx"], description = "XCFA and ParseContext (will overwrite --input when given)")
+    @Parameter(names = ["--parse-ctx"],
+        description = "Path of the parse context JSON (may contain additional metadata)")
+    var parseCtx: File? = null,
+
+    @Parameter(names = ["--xcfa-w-ctx"],
+        description = "XCFA and ParseContext (will overwrite --input and --parse-ctx when given)")
     var xcfaWCtx: Pair<XCFA, ParseContext>? = null,
 
     @Parameter(names = ["--property-file"], description = "Path of the property file (will overwrite --property when given)")
@@ -105,13 +102,6 @@ data class FrontendConfig<T: SpecFrontendConfig>(
             InputType.DSL -> null
             InputType.CHC -> CHCFrontendConfig() as T
         }
-    }
-
-    override fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder) {
-        gsonBuilder.registerTypeAdapterFactory(RuntimeTypeAdapterFactory
-            .of(SpecFrontendConfig::class.java, "type")
-            .registerSubtype(CFrontendConfig::class.java, "c")
-            .registerSubtype(CHCFrontendConfig::class.java, "chc"))
     }
 }
 
@@ -152,14 +142,6 @@ data class BackendConfig<T: SpecBackendConfig>(
             Backend.NONE -> null
         }
     }
-
-    override fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder) {
-        gsonBuilder.registerTypeAdapterFactory(RuntimeTypeAdapterFactory
-            .of(SpecBackendConfig::class.java, "type")
-            .registerSubtype(CegarConfig::class.java, "cegar")
-            .registerSubtype(BoundedConfig::class.java, "bounded")
-            .registerSubtype(PortfolioConfig::class.java, "portfolio"))
-    }
 }
 
 data class CegarConfig(
@@ -187,11 +169,7 @@ data class CegarConfig(
     }
 
     override fun update(): Boolean =
-        listOf(abstractorConfig, refinerConfig).any { it.update() }
-
-    override fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder) {
-        listOf(abstractorConfig, refinerConfig).forEach { it.registerRuntimeTypeAdapters(gsonBuilder) }
-    }
+        listOf(abstractorConfig, refinerConfig).map { it.update() }.any { it }
 }
 
 data class CegarAbstractorConfig(
@@ -245,11 +223,8 @@ data class BoundedConfig(
     }
 
     override fun update(): Boolean =
-        listOf(bmcConfig, indConfig, itpConfig).any { it.update() }
+        listOf(bmcConfig, indConfig, itpConfig).map { it.update() }.any { it }
 
-    override fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder) {
-        listOf(bmcConfig, indConfig, itpConfig).forEach { it.registerRuntimeTypeAdapters(gsonBuilder) }
-    }
 }
 
 data class BMCConfig(
@@ -307,7 +282,7 @@ data class OutputConfig(
     var versionInfo: Boolean = false,
 
     @Parameter(names = ["--output-directory"], description = "Specify the directory where the result files are stored")
-    var resultFolder: File = Paths.get("").toFile(),
+    var resultFolder: File = Paths.get("./").toFile(),
 
     val cOutputConfig: COutputConfig = COutputConfig(),
     val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
@@ -320,11 +295,7 @@ data class OutputConfig(
     }
 
     override fun update(): Boolean =
-        listOf(cOutputConfig, xcfaOutputConfig, witnessConfig, argConfig).any { it.update() }
-
-    override fun registerRuntimeTypeAdapters(gsonBuilder: GsonBuilder) {
-        listOf(cOutputConfig, xcfaOutputConfig, witnessConfig, argConfig).forEach { it.registerRuntimeTypeAdapters(gsonBuilder) }
-    }
+        listOf(cOutputConfig, xcfaOutputConfig, witnessConfig, argConfig).map { it.update() }.any { it }
 }
 
 data class XcfaOutputConfig(

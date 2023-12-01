@@ -28,11 +28,15 @@ import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getChecker(xcfa: XCFA, config: XcfaConfig<*,*>, parseContext: ParseContext, logger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> =
-    when(config.backendConfig.backend) {
-        Backend.CEGAR -> getCegarChecker(xcfa, config, logger)
-        Backend.BOUNDED -> TODO()
-        Backend.LAZY -> TODO()
-        Backend.PORTFOLIO -> TODO()
-        Backend.NONE -> SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> { _ -> SafetyResult.unknown() as SafetyResult<XcfaState<*>, XcfaAction> }
+    if (config.backendConfig.inProcess) {
+        InProcessChecker(xcfa, config, parseContext, logger)
+    } else {
+        when (config.backendConfig.backend) {
+            Backend.CEGAR -> getCegarChecker(xcfa, config, logger)
+            Backend.BOUNDED -> TODO()
+            Backend.LAZY -> TODO()
+            Backend.PORTFOLIO -> TODO()
+            Backend.NONE -> SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> { _ -> SafetyResult.unknown() as SafetyResult<XcfaState<*>, XcfaAction> }
+        }
     }
 

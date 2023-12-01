@@ -54,6 +54,8 @@ import kotlin.random.Random
 fun runConfig(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger): SafetyResult<*, *> {
     propagateInputOptions(config, logger, uniqueLogger)
 
+    registerAllSolverManagers(config.backendConfig.solverHome, logger)
+
     validateInputOptions(config, logger, uniqueLogger)
 
     val (xcfa, parseContext) = frontend(config, logger, uniqueLogger)
@@ -132,8 +134,6 @@ private fun backend(xcfa: XCFA, parseContext: ParseContext, config: XcfaConfig<*
     if (config.backendConfig.backend == Backend.NONE) {
         SafetyResult.unknown()
     } else {
-        registerAllSolverManagers(config.backendConfig.solverHome, logger)
-
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
             SafetyResult.safe()
         } else {
@@ -193,14 +193,14 @@ private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, parseConte
     logger.write(Logger.Level.INFO,
         "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n")
 
-    if (!config.outputConfig.argConfig.disable) {
+    if (!config.outputConfig.argConfig.disable && safetyResult.arg != null) {
         val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
         val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
         argFile.writeText(GraphvizWriter.getInstance().writeString(g))
     }
 
     if (!config.outputConfig.witnessConfig.disable) {
-        if (safetyResult.isUnsafe) {
+        if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
                 safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?,
                 getSolver(config.outputConfig.witnessConfig.concretizerSolver,

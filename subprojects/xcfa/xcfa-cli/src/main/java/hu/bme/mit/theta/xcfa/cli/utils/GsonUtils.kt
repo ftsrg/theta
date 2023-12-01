@@ -44,13 +44,14 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaActionAdapter
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.XcfaStateAdapter
-import hu.bme.mit.theta.xcfa.cli.params.Domain
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.getSymbols
 import hu.bme.mit.theta.xcfa.gson.*
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
+import java.io.File
 import java.util.*
 
 private fun argAdapterHelper(stateType: java.lang.reflect.Type): java.lang.reflect.Type =
@@ -91,6 +92,9 @@ private fun getGson(scope: XcfaScope, env: Env, newScope: Boolean, domain: () ->
     solver: () -> Solver): Gson {
     val gsonBuilder = GsonBuilder()
     lateinit var gson: Gson
+    gsonBuilder.registerTypeHierarchyAdapter(FrontendConfig::class.java, SpecFrontendConfigTypeAdapter { gson })
+    gsonBuilder.registerTypeHierarchyAdapter(BackendConfig::class.java, SpecBackendConfigTypeAdapter { gson })
+    gsonBuilder.registerTypeHierarchyAdapter(File::class.java, StringTypeAdapter { File(it) })
     gsonBuilder.registerTypeHierarchyAdapter(XcfaLocation::class.java,
         StringTypeAdapter(xcfaLocationAdapter))
     gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
