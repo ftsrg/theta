@@ -17,7 +17,6 @@
 package hu.bme.mit.theta.xcfa.cli.utils
 
 import java.io.File
-import java.nio.file.Paths
 
 object CachingFileSerializer {
     private val cache: MutableMap<Pair<String, Any>, File> = LinkedHashMap()
@@ -32,7 +31,7 @@ object CachingFileSerializer {
             cache[Pair(key, obj)]!!
         } else {
             val str = func(obj)
-            val file = File.createTempFile(key, "", Paths.get("./").toFile())
+            val file = File.createTempFile(key, "")
             file.deleteOnExit()
             file.writeText(str)
             cache[Pair(key, obj)] = file

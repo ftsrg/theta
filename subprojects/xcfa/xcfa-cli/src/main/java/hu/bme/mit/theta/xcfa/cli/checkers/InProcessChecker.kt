@@ -34,7 +34,6 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.lang.System.err
 import java.nio.ByteBuffer
-import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createTempDirectory
@@ -51,7 +50,7 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
     }
 
     override fun check(): SafetyResult<XcfaState<*>, XcfaAction> {
-        val tempDir = createTempDirectory(Paths.get(""))
+        val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
 
         val xcfaJson = CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
         val parseContextJson = CachingFileSerializer.serialize("parseContext.json", parseContext) { getGson(xcfa).toJson(parseContext) }
@@ -110,6 +109,11 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
             } else {
                 processHandler.safetyResult
             }
+
+        tempDir.toFile().listFiles()?.forEach {
+            it.copyTo(config.outputConfig.resultFolder)
+        }
+        tempDir.toFile().deleteRecursively()
 
         return booleanSafetyResult as SafetyResult<XcfaState<*>, XcfaAction>
     }
