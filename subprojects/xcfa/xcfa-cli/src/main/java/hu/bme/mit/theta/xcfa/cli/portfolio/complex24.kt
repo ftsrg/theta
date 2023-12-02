@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 
@@ -61,12 +62,15 @@ fun complexPortfolio24(
         timeoutMs = 0
     )
 
+    if (!xcfaTyped.isInlined) {
+        baseConfig = baseConfig.copy(search = Search.BFS, pruneStrategy = PruneStrategy.LAZY)
+    }
     if (traitsTyped.multithreaded) {
         baseConfig = baseConfig.copy(search = Search.DFS, porLevel = POR.AASPOR, pruneStrategy = PruneStrategy.FULL,
             coi = ConeOfInfluenceMode.COI)
 
         if (propertyTyped == ErrorDetection.DATA_RACE) {
-            baseConfig = baseConfig.copy(porLevel = POR.SPOR)
+            baseConfig = baseConfig.copy(porLevel = POR.SPOR, coi = ConeOfInfluenceMode.NO_COI)
         }
     }
     val timeoutTrigger = ExceptionTrigger(

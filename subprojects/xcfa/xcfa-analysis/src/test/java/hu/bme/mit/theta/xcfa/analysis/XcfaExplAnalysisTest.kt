@@ -89,7 +89,7 @@ class XcfaExplAnalysisTest {
         val precRefiner = XcfaPrecRefiner<XcfaState<ExplState>, ExplPrec, ItpRefutation>(ItpRefToExplPrec())
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
@@ -133,7 +133,7 @@ class XcfaExplAnalysisTest {
         val precRefiner = XcfaPrecRefiner<XcfaState<ExplState>, ExplPrec, ItpRefutation>(ItpRefToExplPrec())
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
@@ -177,7 +177,7 @@ class XcfaExplAnalysisTest {
         val precRefiner = XcfaPrecRefiner<XcfaState<ExplState>, ExplPrec, ItpRefutation>(ItpRefToExplPrec())
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
@@ -222,7 +222,7 @@ class XcfaExplAnalysisTest {
         val atomicNodePruner = AtomicNodePruner<XcfaState<ExplState>, XcfaAction>()
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
@@ -266,7 +266,7 @@ class XcfaExplAnalysisTest {
         val precRefiner = XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec())
 
         val refiner =
-            SingleExprTraceRefiner.create(
+            XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3SolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,

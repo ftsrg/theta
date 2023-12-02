@@ -99,7 +99,7 @@ enum class Domain(
     ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
     val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
     val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>,
-    val partialOrd: (Solver) -> PartialOrd<out XcfaState<out ExprState>>,
+    val partialOrd: (Solver) -> PartialOrd<out ExprState>,
     val nodePruner: NodePruner<out ExprState, out ExprAction>,
     val stateType: Type
 ) {
@@ -113,7 +113,7 @@ enum class Domain(
             XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec())
         },
         initPrec = { x, ip -> ip.explPrec(x) },
-        partialOrd = { getPartialOrder<ExplState> { s1, s2 -> s1.isLeq(s2) } },
+        partialOrd = { PartialOrd<ExplState> { s1, s2 -> s1.isLeq(s2) } },
         nodePruner = AtomicNodePruner<XcfaState<ExplState>, XcfaAction>(),
         stateType = TypeToken.get(ExplState::class.java).type
     ),
@@ -126,7 +126,7 @@ enum class Domain(
             XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
-        partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
+        partialOrd = { solver -> PredOrd.create(solver) },
         nodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>(),
         stateType = TypeToken.get(PredState::class.java).type
     ),
@@ -139,7 +139,7 @@ enum class Domain(
             XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
-        partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
+        partialOrd = { solver -> PredOrd.create(solver) },
         nodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>(),
         stateType = TypeToken.get(PredState::class.java).type
     ),
@@ -152,7 +152,7 @@ enum class Domain(
             XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
-        partialOrd = { solver -> getPartialOrder<PredState>(PredOrd.create(solver)) },
+        partialOrd = { solver -> PredOrd.create(solver) },
         nodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>(),
         stateType = TypeToken.get(PredState::class.java).type
     ),
