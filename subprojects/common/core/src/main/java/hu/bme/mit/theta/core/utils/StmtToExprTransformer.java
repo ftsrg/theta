@@ -243,16 +243,6 @@ final class StmtToExprTransformer {
         @Override
         public StmtUnfoldResult visit(PointerDereffedStmt stmt, VarIndexing indexing) {
             return StmtUnfoldResult.of(ImmutableList.of(True()), indexing);
-            /* Z3TermTransformer::transformApp fails because the deref_ version is not added to the symbol table
-            final DeRefExpr<?> deRefExpr = stmt.getDeRefExpr();
-            final VarDecl<?> varDeclTo = stmt.getVarDeclTo();
-            final Expr<?> lhs = ExprUtils.applyPrimes(deRefExpr, indexing);
-            final Expr<?> rhs = ExprUtils.applyPrimes(varDeclTo.getRef(), indexing);
-
-            final Expr<BoolType> expr;
-            expr = Eq(lhs, rhs);
-            return StmtUnfoldResult.of(ImmutableList.of(expr), indexing);
-             */
         }
     }
 }
