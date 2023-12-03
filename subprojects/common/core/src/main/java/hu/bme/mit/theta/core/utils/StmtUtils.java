@@ -44,6 +44,18 @@ public final class StmtUtils {
     }
 
     /**
+     * Get variables appearing in a statement, excluding those only appearing in address-of expressions.
+     *
+     * @param stmt Statement
+     * @return Variables
+     */
+    public static Set<VarDecl<?>> getVarsWithoutAddrOf(final Stmt stmt) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        stmt.accept(VarCollectorStmtVisitorWithoutAddrOf.getInstance(), vars);
+        return vars;
+    }
+
+    /**
      * Get variables appearing in statements
      *
      * @param stmts Statements

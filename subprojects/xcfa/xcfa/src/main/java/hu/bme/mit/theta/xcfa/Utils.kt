@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.changeDeRefs
 import java.util.function.Predicate
 
 
@@ -153,15 +154,15 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is StmtLabel -> {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
-            is AssignStmt<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
-            else -> StmtUtils.getVars(stmt).associateWith { READ }
+            is AssignStmt<*> -> ExprUtils.getVarsWithoutAddrOf(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
+            else -> StmtUtils.getVarsWithoutAddrOf(stmt).associateWith { READ }
         }
     }
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ }
-    is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
+    is InvokeLabel -> params.map { ExprUtils.getVarsWithoutAddrOf(it) }.flatten().associateWith { READ }
+    is StartLabel -> params.map { ExprUtils.getVarsWithoutAddrOf(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
     is WriteLabel -> mapOf(global to WRITE, local to WRITE)

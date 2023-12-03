@@ -22,8 +22,9 @@ import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import java.awt.Color
 import java.util.*
-import java.util.function.Consumer
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 
 class PointerStore {
@@ -108,5 +109,10 @@ class PointerStore {
             }
         }
         return SmartBoolExprs.And(ops)
+    }
+
+    fun deRefLut(): Map<DeRefExpr<*>, VarDecl<*>> {
+        val deRefLut = pointsTo.map { (source, target) -> DeRefExpr.of(RefExpr.of(source)) to target }.toMap()
+        return deRefLut
     }
 }

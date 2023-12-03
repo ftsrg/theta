@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
@@ -97,7 +98,7 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                         val deRefLut = deRefExprs.associateWith { deRefExpr ->
                             val varDecl = (deRefExpr.op as RefExpr<*>).decl as VarDecl<*>
                             val pointsTo = localPointerStore.pointsTo(varDecl)
-                            assert(pointsTo.size == 1) { "Pointer points to multiple variables." }
+                            check(pointsTo.size == 1) { "Pointer points to multiple variables." }
                             pointsTo.first()
                         }
                         label.changeDeRefs(deRefLut)
@@ -207,8 +208,9 @@ fun getXcfaErrorPredicate(
                             for (edge2 in process2.value.locs.peek().outgoingEdges) {
                                 val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
                                 val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
-                                val globalVars1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
-                                val globalVars2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+                                val deRefLut = s.pointerStore.deRefLut()
+                                val globalVars1 = edge1.changeDeRefs(deRefLut, varLookup = process1.value.varLookup.peek()).getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+                                val globalVars2 = edge2.changeDeRefs(deRefLut, varLookup = process2.value.varLookup.peek()).getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
                                 for (v1 in globalVars1)
                                     for (v2 in globalVars2)
                                         if (v1.varDecl == v2.varDecl)
@@ -290,7 +292,6 @@ private fun getExplXcfaInitFunc(xcfa: XCFA,
 private fun getExplXcfaTransFunc(solver: Solver,
     maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
     val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
-    // xcfastatebe elrakni a precisiont
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(

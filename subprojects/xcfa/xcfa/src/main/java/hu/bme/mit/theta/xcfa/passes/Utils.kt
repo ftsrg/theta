@@ -105,15 +105,19 @@ fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: Par
     else this
 
 @JvmOverloads
-fun XcfaLabel.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null): XcfaLabel =
+fun XcfaLabel.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null, varLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()): XcfaLabel =
         if (deRefLut.isNotEmpty())
             when (this) {
-                is SequenceLabel -> SequenceLabel(labels.map { it.changeDeRefs(deRefLut, parseContext) },
+                is SequenceLabel -> SequenceLabel(labels.map { it.changeDeRefs(deRefLut, parseContext, varLookup) },
                         metadata = metadata)
-                is StmtLabel -> StmtLabel(stmt.changeDeRefs(deRefLut, parseContext), metadata = metadata)
+                is StmtLabel -> StmtLabel(stmt.changeDeRefs(deRefLut, parseContext, varLookup), metadata = metadata)
                 else -> this
             }
         else this
+
+@JvmOverloads
+fun XcfaEdge.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null, varLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()): XcfaEdge =
+        XcfaEdge(source, target, label.changeDeRefs(deRefLut, parseContext, varLookup))
 
 @JvmOverloads
 fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
@@ -135,15 +139,15 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
 }
 
 @JvmOverloads
-fun Stmt.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
+fun Stmt.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null, varLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()): Stmt {
     val stmt = when (this) {
-        is AssignStmt<*> -> AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.changeDeRefs(deRefLut, parseContext), varDecl.type))
-        is AssumeStmt -> AssumeStmt.of(cond.changeDeRefs(deRefLut, parseContext))
-        is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeDeRefs(deRefLut, parseContext) })
+        is AssignStmt<*> -> AssignStmt.of(cast(varDecl, varDecl.type), cast(expr.changeDeRefs(deRefLut, parseContext, varLookup), varDecl.type))
+        is AssumeStmt -> AssumeStmt.of(cond.changeDeRefs(deRefLut, parseContext, varLookup))
+        is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeDeRefs(deRefLut, parseContext, varLookup) })
         is SkipStmt -> this
         is DerefWriteStmt -> {
             val type = deRef.type
-            AssignStmt.of(cast((deRef.changeDeRefs(deRefLut, parseContext) as RefExpr<*>).decl as VarDecl<*>, type), cast(expr.changeDeRefs(deRefLut, parseContext), deRef.type))
+            AssignStmt.of(cast((deRef.changeDeRefs(deRefLut, parseContext, varLookup) as RefExpr<*>).decl as VarDecl<*>, type), cast(expr.changeDeRefs(deRefLut, parseContext, varLookup), deRef.type))
         }
         else -> TODO("Not yet implemented")
     }
@@ -165,13 +169,14 @@ fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseCon
     }
 
 @JvmOverloads
-fun <T : Type> Expr<T>.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null): Expr<T> =
-        if (this is DeRefExpr<T> && deRefLut.containsKey(this)) {
-            deRefLut[this]!!.ref as Expr<T>
-        }
-        else {
-            this.withOps(this.ops.map { it.changeDeRefs(deRefLut, parseContext) })
-        }
+fun <T : Type> Expr<T>.changeDeRefs(deRefLut: Map<out DeRefExpr<*>, VarDecl<*>>, parseContext: ParseContext? = null, varLookup: Map<VarDecl<*>, VarDecl<*>> = emptyMap()): Expr<T> {
+    if (this is DeRefExpr<T>) {
+        if (deRefLut.containsKey(this)) return deRefLut[this]!!.ref as Expr<T>
+        val changedVars = this.changeVars(varLookup) as DeRefExpr<T>
+        if (deRefLut.containsKey(changedVars)) return deRefLut[changedVars]!!.ref as Expr<T>
+    }
+    return this.withOps(this.ops.map { it.changeDeRefs(deRefLut, parseContext, varLookup) })
+}
 
 fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
     (varLut[this] ?: this) as VarDecl<T>

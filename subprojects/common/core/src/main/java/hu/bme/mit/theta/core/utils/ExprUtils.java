@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -132,6 +133,28 @@ public final class ExprUtils {
     }
 
     /**
+     * Collect variables of an expression into a given collection, excluding those only appearing in address-of expressions.
+     *
+     * @param expr      Expression
+     * @param collectTo Collection where the variables should be put
+     */
+    public static void collectVarsWithoutAddrOf(final Expr<?> expr, final Collection<VarDecl<?>> collectTo) {
+        if (expr instanceof AddrOfExpr<?>) {
+            return;
+        }
+        if (expr instanceof RefExpr) {
+            final RefExpr<?> refExpr = (RefExpr<?>) expr;
+            final Decl<?> decl = refExpr.getDecl();
+            if (decl instanceof VarDecl) {
+                final VarDecl<?> varDecl = (VarDecl<?>) decl;
+                collectTo.add(varDecl);
+                return;
+            }
+        }
+        expr.getOps().forEach(op -> collectVarsWithoutAddrOf(op, collectTo));
+    }
+
+    /**
      * Collect variables from expressions into a given collection.
      *
      * @param exprs     Expressions
@@ -139,6 +162,16 @@ public final class ExprUtils {
      */
     public static void collectVars(final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
         exprs.forEach(e -> collectVars(e, collectTo));
+    }
+
+    /**
+     * Collect variables from expressions into a given collection, excluding those only appearing in address-of expressions.
+     *
+     * @param exprs     Expressions
+     * @param collectTo Collection where the variables should be put
+     */
+    public static void collectVarsWithoutAddrOf(final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
+        exprs.forEach(e -> collectVarsWithoutAddrOf(e, collectTo));
     }
 
     /**
@@ -150,6 +183,18 @@ public final class ExprUtils {
     public static Set<VarDecl<?>> getVars(final Expr<?> expr) {
         final Set<VarDecl<?>> vars = Containers.createSet();
         collectVars(expr, vars);
+        return vars;
+    }
+
+    /**
+     * Get variables of an expression, excluding those only appearing in address-of expressions.
+     *
+     * @param expr Expression
+     * @return Set of variables appearing in the expression
+     */
+    public static Set<VarDecl<?>> getVarsWithoutAddrOf(final Expr<?> expr) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        collectVarsWithoutAddrOf(expr, vars);
         return vars;
     }
 
