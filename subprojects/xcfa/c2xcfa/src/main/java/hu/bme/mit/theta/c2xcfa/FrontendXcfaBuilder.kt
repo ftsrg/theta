@@ -40,12 +40,10 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
@@ -53,7 +51,6 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
 import java.math.BigInteger
 import java.util.*
-import java.util.Set
 import java.util.stream.Collectors
 
 class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false,
@@ -266,14 +263,16 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         }
 
         if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
-            // TODO: Ez gondolom nem ide kéne
             if (rExpression is AddrOfExpr<*>) {
-                val assume = Stmts.Assume(AbstractExprs.Neq(lValue, IntLitExpr.of(BigInteger.valueOf(0L))))
-                val middleLoc = getAnonymousLoc(builder, getMetadata(statement))
-                xcfaEdge = XcfaEdge(initLoc, middleLoc, label, metadata = getMetadata(statement))
+                val havocPointerValue = Stmts.Havoc((lValue as RefExpr<*>).decl as VarDecl<*>)
+                val assumePointerIsNotNull = Stmts.Assume(AbstractExprs.Neq(lValue, IntLitExpr.of(BigInteger.valueOf(0L))))
+                val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
+                val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))
+                xcfaEdge = XcfaEdge(initLoc, middleLoc1, StmtLabel(havocPointerValue, metadata = getMetadata(statement)))
                 builder.addEdge(xcfaEdge)
-                xcfaEdge = XcfaEdge(middleLoc, location, StmtLabel(assume, metadata = getMetadata(statement)),
-                        metadata = getMetadata(statement))
+                xcfaEdge = XcfaEdge(middleLoc1, middleLoc2, StmtLabel(assumePointerIsNotNull, metadata = getMetadata(statement)))
+                builder.addEdge(xcfaEdge)
+                xcfaEdge = XcfaEdge(middleLoc2, location, label, metadata = getMetadata(statement))
                 builder.addEdge(xcfaEdge)
             } else {
                 xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
