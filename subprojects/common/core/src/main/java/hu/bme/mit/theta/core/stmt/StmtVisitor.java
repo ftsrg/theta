@@ -27,11 +27,11 @@ public interface StmtVisitor<P, R> {
 
     <DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 
-	R visit(DerefWriteStmt stmt, P param);
+    R visit(DerefWriteStmt stmt, P param);
 
-	R visit(PointerDereffedStmt stmt, P param);
+    R visit(PointerDereffedStmt stmt, P param);
 
-	R visit(SequenceStmt stmt, P param);
+    R visit(SequenceStmt stmt, P param);
 
     R visit(NonDetStmt stmt, P param);
 

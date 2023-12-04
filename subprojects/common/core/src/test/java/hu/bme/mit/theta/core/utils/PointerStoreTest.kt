@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 package hu.bme.mit.theta.core.utils
+
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.inttype.IntExprs
@@ -21,6 +22,7 @@ import org.junit.Assert
 import org.junit.Test
 
 class PointerStoreTest {
+
     @Test
     fun testIsLeq() {
         val pointerStore1 = PointerStore()

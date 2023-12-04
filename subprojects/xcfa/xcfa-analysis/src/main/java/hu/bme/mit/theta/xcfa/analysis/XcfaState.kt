@@ -145,6 +145,7 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                     changes.add { state -> state.handleStmtLabel(it) }
                     !isPointerOnlyAction(it)
                 }
+
                 is WriteLabel -> error("Read/Write labels not yet supported")
             }
         }

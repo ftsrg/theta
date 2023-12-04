@@ -154,7 +154,9 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is StmtLabel -> {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
-            is AssignStmt<*> -> ExprUtils.getVarsWithoutAddrOf(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
+            is AssignStmt<*> -> ExprUtils.getVarsWithoutAddrOf(stmt.expr).associateWith { READ } + mapOf(
+                stmt.varDecl to WRITE)
+
             else -> StmtUtils.getVarsWithoutAddrOf(stmt).associateWith { READ }
         }
     }
@@ -162,7 +164,9 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is InvokeLabel -> params.map { ExprUtils.getVarsWithoutAddrOf(it) }.flatten().associateWith { READ }
-    is StartLabel -> params.map { ExprUtils.getVarsWithoutAddrOf(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
+    is StartLabel -> params.map { ExprUtils.getVarsWithoutAddrOf(it) }.flatten().associateWith { READ } + mapOf(
+        pidVar to READ)
+
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
     is WriteLabel -> mapOf(global to WRITE, local to WRITE)

@@ -194,7 +194,9 @@ public class SpState {
         }
 
         @Override
-        public SpState visit(DerefWriteStmt stmt, SpState param) { throw new UnsupportedOperationException(); }
+        public SpState visit(DerefWriteStmt stmt, SpState param) {
+            throw new UnsupportedOperationException();
+        }
 
         @Override
         public SpState visit(PointerDereffedStmt stmt, SpState param) {

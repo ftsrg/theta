@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.Assert
 
 class DisjointSetTest {
+
     @Test
     fun testMakeSet() {
         val set = DisjointSet<Int>()
@@ -86,13 +87,13 @@ class DisjointSetTest {
         Assert.assertEquals(set.find(1), set.find(10))
     }
 
-    @Test (expected = IllegalArgumentException::class)
+    @Test(expected = IllegalArgumentException::class)
     fun testFindException() {
         val set = DisjointSet<Int>()
         set.find(1)
     }
 
-    @Test (expected = IllegalArgumentException::class)
+    @Test(expected = IllegalArgumentException::class)
     fun testUnionException() {
         val set = DisjointSet<Int>()
         set.makeSet(1)

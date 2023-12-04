@@ -107,7 +107,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return the enabled actions
      */
     protected fun getAllEnabledActionsFor(state: XcfaState<*>): Collection<XcfaAction> =
-            simpleXcfaLts.getEnabledActionsFor(state)
+        simpleXcfaLts.getEnabledActionsFor(state)
 
     /**
      * Returns the possible starting actions of a source set.
@@ -116,7 +116,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return the possible starting actions of a source set
      */
     protected fun getSourceSetFirstActions(state: XcfaState<*>,
-                                           allEnabledActions: Collection<XcfaAction>): Collection<Collection<XcfaAction>> {
+        allEnabledActions: Collection<XcfaAction>): Collection<Collection<XcfaAction>> {
         val enabledActionsByProcess = allEnabledActions.groupBy(XcfaAction::pid)
         val enabledProcesses = enabledActionsByProcess.keys.toList().shuffled(random)
         return enabledProcesses.map { pid ->
@@ -137,7 +137,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return the set of first processes
      */
     private fun checkMutexBlocks(state: XcfaState<*>, pid: Int, firstProcesses: MutableSet<Int>,
-                                 enabledActionsByProcess: Map<Int, List<XcfaAction>>) {
+        enabledActionsByProcess: Map<Int, List<XcfaAction>>) {
         val processState = checkNotNull(state.processes[pid])
         if (!processState.paramsInitialized) return
         val disabledOutEdges = processState.locs.peek().outgoingEdges.filter { edge ->
@@ -166,7 +166,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return a source set of enabled actions
      */
     private fun calculateSourceSet(enabledActions: Collection<XcfaAction>,
-                                   firstActions: Collection<XcfaAction>, state: XcfaState<*>): Set<XcfaAction> {
+        firstActions: Collection<XcfaAction>, state: XcfaState<*>): Set<XcfaAction> {
         if (firstActions.any(::isBackwardAction)) {
             return enabledActions.toSet()
         }
@@ -204,7 +204,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
     private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction, state: XcfaState<*>): Boolean {
         val usedBySourceSetAction = getUsedSharedObjects(getEdgeOf(sourceSetAction), state)
         return isSameProcess(sourceSetAction, action) ||
-                getInfluencedSharedObjects(getEdgeOf(action)).any { it in usedBySourceSetAction }
+            getInfluencedSharedObjects(getEdgeOf(action)).any { it in usedBySourceSetAction }
     }
 
     /**
@@ -303,7 +303,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return the set of encountered shared objects
      */
     private fun getSharedObjectsWithBFS(startTransition: XcfaEdge,
-                                        goFurther: Predicate<XcfaEdge>): Set<Decl<out Type>> {
+        goFurther: Predicate<XcfaEdge>): Set<Decl<out Type>> {
         val vars = mutableSetOf<Decl<out Type>>()
         val exploredEdges = mutableListOf<XcfaEdge>()
         val edgesToExplore = mutableListOf<XcfaEdge>()

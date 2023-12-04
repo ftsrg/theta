@@ -22,6 +22,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 import kotlin.math.absoluteValue
 
 class DisjointSetMember(val varDecl: VarDecl<*>, val derefLevel: Int) {
+
     override fun toString(): String {
         val prefixChar = if (derefLevel < 0) "&" else "*"
         return prefixChar.repeat(derefLevel.absoluteValue) + varDecl.name
@@ -89,6 +90,7 @@ class SteensgaardsPointerAnalysis : PointerAnalysis() {
 
                     join(pStar, q)
                 }
+
                 is DereferencingWritePointerAction -> {
                     // *p = q
                     val pStarStar = DisjointSetMember(pVarDecl, 2)
@@ -99,6 +101,7 @@ class SteensgaardsPointerAnalysis : PointerAnalysis() {
 
                     join(pStarStar, qStar)
                 }
+
                 is DereferencingReadPointerAction -> {
                     // p = *q
                     val pStar = DisjointSetMember(pVarDecl, 1)
@@ -109,6 +112,7 @@ class SteensgaardsPointerAnalysis : PointerAnalysis() {
 
                     join(pStar, qStarStar)
                 }
+
                 is AliasingPointerAction -> {
                     // p = q
                     val pStar = DisjointSetMember(pVarDecl, 1)

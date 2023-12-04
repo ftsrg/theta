@@ -128,10 +128,14 @@ public final class ClockOps {
         }
 
         @Override
-        public ClockOp visit(DerefWriteStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+        public ClockOp visit(DerefWriteStmt stmt, Void param) {
+            throw new UnsupportedOperationException();
+        }
 
         @Override
-        public ClockOp visit(PointerDereffedStmt stmt, Void param) { throw new UnsupportedOperationException(); }
+        public ClockOp visit(PointerDereffedStmt stmt, Void param) {
+            throw new UnsupportedOperationException();
+        }
 
         @Override
         public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt,

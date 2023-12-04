@@ -97,7 +97,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_cond_wait" -> {
                                 var cond = invokeLabel.params[1]
-                                while (cond is Reference<*, *>  || cond is AddrOfExpr<*>) cond = (cond as UnaryExpr<*, *>).op
+                                while (cond is Reference<*, *> || cond is AddrOfExpr<*>) cond = (cond as UnaryExpr<*, *>).op
                                 var handle = invokeLabel.params[2]
                                 while (handle is Reference<*, *> || handle is AddrOfExpr<*>) handle = (handle as UnaryExpr<*, *>).op
                                 check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)

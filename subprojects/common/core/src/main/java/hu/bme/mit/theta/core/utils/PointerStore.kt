@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 
 class PointerStore {
+
     private val pointerStoreMembers: MutableSet<VarDecl<*>> = mutableSetOf()
     private val pointsTo: MutableSet<Pair<VarDecl<*>, VarDecl<*>>> = mutableSetOf()
 
@@ -60,22 +61,25 @@ class PointerStore {
         }
         return pointsTo.filter { it.first == pointerStoreMember }.map { it.second }.toSet()
     }
-    
+
     fun has(pointerStoreMember: VarDecl<*>): Boolean {
         return pointerStoreMembers.contains(pointerStoreMember)
     }
 
-    fun toGraph() : Graph {
+    fun toGraph(): Graph {
         val graph = Graph("\"" + UUID.randomUUID().toString() + "\"", "Pointer Analysis")
         val attrsBuilder = NodeAttributes.builder().shape(Shape.RECTANGLE)
-                .fillColor(Color.WHITE).lineColor(Color.BLACK).alignment(Alignment.LEFT)
+            .fillColor(Color.WHITE).lineColor(Color.BLACK).alignment(Alignment.LEFT)
         pointerStoreMembers.forEach {
             graph.addNode("\"" + it + "\"", attrsBuilder.label(it.toString()).build())
         }
-        val eAttrs = EdgeAttributes.builder().label("").color(Color.BLACK).lineStyle(LineStyle.NORMAL).font("courier").build()
-        pointsTo.forEach { (source, target) -> run {
-            graph.addEdge("\"" + source.toString() + "\"", "\"" + target.toString() + "\"", eAttrs)
-        }}
+        val eAttrs = EdgeAttributes.builder().label("").color(Color.BLACK).lineStyle(LineStyle.NORMAL).font("courier")
+            .build()
+        pointsTo.forEach { (source, target) ->
+            run {
+                graph.addEdge("\"" + source.toString() + "\"", "\"" + target.toString() + "\"", eAttrs)
+            }
+        }
         return graph
     }
 
@@ -103,7 +107,8 @@ class PointerStore {
             pointerStoreMembers.forEach { v2 ->
                 val v1PointsTo = pointsTo(v1)
                 val v2PointsTo = pointsTo(v2)
-                if (v1PointsTo.size == 1 && v2PointsTo.size == 1 && v1PointsTo != v2PointsTo && !ops.contains(Neq(v2.ref, v1.ref))) {
+                if (v1PointsTo.size == 1 && v2PointsTo.size == 1 && v1PointsTo != v2PointsTo && !ops.contains(
+                        Neq(v2.ref, v1.ref))) {
                     ops.add(Neq(v1.ref, v2.ref))
                 }
             }

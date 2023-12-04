@@ -75,7 +75,7 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
     Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts,
                                         final ExplPrec prec, Optional<PointerStore> pointerStore) {
         final MutableValuation val = MutableValuation.copyOf(state);
-		pointerStore.ifPresent(val::setPointerStore);
+        pointerStore.ifPresent(val::setPointerStore);
         boolean triedSolver = false;
 
         for (int i = 0; i < stmts.size(); i++) {

@@ -29,7 +29,7 @@ open class XcfaAasporLts(
 ) : XcfaSporLts(xcfa) {
 
     override fun <P : Prec> getEnabledActionsFor(state: XcfaState<*>, exploredActions: Collection<XcfaAction>,
-                                                 prec: P): Set<XcfaAction> {
+        prec: P): Set<XcfaAction> {
         // Collecting enabled actions
         val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
 
@@ -73,7 +73,7 @@ open class XcfaAasporLts(
      * @return a source set of enabled actions in the current abstraction
      */
     private fun calculateSourceSet(enabledActions: Collection<XcfaAction>, firstActions: Collection<XcfaAction>,
-                                   prec: Prec, ignoredVars: MutableSet<Decl<out Type>>, state: XcfaState<*>): Set<XcfaAction> {
+        prec: Prec, ignoredVars: MutableSet<Decl<out Type>>, state: XcfaState<*>): Set<XcfaAction> {
         if (firstActions.any(this::isBackwardAction)) {
             return enabledActions.toSet()
         }
@@ -110,7 +110,7 @@ open class XcfaAasporLts(
     }
 
     private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction, prec: Prec,
-                              ignoredVariables: MutableSet<Decl<out Type?>>, state: XcfaState<*>): Boolean {
+        ignoredVariables: MutableSet<Decl<out Type?>>, state: XcfaState<*>): Boolean {
         if (isSameProcess(sourceSetAction, action)) {
             return true
         }

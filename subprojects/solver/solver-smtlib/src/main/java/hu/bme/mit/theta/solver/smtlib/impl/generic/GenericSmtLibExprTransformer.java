@@ -1217,6 +1217,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     protected String transformDeRef(final DeRefExpr<?> deRefExpr) {
         throw new UnsupportedOperationException("Transformation of DeRefExpr is not supported");
     }
+
     protected String transformAddrOf(final AddrOfExpr<?> expr) {
         throw new UnsupportedOperationException("Transformation of AddrOfExpr is not supported");
     }

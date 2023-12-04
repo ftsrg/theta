@@ -265,12 +265,15 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
             if (rExpression is AddrOfExpr<*>) {
                 val havocPointerValue = Stmts.Havoc((lValue as RefExpr<*>).decl as VarDecl<*>)
-                val assumePointerIsNotNull = Stmts.Assume(AbstractExprs.Neq(lValue, IntLitExpr.of(BigInteger.valueOf(0L))))
+                val assumePointerIsNotNull = Stmts.Assume(
+                    AbstractExprs.Neq(lValue, IntLitExpr.of(BigInteger.valueOf(0L))))
                 val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
                 val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))
-                xcfaEdge = XcfaEdge(initLoc, middleLoc1, StmtLabel(havocPointerValue, metadata = getMetadata(statement)))
+                xcfaEdge = XcfaEdge(initLoc, middleLoc1,
+                    StmtLabel(havocPointerValue, metadata = getMetadata(statement)))
                 builder.addEdge(xcfaEdge)
-                xcfaEdge = XcfaEdge(middleLoc1, middleLoc2, StmtLabel(assumePointerIsNotNull, metadata = getMetadata(statement)))
+                xcfaEdge = XcfaEdge(middleLoc1, middleLoc2,
+                    StmtLabel(assumePointerIsNotNull, metadata = getMetadata(statement)))
                 builder.addEdge(xcfaEdge)
                 xcfaEdge = XcfaEdge(middleLoc2, location, label, metadata = getMetadata(statement))
                 builder.addEdge(xcfaEdge)

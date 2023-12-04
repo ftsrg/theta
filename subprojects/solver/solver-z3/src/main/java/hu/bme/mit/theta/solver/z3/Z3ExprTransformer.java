@@ -1263,7 +1263,7 @@ final class Z3ExprTransformer {
 
 
     private com.microsoft.z3.Expr transformDeRef(DeRefExpr<?> deRefExpr) {
-       throw new UnsupportedOperationException("Transformation of DeRefExpr is not supported");
+        throw new UnsupportedOperationException("Transformation of DeRefExpr is not supported");
     }
 
     private com.microsoft.z3.Expr transformAddrOf(AddrOfExpr<?> addrOfExpr) {

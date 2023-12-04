@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.utils.PointerStore
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 class AndersensPointerAnalysis : PointerAnalysis() {
+
     override fun run(xcfa: XCFA): PointerStore {
         val actions = getPointerActions(xcfa)
         return runOnActions(actions)
@@ -37,6 +38,7 @@ class AndersensPointerAnalysis : PointerAnalysis() {
                         // p = &q
                         pointerStore.addPointsTo(pVarDecl, qVarDecl)
                     }
+
                     is DereferencingWritePointerAction -> {
                         // *p = q
                         val xs = pointerStore.pointsTo(pVarDecl)
@@ -46,15 +48,17 @@ class AndersensPointerAnalysis : PointerAnalysis() {
                             }
                         }
                     }
+
                     is DereferencingReadPointerAction -> {
                         // p = *q
                         val xs = pointerStore.pointsTo(qVarDecl)
                         xs.forEach { x ->
-                           pointerStore.pointsTo(x).forEach { y ->
-                               if (pVarDecl != y) pointerStore.addPointsTo(pVarDecl, y)
+                            pointerStore.pointsTo(x).forEach { y ->
+                                if (pVarDecl != y) pointerStore.addPointsTo(pVarDecl, y)
                             }
                         }
                     }
+
                     is AliasingPointerAction -> {
                         // p = q
                         pointerStore.pointsTo(qVarDecl).forEach { y ->

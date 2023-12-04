@@ -29,6 +29,7 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 interface PointerAction {
+
     val p: VarDecl<*>
     val q: VarDecl<*>
 }
@@ -40,10 +41,12 @@ data class AliasingPointerAction(override val p: VarDecl<*>, override val q: Var
 data class DoubleDerefAliasAction(override val p: VarDecl<*>, override val q: VarDecl<*>) : PointerAction
 
 abstract class PointerAnalysis {
+
     abstract fun run(xcfa: XCFA): PointerStore
     abstract fun runOnActions(actions: List<PointerAction>): PointerStore
 
     companion object {
+
         private fun getPointerAction(label: StmtLabel): PointerAction? {
             try {
                 if (label.stmt is AssignStmt<*>) {
@@ -119,11 +122,13 @@ abstract class PointerAnalysis {
                     newPointerStore.removePointsToAny(action.p)
                     newPointerStore.addPointsTo(action.p, action.q)
                 }
+
                 is DereferencingWritePointerAction -> {
                     // *p = q
                     // throw UnsupportedOperationException("DereferencingWritePointerAction found")
                     println("DereferencingWritePointerAction found: $label")
                 }
+
                 is DereferencingReadPointerAction -> {
                     // p = *q
                     newPointerStore.removePointsToAny(action.p)
@@ -133,6 +138,7 @@ abstract class PointerAnalysis {
                         }
                     }
                 }
+
                 is AliasingPointerAction -> {
                     // p = q
                     newPointerStore.removePointsToAny(action.p)
@@ -140,9 +146,10 @@ abstract class PointerAnalysis {
                         newPointerStore.addPointsTo(action.p, q)
                     }
                 }
+
                 is DoubleDerefAliasAction -> {
                     // *p = *q
-                    newPointerStore.pointsTo(action.p).forEach{ newPointerStore.removePointsToAny(it) }
+                    newPointerStore.pointsTo(action.p).forEach { newPointerStore.removePointsToAny(it) }
                     newPointerStore.pointsTo(action.p).forEach { r ->
                         newPointerStore.pointsTo(action.q).forEach { s ->
                             newPointerStore.pointsTo(s).forEach { t ->

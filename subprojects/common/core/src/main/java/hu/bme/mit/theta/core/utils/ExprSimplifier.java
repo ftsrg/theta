@@ -416,7 +416,7 @@ public final class ExprSimplifier {
     }
 
     private <DeclType extends Type> Expr<DeclType> simplifyGenericDeRef(final DeRefExpr<DeclType> expr,
-                                                                      final Valuation val) {
+                                                                        final Valuation val) {
         return expr;
     }
 

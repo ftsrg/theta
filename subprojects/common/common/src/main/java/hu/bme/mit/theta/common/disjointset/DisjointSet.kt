@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.common.disjointset
 
 class DisjointSet<T> {
+
     private val parent = mutableMapOf<T, T>()
     private val rank = mutableMapOf<T, Int>()
 
