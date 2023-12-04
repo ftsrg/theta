@@ -28,6 +28,9 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.anytype.AddrOfExpr;
+import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
@@ -399,12 +402,21 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
+                // Pointers
+
+                .addCase(DeRefExpr.class, this::transformDeRef)
+
+                .addCase(AddrOfExpr.class, this::transformAddrOf)
+
                 .build();
     }
 
     @Override
     public final String toTerm(final Expr<?> expr) {
         try {
+            if (expr instanceof EqExpr<?> && ((EqExpr<?>) expr).getLeftOp() instanceof RefExpr<?> && ((EqExpr<?>) expr).getRightOp() instanceof AddrOfExpr<?>) {
+                return toTerm(TrueExpr.of(true));
+            }
             return exprToTerm.get(expr, () -> table.dispatch(expr));
         } catch (final ExecutionException e) {
             throw new AssertionError();
@@ -1200,5 +1212,12 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                     toTerm(elem.get2()));
         }
         return running;
+    }
+
+    protected String transformDeRef(final DeRefExpr<?> deRefExpr) {
+        throw new UnsupportedOperationException("Transformation of DeRefExpr is not supported");
+    }
+    protected String transformAddrOf(final AddrOfExpr<?> expr) {
+        throw new UnsupportedOperationException("Transformation of AddrOfExpr is not supported");
     }
 }

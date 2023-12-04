@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.anytype.AddrOfExpr;
 import hu.bme.mit.theta.core.type.anytype.DeRefExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
@@ -439,6 +440,9 @@ final class Z3ExprTransformer {
 
     public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
         try {
+            if (expr instanceof EqExpr<?> && ((EqExpr<?>) expr).getLeftOp() instanceof RefExpr<?> && ((EqExpr<?>) expr).getRightOp() instanceof AddrOfExpr<?>) {
+                return toTerm(TrueExpr.of(true));
+            }
             return exprToTerm.get(expr, () -> table.dispatch(expr));
         } catch (final ExecutionException e) {
             throw new AssertionError("Unhandled case: " + expr, e);
@@ -1259,28 +1263,11 @@ final class Z3ExprTransformer {
 
 
     private com.microsoft.z3.Expr transformDeRef(DeRefExpr<?> deRefExpr) {
-        final RefExpr<?> refExpr = (RefExpr<?>) deRefExpr.getOp();
-        final Decl<?> decl = refExpr.getDecl();
-        if (decl instanceof ConstDecl) {
-            final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
-            return context.mkConst("deref_" + funcDecl.getName(), context.mkIntSort());
-        } else {
-            throw new UnsupportedOperationException("Unable to dereference: " + deRefExpr);
-        }
+       throw new UnsupportedOperationException("Transformation of DeRefExpr is not supported");
     }
 
     private com.microsoft.z3.Expr transformAddrOf(AddrOfExpr<?> addrOfExpr) {
-        final RefExpr<?> refExpr = (RefExpr<?>) addrOfExpr.getOp();
-        final Decl<?> decl = refExpr.getDecl();
-        if (decl instanceof ConstDecl) {
-            final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
-            final com.microsoft.z3.FuncDecl addrOfFuncDecl = context.mkConst("addrOf_" + funcDecl.getName(), context.mkIntSort()).getFuncDecl();
-            final com.microsoft.z3.BoolExpr addrIsNotZero = context.mkNot(context.mkEq(addrOfFuncDecl.apply(), context.mkInt(0)));
-
-            return addrOfFuncDecl.apply();
-        } else {
-            throw new UnsupportedOperationException("Unable to take address of: " + addrOfExpr);
-        }
+        throw new UnsupportedOperationException("Transformation of AddrOfExpr is not supported");
     }
 
     public void reset() {
