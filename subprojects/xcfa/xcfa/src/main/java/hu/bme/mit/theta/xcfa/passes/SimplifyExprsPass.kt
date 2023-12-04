@@ -48,7 +48,9 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
-        removeUnusedGlobalVarWrites(builder)
+        // TODO: This would remove variable writes that are only used through pointers
+        // e.g. in /sv-benchmarks/c/ldv-regression/test09.c, the write to b is removed from the xcfa
+        // removeUnusedGlobalVarWrites(builder)
         // TODO: this does not work if the program contains deRefWrites
         // e.g. x = 1; y = &x; *y = 2;
         // Maybe we should run a static analysis on the xcfa first, to find out which variables are constant
