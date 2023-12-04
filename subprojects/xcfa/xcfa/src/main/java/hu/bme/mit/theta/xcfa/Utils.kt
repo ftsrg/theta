@@ -97,16 +97,19 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when (this) {
 
 // Complex var access requests
 
-typealias AccessType = Pair<Boolean, Boolean>
+typealias AccessType = Triple<Boolean, Boolean, Boolean>
 private typealias VarAccessMap = Map<VarDecl<*>, AccessType>
 
 val AccessType?.isRead get() = this?.first == true
 val AccessType?.isWritten get() = this?.second == true
+val AccessType?.isAddressRead get() = this?.third == true
 fun AccessType?.merge(other: AccessType?) =
-    Pair(this?.first == true || other?.first == true, this?.second == true || other?.second == true)
+    Triple(this?.first == true || other?.first == true, this?.second == true || other?.second == true,
+        this?.third == true || other?.third == true)
 
-val WRITE: AccessType get() = Pair(false, true)
-val READ: AccessType get() = Pair(true, false)
+val WRITE: AccessType get() = Triple(false, true, false)
+val READ: AccessType get() = Triple(true, false, false)
+val READ_ADDRESS: AccessType get() = Triple(false, false, true)
 
 private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf()) { acc, next ->
     (acc.keys + next.keys).associateWith { acc[it].merge(next[it]) }
@@ -154,18 +157,29 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is StmtLabel -> {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
-            is AssignStmt<*> -> ExprUtils.getVarsWithoutAddrOf(stmt.expr).associateWith { READ } + mapOf(
-                stmt.varDecl to WRITE)
+            is AssignStmt<*> -> {
+                val varsWithoutAddrOf = ExprUtils.getVarsWithoutAddrOf(stmt.expr)
+                val varsInAddrOf = ExprUtils.getVarsInAddrOf(stmt.expr)
+                varsWithoutAddrOf.associateWith { READ } + varsInAddrOf.associateWith { READ_ADDRESS } + mapOf(
+                    stmt.varDecl to WRITE)
+            }
 
-            else -> StmtUtils.getVarsWithoutAddrOf(stmt).associateWith { READ }
+            else -> StmtUtils.getVarsWithoutAddrOf(stmt).associateWith { READ } + StmtUtils.getVarsInAddrOf(stmt)
+                .associateWith { READ_ADDRESS }
         }
     }
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    is InvokeLabel -> params.map { ExprUtils.getVarsWithoutAddrOf(it) }.flatten().associateWith { READ }
-    is StartLabel -> params.map { ExprUtils.getVarsWithoutAddrOf(it) }.flatten().associateWith { READ } + mapOf(
-        pidVar to READ)
+    is InvokeLabel -> params.map {
+        ExprUtils.getVarsWithoutAddrOf(it).associateWith { READ } + ExprUtils.getVarsInAddrOf(it)
+            .associateWith { READ_ADDRESS }
+    }.mergeAndCollect()
+
+    is StartLabel -> params.map {
+        ExprUtils.getVarsWithoutAddrOf(it).associateWith { READ } + ExprUtils.getVarsInAddrOf(it)
+            .associateWith { READ_ADDRESS }
+    }.mergeAndCollect() + mapOf(pidVar to WRITE)
 
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
@@ -177,7 +191,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
  * Returns the global variables accessed by the label (the variables present in the given argument).
  */
 private fun XcfaLabel.collectGlobalVars(globalVars: Set<VarDecl<*>>): VarAccessMap =
-    collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } }
+    collectVarsWithAccessType().filter { labelVar -> globalVars.any { it == labelVar.key } && (labelVar.value.isRead || labelVar.value.isWritten) }
 
 /**
  * Returns the global variables (potentially indirectly) accessed by the edge.

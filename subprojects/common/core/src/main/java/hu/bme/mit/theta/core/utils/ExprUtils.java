@@ -155,6 +155,25 @@ public final class ExprUtils {
     }
 
     /**
+     * Collect variables in address-of expressions of an expression into a given collection.
+     *
+     * @param expr      Expression
+     * @param collectTo Collection where the variables should be put
+     */
+    public static void collectVarsInAddrOf(final Expr<?> expr, final Collection<VarDecl<?>> collectTo) {
+        if (expr instanceof AddrOfExpr<?>) {
+            final AddrOfExpr<?> addrOfExpr = (AddrOfExpr<?>) expr;
+            final Decl<?> decl = ((RefExpr<?>) addrOfExpr.getOp()).getDecl();
+            if (decl instanceof VarDecl) {
+                final VarDecl<?> varDecl = (VarDecl<?>) decl;
+                collectTo.add(varDecl);
+            }
+            return;
+        }
+        expr.getOps().forEach(op -> collectVarsWithoutAddrOf(op, collectTo));
+    }
+
+    /**
      * Collect variables from expressions into a given collection.
      *
      * @param exprs     Expressions
@@ -190,11 +209,23 @@ public final class ExprUtils {
      * Get variables of an expression, excluding those only appearing in address-of expressions.
      *
      * @param expr Expression
-     * @return Set of variables appearing in the expression
+     * @return Set of variables appearing in the expression, excluding those only appearing in address-of expressions
      */
     public static Set<VarDecl<?>> getVarsWithoutAddrOf(final Expr<?> expr) {
         final Set<VarDecl<?>> vars = Containers.createSet();
         collectVarsWithoutAddrOf(expr, vars);
+        return vars;
+    }
+
+    /**
+     * Get variables of an expression appearing in address-of expressions.
+     *
+     * @param expr Expression
+     * @return Set of variables appearing in address-of expressions in the expression
+     */
+    public static Set<VarDecl<?>> getVarsInAddrOf(final Expr<?> expr) {
+        final Set<VarDecl<?>> vars = Containers.createSet();
+        collectVarsInAddrOf(expr, vars);
         return vars;
     }
 

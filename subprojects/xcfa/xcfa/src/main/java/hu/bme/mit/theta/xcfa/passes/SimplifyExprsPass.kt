@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.isAddressRead
 import hu.bme.mit.theta.xcfa.isRead
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -48,9 +49,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
-        // TODO: This would remove variable writes that are only used through pointers
-        // e.g. in /sv-benchmarks/c/ldv-regression/test09.c, the write to b is removed from the xcfa
-        // removeUnusedGlobalVarWrites(builder)
+        removeUnusedGlobalVarWrites(builder)
         // TODO: this does not work if the program contains deRefWrites
         // e.g. x = 1; y = &x; *y = 2;
         // Maybe we should run a static analysis on the xcfa first, to find out which variables are constant
@@ -96,7 +95,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val xcfaBuilder = builder.parent
         xcfaBuilder.getProcedures().flatMap { it.getEdges() }.forEach {
             it.label.collectVarsWithAccessType().forEach { (varDecl, access) ->
-                if (access.isRead) usedVars.add(varDecl)
+                if (access.isRead || access.isAddressRead) usedVars.add(varDecl)
             }
         }
         val unusedVars = xcfaBuilder.getVars().map { it.wrappedVar } union builder.getVars() subtract
