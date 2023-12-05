@@ -30,7 +30,7 @@ import java.nio.file.Paths
 
 fun complexPortfolio23(xcfa: XCFA,
     parseContext: ParseContext,
-    portfolioConfig: XcfaConfig<*, CegarConfig>,
+    portfolioConfig: XcfaConfig<*, *>,
     logger: Logger,
     uniqueLogger: Logger): STM {
 
