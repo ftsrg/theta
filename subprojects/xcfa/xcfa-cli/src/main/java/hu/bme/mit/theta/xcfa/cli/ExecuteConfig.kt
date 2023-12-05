@@ -102,6 +102,12 @@ private fun validateInputOptions(config: XcfaConfig<*,*>, logger: Logger, unique
 
 private fun frontend(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger): Pair<XCFA, ParseContext> {
     if(config.inputConfig.xcfaWCtx != null) {
+        val xcfa = config.inputConfig.xcfaWCtx!!.first
+        ConeOfInfluence = if (config.inputConfig.xcfaWCtx!!.second.multiThreading) {
+            XcfaCoiMultiThread(xcfa)
+        } else {
+            XcfaCoiSingleThread(xcfa)
+        }
         return config.inputConfig.xcfaWCtx!!
     }
 
@@ -144,7 +150,7 @@ private fun backend(xcfa: XCFA, parseContext: ParseContext, config: XcfaConfig<*
             logger.write(Logger.Level.INFO,
                 "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n")
 
-            val checker = getChecker(xcfa, config, parseContext, logger)
+            val checker = getChecker(xcfa, config, parseContext, logger, uniqueLogger)
             val result = exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug) {
                 checker.check()
             }
@@ -189,6 +195,12 @@ private fun preVerificationLogging(xcfa: XCFA, parseContext: ParseContext, confi
 
 private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, parseContext: ParseContext,
     config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger) {
+
+    // we only want to log the files if the current configuration is not --in-process or portfolio
+    if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
+        return
+    }
+
     val resultFolder = config.outputConfig.resultFolder
     resultFolder.mkdirs()
 
