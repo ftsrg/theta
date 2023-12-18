@@ -245,11 +245,12 @@ final class XstsExpression {
 			if (ctx.rightOp != null) {
 				final Expr<?> leftOp = ctx.leftOp.accept(this);
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
+				final int operType = ctx.oper.getType();
 
 				if (leftOp.getType() instanceof ClockType) {
 					final Expr<ClockType> clock = cast(leftOp, Clock());
 					final Expr<IntType> value = cast(rightOp, Int());
-					switch (ctx.oper.getType()) {
+					switch (operType) {
 						case LT:
 							return ClockExprs.Lt(clock, value);
 						case LEQ:
@@ -258,14 +259,28 @@ final class XstsExpression {
 							return ClockExprs.Gt(clock, value);
 						case GEQ:
 							return ClockExprs.Geq(clock, value);
-						case EQ:
-							return ClockExprs.Eq(clock, value);
+						default:
+							throw new ParseException(ctx, "Unknown operator");
+					}
+				}
+				if (rightOp.getType() instanceof ClockType) {
+					final Expr<IntType> value = cast(leftOp, Int());
+					final Expr<ClockType> clock = cast(rightOp, Clock());
+					switch (operType) {
+						case LT:
+							return ClockExprs.Gt(clock, value);
+						case LEQ:
+							return ClockExprs.Geq(clock, value);
+						case GT:
+							return ClockExprs.Lt(clock, value);
+						case GEQ:
+							return ClockExprs.Leq(clock, value);
 						default:
 							throw new ParseException(ctx, "Unknown operator");
 					}
 				}
 
-				switch (ctx.oper.getType()) {
+				switch (operType) {
 					case LT:
 						return Lt(leftOp, rightOp);
 					case LEQ:
