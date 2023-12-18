@@ -1,0 +1,13 @@
+prop {
+       !((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibaallapot_8
+            || main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_1
+            || main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_2
+            || main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3
+            || main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7)
+       && (main_region_of_mo_antivalchk_antival_chk_I_FT == Hibaallapot_8
+            || main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_1
+            || main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_2
+            || main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3
+            || main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7)
+       && StateMachine_OutPort_O_COID_Out_O_COIDValue_coid == ACTIVE)
+}

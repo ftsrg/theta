@@ -80,7 +80,7 @@ import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsNewAtomsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsNewOperandsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsStaticAutoExpl;
-import hu.bme.mit.theta.xsts.analysis.clocks.XstsClockReplacers;
+import hu.bme.mit.theta.xsts.analysis.timed.XstsClockReplacers;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsAllVarsInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsCtrlInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsEmptyInitPrec;

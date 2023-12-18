@@ -1,0 +1,37 @@
+ctrl var L : integer = 0
+var x1 : integer = 0
+var x2 : integer = 0
+var c1 : clock
+var c2 : clock
+
+trans {
+    assume L == 0;
+    x2 := 2;
+    c1 := 0;
+    L := 1;
+    __delay;
+} or {
+    assume L == 1;
+    x1 := 1;
+    c2 := 0;
+    L := 2;
+    __delay;
+} or {
+    assume L == 2;
+    c2 := 0;
+    __delay;
+} or {
+    assume L == 2;
+    assume c1 < 1 && c2 >= 1;
+    x1 := x1 + 1;
+    __delay;
+} or {
+    assume L == 2;
+    assume x1 > 1;
+    L := 3;
+    __delay;
+}
+
+init {}
+
+env {}

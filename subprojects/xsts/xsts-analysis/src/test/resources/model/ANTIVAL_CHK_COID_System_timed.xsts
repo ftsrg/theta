@@ -1,0 +1,678 @@
+type MyBool : { ERVENYTELEN, _0, _1 }
+type Main_region_of_mo_antivalchk_AntivalenceChecker : { __Inactive__, _1_0, Hibatarolassal_0_1, Hibatarolassal_1_2, Hibatarolassal_0_rol_1_re_3, _1_rol_0_ra_4, _0_5, _0_rol_1_re_6, Hibatarolassal_1_rol_0_ra_7, Hibaallapot_8 }
+type Activeness : { ACTIVE, PASSIVE }
+type CeloldasIdozites : { CELOLDAS_IDOZITES, NINCS_CELOLDAS_IDOZITES, NERV1 }
+type Main_region_of_bJbCOID_allapotgep_bJbCOID_allapotgep : { __Inactive__, Oldas_4, Celoldas_idozites_nem_fut_5, Celoldas_idozites_fut_8 }
+type Region_1_in_Celoldas_idozites_nem_fut_5_bJbCOID_allapotgep : { __Inactive__, Ervenytelen_0, Tranziens_2, Idozites_nem_fut_1 }
+var Signals_p_In_antival_chk_I_CR : boolean = false
+var Signals_p_In_pValue_antival_chk_I_CR : MyBool = ERVENYTELEN
+var Signals_n_In_antival_chk_I_CR : boolean = false
+var Signals_n_In_nValue_antival_chk_I_CR : MyBool = ERVENYTELEN
+ctrl var main_region_of_mo_antivalchk_antival_chk_I_CR : Main_region_of_mo_antivalchk_AntivalenceChecker = __Inactive__
+var _0_rol_1_re_6Timeout_antival_chk_I_CR : clock
+var Signals_p_In_antival_chk_I_FT : boolean = false
+var Signals_p_In_pValue_antival_chk_I_FT : MyBool = ERVENYTELEN
+var Signals_n_In_antival_chk_I_FT : boolean = false
+var Signals_n_In_nValue_antival_chk_I_FT : MyBool = ERVENYTELEN
+ctrl var main_region_of_mo_antivalchk_antival_chk_I_FT : Main_region_of_mo_antivalchk_AntivalenceChecker = __Inactive__
+var _0_rol_1_re_6Timeout_antival_chk_I_FT : clock
+var I_FT_h_In_coid : boolean = false
+var I_FT_h_In_hValue_coid : MyBool = ERVENYTELEN
+var StateMachine_OutPort_O_COID_Out_coid : boolean = false
+var StateMachine_OutPort_O_COID_Out_O_COIDValue_coid : Activeness = ACTIVE
+var I_CR_h_In_coid : boolean = false
+var I_CR_h_In_hValue_coid : MyBool = ERVENYTELEN
+var I_FT_e_In_coid : boolean = false
+var I_FT_e_In_eValue_coid : MyBool = ERVENYTELEN
+ctrl var main_region_of_bJbCOID_allapotgep_coid : Main_region_of_bJbCOID_allapotgep_bJbCOID_allapotgep = __Inactive__
+ctrl var region_1_in_Celoldas_idozites_nem_fut_5_coid : Region_1_in_Celoldas_idozites_nem_fut_5_bJbCOID_allapotgep = __Inactive__
+  var __id_Idozites_nem_fut_1_8_Ervenytelen_0__coid : boolean = false
+  var __id_Celoldas_idozites_fut_8_1_Oldas_4__coid : boolean = false
+  var __id_Ervenytelen_0_2_Idozites_nem_fut_1__coid : boolean = false
+  var __id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_0_Ervenytelen_0__coid : boolean = false
+var Oldas_Exit_coid : boolean = false
+  var __id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_7_Idozites_nem_fut_1__coid : boolean = false
+  var __id_Celoldas_idozites_nem_fut_5_5_Celoldas_idozites_fut_8__coid : boolean = false
+  var __id_choice_6_in_main_region_of_bJbCOID_allapotgep_4_Celoldas_idozites_nem_fut_5__coid : boolean = false
+  var __id_Oldas_4_3_Celoldas_idozites_nem_fut_5__coid : boolean = false
+  var Fut_NemFut_coid : boolean = false
+  var __id_Tranziens_2_6_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5__coid : boolean = false
+var RS_COID_coid : CeloldasIdozites = CELOLDAS_IDOZITES
+var P_COIDT_Timeout_coid : clock
+var P_COIDH_Timeout_coid : clock
+
+trans {
+	__delay;
+	if (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) {
+		main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+		I_CR_h_In_hValue_coid := ERVENYTELEN;
+		I_CR_h_In_coid := true;
+	}
+	else {
+		if (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_rol_0_ra_4) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) {
+			main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+			I_CR_h_In_hValue_coid := ERVENYTELEN;
+			I_CR_h_In_coid := true;
+		}
+		else {
+			if (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_rol_1_re_6) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) {
+				main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+				I_CR_h_In_hValue_coid := ERVENYTELEN;
+				I_CR_h_In_coid := true;
+			}
+			else {
+				if (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7) && (503 <= _0_rol_1_re_6Timeout_antival_chk_I_CR))) {
+					main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+					I_CR_h_In_hValue_coid := ERVENYTELEN;
+					I_CR_h_In_coid := true;
+				}
+				else {
+					if ((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_0)) {
+						main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+						if ((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) {
+							main_region_of_mo_antivalchk_antival_chk_I_CR := _1_rol_0_ra_4;
+							_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+							I_CR_h_In_hValue_coid := _0;
+							I_CR_h_In_coid := true;
+						}
+						else {
+							if (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) {
+								main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+								I_CR_h_In_hValue_coid := _0;
+								I_CR_h_In_coid := true;
+							}
+							else {
+								main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+								I_CR_h_In_hValue_coid := _1;
+								I_CR_h_In_coid := true;
+							}
+						}
+					}
+					else {
+						if ((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_1)) {
+							main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+							if (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) {
+								main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+								I_CR_h_In_hValue_coid := _1;
+								I_CR_h_In_coid := true;
+							}
+							else {
+								if ((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) {
+									main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_rol_1_re_3;
+									_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+									I_CR_h_In_hValue_coid := ERVENYTELEN;
+									I_CR_h_In_coid := true;
+								}
+								else {
+									main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_1;
+									I_CR_h_In_hValue_coid := ERVENYTELEN;
+									I_CR_h_In_coid := true;
+								}
+							}
+						}
+						else {
+							if ((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_5)) {
+								main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+								if ((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) {
+									main_region_of_mo_antivalchk_antival_chk_I_CR := _0_rol_1_re_6;
+									_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+									I_CR_h_In_hValue_coid := _0;
+									I_CR_h_In_coid := true;
+								}
+								else {
+									if (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) {
+										main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+										I_CR_h_In_hValue_coid := _1;
+										I_CR_h_In_coid := true;
+									}
+									else {
+										main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+										I_CR_h_In_hValue_coid := _0;
+										I_CR_h_In_coid := true;
+									}
+								}
+							}
+							else {
+								if (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_rol_0_ra_7) && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))) {
+									main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+									if (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) {
+										main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_2;
+										I_CR_h_In_hValue_coid := ERVENYTELEN;
+										I_CR_h_In_coid := true;
+									}
+									else {
+										if (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) {
+											main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+											I_CR_h_In_hValue_coid := _0;
+											I_CR_h_In_coid := true;
+										}
+									}
+								}
+								else {
+									if (((main_region_of_mo_antivalchk_antival_chk_I_CR == _0_rol_1_re_6) && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))) {
+										main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+										if (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) {
+											main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+											I_CR_h_In_hValue_coid := _1;
+											I_CR_h_In_coid := true;
+										}
+										else {
+											if (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) {
+												main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+												I_CR_h_In_hValue_coid := _0;
+												I_CR_h_In_coid := true;
+											}
+										}
+									}
+									else {
+										if ((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_1_2)) {
+											main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+											if (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) {
+												main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+												I_CR_h_In_hValue_coid := _0;
+												I_CR_h_In_coid := true;
+											}
+											else {
+												if ((((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _1)) || (Signals_p_In_pValue_antival_chk_I_CR == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_CR == ERVENYTELEN))) {
+													main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_rol_0_ra_7;
+													_0_rol_1_re_6Timeout_antival_chk_I_CR := 0;
+													I_CR_h_In_hValue_coid := ERVENYTELEN;
+													I_CR_h_In_coid := true;
+												}
+												else {
+													main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_2;
+													I_CR_h_In_hValue_coid := ERVENYTELEN;
+													I_CR_h_In_coid := true;
+												}
+											}
+										}
+										else {
+											if (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibaallapot_8) && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))) {
+												main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+												if (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1) && (true == true))) {
+													main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_1;
+													I_CR_h_In_hValue_coid := ERVENYTELEN;
+													I_CR_h_In_coid := true;
+												}
+												else {
+													if (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0) && (true == true))) {
+														main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_1_2;
+														I_CR_h_In_hValue_coid := ERVENYTELEN;
+														I_CR_h_In_coid := true;
+													}
+												}
+											}
+											else {
+												if (((main_region_of_mo_antivalchk_antival_chk_I_CR == Hibatarolassal_0_rol_1_re_3) && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))) {
+													main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+													if (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) {
+														main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+														I_CR_h_In_hValue_coid := _1;
+														I_CR_h_In_coid := true;
+													}
+													else {
+														if (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) {
+															main_region_of_mo_antivalchk_antival_chk_I_CR := Hibatarolassal_0_1;
+															I_CR_h_In_hValue_coid := ERVENYTELEN;
+															I_CR_h_In_coid := true;
+														}
+													}
+												}
+												else {
+													if (((main_region_of_mo_antivalchk_antival_chk_I_CR == _1_rol_0_ra_4) && (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0)) || ((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))))) {
+														main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+														if (((Signals_p_In_pValue_antival_chk_I_CR == _0) && (Signals_n_In_nValue_antival_chk_I_CR == _1))) {
+															main_region_of_mo_antivalchk_antival_chk_I_CR := _0_5;
+															I_CR_h_In_hValue_coid := _0;
+															I_CR_h_In_coid := true;
+														}
+														else {
+															if (((Signals_p_In_pValue_antival_chk_I_CR == _1) && (Signals_n_In_nValue_antival_chk_I_CR == _0))) {
+																main_region_of_mo_antivalchk_antival_chk_I_CR := _1_0;
+																I_CR_h_In_hValue_coid := _1;
+																I_CR_h_In_coid := true;
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) {
+		main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+		I_FT_e_In_eValue_coid := ERVENYTELEN;
+		I_FT_e_In_coid := true;
+		I_FT_h_In_hValue_coid := ERVENYTELEN;
+		I_FT_h_In_coid := true;
+	}
+	else {
+		if (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_rol_0_ra_4) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) {
+			main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+			I_FT_e_In_eValue_coid := ERVENYTELEN;
+			I_FT_e_In_coid := true;
+			I_FT_h_In_hValue_coid := ERVENYTELEN;
+			I_FT_h_In_coid := true;
+		}
+		else {
+			if (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_rol_1_re_6) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) {
+				main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+				I_FT_e_In_eValue_coid := ERVENYTELEN;
+				I_FT_e_In_coid := true;
+				I_FT_h_In_hValue_coid := ERVENYTELEN;
+				I_FT_h_In_coid := true;
+			}
+			else {
+				if (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7) && (501 <= _0_rol_1_re_6Timeout_antival_chk_I_FT))) {
+					main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+					I_FT_e_In_eValue_coid := ERVENYTELEN;
+					I_FT_e_In_coid := true;
+					I_FT_h_In_hValue_coid := ERVENYTELEN;
+					I_FT_h_In_coid := true;
+				}
+				else {
+					if ((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_0)) {
+						main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+						if ((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) {
+							main_region_of_mo_antivalchk_antival_chk_I_FT := _1_rol_0_ra_4;
+							_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+							I_FT_e_In_eValue_coid := _1;
+							I_FT_e_In_coid := true;
+							I_FT_h_In_hValue_coid := _0;
+							I_FT_h_In_coid := true;
+						}
+						else {
+							if (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) {
+								main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+								I_FT_e_In_eValue_coid := _0;
+								I_FT_e_In_coid := true;
+								I_FT_h_In_hValue_coid := _0;
+								I_FT_h_In_coid := true;
+							}
+							else {
+								main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+								I_FT_e_In_eValue_coid := _1;
+								I_FT_e_In_coid := true;
+								I_FT_h_In_hValue_coid := _1;
+								I_FT_h_In_coid := true;
+							}
+						}
+					}
+					else {
+						if ((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_1)) {
+							main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+							if (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) {
+								main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+								I_FT_e_In_eValue_coid := _1;
+								I_FT_e_In_coid := true;
+								I_FT_h_In_hValue_coid := _1;
+								I_FT_h_In_coid := true;
+							}
+							else {
+								if ((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) {
+									main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_rol_1_re_3;
+									_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+									I_FT_e_In_eValue_coid := ERVENYTELEN;
+									I_FT_e_In_coid := true;
+									I_FT_h_In_hValue_coid := ERVENYTELEN;
+									I_FT_h_In_coid := true;
+								}
+								else {
+									main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_1;
+									I_FT_e_In_eValue_coid := ERVENYTELEN;
+									I_FT_e_In_coid := true;
+									I_FT_h_In_hValue_coid := ERVENYTELEN;
+									I_FT_h_In_coid := true;
+								}
+							}
+						}
+						else {
+							if ((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_5)) {
+								main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+								if ((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) {
+									main_region_of_mo_antivalchk_antival_chk_I_FT := _0_rol_1_re_6;
+									_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+									I_FT_e_In_eValue_coid := _0;
+									I_FT_e_In_coid := true;
+									I_FT_h_In_hValue_coid := _0;
+									I_FT_h_In_coid := true;
+								}
+								else {
+									if (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) {
+										main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+										I_FT_e_In_eValue_coid := _1;
+										I_FT_e_In_coid := true;
+										I_FT_h_In_hValue_coid := _1;
+										I_FT_h_In_coid := true;
+									}
+									else {
+										main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+										I_FT_e_In_eValue_coid := _0;
+										I_FT_e_In_coid := true;
+										I_FT_h_In_hValue_coid := _0;
+										I_FT_h_In_coid := true;
+									}
+								}
+							}
+							else {
+								if (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_rol_0_ra_7) && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))) {
+									main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+									if (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) {
+										main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_2;
+										I_FT_e_In_eValue_coid := ERVENYTELEN;
+										I_FT_e_In_coid := true;
+										I_FT_h_In_hValue_coid := ERVENYTELEN;
+										I_FT_h_In_coid := true;
+									}
+									else {
+										if (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) {
+											main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+											I_FT_e_In_eValue_coid := _0;
+											I_FT_e_In_coid := true;
+											I_FT_h_In_hValue_coid := _0;
+											I_FT_h_In_coid := true;
+										}
+									}
+								}
+								else {
+									if (((main_region_of_mo_antivalchk_antival_chk_I_FT == _0_rol_1_re_6) && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))) {
+										main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+										if (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) {
+											main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+											I_FT_e_In_eValue_coid := _1;
+											I_FT_e_In_coid := true;
+											I_FT_h_In_hValue_coid := _1;
+											I_FT_h_In_coid := true;
+										}
+										else {
+											if (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) {
+												main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+												I_FT_e_In_eValue_coid := _0;
+												I_FT_e_In_coid := true;
+												I_FT_h_In_hValue_coid := _0;
+												I_FT_h_In_coid := true;
+											}
+										}
+									}
+									else {
+										if ((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_1_2)) {
+											main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+											if (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) {
+												main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+												I_FT_e_In_eValue_coid := _0;
+												I_FT_e_In_coid := true;
+												I_FT_h_In_hValue_coid := _0;
+												I_FT_h_In_coid := true;
+											}
+											else {
+												if ((((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _1)) || (Signals_p_In_pValue_antival_chk_I_FT == ERVENYTELEN) || (Signals_n_In_nValue_antival_chk_I_FT == ERVENYTELEN))) {
+													main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_rol_0_ra_7;
+													_0_rol_1_re_6Timeout_antival_chk_I_FT := 0;
+													I_FT_e_In_eValue_coid := ERVENYTELEN;
+													I_FT_e_In_coid := true;
+													I_FT_h_In_hValue_coid := ERVENYTELEN;
+													I_FT_h_In_coid := true;
+												}
+												else {
+													main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_2;
+													I_FT_e_In_eValue_coid := ERVENYTELEN;
+													I_FT_e_In_coid := true;
+													I_FT_h_In_hValue_coid := ERVENYTELEN;
+													I_FT_h_In_coid := true;
+												}
+											}
+										}
+										else {
+											if (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibaallapot_8) && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))) {
+												main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+												if (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1) && (true == true))) {
+													main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_1;
+													I_FT_e_In_eValue_coid := ERVENYTELEN;
+													I_FT_e_In_coid := true;
+													I_FT_h_In_hValue_coid := ERVENYTELEN;
+													I_FT_h_In_coid := true;
+												}
+												else {
+													if (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0) && (true == true))) {
+														main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_1_2;
+														I_FT_e_In_eValue_coid := ERVENYTELEN;
+														I_FT_e_In_coid := true;
+														I_FT_h_In_hValue_coid := ERVENYTELEN;
+														I_FT_h_In_coid := true;
+													}
+												}
+											}
+											else {
+												if (((main_region_of_mo_antivalchk_antival_chk_I_FT == Hibatarolassal_0_rol_1_re_3) && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))) {
+													main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+													if (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) {
+														main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+														I_FT_e_In_eValue_coid := _1;
+														I_FT_e_In_coid := true;
+														I_FT_h_In_hValue_coid := _1;
+														I_FT_h_In_coid := true;
+													}
+													else {
+														if (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) {
+															main_region_of_mo_antivalchk_antival_chk_I_FT := Hibatarolassal_0_1;
+															I_FT_e_In_eValue_coid := ERVENYTELEN;
+															I_FT_e_In_coid := true;
+															I_FT_h_In_hValue_coid := ERVENYTELEN;
+															I_FT_h_In_coid := true;
+														}
+													}
+												}
+												else {
+													if (((main_region_of_mo_antivalchk_antival_chk_I_FT == _1_rol_0_ra_4) && (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0)) || ((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))))) {
+														main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+														if (((Signals_p_In_pValue_antival_chk_I_FT == _0) && (Signals_n_In_nValue_antival_chk_I_FT == _1))) {
+															main_region_of_mo_antivalchk_antival_chk_I_FT := _0_5;
+															I_FT_e_In_eValue_coid := _0;
+															I_FT_e_In_coid := true;
+															I_FT_h_In_hValue_coid := _0;
+															I_FT_h_In_coid := true;
+														}
+														else {
+															if (((Signals_p_In_pValue_antival_chk_I_FT == _1) && (Signals_n_In_nValue_antival_chk_I_FT == _0))) {
+																main_region_of_mo_antivalchk_antival_chk_I_FT := _1_0;
+																I_FT_e_In_eValue_coid := _1;
+																I_FT_e_In_coid := true;
+																I_FT_h_In_hValue_coid := _1;
+																I_FT_h_In_coid := true;
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	__id_Idozites_nem_fut_1_8_Ervenytelen_0__coid := false;
+	__id_Celoldas_idozites_fut_8_1_Oldas_4__coid := false;
+	__id_Ervenytelen_0_2_Idozites_nem_fut_1__coid := false;
+	__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_0_Ervenytelen_0__coid := false;
+	__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_7_Idozites_nem_fut_1__coid := false;
+	__id_Celoldas_idozites_nem_fut_5_5_Celoldas_idozites_fut_8__coid := false;
+	__id_choice_6_in_main_region_of_bJbCOID_allapotgep_4_Celoldas_idozites_nem_fut_5__coid := false;
+	__id_Oldas_4_3_Celoldas_idozites_nem_fut_5__coid := false;
+	Fut_NemFut_coid := false;
+	__id_Tranziens_2_6_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5__coid := false;
+	if (((region_1_in_Celoldas_idozites_nem_fut_5_coid == Ervenytelen_0) && (I_FT_e_In_eValue_coid == _0))) {
+		__id_Ervenytelen_0_2_Idozites_nem_fut_1__coid := true;
+		region_1_in_Celoldas_idozites_nem_fut_5_coid := Idozites_nem_fut_1;
+		RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+	}
+	else {
+		if (((region_1_in_Celoldas_idozites_nem_fut_5_coid == Idozites_nem_fut_1) && (I_FT_h_In_hValue_coid != _0))) {
+			__id_Idozites_nem_fut_1_8_Ervenytelen_0__coid := true;
+			region_1_in_Celoldas_idozites_nem_fut_5_coid := Ervenytelen_0;
+			RS_COID_coid := NERV1;
+		}
+		else {
+			if (((region_1_in_Celoldas_idozites_nem_fut_5_coid == Tranziens_2) && (497 <= P_COIDT_Timeout_coid))) {
+				region_1_in_Celoldas_idozites_nem_fut_5_coid := __Inactive__;
+				__id_Tranziens_2_6_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5__coid := true;
+				choice {
+					assume (I_FT_e_In_eValue_coid == _0);
+					__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_7_Idozites_nem_fut_1__coid := true;
+					region_1_in_Celoldas_idozites_nem_fut_5_coid := Idozites_nem_fut_1;
+					RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+				} or {
+					assume (I_FT_e_In_eValue_coid != _0);
+					__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_0_Ervenytelen_0__coid := true;
+					region_1_in_Celoldas_idozites_nem_fut_5_coid := Ervenytelen_0;
+					RS_COID_coid := NERV1;
+				} or {
+					assume (!(((I_FT_e_In_eValue_coid == _0) || (I_FT_e_In_eValue_coid != _0))));
+				}
+			}
+			else {
+				choice {
+					assume ((main_region_of_bJbCOID_allapotgep_coid == Oldas_4) && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1)));
+					Oldas_Exit_coid := true;
+					__id_Oldas_4_3_Celoldas_idozites_nem_fut_5__coid := true;
+					main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_nem_fut_5;
+					region_1_in_Celoldas_idozites_nem_fut_5_coid := Tranziens_2;
+					StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+					StateMachine_OutPort_O_COID_Out_coid := true;
+					P_COIDT_Timeout_coid := 0;
+					RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+				} or {
+					assume ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1));
+					region_1_in_Celoldas_idozites_nem_fut_5_coid := __Inactive__;
+					__id_Celoldas_idozites_nem_fut_5_5_Celoldas_idozites_fut_8__coid := true;
+					main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_fut_8;
+					P_COIDH_Timeout_coid := 0;
+					StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+					StateMachine_OutPort_O_COID_Out_coid := true;
+					RS_COID_coid := CELOLDAS_IDOZITES;
+				} or {
+					assume ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && (499 <= P_COIDH_Timeout_coid) && (I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1));
+					__id_Celoldas_idozites_fut_8_1_Oldas_4__coid := true;
+					main_region_of_bJbCOID_allapotgep_coid := Oldas_4;
+					StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := ACTIVE;
+					StateMachine_OutPort_O_COID_Out_coid := true;
+					RS_COID_coid := CELOLDAS_IDOZITES;
+				} or {
+					assume ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1)));
+					Fut_NemFut_coid := true;
+					main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_nem_fut_5;
+					region_1_in_Celoldas_idozites_nem_fut_5_coid := Tranziens_2;
+					StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+					StateMachine_OutPort_O_COID_Out_coid := true;
+					P_COIDT_Timeout_coid := 0;
+					RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+				} or {
+					assume (!((((main_region_of_bJbCOID_allapotgep_coid == Oldas_4) && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1))) || ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_nem_fut_5) && (I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1)) || ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && (499 <= P_COIDH_Timeout_coid) && (I_CR_h_In_hValue_coid == _1) && (I_FT_h_In_hValue_coid == _1)) || ((main_region_of_bJbCOID_allapotgep_coid == Celoldas_idozites_fut_8) && ((I_CR_h_In_hValue_coid != _1) || (I_FT_h_In_hValue_coid != _1))))));
+				}
+			}
+		}
+	}
+	I_FT_h_In_coid := false;
+	I_FT_e_In_coid := false;
+	I_CR_h_In_coid := false;
+	Signals_p_In_antival_chk_I_FT := false;
+	Signals_n_In_antival_chk_I_CR := false;
+	Signals_p_In_antival_chk_I_CR := false;
+	Signals_n_In_antival_chk_I_FT := false;
+}
+init {
+	_0_rol_1_re_6Timeout_antival_chk_I_CR := (503 + 503 + 503 + 503);
+	main_region_of_mo_antivalchk_antival_chk_I_CR := __Inactive__;
+	Signals_p_In_antival_chk_I_CR := false;
+	Signals_n_In_antival_chk_I_CR := false;
+	Signals_p_In_pValue_antival_chk_I_CR := ERVENYTELEN;
+	Signals_n_In_nValue_antival_chk_I_CR := ERVENYTELEN;
+	_0_rol_1_re_6Timeout_antival_chk_I_FT := (501 + 501 + 501 + 501);
+	main_region_of_mo_antivalchk_antival_chk_I_FT := __Inactive__;
+	Signals_p_In_antival_chk_I_FT := false;
+	Signals_n_In_antival_chk_I_FT := false;
+	Signals_p_In_pValue_antival_chk_I_FT := ERVENYTELEN;
+	Signals_n_In_nValue_antival_chk_I_FT := ERVENYTELEN;
+	RS_COID_coid := CELOLDAS_IDOZITES;
+	Oldas_Exit_coid := false;
+	__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_0_Ervenytelen_0__coid := false;
+	__id_Celoldas_idozites_fut_8_1_Oldas_4__coid := false;
+	__id_Ervenytelen_0_2_Idozites_nem_fut_1__coid := false;
+	__id_Oldas_4_3_Celoldas_idozites_nem_fut_5__coid := false;
+	__id_choice_6_in_main_region_of_bJbCOID_allapotgep_4_Celoldas_idozites_nem_fut_5__coid := false;
+	__id_Celoldas_idozites_nem_fut_5_5_Celoldas_idozites_fut_8__coid := false;
+	Fut_NemFut_coid := false;
+	__id_Tranziens_2_6_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5__coid := false;
+	__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_7_Idozites_nem_fut_1__coid := false;
+	__id_Idozites_nem_fut_1_8_Ervenytelen_0__coid := false;
+	P_COIDH_Timeout_coid := 499;
+	P_COIDT_Timeout_coid := 497;
+	main_region_of_bJbCOID_allapotgep_coid := __Inactive__;
+	region_1_in_Celoldas_idozites_nem_fut_5_coid := __Inactive__;
+	I_FT_h_In_coid := false;
+	I_CR_h_In_coid := false;
+	I_FT_e_In_coid := false;
+	StateMachine_OutPort_O_COID_Out_coid := false;
+	I_FT_h_In_hValue_coid := ERVENYTELEN;
+	I_CR_h_In_hValue_coid := ERVENYTELEN;
+	I_FT_e_In_eValue_coid := ERVENYTELEN;
+	StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := ACTIVE;
+	main_region_of_mo_antivalchk_antival_chk_I_CR := Hibaallapot_8;
+	main_region_of_mo_antivalchk_antival_chk_I_FT := Hibaallapot_8;
+	__id_choice_6_in_main_region_of_bJbCOID_allapotgep_4_Celoldas_idozites_nem_fut_5__coid := true;
+	main_region_of_bJbCOID_allapotgep_coid := Celoldas_idozites_nem_fut_5;
+	region_1_in_Celoldas_idozites_nem_fut_5_coid := Tranziens_2;
+	I_CR_h_In_hValue_coid := ERVENYTELEN;
+	I_CR_h_In_coid := true;
+	I_FT_e_In_eValue_coid := ERVENYTELEN;
+	I_FT_e_In_coid := true;
+	I_FT_h_In_hValue_coid := ERVENYTELEN;
+	I_FT_h_In_coid := true;
+	StateMachine_OutPort_O_COID_Out_O_COIDValue_coid := PASSIVE;
+	StateMachine_OutPort_O_COID_Out_coid := true;
+	P_COIDT_Timeout_coid := 0;
+	RS_COID_coid := NINCS_CELOLDAS_IDOZITES;
+}
+env {
+	__id_Idozites_nem_fut_1_8_Ervenytelen_0__coid := false;
+	__id_Celoldas_idozites_fut_8_1_Oldas_4__coid := false;
+	__id_Ervenytelen_0_2_Idozites_nem_fut_1__coid := false;
+	__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_0_Ervenytelen_0__coid := false;
+	__id_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5_7_Idozites_nem_fut_1__coid := false;
+	__id_Celoldas_idozites_nem_fut_5_5_Celoldas_idozites_fut_8__coid := false;
+	__id_choice_6_in_main_region_of_bJbCOID_allapotgep_4_Celoldas_idozites_nem_fut_5__coid := false;
+	__id_Oldas_4_3_Celoldas_idozites_nem_fut_5__coid := false;
+	Fut_NemFut_coid := false;
+	__id_Tranziens_2_6_choice_6_in_region_1_in_Celoldas_idozites_nem_fut_5__coid := false;
+	havoc Signals_p_In_antival_chk_I_CR;
+	if (Signals_p_In_antival_chk_I_CR) {
+		havoc Signals_p_In_pValue_antival_chk_I_CR;
+	}
+	havoc Signals_n_In_antival_chk_I_CR;
+	if (Signals_n_In_antival_chk_I_CR) {
+		havoc Signals_n_In_nValue_antival_chk_I_CR;
+	}
+	havoc Signals_p_In_antival_chk_I_FT;
+	if (Signals_p_In_antival_chk_I_FT) {
+		havoc Signals_p_In_pValue_antival_chk_I_FT;
+	}
+	havoc Signals_n_In_antival_chk_I_FT;
+	if (Signals_n_In_antival_chk_I_FT) {
+		havoc Signals_n_In_nValue_antival_chk_I_FT;
+	}
+	Signals_p_In_antival_chk_I_FT := Signals_p_In_antival_chk_I_CR;
+	Signals_n_In_antival_chk_I_FT := Signals_n_In_antival_chk_I_CR;
+	Signals_p_In_pValue_antival_chk_I_FT := Signals_p_In_pValue_antival_chk_I_CR;
+	Signals_n_In_nValue_antival_chk_I_FT := Signals_n_In_nValue_antival_chk_I_CR;
+	StateMachine_OutPort_O_COID_Out_coid := false;
+}

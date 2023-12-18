@@ -1,0 +1,38 @@
+var a : integer = 0
+ctrl var b : integer = 10
+var c : boolean
+var x : clock
+var y : clock
+
+trans {
+    if (a < b-1) {
+        a := a+1;
+        b := b-1;
+        x := 0;
+    } else {
+        y := 0;
+    }
+} or {
+    for i from 0 to b do {
+        a := b-1;
+    }
+} or {
+    choice {
+        if (x < 10 || (y > 10 && b > a)) {
+            b := b+1;
+            x := 0;
+            y := 0;
+        }
+    } or {
+        c := (0 >= x - y);
+        b := 0;
+    }
+}
+
+init {
+    __delay;
+}
+
+env {
+    __delay;
+}

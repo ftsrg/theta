@@ -27,6 +27,7 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
+import hu.bme.mit.theta.xsts.analysis.config.combined.XstsCombinedConfigBuilder;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
@@ -101,6 +102,21 @@ public class XstsCli {
 
 	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
+
+	@Parameter(names = {"--clockreplacement"}, description = "Clock replacement type")
+	ClockImpl clockImpl = ClockImpl.RAT;
+
+	@Parameter(names = {"--combined"}, description = "Run combined abstraction")
+	boolean combinedAlgorithm = false;
+
+	@Parameter(names = {"--combinedsearch"}, description = "Search strategy for combined abstraction")
+	XstsCombinedConfigBuilder.Search combinedSearch = XstsCombinedConfigBuilder.Search.BFS;
+
+	@Parameter(names = {"--clockstrategy"}, description = "Clock strategy for combined abstraction")
+	XstsCombinedConfigBuilder.ClockStrategy clockStrategy = XstsCombinedConfigBuilder.ClockStrategy.NONE;
+
+	@Parameter(names = {"--zonerefinement"}, description = "Refinement strategy for zone states")
+	XstsCombinedConfigBuilder.ZoneRefinement zoneRefinement = XstsCombinedConfigBuilder.ZoneRefinement.BW_ITP;
 
 	private Logger logger;
 
@@ -200,9 +216,18 @@ public class XstsCli {
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
 		try {
-			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
-					.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
-					.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
+			if (combinedAlgorithm) {
+				return new XstsCombinedConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+						.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
+						.search(combinedSearch).predSplit(predSplit).optimizeStmts(optimizeStmts)
+						.clockStrategy(clockStrategy).zoneRefinement(zoneRefinement)
+						.logger(logger).build(xsts);
+			} else {
+				return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+						.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
+						.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).clockImpl(clockImpl)
+						.logger(logger).build(xsts);
+			}
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}

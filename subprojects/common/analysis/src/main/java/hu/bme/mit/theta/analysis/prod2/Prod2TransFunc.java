@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransFunc;
 
-final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec>
+public final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec>
 		implements TransFunc<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> {
 
 	private final TransFunc<S1, ? super A, P1> transFunc1;

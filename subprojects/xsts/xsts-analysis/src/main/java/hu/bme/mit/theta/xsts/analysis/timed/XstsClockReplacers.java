@@ -1,26 +1,21 @@
-package hu.bme.mit.theta.xsts.analysis.clocks;
+package hu.bme.mit.theta.xsts.analysis.timed;
 
 import hu.bme.mit.theta.core.clock.impl.*;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Ordered;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.clocktype.ClockEqExpr;
 import hu.bme.mit.theta.core.type.clocktype.ClockExprs;
 import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.type.XstsPrimitiveType;
 import hu.bme.mit.theta.xsts.type.XstsType;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;

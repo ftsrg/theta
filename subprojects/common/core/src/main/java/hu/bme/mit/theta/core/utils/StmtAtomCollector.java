@@ -102,12 +102,12 @@ public class StmtAtomCollector {
 
 		@Override
 		public Void visit(DelayStmt stmt, Set<Expr<BoolType>> atoms) {
-			throw new UnsupportedOperationException();
+			return null;
 		}
 
 		@Override
 		public Void visit(ResetStmt stmt, Set<Expr<BoolType>> atoms) {
-			throw new UnsupportedOperationException();
+			return null;
 		}
 	}
 

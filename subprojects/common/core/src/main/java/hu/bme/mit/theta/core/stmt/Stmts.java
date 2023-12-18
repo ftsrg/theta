@@ -56,4 +56,12 @@ public final class Stmts {
 		return NonDetStmt.of(stmts);
 	}
 
+	public static IfStmt IfStmt(final Expr<BoolType> cond, final Stmt then) {
+		return IfStmt.of(cond, then);
+	}
+
+	public static IfStmt IfStmt(final Expr<BoolType> cond, final Stmt then, final Stmt elze) {
+		return IfStmt.of(cond, then, elze);
+	}
+
 }
