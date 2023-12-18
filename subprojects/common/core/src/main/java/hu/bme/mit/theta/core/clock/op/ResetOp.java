@@ -17,7 +17,6 @@ package hu.bme.mit.theta.core.clock.op;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.Collection;
@@ -26,26 +25,26 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class ResetOp implements ClockOp {
 
 	private static final int HASH_SEED = 4507;
 
-	private final VarDecl<RatType> varDecl;
+	private final VarDecl<ClockType> varDecl;
 	private final int value;
 
 	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType> stmt = null;
+	private volatile ResetStmt stmt = null;
 
-	ResetOp(final VarDecl<RatType> varDecl, final int value) {
+	ResetOp(final VarDecl<ClockType> varDecl, final int value) {
 		checkArgument(value >= 0);
 		this.varDecl = checkNotNull(varDecl);
 		this.value = value;
 	}
 
-	public VarDecl<RatType> getVar() {
+	public VarDecl<ClockType> getVar() {
 		return varDecl;
 	}
 
@@ -54,15 +53,15 @@ public final class ResetOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return ImmutableSet.of(varDecl);
 	}
 
 	@Override
-	public AssignStmt<RatType> toStmt() {
-		AssignStmt<RatType> result = stmt;
+	public ResetStmt toStmt() {
+		ResetStmt result = stmt;
 		if (result == null) {
-			result = Assign(varDecl, Rat(value, 1));
+			result = ResetStmt.of(varDecl, value);
 			stmt = result;
 		}
 		return result;

@@ -16,19 +16,19 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 final class ZeroVar {
 
-	private static final VarDecl<RatType> ZERO_VAR = Var("_zero", Rat());
+	private static final VarDecl<ClockType> ZERO_VAR = Var("_zero", Clock());
 
 	private ZeroVar() {
 	}
 
-	static VarDecl<RatType> getInstance() {
+	static VarDecl<ClockType> getInstance() {
 		return ZERO_VAR;
 	}
 

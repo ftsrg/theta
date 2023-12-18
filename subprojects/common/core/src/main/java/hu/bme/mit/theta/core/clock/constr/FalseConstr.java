@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class FalseConstr implements ClockConstr {
 
@@ -32,7 +32,7 @@ public final class FalseConstr implements ClockConstr {
 	private static final String CC_LABEL = "false";
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return ImmutableSet.of();
 	}
 

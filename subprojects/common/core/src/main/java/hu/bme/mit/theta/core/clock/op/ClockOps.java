@@ -21,11 +21,13 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -37,9 +39,10 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class ClockOps {
@@ -61,11 +64,11 @@ public final class ClockOps {
 
 	////
 
-	public static CopyOp Copy(final VarDecl<RatType> varDecl, final VarDecl<RatType> value) {
+	public static CopyOp Copy(final VarDecl<ClockType> varDecl, final VarDecl<ClockType> value) {
 		return new CopyOp(varDecl, value);
 	}
 
-	public static FreeOp Free(final VarDecl<RatType> varDecl) {
+	public static FreeOp Free(final VarDecl<ClockType> varDecl) {
 		return new FreeOp(varDecl);
 	}
 
@@ -73,11 +76,11 @@ public final class ClockOps {
 		return new GuardOp(constr);
 	}
 
-	public static ResetOp Reset(final VarDecl<RatType> varDecl, final int value) {
+	public static ResetOp Reset(final VarDecl<ClockType> varDecl, final int value) {
 		return new ResetOp(varDecl, value);
 	}
 
-	public static ShiftOp Shift(final VarDecl<RatType> varDecl, final int offset) {
+	public static ShiftOp Shift(final VarDecl<ClockType> varDecl, final int offset) {
 		return new ShiftOp(varDecl, offset);
 	}
 
@@ -95,7 +98,7 @@ public final class ClockOps {
 
 		@Override
 		public <DeclType extends Type> ClockOp visit(final HavocStmt<DeclType> stmt, final Void param) {
-			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
+			final VarDecl<ClockType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Clock());
 			return Free(varDecl);
 		}
 
@@ -125,9 +128,20 @@ public final class ClockOps {
 		}
 
 		@Override
+		public ClockOp visit(DelayStmt stmt, Void param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ClockOp visit(ResetStmt stmt, Void param) {
+			final VarDecl<ClockType> varDecl = TypeUtils.cast(stmt.getClockDecl(), Clock());
+			return Reset(varDecl, stmt.getValue());
+		}
+
+		@Override
 		public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt, final Void param) {
 
-			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
+			final VarDecl<ClockType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Clock());
 			final Expr<?> expr = stmt.getExpr();
 
 			if (expr instanceof IntLitExpr) {
@@ -140,12 +154,12 @@ public final class ClockOps {
 				final Decl<?> rightDecl = rightRef.getDecl();
 				if (rightDecl instanceof VarDecl) {
 					final VarDecl<?> rightVar = (VarDecl<?>) rightDecl;
-					final VarDecl<RatType> rightRatVar = TypeUtils.cast(rightVar, Rat());
+					final VarDecl<ClockType> rightRatVar = TypeUtils.cast(rightVar, Clock());
 					return Copy(varDecl, rightRatVar);
 				}
 
 			} else if (expr instanceof AddExpr) {
-				final RefExpr<RatType> varRef = varDecl.getRef();
+				final RefExpr<ClockType> varRef = varDecl.getRef();
 				final AddExpr<?> addExpr = (AddExpr<?>) expr;
 				final Expr<?>[] ops = addExpr.getOps().toArray(new Expr<?>[0]);
 
@@ -176,7 +190,7 @@ public final class ClockOps {
 		public ClockOp visit(final AssumeStmt stmt, final Void param) {
 			try {
 				final Expr<BoolType> cond = stmt.getCond();
-				final ClockConstr constr = ClockConstrs.formExpr(cond);
+				final ClockConstr constr = ClockConstrs.fromExpr(cond);
 				return Guard(constr);
 
 			} catch (final IllegalArgumentException e) {

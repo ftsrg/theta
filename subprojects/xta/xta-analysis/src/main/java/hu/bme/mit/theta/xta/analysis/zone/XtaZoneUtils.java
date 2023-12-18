@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Update;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
@@ -266,7 +266,7 @@ public final class XtaZoneUtils {
 		for (final Update update : edge.getUpdates()) {
 			if (update.isClockUpdate()) {
 				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<RatType> varDecl = op.getVar();
+				final VarDecl<ClockType> varDecl = op.getVar();
 				final int value = op.getValue();
 				builder.reset(varDecl, value);
 			}
@@ -277,7 +277,7 @@ public final class XtaZoneUtils {
 		for (final Update update : Lists.reverse(edge.getUpdates())) {
 			if (update.isClockUpdate()) {
 				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<RatType> varDecl = op.getVar();
+				final VarDecl<ClockType> varDecl = op.getVar();
 				final int value = op.getValue();
 				builder.and(Eq(varDecl, value));
 				builder.free(varDecl);

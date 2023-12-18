@@ -19,11 +19,11 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public interface ClockOp {
 
-	Collection<VarDecl<RatType>> getVars();
+	Collection<VarDecl<ClockType>> getVars();
 
 	Stmt toStmt();
 

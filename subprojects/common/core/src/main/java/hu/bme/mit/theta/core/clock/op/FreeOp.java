@@ -25,33 +25,33 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class FreeOp implements ClockOp {
 
 	private static final int HASH_SEED = 2281;
 
-	private final VarDecl<RatType> varDecl;
+	private final VarDecl<ClockType> varDecl;
 
 	private volatile int hashCode = 0;
-	private volatile HavocStmt<RatType> stmt = null;
+	private volatile HavocStmt<ClockType> stmt = null;
 
-	FreeOp(final VarDecl<RatType> varDecl) {
+	FreeOp(final VarDecl<ClockType> varDecl) {
 		this.varDecl = checkNotNull(varDecl);
 	}
 
-	public VarDecl<RatType> getVar() {
+	public VarDecl<ClockType> getVar() {
 		return varDecl;
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return ImmutableSet.of(varDecl);
 	}
 
 	@Override
-	public HavocStmt<RatType> toStmt() {
-		HavocStmt<RatType> result = stmt;
+	public HavocStmt<ClockType> toStmt() {
+		HavocStmt<ClockType> result = stmt;
 		if (result == null) {
 			result = Havoc(varDecl);
 			stmt = result;

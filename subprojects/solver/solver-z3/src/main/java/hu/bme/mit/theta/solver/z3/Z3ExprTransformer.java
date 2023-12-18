@@ -84,6 +84,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.clocktype.*;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
@@ -399,6 +400,18 @@ final class Z3ExprTransformer {
 				.addCase(ArrayLitExpr.class, this::transformArrayLit)
 
 				.addCase(ArrayInitExpr.class, this::transformArrayInit)
+
+				.addCase(ClockLtExpr.class, this::transformClockLt)
+
+				.addCase(ClockLeqExpr.class, this::transformClockLeq)
+
+				.addCase(ClockGtExpr.class, this::transformClockGt)
+
+				.addCase(ClockGeqExpr.class, this::transformClockGeq)
+
+				.addCase(ClockEqExpr.class, this::transformClockEq)
+
+				.addCase(ClockDiffExpr.class, this::transformClockDiff)
 
 				.build();
 	}
@@ -1192,6 +1205,42 @@ final class Z3ExprTransformer {
 		} else {
 			throw new UnsupportedOperationException("Higher order functions are not supported: " + func);
 		}
+	}
+
+	private com.microsoft.z3.Expr transformClockGeq(final ClockGeqExpr expr) {
+		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
+		return context.mkGe(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformClockGt(final ClockGtExpr expr) {
+		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
+		return context.mkGt(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformClockLeq(final ClockLeqExpr expr) {
+		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
+		return context.mkLe(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformClockLt(final ClockLtExpr expr) {
+		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
+		return context.mkLt(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformClockEq(final ClockEqExpr expr) {
+		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
+		return context.mkEq(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformClockDiff(final ClockDiffExpr expr) {
+		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
+		return context.mkSub(leftOpTerm, rightOpTerm);
 	}
 
 	public void reset() {

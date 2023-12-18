@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -61,13 +61,14 @@ public final class ZoneState implements ExprState {
 
 	////
 
-	public static ZoneState region(final Valuation valuation, final Collection<VarDecl<RatType>> vars) {
+	/*
+	public static ZoneState region(final Valuation valuation, final Collection<VarDecl<ClockType>> vars) {
 		checkNotNull(valuation);
-		final Iterable<VarDecl<RatType>> constrainedVars = Iterables.filter(vars, v -> valuation.eval(v).isPresent());
+		final Iterable<VarDecl<ClockType>> constrainedVars = Iterables.filter(vars, v -> valuation.eval(v).isPresent());
 
 		final DBM dbm = DBM.top(constrainedVars);
 
-		for (final VarDecl<RatType> x : constrainedVars) {
+		for (final VarDecl<ClockType> x : constrainedVars) {
 			final RatLitExpr sx = (RatLitExpr) valuation.eval(x).get();
 			final RatLitExpr fx = sx.frac();
 
@@ -78,7 +79,7 @@ public final class ZoneState implements ExprState {
 				dbm.and(Gt(x, sx.floor().intValue()));
 			}
 
-			for (final VarDecl<RatType> y : constrainedVars) {
+			for (final VarDecl<ClockType> y : constrainedVars) {
 				if (x == y) {
 					continue;
 				}
@@ -97,6 +98,7 @@ public final class ZoneState implements ExprState {
 
 		return new ZoneState(dbm);
 	}
+	*/
 
 	public static ZoneState top() {
 		return TOP;
@@ -106,7 +108,7 @@ public final class ZoneState implements ExprState {
 		return BOTTOM;
 	}
 
-	public static ZoneState zero(final Collection<? extends VarDecl<RatType>> clocks) {
+	public static ZoneState zero(final Collection<? extends VarDecl<ClockType>> clocks) {
 		return new ZoneState(DBM.zero(clocks));
 	}
 
@@ -145,7 +147,7 @@ public final class ZoneState implements ExprState {
 		return Builder.transform(this);
 	}
 
-	public Builder project(final Collection<? extends VarDecl<RatType>> clocks) {
+	public Builder project(final Collection<? extends VarDecl<ClockType>> clocks) {
 		checkNotNull(clocks);
 		return Builder.project(this, clocks);
 	}
@@ -165,7 +167,7 @@ public final class ZoneState implements ExprState {
 		return this.dbm.isLeq(that.dbm);
 	}
 
-	public boolean isLeq(final ZoneState that, final Collection<? extends VarDecl<RatType>> activeVars) {
+	public boolean isLeq(final ZoneState that, final Collection<? extends VarDecl<ClockType>> activeVars) {
 		return this.dbm.isLeq(that.dbm, activeVars);
 	}
 
@@ -237,7 +239,7 @@ public final class ZoneState implements ExprState {
 			return new Builder(DBM.copyOf(state.dbm));
 		}
 
-		private static Builder project(final ZoneState state, final Collection<? extends VarDecl<RatType>> clocks) {
+		private static Builder project(final ZoneState state, final Collection<? extends VarDecl<ClockType>> clocks) {
 			return new Builder(DBM.project(state.dbm, clocks));
 		}
 
@@ -274,27 +276,27 @@ public final class ZoneState implements ExprState {
 			return this;
 		}
 
-		public Builder free(final VarDecl<RatType> varDecl) {
+		public Builder free(final VarDecl<ClockType> varDecl) {
 			dbm.free(varDecl);
 			return this;
 		}
 
-		public Builder reset(final VarDecl<RatType> varDecl, final int m) {
+		public Builder reset(final VarDecl<ClockType> varDecl, final int m) {
 			dbm.reset(varDecl, m);
 			return this;
 		}
 
-		public Builder copy(final VarDecl<RatType> lhs, final VarDecl<RatType> rhs) {
+		public Builder copy(final VarDecl<ClockType> lhs, final VarDecl<ClockType> rhs) {
 			dbm.copy(lhs, rhs);
 			return this;
 		}
 
-		public Builder shift(final VarDecl<RatType> varDecl, final int m) {
+		public Builder shift(final VarDecl<ClockType> varDecl, final int m) {
 			dbm.shift(varDecl, m);
 			return this;
 		}
 
-		public Builder norm(final Map<? extends VarDecl<RatType>, ? extends Integer> ceilings) {
+		public Builder norm(final Map<? extends VarDecl<ClockType>, ? extends Integer> ceilings) {
 			dbm.norm(ceilings);
 			return this;
 		}

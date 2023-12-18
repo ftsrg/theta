@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 import java.util.Collection;
 import java.util.Set;
@@ -29,18 +29,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ZonePrec implements Prec {
 
-	private final Set<VarDecl<RatType>> clocks;
+	private final Set<VarDecl<ClockType>> clocks;
 
-	private ZonePrec(final Collection<? extends VarDecl<RatType>> clocks) {
+	private ZonePrec(final Collection<? extends VarDecl<ClockType>> clocks) {
 		checkNotNull(clocks);
 		this.clocks = ImmutableSet.copyOf(clocks);
 	}
 
-	public static ZonePrec of(final Collection<? extends VarDecl<RatType>> clocks) {
+	public static ZonePrec of(final Collection<? extends VarDecl<ClockType>> clocks) {
 		return new ZonePrec(clocks);
 	}
 
-	public Set<VarDecl<RatType>> getVars() {
+	public Set<VarDecl<ClockType>> getVars() {
 		return clocks;
 	}
 

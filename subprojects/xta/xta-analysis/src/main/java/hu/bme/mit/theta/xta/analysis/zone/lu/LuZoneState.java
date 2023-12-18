@@ -20,9 +20,10 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Gt;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Lt;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +41,9 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockExprs;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
 public final class LuZoneState implements ExprState {
@@ -95,28 +98,32 @@ public final class LuZoneState implements ExprState {
 			final Collection<VarDecl<?>> vars = mapping.keySet();
 
 			for (final VarDecl<?> vx : vars) {
-				@SuppressWarnings("unchecked") final VarDecl<RatType> dx = (VarDecl<RatType>) vx;
+				@SuppressWarnings("unchecked") final VarDecl<ClockType> dx = (VarDecl<ClockType>) vx;
 
-				@SuppressWarnings("unchecked") final ParamDecl<RatType> dxp = (ParamDecl<RatType>) mapping.get(dx);
+				@SuppressWarnings("unchecked") final ParamDecl<ClockType> dxp = (ParamDecl<ClockType>) mapping.get(dx);
 
-				final Expr<RatType> x = dx.getRef();
-				final Expr<RatType> xp = dxp.getRef();
+				final Expr<ClockType> x = dx.getRef();
+				final Expr<ClockType> xp = dxp.getRef();
 
 				final Optional<Integer> optLower = boundFunc.getLower(dx);
 				if (optLower.isPresent()) {
 					final int lower = optLower.get();
-					final Expr<RatType> lx = Rat(lower, 1);
+					final Expr<IntType> lx = Int(lower);
 					// x > xp imply xp > L(x)
-					final Expr<BoolType> lowerExpr = Imply(Gt(x, xp), Gt(xp, lx));
+					final Expr<BoolType> xGtXp = Gt(Diff(x, xp), Int(0));
+					final Expr<BoolType> xpGtLx = Gt(xp, lx);
+					final Expr<BoolType> lowerExpr = Imply(xGtXp, xpGtLx);
 					conjuncts.add(lowerExpr);
 				}
 
 				final Optional<Integer> optUpper = boundFunc.getUpper(dx);
 				if (optUpper.isPresent()) {
 					final int upper = optUpper.get();
-					final Expr<RatType> ux = Rat(upper, 1);
+					final Expr<IntType> ux = Int(upper);
 					// x < xp imply x > U(x)
-					final Expr<BoolType> upperExpr = Imply(Lt(x, xp), Gt(x, ux));
+					final Expr<BoolType> xLtXp = Lt(Diff(x, xp), Int(0));
+					final Expr<BoolType> xGtUx = Gt(x, ux);
+					final Expr<BoolType> upperExpr = Imply(xLtXp, xGtUx);
 					conjuncts.add(upperExpr);
 				}
 			}

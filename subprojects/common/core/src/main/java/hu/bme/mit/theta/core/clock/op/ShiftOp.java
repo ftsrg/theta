@@ -27,24 +27,24 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class ShiftOp implements ClockOp {
 
 	private static final int HASH_SEED = 5521;
 
-	private final VarDecl<RatType> varDecl;
+	private final VarDecl<ClockType> varDecl;
 	private final int offset;
 
 	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType> stmt = null;
+	private volatile AssignStmt<ClockType> stmt = null;
 
-	ShiftOp(final VarDecl<RatType> varDecl, final int offset) {
+	ShiftOp(final VarDecl<ClockType> varDecl, final int offset) {
 		this.varDecl = checkNotNull(varDecl);
 		this.offset = offset;
 	}
 
-	public VarDecl<RatType> getVar() {
+	public VarDecl<ClockType> getVar() {
 		return varDecl;
 	}
 
@@ -53,15 +53,16 @@ public final class ShiftOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return ImmutableSet.of(varDecl);
 	}
 
 	@Override
-	public AssignStmt<RatType> toStmt() {
-		AssignStmt<RatType> result = stmt;
+	public AssignStmt<ClockType> toStmt() {
+		AssignStmt<ClockType> result = stmt;
 		if (result == null) {
-			result = Assign(varDecl, Add(varDecl.getRef(), Rat(offset, 1)));
+			// TODO
+			//result = Assign(varDecl, Add(varDecl.getRef(), Rat(offset, 1)));
 			stmt = result;
 		}
 		return result;

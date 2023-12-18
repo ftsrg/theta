@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.clocktype.ClockConstraintExpr;
 
 public abstract class Guard {
 
@@ -31,8 +32,8 @@ public abstract class Guard {
 		return new DataGuard(expr);
 	}
 
-	static ClockGuard clockGuard(final Expr<BoolType> expr) {
-		return new ClockGuard(ClockConstrs.formExpr(expr));
+	static ClockGuard clockGuard(final ClockConstraintExpr expr) {
+		return new ClockGuard(ClockConstrs.fromClockExpr(expr));
 	}
 
 	public abstract Expr<BoolType> toExpr();

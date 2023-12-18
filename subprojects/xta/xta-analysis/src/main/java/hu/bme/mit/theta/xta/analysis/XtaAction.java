@@ -22,11 +22,12 @@ import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.DelayStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.Sync;
@@ -51,14 +52,15 @@ import static hu.bme.mit.theta.core.stmt.Stmts.*;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xta.Sync.Kind.EMIT;
 
 public abstract class XtaAction extends StmtAction {
 
-	private static final VarDecl<RatType> DELAY = Var("_delay", Rat());
+	private static final VarDecl<ClockType> DELAY = Var("_delay", Clock());
 
-	private final Collection<VarDecl<RatType>> clockVars;
+	private final Collection<VarDecl<ClockType>> clockVars;
 	private final List<Loc> sourceLocs;
 
 	private XtaAction(final XtaSystem system, final List<Loc> source) {
@@ -81,7 +83,7 @@ public abstract class XtaAction extends StmtAction {
 		return new BroadcastXtaAction(system, sourceLocs, emitEdge, recvEdges);
 	}
 
-	public Collection<VarDecl<RatType>> getClockVars() {
+	public Collection<VarDecl<ClockType>> getClockVars() {
 		return clockVars;
 	}
 
@@ -551,8 +553,8 @@ public abstract class XtaAction extends StmtAction {
 	}
 
 	private static void addClocksNonNegative(final ImmutableList.Builder<Stmt> builder,
-											 final Collection<VarDecl<RatType>> clocks) {
-		clocks.forEach(c -> builder.add(Assume(Geq(c.getRef(), Rat(0, 1)))));
+											 final Collection<VarDecl<ClockType>> clocks) {
+		clocks.forEach(c -> builder.add(Assume(Geq(c.getRef(), Int(0)))));
 	}
 
 	private static void addInvariants(final ImmutableList.Builder<Stmt> builder, final List<Loc> locs) {
@@ -587,10 +589,8 @@ public abstract class XtaAction extends StmtAction {
 		edge.getUpdates().forEach(u -> builder.add(u.toStmt()));
 	}
 
-	private static void addDelay(final ImmutableList.Builder<Stmt> builder, final Collection<VarDecl<RatType>> clocks) {
-		builder.add(Havoc(DELAY));
-		builder.add(Assume(Geq(DELAY.getRef(), Rat(0, 1))));
-		clocks.forEach(c -> builder.add(Assign(c, Add(c.getRef(), DELAY.getRef()))));
+	private static void addDelay(final ImmutableList.Builder<Stmt> builder, final Collection<VarDecl<ClockType>> clocks) {
+		builder.add(DelayStmt.getInstance());
 	}
 
 	private static boolean shouldApplyDelay(final List<Loc> locs) {

@@ -20,7 +20,7 @@ import java.util.List;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Update;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
@@ -83,7 +83,7 @@ public final class XtaLuZoneUtils {
 		for (final Update update : edge.getUpdates()) {
 			if (update.isClockUpdate()) {
 				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<RatType> varDecl = op.getVar();
+				final VarDecl<ClockType> varDecl = op.getVar();
 				succStateBuilder.remove(varDecl);
 			}
 		}

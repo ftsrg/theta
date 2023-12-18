@@ -25,39 +25,39 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class CopyOp implements ClockOp {
 
 	private static final int HASH_SEED = 1289;
 
-	private final VarDecl<RatType> varDecl;
-	private final VarDecl<RatType> value;
+	private final VarDecl<ClockType> varDecl;
+	private final VarDecl<ClockType> value;
 
 	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType> stmt = null;
+	private volatile AssignStmt<ClockType> stmt = null;
 
-	CopyOp(final VarDecl<RatType> varDecl, final VarDecl<RatType> value) {
+	CopyOp(final VarDecl<ClockType> varDecl, final VarDecl<ClockType> value) {
 		this.varDecl = checkNotNull(varDecl);
 		this.value = checkNotNull(value);
 	}
 
-	public VarDecl<RatType> getVar() {
+	public VarDecl<ClockType> getVar() {
 		return varDecl;
 	}
 
-	public VarDecl<RatType> getValue() {
+	public VarDecl<ClockType> getValue() {
 		return value;
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return ImmutableSet.of(varDecl, value);
 	}
 
 	@Override
-	public AssignStmt<RatType> toStmt() {
-		AssignStmt<RatType> result = stmt;
+	public AssignStmt<ClockType> toStmt() {
+		AssignStmt<ClockType> result = stmt;
 		if (result == null) {
 			result = Assign(varDecl, value.getRef());
 			stmt = result;

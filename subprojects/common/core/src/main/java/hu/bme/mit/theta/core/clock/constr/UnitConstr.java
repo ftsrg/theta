@@ -22,25 +22,25 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public abstract class UnitConstr extends AtomicConstr {
 
-	private final VarDecl<RatType> varDecl;
+	private final VarDecl<ClockType> varDecl;
 
 	private volatile int hashCode = 0;
 
-	protected UnitConstr(final VarDecl<RatType> varDecl, final int bound) {
+	protected UnitConstr(final VarDecl<ClockType> varDecl, final int bound) {
 		super(bound);
 		this.varDecl = checkNotNull(varDecl);
 	}
 
-	public final VarDecl<RatType> getVar() {
+	public final VarDecl<ClockType> getVar() {
 		return varDecl;
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return ImmutableSet.of(varDecl);
 	}
 

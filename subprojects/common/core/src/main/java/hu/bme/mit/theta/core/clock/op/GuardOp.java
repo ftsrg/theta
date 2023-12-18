@@ -24,7 +24,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class GuardOp implements ClockOp {
 
@@ -44,7 +44,7 @@ public final class GuardOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return constr.getVars();
 	}
 

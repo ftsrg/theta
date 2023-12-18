@@ -31,26 +31,26 @@ import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
-final class DbmSignature implements Iterable<VarDecl<RatType>> {
+final class DbmSignature implements Iterable<VarDecl<ClockType>> {
 
-	private final List<VarDecl<RatType>> indexToVar;
-	private final Map<VarDecl<RatType>, Integer> varToIndex;
+	private final List<VarDecl<ClockType>> indexToVar;
+	private final Map<VarDecl<ClockType>, Integer> varToIndex;
 
-	private DbmSignature(final Iterable<? extends VarDecl<RatType>> varDecls) {
+	private DbmSignature(final Iterable<? extends VarDecl<ClockType>> varDecls) {
 		checkNotNull(varDecls);
 
-		final ImmutableList.Builder<VarDecl<RatType>> indexToVarBuilder = ImmutableList.builder();
-		final ImmutableMap.Builder<VarDecl<RatType>, Integer> varToIndexBuilder = ImmutableMap.builder();
+		final ImmutableList.Builder<VarDecl<ClockType>> indexToVarBuilder = ImmutableList.builder();
+		final ImmutableMap.Builder<VarDecl<ClockType>, Integer> varToIndexBuilder = ImmutableMap.builder();
 
-		final Set<VarDecl<RatType>> addedVars = Containers.createSet();
+		final Set<VarDecl<ClockType>> addedVars = Containers.createSet();
 
 		indexToVarBuilder.add(ZeroVar.getInstance());
 		varToIndexBuilder.put(ZeroVar.getInstance(), addedVars.size());
 		addedVars.add(ZeroVar.getInstance());
 
-		for (final VarDecl<RatType> varDecl : varDecls) {
+		for (final VarDecl<ClockType> varDecl : varDecls) {
 			if (!addedVars.contains(varDecl)) {
 				indexToVarBuilder.add(varDecl);
 				varToIndexBuilder.put(varDecl, addedVars.size());
@@ -64,36 +64,36 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 
 	////
 
-	static DbmSignature over(final Iterable<? extends VarDecl<RatType>> vars) {
+	static DbmSignature over(final Iterable<? extends VarDecl<ClockType>> vars) {
 		return new DbmSignature(vars);
 	}
 
 	public static DbmSignature union(final DbmSignature signature1, final DbmSignature signature2) {
 		checkNotNull(signature1);
 		checkNotNull(signature2);
-		final Iterable<VarDecl<RatType>> vars = Sets.union(signature1.toSet(), signature2.toSet());
+		final Iterable<VarDecl<ClockType>> vars = Sets.union(signature1.toSet(), signature2.toSet());
 		return new DbmSignature(vars);
 	}
 
 	public static DbmSignature intersection(final DbmSignature signature1, final DbmSignature signature2) {
 		checkNotNull(signature1);
 		checkNotNull(signature2);
-		final Set<VarDecl<RatType>> vars = Sets.intersection(signature1.toSet(), signature2.toSet());
+		final Set<VarDecl<ClockType>> vars = Sets.intersection(signature1.toSet(), signature2.toSet());
 		return new DbmSignature(vars);
 	}
 
 	////
 
-	public List<VarDecl<RatType>> toList() {
+	public List<VarDecl<ClockType>> toList() {
 		return indexToVar;
 	}
 
-	public Set<VarDecl<RatType>> toSet() {
+	public Set<VarDecl<ClockType>> toSet() {
 		return varToIndex.keySet();
 	}
 
 	@Override
-	public Iterator<VarDecl<RatType>> iterator() {
+	public Iterator<VarDecl<ClockType>> iterator() {
 		return indexToVar.iterator();
 	}
 
@@ -103,17 +103,17 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 		return indexToVar.size();
 	}
 
-	public boolean contains(final VarDecl<RatType> varDecl) {
+	public boolean contains(final VarDecl<ClockType> varDecl) {
 		checkNotNull(varDecl);
 		return varToIndex.containsKey(varDecl);
 	}
 
-	public int indexOf(final VarDecl<RatType> varDecl) {
+	public int indexOf(final VarDecl<ClockType> varDecl) {
 		checkArgument(contains(varDecl), "Unknown variable");
 		return varToIndex.get(varDecl);
 	}
 
-	public VarDecl<RatType> getVar(final int index) {
+	public VarDecl<ClockType> getVar(final int index) {
 		checkElementIndex(index, varToIndex.size());
 		return indexToVar.get(index);
 	}

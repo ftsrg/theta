@@ -15,14 +15,15 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockDiffExpr;
+import hu.bme.mit.theta.core.type.clocktype.ClockEqExpr;
+import hu.bme.mit.theta.core.type.clocktype.ClockExprs;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class DiffEqConstr extends DiffConstr {
 
@@ -30,19 +31,20 @@ public final class DiffEqConstr extends DiffConstr {
 
 	private static final String OPERATOR_LABEL = "=";
 
-	private volatile RatEqExpr expr = null;
+	private volatile ClockEqExpr expr = null;
 
-	DiffEqConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int bound) {
+	DiffEqConstr(final VarDecl<ClockType> leftVar, final VarDecl<ClockType> rightVar, final int bound) {
 		super(leftVar, rightVar, bound);
 	}
 
 	@Override
-	public RatEqExpr toExpr() {
-		RatEqExpr result = expr;
+	public ClockEqExpr toExpr() {
+		ClockEqExpr result = expr;
 		if (result == null) {
-			final RefExpr<RatType> leftRef = getLeftVar().getRef();
-			final RefExpr<RatType> rightRef = getRightVar().getRef();
-			result = Eq(Sub(leftRef, rightRef), Rat(getBound(), 1));
+			final RefExpr<ClockType> leftRef = getLeftVar().getRef();
+			final RefExpr<ClockType> rightRef = getRightVar().getRef();
+			final ClockDiffExpr diffExpr = ClockExprs.Diff(leftRef, rightRef);
+			result = ClockExprs.Eq(diffExpr, Int(getBound()));
 			expr = result;
 		}
 		return result;

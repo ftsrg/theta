@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 final class DiffBounds {
 
@@ -50,7 +50,7 @@ final class DiffBounds {
 
 	////
 
-	public static ClockConstr toConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int b) {
+	public static ClockConstr toConstr(final VarDecl<ClockType> leftVar, final VarDecl<ClockType> rightVar, final int b) {
 		checkNotNull(leftVar);
 		checkNotNull(rightVar);
 

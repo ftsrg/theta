@@ -31,6 +31,8 @@ import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.clocktype.ClockExprs;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
@@ -66,6 +68,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -303,6 +306,11 @@ final class XtaExpression {
 
                 final EqualityOpContext op = Utils.singleElementOf(ctx.fOpers);
                 if (op.fEqOp != null) {
+                    if (leftOp.getType() instanceof ClockType) {
+                        final Expr<ClockType> clock = cast(leftOp, Clock());
+                        final Expr<IntType> value = cast(rightOp, Int());
+                        return ClockExprs.Eq(clock, value);
+                    }
                     return Eq(leftOp, rightOp);
                 } else if (op.fNeqOp != null) {
                     return Neq(leftOp, rightOp);
@@ -321,6 +329,23 @@ final class XtaExpression {
                 final Expr<?> rightOp = ctx.fOps.get(1).accept(this);
 
                 final RelationalOpContext op = Utils.singleElementOf(ctx.fOpers);
+
+                if (leftOp.getType() instanceof ClockType) {
+                    final Expr<ClockType> clock = cast(leftOp, Clock());
+                    final Expr<IntType> value = cast(rightOp, Int());
+                    if (op.fLtOp != null) {
+                        return ClockExprs.Lt(clock, value);
+                    } else if (op.fLeqOp != null) {
+                        return ClockExprs.Leq(clock, value);
+                    } else if (op.fGtOp != null) {
+                        return ClockExprs.Gt(clock, value);
+                    } else if (op.fGeqOp != null) {
+                        return ClockExprs.Geq(clock, value);
+                    } else {
+                        throw new AssertionError();
+                    }
+                }
+
                 if (op.fLtOp != null) {
                     return Lt(leftOp, rightOp);
                 } else if (op.fLeqOp != null) {

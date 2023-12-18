@@ -35,14 +35,14 @@ import hu.bme.mit.theta.core.clock.constr.UnitGtConstr;
 import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr;
 import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class BoundFunc {
 	private static final int HASH_SEED = 2903;
 	private static final BoundFunc TOP = BoundFunc.builder().build();
 
-	private final Map<VarDecl<RatType>, Integer> varToLower;
-	private final Map<VarDecl<RatType>, Integer> varToUpper;
+	private final Map<VarDecl<ClockType>, Integer> varToLower;
+	private final Map<VarDecl<ClockType>, Integer> varToUpper;
 
 	private volatile int hashCode = 0;
 
@@ -51,16 +51,16 @@ public final class BoundFunc {
 		varToUpper = builder.varToUpper;
 	}
 
-	private BoundFunc(final Map<VarDecl<RatType>, Integer> varToLower,
-					  final Map<VarDecl<RatType>, Integer> varToUpper) {
+	private BoundFunc(final Map<VarDecl<ClockType>, Integer> varToLower,
+					  final Map<VarDecl<ClockType>, Integer> varToUpper) {
 		this.varToLower = varToLower;
 		this.varToUpper = varToUpper;
 	}
 
 	public BoundFunc merge(final BoundFunc that) {
 		checkNotNull(that);
-		final Map<VarDecl<RatType>, Integer> varToLower = Containers.createMap(this.varToLower);
-		final Map<VarDecl<RatType>, Integer> varToUpper = Containers.createMap(this.varToUpper);
+		final Map<VarDecl<ClockType>, Integer> varToLower = Containers.createMap(this.varToLower);
+		final Map<VarDecl<ClockType>, Integer> varToUpper = Containers.createMap(this.varToUpper);
 
 		that.varToLower.forEach((c, b) -> varToLower.merge(c, b, Integer::max));
 		that.varToUpper.forEach((c, b) -> varToUpper.merge(c, b, Integer::max));
@@ -80,7 +80,7 @@ public final class BoundFunc {
 		return new Builder(this);
 	}
 
-	public Optional<Integer> getLower(final VarDecl<RatType> varDecl) {
+	public Optional<Integer> getLower(final VarDecl<ClockType> varDecl) {
 		checkNotNull(varDecl);
 		if (varDecl.equals(ZeroVar.getInstance())) {
 			return Optional.of(0);
@@ -89,7 +89,7 @@ public final class BoundFunc {
 		}
 	}
 
-	public Optional<Integer> getUpper(final VarDecl<RatType> varDecl) {
+	public Optional<Integer> getUpper(final VarDecl<ClockType> varDecl) {
 		checkNotNull(varDecl);
 		if (varDecl.equals(ZeroVar.getInstance())) {
 			return Optional.of(0);
@@ -98,11 +98,11 @@ public final class BoundFunc {
 		}
 	}
 
-	public Collection<VarDecl<RatType>> getLowerVars() {
+	public Collection<VarDecl<ClockType>> getLowerVars() {
 		return Collections.unmodifiableCollection(varToLower.keySet());
 	}
 
-	public Collection<VarDecl<RatType>> getUpperVars() {
+	public Collection<VarDecl<ClockType>> getUpperVars() {
 		return Collections.unmodifiableCollection(varToUpper.keySet());
 	}
 
@@ -111,7 +111,7 @@ public final class BoundFunc {
 		return isLeq(this.varToLower, that.varToLower) && isLeq(this.varToUpper, that.varToUpper);
 	}
 
-	private static boolean isLeq(final Map<VarDecl<RatType>, Integer> map1, final Map<VarDecl<RatType>, Integer> map2) {
+	private static boolean isLeq(final Map<VarDecl<ClockType>, Integer> map1, final Map<VarDecl<ClockType>, Integer> map2) {
 		return map1.entrySet().stream()
 				.allMatch(e1 -> map2.containsKey(e1.getKey()) && e1.getValue() <= map2.get(e1.getKey()));
 	}
@@ -155,8 +155,8 @@ public final class BoundFunc {
 
 	public static final class Builder {
 		private volatile BoundFunc boundFunction;
-		private final Map<VarDecl<RatType>, Integer> varToLower;
-		private final Map<VarDecl<RatType>, Integer> varToUpper;
+		private final Map<VarDecl<ClockType>, Integer> varToLower;
+		private final Map<VarDecl<ClockType>, Integer> varToUpper;
 
 		private Builder() {
 			this.boundFunction = null;
@@ -170,7 +170,7 @@ public final class BoundFunc {
 			this.varToUpper = Containers.createMap(boundFunction.varToUpper);
 		}
 
-		public Builder remove(final VarDecl<RatType> varDecl) {
+		public Builder remove(final VarDecl<ClockType> varDecl) {
 			checkState(!isBuilt(), "Already built.");
 			varToLower.remove(varDecl);
 			varToUpper.remove(varDecl);
@@ -205,7 +205,7 @@ public final class BoundFunc {
 
 		@Override
 		public Void visit(final UnitLtConstr constr, final Builder builder) {
-			final VarDecl<RatType> varDecl = constr.getVar();
+			final VarDecl<ClockType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
 			builder.varToUpper.merge(varDecl, bound, Integer::max);
 			return null;
@@ -213,7 +213,7 @@ public final class BoundFunc {
 
 		@Override
 		public Void visit(final UnitLeqConstr constr, final Builder builder) {
-			final VarDecl<RatType> varDecl = constr.getVar();
+			final VarDecl<ClockType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
 			builder.varToUpper.merge(varDecl, bound, Integer::max);
 			return null;
@@ -221,7 +221,7 @@ public final class BoundFunc {
 
 		@Override
 		public Void visit(final UnitGtConstr constr, final Builder builder) {
-			final VarDecl<RatType> varDecl = constr.getVar();
+			final VarDecl<ClockType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
 			builder.varToLower.merge(varDecl, bound, Integer::max);
 			return null;
@@ -229,7 +229,7 @@ public final class BoundFunc {
 
 		@Override
 		public Void visit(final UnitGeqConstr constr, final Builder builder) {
-			final VarDecl<RatType> varDecl = constr.getVar();
+			final VarDecl<ClockType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
 			builder.varToLower.merge(varDecl, bound, Integer::max);
 			return null;
@@ -237,7 +237,7 @@ public final class BoundFunc {
 
 		@Override
 		public Void visit(final UnitEqConstr constr, final Builder builder) {
-			final VarDecl<RatType> varDecl = constr.getVar();
+			final VarDecl<ClockType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
 			builder.varToLower.merge(varDecl, bound, Integer::max);
 			builder.varToUpper.merge(varDecl, bound, Integer::max);

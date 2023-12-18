@@ -22,31 +22,31 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public abstract class DiffConstr extends AtomicConstr {
 
-	private final VarDecl<RatType> leftVar;
-	private final VarDecl<RatType> rightVar;
+	private final VarDecl<ClockType> leftVar;
+	private final VarDecl<ClockType> rightVar;
 
 	private volatile int hashCode = 0;
 
-	protected DiffConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int bound) {
+	protected DiffConstr(final VarDecl<ClockType> leftVar, final VarDecl<ClockType> rightVar, final int bound) {
 		super(bound);
 		this.leftVar = checkNotNull(leftVar);
 		this.rightVar = checkNotNull(rightVar);
 	}
 
-	public final VarDecl<RatType> getLeftVar() {
+	public final VarDecl<ClockType> getLeftVar() {
 		return leftVar;
 	}
 
-	public final VarDecl<RatType> getRightVar() {
+	public final VarDecl<ClockType> getRightVar() {
 		return rightVar;
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
+	public Collection<VarDecl<ClockType>> getVars() {
 		return ImmutableSet.of(leftVar, rightVar);
 	}
 

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -84,6 +85,8 @@ final class Z3TypeTransformer {
 			final com.microsoft.z3.Sort indexSort = toSort(arrayType.getIndexType());
 			final com.microsoft.z3.Sort elemSort = toSort(arrayType.getElemType());
 			return context.mkArraySort(indexSort, elemSort);
+		} else if (type instanceof ClockType) {
+			return realSort;
 		} else {
 			throw new UnsupportedOperationException("Unsupporte type: " + type.getClass().getSimpleName());
 		}

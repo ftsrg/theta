@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
@@ -136,7 +136,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
                     env.define(variable, label);
 					env.define_in_parent(variable, label);
                 } else if (instantiateResult.isClockVariable()) {
-                    final VarDecl<RatType> varDecl = instantiateResult.asClockVariable().getVarDecl();
+                    final VarDecl<ClockType> varDecl = instantiateResult.asClockVariable().getVarDecl();
                     env.define(variable, varDecl);
 					env.define_in_parent(variable, varDecl);
                     process.getSystem().addClockVar(varDecl);

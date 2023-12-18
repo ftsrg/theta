@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class AndConstr implements ClockConstr {
 
@@ -47,8 +47,8 @@ public final class AndConstr implements ClockConstr {
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getVars() {
-		final ImmutableSet.Builder<VarDecl<RatType>> builder = ImmutableSet.builder();
+	public Collection<VarDecl<ClockType>> getVars() {
+		final ImmutableSet.Builder<VarDecl<ClockType>> builder = ImmutableSet.builder();
 		for (final ClockConstr constr : constrs) {
 			builder.addAll(constr.getVars());
 		}

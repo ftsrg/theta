@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser;
@@ -173,7 +173,7 @@ final class XtaSpecification implements Scope {
 						final Label label = instantiateResult.asChannel().getLabel();
 						env.define(variable, label);
 					} else if (instantiateResult.isClockVariable()) {
-						final VarDecl<RatType> varDecl = instantiateResult.asClockVariable().getVarDecl();
+						final VarDecl<ClockType> varDecl = instantiateResult.asClockVariable().getVarDecl();
 						env.define(variable, varDecl);
 						system.addClockVar(varDecl);
 					} else if (instantiateResult.isDataVariable()) {

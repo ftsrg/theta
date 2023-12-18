@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 
@@ -36,12 +36,12 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 public final class XtaSystem {
 	private final List<XtaProcess> processes;
 	private final Collection<VarDecl<?>> dataVars;
-	private final Collection<VarDecl<RatType>> clockVars;
+	private final Collection<VarDecl<ClockType>> clockVars;
 	private final MutableValuation initVal;
 
 	private final List<XtaProcess> unmodProcesses;
 	private final Collection<VarDecl<?>> unmodDataVars;
-	private final Collection<VarDecl<RatType>> unmodClockVars;
+	private final Collection<VarDecl<ClockType>> unmodClockVars;
 
 
 	private Expr<BoolType> prop;
@@ -70,7 +70,7 @@ public final class XtaSystem {
 		return unmodDataVars;
 	}
 
-	public Collection<VarDecl<RatType>> getClockVars() {
+	public Collection<VarDecl<ClockType>> getClockVars() {
 		return unmodClockVars;
 	}
 
@@ -93,7 +93,7 @@ public final class XtaSystem {
 		initVal.put(varDecl, initValue);
 	}
 
-	public void addClockVar(final VarDecl<RatType> varDecl) {
+	public void addClockVar(final VarDecl<ClockType> varDecl) {
 		checkNotNull(varDecl);
 		checkArgument(!dataVars.contains(varDecl));
 		clockVars.add(varDecl);

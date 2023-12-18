@@ -15,13 +15,16 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.clocktype.ClockExprs;
+import hu.bme.mit.theta.core.type.clocktype.ClockLeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class UnitLeqConstr extends UnitConstr {
 
@@ -29,18 +32,18 @@ public final class UnitLeqConstr extends UnitConstr {
 
 	private static final String OPERATOR_LABEL = "<=";
 
-	private volatile RatLeqExpr expr = null;
+	private volatile ClockLeqExpr expr = null;
 
-	UnitLeqConstr(final VarDecl<RatType> clock, final int bound) {
+	UnitLeqConstr(final VarDecl<ClockType> clock, final int bound) {
 		super(clock, bound);
 	}
 
 	@Override
-	public RatLeqExpr toExpr() {
-		RatLeqExpr result = expr;
+	public ClockLeqExpr toExpr() {
+		ClockLeqExpr result = expr;
 		if (result == null) {
-			final RefExpr<RatType> ref = getVar().getRef();
-			result = Leq(ref, Rat(getBound(), 1));
+			final RefExpr<ClockType> ref = getVar().getRef();
+			result = ClockExprs.Leq(ref, Int(getBound()));
 			expr = result;
 		}
 		return result;

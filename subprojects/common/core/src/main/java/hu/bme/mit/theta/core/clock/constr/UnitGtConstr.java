@@ -15,13 +15,16 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.clocktype.ClockExprs;
+import hu.bme.mit.theta.core.type.clocktype.ClockGtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
 
 public final class UnitGtConstr extends UnitConstr {
 
@@ -29,18 +32,18 @@ public final class UnitGtConstr extends UnitConstr {
 
 	private static final String OPERATOR_LABEL = ">";
 
-	private volatile RatGtExpr expr = null;
+	private volatile ClockGtExpr expr = null;
 
-	UnitGtConstr(final VarDecl<RatType> clock, final int bound) {
+	UnitGtConstr(final VarDecl<ClockType> clock, final int bound) {
 		super(clock, bound);
 	}
 
 	@Override
-	public RatGtExpr toExpr() {
-		RatGtExpr result = expr;
+	public ClockGtExpr toExpr() {
+		ClockGtExpr result = expr;
 		if (result == null) {
-			final RefExpr<RatType> ref = getVar().getRef();
-			result = Gt(ref, Rat(getBound(), 1));
+			final RefExpr<ClockType> ref = getVar().getRef();
+			result = ClockExprs.Gt(ref, Int(getBound()));
 			expr = result;
 		}
 		return result;
