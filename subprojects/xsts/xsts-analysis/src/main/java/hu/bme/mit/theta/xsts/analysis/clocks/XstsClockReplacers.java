@@ -54,6 +54,9 @@ public final class XstsClockReplacers {
                 .filter(v -> v.getType() instanceof ClockType)
                 .map(v -> cast(v, Clock()))
                 .toList();
+        if (clockVars.isEmpty()) {
+            return xsts;
+        }
         final ClockImpl<T> clockImpl = clockImplFromClocks.apply(clockVars);
 
         final Map<VarDecl<?>, XstsType<?>> varToType = xsts.getVarToType();

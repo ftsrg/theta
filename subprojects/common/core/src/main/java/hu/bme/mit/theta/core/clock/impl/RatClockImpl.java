@@ -13,8 +13,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 public final class RatClockImpl extends ClockImpl<RatType> {
 
-    private static final Expr<RatType> ZERO = Rat(0, 1);
-
     protected RatClockImpl(final Collection<VarDecl<ClockType>> clocks) {
         super(clocks);
     }
@@ -26,11 +24,6 @@ public final class RatClockImpl extends ClockImpl<RatType> {
     @Override
     protected RatType type() {
         return Rat();
-    }
-
-    @Override
-    protected Expr<RatType> zeroExpr() {
-        return ZERO;
     }
 
     @Override

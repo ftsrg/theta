@@ -13,7 +13,6 @@ import hu.bme.mit.theta.core.type.clocktype.ClockConstraintExpr;
 import hu.bme.mit.theta.core.type.clocktype.ClockDiffExpr;
 import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatExprs;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,12 +21,12 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static java.util.stream.Collectors.toList;
 
 public abstract class ClockImpl<CType extends Ordered<CType>> {
 
     private final HashMap<Decl<ClockType>, VarDecl<CType>> clockLut;
-    private final VarDecl<CType> delayVar;
     private Stmt delayStmt;
 
     protected ClockImpl(final Collection<VarDecl<ClockType>> clocks) {
@@ -37,12 +36,9 @@ public abstract class ClockImpl<CType extends Ordered<CType>> {
             final VarDecl<CType> newVar = Decls.Var(clock.getName(), type());
             clockLut.put(clock, newVar);
         }
-        delayVar = Decls.Var("__delay", type());
     }
 
     protected abstract CType type();
-
-    protected abstract Expr<CType> zeroExpr();
 
     protected abstract Expr<CType> addExpr(final Expr<CType> leftOp, final Expr<CType> rightOp);
 
@@ -116,13 +112,20 @@ public abstract class ClockImpl<CType extends Ordered<CType>> {
             public Stmt visit(DelayStmt stmt, Void param) {
                 if (delayStmt == null) {
                     final List<Stmt> stmts = new ArrayList<>();
+
+                    final VarDecl<CType> delayVar = Decls.Var("__delay", type());
                     stmts.add(HavocStmt.of(delayVar));
-                    stmts.add(AssumeStmt.of(type().Geq(delayVar.getRef(), zeroExpr())));
+
+                    final Expr<IntType> intZeroExpr = Int(0);
+                    final Expr<CType> tZeroExpr = IntType.getInstance().Cast(intZeroExpr, type());
+                    stmts.add(AssumeStmt.of(type().Geq(delayVar.getRef(), tZeroExpr)));
+
                     for (Decl<ClockType> clock : clockLut.keySet()) {
                         final VarDecl<CType> replacementVar = clockLut.get(clock);
                         final Expr<CType> addDelayExpr = addExpr(replacementVar.getRef(), delayVar.getRef());
                         stmts.add(AssignStmt.of(replacementVar, addDelayExpr));
                     }
+
                     delayStmt = SequenceStmt.of(stmts);
                 }
                 return delayStmt;
@@ -131,8 +134,12 @@ public abstract class ClockImpl<CType extends Ordered<CType>> {
             @Override
             public Stmt visit(ResetStmt stmt, Void param) {
                 final VarDecl<ClockType> clockVar = stmt.getClockDecl();
-                final VarDecl<CType> var = clockLut.get(clockVar);
-                return AssignStmt.of(var, zeroExpr());
+                final VarDecl<CType> tVar = clockLut.get(clockVar);
+
+                final Expr<IntType> intValueExpr = Int(stmt.getValue());
+                final Expr<CType> tValueExpr = IntType.getInstance().Cast(intValueExpr, type());
+
+                return AssignStmt.of(tVar, tValueExpr);
             }
 
             private List<Stmt> visitStmts(final List<Stmt> stmts) {

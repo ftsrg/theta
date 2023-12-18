@@ -13,8 +13,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 
 public final class IntClockImpl extends ClockImpl<IntType> {
 
-    private static final Expr<IntType> ZERO = Int(0);
-
     protected IntClockImpl(final Collection<VarDecl<ClockType>> clocks) {
         super(clocks);
     }
@@ -26,11 +24,6 @@ public final class IntClockImpl extends ClockImpl<IntType> {
     @Override
     protected IntType type() {
         return Int();
-    }
-
-    @Override
-    protected Expr<IntType> zeroExpr() {
-        return ZERO;
     }
 
     @Override
