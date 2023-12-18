@@ -147,7 +147,7 @@ public final class LazyXtaAbstractor<SConcr extends State, SAbstr extends State,
                         succStates = analysis.getTransFunc().getSuccStates(state, action, prec);
 
                 for (final LazyState<XtaState<SConcr>, XtaState<SAbstr>> succState : succStates) {
-                    if (lazyStrategy.inconsistentState(succState.getConcrState().getState())) {
+                    if (lazyStrategy.inconsistentState(succState)) {
                         final Collection<ArgNode<LazyState<XtaState<SConcr>, XtaState<SAbstr>>, XtaAction>>
                                 uncoveredNodes = new ArrayList<>();
                         lazyStrategy.disable(node, action, succState, uncoveredNodes);

@@ -88,8 +88,7 @@ public class LazyXcfaAbstractorConfigFactory {
                     searchStrategy,
                     lazyStrategy,
                     lazyAnalysis,
-                    s -> ((XcfaSTState) s).isError(),
-                    createConcrDataLens()
+                    s -> ((XcfaSTState) s).isError()
             );
             return new LazyXcfaAbstractorConfig<>(abstractor, prec);
         }

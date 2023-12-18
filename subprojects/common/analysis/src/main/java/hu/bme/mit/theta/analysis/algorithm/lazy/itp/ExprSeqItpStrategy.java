@@ -62,7 +62,7 @@ public final class ExprSeqItpStrategy<S extends State, A extends Action> extends
 
     @Override
     public void disable(ArgNode<S, A> node, A action, S succState, Collection<ArgNode<S, A>> uncoveredNodes) {
-        assert inconsistentState(lens.get(succState).getConcrState());
+        assert inconsistentState(succState);
         final ExprAction exprAction = actionTransform.apply(action);
         final Expr<BoolType> badExpr = exprAction.toExpr();
         block(node, badExpr, uncoveredNodes);

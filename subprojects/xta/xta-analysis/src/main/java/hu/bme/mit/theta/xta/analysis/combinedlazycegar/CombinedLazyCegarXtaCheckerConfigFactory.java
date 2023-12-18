@@ -143,8 +143,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
                 searchStrategy,
                 lazyStrategy,
                 lazyAnalysis,
-                XtaState::isError,
-                createConcrProd2Lens()
+                XtaState::isError
             ),
             SingleExprTraceRefiner.create(
                 new CombinedLazyCegarExprTraceChecker(

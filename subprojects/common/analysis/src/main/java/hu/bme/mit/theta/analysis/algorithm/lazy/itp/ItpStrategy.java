@@ -55,8 +55,8 @@ public abstract class ItpStrategy<SConcr extends State, SAbstr extends ExprState
     }
 
     @Override
-    public boolean inconsistentState(final SConcr state) {
-        return concretizer.inconsistentConcrState(state);
+    public boolean inconsistentState(final S state) {
+        return concretizer.inconsistentConcrState(lens.get(state).getConcrState());
     }
 
     @Override

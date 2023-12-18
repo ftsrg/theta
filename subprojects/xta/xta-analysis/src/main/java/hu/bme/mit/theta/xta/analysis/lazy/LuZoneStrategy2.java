@@ -51,8 +51,8 @@ public final class LuZoneStrategy2<S extends State> implements LazyStrategy<Zone
     }
 
     @Override
-    public boolean inconsistentState(ZoneState state) {
-        return state.isBottom();
+    public boolean inconsistentState(S state) {
+        return lens.get(state).isBottom();
     }
 
     @Override

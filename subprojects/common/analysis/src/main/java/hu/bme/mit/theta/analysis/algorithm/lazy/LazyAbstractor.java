@@ -12,7 +12,6 @@ import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
-import hu.bme.mit.theta.core.utils.Lens;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,20 +28,17 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
     //private final Function<LazyState<FSConcr, FSAbstr>, ?> projection;
     private final Analysis<LazyState<FSConcr, FSAbstr>, A, P> analysis;
     private final Predicate<FSConcr> isTarget;
-    private final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens;
 
     public LazyAbstractor(final LTS<FSConcr, A> lts,
                           final SearchStrategy searchStrategy,
                           final LazyStrategy<SConcr, SAbstr, LazyState<FSConcr, FSAbstr>, A> lazyStrategy,
                           final LazyAnalysis<FSConcr, FSAbstr, A, P> analysis,
-                          final Predicate<FSConcr> isTarget,
-                          final Lens<LazyState<FSConcr, FSAbstr>, SConcr> concrStateLens) {
+                          final Predicate<FSConcr> isTarget) {
         this.lts = checkNotNull(lts);
         this.searchStrategy = checkNotNull(searchStrategy);
         this.lazyStrategy = checkNotNull(lazyStrategy);
         this.analysis = checkNotNull(analysis);
         this.isTarget = isTarget;
-        this.concrStateLens = concrStateLens;
     }
 
     @Override
@@ -53,9 +49,9 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
     @Override
     public AbstractorResult check(ARG<LazyState<FSConcr, FSAbstr>, A> arg, P prec) {
         Waitlist<ArgNode<LazyState<FSConcr, FSAbstr>, A>> waiting = searchStrategy.createWaitlist();
-        if (arg.getNodes().findAny().isEmpty()) {
-            final Collection<? extends LazyState<FSConcr, FSAbstr>>
-                    initStates = analysis.getInitFunc().getInitStates(prec);
+        final Collection<? extends LazyState<FSConcr, FSAbstr>>
+                initStates = analysis.getInitFunc().getInitStates(prec);
+        if (arg.getInitNodes().count() < initStates.size()) {
             for (final LazyState<FSConcr, FSAbstr> initState : initStates) {
                 final boolean target = isTarget.test(initState.getConcrState());
                 arg.createInitNode(initState, target);
@@ -151,14 +147,16 @@ public final class LazyAbstractor<SConcr extends State, SAbstr extends State, FS
             stats.startExpanding();
             final LazyState<FSConcr, FSAbstr> state = node.getState();
 
-            for (final A action : lts.getEnabledActionsFor(state.getConcrState())) {
+            final Collection<A> enabledActions = lts.getEnabledActionsFor(state.getConcrState());
+
+            for (final A action : enabledActions) {
                 final Collection<? extends LazyState<FSConcr, FSAbstr>>
                         succStates = analysis.getTransFunc().getSuccStates(state, action, prec);
 
                 for (final LazyState<FSConcr, FSAbstr> succState : succStates) {
                     if (node.getSuccNodes().noneMatch(n -> n.getInEdge().get().getAction().equals(action)
                             && n.getState().equals(succState))) {
-                        if (lazyStrategy.inconsistentState(concrStateLens.get(succState))) {
+                        if (lazyStrategy.inconsistentState(succState)) {
                             final Collection<ArgNode<LazyState<FSConcr, FSAbstr>, A>>
                                     uncoveredNodes = new ArrayList<>();
                             lazyStrategy.disable(node, action, succState, uncoveredNodes);

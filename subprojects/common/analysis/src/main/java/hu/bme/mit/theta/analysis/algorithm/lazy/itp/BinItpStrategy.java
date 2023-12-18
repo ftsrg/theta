@@ -42,7 +42,7 @@ public abstract class BinItpStrategy<SConcr extends State, SAbstr extends ExprSt
 
     @Override
     public final void disable(final ArgNode<S, A> node, final A action, final S succState, final Collection<ArgNode<S, A>> uncoveredNodes) {
-        assert inconsistentState(lens.get(succState).getConcrState());
+        assert inconsistentState(succState);
         final SItp top = interpolator.toItpDom(abstrLattice.top());
         final Collection<? extends SItp> badStates = invTransFunc.getPreStates(top, action, prec);
         badStates.forEach(B -> block(node, B, uncoveredNodes));

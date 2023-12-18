@@ -44,8 +44,8 @@ public final class BasicLazyStrategy<SConcr extends State, S extends State, A ex
     }
 
     @Override
-    public boolean inconsistentState(SConcr state) {
-        return concretizer.inconsistentConcrState(state);
+    public boolean inconsistentState(S state) {
+        return concretizer.inconsistentConcrState(lens.get(state));
     }
 
     @Override

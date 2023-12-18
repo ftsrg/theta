@@ -16,7 +16,7 @@ public interface LazyStrategy<SConcr extends State, SAbstr extends State, S exte
 
     PartialOrd<SAbstr> getPartialOrd();
 
-    boolean inconsistentState(final SConcr state);
+    boolean inconsistentState(final S state);
 
     boolean mightCover(final ArgNode<S, A> coveree, final ArgNode<S, A> coverer);
 

@@ -52,14 +52,14 @@ public final class Prod2LazyStrategy<SConcr1 extends State, SConcr2 extends Stat
     }
 
     @Override
-    public boolean inconsistentState(Prod2State<SConcr1, SConcr2> state) {
+    public boolean inconsistentState(S state) {
         return state.isBottom() ||
-                strategy1.inconsistentState(state.getState1()) || strategy2.inconsistentState(state.getState2());
+                strategy2.inconsistentState(state) || strategy1.inconsistentState(state);
     }
 
     @Override
     public boolean mightCover(ArgNode<S, A> coveree, ArgNode<S, A> coverer) {
-        return strategy1.mightCover(coveree, coverer) && strategy2.mightCover(coveree, coverer);
+        return strategy2.mightCover(coveree, coverer) && strategy1.mightCover(coveree, coverer);
     }
 
     @Override
@@ -74,11 +74,11 @@ public final class Prod2LazyStrategy<SConcr1 extends State, SConcr2 extends Stat
 
     @Override
     public void disable(ArgNode<S, A> node, A action, S succState, Collection<ArgNode<S, A>> uncoveredNodes) {
+        assert inconsistentState(succState);
         Prod2State<SConcr1, SConcr2> state = lens.get(succState);
-        assert inconsistentState(state);
-        if (state.isBottom1() || (!state.isBottom2() && strategy1.inconsistentState(state.getState1()))) {
+        if (state.isBottom1() || (!state.isBottom2() && strategy1.inconsistentState(succState))) {
             strategy1.disable(node, action, succState, uncoveredNodes);
-        } else if (strategy2.inconsistentState(state.getState2())) {
+        } else if (strategy2.inconsistentState(succState)) {
             strategy2.disable(node, action, succState, uncoveredNodes);
         } else {
             throw new AssertionError();

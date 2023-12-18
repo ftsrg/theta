@@ -94,8 +94,7 @@ public final class LazyXtaAbstractorConfigFactory {
                     searchStrategy,
                     lazyStrategy,
                     lazyAnalysis,
-                    s -> ((XtaState) s).isError(),
-                    createConcrProd2Lens()
+                    s -> ((XtaState) s).isError()
             );
             return new LazyXtaAbstractorConfig<>(abstractor, prec);
         }

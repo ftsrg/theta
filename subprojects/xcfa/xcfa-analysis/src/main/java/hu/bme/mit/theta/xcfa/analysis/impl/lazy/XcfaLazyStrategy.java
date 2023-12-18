@@ -36,7 +36,7 @@ public  class XcfaLazyStrategy<DConcr extends ExprState, DAbstr extends ExprStat
     }
 
     @Override
-    public boolean inconsistentState(DConcr state) {
+    public boolean inconsistentState(LazyState<XcfaState<DConcr>, XcfaState<DAbstr>> state) {
         return lazyStrategy.inconsistentState(state);
     }
 
