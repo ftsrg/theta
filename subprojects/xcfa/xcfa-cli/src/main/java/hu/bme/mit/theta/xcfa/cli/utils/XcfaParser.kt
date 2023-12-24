@@ -20,6 +20,7 @@ import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
+import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
@@ -55,6 +56,8 @@ fun getXcfa(config: XcfaConfig<*,*>, parseContext: ParseContext, logger: Logger,
             }
 
             InputType.LLVM -> XcfaUtils.fromFile(config.inputConfig.input!!, ArithmeticType.efficient)
+
+            InputType.LITMUS -> LitmusInterpreter.getXcfa(config.inputConfig.input!!)
 
             InputType.JSON -> {
                 val gson = getGson()

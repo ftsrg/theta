@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Neq
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -44,7 +45,8 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.stream.Collectors
 
-fun getBoundedChecker(xcfa: XCFA, config: XcfaConfig<*, *>,
+fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
+    config: XcfaConfig<*, *>,
     logger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
 
     val boundedConfig = config.backendConfig.specConfig as BoundedConfig

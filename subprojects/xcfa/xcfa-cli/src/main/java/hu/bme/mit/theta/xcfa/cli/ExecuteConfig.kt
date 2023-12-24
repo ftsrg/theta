@@ -27,11 +27,13 @@ import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
+import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -60,13 +62,13 @@ fun runConfig(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger): Sa
 
     validateInputOptions(config, logger, uniqueLogger)
 
-    val (xcfa, parseContext) = frontend(config, logger, uniqueLogger)
+    val (xcfa, mcm, parseContext) = frontend(config, logger, uniqueLogger)
 
-    preVerificationLogging(xcfa, parseContext, config, logger, uniqueLogger)
+    preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-    val result = backend(xcfa, parseContext, config, logger, uniqueLogger)
+    val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-    postVerificationLogging(result, parseContext, config, logger, uniqueLogger)
+    postVerificationLogging(result, mcm, parseContext, config, logger, uniqueLogger)
 
     return result
 }
@@ -99,11 +101,10 @@ private fun validateInputOptions(config: XcfaConfig<*,*>, logger: Logger, unique
     // TODO add more validation options
 }
 
-
-private fun frontend(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger): Pair<XCFA, ParseContext> {
+fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Triple<XCFA, MCM, ParseContext> {
     if(config.inputConfig.xcfaWCtx != null) {
         val xcfa = config.inputConfig.xcfaWCtx!!.first
-        ConeOfInfluence = if (config.inputConfig.xcfaWCtx!!.second.multiThreading) {
+        ConeOfInfluence = if (config.inputConfig.xcfaWCtx!!.third.multiThreading) {
             XcfaCoiMultiThread(xcfa)
         } else {
             XcfaCoiSingleThread(xcfa)
@@ -125,6 +126,11 @@ private fun frontend(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logg
     }
 
     val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
+    val mcm = if (config.inputConfig.catFile != null) {
+        CatDslManager.createMCM(config.inputConfig.catFile!!)
+    } else {
+        emptySet()
+    }
 
     ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
 
@@ -134,10 +140,11 @@ private fun frontend(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logg
 
     logger.write(Logger.Level.RESULT, "ParsingResult Success\n")
 
-    return Pair(xcfa, parseContext)
+    return Triple(xcfa, mcm, parseContext)
 }
 
-private fun backend(xcfa: XCFA, parseContext: ParseContext, config: XcfaConfig<*,*>, logger: Logger,
+private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
+    logger: Logger,
     uniqueLogger: Logger): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
         SafetyResult.unknown()
@@ -150,7 +157,7 @@ private fun backend(xcfa: XCFA, parseContext: ParseContext, config: XcfaConfig<*
             logger.write(Logger.Level.INFO,
                 "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n")
 
-            val checker = getChecker(xcfa, config, parseContext, logger, uniqueLogger)
+            val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
             val result = exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug) {
                 checker.check()
             }
@@ -164,7 +171,8 @@ private fun backend(xcfa: XCFA, parseContext: ParseContext, config: XcfaConfig<*
         }
     }
 
-private fun preVerificationLogging(xcfa: XCFA, parseContext: ParseContext, config: XcfaConfig<*,*>, logger: Logger,
+private fun preVerificationLogging(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
+    logger: Logger,
     uniqueLogger: Logger) {
     val resultFolder = config.outputConfig.resultFolder
     resultFolder.mkdirs()
@@ -193,8 +201,8 @@ private fun preVerificationLogging(xcfa: XCFA, parseContext: ParseContext, confi
     }
 }
 
-private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, parseContext: ParseContext,
-    config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger) {
+private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
+    parseContext: ParseContext, config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
 
     // we only want to log the files if the current configuration is not --in-process or portfolio
     if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {

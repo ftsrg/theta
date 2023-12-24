@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -27,16 +28,17 @@ import hu.bme.mit.theta.xcfa.cli.params.Backend
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getChecker(xcfa: XCFA, config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger,
+fun getChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: ParseContext,
+    logger: Logger,
     uniqueLogger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> =
     if (config.backendConfig.inProcess) {
         InProcessChecker(xcfa, config, parseContext, logger)
     } else {
         when (config.backendConfig.backend) {
-            Backend.CEGAR -> getCegarChecker(xcfa, config, logger)
-            Backend.BOUNDED -> getBoundedChecker(xcfa, config, logger)
+            Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
+            Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, config, logger)
             Backend.LAZY -> TODO()
-            Backend.PORTFOLIO -> getPortfolioChecker(xcfa, config, parseContext, logger, uniqueLogger)
+            Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
             Backend.NONE -> SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> { _ -> SafetyResult.unknown() as SafetyResult<XcfaState<*>, XcfaAction> }
         }
     }

@@ -54,7 +54,8 @@ enum class InputType {
     LLVM,
     JSON,
     DSL,
-    CHC
+    CHC,
+    LITMUS,
 }
 
 enum class Backend {

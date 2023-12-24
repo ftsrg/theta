@@ -35,6 +35,9 @@ dependencies {
     implementation(project(":theta-c-frontend"))
     implementation(project(":theta-grammar"))
     implementation(project(":theta-llvm2xcfa"))
+    implementation(project(":theta-litmus2xcfa"))
+    implementation(project(":theta-graph-solver"))
+    implementation(project(":theta-cat"))
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
 }

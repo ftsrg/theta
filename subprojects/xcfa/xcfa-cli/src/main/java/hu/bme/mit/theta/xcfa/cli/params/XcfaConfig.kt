@@ -22,6 +22,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -65,13 +66,16 @@ data class InputConfig(
     @Parameter(names = ["--input"], description = "Path of the input model", required = true)
     var input: File? = null,
 
+    @Parameter(names = ["--cat"], description = "Path of the cat model")
+    var catFile: File? = null,
+
     @Parameter(names = ["--parse-ctx"],
         description = "Path of the parse context JSON (may contain additional metadata)")
     var parseCtx: File? = null,
 
     @Parameter(names = ["--xcfa-w-ctx"],
         description = "XCFA and ParseContext (will overwrite --input and --parse-ctx when given)")
-    var xcfaWCtx: Pair<XCFA, ParseContext>? = null,
+    var xcfaWCtx: Triple<XCFA, MCM, ParseContext>? = null,
 
     @Parameter(names = ["--property-file"], description = "Path of the property file (will overwrite --property when given)")
     var propertyFile: File? = null,
@@ -100,6 +104,7 @@ data class FrontendConfig<T: SpecFrontendConfig>(
             InputType.LLVM -> null
             InputType.JSON -> null
             InputType.DSL -> null
+            InputType.LITMUS -> null
             InputType.CHC -> CHCFrontendConfig() as T
         }
     }

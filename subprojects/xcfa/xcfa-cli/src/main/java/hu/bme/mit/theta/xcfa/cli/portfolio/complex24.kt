@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.params.*
@@ -31,6 +32,7 @@ import java.nio.file.Paths
 
 fun complexPortfolio24(
     xcfa: XCFA,
+    mcm: MCM,
     parseContext: ParseContext,
     portfolioConfig: XcfaConfig<*, *>,
     logger: Logger,
@@ -41,7 +43,7 @@ fun complexPortfolio24(
     var baseConfig = XcfaConfig(
         inputConfig = InputConfig(
             input = null,
-            xcfaWCtx = Pair(xcfa, parseContext),
+            xcfaWCtx = Triple(xcfa, mcm, parseContext),
             propertyFile = null,
             property = portfolioConfig.inputConfig.property),
         frontendConfig = FrontendConfig(

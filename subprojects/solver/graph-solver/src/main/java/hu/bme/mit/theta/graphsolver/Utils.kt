@@ -26,6 +26,7 @@ fun GraphConstraint.collectSubRelations(): Set<GraphPattern> = when (this) {
     is Irreflexive -> this.constrainedRule.collectSubRelations()
     is Nonempty -> this.constrainedRule.collectSubRelations()
     is Reflexive -> this.constrainedRule.collectSubRelations()
+    else -> error("") // this should not be necessary, but the compiler complains otherwise
 }
 
 fun GraphPattern.collectSubRelations(): Set<GraphPattern> = when (this) {

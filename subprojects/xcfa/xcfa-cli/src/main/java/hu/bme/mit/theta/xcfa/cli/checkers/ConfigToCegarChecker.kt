@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
@@ -40,7 +41,8 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getCegarChecker(xcfa: XCFA, config: XcfaConfig<*, *>,
+fun getCegarChecker(xcfa: XCFA, mcm: MCM,
+    config: XcfaConfig<*, *>,
     logger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
     val cegarConfig = config.backendConfig.specConfig as CegarConfig
     val abstractionSolverFactory: SolverFactory = getSolver(cegarConfig.abstractorConfig.abstractionSolver,
