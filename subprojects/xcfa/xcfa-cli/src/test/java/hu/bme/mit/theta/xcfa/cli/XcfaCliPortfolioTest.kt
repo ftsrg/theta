@@ -19,7 +19,10 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.cli.params.SpecBackendConfig
+import hu.bme.mit.theta.xcfa.cli.params.SpecFrontendConfig
+import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.STM
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
@@ -37,27 +40,21 @@ class XcfaCliPortfolioTest {
         @JvmStatic
         fun portfolios(): Stream<Arguments> {
             return Stream.of(
-                Arguments.of({ xcfaTyped: XCFA,
-                    cFileNameTyped: String,
-                    loggerTyped: Logger,
-                    smtHomeTyped: String,
-                    traitsTyped: VerificationTraits,
-                    propertyTyped: ErrorDetection,
-                    parseContextTyped: ParseContext,
-                    argdebug: Boolean ->
-                    complexPortfolio23(xcfaTyped, cFileNameTyped, loggerTyped, smtHomeTyped, traitsTyped, propertyTyped,
-                        parseContextTyped, true, argdebug)
+                Arguments.of({ xcfa: XCFA,
+                    mcm: MCM,
+                    parseContext: ParseContext,
+                    portfolioConfig: XcfaConfig<*, *>,
+                    logger: Logger,
+                    uniqueLogger: Logger ->
+                    complexPortfolio23(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
                 }),
-                Arguments.of({ xcfaTyped: XCFA,
-                    cFileNameTyped: String,
-                    loggerTyped: Logger,
-                    smtHomeTyped: String,
-                    traitsTyped: VerificationTraits,
-                    propertyTyped: ErrorDetection,
-                    parseContextTyped: ParseContext,
-                    argdebug: Boolean ->
-                    complexPortfolio24(xcfaTyped, cFileNameTyped, loggerTyped, smtHomeTyped, traitsTyped, propertyTyped,
-                        parseContextTyped, true, argdebug)
+                Arguments.of({ xcfa: XCFA,
+                    mcm: MCM,
+                    parseContext: ParseContext,
+                    portfolioConfig: XcfaConfig<*, *>,
+                    logger: Logger,
+                    uniqueLogger: Logger ->
+                    complexPortfolio24(xcfa, mcm, parseContext, portfolioConfig, logger, uniqueLogger)
                 }),
             )
         }
@@ -66,20 +63,17 @@ class XcfaCliPortfolioTest {
 
     @ParameterizedTest
     @MethodSource("portfolios")
-    fun testPortfolio(portfolio: (xcfaTyped: XCFA,
-        cFileNameTyped: String,
-        loggerTyped: Logger,
-        smtHomeTyped: String,
-        traitsTyped: VerificationTraits,
-        propertyTyped: ErrorDetection,
-        parseContextTyped: ParseContext,
-        argdebug: Boolean) -> STM) {
+    fun testPortfolio(portfolio: (xcfa: XCFA,
+        mcm: MCM,
+        parseContext: ParseContext,
+        portfolioConfig: XcfaConfig<*, *>,
+        logger: Logger,
+        uniqueLogger: Logger) -> STM) {
 
         for (value in ArithmeticTrait.values()) {
 
-            val stm = portfolio(XCFA("name", setOf()), "", NullLogger.getInstance(), "",
-                VerificationTraits(arithmeticTraits = setOf(value)),
-                ErrorDetection.ERROR_LOCATION, ParseContext(), false)
+            val stm = portfolio(XCFA("name", setOf()), emptySet(), ParseContext(),
+                XcfaConfig<SpecFrontendConfig, SpecBackendConfig>(), NullLogger.getInstance(), NullLogger.getInstance())
 
             Assertions.assertTrue(stm.visualize().isNotEmpty())
         }

@@ -170,7 +170,7 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only", "--stacktrace",
+            "--backend", "NONE", "--stacktrace",
             "--debug"
         ))
     }
@@ -182,7 +182,7 @@ class XcfaCliParseTest {
 //            main(arrayOf(
 //                "--input-type", "LLVM",
 //                "--input", javaClass.getResource(filePath)!!.path,
-//                "--parse-only", "--stacktrace"
+//                "--backend", "NONE", "--stacktrace"
 //            ))
 //        }
 //    }
@@ -194,7 +194,7 @@ class XcfaCliParseTest {
             "--input-type", "CHC",
             "--chc-transformation", chcTransformation.toString(),
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only",
+            "--backend", "NONE",
             "--stacktrace",
             "--debug"
         ))
@@ -206,7 +206,7 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "DSL",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only",
+            "--backend", "NONE",
             "--stacktrace",
             "--debug"
         ))
@@ -218,7 +218,7 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "JSON",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only",
+            "--backend", "NONE",
             "--stacktrace",
             "--debug"
         ))
@@ -231,7 +231,7 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only",
+            "--backend", "NONE",
             "--stacktrace",
             "--output-results",
             "--output-directory", temp.toAbsolutePath().toString(),
@@ -241,7 +241,7 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "JSON",
             "--input", xcfaJson.absolutePath.toString(),
-            "--parse-only",
+            "--backend", "NONE",
             "--stacktrace",
             "--debug"
         ))
@@ -255,7 +255,7 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
-            "--parse-only",
+            "--backend", "NONE",
             "--stacktrace",
             "--output-results",
             "--output-directory", temp.toAbsolutePath().toString(),
@@ -265,7 +265,7 @@ class XcfaCliParseTest {
         main(arrayOf(
             "--input-type", "C",
             "--input", xcfaC.absolutePath.toString(),
-            "--parse-only",
+            "--backend", "NONE",
             "--stacktrace",
             "--debug"
         ))

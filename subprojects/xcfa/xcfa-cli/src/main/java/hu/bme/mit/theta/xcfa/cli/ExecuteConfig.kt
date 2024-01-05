@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -174,67 +174,74 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
 private fun preVerificationLogging(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
     logger: Logger,
     uniqueLogger: Logger) {
-    val resultFolder = config.outputConfig.resultFolder
-    resultFolder.mkdirs()
+    try {
+        val resultFolder = config.outputConfig.resultFolder
+        resultFolder.mkdirs()
 
-    logger.write(Logger.Level.INFO,
-        "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n")
+        logger.write(Logger.Level.INFO,
+            "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n")
 
-    if (!config.outputConfig.xcfaOutputConfig.disable) {
-        val xcfaDotFile = File(resultFolder, "xcfa.dot")
-        xcfaDotFile.writeText(xcfa.toDot())
+        if (!config.outputConfig.xcfaOutputConfig.disable) {
+            val xcfaDotFile = File(resultFolder, "xcfa.dot")
+            xcfaDotFile.writeText(xcfa.toDot())
 
-        val xcfaJsonFile = File(resultFolder, "xcfa.json")
-        val uglyJson = getGson(xcfa).toJson(xcfa)
-        val create = GsonBuilder().setPrettyPrinting().create()
-        xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
-    }
-
-    if (!config.outputConfig.cOutputConfig.disable) {
-        try {
-            val xcfaCFile = File(resultFolder, "xcfa.c")
-            xcfaCFile.writeText(xcfa.toC(parseContext, config.outputConfig.cOutputConfig.useArr,
-                config.outputConfig.cOutputConfig.useExArr, config.outputConfig.cOutputConfig.useRange))
-        } catch (e: Throwable) {
-            logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
+            val xcfaJsonFile = File(resultFolder, "xcfa.json")
+            val uglyJson = getGson(xcfa).toJson(xcfa)
+            val create = GsonBuilder().setPrettyPrinting().create()
+            xcfaJsonFile.writeText(create.toJson(JsonParser.parseString(uglyJson)))
         }
+
+        if (!config.outputConfig.cOutputConfig.disable) {
+            try {
+                val xcfaCFile = File(resultFolder, "xcfa.c")
+                xcfaCFile.writeText(xcfa.toC(parseContext, config.outputConfig.cOutputConfig.useArr,
+                    config.outputConfig.cOutputConfig.useExArr, config.outputConfig.cOutputConfig.useRange))
+            } catch (e: Throwable) {
+                logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
+            }
+        }
+    } catch (e: Throwable) {
+        logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
     }
 }
 
 private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
     parseContext: ParseContext, config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
-
-    // we only want to log the files if the current configuration is not --in-process or portfolio
-    if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
-        return
-    }
-
-    val resultFolder = config.outputConfig.resultFolder
-    resultFolder.mkdirs()
-
-    logger.write(Logger.Level.INFO,
-        "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n")
-
-    if (!config.outputConfig.argConfig.disable && safetyResult.arg != null) {
-        val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
-        val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
-        argFile.writeText(GraphvizWriter.getInstance().writeString(g))
-    }
-
-    if (!config.outputConfig.witnessConfig.disable) {
-        if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
-            val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?,
-                getSolver(config.outputConfig.witnessConfig.concretizerSolver,
-                    config.outputConfig.witnessConfig.validateConcretizerSolver))
-
-            val traceFile = File(resultFolder, "trace.dot")
-            val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
-            traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+    try {
+        // we only want to log the files if the current configuration is not --in-process or portfolio
+        if (config.backendConfig.inProcess || config.backendConfig.backend == Backend.PORTFOLIO) {
+            return
         }
-        val witnessFile = File(resultFolder, "witness.graphml")
-        XcfaWitnessWriter().writeWitness(safetyResult, config.inputConfig.input!!,
-            getSolver(config.outputConfig.witnessConfig.concretizerSolver,
-                config.outputConfig.witnessConfig.validateConcretizerSolver), parseContext, witnessFile)
+
+        val resultFolder = config.outputConfig.resultFolder
+        resultFolder.mkdirs()
+
+        logger.write(Logger.Level.INFO,
+            "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n")
+
+        if (!config.outputConfig.argConfig.disable && safetyResult.arg != null) {
+            val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
+            val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
+            argFile.writeText(GraphvizWriter.getInstance().writeString(g))
+        }
+
+        if (!config.outputConfig.witnessConfig.disable) {
+            if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
+                val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
+                    safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?,
+                    getSolver(config.outputConfig.witnessConfig.concretizerSolver,
+                        config.outputConfig.witnessConfig.validateConcretizerSolver))
+
+                val traceFile = File(resultFolder, "trace.dot")
+                val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
+                traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+            }
+            val witnessFile = File(resultFolder, "witness.graphml")
+            XcfaWitnessWriter().writeWitness(safetyResult, config.inputConfig.input!!,
+                getSolver(config.outputConfig.witnessConfig.concretizerSolver,
+                    config.outputConfig.witnessConfig.validateConcretizerSolver), parseContext, witnessFile)
+        }
+    } catch (e: Throwable) {
+        logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
     }
 }
