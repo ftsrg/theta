@@ -30,7 +30,7 @@ runs:
     - name: Get archive
       shell: bash
       run: |
-        wget https://github.com/ftsrg/theta/releases/download/svcomp23/theta.zip
+        wget https://github.com/ftsrg/theta/releases/download/svcomp24/theta.zip
         unzip theta.zip
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
       name: Get JAR
