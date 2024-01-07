@@ -35,13 +35,11 @@ include(
 
     "xcfa/xcfa",
     "xcfa/cat",
-    "xcfa/exec-graph-cli",
     "xcfa/c2xcfa",
     "xcfa/litmus2xcfa",
     "xcfa/llvm2xcfa",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
-    "xcfa/litmus-cli",
 
     "xta/xta",
     "xta/xta-analysis",
