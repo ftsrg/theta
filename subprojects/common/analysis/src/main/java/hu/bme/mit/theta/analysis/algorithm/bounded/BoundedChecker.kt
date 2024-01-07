@@ -35,7 +35,7 @@ import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
 import java.util.*
 
-class BoundedChecker<S: ExprState, A: StmtAction>(
+class BoundedChecker<S : ExprState, A : StmtAction>(
     private val monolithicExpr: MonolithicExpr,
     private val shouldGiveUp: (Int) -> Boolean = { false },
     private val bmcSolver: Solver? = null,
@@ -47,22 +47,24 @@ class BoundedChecker<S: ExprState, A: StmtAction>(
     private val valToState: (Valuation) -> S,
     private val biValToAction: (Valuation, Valuation) -> A,
     private val logger: Logger,
-): SafetyChecker<S, A, UnitPrec> {
+) : SafetyChecker<S, A, UnitPrec> {
+
     private val vars = monolithicExpr.vars()
     private val unfoldedInitExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
-    private val unfoldedPropExpr = {i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i)}
+    private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
     private val indices = mutableListOf(VarIndexingFactory.indexing(0))
     private val exprs = mutableListOf<Expr<BoolType>>()
 
     init {
-        check(bmcSolver != itpSolver || bmcSolver == null) {"Use distinct solvers for BMC and IMC!"}
-        check(bmcSolver != indSolver || bmcSolver == null) {"Use distinct solvers for BMC and KInd!"}
-        check(itpSolver != indSolver || itpSolver == null) {"Use distinct solvers for IMC and KInd!"}
+        check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
+        check(bmcSolver != indSolver || bmcSolver == null) { "Use distinct solvers for BMC and KInd!" }
+        check(itpSolver != indSolver || itpSolver == null) { "Use distinct solvers for IMC and KInd!" }
     }
+
     override fun check(prec: UnitPrec?): SafetyResult<S, A> {
         var iteration = 0;
 
-        while(!shouldGiveUp(iteration)) {
+        while (!shouldGiveUp(iteration)) {
             iteration++
             logger.write(Logger.Level.MAINSTEP, "Starting iteration $iteration\n")
 
@@ -70,15 +72,15 @@ class BoundedChecker<S: ExprState, A: StmtAction>(
 
             indices.add(indices.last().add(monolithicExpr.offsetIndex))
 
-            if(bmcEnabled(iteration)) {
+            if (bmcEnabled(iteration)) {
                 bmc()?.let { return it }
             }
 
-            if(kindEnabled(iteration)) {
+            if (kindEnabled(iteration)) {
                 kind()?.let { return it }
             }
 
-            if(imcEnabled(iteration)) {
+            if (imcEnabled(iteration)) {
                 itp()?.let { return it }
             }
         }
@@ -94,7 +96,7 @@ class BoundedChecker<S: ExprState, A: StmtAction>(
         bmcSolver.add(exprs)
         bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
 
-        val ret = if(bmcSolver.check().isSat) {
+        val ret = if (bmcSolver.check().isSat) {
             val trace = getTrace(bmcSolver.model)
             logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
             SafetyResult.unsafe(trace)
@@ -113,7 +115,7 @@ class BoundedChecker<S: ExprState, A: StmtAction>(
         indSolver.add(exprs)
         indSolver.add(Not(unfoldedPropExpr(indices.last())))
 
-        val ret = if(indSolver.check().isUnsat) {
+        val ret = if (indSolver.check().isUnsat) {
             logger.write(Logger.Level.MAINSTEP, "Safety proven in k-induction step\n")
             SafetyResult.safe<S, A>()
         } else null
@@ -141,7 +143,7 @@ class BoundedChecker<S: ExprState, A: StmtAction>(
 
         val status = itpSolver.check()
 
-        if(status.isSat) {
+        if (status.isSat) {
             val trace = getTrace(itpSolver.model)
             logger.write(Logger.Level.MAINSTEP, "CeX found in IMC/BMC step (length ${trace.length()})\n")
             itpSolver.pop()
@@ -150,7 +152,7 @@ class BoundedChecker<S: ExprState, A: StmtAction>(
         }
 
         var img = unfoldedInitExpr
-        while(itpSolver.check().isUnsat) {
+        while (itpSolver.check().isUnsat) {
             val interpolant = itpSolver.getInterpolant(pattern)
             val itpFormula = PathUtils.unfold(PathUtils.foldin(interpolant.eval(a), indices[1]), indices[0])
             itpSolver.pop()
@@ -159,7 +161,7 @@ class BoundedChecker<S: ExprState, A: StmtAction>(
             itpSolver.add(a, itpFormula)
             itpSolver.add(a, Not(img))
             val itpStatus = itpSolver.check()
-            if(itpStatus.isUnsat) {
+            if (itpStatus.isUnsat) {
                 logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC step\n")
                 itpSolver.pop()
                 itpSolver.pop()

@@ -46,13 +46,13 @@ fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
     val sw = Stopwatch.createStarted()
     val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
 
-    val portfolioStm = when(portfolioName) {
+    val portfolioStm = when (portfolioName) {
         "COMPLEX",
         "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
         "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
         else -> {
-            if(File(portfolioName).exists()) {
+            if (File(portfolioName).exists()) {
                 val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
                 val bindings: Bindings = SimpleBindings()
                 bindings["xcfa"] = xcfa

@@ -61,7 +61,8 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
     }
 
     val abstractionSolverInstance = abstractionSolverFactory.createSolver()
-    val globalStatePartialOrd: PartialOrd<out ExprState> = cegarConfig.abstractorConfig.domain.partialOrd(abstractionSolverInstance)
+    val globalStatePartialOrd: PartialOrd<out ExprState> = cegarConfig.abstractorConfig.domain.partialOrd(
+        abstractionSolverInstance)
     val corePartialOrd: PartialOrd<out XcfaState<out ExprState>> =
         if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
         else getStackPartialOrder(globalStatePartialOrd)

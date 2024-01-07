@@ -55,7 +55,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-fun runConfig(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger): SafetyResult<*, *> {
+fun runConfig(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): SafetyResult<*, *> {
     propagateInputOptions(config, logger, uniqueLogger)
 
     registerAllSolverManagers(config.backendConfig.solverHome, logger)
@@ -74,7 +74,7 @@ fun runConfig(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger): Sa
 }
 
 
-private fun propagateInputOptions(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger) {
+private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
     config.inputConfig.property = determineProperty(config, logger)
     LbePass.level = config.frontendConfig.lbeLevel
     if (config.backendConfig.backend == Backend.CEGAR) {
@@ -93,7 +93,7 @@ private fun propagateInputOptions(config: XcfaConfig<*,*>, logger: Logger, uniqu
     ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
-private fun validateInputOptions(config: XcfaConfig<*,*>, logger: Logger, uniqueLogger: Logger) {
+private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
     rule("NoCoiWhenDataRace") {
         (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
             config.inputConfig.property == ErrorDetection.DATA_RACE
@@ -102,7 +102,7 @@ private fun validateInputOptions(config: XcfaConfig<*,*>, logger: Logger, unique
 }
 
 fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Triple<XCFA, MCM, ParseContext> {
-    if(config.inputConfig.xcfaWCtx != null) {
+    if (config.inputConfig.xcfaWCtx != null) {
         val xcfa = config.inputConfig.xcfaWCtx!!.first
         ConeOfInfluence = if (config.inputConfig.xcfaWCtx!!.third.multiThreading) {
             XcfaCoiMultiThread(xcfa)

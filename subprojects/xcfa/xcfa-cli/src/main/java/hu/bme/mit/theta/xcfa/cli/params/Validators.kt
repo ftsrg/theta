@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.ParameterException
 
-fun rule(name: String, test: ()->Boolean) {
-    if(test()) {
+fun rule(name: String, test: () -> Boolean) {
+    if (test()) {
         throw ParameterException("Validation failed for rule $name")
     }
 }

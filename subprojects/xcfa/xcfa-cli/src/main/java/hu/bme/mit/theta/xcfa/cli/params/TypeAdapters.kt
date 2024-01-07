@@ -23,7 +23,7 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.xcfa.passes.LbePass
 
-class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson): TypeAdapter<FrontendConfig<*>>() {
+class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<FrontendConfig<*>>() {
 
     private lateinit var gson: Gson
 
@@ -35,7 +35,7 @@ class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson): TypeAdapter<F
         writer.name("loopUnroll").value(value.loopUnroll)
         writer.name("inputType").value(value.inputType.name)
         writer.name("specConfig")
-        if(value.specConfig != null) {
+        if (value.specConfig != null) {
             writer.beginObject()
             writer.name("type").value(value.specConfig?.javaClass?.typeName)
             writer.name("value")
@@ -92,7 +92,7 @@ class SpecFrontendConfigTypeAdapter(val gsonSupplier: () -> Gson): TypeAdapter<F
     }
 }
 
-class SpecBackendConfigTypeAdapter(val gsonSupplier: () -> Gson): TypeAdapter<BackendConfig<*>>() {
+class SpecBackendConfigTypeAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<BackendConfig<*>>() {
 
     private lateinit var gson: Gson
 
@@ -105,7 +105,7 @@ class SpecBackendConfigTypeAdapter(val gsonSupplier: () -> Gson): TypeAdapter<Ba
         writer.name("timeoutMs").value(value.timeoutMs)
         writer.name("inProcess").value(value.inProcess)
         writer.name("specConfig")
-        if(value.specConfig != null) {
+        if (value.specConfig != null) {
             writer.beginObject()
             writer.name("type").value(value.specConfig?.javaClass?.typeName)
             writer.name("value")

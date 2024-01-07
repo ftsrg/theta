@@ -20,7 +20,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
-fun determineProperty(config: XcfaConfig<*,*>, logger: Logger): ErrorDetection = config.inputConfig.propertyFile?.run {
+fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection = config.inputConfig.propertyFile?.run {
     val propertyFile = config.inputConfig.propertyFile!!
     when {
         propertyFile.name.endsWith("unreach-call.prp") -> {

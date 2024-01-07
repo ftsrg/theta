@@ -40,7 +40,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createTempDirectory
 
-class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
+class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
     val xcfa: XCFA,
     val config: XcfaConfig<F, B>,
     val parseContext: ParseContext,
@@ -55,7 +55,9 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
         val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
 
         val xcfaJson = CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
-        val parseContextJson = CachingFileSerializer.serialize("parseContext.json", parseContext) { getGson(xcfa).toJson(parseContext) }
+        val parseContextJson = CachingFileSerializer.serialize("parseContext.json", parseContext) {
+            getGson(xcfa).toJson(parseContext)
+        }
 
         val processConfig = config.copy(
             inputConfig = config.inputConfig.copy(
@@ -74,7 +76,9 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
             )
         )
 
-        val configJson = CachingFileSerializer.serialize("config.json", processConfig) { getGson(xcfa).toJson(processConfig) }
+        val configJson = CachingFileSerializer.serialize("config.json", processConfig) {
+            getGson(xcfa).toJson(processConfig)
+        }
 
         val pb = NuProcessBuilder(listOf(
             ProcessHandle.current().info().command().orElse("java"),
@@ -98,7 +102,8 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
                     process.destroy(true)
                     throw ErrorCodeException(ExitCodes.TIMEOUT.code)
                 } else {
-                    logger.write(Logger.Level.RESULT,"Config timed out but started writing result, trying to wait an additional 10%...")
+                    logger.write(Logger.Level.RESULT,
+                        "Config timed out but started writing result, trying to wait an additional 10%...")
                     val retCode = process.waitFor(config.backendConfig.timeoutMs / 10, TimeUnit.MILLISECONDS)
                     if (retCode != 0) {
                         throw ErrorCodeException(retCode)
@@ -120,24 +125,26 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
         return booleanSafetyResult as SafetyResult<XcfaState<*>, XcfaAction>
     }
 
-    private class ProcessHandler: NuAbstractProcessHandler() {
+    private class ProcessHandler : NuAbstractProcessHandler() {
+
         private val stdout = LinkedList<String>()
         private var stdoutRemainder = ""
         private val stderr = LinkedList<String>()
         private var stderrRemainder = ""
         var safetyResult: SafetyResult<*, *>? = null
             private set
+
         override fun onStdout(buffer: ByteBuffer, closed: Boolean) {
-            if(!closed) {
+            if (!closed) {
                 val bytes = ByteArray(buffer.remaining())
                 buffer[bytes]
                 val str = bytes.decodeToString()
 
                 stdoutRemainder += str
-                if(stdoutRemainder.contains("SafetyResult Safe")) {
+                if (stdoutRemainder.contains("SafetyResult Safe")) {
                     safetyResult = SafetyResult.safe<State, Action>()
                 }
-                if(stdoutRemainder.contains("SafetyResult Unsafe")) {
+                if (stdoutRemainder.contains("SafetyResult Unsafe")) {
                     safetyResult = SafetyResult.unsafe()
                 }
 
@@ -151,7 +158,7 @@ class InProcessChecker<F: SpecFrontendConfig, B: SpecBackendConfig>(
         }
 
         override fun onStderr(buffer: ByteBuffer, closed: Boolean) {
-            if(!closed) {
+            if (!closed) {
                 val bytes = ByteArray(buffer.remaining())
                 buffer[bytes]
                 val str = bytes.decodeToString()

@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.cli.utils
 import java.io.File
 
 object CachingFileSerializer {
+
     private val cache: MutableMap<Pair<String, Any>, File> = LinkedHashMap()
 
     /**
@@ -27,7 +28,7 @@ object CachingFileSerializer {
      * func: generator function if a cache miss occurs
      */
     fun serialize(key: String, obj: Any, func: (Any) -> String): File =
-        if(cache.containsKey(Pair(key, obj))) {
+        if (cache.containsKey(Pair(key, obj))) {
             cache[Pair(key, obj)]!!
         } else {
             val str = func(obj)

@@ -41,7 +41,7 @@ import javax.script.ScriptEngineManager
 import kotlin.system.exitProcess
 
 
-fun getXcfa(config: XcfaConfig<*,*>, parseContext: ParseContext, logger: Logger, uniqueWarningLogger: Logger) =
+fun getXcfa(config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger, uniqueWarningLogger: Logger) =
     try {
         when (config.frontendConfig.inputType) {
             InputType.CHC -> {

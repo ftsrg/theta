@@ -45,7 +45,7 @@ interface SpecializableConfig<T : Config> : Config {
     override fun update(): Boolean = specConfig?.update() ?: createSpecConfig().let { specConfig != null }
 }
 
-data class XcfaConfig<F: SpecFrontendConfig, B: SpecBackendConfig>(
+data class XcfaConfig<F : SpecFrontendConfig, B : SpecBackendConfig>(
     val inputConfig: InputConfig = InputConfig(),
     val frontendConfig: FrontendConfig<F> = FrontendConfig(),
     val backendConfig: BackendConfig<B> = BackendConfig(),
@@ -77,7 +77,8 @@ data class InputConfig(
         description = "XCFA and ParseContext (will overwrite --input and --parse-ctx when given)")
     var xcfaWCtx: Triple<XCFA, MCM, ParseContext>? = null,
 
-    @Parameter(names = ["--property-file"], description = "Path of the property file (will overwrite --property when given)")
+    @Parameter(names = ["--property-file"],
+        description = "Path of the property file (will overwrite --property when given)")
     var propertyFile: File? = null,
 
     @Parameter(names = ["--property"], description = "Property")
@@ -85,7 +86,7 @@ data class InputConfig(
 ) : Config
 
 interface SpecFrontendConfig : Config
-data class FrontendConfig<T: SpecFrontendConfig>(
+data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
 
@@ -122,7 +123,7 @@ data class CHCFrontendConfig(
 
 interface SpecBackendConfig : Config
 
-data class BackendConfig<T: SpecBackendConfig>(
+data class BackendConfig<T : SpecBackendConfig>(
     @Parameter(names = ["--backend"], description = "Backend analysis to use")
     var backend: Backend = Backend.CEGAR,
 
