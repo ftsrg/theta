@@ -19,8 +19,7 @@ runs:
       shell: bash
       run: |
         mkdir -p xml
-        wget https://gitlab.com/sosy-lab/sv-comp/bench-defs/-/raw/main/benchmark-defs/theta.xml -P xml
-        sed -i 's/<benchmark tool="theta" timelimit=".*" hardtimelimit=".*" memlimit="15 GB" cpuCores="4">/<benchmark tool="theta" timelimit="120 s" hardtimelimit="130 s">/g' xml/theta.xml
+        cp $GITHUB_ACTION_PATH/theta.xml xml/
     - name: Get sv-benchmarks
       shell: bash
       run: |
