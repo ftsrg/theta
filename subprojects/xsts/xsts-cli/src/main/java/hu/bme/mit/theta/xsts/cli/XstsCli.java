@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.BmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -36,7 +34,6 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
@@ -45,7 +42,6 @@ import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
-import hu.bme.mit.theta.xsts.analysis.XstsToMonoliticTransFunc;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
@@ -202,18 +198,6 @@ public class XstsCli {
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
                 status = check(configuration);
-                sw.stop();
-            } else if (algorithm.equals(Algorithm.KINDUCTION)) {
-                var transFunc = XstsToMonoliticTransFunc.create(xsts);
-                var checker = new KIndChecker<XstsState<ExplState>, XstsAction>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), (val1, val2) -> XstsAction.create(SkipStmt.getInstance()), xsts.getVars());
-                status = checker.check(null);
-                logger.write(Logger.Level.RESULT, "%s%n", status);
-                sw.stop();
-            } else if (algorithm.equals(Algorithm.IMC)) {
-                var transFunc = XstsToMonoliticTransFunc.create(xsts);
-                var checker = new BmcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), (x) -> XstsState.of(ExplState.of(x), false, true), xsts.getVars(), null);
-                status = checker.check(null);
-                logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();
             } else {
                 throw new IllegalArgumentException("Unknown algorithm: " + algorithm);

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,16 +48,7 @@ class XcfaCliWitnessTest {
                         assumption = Regex("i *== *-1"),
                     ),
                 )),
-                Arguments.of("/c/litmustest/singlethread/witness_test.c", "--backend KIND", listOf(
-                    WitnessEdge(
-                        startlineRange = Pair(5, 5),
-                        endlineRange = Pair(5, 5),
-                        startoffsetRange = Pair(79, 95),
-                        endoffsetRange = Pair(110, 125),
-                        assumption = Regex("i *== *-1"),
-                    ),
-                )),
-                Arguments.of("/c/litmustest/singlethread/witness_test.c", "--backend IMC", listOf(
+                Arguments.of("/c/litmustest/singlethread/witness_test.c", "--backend BOUNDED", listOf(
                     WitnessEdge(
                         startlineRange = Pair(5, 5),
                         endlineRange = Pair(5, 5),
@@ -80,7 +71,6 @@ class XcfaCliWitnessTest {
             "--input", javaClass.getResource(filePath)!!.path,
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
             "--stacktrace",
-            "--output-results",
             "--output-directory", temp.absolutePathString(),
             "--debug",
         )

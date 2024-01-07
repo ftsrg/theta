@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ data class XcfaConfig<F: SpecFrontendConfig, B: SpecBackendConfig>(
 }
 
 data class InputConfig(
-    @Parameter(names = ["--input"], description = "Path of the input model", required = true)
+    @Parameter(names = ["--input"], description = "Path of the input model")
     var input: File? = null,
 
     @Parameter(names = ["--cat"], description = "Path of the cat model")

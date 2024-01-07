@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,12 +53,13 @@ class XcfaCli(private val args: Array<String>) {
                 config = XcfaConfig<SpecFrontendConfig, SpecBackendConfig>()
             }
             while (remainingFlags.isNotEmpty()) {
+                val nextArgs = remainingFlags.toTypedArray()
                 remainingFlags.clear()
                 val builder = JCommander.newBuilder().addObject(this)
                 for (obj in config.getObjects()) {
                     builder.addObject(obj)
                 }
-                builder.programName(JAR_NAME).build().parse(*args)
+                builder.programName(JAR_NAME).build().parse(*nextArgs)
                 if (!config.update() && remainingFlags.isNotEmpty()) {
                     throw ParameterException("Extraneous parameters: $remainingFlags")
                 }

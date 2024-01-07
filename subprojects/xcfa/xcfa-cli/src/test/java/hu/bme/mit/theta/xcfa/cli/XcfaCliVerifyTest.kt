@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -116,7 +116,6 @@ class XcfaCliVerifyTest {
     fun testCVerifyServer(filePath: String, extraArgs: String?) {
         val params = arrayOf(
             "--input-type", "C",
-            "--strategy", "SERVER_DEBUG",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
@@ -136,7 +135,7 @@ class XcfaCliVerifyTest {
     fun testCVerifyPortfolio(filePath: String, extraArgs: String?) {
         val params = arrayOf(
             "--input-type", "C",
-            "--strategy", "PORTFOLIO",
+            "--backend", "PORTFOLIO",
             "--portfolio", javaClass.getResource("/simple.kts")!!.path,
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
@@ -155,7 +154,7 @@ class XcfaCliVerifyTest {
     fun testCVerifyBuiltInPortfolio() {
         val params = arrayOf(
             "--input-type", "C",
-            "--strategy", "PORTFOLIO",
+            "--backend", "PORTFOLIO",
             "--portfolio", "COMPLEX",
             "--input", javaClass.getResource("/c/dekker.i")!!.path,
             "--stacktrace",
@@ -179,7 +178,6 @@ class XcfaCliVerifyTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
-            "--output-results",
             "--output-directory", temp.absolutePathString(),
             "--debug"
         )
@@ -206,7 +204,7 @@ class XcfaCliVerifyTest {
     @MethodSource("singleThreadedCFiles")
     fun testCVerifyKind(filePath: String, extraArgs: String?) {
         val params = arrayOf(
-            "--backend", "KIND",
+            "--backend", "BOUNDED",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
@@ -219,7 +217,7 @@ class XcfaCliVerifyTest {
     @MethodSource("singleThreadedCFiles")
     fun testCVerifyIMC(filePath: String, extraArgs: String?) {
         val params = arrayOf(
-            "--backend", "IMC",
+            "--backend", "BOUNDED",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
@@ -232,7 +230,7 @@ class XcfaCliVerifyTest {
     @MethodSource("singleThreadedCFiles")
     fun testCVerifyIMCThenKind(filePath: String, extraArgs: String?) {
         val params = arrayOf(
-            "--backend", "IMC_THEN_KIND",
+            "--backend", "BOUNDED",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,14 +22,12 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
-import hu.bme.mit.theta.analysis.algorithm.bounded.BmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.cfa.analysis.CfaToMonoliticTransFunc;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
@@ -239,18 +237,6 @@ public class CfaCli {
             if (algorithm == Algorithm.CEGAR) {
                 final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
                 status = check(configuration);
-                sw.stop();
-            } else if (algorithm == Algorithm.KINDUCTION) {
-                var transFunc = CfaToMonoliticTransFunc.create(cfa);
-                var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, null, cfa.getVars());
-                status = checker.check(null);
-                logger.write(Logger.Level.RESULT, "%s%n", status);
-                sw.stop();
-            } else if (algorithm == Algorithm.IMC) {
-                var transFunc = CfaToMonoliticTransFunc.create(cfa);
-                var checker = new BmcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, cfa.getVars(), null);
-                status = checker.check(null);
-                logger.write(Logger.Level.RESULT, "%s%n", status);
                 sw.stop();
             } else {
                 throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");

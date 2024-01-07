@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -233,7 +233,6 @@ class XcfaCliParseTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",
             "--stacktrace",
-            "--output-results",
             "--output-directory", temp.toAbsolutePath().toString(),
             "--debug"
         ))
@@ -257,7 +256,6 @@ class XcfaCliParseTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",
             "--stacktrace",
-            "--output-results",
             "--output-directory", temp.toAbsolutePath().toString(),
             "--debug"
         ))

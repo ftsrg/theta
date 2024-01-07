@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.bounded.BmcChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.common.CliUtils;
@@ -45,7 +43,6 @@ import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
 import hu.bme.mit.theta.sts.analysis.StsAction;
-import hu.bme.mit.theta.sts.analysis.StsToMonoliticTransFunc;
 import hu.bme.mit.theta.sts.analysis.StsTraceConcretizer;
 import hu.bme.mit.theta.sts.analysis.config.StsConfig;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
@@ -165,14 +162,8 @@ public class StsCli {
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
                 status = check(configuration);
-            } else if (algorithm.equals(Algorithm.KINDUCTION)) {
-                var transFunc = StsToMonoliticTransFunc.create(sts);
-                var checker = new KIndChecker<>(transFunc, Integer.MAX_VALUE, 0, 1, Z3SolverFactory.getInstance().createSolver(), Z3SolverFactory.getInstance().createSolver(), ExplState::of, null, sts.getVars());
-                status = checker.check(null);
-            } else if (algorithm.equals(Algorithm.IMC)) {
-                var transFunc = StsToMonoliticTransFunc.create(sts);
-                var checker = new BmcChecker<>(transFunc, Integer.MAX_VALUE, Z3SolverFactory.getInstance().createItpSolver(), ExplState::of, sts.getVars(), null);
-                status = checker.check(null);
+            } else {
+                throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
             }
             sw.stop();
             printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));

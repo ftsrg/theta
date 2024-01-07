@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,8 +56,9 @@ fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
                 val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
                 val bindings: Bindings = SimpleBindings()
                 bindings["xcfa"] = xcfa
+                bindings["mcm"] = mcm
                 bindings["parseContext"] = parseContext
-                bindings["config"] = config
+                bindings["portfolioConfig"] = config
                 bindings["logger"] = logger
                 bindings["uniqueLogger"] = uniqueLogger
                 kotlinEngine.eval(FileReader(portfolioName), bindings) as STM
