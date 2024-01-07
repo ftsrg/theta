@@ -35,9 +35,11 @@ fun registerAllSolverManagers(home: String, logger: Logger) {
     SolverManager.closeAll()
     // register solver managers
     SolverManager.registerSolverManager(Z3SolverManager.create())
+    logger.write(Logger.Level.INFO, "Registered Z3 SolverManager")
     if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
         val homePath = Path.of(home)
         val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)
         SolverManager.registerSolverManager(smtLibSolverManager)
+        logger.write(Logger.Level.INFO, "Registered SMT-LIB SolverManager")
     }
 }

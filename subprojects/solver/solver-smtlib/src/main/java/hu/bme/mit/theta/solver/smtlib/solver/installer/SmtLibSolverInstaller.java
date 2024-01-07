@@ -191,7 +191,8 @@ public interface SmtLibSolverInstaller {
 
             final var installDir = home.resolve(version);
             if (!Files.exists(installDir)) {
-                throw new SmtLibSolverInstallerException("The version is not installed");
+                throw new SmtLibSolverInstallerException("The version <" + version
+                        + "> is not installed in <" + home + ">");
             }
 
             try {

@@ -83,7 +83,13 @@ data class InputConfig(
 
     @Parameter(names = ["--property-value"], description = "Property")
     var property: ErrorDetection = ErrorDetection.ERROR_LOCATION
-) : Config
+) : Config {
+
+    override fun toString(): String {
+        return "InputConfig(inputFile=${input}, catFile=${catFile}, parseCtx=${parseCtx}, " +
+            "xcfaWCtx=${xcfaWCtx?.let { "present" } ?: "missing"}, propertyFile=${propertyFile}, property=${property}"
+    }
+}
 
 interface SpecFrontendConfig : Config
 data class FrontendConfig<T : SpecFrontendConfig>(
