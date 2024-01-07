@@ -77,11 +77,11 @@ data class InputConfig(
         description = "XCFA and ParseContext (will overwrite --input and --parse-ctx when given)")
     var xcfaWCtx: Triple<XCFA, MCM, ParseContext>? = null,
 
-    @Parameter(names = ["--property-file"],
+    @Parameter(names = ["--property"],
         description = "Path of the property file (will overwrite --property when given)")
     var propertyFile: File? = null,
 
-    @Parameter(names = ["--property"], description = "Property")
+    @Parameter(names = ["--property-value"], description = "Property")
     var property: ErrorDetection = ErrorDetection.ERROR_LOCATION
 ) : Config
 
