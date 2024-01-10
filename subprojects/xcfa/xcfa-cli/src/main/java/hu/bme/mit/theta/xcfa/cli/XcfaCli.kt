@@ -38,6 +38,9 @@ class XcfaCli(private val args: Array<String>) {
     @Parameter(names = ["--config", "-c"], description = "Configuration file (CLI options will overwrite these!)")
     var configFile: File? = null
 
+    @Parameter(names = ["--help", "-h"], help = true)
+    private var help = false
+
     @Parameter
     var remainingFlags: MutableList<String> = ArrayList()
 
@@ -77,6 +80,16 @@ class XcfaCli(private val args: Array<String>) {
             println("There was a problem parsing ${configFile}:")
             ex.printStackTrace()
             exitProcess(ExitCodes.INVALID_PARAM.code)
+        }
+
+
+        if (help) {
+            val builder = JCommander.newBuilder().addObject(this)
+            for (obj in config.getObjects()) {
+                builder.addObject(obj)
+            }
+            builder.build().usage()
+            return
         }
 
         /// version
