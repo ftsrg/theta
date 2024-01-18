@@ -34,9 +34,10 @@ open class XcfaSporLts(protected val xcfa: XCFA) : SporLts<XcfaState<*>, XcfaAct
 
     companion object {
 
-        private val random: Random = Random.Default
-        private val simpleXcfaLts = getXcfaLts()
+        var random: Random = Random.Default
     }
+
+    protected var simpleXcfaLts = getXcfaLts()
 
     init {
         collectBackwardTransitions()

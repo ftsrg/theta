@@ -38,6 +38,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
+import hu.bme.mit.theta.xcfa.analysis.coi.COI
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVars
 import hu.bme.mit.theta.xcfa.isWritten
@@ -50,8 +51,13 @@ import java.util.function.Predicate
 open class XcfaAnalysis<S : ExprState, P : Prec>(
     private val corePartialOrd: PartialOrd<XcfaState<S>>,
     private val coreInitFunc: InitFunc<XcfaState<S>, XcfaPrec<P>>,
-    private val coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
+    private var coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
 ) : Analysis<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
+
+    init {
+        COI.coreTransFunc = transFunc as TransFunc<XcfaState<out ExprState>, XcfaAction, XcfaPrec<out Prec>>
+        coreTransFunc = COI.transFunc as TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>
+    }
 
     override fun getPartialOrd(): PartialOrd<XcfaState<S>> = corePartialOrd
     override fun getInitFunc(): InitFunc<XcfaState<S>, XcfaPrec<P>> = coreInitFunc
@@ -192,6 +198,7 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
     BasicAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
+        .projection { it.processes }
         .build() // TODO: can we do this nicely?
 
 /// EXPL

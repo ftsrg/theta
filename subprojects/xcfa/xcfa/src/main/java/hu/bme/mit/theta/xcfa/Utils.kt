@@ -49,6 +49,14 @@ fun XcfaLabel.collectAssumes(): Iterable<Expr<BoolType>> = when (this) {
     else -> setOf()
 }
 
+fun XcfaLabel.collectAssumesVars(): Set<VarDecl<*>> {
+    return collectAssumes().flatMap {
+        val v = mutableSetOf<VarDecl<*>>()
+        ExprUtils.collectVars(it, v)
+        v
+    }.toSet()
+}
+
 fun XcfaLabel.collectHavocs(): Set<HavocStmt<*>> = when (this) {
     is StmtLabel -> when (stmt) {
         is HavocStmt<*> -> setOf(stmt)
@@ -92,7 +100,7 @@ private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf
 
 /**
  * Returns the list of accessed variables by the label.
- * The variable is associated with true if the variable is written and false otherwise.
+ * The variable is associated with an AccessType object based on whether the variable is read/written by the label.
  */
 internal fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
     is StmtLabel -> {
@@ -163,6 +171,11 @@ fun XcfaEdge.getGlobalVars(xcfa: XCFA): Map<VarDecl<*>, AccessType> {
         return label.collectGlobalVars(globalVars)
     }
 }
+
+/**
+ * Returns the list of accessed variables by the edge associated with an AccessType object.
+ */
+fun XcfaEdge.getVars(): Map<VarDecl<*>, AccessType> = label.collectVarsWithAccessType()
 
 /**
  * Returns true if the edge starts an atomic block.

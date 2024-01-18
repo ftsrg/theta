@@ -1,0 +1,175 @@
+package hu.bme.mit.theta.xcfa.analysis.coi
+
+import hu.bme.mit.theta.analysis.LTS
+import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.TransFunc
+import hu.bme.mit.theta.analysis.algorithm.cegar.COILogger
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.xcfa.*
+import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
+import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
+import hu.bme.mit.theta.xcfa.analysis.por.extension
+import hu.bme.mit.theta.xcfa.analysis.por.nullableExtension
+import hu.bme.mit.theta.xcfa.model.*
+import java.util.*
+import kotlin.math.min
+
+lateinit var COI: XcfaCoi
+
+internal typealias S = XcfaState<out ExprState>
+internal typealias A = XcfaAction
+
+internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
+
+abstract class XcfaCoi(protected val xcfa: XCFA) {
+
+    var coreLts: LTS<S, A> = getXcfaLts()
+    lateinit var coreTransFunc: TransFunc<S, A, XcfaPrec<out Prec>>
+
+    protected var lastPrec: Prec? = null
+    protected var XcfaLocation.scc: Int by extension()
+    protected val directObservation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
+
+    abstract val lts: LTS<S, A>
+
+    val transFunc = TransFunc<S, A, XcfaPrec<out Prec>> { state, action, prec ->
+        val a = action.transFuncVersion ?: action
+        action.label.getFlatLabels().forEach {
+            if (it is NopLabel) COILogger.decNops()
+            if (it is StmtLabel && it.stmt is HavocStmt<*>) COILogger.decHavocs()
+        }
+        a.label.getFlatLabels().forEach {
+            COILogger.incAllLabels()
+            if (it is NopLabel) COILogger.incNops()
+            if (it is StmtLabel && it.stmt is HavocStmt<*>) COILogger.incHavocs()
+        }
+        COILogger.incExploredActions()
+
+        COILogger.startTransFuncTimer()
+        val r = coreTransFunc.getSuccStates(state, a, prec)
+        COILogger.stopTransFuncTimer()
+
+        r
+    }
+
+    init {
+        COILogger.startCoiTimer()
+        xcfa.procedures.forEach { tarjan(it.initLoc) }
+        COILogger.stopCoiTimer()
+    }
+
+    private fun tarjan(initLoc: XcfaLocation) {
+        var sccCnt = 0
+        var discCnt = 0
+        val disc = mutableMapOf<XcfaLocation, Int>()
+        val lowest = mutableMapOf<XcfaLocation, Int>()
+        val visited = mutableSetOf<XcfaLocation>()
+        val stack = Stack<XcfaLocation>()
+        val toVisit = Stack<XcfaLocation>()
+        toVisit.push(initLoc)
+
+        while (toVisit.isNotEmpty()) {
+            val visiting = toVisit.peek()
+            if (visiting !in visited) {
+                disc[visiting] = discCnt++
+                lowest[visiting] = disc[visiting]!!
+                stack.push(visiting)
+                visited.add(visiting)
+            }
+
+            for (edge in visiting.outgoingEdges) {
+                if (edge.target in stack) {
+                    lowest[visiting] = min(lowest[visiting]!!, lowest[edge.target]!!)
+                } else if (edge.target !in visited) {
+                    toVisit.push(edge.target)
+                    break
+                }
+            }
+
+            if (toVisit.peek() != visiting) continue
+
+            if (lowest[visiting] == disc[visiting]) {
+                val scc = sccCnt++
+                while (stack.peek() != visiting) {
+                    stack.pop().scc = scc
+                }
+                stack.pop().scc = scc // visiting
+            }
+
+            toVisit.pop()
+        }
+    }
+
+    protected fun findDirectObservers(edge: XcfaEdge, prec: Prec) {
+        val precVars = prec.usedVars
+        val writtenVars = edge.getVars().filter { it.value.isWritten && it.key in precVars }
+        if (writtenVars.isEmpty()) return
+
+        val toVisit = mutableListOf(edge)
+        val visited = mutableSetOf<XcfaEdge>()
+        while (toVisit.isNotEmpty()) {
+            val visiting = toVisit.removeFirst()
+            visited.add(visiting)
+            addEdgeIfObserved(edge, visiting, writtenVars, precVars, directObservation)
+            toVisit.addAll(visiting.target.outgoingEdges.filter { it !in visited })
+        }
+    }
+
+    protected open fun addEdgeIfObserved(
+        source: XcfaEdge, target: XcfaEdge, observableVars: Map<VarDecl<*>, AccessType>,
+        precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>
+    ) {
+        val vars = target.getVars()
+        var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
+        if (!relevantAction) {
+            val assumeVars = target.label.collectAssumesVars()
+            relevantAction = assumeVars.any { it in precVars }
+        }
+
+        if (relevantAction && vars.any { it.key in observableVars && it.value.isRead }) {
+            addToRelation(source, target, relation)
+        }
+    }
+
+    protected abstract fun addToRelation(source: XcfaEdge, target: XcfaEdge,
+        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>)
+
+    protected fun isRealObserver(edge: XcfaEdge) = edge.label.collectAssumesVars().isNotEmpty()
+
+    protected fun replace(action: A, prec: Prec): XcfaAction {
+        val replacedLabel = action.label.replace(prec)
+        action.transFuncVersion = action.withLabel(replacedLabel.run {
+            if (this !is SequenceLabel) SequenceLabel(listOf(this)) else this
+        })
+        return action
+    }
+
+    private fun XcfaLabel.replace(prec: Prec): XcfaLabel = when (this) {
+        is SequenceLabel -> SequenceLabel(labels.map { it.replace(prec) }, metadata)
+        is NondetLabel -> NondetLabel(labels.map { it.replace(prec) }.toSet(), metadata)
+        is StmtLabel -> {
+            when (val stmt = this.stmt) {
+                is AssignStmt<*> -> if (stmt.varDecl in prec.usedVars) {
+                    StmtLabel(HavocStmt.of(stmt.varDecl), metadata = this.metadata)
+                } else {
+                    NopLabel
+                }
+
+                is HavocStmt<*> -> if (stmt.varDecl in prec.usedVars) {
+                    this
+                } else {
+                    NopLabel
+                }
+
+                else -> this
+            }
+        }
+
+        else -> this
+    }
+}

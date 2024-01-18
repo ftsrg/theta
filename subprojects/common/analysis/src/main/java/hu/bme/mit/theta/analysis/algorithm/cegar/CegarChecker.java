@@ -29,9 +29,13 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
 
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -80,7 +84,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         AbstractorResult abstractorResult = null;
         P prec = initPrec;
         int iteration = 0;
-        WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
+//        WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
             ++iteration;
 
@@ -91,10 +95,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
             logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
-            String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
-            String precString = prec.toString();
+//            String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
+//            String precString = prec.toString();
 
-            wdl.addIteration(iteration, argGraph, precString);
+//            wdl.addIteration(iteration, argGraph, precString);
+            COILogger.newIteration();
 
             if (abstractorResult.isUnsafe()) {
                 MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");
@@ -136,6 +141,15 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         assert cegarResult != null;
         logger.write(Level.RESULT, "%s%n", cegarResult);
         logger.write(Level.INFO, "%s%n", stats);
+        System.err.println("Abstractor time: " + stats.getAbstractorTimeMs());
+        System.err.println("Refiner time: " + stats.getRefinerTimeMs());
+        System.err.println("COI time: " + COILogger.coiTimer);
+        System.err.println("TransFunc time: " + COILogger.transFuncTimer);
+        System.err.println("COI NOP labels: " + COILogger.nopsList);
+        System.err.println("COI havoc labels: " + COILogger.havocsList);
+        System.err.println("COI all labels: " + COILogger.allLabelsList);
+        System.err.println("Covers: " + COILogger.coversList);
+        System.err.println("Explored actions: " + COILogger.exploredActionsList);
         return cegarResult;
     }
 
