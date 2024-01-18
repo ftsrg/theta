@@ -276,7 +276,7 @@ class LbePass(val parseContext: ParseContext) : ProcedurePass {
         if (location.outgoingEdges.size != 1) return false
         val outEdge = location.outgoingEdges.first()
         if (
-            location.incomingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel || (it is StmtLabel && it.stmt is AssumeStmt) } }
+            location.incomingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel } }
             || location.outgoingEdges.any { edge -> edge.getFlatLabels().any { it is InvokeLabel } }
             || (level == LbeLevel.LBE_LOCAL && !atomicPhase && isNotLocal(outEdge))
         ) {
