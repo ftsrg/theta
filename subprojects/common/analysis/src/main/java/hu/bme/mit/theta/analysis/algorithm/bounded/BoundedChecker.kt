@@ -25,8 +25,8 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
@@ -40,6 +40,7 @@ class BoundedChecker<S : ExprState, A : StmtAction>(
     private val shouldGiveUp: (Int) -> Boolean = { false },
     private val bmcSolver: Solver? = null,
     private val bmcEnabled: (Int) -> Boolean = { true },
+    private val lfPathOnly: () -> Boolean = { true },
     private val itpSolver: ItpSolver? = null,
     private val imcEnabled: (Int) -> Boolean = { true },
     private val indSolver: Solver? = null,
@@ -95,6 +96,17 @@ class BoundedChecker<S : ExprState, A : StmtAction>(
         bmcSolver.add(unfoldedInitExpr)
         bmcSolver.add(exprs)
         bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
+
+        if (lfPathOnly()) { // indices contains currIndex as last()
+            for (indexing in indices) {
+                if (indexing != indices.last()) {
+                    val allVarsSame = And(vars.map {
+                        Eq(PathUtils.unfold(it.ref, indexing), PathUtils.unfold(it.ref, indices.last()))
+                    })
+                    bmcSolver.add(Not(allVarsSame))
+                }
+            }
+        }
 
         val ret = if (bmcSolver.check().isSat) {
             val trace = getTrace(bmcSolver.model)

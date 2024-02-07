@@ -243,6 +243,9 @@ data class BMCConfig(
     @Parameter(names = ["--no-bmc"], description = "Disable SAT check")
     var disable: Boolean = false,
 
+    @Parameter(names = ["--non-lf-path"], description = "Disable loop-freeness check")
+    var nonLfPath: Boolean = false,
+
     @Parameter(names = ["--bmc-solver"], description = "BMC solver name")
     var bmcSolver: String = "Z3",
 
