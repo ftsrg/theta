@@ -35,7 +35,7 @@ import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
 import java.util.*
 
-class BoundedChecker<S : ExprState, A : StmtAction>(
+class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val monolithicExpr: MonolithicExpr,
     private val shouldGiveUp: (Int) -> Boolean = { false },
     private val bmcSolver: Solver? = null,
