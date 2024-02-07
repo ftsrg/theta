@@ -95,7 +95,6 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         bmcSolver.push()
         bmcSolver.add(unfoldedInitExpr)
         bmcSolver.add(exprs)
-        bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
 
         if (lfPathOnly()) { // indices contains currIndex as last()
             for (indexing in indices) {
@@ -106,7 +105,15 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
                     bmcSolver.add(Not(allVarsSame))
                 }
             }
+
+            if (bmcSolver.check().isUnsat) {
+                bmcSolver.pop()
+                logger.write(Logger.Level.MAINSTEP, "Safety proven in BMC step\n")
+                return SafetyResult.safe<S, A>()
+            }
         }
+
+        bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
 
         val ret = if (bmcSolver.check().isSat) {
             val trace = getTrace(bmcSolver.model)
@@ -151,6 +158,27 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         itpSolver.add(a, unfoldedInitExpr)
         itpSolver.add(a, exprs[0])
         itpSolver.add(b, exprs.subList(1, exprs.size))
+
+        if (lfPathOnly()) { // indices contains currIndex as last()
+            itpSolver.push()
+            for (indexing in indices) {
+                if (indexing != indices.last()) {
+                    val allVarsSame = And(vars.map {
+                        Eq(PathUtils.unfold(it.ref, indexing), PathUtils.unfold(it.ref, indices.last()))
+                    })
+                    itpSolver.add(a, Not(allVarsSame))
+                }
+            }
+
+            if (itpSolver.check().isUnsat) {
+                itpSolver.pop()
+                itpSolver.pop()
+                logger.write(Logger.Level.MAINSTEP, "Safety proven in IMC/BMC step\n")
+                return SafetyResult.safe()
+            }
+            itpSolver.pop()
+        }
+
         itpSolver.add(b, Not(unfoldedPropExpr(indices.last())))
 
         val status = itpSolver.check()
