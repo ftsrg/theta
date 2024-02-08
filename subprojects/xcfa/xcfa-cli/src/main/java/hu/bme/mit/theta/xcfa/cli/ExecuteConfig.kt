@@ -95,7 +95,8 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
 
 private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
     rule("NoCoiWhenDataRace") {
-        (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
+        config.backendConfig.backend == Backend.CEGAR &&
+            (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
             config.inputConfig.property == ErrorDetection.DATA_RACE
     }
     // TODO add more validation options
