@@ -99,6 +99,14 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
             (config.backendConfig.specConfig as? CegarConfig)?.coi != ConeOfInfluenceMode.NO_COI &&
             config.inputConfig.property == ErrorDetection.DATA_RACE
     }
+    rule("NoAaporWhenDataRace") {
+        (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isAbstractionAware == true &&
+            config.inputConfig.property == ErrorDetection.DATA_RACE
+    }
+    rule("DPORWithoutDFS") {
+        (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isDynamic == true &&
+            (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.search != Search.DFS
+    }
     // TODO add more validation options
 }
 
