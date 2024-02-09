@@ -55,6 +55,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
     private val indices = mutableListOf(VarIndexingFactory.indexing(0))
     private val exprs = mutableListOf<Expr<BoolType>>()
+    private var lastIterLookup = Triple(-1, -1, -1)
 
     init {
         check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
@@ -64,6 +65,8 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
     override fun check(prec: UnitPrec?): SafetyResult<S, A> {
         var iteration = 0;
+
+        bmcSolver?.add(unfoldedInitExpr)
 
         while (!shouldGiveUp(iteration)) {
             iteration++
@@ -75,14 +78,20 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
             if (bmcEnabled(iteration)) {
                 bmc()?.let { return it }
+                lastIterLookup = lastIterLookup.copy(first = iteration)
             }
 
             if (kindEnabled(iteration)) {
+                if (!bmcEnabled(iteration)) {
+                    error("Bad configuration: induction check should always be preceded by a BMC/SAT check")
+                }
                 kind()?.let { return it }
+                lastIterLookup = lastIterLookup.copy(second = iteration)
             }
 
             if (imcEnabled(iteration)) {
                 itp()?.let { return it }
+                lastIterLookup = lastIterLookup.copy(third = iteration)
             }
         }
         return SafetyResult.unknown() as SafetyResult<S, A>
@@ -92,9 +101,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         val bmcSolver = this.bmcSolver!!
         logger.write(Logger.Level.MAINSTEP, "\tStarting BMC\n")
 
-        bmcSolver.push()
-        bmcSolver.add(unfoldedInitExpr)
-        bmcSolver.add(exprs)
+        exprs.subList(lastIterLookup.first + 1, exprs.size).forEach { bmcSolver.add(it) }
 
         if (lfPathOnly()) { // indices contains currIndex as last()
             for (indexing in indices) {
@@ -113,6 +120,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
             }
         }
 
+        bmcSolver.push()
         bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
 
         val ret = if (bmcSolver.check().isSat) {
@@ -130,8 +138,9 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
         logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
 
+        exprs.subList(lastIterLookup.first + 1, exprs.size).forEach { indSolver.add(it) }
+
         indSolver.push()
-        indSolver.add(exprs)
         indSolver.add(Not(unfoldedPropExpr(indices.last())))
 
         val ret = if (indSolver.check().isUnsat) {
