@@ -39,7 +39,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val monolithicExpr: MonolithicExpr,
     private val shouldGiveUp: (Int) -> Boolean = { false },
     private val bmcSolver: Solver? = null,
-    private val bmcEnabled: (Int) -> Boolean = { true },
+    private val bmcEnabled: () -> Boolean = { true },
     private val lfPathOnly: () -> Boolean = { true },
     private val itpSolver: ItpSolver? = null,
     private val imcEnabled: (Int) -> Boolean = { true },
@@ -55,7 +55,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
     private val indices = mutableListOf(VarIndexingFactory.indexing(0))
     private val exprs = mutableListOf<Expr<BoolType>>()
-    private var lastIterLookup = Triple(-1, -1, -1)
+    private var lastIterLookup = Pair(-1, -1)
 
     init {
         check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
@@ -64,8 +64,9 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     }
 
     override fun check(prec: UnitPrec?): SafetyResult<S, A> {
-        var iteration = 0;
+        var iteration = 0
 
+        val isBmcEnabled = bmcEnabled() // we don't allow per-iteration setting of bmc enabledness
         bmcSolver?.add(unfoldedInitExpr)
 
         while (!shouldGiveUp(iteration)) {
@@ -76,22 +77,21 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
             indices.add(indices.last().add(monolithicExpr.offsetIndex))
 
-            if (bmcEnabled(iteration)) {
+            if (isBmcEnabled) {
                 bmc()?.let { return it }
-                lastIterLookup = lastIterLookup.copy(first = iteration)
             }
 
             if (kindEnabled(iteration)) {
-                if (!bmcEnabled(iteration)) {
+                if (!isBmcEnabled) {
                     error("Bad configuration: induction check should always be preceded by a BMC/SAT check")
                 }
                 kind()?.let { return it }
-                lastIterLookup = lastIterLookup.copy(second = iteration)
+                lastIterLookup = lastIterLookup.copy(first = iteration)
             }
 
             if (imcEnabled(iteration)) {
                 itp()?.let { return it }
-                lastIterLookup = lastIterLookup.copy(third = iteration)
+                lastIterLookup = lastIterLookup.copy(second = iteration)
             }
         }
         return SafetyResult.unknown() as SafetyResult<S, A>
@@ -101,7 +101,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         val bmcSolver = this.bmcSolver!!
         logger.write(Logger.Level.MAINSTEP, "\tStarting BMC\n")
 
-        exprs.subList(lastIterLookup.first + 1, exprs.size).forEach { bmcSolver.add(it) }
+        bmcSolver.add(exprs.last())
 
         if (lfPathOnly()) { // indices contains currIndex as last()
             for (indexing in indices) {
