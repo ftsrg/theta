@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,90 +15,91 @@
  */
 package hu.bme.mit.theta.xta.utils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.common.Utils.head;
-import static hu.bme.mit.theta.common.Utils.tail;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-
-import java.util.List;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xta.Label;
 
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Utils.head;
+import static hu.bme.mit.theta.common.Utils.tail;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+
 public final class LabelExpr extends NullaryExpr<Type> {
-	private static final int HASH_SEED = 4703;
 
-	private volatile int hashCode = 0;
-	private volatile Type type = null;
+    private static final int HASH_SEED = 4703;
 
-	private final Label label;
+    private volatile int hashCode = 0;
+    private volatile Type type = null;
 
-	private LabelExpr(final Label label) {
-		this.label = checkNotNull(label);
-	}
+    private final Label label;
 
-	public static LabelExpr of(final Label label) {
-		return new LabelExpr(label);
-	}
+    private LabelExpr(final Label label) {
+        this.label = checkNotNull(label);
+    }
 
-	public Label getLabel() {
-		return label;
-	}
+    public static LabelExpr of(final Label label) {
+        return new LabelExpr(label);
+    }
 
-	@Override
-	public Type getType() {
-		Type result = type;
-		if (result == null) {
-			result = extractType(label.getParamTypes());
-			type = result;
-		}
-		return result;
-	}
+    public Label getLabel() {
+        return label;
+    }
 
-	@Override
-	public LitExpr<Type> eval(final Valuation val) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public Type getType() {
+        Type result = type;
+        if (result == null) {
+            result = extractType(label.getParamTypes());
+            type = result;
+        }
+        return result;
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + label.hashCode();
-			hashCode = result;
-		}
-		return result;
-	}
+    @Override
+    public LitExpr<Type> eval(final Valuation val) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof LabelExpr) {
-			final LabelExpr that = (LabelExpr) obj;
-			return this.label.equals(that.label);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + label.hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return label.getName();
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final LabelExpr that = (LabelExpr) obj;
+            return this.label.equals(that.label);
+        } else {
+            return false;
+        }
+    }
 
-	private Type extractType(final List<? extends Type> types) {
-		if (types.isEmpty()) {
-			return ChanType.getInstance();
-		} else {
-			final Type head = head(types);
-			final List<? extends Type> tail = tail(types);
-			return Array(head, extractType(tail));
-		}
-	}
+    @Override
+    public String toString() {
+        return label.getName();
+    }
+
+    private Type extractType(final List<? extends Type> types) {
+        if (types.isEmpty()) {
+            return ChanType.getInstance();
+        } else {
+            final Type head = head(types);
+            final List<? extends Type> tail = tail(types);
+            return Array(head, extractType(tail));
+        }
+    }
 
 }

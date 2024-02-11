@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,231 +60,235 @@ import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
 
 public final class SmtLibItpSolverTest {
-	private static boolean solverInstalled = false;
-	private static SmtLibSolverManager solverManager;
-	private static SolverFactory solverFactory;
-	private static final String SOLVER = "z3";
-	private static final String VERSION = "4.5.0";
 
-	@BeforeClass
-	public static void init() throws SmtLibSolverInstallerException, IOException {
-		if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-			Path home = SmtLibSolverManager.HOME;
+    private static boolean solverInstalled = false;
+    private static SmtLibSolverManager solverManager;
+    private static SolverFactory solverFactory;
+    private static final String SOLVER = "z3";
+    private static final String VERSION = "4.5.0";
 
-			solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
-			try {
-				solverManager.install(SOLVER, VERSION, VERSION, null, false);
-				solverInstalled = true;
-			} catch (SmtLibSolverInstallerException e) {
-				e.printStackTrace();
-			}
+    @BeforeClass
+    public static void init() throws SmtLibSolverInstallerException, IOException {
+        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+            Path home = SmtLibSolverManager.HOME;
 
-			solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
-		}
-	}
+            solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
+            try {
+                solverManager.install(SOLVER, VERSION, VERSION, null, false);
+                solverInstalled = true;
+            } catch (SmtLibSolverInstallerException e) {
+                e.printStackTrace();
+            }
 
-	@AfterClass
-	public static void destroy() throws SmtLibSolverInstallerException {
-		if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
-	}
+            solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
+        }
+    }
 
-	ItpSolver solver;
+    @AfterClass
+    public static void destroy() throws SmtLibSolverInstallerException {
+        if (solverInstalled) {
+            solverManager.uninstall(SOLVER, VERSION);
+        }
+    }
 
-	Expr<IntType> a;
-	Expr<IntType> b;
-	Expr<IntType> c;
-	Expr<IntType> d;
-	Expr<IntType> e;
-	Expr<FuncType<IntType, IntType>> f;
-	Expr<FuncType<IntType, IntType>> g;
+    ItpSolver solver;
 
-	@Before
-	public void initialize() {
-		Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+    Expr<IntType> a;
+    Expr<IntType> b;
+    Expr<IntType> c;
+    Expr<IntType> d;
+    Expr<IntType> e;
+    Expr<FuncType<IntType, IntType>> f;
+    Expr<FuncType<IntType, IntType>> g;
 
-		solver = solverFactory.createItpSolver();
+    @Before
+    public void initialize() {
+        Assume.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
 
-		final ConstDecl<IntType> ad = Const("a", Int());
-		final ConstDecl<IntType> bd = Const("b", Int());
-		final ConstDecl<IntType> cd = Const("c", Int());
-		final ConstDecl<IntType> dd = Const("d", Int());
-		final ConstDecl<IntType> ed = Const("e", Int());
-		final ConstDecl<FuncType<IntType, IntType>> fd = Const("f", Func(Int(), Int()));
-		final ConstDecl<FuncType<IntType, IntType>> gd = Const("g", Func(Int(), Int()));
+        solver = solverFactory.createItpSolver();
 
-		a = ad.getRef();
-		b = bd.getRef();
-		c = cd.getRef();
-		d = dd.getRef();
-		e = ed.getRef();
-		f = fd.getRef();
-		g = gd.getRef();
-	}
+        final ConstDecl<IntType> ad = Const("a", Int());
+        final ConstDecl<IntType> bd = Const("b", Int());
+        final ConstDecl<IntType> cd = Const("c", Int());
+        final ConstDecl<IntType> dd = Const("d", Int());
+        final ConstDecl<IntType> ed = Const("e", Int());
+        final ConstDecl<FuncType<IntType, IntType>> fd = Const("f", Func(Int(), Int()));
+        final ConstDecl<FuncType<IntType, IntType>> gd = Const("g", Func(Int(), Int()));
 
-	@Test
-	public void testBinaryInterpolation() {
-		final ItpMarker A = solver.createMarker();
-		final ItpMarker B = solver.createMarker();
-		final ItpPattern pattern = solver.createBinPattern(A, B);
+        a = ad.getRef();
+        b = bd.getRef();
+        c = cd.getRef();
+        d = dd.getRef();
+        e = ed.getRef();
+        f = fd.getRef();
+        g = gd.getRef();
+    }
 
-		solver.add(A, Eq(a, b));
-		solver.add(A, Eq(a, c));
-		solver.add(B, Eq(b, d));
-		solver.add(B, Neq(c, d));
+    @Test
+    public void testBinaryInterpolation() {
+        final ItpMarker A = solver.createMarker();
+        final ItpMarker B = solver.createMarker();
+        final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-		final Interpolant itp = solver.getInterpolant(pattern);
+        solver.add(A, Eq(a, b));
+        solver.add(A, Eq(a, c));
+        solver.add(B, Eq(b, d));
+        solver.add(B, Neq(c, d));
 
-		System.out.println(itp.eval(A));
-		System.out.println("----------");
-		Assert.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
-	}
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
 
-	@Test
-	public void testSequenceInterpolation() {
-		final ItpMarker I1 = solver.createMarker();
-		final ItpMarker I2 = solver.createMarker();
-		final ItpMarker I3 = solver.createMarker();
-		final ItpMarker I4 = solver.createMarker();
-		final ItpMarker I5 = solver.createMarker();
-		final ItpPattern pattern = solver.createSeqPattern(ImmutableList.of(I1, I2, I3, I4, I5));
+        System.out.println(itp.eval(A));
+        System.out.println("----------");
+        Assert.assertTrue(ExprUtils.getVars(itp.eval(A)).size() <= 3);
+    }
 
-		solver.add(I1, Eq(a, Int(0)));
-		solver.add(I2, Eq(a, b));
-		solver.add(I3, Eq(c, d));
-		solver.add(I4, Eq(d, Int(1)));
-		solver.add(I5, Eq(b, c));
+    @Test
+    public void testSequenceInterpolation() {
+        final ItpMarker I1 = solver.createMarker();
+        final ItpMarker I2 = solver.createMarker();
+        final ItpMarker I3 = solver.createMarker();
+        final ItpMarker I4 = solver.createMarker();
+        final ItpMarker I5 = solver.createMarker();
+        final ItpPattern pattern = solver.createSeqPattern(ImmutableList.of(I1, I2, I3, I4, I5));
 
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-		final Interpolant itp = solver.getInterpolant(pattern);
+        solver.add(I1, Eq(a, Int(0)));
+        solver.add(I2, Eq(a, b));
+        solver.add(I3, Eq(c, d));
+        solver.add(I4, Eq(d, Int(1)));
+        solver.add(I5, Eq(b, c));
 
-		System.out.println(itp.eval(I1));
-		System.out.println(itp.eval(I2));
-		System.out.println(itp.eval(I3));
-		System.out.println(itp.eval(I4));
-		System.out.println(itp.eval(I5));
-		System.out.println("----------");
-	}
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
 
-	@Test
-	public void testTreeInterpolation() {
-		final ItpMarker I1 = solver.createMarker();
-		final ItpMarker I2 = solver.createMarker();
-		final ItpMarker I3 = solver.createMarker();
-		final ItpMarker I4 = solver.createMarker();
-		final ItpMarker I5 = solver.createMarker();
-		final ItpPattern pattern = solver.createTreePattern(Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
+        System.out.println(itp.eval(I1));
+        System.out.println(itp.eval(I2));
+        System.out.println(itp.eval(I3));
+        System.out.println(itp.eval(I4));
+        System.out.println(itp.eval(I5));
+        System.out.println("----------");
+    }
 
-		solver.add(I1, Eq(a, Int(0)));
-		solver.add(I2, Eq(a, b));
-		solver.add(I3, Eq(c, d));
-		solver.add(I4, Eq(d, Int(1)));
-		solver.add(I5, Eq(b, c));
+    @Test
+    public void testTreeInterpolation() {
+        final ItpMarker I1 = solver.createMarker();
+        final ItpMarker I2 = solver.createMarker();
+        final ItpMarker I3 = solver.createMarker();
+        final ItpMarker I4 = solver.createMarker();
+        final ItpMarker I5 = solver.createMarker();
+        final ItpPattern pattern = solver.createTreePattern(
+                Tree(I3, Subtree(I1, Leaf(I4), Leaf(I5)), Leaf(I2)));
 
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-		final Interpolant itp = solver.getInterpolant(pattern);
+        solver.add(I1, Eq(a, Int(0)));
+        solver.add(I2, Eq(a, b));
+        solver.add(I3, Eq(c, d));
+        solver.add(I4, Eq(d, Int(1)));
+        solver.add(I5, Eq(b, c));
 
-		System.out.println(itp.eval(I1));
-		System.out.println(itp.eval(I2));
-		System.out.println(itp.eval(I3));
-		System.out.println(itp.eval(I4));
-		System.out.println(itp.eval(I5));
-		System.out.println("----------");
-	}
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
 
-	@Test
-	public void testEUF() {
-		final ItpMarker A = solver.createMarker();
-		final ItpMarker B = solver.createMarker();
-		final ItpPattern pattern = solver.createBinPattern(A, B);
+        System.out.println(itp.eval(I1));
+        System.out.println(itp.eval(I2));
+        System.out.println(itp.eval(I3));
+        System.out.println(itp.eval(I4));
+        System.out.println(itp.eval(I5));
+        System.out.println("----------");
+    }
 
-		solver.add(A, Eq(App(f, a), c));
-		solver.add(A, Eq(App(f, b), d));
-		solver.add(B, Eq(a, b));
-		solver.add(B, Neq(App(g, c), App(g, d)));
+    @Test
+    public void testEUF() {
+        final ItpMarker A = solver.createMarker();
+        final ItpMarker B = solver.createMarker();
+        final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-		final Interpolant itp = solver.getInterpolant(pattern);
+        solver.add(A, Eq(App(f, a), c));
+        solver.add(A, Eq(App(f, b), d));
+        solver.add(B, Eq(a, b));
+        solver.add(B, Neq(App(g, c), App(g, d)));
 
-		System.out.println(itp.eval(A));
-		System.out.println("----------");
-	}
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
 
-	@Test
-	public void testLIA() {
-		final ItpMarker A = solver.createMarker();
-		final ItpMarker B = solver.createMarker();
-		final ItpPattern pattern = solver.createBinPattern(A, B);
+        System.out.println(itp.eval(A));
+        System.out.println("----------");
+    }
 
-		solver.add(A, Eq(b, Mul(ImmutableList.of(Int(2), a))));
-		solver.add(B, Eq(b, Add(ImmutableList.of(Mul(ImmutableList.of(Int(2), c)), Int(1)))));
+    @Test
+    public void testLIA() {
+        final ItpMarker A = solver.createMarker();
+        final ItpMarker B = solver.createMarker();
+        final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-		final Interpolant itp = solver.getInterpolant(pattern);
+        solver.add(A, Eq(b, Mul(ImmutableList.of(Int(2), a))));
+        solver.add(B, Eq(b, Add(ImmutableList.of(Mul(ImmutableList.of(Int(2), c)), Int(1)))));
 
-		System.out.println(itp.eval(A));
-		System.out.println("----------");
-	}
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
 
-	@Test
-	public void testQuantifiers() {
-		final ItpMarker A = solver.createMarker();
-		final ItpMarker B = solver.createMarker();
-		final ItpPattern pattern = solver.createBinPattern(A, B);
+        System.out.println(itp.eval(A));
+        System.out.println("----------");
+    }
 
-		final ConstDecl<IntType> id = Const("i", Int());
-		final ConstDecl<FuncType<IntType, BoolType>> pd = Const("p", Func(Int(), Bool()));
-		final ConstDecl<FuncType<IntType, BoolType>> qd = Const("q", Func(Int(), Bool()));
-		final ParamDecl<IntType> x1d = Param("x", Int());
-		final ParamDecl<IntType> x2d = Param("x", Int());
+    @Test
+    public void testQuantifiers() {
+        final ItpMarker A = solver.createMarker();
+        final ItpMarker B = solver.createMarker();
+        final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		final Expr<IntType> i = id.getRef();
-		final Expr<FuncType<IntType, BoolType>> p = pd.getRef();
-		final Expr<FuncType<IntType, BoolType>> q = qd.getRef();
-		final Expr<IntType> x1 = x1d.getRef();
-		final Expr<IntType> x2 = x2d.getRef();
+        final ConstDecl<IntType> id = Const("i", Int());
+        final ConstDecl<FuncType<IntType, BoolType>> pd = Const("p", Func(Int(), Bool()));
+        final ConstDecl<FuncType<IntType, BoolType>> qd = Const("q", Func(Int(), Bool()));
+        final ParamDecl<IntType> x1d = Param("x", Int());
+        final ParamDecl<IntType> x2d = Param("x", Int());
 
-		solver.add(A, Forall(ImmutableList.of(x1d), Imply(App(q, x1), App(p, x1))));
-		solver.add(A, Forall(ImmutableList.of(x2d), Not(App(p, x2))));
-		solver.add(B, App(q, i));
+        final Expr<IntType> i = id.getRef();
+        final Expr<FuncType<IntType, BoolType>> p = pd.getRef();
+        final Expr<FuncType<IntType, BoolType>> q = qd.getRef();
+        final Expr<IntType> x1 = x1d.getRef();
+        final Expr<IntType> x2 = x2d.getRef();
 
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-		final Interpolant itp = solver.getInterpolant(pattern);
+        solver.add(A, Forall(ImmutableList.of(x1d), Imply(App(q, x1), App(p, x1))));
+        solver.add(A, Forall(ImmutableList.of(x2d), Not(App(p, x2))));
+        solver.add(B, App(q, i));
 
-		System.out.println(itp.eval(A));
-		System.out.println("----------");
-	}
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
 
-	@Test
-	public void testPushPop() {
-		final ItpMarker A = solver.createMarker();
-		final ItpMarker B = solver.createMarker();
-		final ItpPattern pattern = solver.createBinPattern(A, B);
+        System.out.println(itp.eval(A));
+        System.out.println("----------");
+    }
 
-		solver.add(A, Eq(a, b));
-		solver.add(B, Eq(b, c));
+    @Test
+    public void testPushPop() {
+        final ItpMarker A = solver.createMarker();
+        final ItpMarker B = solver.createMarker();
+        final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.push();
+        solver.add(A, Eq(a, b));
+        solver.add(B, Eq(b, c));
 
-		solver.add(A, Neq(a, c));
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        solver.push();
 
-		solver.pop();
+        solver.add(A, Neq(a, c));
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
 
-		solver.add(B, Neq(a, c));
-		solver.check();
-		Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-		final Interpolant itp = solver.getInterpolant(pattern);
+        solver.pop();
 
-		System.out.println(itp.eval(A));
-		System.out.println("----------");
-	}
+        solver.add(B, Neq(a, c));
+        solver.check();
+        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
+        final Interpolant itp = solver.getInterpolant(pattern);
+
+        System.out.println(itp.eval(A));
+        System.out.println("----------");
+    }
 
 }

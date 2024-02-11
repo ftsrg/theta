@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Collection;
@@ -36,177 +37,191 @@ import static java.util.stream.Collectors.toList;
  */
 public final class ARG<S extends State, A extends Action> {
 
-	private final Collection<ArgNode<S, A>> initNodes;
-	boolean initialized; // Set by ArgBuilder
-	private int nextId = 0;
-	final PartialOrd<S> partialOrd;
+    private final Collection<ArgNode<S, A>> initNodes;
+    public boolean initialized; // Set by ArgBuilder
+    private int nextId = 0;
+    private final PartialOrd<S> partialOrd;
 
-	private ARG(final PartialOrd<S> partialOrd) {
-		initNodes = Containers.createSet();
-		this.partialOrd = partialOrd;
-		this.initialized = false;
-	}
+    private ARG(final PartialOrd<S> partialOrd) {
+        initNodes = Containers.createSet();
+        this.partialOrd = partialOrd;
+        this.initialized = false;
+    }
 
-	public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
-		return new ARG<>(partialOrd);
-	}
+    public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
+        return new ARG<>(partialOrd);
+    }
 
-	////
+    ////
 
-	public Stream<ArgNode<S, A>> getInitNodes() {
-		return initNodes.stream();
-	}
+    public Stream<ArgNode<S, A>> getInitNodes() {
+        return initNodes.stream();
+    }
 
-	public Stream<S> getInitStates() {
-		return getInitNodes().map(ArgNode::getState);
-	}
+    public Stream<S> getInitStates() {
+        return getInitNodes().map(ArgNode::getState);
+    }
 
-	public Stream<ArgNode<S, A>> getNodes() {
-		return getInitNodes().flatMap(ArgNode::descendants);
-	}
+    public Stream<ArgNode<S, A>> getNodes() {
+        return getInitNodes().flatMap(ArgNode::descendants);
+    }
 
-	public Stream<ArgNode<S, A>> getUnsafeNodes() {
-		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(ArgNode::isTarget);
-	}
+    public Stream<ArgNode<S, A>> getUnsafeNodes() {
+        return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(ArgNode::isTarget);
+    }
 
-	public Stream<ArgNode<S, A>> getIncompleteNodes() {
-		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> !n.isExpanded());
-	}
+    public Stream<ArgNode<S, A>> getIncompleteNodes() {
+        return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> !n.isExpanded());
+    }
 
-	////
 
-	/**
-	 * Checks if the ARG is complete, i.e., whether it is initialized and all of
-	 * its nodes are complete.
-	 */
-	public boolean isComplete() {
-		return isInitialized() && getNodes().allMatch(ArgNode::isComplete);
-	}
+    PartialOrd<S> getPartialOrd() {
+        return partialOrd;
+    }
 
-	/**
-	 * Checks if the ARG is safe, i.e., whether all of its nodes are safe.
-	 */
-	public boolean isSafe() {
-		return getNodes().allMatch(ArgNode::isSafe);
-	}
+    ////
 
-	/**
-	 * Checks if the ARG is initialized, i.e., all of its initial nodes are
-	 * present.
-	 */
-	public boolean isInitialized() {
-		return initialized;
-	}
+    /**
+     * Checks if the ARG is complete, i.e., whether it is initialized and all of
+     * its nodes are complete.
+     */
+    public boolean isComplete() {
+        return isInitialized() && getNodes().allMatch(ArgNode::isComplete);
+    }
 
-	////
+    /**
+     * Checks if the ARG is safe, i.e., whether all of its nodes are safe.
+     */
+    public boolean isSafe() {
+        return getNodes().allMatch(ArgNode::isSafe);
+    }
 
-	public ArgNode<S, A> createInitNode(final S initState, final boolean target) {
-		checkNotNull(initState);
-		final ArgNode<S, A> initNode = createNode(initState, 0, target);
-		initNodes.add(initNode);
-		return initNode;
-	}
+    /**
+     * Checks if the ARG is initialized, i.e., all of its initial nodes are
+     * present.
+     */
+    public boolean isInitialized() {
+        return initialized;
+    }
 
-	public ArgNode<S, A> createSuccNode(final ArgNode<S, A> node, final A action, final S succState,
-										final boolean target) {
-		checkNotNull(node);
-		checkNotNull(action);
-		checkNotNull(succState);
-		checkArgument(node.arg == this, "Node does not belong to this ARG");
-		checkArgument(!node.isTarget(), "Node is target");
-		final ArgNode<S, A> succNode = createNode(succState, node.getDepth() + 1, target);
-		createEdge(node, action, succNode);
-		return succNode;
-	}
+    ////
 
-	private ArgNode<S, A> createNode(final S state, final int depth, final boolean target) {
-		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, depth, target);
-		nextId = nextId + 1;
-		return node;
-	}
+    public ArgNode<S, A> createInitNode(final S initState, final boolean target) {
+        checkNotNull(initState);
+        final ArgNode<S, A> initNode = createNode(initState, 0, target);
+        initNodes.add(initNode);
+        ARGWebDebugger.create(initNode);
+        return initNode;
+    }
 
-	private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
-		final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
-		source.outEdges.add(edge);
-		target.inEdge = Optional.of(edge);
-		return edge;
-	}
+    public ArgNode<S, A> createSuccNode(final ArgNode<S, A> node, final A action, final S succState,
+                                        final boolean target) {
+        checkNotNull(node);
+        checkNotNull(action);
+        checkNotNull(succState);
+        checkArgument(node.arg == this, "Node does not belong to this ARG");
+        checkArgument(!node.isTarget(), "Node is target");
+        final ArgNode<S, A> succNode = createNode(succState, node.getDepth() + 1, target);
+        createEdge(node, action, succNode);
+        return succNode;
+    }
 
-	/**
-	 * Removes a node along with its subtree.
-	 */
-	public void prune(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		checkArgument(node.arg == this, "Node does not belong to this ARG");
-		if (node.getInEdge().isPresent()) {
-			final ArgEdge<S, A> edge = node.getInEdge().get();
-			final ArgNode<S, A> parent = edge.getSource();
-			parent.outEdges.remove(edge);
-			parent.expanded = false;
-		} else {
-			assert initNodes.contains(node);
-			initNodes.remove(node);
-			this.initialized = false;
-		}
-		node.descendants().forEach(ArgNode::unsetCoveringNode);
-		node.descendants().forEach(ArgNode::clearCoveredNodes);
-	}
+    private ArgNode<S, A> createNode(final S state, final int depth, final boolean target) {
+        final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, depth, target);
+        nextId = nextId + 1;
+        return node;
+    }
 
-	/**
-	 * Prune the whole ARG, making it uninitialized.
-	 */
-	public void pruneAll() {
-		initNodes.clear();
-		this.initialized = false;
-	}
+    private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
+        final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
+        source.outEdges.add(edge);
+        target.inEdge = Optional.of(edge);
+        ARGWebDebugger.add(source, action, target);
+        return edge;
+    }
 
-	public void minimize() {
-		initNodes.forEach(this::minimizeSubTree);
-	}
+    /**
+     * Removes a node along with its subtree.
+     */
+    public void prune(final ArgNode<S, A> node) {
+        checkNotNull(node);
+        checkArgument(node.arg == this, "Node does not belong to this ARG");
+        if (node.getInEdge().isPresent()) {
+            final ArgEdge<S, A> edge = node.getInEdge().get();
+            final ArgNode<S, A> parent = edge.getSource();
+            parent.outEdges.remove(edge);
+            ARGWebDebugger.remove(edge);
+            parent.expanded = false;
+        } else {
+            assert initNodes.contains(node);
+            initNodes.remove(node);
+            this.initialized = false;
+        }
+        node.descendants().forEach(ArgNode::unsetCoveringNode);
+        node.descendants().forEach(ArgNode::clearCoveredNodes);
+    }
 
-	private void minimizeSubTree(final ArgNode<S, A> node) {
-		final Stream<ArgNode<S, A>> children = node.children().collect(toList()).stream();
-		if (node.isExcluded()) {
-			children.forEach(this::prune);
-		} else {
-			children.forEach(this::minimizeSubTree);
-		}
-	}
+    /**
+     * Prune the whole ARG, making it uninitialized.
+     */
+    public void pruneAll() {
+        initNodes.clear();
+        this.initialized = false;
+    }
 
-	////
+    /**
+     * Marks the node for reexpanding without pruning it.
+     */
+    public void markForReExpansion(final ArgNode<S, A> node) {
+        node.expanded = false;
+    }
 
-	/**
-	 * Gets all counterexamples, i.e., traces leading to target nodes.
-	 */
-	public Stream<ArgTrace<S, A>> getCexs() {
-		return getUnsafeNodes().map(ArgTrace::to);
-	}
+    public void minimize() {
+        initNodes.forEach(this::minimizeSubTree);
+    }
 
-	/**
-	 * Gets the size of the ARG, i.e., the number of nodes.
-	 */
-	public long size() {
-		return getNodes().count();
-	}
+    private void minimizeSubTree(final ArgNode<S, A> node) {
+        final Stream<ArgNode<S, A>> children = node.children().collect(toList()).stream();
+        if (node.isExcluded()) {
+            children.forEach(this::prune);
+        } else {
+            children.forEach(this::minimizeSubTree);
+        }
+    }
 
-	/**
-	 * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
-	 * starts (at the initial nodes) from 0. Depth is undefined for an empty
-	 * ARG.
-	 */
-	public int getDepth() {
-		final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
-		checkState(maxOpt.isPresent(), "Depth is undefined for an empty ARG.");
-		return maxOpt.getAsInt();
-	}
+    ////
 
-	/**
-	 * Gets the mean branching factor of the expanded nodes.
-	 */
-	public double getMeanBranchingFactor() {
-		final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(ArgNode::isExpanded);
-		final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
-		return mean;
-	}
+    /**
+     * Gets all counterexamples, i.e., traces leading to target nodes.
+     */
+    public Stream<ArgTrace<S, A>> getCexs() {
+        return getUnsafeNodes().map(ArgTrace::to);
+    }
 
+    /**
+     * Gets the size of the ARG, i.e., the number of nodes.
+     */
+    public long size() {
+        return getNodes().count();
+    }
+
+    /**
+     * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
+     * starts (at the initial nodes) from 0. Depth is undefined for an empty
+     * ARG.
+     */
+    public int getDepth() {
+        final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
+        checkState(maxOpt.isPresent(), "Depth is undefined for an empty ARG.");
+        return maxOpt.getAsInt();
+    }
+
+    /**
+     * Gets the mean branching factor of the expanded nodes.
+     */
+    public double getMeanBranchingFactor() {
+        final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(ArgNode::isExpanded);
+        final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
+        return mean;
+    }
 }

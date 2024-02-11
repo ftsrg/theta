@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.pred;
 
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -23,6 +24,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
@@ -49,176 +51,208 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
  */
 public class PredAbstractors {
 
-	private PredAbstractors() {
-	}
+    private PredAbstractors() {
+    }
 
-	/**
-	 * Interface for performing predicate abstraction over an expression.
-	 */
-	public interface PredAbstractor {
-		/**
-		 * Create predicate states for a given expression with a given
-		 * precision.
-		 *
-		 * @param expr         Expression to be abstracted
-		 * @param exprIndexing Unfold indexing of the expression
-		 * @param prec         Precision
-		 * @param precIndexing Unfold indexing of the precision
-		 * @return
-		 */
-		Collection<PredState> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-												  final PredPrec prec, final VarIndexing precIndexing);
-	}
+    /**
+     * Interface for performing predicate abstraction over an expression.
+     */
+    public interface PredAbstractor {
 
-	/**
-	 * Get the strategy that uses Boolean abstraction and splits the disjuncts.
-	 *
-	 * @param solver
-	 * @return
-	 */
-	public static PredAbstractor booleanSplitAbstractor(final Solver solver) {
-		return new BooleanAbstractor(solver, true);
-	}
+        /**
+         * Create predicate states for a given expression with a given precision.
+         *
+         * @param expr         Expression to be abstracted
+         * @param exprIndexing Unfold indexing of the expression
+         * @param prec         Precision
+         * @param precIndexing Unfold indexing of the precision
+         * @return
+         */
+        Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
+                                                  final VarIndexing exprIndexing,
+                                                  final PredPrec prec, final VarIndexing precIndexing);
 
-	/**
-	 * Get the strategy that uses Boolean abstraction (and keeps the formula as
-	 * a whole).
-	 *
-	 * @param solver
-	 * @return
-	 */
-	public static PredAbstractor booleanAbstractor(final Solver solver) {
-		return new BooleanAbstractor(solver, false);
-	}
+        default Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
+                                                          final VarIndexing exprIndexing,
+                                                          final PredPrec prec,
+                                                          final VarIndexing precIndexing,
+                                                          final PredState state,
+                                                          final ExprAction action) {
+            return createStatesForExpr(expr, exprIndexing, prec, precIndexing);
+        }
+    }
 
-	/**
-	 * Get the strategy that uses Cartesian abstraction.
-	 *
-	 * @param solver
-	 * @return
-	 */
-	public static PredAbstractor cartesianAbstractor(final Solver solver) {
-		return new CartesianAbstractor(solver);
-	}
+    /**
+     * Get the strategy that uses Boolean abstraction and splits the disjuncts.
+     *
+     * @param solver
+     * @return
+     */
+    public static PredAbstractor booleanSplitAbstractor(final Solver solver) {
+        return new BooleanAbstractor(solver, true);
+    }
 
-	private static final class BooleanAbstractor implements PredAbstractor {
+    /**
+     * Get the strategy that uses Boolean abstraction (and keeps the formula as a whole).
+     *
+     * @param solver
+     * @return
+     */
+    public static PredAbstractor booleanAbstractor(final Solver solver) {
+        return new BooleanAbstractor(solver, false);
+    }
 
-		private final Solver solver;
-		private final List<ConstDecl<BoolType>> actLits;
-		private final String litPrefix;
-		private static int instanceCounter = 0;
-		private final boolean split;
+    /**
+     * Get the strategy that uses Cartesian abstraction.
+     *
+     * @param solver
+     * @return
+     */
+    public static PredAbstractor cartesianAbstractor(final Solver solver) {
+        return new CartesianAbstractor(solver);
+    }
 
-		public BooleanAbstractor(final Solver solver, final boolean split) {
-			this.solver = checkNotNull(solver);
-			this.actLits = new ArrayList<>();
-			this.litPrefix = "__" + getClass().getSimpleName() + "_" + instanceCounter + "_";
-			instanceCounter++;
-			this.split = split;
-		}
+    private static final class BooleanAbstractor implements PredAbstractor {
 
-		@Override
-		public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-														 final PredPrec prec, final VarIndexing precIndexing) {
-			checkNotNull(expr);
-			checkNotNull(exprIndexing);
-			checkNotNull(prec);
-			checkNotNull(precIndexing);
+        private final Solver solver;
+        private final List<ConstDecl<BoolType>> actLits;
+        private final String litPrefix;
+        private static int instanceCounter = 0;
+        private final boolean split;
 
-			final List<Expr<BoolType>> preds = new ArrayList<>(prec.getPreds());
-			generateActivationLiterals(preds.size());
+        public BooleanAbstractor(final Solver solver, final boolean split) {
+            this.solver = checkNotNull(solver);
+            this.actLits = new ArrayList<>();
+            this.litPrefix = "__" + getClass().getSimpleName() + "_" + instanceCounter + "_";
+            instanceCounter++;
+            this.split = split;
+        }
 
-			assert actLits.size() >= preds.size();
+        @Override
+        public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
+                                                         final VarIndexing exprIndexing,
+                                                         final PredPrec prec, final VarIndexing precIndexing) {
+            checkNotNull(expr);
+            checkNotNull(exprIndexing);
+            checkNotNull(prec);
+            checkNotNull(precIndexing);
 
-			final List<PredState> states = new LinkedList<>();
-			try (WithPushPop wp = new WithPushPop(solver)) {
-				solver.add(PathUtils.unfold(expr, exprIndexing));
-				for (int i = 0; i < preds.size(); ++i) {
-					solver.add(Iff(actLits.get(i).getRef(), PathUtils.unfold(preds.get(i), precIndexing)));
-				}
-				while (solver.check().isSat()) {
-					final Valuation model = solver.getModel();
-					final Set<Expr<BoolType>> newStatePreds = Containers.createSet();
-					final List<Expr<BoolType>> feedback = new LinkedList<>();
-					feedback.add(True());
-					for (int i = 0; i < preds.size(); ++i) {
-						final ConstDecl<BoolType> lit = actLits.get(i);
-						final Expr<BoolType> pred = preds.get(i);
-						final Optional<LitExpr<BoolType>> eval = model.eval(lit);
-						if (eval.isPresent()) {
-							if (eval.get().equals(True())) {
-								newStatePreds.add(pred);
-								feedback.add(lit.getRef());
-							} else {
-								newStatePreds.add(prec.negate(pred));
-								feedback.add(Not(lit.getRef()));
-							}
-						}
-					}
-					states.add(PredState.of(newStatePreds));
-					solver.add(Not(And(feedback)));
-				}
-			}
-			if (!split && states.size() > 1) {
-				final Expr<BoolType> pred = Or(states.stream().map(PredState::toExpr).collect(Collectors.toList()));
-				return Collections.singleton(PredState.of(pred));
-			} else {
-				return states;
-			}
-		}
+            final List<Expr<BoolType>> preds = new ArrayList<>(prec.getPreds());
+            generateActivationLiterals(preds.size());
 
-		private void generateActivationLiterals(final int n) {
-			while (actLits.size() < n) {
-				actLits.add(Decls.Const(litPrefix + actLits.size(), BoolExprs.Bool()));
-			}
-		}
-	}
+            assert actLits.size() >= preds.size();
 
-	private static final class CartesianAbstractor implements PredAbstractor {
+            final List<PredState> states = new LinkedList<>();
+            try (WithPushPop wp = new WithPushPop(solver)) {
+                solver.add(PathUtils.unfold(expr, exprIndexing));
+                for (int i = 0; i < preds.size(); ++i) {
+                    solver.add(
+                            Iff(actLits.get(i).getRef(), PathUtils.unfold(preds.get(i), precIndexing)));
+                }
+                while (solver.check().isSat()) {
+                    final Valuation model = solver.getModel();
+                    final Set<Expr<BoolType>> newStatePreds = Containers.createSet();
+                    final List<Expr<BoolType>> feedback = new LinkedList<>();
+                    feedback.add(True());
+                    for (int i = 0; i < preds.size(); ++i) {
+                        final ConstDecl<BoolType> lit = actLits.get(i);
+                        final Expr<BoolType> pred = preds.get(i);
+                        final Optional<LitExpr<BoolType>> eval = model.eval(lit);
+                        if (eval.isPresent()) {
+                            if (eval.get().equals(True())) {
+                                newStatePreds.add(pred);
+                                feedback.add(lit.getRef());
+                            } else {
+                                newStatePreds.add(prec.negate(pred));
+                                feedback.add(Not(lit.getRef()));
+                            }
+                        }
+                    }
+                    states.add(PredState.of(newStatePreds));
+                    solver.add(Not(And(feedback)));
+                }
+            }
+            if (!split && states.size() > 1) {
+                final Expr<BoolType> pred = Or(
+                        states.stream().map(PredState::toExpr).collect(Collectors.toList()));
+                return Collections.singleton(PredState.of(pred));
+            } else {
+                return states;
+            }
+        }
 
-		private final Solver solver;
+        private void generateActivationLiterals(final int n) {
+            while (actLits.size() < n) {
+                actLits.add(Decls.Const(litPrefix + actLits.size(), BoolExprs.Bool()));
+            }
+        }
+    }
 
-		public CartesianAbstractor(final Solver solver) {
-			this.solver = solver;
-		}
+    private static final class CartesianAbstractor implements PredAbstractor {
 
-		@Override
-		public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-														 final PredPrec prec, final VarIndexing precIndexing) {
-			final List<Expr<BoolType>> newStatePreds = new ArrayList<>();
+        private final Solver solver;
 
-			try (WithPushPop wp = new WithPushPop(solver)) {
-				solver.add(PathUtils.unfold(expr, exprIndexing));
-				solver.check();
-				if (solver.getStatus().isUnsat()) {
-					return Collections.emptySet();
-				}
+        public CartesianAbstractor(final Solver solver) {
+            this.solver = solver;
+        }
 
-				for (final Expr<BoolType> pred : prec.getPreds()) {
-					final boolean ponEntailed;
-					final boolean negEntailed;
-					try (WithPushPop wp1 = new WithPushPop(solver)) {
-						solver.add(PathUtils.unfold(prec.negate(pred), precIndexing));
-						ponEntailed = solver.check().isUnsat();
-					}
-					try (WithPushPop wp2 = new WithPushPop(solver)) {
-						solver.add(PathUtils.unfold(pred, precIndexing));
-						negEntailed = solver.check().isUnsat();
-					}
+        @Override
+        public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
+                                                         final VarIndexing exprIndexing,
+                                                         final PredPrec prec, final VarIndexing precIndexing) {
+            final List<Expr<BoolType>> newStatePreds = new ArrayList<>();
 
-					assert !(ponEntailed && negEntailed) : "Ponated and negated predicates are both entailed.";
+            try (WithPushPop wp = new WithPushPop(solver)) {
+                solver.add(PathUtils.unfold(expr, exprIndexing));
+                solver.check();
+                if (solver.getStatus().isUnsat()) {
+                    return Collections.emptySet();
+                }
 
-					if (ponEntailed) {
-						newStatePreds.add(pred);
-					}
-					if (negEntailed) {
-						newStatePreds.add(prec.negate(pred));
-					}
-				}
-			}
+                for (final Expr<BoolType> pred : prec.getPreds()) {
+                    final boolean ponEntailed;
+                    final boolean negEntailed;
+                    try (WithPushPop wp1 = new WithPushPop(solver)) {
+                        solver.add(PathUtils.unfold(prec.negate(pred), precIndexing));
+                        ponEntailed = solver.check().isUnsat();
+                    }
+                    try (WithPushPop wp2 = new WithPushPop(solver)) {
+                        solver.add(PathUtils.unfold(pred, precIndexing));
+                        negEntailed = solver.check().isUnsat();
+                    }
 
-			return Collections.singleton(PredState.of(newStatePreds));
-		}
+                    assert !(ponEntailed
+                            && negEntailed) : "Ponated and negated predicates are both entailed.";
 
-	}
+                    if (ponEntailed) {
+                        newStatePreds.add(pred);
+                    }
+                    if (negEntailed) {
+                        newStatePreds.add(prec.negate(pred));
+                    }
+                }
+            }
+
+            return Collections.singleton(PredState.of(newStatePreds));
+        }
+
+        @Override
+        public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
+                                                         final VarIndexing exprIndexing,
+                                                         final PredPrec prec,
+                                                         final VarIndexing precIndexing,
+                                                         final PredState state,
+                                                         final ExprAction action) {
+            var actionExpr = action.toExpr();
+            if (actionExpr.equals(True())) {
+                var filteredPreds = state.getPreds().stream().filter(p -> {
+                    var vars = ExprUtils.getVars(p);
+                    var indexing = action.nextIndexing();
+                    return vars.stream().allMatch(v -> indexing.get(v) == 0);
+                }).collect(Collectors.toList());
+                return Collections.singleton(PredState.of(filteredPreds));
+            }
+            return createStatesForExpr(expr, exprIndexing, prec, precIndexing);
+        }
+    }
 }

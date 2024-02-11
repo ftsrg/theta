@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,65 +28,66 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.utils.TypeUtils.checkAllTypesEqual;
 
 public final class BvMulExpr extends MulExpr<BvType> {
-	private static final int HASH_SEED = 9825;
-	private static final String OPERATOR_LABEL = "bvmul";
 
-	private BvMulExpr(final Iterable<? extends Expr<BvType>> ops) {
-		super(ops);
-		checkAllTypesEqual(ops);
-	}
+    private static final int HASH_SEED = 9825;
+    private static final String OPERATOR_LABEL = "bvmul";
 
-	public static BvMulExpr of(final Iterable<? extends Expr<BvType>> ops) {
-		return new BvMulExpr(ops);
-	}
+    private BvMulExpr(final Iterable<? extends Expr<BvType>> ops) {
+        super(ops);
+        checkAllTypesEqual(ops);
+    }
 
-	public static BvMulExpr create(final List<? extends Expr<?>> ops) {
-		checkNotNull(ops);
-		return BvMulExpr.of(ops.stream().map(TypeUtils::castBv).collect(toImmutableList()));
-	}
+    public static BvMulExpr of(final Iterable<? extends Expr<BvType>> ops) {
+        return new BvMulExpr(ops);
+    }
 
-	@Override
-	public BvType getType() {
-		return getOps().get(0).getType();
-	}
+    public static BvMulExpr create(final List<? extends Expr<?>> ops) {
+        checkNotNull(ops);
+        return BvMulExpr.of(ops.stream().map(TypeUtils::castBv).collect(toImmutableList()));
+    }
 
-	@Override
-	public BvLitExpr eval(final Valuation val) {
-		return getOps().stream().skip(1).reduce(
-				(BvLitExpr) getOps().get(0).eval(val),
-				(op1, op2) -> (op1.mul((BvLitExpr) op2.eval(val))),
-				BvLitExpr::mul
-		);
-	}
+    @Override
+    public BvType getType() {
+        return getOps().get(0).getType();
+    }
 
-	@Override
-	public BvMulExpr with(final Iterable<? extends Expr<BvType>> ops) {
-		if (ops == getOps()) {
-			return this;
-		} else {
-			return BvMulExpr.of(ops);
-		}
-	}
+    @Override
+    public BvLitExpr eval(final Valuation val) {
+        return getOps().stream().skip(1).reduce(
+                (BvLitExpr) getOps().get(0).eval(val),
+                (op1, op2) -> (op1.mul((BvLitExpr) op2.eval(val))),
+                BvLitExpr::mul
+        );
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof BvMulExpr) {
-			final BvMulExpr that = (BvMulExpr) obj;
-			return this.getOps().equals(that.getOps());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public BvMulExpr with(final Iterable<? extends Expr<BvType>> ops) {
+        if (ops == getOps()) {
+            return this;
+        } else {
+            return BvMulExpr.of(ops);
+        }
+    }
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final BvMulExpr that = (BvMulExpr) obj;
+            return this.getOps().equals(that.getOps());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    protected int getHashSeed() {
+        return HASH_SEED;
+    }
+
+    @Override
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 }

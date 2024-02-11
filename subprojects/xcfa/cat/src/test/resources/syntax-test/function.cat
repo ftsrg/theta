@@ -1,0 +1,12 @@
+FUNCTION
+
+(* Two constraints, uses po and rf only *)
+
+let my_intersection1 A B = A | B
+let my_intersection2(A, B) = A | B
+
+let porf = my_intersection1(po, rf)
+acyclic porf
+
+let popoinv = my_intersection2(po, po^-1)
+irreflexive popoinv
