@@ -7,15 +7,19 @@ import com.google.common.base.Stopwatch;
 import com.google.common.io.Files;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
-import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -23,10 +27,14 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.analysis.*;
+import hu.bme.mit.theta.xsts.analysis.XstsAction;
+import hu.bme.mit.theta.xsts.analysis.XstsState;
 import hu.bme.mit.theta.xsts.analysis.concretizer.TraceGenerationXstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
@@ -41,6 +49,7 @@ import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +86,7 @@ public class XstsCli {
 	Integer maxEnum = 0;
 
 	@Parameter(names = "--autoexpl", description = "Predicate to explicit switching strategy")
- 	AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
+	AutoExpl autoExpl = AutoExpl.NEWOPERANDS;
 
 	@Parameter(names = {"--initprec"}, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
@@ -111,6 +120,18 @@ public class XstsCli {
 
 	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
+
+	@Parameter(names = {"--refinement-solver"}, description = "Refinement solver name")
+	String refinementSolver= "Z3";
+
+	@Parameter(names = {"--abstraction-solver"}, description = "Abstraction solver name")
+	String abstractionSolver= "Z3";
+
+	@Parameter(names = {"--smt-home"}, description = "The path of the solver registry")
+	String solverHome = SmtLibSolverManager.HOME.toAbsolutePath().toString();
+
+	@Parameter(names = "--no-stuck-check")
+	boolean noStuckCheck = false;
 
 	@Parameter(names = "--tracegen", description = "Generate all possible traces of the model (instead of verification)")
 	boolean tracegen = false;
@@ -264,8 +285,19 @@ public class XstsCli {
 	}
 
 	private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
+		// set up stopping analysis if it is stuck on same ARGs and precisions
+		if (noStuckCheck) {
+			ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+		} else {
+			ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
+		}
+
+		registerAllSolverManagers(solverHome, logger);
+		SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+		SolverFactory refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+
 		try {
-			return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+			return new XstsConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
 					.maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
 					.search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
 		} catch (final Exception ex) {
@@ -327,6 +359,15 @@ public class XstsCli {
 		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
 				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
 		GraphvizWriter.getInstance().writeFile(graph, filename);
+	}
+
+	private void registerAllSolverManagers(String home, Logger logger) throws Exception {
+		SolverManager.closeAll();
+		SolverManager.registerSolverManager(Z3SolverManager.create());
+		if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+			SmtLibSolverManager smtLibSolverManager = SmtLibSolverManager.create(Path.of(home), logger);
+			SolverManager.registerSolverManager(smtLibSolverManager);
+		}
 	}
 
 }

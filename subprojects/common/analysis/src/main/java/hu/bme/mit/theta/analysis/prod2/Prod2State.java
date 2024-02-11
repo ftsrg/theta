@@ -157,7 +157,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 				result = HASH_SEED;
 				result = 37 * result + state1.hashCode();
 				result = 37 * result + state2.hashCode();
-				result = hashCode;
+                hashCode = result;
 			}
 			return result;
 		}
@@ -214,7 +214,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 				result = HASH_SEED;
 				result = 37 * result + getIndex();
 				result = 37 * result + getState().hashCode();
-				result = hashCode;
+                hashCode = result;
 			}
 			return result;
 		}

@@ -57,6 +57,9 @@ public final class SmtLibSolverTest {
     private static SmtLibSolverManager solverManager;
     private static SolverFactory solverFactory;
 
+    private static final String SOLVER = "cvc5";
+    private static final String VERSION = "1.0.2";
+
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
         if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
@@ -64,18 +67,19 @@ public final class SmtLibSolverTest {
 
             solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
             try {
-                solverManager.install("z3", "4.5.0", "4.5.0", null, false);
+                solverManager.install(SOLVER, VERSION, VERSION, null, false);
                 solverInstalled = true;
             } catch (SmtLibSolverInstallerException e) {
+                e.printStackTrace();
             }
 
-            solverFactory = solverManager.getSolverFactory("z3", "4.5.0");
+            solverFactory = solverManager.getSolverFactory(SOLVER, VERSION);
         }
     }
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        if(solverInstalled) solverManager.uninstall("z3", "4.5.0");
+        if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
     }
 
     @Before

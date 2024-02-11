@@ -50,7 +50,7 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     protected String[] getDefaultSolverArgs(String version) {
-        return new String[] { "-smt2" };
+        return new String[] { "-smt2", "-q" };
     }
 
     @Override
@@ -61,12 +61,13 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("2.5-916", "2.5-663", "2.5-479", "2.5-7");
+        return Arrays.asList("2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
     }
 
     private URL getDownloadUrl(final String version) throws SmtLibSolverInstallerException, MalformedURLException {
         final String fileName;
         switch (version) {
+            case "2.5-1230": fileName = "2.5-1230-g3eafb46a"; break;
             case "2.5-916": fileName = "2.5-916-ga5843d8b"; break;
             case "2.5-663": fileName = "2.5-663-gf15aa217"; break;
             case "2.5-479": fileName = "2.5-479-ga49e50b1"; break;

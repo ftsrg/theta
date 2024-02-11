@@ -1,11 +1,11 @@
 name: CI-sonar
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types: [opened, synchronize, reopened]
   workflow_dispatch:
+  workflow_call:
 
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2

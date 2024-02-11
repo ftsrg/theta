@@ -1,5 +1,6 @@
 apply<JavaPlugin>()
 apply(plugin = "jacoco-common")
+apply(plugin = "maven-artifact")
 
 dependencies {
     val implementation: Configuration by configurations

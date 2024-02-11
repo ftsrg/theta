@@ -71,7 +71,7 @@ public final class Prod4Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec, 
 			result = 37 * result + prec2.hashCode();
 			result = 37 * result + prec3.hashCode();
 			result = 37 * result + prec4.hashCode();
-			result = hashCode;
+            hashCode = result;
 		}
 		return result;
 	}
