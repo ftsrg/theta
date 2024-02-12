@@ -71,6 +71,7 @@ enum class POR(
     val isDynamic: Boolean,
     val isAbstractionAware: Boolean
 ) {
+
     NOPOR({ _, _ -> getXcfaLts() }, false, false),
     SPOR({ xcfa, _ -> XcfaSporLts(xcfa) }, false, false),
     AASPOR({ xcfa, registry -> XcfaAasporLts(xcfa, registry) }, false, true),
