@@ -120,7 +120,7 @@ private operator fun VarAccessMap?.plus(other: VarAccessMap?): VarAccessMap =
 inline val FenceLabel.acquiredMutexes: Set<String>
     get() = labels.mapNotNull {
         when {
-            it == "ATOMIC_BEGIN" -> "___atomic_block_mutex___"
+            it == "ATOMIC_BEGIN" -> ""
             it.startsWith("mutex_lock") -> it.substringAfter('(').substringBefore(')')
             it.startsWith("cond_wait") -> it.substring("cond_wait".length + 1, it.length - 1).split(",")[1]
             else -> null
@@ -133,7 +133,7 @@ inline val FenceLabel.acquiredMutexes: Set<String>
 inline val FenceLabel.releasedMutexes: Set<String>
     get() = labels.mapNotNull {
         when {
-            it == "ATOMIC_END" -> "___atomic_block_mutex___"
+            it == "ATOMIC_END" -> ""
             it.startsWith("mutex_unlock") -> it.substringAfter('(').substringBefore(')')
             it.startsWith("start_cond_wait") -> it.substring("start_cond_wait".length + 1, it.length - 1).split(",")[1]
             else -> null
