@@ -42,7 +42,7 @@ class XcfaWitnessWriter {
         parseContext: ParseContext,
         witnessfile: File,
     ) {
-        if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
+        if (safetyResult.isUnsafe && safetyResult.asUnsafe().hasTrace()) {
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
                 safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
 

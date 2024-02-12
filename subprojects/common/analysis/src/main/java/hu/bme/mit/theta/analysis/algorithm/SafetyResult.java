@@ -157,6 +157,10 @@ public abstract class SafetyResult<S extends State, A extends Action> {
             this.cex = Optional.empty();
         }
 
+        public boolean hasTrace() {
+            return cex.isPresent();
+        }
+
         public Trace<S, A> getTrace() {
             return cex.orElseThrow();
         }

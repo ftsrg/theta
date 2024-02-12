@@ -228,7 +228,7 @@ private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
         logger.write(Logger.Level.INFO,
             "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n")
 
-        if (!config.outputConfig.argConfig.disable && safetyResult.arg != null) {
+        if (!config.outputConfig.argConfig.disable && safetyResult.hasArg()) {
             val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
             val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
             argFile.writeText(GraphvizWriter.getInstance().writeString(g))
