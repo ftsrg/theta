@@ -26,26 +26,37 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SafetyResult<S extends State, A extends Action> {
 
-    private final ARG<S, A> arg;
+    private final Optional<ARG<S, A>> arg;
     private final Optional<Statistics> stats;
 
     private SafetyResult(final ARG<S, A> arg, final Optional<Statistics> stats) {
-        this.arg = checkNotNull(arg);
+        this.arg = Optional.of(arg);
         this.stats = checkNotNull(stats);
     }
 
     private SafetyResult() {
-        this.arg = null;
+        this.arg = Optional.empty();
         this.stats = Optional.empty();
     }
 
 
+    public boolean hasArg() {
+        return arg.isPresent();
+    }
+
     public ARG<S, A> getArg() {
-        return arg;
+        return arg.orElseThrow();
     }
 
     public Optional<Statistics> getStats() {
         return stats;
+    }
+
+    // Factory methods
+
+    public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg,
+                                                                      final Statistics stats) {
+        return new Safe<>(arg, Optional.of(stats));
     }
 
     public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg) {
@@ -57,19 +68,14 @@ public abstract class SafetyResult<S extends State, A extends Action> {
     }
 
     public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
-                                                                          final ARG<S, A> arg) {
-        return new Unsafe<>(cex, arg, Optional.empty());
-    }
-
-    public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg,
-                                                                      final Statistics stats) {
-        return new Safe<>(arg, Optional.of(stats));
-    }
-
-    public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
                                                                           final ARG<S, A> arg,
                                                                           final Statistics stats) {
         return new Unsafe<>(cex, arg, Optional.of(stats));
+    }
+
+    public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
+                                                                          final ARG<S, A> arg) {
+        return new Unsafe<>(cex, arg, Optional.empty());
     }
 
     public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex) {
@@ -135,24 +141,24 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 
     public static final class Unsafe<S extends State, A extends Action> extends SafetyResult<S, A> {
 
-        private final Trace<S, A> cex;
+        private final Optional<Trace<S, A>> cex;
 
         private Unsafe(final Trace<S, A> cex, final ARG<S, A> arg,
                        final Optional<Statistics> stats) {
             super(arg, stats);
-            this.cex = checkNotNull(cex);
+            this.cex = Optional.of(cex);
         }
 
         private Unsafe(final Trace<S, A> cex) {
-            this.cex = checkNotNull(cex);
+            this.cex = Optional.of(cex);
         }
 
         private Unsafe() {
-            this.cex = null;
+            this.cex = Optional.empty();
         }
 
         public Trace<S, A> getTrace() {
-            return cex;
+            return cex.orElseThrow();
         }
 
         @Override
@@ -181,7 +187,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         public String toString() {
             return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
                     .add(Unsafe.class.getSimpleName())
-                    .add("Trace length: " + cex.length()).toString();
+                    .add("Trace length: " + cex.map(Trace::length).orElse(-1)).toString();
         }
     }
 

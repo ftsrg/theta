@@ -28,6 +28,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
+import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import java.nio.file.Paths
 
 fun complexPortfolio24(
@@ -47,8 +48,8 @@ fun complexPortfolio24(
             propertyFile = null,
             property = portfolioConfig.inputConfig.property),
         frontendConfig = FrontendConfig(
-            lbeLevel = LbePass.LbeLevel.LBE_SEQ,
-            loopUnroll = 50,
+            lbeLevel = LbePass.level,
+            loopUnroll = LoopUnrollPass.UNROLL_LIMIT,
             inputType = InputType.C,
             specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient)),
         backendConfig = BackendConfig(
