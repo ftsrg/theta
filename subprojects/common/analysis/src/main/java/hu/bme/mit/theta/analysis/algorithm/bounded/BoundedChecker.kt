@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverBase
 import java.util.*
 
 class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
@@ -62,6 +63,14 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         check(bmcSolver != indSolver || bmcSolver == null) { "Use distinct solvers for BMC and KInd!" }
         check(itpSolver != indSolver || itpSolver == null) { "Use distinct solvers for IMC and KInd!" }
     }
+
+    private fun <T> SolverBase.pushPop(func: () -> T): T {
+        push()
+        val ret = func()
+        pop()
+        return ret
+    }
+
 
     override fun check(prec: UnitPrec?): SafetyResult<S, A> {
         var iteration = 0
@@ -114,23 +123,20 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
             }
 
             if (bmcSolver.check().isUnsat) {
-                bmcSolver.pop()
                 logger.write(Logger.Level.MAINSTEP, "Safety proven in BMC step\n")
-                return SafetyResult.safe<S, A>()
+                return SafetyResult.safe()
             }
         }
 
-        bmcSolver.push()
-        bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
+        return bmcSolver.pushPop {
+            bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
 
-        val ret = if (bmcSolver.check().isSat) {
-            val trace = getTrace(bmcSolver.model)
-            logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
-            SafetyResult.unsafe(trace)
-        } else null
-
-        bmcSolver.pop()
-        return ret
+            if (bmcSolver.check().isSat) {
+                val trace = getTrace(bmcSolver.model)
+                logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
+                SafetyResult.unsafe(trace)
+            } else null
+        }
     }
 
     private fun kind(): SafetyResult<S, A>? {
@@ -140,16 +146,14 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
         exprs.subList(lastIterLookup.first + 1, exprs.size).forEach { indSolver.add(it) }
 
-        indSolver.push()
-        indSolver.add(Not(unfoldedPropExpr(indices.last())))
+        return indSolver.pushPop {
+            indSolver.add(Not(unfoldedPropExpr(indices.last())))
 
-        val ret = if (indSolver.check().isUnsat) {
-            logger.write(Logger.Level.MAINSTEP, "Safety proven in k-induction step\n")
-            SafetyResult.safe<S, A>()
-        } else null
-
-        indSolver.pop()
-        return ret
+            if (indSolver.check().isUnsat) {
+                logger.write(Logger.Level.MAINSTEP, "Safety proven in k-induction step\n")
+                SafetyResult.safe<S, A>()
+            } else null
+        }
     }
 
     private fun itp(): SafetyResult<S, A>? {
