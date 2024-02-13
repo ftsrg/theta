@@ -56,7 +56,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
     private val indices = mutableListOf(VarIndexingFactory.indexing(0))
     private val exprs = mutableListOf<Expr<BoolType>>()
-    private var lastIterLookup = Pair(-1, -1)
+    private var lastIterLookup = Pair(0, 0)
 
     init {
         check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
@@ -144,7 +144,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
         logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
 
-        exprs.subList(lastIterLookup.first + 1, exprs.size).forEach { indSolver.add(it) }
+        exprs.subList(lastIterLookup.first, exprs.size).forEach { indSolver.add(it) }
 
         return indSolver.pushPop {
             indSolver.add(Not(unfoldedPropExpr(indices.last())))
