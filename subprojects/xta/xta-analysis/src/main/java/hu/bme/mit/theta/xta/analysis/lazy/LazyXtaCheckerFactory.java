@@ -29,10 +29,10 @@ public final class LazyXtaCheckerFactory {
 	private LazyXtaCheckerFactory() {
 	}
 
-	public static SafetyChecker<? extends ARG<?, ?>, ? extends Trace<?, ?>, UnitPrec> create(final XtaSystem system,
+	public static SafetyChecker<? extends ARG<? extends XtaState<?>, XtaAction>, ? extends Trace<? extends XtaState<?>, XtaAction>, UnitPrec> create(final XtaSystem system,
 																											 final DataStrategy dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
 		final CombinedStrategy<?, ?> algorithmStrategy = combineStrategies(system, dataStrategy, clockStrategy);
-		final SafetyChecker<? extends ARG<?,?>, ? extends Trace<?, ?>, UnitPrec> checker = LazyXtaChecker.create(system,
+		final SafetyChecker<? extends ARG<? extends XtaState<?>,XtaAction>, ? extends Trace<? extends XtaState<?>, XtaAction>, UnitPrec> checker = LazyXtaChecker.create(system,
 				algorithmStrategy, searchStrategy);
 		return checker;
 	}
