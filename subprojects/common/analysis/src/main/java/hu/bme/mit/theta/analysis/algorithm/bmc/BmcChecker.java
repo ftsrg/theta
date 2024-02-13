@@ -17,13 +17,10 @@
 package hu.bme.mit.theta.analysis.algorithm.bmc;
 
 import com.google.common.collect.Lists;
-import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.*;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
@@ -39,7 +36,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Prec> implements SafetyChecker<S, A, P> {
+public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Prec> implements SafetyChecker<ARG<S, A>, Trace<S, A>, P> {
 	private final LTS<S, A> lts;
 	private final InitFunc<S, P> initFunc;
 	private final TransFunc<S, A, P> transFunc;
@@ -88,12 +85,12 @@ public class BmcChecker<S extends ExprState, A extends StmtAction, P extends Pre
 	}
 
 	@Override
-	public SafetyResult<S, A> check(P prec) {
+	public SafetyResult<ARG<S, A>, Trace<S, A>> check(P prec) {
 		logger.write(Logger.Level.INFO, "Configuration: %s%n", this);
 		final Collection<? extends S> initStates = initFunc.getInitStates(prec);
 		final List<BmcTrace<S, A>> traces = initStates.stream().map(s -> BmcTrace.of(List.<S>of(s), List.<A>of())).collect(Collectors.toCollection(LinkedList::new));
 		int currentBound = 0;
-		SafetyResult<S, A> bmcresult = null;
+		SafetyResult<ARG<S, A>, Trace<S, A>> bmcresult = null;
 		outerloop:
 		while ((upperBound < 0 || currentBound < upperBound) && traces.size() > 0) {
 			currentBound++;
