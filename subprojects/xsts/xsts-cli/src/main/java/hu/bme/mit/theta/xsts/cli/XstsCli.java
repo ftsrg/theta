@@ -13,6 +13,7 @@ import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -58,8 +59,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.IterationStrategy;
 
 public class XstsCli {
@@ -224,7 +223,7 @@ public class XstsCli {
                 }
 
                 final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-                final SafetyResult<?, ?> status = check(configuration);
+                final SafetyResult<? extends ARG<?,?>,? extends Trace<XstsState<?>, XstsAction>> status = check(configuration);
                 sw.stop();
                 printCegarResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
                 if (status.isUnsafe() && cexfile != null) {
@@ -338,9 +337,9 @@ public class XstsCli {
         }
     }
 
-    private SafetyResult<?, ?> check(XstsConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?,?>,? extends Trace<XstsState<?>, XstsAction>> check(XstsConfig<?, ?, ?> configuration) throws Exception {
         try {
-            return configuration.check();
+            return (SafetyResult<? extends ARG<?, ?>, ? extends Trace<XstsState<?>, XstsAction>>) configuration.check();
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
@@ -485,7 +484,7 @@ public class XstsCli {
         }
     }
 
-    private void printCegarResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
+    private void printCegarResult(final SafetyResult<? extends ARG<?,?>,? extends Trace<?,?>> status, final XSTS sts, final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics) status.getStats().get();
         if (benchmarkMode) {
             writer.cell(status.isSafe());
@@ -494,11 +493,11 @@ public class XstsCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
+            writer.cell(status.getWitness().size());
+            writer.cell(status.getWitness().getDepth());
+            writer.cell(status.getWitness().getMeanBranchingFactor());
             if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
+                writer.cell(status.asUnsafe().getCex().length() + "");
             } else {
                 writer.cell("");
             }
@@ -681,7 +680,7 @@ public class XstsCli {
 
     private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
 
-        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
+        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getCex();
         final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
         final File file = new File(cexfile);
         try (PrintWriter printWriter = new PrintWriter(file)) {
@@ -689,10 +688,10 @@ public class XstsCli {
         }
     }
 
-    private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
+    private void writeVisualStatus(final SafetyResult<? extends ARG<?,?>,? extends Trace<XstsState<?>, XstsAction>> status, final String filename)
             throws FileNotFoundException {
-        final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
-                : TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
+        final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
+                : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }
 

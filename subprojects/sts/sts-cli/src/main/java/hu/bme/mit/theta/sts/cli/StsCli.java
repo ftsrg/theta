@@ -26,6 +26,7 @@ import com.google.common.base.Stopwatch;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -40,7 +41,6 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.z3.*;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
@@ -144,7 +144,7 @@ public class StsCli {
 			final Stopwatch sw = Stopwatch.createStarted();
 			final STS sts = loadModel();
 			final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-			final SafetyResult<?, ?> status = check(configuration);
+			final SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> status = check(configuration);
 			sw.stop();
 			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (status.isUnsafe() && cexfile != null) {
@@ -156,7 +156,7 @@ public class StsCli {
 		}
 	}
 
-	private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
+	private SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> check(StsConfig<?, ?, ?> configuration) throws Exception {
 		try {
 			return configuration.check();
 		} catch (final Exception ex) {
@@ -201,7 +201,7 @@ public class StsCli {
 		}
 	}
 
-	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
+	private void printResult(final SafetyResult<? extends ARG<?,?>,? extends Trace<?,?>> status, final STS sts, final long totalTimeMs) {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
 			writer.cell(status.isSafe());
@@ -210,11 +210,11 @@ public class StsCli {
 			writer.cell(stats.getAbstractorTimeMs());
 			writer.cell(stats.getRefinerTimeMs());
 			writer.cell(stats.getIterations());
-			writer.cell(status.getArg().size());
-			writer.cell(status.getArg().getDepth());
-			writer.cell(status.getArg().getMeanBranchingFactor());
+			writer.cell(status.getWitness().size());
+			writer.cell(status.getWitness().getDepth());
+			writer.cell(status.getWitness().getMeanBranchingFactor());
 			if (status.isUnsafe()) {
-				writer.cell(status.asUnsafe().getTrace().length() + "");
+				writer.cell(status.asUnsafe().getCex().length() + "");
 			} else {
 				writer.cell("");
 			}
@@ -241,8 +241,8 @@ public class StsCli {
 		}
 	}
 
-	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
-		@SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
+	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Trace<?,?>> status) throws FileNotFoundException {
+		@SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getCex();
 		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, Z3SolverFactory.getInstance());
 		final File file = new File(cexfile);
 		PrintWriter printWriter = null;
