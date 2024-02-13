@@ -27,12 +27,10 @@ public final class Z3SolverFactory implements SolverFactory {
 
     private static final Z3SolverFactory INSTANCE;
 
-	public static int solversCreated = 0;
-
-	static {
-		loadLibraries();
-		INSTANCE = new Z3SolverFactory();
-	}
+    static {
+        loadLibraries();
+        INSTANCE = new Z3SolverFactory();
+    }
 
     private Z3SolverFactory() {
     }
@@ -55,11 +53,10 @@ public final class Z3SolverFactory implements SolverFactory {
         }
     }
 
-	@Override
-	public Solver createSolver() {
-		solversCreated++;
-		final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
-		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
+    @Override
+    public Solver createSolver() {
+        final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
+        final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();
         final Z3TransformationManager transformationManager = new Z3TransformationManager(
