@@ -23,9 +23,11 @@ import java.util.function.Predicate;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors;
@@ -42,7 +44,7 @@ import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class PredImpactChecker implements SafetyChecker<CfaState<PredState>, CfaAction, UnitPrec> {
+public final class PredImpactChecker implements SafetyChecker<ARG<CfaState<PredState>, CfaAction>, Trace<CfaState<PredState>, CfaAction>, UnitPrec> {
 
 	private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
 
@@ -82,7 +84,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 	}
 
 	@Override
-	public SafetyResult<CfaState<PredState>, CfaAction> check(final UnitPrec prec) {
+	public SafetyResult<ARG<CfaState<PredState>, CfaAction>, Trace<CfaState<PredState>, CfaAction>> check(final UnitPrec prec) {
 		return checker.check(prec);
 	}
 
