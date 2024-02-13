@@ -13,11 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.arg;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.Witness;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Collection;
@@ -34,7 +35,7 @@ import static java.util.stream.Collectors.toList;
  * Represents an abstract reachability graph (ARG). See the related class
  * ArgBuilder.
  */
-public final class ARG<S extends State, A extends Action> {
+public final class ARG<S extends State, A extends Action> implements Witness {
 
 	private final Collection<ArgNode<S, A>> initNodes;
 	boolean initialized; // Set by ArgBuilder
