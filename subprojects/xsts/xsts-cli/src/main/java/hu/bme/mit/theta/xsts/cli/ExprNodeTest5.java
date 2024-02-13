@@ -43,7 +43,7 @@ public class ExprNodeTest5 {
         Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)), Eq(declZ.getRef(), Add(declY.getRef(), Int(2))));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 
