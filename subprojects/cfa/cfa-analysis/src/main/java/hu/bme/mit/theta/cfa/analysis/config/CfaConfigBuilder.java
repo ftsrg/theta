@@ -15,13 +15,11 @@
  */
 package hu.bme.mit.theta.cfa.analysis.config;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
+import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
@@ -373,7 +371,7 @@ public class CfaConfigBuilder {
 							domain + " domain does not support " + refinement + " refinement.");
 			}
 
-			final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
+			final SafetyChecker<ARG<CfaState<ExplState>, CfaAction>, Trace<CfaState<ExplState>, CfaAction>, CfaPrec<ExplPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
 			CfaPrec<ExplPrec> prec;
@@ -474,7 +472,7 @@ public class CfaConfigBuilder {
 						precGranularity.createRefiner(refToPrec), pruneStrategy, logger);
 			}
 
-			final SafetyChecker<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> checker = CegarChecker
+			final SafetyChecker<ARG<CfaState<PredState>, CfaAction>, Trace<CfaState<PredState>, CfaAction>, CfaPrec<PredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
 			CfaPrec<PredPrec> prec;

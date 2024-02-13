@@ -113,7 +113,7 @@ public final class OutputHandler {
 	public void writeCounterexamples(SafetyResult<?, ?> status, String refinementSolver) throws Exception {
 		if (outputConfiguration == OutputOptions.NONE) return;
 		SolverFactory cexSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
-		final Trace<XcfaState<?>, XcfaAction> trace = (Trace<XcfaState<?>, XcfaAction>) status.asUnsafe().getTrace();
+		final Trace<XcfaState<?>, XcfaAction> trace = (Trace<XcfaState<?>, XcfaAction>) status.asUnsafe().getCex();
 		final Trace<XcfaState<ExplState>, XcfaAction> concrTrace = XcfaTraceConcretizer.concretize(trace, cexSolverFactory);
 
 		if (outputConfiguration == OutputOptions.WITNESS_ONLY) {
