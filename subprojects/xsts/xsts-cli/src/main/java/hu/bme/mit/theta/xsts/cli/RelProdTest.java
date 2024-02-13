@@ -54,12 +54,12 @@ public class RelProdTest {
         // x = 0, y = 0
         Expr<BoolType> initExpr = And(Eq(declX.getRef(),Int(0)), Eq(declY.getRef(),Int(0)));
 
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
 
         // x' = x + 1, y' = y - 1, x < 9
         Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(9)));
 
-        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
+        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
         AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
 
         var relprod = new CursorRelationalProductProvider(stateSig.getVariableOrder());
@@ -70,8 +70,6 @@ public class RelProdTest {
 //
 //        var saturation = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
 //        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
-
-        System.out.println(Z3SolverFactory.solversCreated);
 
         final Graph graph = new MddNodeVisualizer(RelProdTest::nodeToString).visualize(relResult.getNode());
         try {
