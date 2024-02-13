@@ -19,9 +19,10 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
@@ -42,7 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * check counterexamples and refine them if needed. It also provides certain
  * statistics about its execution.
  */
-public final class CegarChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
+public final class CegarChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<ARG<S, A>, Trace<S, A>, P> {
 
     private final Abstractor<S, A, P> abstractor;
     private final Refiner<S, A, P> refiner;
