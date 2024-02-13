@@ -145,6 +145,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
 
         exprs.subList(lastIterLookup.first, exprs.size).forEach { indSolver.add(it) }
+        indices.subList(lastIterLookup.first, indices.size - 1).forEach { indSolver.add(unfoldedPropExpr(it)) }
 
         return indSolver.pushPop {
             indSolver.add(Not(unfoldedPropExpr(indices.last())))
