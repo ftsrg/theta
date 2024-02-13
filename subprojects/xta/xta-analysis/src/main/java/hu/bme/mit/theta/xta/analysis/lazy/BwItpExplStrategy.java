@@ -20,8 +20,8 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
