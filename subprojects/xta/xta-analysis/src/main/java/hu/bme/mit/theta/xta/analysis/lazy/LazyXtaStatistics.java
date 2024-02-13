@@ -21,7 +21,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.google.common.base.Stopwatch;
 
-import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.table.TableWriter;
 
