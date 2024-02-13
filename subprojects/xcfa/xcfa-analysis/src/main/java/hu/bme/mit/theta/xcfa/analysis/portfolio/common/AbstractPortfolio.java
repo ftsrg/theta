@@ -60,7 +60,7 @@ public abstract class AbstractPortfolio {
 	 * @return the result of the analysis
 	 * @throws Exception
 	 */
-	public abstract hu.bme.mit.theta.analysis.algorithm.SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
+	public abstract SafetyResult<?, ?> executeAnalysis(XCFA xcfa, Duration initializationTime) throws Exception;
 
 	/**
 	 * Creates and saves the counterexample into a file, also saves statistics into files (implemented by {@link OutputHandler} )
