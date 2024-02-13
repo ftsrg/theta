@@ -15,12 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.Checker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 
-public interface SafetyChecker<S extends State, A extends Action, P extends Prec> {
+public interface SafetyChecker<W extends Witness, C extends Cex, I> extends Checker<W, I> {
 
-	SafetyResult<S, A> check(final P prec);
+	@Override
+	SafetyResult<W, C> check(final I input);
 
 }
