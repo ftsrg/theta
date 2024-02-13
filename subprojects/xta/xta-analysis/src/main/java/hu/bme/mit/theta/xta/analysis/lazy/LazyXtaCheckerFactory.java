@@ -15,8 +15,10 @@
  */
 package hu.bme.mit.theta.xta.analysis.lazy;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
@@ -27,17 +29,13 @@ public final class LazyXtaCheckerFactory {
     private LazyXtaCheckerFactory() {
     }
 
-    public static SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> create(
-            final XtaSystem system,
-            final DataStrategy dataStrategy, final ClockStrategy clockStrategy,
-            final SearchStrategy searchStrategy) {
-        final CombinedStrategy<?, ?> algorithmStrategy = combineStrategies(system, dataStrategy,
-                clockStrategy);
-        final SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> checker = LazyXtaChecker.create(
-                system,
-                algorithmStrategy, searchStrategy);
-        return checker;
-    }
+	public static SafetyChecker<? extends ARG<?, ?>, ? extends Trace<?, ?>, UnitPrec> create(final XtaSystem system,
+																											 final DataStrategy dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
+		final CombinedStrategy<?, ?> algorithmStrategy = combineStrategies(system, dataStrategy, clockStrategy);
+		final SafetyChecker<? extends ARG<?,?>, ? extends Trace<?, ?>, UnitPrec> checker = LazyXtaChecker.create(system,
+				algorithmStrategy, searchStrategy);
+		return checker;
+	}
 
     private static CombinedStrategy<?, ?> combineStrategies(final XtaSystem system,
                                                             final DataStrategy dataStrategy,

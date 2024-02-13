@@ -23,11 +23,12 @@ import java.util.Collection;
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -37,7 +38,7 @@ import hu.bme.mit.theta.xta.analysis.XtaLts;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
 final class LazyXtaChecker<S extends State> implements
-        SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
+        SafetyChecker<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>, UnitPrec> {
 
     private final XtaLts lts;
     private final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy;
