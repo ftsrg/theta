@@ -66,4 +66,9 @@ object Deps {
 
         val core = "org.mockito:mockito-core:${Versions.mockito}"
     }
+
+    object Kotlin {
+        val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
+        val reflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
+    }
 }
