@@ -21,12 +21,16 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.solver.Solver;
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -54,13 +58,13 @@ public final class CfaPredImpactCheckerTest {
                 l -> l.equals(cfa.getErrorLoc().get()), abstractionSolver, refinementSolver);
 
         // Act
-        final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(
+        final SafetyResult<ARG<CfaState<PredState>, CfaAction>, Trace<CfaState<PredState>, CfaAction>> status = checker.check(
                 UnitPrec.getInstance());
 
         // Assert
         assertTrue(status.isSafe());
 
-        final ARG<? extends ExprState, ? extends ExprAction> arg = status.getArg();
+        final ARG<? extends ExprState, ? extends ExprAction> arg = status.getWitness();
         arg.minimize();
 
         final ArgChecker argChecker = ArgChecker.create(abstractionSolver);
