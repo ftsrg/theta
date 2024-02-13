@@ -16,41 +16,49 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public abstract class SafetyResult<S extends State, A extends Action> {
+public abstract class SafetyResult<W extends Witness, C extends Cex> implements Result<W> {
+	private final W witness;
+	private final Optional<Statistics> stats;
 
-    private final Optional<ARG<S, A>> arg;
-    private final Optional<Statistics> stats;
+	private SafetyResult(final W witness, final Optional<Statistics> stats) {
+		this.witness = checkNotNull(witness);
+		this.stats = checkNotNull(stats);
+	}
 
-    private SafetyResult(final ARG<S, A> arg, final Optional<Statistics> stats) {
-        this.arg = Optional.of(arg);
-        this.stats = checkNotNull(stats);
-    }
+	@Override
+	public W getWitness() {
+		return witness;
+	}
 
-    private SafetyResult() {
-        this.arg = Optional.empty();
-        this.stats = Optional.empty();
-    }
+	@Override
+	public Optional<Statistics> getStats() {
+		return stats;
+	}
 
+	public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness) {
+		return new Safe<>(witness, Optional.empty());
+	}
 
-    public boolean hasArg() {
-        return arg.isPresent();
-    }
+	public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness) {
+		return new Unsafe<>(cex, witness, Optional.empty());
+	}
 
-    public ARG<S, A> getArg() {
-        return arg.orElseThrow();
-    }
+	public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness, final Statistics stats) {
+		return new Safe<>(witness, Optional.of(stats));
+	}
 
-    public Optional<Statistics> getStats() {
-        return stats;
-    }
+	public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness,
+																		  final Statistics stats) {
+		return new Unsafe<>(cex, witness, Optional.of(stats));
+	}
 
     // Factory methods
 
@@ -59,13 +67,9 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Safe<>(arg, Optional.of(stats));
     }
 
-    public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg) {
-        return new Safe<>(arg, Optional.empty());
-    }
+	public abstract Safe<W, C> asSafe();
 
-    public static <S extends State, A extends Action> Safe<S, A> safe() {
-        return new Safe<>();
-    }
+	public abstract Unsafe<W, C> asUnsafe();
 
     public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
                                                                           final ARG<S, A> arg,
@@ -73,10 +77,10 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Unsafe<>(cex, arg, Optional.of(stats));
     }
 
-    public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex,
-                                                                          final ARG<S, A> arg) {
-        return new Unsafe<>(cex, arg, Optional.empty());
-    }
+	public static final class Safe<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
+		private Safe(final W witness, final Optional<Statistics> stats) {
+			super(witness, stats);
+		}
 
     public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex) {
         return new Unsafe<>(cex);
@@ -86,19 +90,30 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Unsafe<>();
     }
 
-    public static <S extends State, A extends Action> Unknown<S, A> unknown() {
-        return new Unknown<>();
-    }
+		@Override
+		public Safe<W, C> asSafe() {
+			return this;
+		}
 
-    public abstract boolean isSafe();
+		@Override
+		public Unsafe<W, C> asUnsafe() {
+			throw new ClassCastException(
+					"Cannot cast " + Safe.class.getSimpleName() + " to " + Unsafe.class.getSimpleName());
+		}
 
     public abstract boolean isUnsafe();
 
-    public abstract Safe<S, A> asSafe();
+	public static final class Unsafe<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
+		private final C cex;
 
-    public abstract Unsafe<S, A> asUnsafe();
+		private Unsafe(final C cex, final W witness, final Optional<Statistics> stats) {
+			super(witness, stats);
+			this.cex = checkNotNull(cex);
+		}
 
-    ////
+		public C getCex() {
+			return cex;
+		}
 
     public static final class Safe<S extends State, A extends Action> extends SafetyResult<S, A> {
 
@@ -106,13 +121,16 @@ public abstract class SafetyResult<S extends State, A extends Action> {
             super(arg, stats);
         }
 
-        private Safe() {
-        }
+		@Override
+		public Safe<W, C> asSafe() {
+			throw new ClassCastException(
+					"Cannot cast " + Unsafe.class.getSimpleName() + " to " + Safe.class.getSimpleName());
+		}
 
-        @Override
-        public boolean isSafe() {
-            return true;
-        }
+		@Override
+		public Unsafe<W, C> asUnsafe() {
+			return this;
+		}
 
         @Override
         public boolean isUnsafe() {
