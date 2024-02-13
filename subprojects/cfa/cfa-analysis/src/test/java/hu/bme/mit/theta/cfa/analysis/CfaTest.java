@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
@@ -170,11 +171,11 @@ public class CfaTest {
 			CFA cfa = CfaDslManager.createCfa(new FileInputStream(filePath));
 			CfaConfig<? extends State, ? extends Action, ? extends Prec> config
 				= new CfaConfigBuilder(domain, refinement, solverFactory).build(cfa, cfa.getErrorLoc().get());
-			SafetyResult<? extends State, ? extends Action> result = config.check();
+			SafetyResult<?, ?> result = config.check();
 			Assert.assertEquals(isSafe, result.isSafe());
 			if (result.isUnsafe()) {
 				Trace<CfaState<ExplState>, CfaAction> trace = CfaTraceConcretizer.concretize(
-					(Trace<CfaState<?>, CfaAction>) result.asUnsafe().getTrace(),
+					(Trace<CfaState<?>, CfaAction>) result.asUnsafe().getCex(),
 					solverFactory);
 				Assert.assertEquals(cexLength, trace.length());
 			}
