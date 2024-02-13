@@ -16,7 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.analysis.impl.interleavings;
 
-import hu.bme.mit.theta.analysis.algorithm.PorLts;
+import hu.bme.mit.theta.analysis.algorithm.arg.PorLts;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;

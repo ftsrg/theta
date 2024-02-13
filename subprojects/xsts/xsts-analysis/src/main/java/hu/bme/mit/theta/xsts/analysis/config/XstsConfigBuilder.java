@@ -16,13 +16,10 @@
 
 package hu.bme.mit.theta.xsts.analysis.config;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
+import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
@@ -282,7 +279,7 @@ public class XstsConfigBuilder {
 					throw new UnsupportedOperationException(domain + " domain does not support " + refinement + " refinement.");
 			}
 
-			final SafetyChecker<XstsState<ExplState>, XstsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
+			final SafetyChecker<ARG<XstsState<ExplState>, XstsAction>, Trace<XstsState<ExplState>, XstsAction>, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
 					logger);
 			final ExplPrec prec = initPrec.builder.createExpl(xsts);
 			return XstsConfig.create(checker, prec);
@@ -348,7 +345,7 @@ public class XstsConfigBuilder {
 						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), pruneStrategy, logger);
 			}
 
-			final SafetyChecker<XstsState<PredState>, XstsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
+			final SafetyChecker<ARG<XstsState<PredState>, XstsAction>, Trace<XstsState<PredState>, XstsAction>, PredPrec> checker = CegarChecker.create(abstractor, refiner,
 					logger);
 
 			final PredPrec prec = initPrec.builder.createPred(xsts);
@@ -431,7 +428,7 @@ public class XstsConfigBuilder {
 							domain + " domain does not support " + refinement + " refinement.");
 			}
 
-			final SafetyChecker<XstsState<Prod2State<ExplState, PredState>>, XstsAction, Prod2Prec<ExplPrec, PredPrec>> checker = CegarChecker.create(abstractor, refiner,
+			final SafetyChecker<ARG<XstsState<Prod2State<ExplState, PredState>>, XstsAction>, Trace<XstsState<Prod2State<ExplState, PredState>>, XstsAction>, Prod2Prec<ExplPrec, PredPrec>> checker = CegarChecker.create(abstractor, refiner,
 					logger);
 			final Prod2Prec<ExplPrec, PredPrec> prec = initPrec.builder.createProd2ExplPred(xsts);
 			return XstsConfig.create(checker, prec);
