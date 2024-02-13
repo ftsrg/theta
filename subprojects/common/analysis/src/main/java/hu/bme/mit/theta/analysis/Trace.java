@@ -31,7 +31,7 @@ import hu.bme.mit.theta.common.Utils;
  * State, ..., State, Action, State) sequence. A trace always contains at least
  * one state and the number of actions is one less than the number of states.
  */
-public final class Trace<S, A> {
+public final class Trace<S, A> implements Cex {
 
 	private final ImmutableList<S> states;
 	private final ImmutableList<A> actions;
@@ -56,6 +56,7 @@ public final class Trace<S, A> {
 	/**
 	 * Gets the length of the trace, which is the number of actions.
 	 */
+	@Override
 	public int length() {
 		return actions.size();
 	}
