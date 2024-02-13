@@ -19,8 +19,8 @@ package hu.bme.mit.theta.analysis.algorithm.runtimecheck;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace;
 
 /**
  * Used by the {@link ArgCexCheckHandler} to store and check abstract ARGs and Counterexamples and if there is any refinement progress on them
