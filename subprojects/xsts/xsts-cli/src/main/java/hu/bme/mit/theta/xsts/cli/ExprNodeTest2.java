@@ -44,7 +44,7 @@ public class ExprNodeTest2 {
 
         Expr<BoolType> expr = And(Or(declA.getRef(), Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
 
-        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
+        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
 
         for (var c = rootNode.cursor(); c.moveNext(); ){}
 
