@@ -15,13 +15,11 @@
  */
 package hu.bme.mit.theta.cfa.analysis.config;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
+import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
