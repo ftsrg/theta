@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024 Budapest University of Technology and Economics
+ *  Copyright 2022 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.sts.analysis.config;
+package hu.bme.mit.theta.xcfa.analysis.common;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -23,23 +23,22 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 
-public final class StsConfig<S extends State, A extends Action, P extends Prec> {
+public final class XcfaConfig<S extends State, A extends Action, P extends Prec> {
+	private final SafetyChecker<ARG<S, A>, Trace<S, A>, P> checker;
+	private final P initPrec;
 
-    private final SafetyChecker<ARG<S, A>, Trace<S, A>, P> checker;
-    private final P initPrec;
+	private XcfaConfig(final SafetyChecker<ARG<S, A>, Trace<S, A>, P> checker, final P initPrec) {
+		this.checker = checker;
+		this.initPrec = initPrec;
+	}
 
-    private StsConfig(final SafetyChecker<ARG<S, A>, Trace<S, A>, P> checker, final P initPrec) {
-        this.checker = checker;
-        this.initPrec = initPrec;
-    }
+	public static <S extends State, A extends Action, P extends Prec> XcfaConfig<S, A, P> create(
+			final SafetyChecker<ARG<S, A>, Trace<S, A>, P> checker, final P initPrec) {
+		return new XcfaConfig<>(checker, initPrec);
+	}
 
-    public static <S extends State, A extends Action, P extends Prec> StsConfig<S, A, P> create(
-            final SafetyChecker<ARG<S, A>, Trace<S, A>, P> checker, final P initPrec) {
-        return new StsConfig<>(checker, initPrec);
-    }
-
-    public SafetyResult<ARG<S, A>, Trace<S, A>> check() {
-        return checker.check(initPrec);
-    }
+	public SafetyResult<ARG<S, A>, Trace<S, A>> check() {
+		return checker.check(initPrec);
+	}
 
 }
