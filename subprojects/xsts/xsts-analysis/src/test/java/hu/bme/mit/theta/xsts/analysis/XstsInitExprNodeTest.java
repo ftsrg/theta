@@ -2,6 +2,7 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
@@ -43,7 +44,8 @@ public class XstsInitExprNodeTest {
             lastVar = varOrder.createOnTop(hu.bme.mit.delta.mdd.MddVariableDescriptor.create(v.getConstDecl(0), 0));
         }
 
-        MddNode rootNode = lastVar.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        MddNode rootNode = lastVar.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var recursiveCursor = rootNode.cursor();
         recursiveCursor.moveNext();
