@@ -7,9 +7,7 @@ runs:
     - uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e
       with:
         python-version: 3.x
-    - run: pip install mkdocs-material==8.3.9
-      shell: bash
-    - run: pip install mkdocs-material-extensions==1.3.1
+    - run: pip install mkdocs-material==9.5.9
       shell: bash
     - run: pip install python-markdown-math==0.8
       shell: bash
