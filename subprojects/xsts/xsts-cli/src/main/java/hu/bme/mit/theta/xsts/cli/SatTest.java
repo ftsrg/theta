@@ -3,7 +3,6 @@ package hu.bme.mit.theta.xsts.cli;
 import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.CursorGeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.OrNextStateDescriptor;
@@ -11,6 +10,7 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddNodeInitializer;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -94,12 +94,10 @@ public class SatTest {
 //        var bfs = new BfsProvider(stateSig.getVariableOrder());
 //        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
-        var saturation = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
-        var satResult = saturation.compute(initNode, nextStates, stateSig.getTopVariableHandle());
+        var saturation = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+        var satResult = saturation.compute(new MddNodeInitializer(initNode), nextStates, stateSig.getTopVariableHandle());
 
         System.out.println(mddGraph.getUniqueTableSize());
-
-        System.out.println(Z3SolverFactory.solversCreated);
 
         final Graph graph = new MddNodeVisualizer(SatTest::nodeToString).visualize(satResult.getNode());
         try {
