@@ -9,6 +9,8 @@ runs:
         python-version: 3.x
     - run: pip install mkdocs-material==8.3.9
       shell: bash
+    - run: pip install mkdocs-material-extensions==1.3.1
+      shell: bash
     - run: pip install python-markdown-math==0.8
       shell: bash
     - run: pip install mkdocs==1.3.0
