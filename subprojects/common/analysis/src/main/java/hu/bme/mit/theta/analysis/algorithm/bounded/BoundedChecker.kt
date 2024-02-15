@@ -19,8 +19,8 @@ package hu.bme.mit.theta.analysis.algorithm.bounded
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.Valuation
@@ -57,7 +57,7 @@ import java.util.*
  * @param biValToAction A function mapping pairs of valuations to statements, used to construct a counterexample.
  * @param logger The logger for logging.
  */
-class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
+class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
     private val monolithicExpr: MonolithicExpr,
     private val shouldGiveUp: (Int) -> Boolean = { false },
     private val bmcSolver: Solver? = null,
