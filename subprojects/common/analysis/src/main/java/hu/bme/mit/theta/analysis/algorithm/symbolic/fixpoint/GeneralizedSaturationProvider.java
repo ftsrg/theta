@@ -198,10 +198,16 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 		}
 		
 		MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-		
+
+//		final IntObjMapView<AbstractNextStateDescriptor> diagonal = dfire.getDiagonal(
+//				stateSpaceInfo);
+//		var c = diagonal.cursor();
+
+		var stateSpaceInfo2 = new MddStateSpaceInfo(variable, n);
+
 		final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
-			stateSpaceInfo);
-		
+			stateSpaceInfo2);
+
 		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
 			for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
 				cFrom.key()).cursor(); cTo.moveNext(); ) {
