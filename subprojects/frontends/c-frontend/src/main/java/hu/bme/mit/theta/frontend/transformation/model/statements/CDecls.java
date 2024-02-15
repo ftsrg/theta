@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 
 import java.util.ArrayList;
@@ -27,7 +28,8 @@ public class CDecls extends CStatement {
 
     private final List<Tuple2<CDeclaration, VarDecl<?>>> cDeclarations;
 
-    public CDecls() {
+    public CDecls(ParseContext parseContext) {
+        super(parseContext);
         this.cDeclarations = new ArrayList<>();
     }
 

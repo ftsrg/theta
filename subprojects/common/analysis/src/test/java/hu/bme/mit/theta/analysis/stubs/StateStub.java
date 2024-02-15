@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.analysis.stubs;
 
 import hu.bme.mit.theta.analysis.State;
+
+import java.util.Objects;
 
 public class StateStub implements State {
 
@@ -35,4 +37,16 @@ public class StateStub implements State {
         return label;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StateStub stateStub = (StateStub) o;
+        return Objects.equals(label, stateStub.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(label);
+    }
 }

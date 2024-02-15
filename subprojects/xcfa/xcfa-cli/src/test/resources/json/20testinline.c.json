@@ -1,0 +1,470 @@
+{
+  "name": "",
+  "vars": [],
+  "procedures": [
+    {
+      "name": "func",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "func_ret",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        },
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "func::a",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "IN"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "func::a",
+          "type": "Int"
+        },
+        {
+          "name": "func::x",
+          "type": "Int"
+        }
+      ],
+      "locs": [
+        "func_init {init}",
+        "func_final {final}",
+        "__loc_2010 ",
+        "func_error {error}"
+      ],
+      "edges": [
+        {
+          "source": "func_init",
+          "target": "__loc_2010",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": -1,
+                    "colNumberStart": -1,
+                    "lineNumberStop": -1,
+                    "colNumberStop": -1,
+                    "offsetStart": -1,
+                    "offsetEnd": -1,
+                    "sourceText": ""
+                  }
+                },
+                "content": "(assume (and (\u003e\u003d func::x -2147483648) (\u003c\u003d func::x 2147483647)))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_2010",
+          "target": "func_error",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 22,
+                    "offsetStart": 58,
+                    "offsetEnd": 73,
+                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                  }
+                },
+                "content": "(assume (/\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_2010",
+          "target": "func_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 22,
+                    "offsetStart": 58,
+                    "offsetEnd": 73,
+                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                  }
+                },
+                "content": "(assume (\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": -1,
+                    "colNumberStart": -1,
+                    "lineNumberStop": -1,
+                    "colNumberStop": -1,
+                    "offsetStart": -1,
+                    "offsetEnd": -1,
+                    "sourceText": ""
+                  }
+                },
+                "content": "(assign func::x 1)"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "main_ret",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "call_func_ret94",
+          "type": "Int"
+        },
+        {
+          "name": "call_func_ret95",
+          "type": "Int"
+        },
+        {
+          "name": "func::a",
+          "type": "Int"
+        },
+        {
+          "name": "func::x",
+          "type": "Int"
+        },
+        {
+          "name": "func_ret",
+          "type": "Int"
+        }
+      ],
+      "locs": [
+        "main_init {init}",
+        "main_final {final}",
+        "__loc_20102048 ",
+        "main_error {error}",
+        "__loc_20102052 "
+      ],
+      "edges": [
+        {
+          "source": "main_init",
+          "target": "__loc_20102048",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 10,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 10,
+                    "colNumberStop": 10,
+                    "offsetStart": 122,
+                    "offsetEnd": 128,
+                    "sourceText": "func(0)"
+                  }
+                },
+                "content": "(assign func::a (+ 0))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": -1,
+                    "colNumberStart": -1,
+                    "lineNumberStop": -1,
+                    "colNumberStop": -1,
+                    "offsetStart": -1,
+                    "offsetEnd": -1,
+                    "sourceText": ""
+                  }
+                },
+                "content": "(assume (and (\u003e\u003d func::x -2147483648) (\u003c\u003d func::x 2147483647)))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_20102048",
+          "target": "main_error",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 22,
+                    "offsetStart": 58,
+                    "offsetEnd": 73,
+                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                  }
+                },
+                "content": "(assume (/\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_20102048",
+          "target": "__loc_20102052",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 22,
+                    "offsetStart": 58,
+                    "offsetEnd": 73,
+                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                  }
+                },
+                "content": "(assume (\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": -1,
+                    "colNumberStart": -1,
+                    "lineNumberStop": -1,
+                    "colNumberStop": -1,
+                    "offsetStart": -1,
+                    "offsetEnd": -1,
+                    "sourceText": ""
+                  }
+                },
+                "content": "(assign func::x 1)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 10,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 10,
+                    "colNumberStop": 10,
+                    "offsetStart": 122,
+                    "offsetEnd": 128,
+                    "sourceText": "func(0)"
+                  }
+                },
+                "content": "(assign call_func_ret94 func_ret)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 11,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 11,
+                    "colNumberStop": 10,
+                    "offsetStart": 135,
+                    "offsetEnd": 141,
+                    "sourceText": "func(1)"
+                  }
+                },
+                "content": "(assign func::a (+ 1))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": -1,
+                    "colNumberStart": -1,
+                    "lineNumberStop": -1,
+                    "colNumberStop": -1,
+                    "offsetStart": -1,
+                    "offsetEnd": -1,
+                    "sourceText": ""
+                  }
+                },
+                "content": "(assume (and (\u003e\u003d func::x -2147483648) (\u003c\u003d func::x 2147483647)))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_20102052",
+          "target": "main_error",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 22,
+                    "offsetStart": 58,
+                    "offsetEnd": 73,
+                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                  }
+                },
+                "content": "(assume (/\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_20102052",
+          "target": "main_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 22,
+                    "offsetStart": 58,
+                    "offsetEnd": 73,
+                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                  }
+                },
+                "content": "(assume (\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": -1,
+                    "colNumberStart": -1,
+                    "lineNumberStop": -1,
+                    "colNumberStop": -1,
+                    "offsetStart": -1,
+                    "offsetEnd": -1,
+                    "sourceText": ""
+                  }
+                },
+                "content": "(assign func::x 1)"
+              },
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 11,
+                    "colNumberStart": 4,
+                    "lineNumberStop": 11,
+                    "colNumberStop": 10,
+                    "offsetStart": 135,
+                    "offsetEnd": 141,
+                    "sourceText": "func(1)"
+                  }
+                },
+                "content": "(assign call_func_ret95 func_ret)"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "initProcedures": [
+    {
+      "params": [],
+      "procedure": "main"
+    }
+  ]
+}

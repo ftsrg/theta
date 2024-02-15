@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpToFpExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpToFpExpr that = (FpToFpExpr) obj;
             return this.getOp().equals(that.getOp()) && expBits == that.expBits
                     && signBits == that.signBits && roundingMode.equals(that.roundingMode);
@@ -105,7 +105,7 @@ public class FpToFpExpr extends UnaryExpr<FpType, FpType> {
     }
 
     public String getOperatorLabel() {
-        return OPERATOR_LABEL;
+        return OPERATOR_LABEL + "[" + expBits + "," + signBits + "]";
     }
 
     public FpRoundingMode getRoundingMode() {

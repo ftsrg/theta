@@ -16,3 +16,13 @@ dest/
 .idea/
 *.iml
 *.iws
+
+# Other
+wdl-output.json
+witness.graphml
+arg-false.dot
+arg-true.dot
+trace.dot
+xcfa.c
+xcfa.dot
+xcfa.json

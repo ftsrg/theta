@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,32 +15,27 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import hu.bme.mit.theta.analysis.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.TransFunc;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Helper class for building the ARG with a given analysis and precision.
  */
 public final class ArgBuilder<S extends State, A extends Action, P extends Prec> {
 
-    private final LTS<? super S, ? extends A> lts;
+    private final LTS<? super S, A> lts;
     private final Analysis<S, ? super A, ? super P> analysis;
     private final Predicate<? super S> target;
     private final boolean excludeBottom;
 
-    private ArgBuilder(final LTS<? super S, ? extends A> lts,
-                       final Analysis<S, ? super A, ? super P> analysis,
+    private ArgBuilder(final LTS<? super S, A> lts, final Analysis<S, ? super A, ? super P> analysis,
                        final Predicate<? super S> target, final boolean excludeBottom) {
         this.lts = checkNotNull(lts);
         this.analysis = checkNotNull(analysis);
@@ -49,13 +44,13 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
     }
 
     public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
-            final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
+            final LTS<? super S, A> lts, final Analysis<S, ? super A, ? super P> analysis,
             final Predicate<? super S> target, final boolean excludeBottom) {
         return new ArgBuilder<>(lts, analysis, target, excludeBottom);
     }
 
     public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
-            final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
+            final LTS<? super S, A> lts, final Analysis<S, ? super A, ? super P> analysis,
             final Predicate<? super S> target) {
         return create(lts, analysis, target, false);
     }
@@ -89,10 +84,10 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
     public Collection<ArgNode<S, A>> expand(final ArgNode<S, A> node, final P prec) {
         checkNotNull(node);
         checkNotNull(prec);
-
         final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
         final S state = node.getState();
-        final Collection<? extends A> actions = lts.getEnabledActionsFor(state);
+        final Collection<A> exploredActions = node.getOutEdges().map(ArgEdge::getAction).collect(Collectors.toSet());
+        final Collection<? extends A> actions = lts.getEnabledActionsFor(state, exploredActions, prec);
         final TransFunc<S, ? super A, ? super P> transFunc = analysis.getTransFunc();
         for (final A action : actions) {
             final Collection<? extends S> succStates = transFunc.getSuccStates(state, action, prec);
@@ -101,12 +96,10 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
                     continue;
                 }
                 // Only add state if there is no covering sibling (with the same action)
-                if (node.getSuccNodes()
-                        .noneMatch(n -> n.getInEdge().get().getAction().equals(action) &&
-                                analysis.getPartialOrd().isLeq(succState, n.getState()))) {
+                if (node.getSuccNodes().noneMatch(n -> n.getInEdge().get().getAction().equals(action) &&
+                        analysis.getPartialOrd().isLeq(succState, n.getState()))) {
                     final boolean isTarget = target.test(succState);
-                    final ArgNode<S, A> newNode = node.arg.createSuccNode(node, action, succState,
-                            isTarget);
+                    final ArgNode<S, A> newNode = node.arg.createSuccNode(node, action, succState, isTarget);
                     newSuccNodes.add(newNode);
                 }
             }
@@ -114,16 +107,6 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
         node.expanded = true;
 
         return newSuccNodes;
-    }
-
-    public void close(final ArgNode<S, A> node) {
-        checkNotNull(node);
-        if (!node.isSubsumed()) {
-            final ARG<S, A> arg = node.arg;
-            final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes()
-                    .filter(n -> n.mayCover(node)).findFirst();
-            nodeToCoverWith.ifPresent(node::cover);
-        }
     }
 
 }

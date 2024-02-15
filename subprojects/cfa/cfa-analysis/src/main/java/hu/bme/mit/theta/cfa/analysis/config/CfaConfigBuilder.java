@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -92,6 +92,12 @@ import java.util.stream.Collectors;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class CfaConfigBuilder {
+
+    public enum Algorithm {
+        CEGAR,
+        KINDUCTION,
+        IMC
+    }
 
     public enum Domain {
         EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT

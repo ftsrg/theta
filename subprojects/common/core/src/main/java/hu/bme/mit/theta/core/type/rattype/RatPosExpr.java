@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public final class RatPosExpr extends PosExpr<RatType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof RatPosExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final RatPosExpr that = (RatPosExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

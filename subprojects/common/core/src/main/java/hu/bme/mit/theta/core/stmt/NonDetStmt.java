@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.core.stmt;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.List;
@@ -66,7 +65,7 @@ public final class NonDetStmt implements Stmt {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof NonDetStmt) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final NonDetStmt that = (NonDetStmt) obj;
             return this.getStmts().equals(that.getStmts());
         } else {

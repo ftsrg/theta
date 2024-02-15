@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -38,11 +41,15 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDo
  * This type either represents a built-in type like int or float, or a typedef'd named type.
  */
 public class NamedType extends CSimpleType {
+    protected final ParseContext parseContext;
 
     private final String namedType;
+    private final Logger uniqueWarningLogger;
 
-    NamedType(final String namedType) {
+    NamedType(ParseContext parseContext, final String namedType, Logger uniqueWarningLogger) {
+        this.parseContext = parseContext;
         this.namedType = namedType;
+        this.uniqueWarningLogger = uniqueWarningLogger;
     }
 
     @Override
@@ -51,52 +58,52 @@ public class NamedType extends CSimpleType {
         switch (namedType) {
             case "char":
                 if (isSigned()) {
-                    type = new CSignedChar(this);
+                    type = new CSignedChar(this, parseContext);
                 } else {
-                    type = new CUnsignedChar(this);
+                    type = new CUnsignedChar(this, parseContext);
                 }
                 break;
             case "int":
                 if (isBool()) {
-                    type = new CBool(this);
+                    type = new CBool(this, parseContext);
                 } else if (isSigned()) {
                     if (isLong()) {
-                        type = new CSignedLong(this);
+                        type = new CSignedLong(this, parseContext);
                     } else if (isLongLong()) {
-                        type = new CSignedLongLong(this);
+                        type = new CSignedLongLong(this, parseContext);
                     } else if (isShort()) {
-                        type = new CSignedShort(this);
+                        type = new CSignedShort(this, parseContext);
                     } else {
-                        type = new CSignedInt(this);
+                        type = new CSignedInt(this, parseContext);
                     }
                 } else {
                     if (isLong()) {
-                        type = new CUnsignedLong(this);
+                        type = new CUnsignedLong(this, parseContext);
                     } else if (isLongLong()) {
-                        type = new CUnsignedLongLong(this);
+                        type = new CUnsignedLongLong(this, parseContext);
                     } else if (isShort()) {
-                        type = new CUnsignedShort(this);
+                        type = new CUnsignedShort(this, parseContext);
                     } else {
-                        type = new CUnsignedInt(this);
+                        type = new CUnsignedInt(this, parseContext);
                     }
                 }
                 break;
             case "double":
                 if (isLong()) {
-                    type = new CLongDouble(this);
+                    type = new CLongDouble(this, parseContext);
                 } else {
-                    type = new CDouble(this);
+                    type = new CDouble(this, parseContext);
                 }
                 break;
             case "float":
-                type = new CFloat(this);
+                type = new CFloat(this, parseContext);
                 break;
             case "void":
-                type = new CVoid(this);
+                type = new CVoid(this, parseContext);
                 break;
             default: {
-                System.err.println("WARNING: Unknown simple type " + namedType);
-                type = new CVoid(this);
+                uniqueWarningLogger.write(Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
+                type = new CVoid(this, parseContext);
                 break;
             }
         }
@@ -105,28 +112,28 @@ public class NamedType extends CSimpleType {
         }
 
         for (int i = 0; i < getPointerLevel(); i++) {
-            type = new CPointer(this, type);
+            type = new CPointer(this, type, parseContext);
         }
         return type;
     }
 
-    public static NamedType getIntType() {
-        NamedType namedType = new NamedType("int");
-        namedType.setSigned(true);
-        return namedType;
-    }
-
-    public static NamedType getUnsignedIntType() {
-        NamedType namedType = new NamedType("int");
-        namedType.setSigned(false);
-        return namedType;
-    }
-
-    public static NamedType getBoolType() {
-        NamedType namedType = new NamedType("_Bool");
-        namedType.setSigned(false);
-        return namedType;
-    }
+//    public static NamedType getIntType() {
+//        NamedType namedType = new NamedType(parseContext, "int");
+//        namedType.setSigned(true);
+//        return namedType;
+//    }
+//
+//    public static NamedType getUnsignedIntType() {
+//        NamedType namedType = new NamedType(parseContext, "int");
+//        namedType.setSigned(false);
+//        return namedType;
+//    }
+//
+//    public static NamedType getBoolType() {
+//        NamedType namedType = new NamedType(parseContext, "_Bool");
+//        namedType.setSigned(false);
+//        return namedType;
+//    }
 
     public String getNamedType() {
         return namedType;
@@ -161,7 +168,7 @@ public class NamedType extends CSimpleType {
 
     @Override
     public CSimpleType getBaseType() {
-        NamedType namedType = new NamedType(getNamedType());
+        NamedType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
         namedType.setAtomic(this.isAtomic());
         namedType.setExtern(this.isExtern());
         namedType.setTypedef(this.isTypedef());
@@ -217,7 +224,7 @@ public class NamedType extends CSimpleType {
 
     @Override
     public CSimpleType copyOf() {
-        CSimpleType namedType = new NamedType(getNamedType());
+        CSimpleType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
         namedType.setAtomic(this.isAtomic());
         namedType.setExtern(this.isExtern());
         namedType.setTypedef(this.isTypedef());

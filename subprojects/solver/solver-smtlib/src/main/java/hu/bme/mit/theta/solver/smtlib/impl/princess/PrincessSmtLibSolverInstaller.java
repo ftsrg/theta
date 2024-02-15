@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-                "2022-07-01", "2021-11-15",
+                "2023-06-19", "2023-04-07", "2022-11-03", "2022-07-01", "2021-11-15",
                 "2021-05-10", "2021-03-10", "2020-03-12", "2019-10-02", "2019-07-24",
                 "2018-10-26", "2018-05-25", "2018-01-27", "2017-12-06", "2017-07-17"
         );

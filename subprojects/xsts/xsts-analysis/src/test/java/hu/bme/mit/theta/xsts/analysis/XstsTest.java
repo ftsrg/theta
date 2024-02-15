@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -110,17 +110,17 @@ public class XstsTest {
                 {"src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop",
                         false, XstsConfigBuilder.Domain.PRED_CART},
 
-//				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+//                { "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-//				{ "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PROD},
+//                { "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PROD},
 
                 {"src/test/resources/model/cross_without.xsts",
                         "src/test/resources/property/cross.prop", false,
                         XstsConfigBuilder.Domain.PRED_CART},
 
-//				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+//                { "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-//				{ "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PROD},
+//                { "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PROD},
 
                 {"src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop",
                         false, XstsConfigBuilder.Domain.PRED_CART},
@@ -143,9 +143,9 @@ public class XstsTest {
                 {"src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop",
                         false, XstsConfigBuilder.Domain.PRED_CART},
 
-//				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
+//                { "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.EXPL},
 
-//				{ "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PROD},
+//                { "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false, XstsConfigBuilder.Domain.PROD},
 
                 {"src/test/resources/model/sequential.xsts",
                         "src/test/resources/property/sequential.prop", true,
@@ -215,7 +215,7 @@ public class XstsTest {
                 {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop",
                         false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-//				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+//                { "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
                 {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop",
                         false, XstsConfigBuilder.Domain.EXPL},
@@ -259,9 +259,9 @@ public class XstsTest {
                 {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop",
                         true, XstsConfigBuilder.Domain.PRED_CART},
 
-//				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
+//                { "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.EXPL},
 
-//				{ "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PROD},
+//                { "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true, XstsConfigBuilder.Domain.PROD},
 
                 {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop",
                         true, XstsConfigBuilder.Domain.PRED_CART},
@@ -272,11 +272,11 @@ public class XstsTest {
                 {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop",
                         true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
-//				{ "src/test/resources/model/ort.xsts", "src/test/resources/property/x_gt_2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
+//                { "src/test/resources/model/ort.xsts", "src/test/resources/property/x_gt_2.prop", false, XstsConfigBuilder.Domain.PRED_CART},
 
-//				{ "src/test/resources/model/ort2.xsts", "src/test/resources/property/ort2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
+//                { "src/test/resources/model/ort2.xsts", "src/test/resources/property/ort2.prop", true, XstsConfigBuilder.Domain.PRED_CART},
 
-//				{ "src/test/resources/model/crossroad_composite.xsts", "src/test/resources/property/both_green.prop", true, XstsConfigBuilder.Domain.EXPL}
+//                { "src/test/resources/model/crossroad_composite.xsts", "src/test/resources/property/both_green.prop", true, XstsConfigBuilder.Domain.EXPL}
 
                 {"src/test/resources/model/array_counter.xsts",
                         "src/test/resources/property/array_10.prop", false,

@@ -35,7 +35,7 @@ Currently, the following tools are available (follow the links for more informat
 * [`theta-xsts-cli`](subprojects/xsts/xsts-cli): Verification of safety properties in eXtended Symbolic Transition Systems (XSTS) using CEGAR-based algorithms.
   * [Gamma](https://github.com/ftsrg/gamma) is a statechart composition framework, that supports theta-xsts-cli as a backend to verify collaborating state machines.
   * theta-xsts-cli natively supports Petri net models in the [PNML](http://www.pnml.org/) format (experimental).
-* [`theta-xcfa-cli`](subprojects/xcfa/xcfa-cli): Reachability checking of error locations in eXtended Control Flow Automata (XCFA) using CEGAR-based algorithms. The CFA formalism is extended with procedures and processes, able to support multithreaded analysis and also several optimization passes. Right now it is mainly used to check both single and multithreaded C programs.
+* [`theta-xcfa-cli`](subprojects/xcfa-old/xcfa-cli): Reachability checking of error locations in eXtended Control Flow Automata (XCFA) using CEGAR-based algorithms. The CFA formalism is extended with procedures and processes, able to support multithreaded analysis and also several optimization passes. Right now it is mainly used to check both single and multithreaded C programs.
   * the [`c-frontend`](subprojects/frontends/c-frontend) module of Theta is capable of parsing C programs and transforming them into a formalism independent, in-memory representation. The `xcfa-cli` is able to convert this representation into an XCFA.
 
 To use Theta as a standalone tool, see the following deployments:
@@ -72,9 +72,9 @@ Each project contains a README.md in its root directory describing its purpose i
 
 |  | Common | CFA | STS | XTA | XSTS | XCFA |
 |--|--|--|--|--|--|--|
-| **Tools** | [`solver-smtlib-cli`](subprojects/solver/solver-smtlib-cli) | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts/sts-cli) | [`xta-cli`](subprojects/xta/xta-cli) | [`xsts-cli`](subprojects/xsts/xsts-cli) | [`xcfa-cli`](subprojects/xcfa/xcfa-cli) |
-| **Analyses** | [`analysis`](subprojects/common/analysis) | [`cfa-analysis`](subprojects/cfa/cfa-analysis) | [`sts-analysis`](subprojects/sts/sts-analysis) | [`xta-analysis`](subprojects/xta/xta-analysis) | [`xsts-analysis`](subprojects/xsts/xsts-analysis) | [`xcfa-analysis`](subprojects/xcfa/xcfa-analysis) |
-| **Formalisms** | [`core`](subprojects/common/core), [`common`](subprojects/common/common) | [`cfa`](subprojects/cfa/cfa) | [`sts`](subprojects/sts/sts) | [`xta`](subprojects/xta/xta) | [`xsts`](subprojects/xsts/xsts) | [`xcfa`](subprojects/xcfa/xcfa) |
+| **Tools** | [`solver-smtlib-cli`](subprojects/solver/solver-smtlib-cli) | [`cfa-cli`](subprojects/cfa/cfa-cli) | [`sts-cli`](subprojects/sts/sts-cli) | [`xta-cli`](subprojects/xta/xta-cli) | [`xsts-cli`](subprojects/xsts/xsts-cli) | [`xcfa-cli`](subprojects/xcfa-old/xcfa-cli) |
+| **Analyses** | [`analysis`](subprojects/common/analysis) | [`cfa-analysis`](subprojects/cfa/cfa-analysis) | [`sts-analysis`](subprojects/sts/sts-analysis) | [`xta-analysis`](subprojects/xta/xta-analysis) | [`xsts-analysis`](subprojects/xsts/xsts-analysis) | [`xcfa-analysis`](subprojects/xcfa-old/xcfa-analysis) |
+| **Formalisms** | [`core`](subprojects/common/core), [`common`](subprojects/common/common) | [`cfa`](subprojects/cfa/cfa) | [`sts`](subprojects/sts/sts) | [`xta`](subprojects/xta/xta) | [`xsts`](subprojects/xsts/xsts) | [`xcfa`](subprojects/xcfa-old/xcfa) |
 | **SMT solvers** | [`solver`](subprojects/solver/solver), [`solver-z3`](subprojects/solver/solver-z3), [`solver-smtlib`](subprojects/solver/solver-smtlib) | |
 
 ## Extend Theta

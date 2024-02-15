@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
 import hu.bme.mit.theta.core.model.Valuation;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 public final class TrueExpr extends BoolLitExpr {
 
@@ -54,7 +54,7 @@ public final class TrueExpr extends BoolLitExpr {
 
     @Override
     public boolean equals(final Object obj) {
-        return (obj instanceof TrueExpr);
+        return (obj != null && this.getClass() == obj.getClass());
     }
 
     @Override

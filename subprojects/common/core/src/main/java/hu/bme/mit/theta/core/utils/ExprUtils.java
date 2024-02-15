@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class ExprUtils {
 
+    private static final ExprSimplifier exprSimplifier = ExprSimplifier.create();
+
     private ExprUtils() {
     }
 
@@ -56,8 +58,7 @@ public final class ExprUtils {
      * @param expr      Expression
      * @param collectTo Collection where the atoms should be put
      */
-    public static void collectAtoms(final Expr<BoolType> expr,
-                                    final Collection<Expr<BoolType>> collectTo) {
+    public static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
         ExprAtomCollector.collectAtoms(expr, collectTo);
     }
 
@@ -104,8 +105,7 @@ public final class ExprUtils {
 
         if (expr instanceof AndExpr) {
             final AndExpr andExpr = (AndExpr) expr;
-            return andExpr.getOps().stream().map(ExprUtils::getConjuncts)
-                    .flatMap(Collection::stream)
+            return andExpr.getOps().stream().map(ExprUtils::getConjuncts).flatMap(Collection::stream)
                     .collect(Collectors.toSet());
         } else {
             return Collections.singleton(expr);
@@ -137,8 +137,7 @@ public final class ExprUtils {
      * @param exprs     Expressions
      * @param collectTo Collection where the variables should be put
      */
-    public static void collectVars(final Iterable<? extends Expr<?>> exprs,
-                                   final Collection<VarDecl<?>> collectTo) {
+    public static void collectVars(final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
         exprs.forEach(e -> collectVars(e, collectTo));
     }
 
@@ -172,8 +171,7 @@ public final class ExprUtils {
      * @param expr      Expression
      * @param collectTo Collection where the constants should be put
      */
-    public static void collectConstants(final Expr<?> expr,
-                                        final Collection<ConstDecl<?>> collectTo) {
+    public static void collectConstants(final Expr<?> expr, final Collection<ConstDecl<?>> collectTo) {
         if (expr instanceof RefExpr) {
             final RefExpr<?> refExpr = (RefExpr<?>) expr;
             final Decl<?> decl = refExpr.getDecl();
@@ -192,8 +190,7 @@ public final class ExprUtils {
      * @param exprs     Expressions
      * @param collectTo Collection where the constants should be put
      */
-    public static void collectConstants(final Iterable<? extends Expr<?>> exprs,
-                                        final Collection<ConstDecl<?>> collectTo) {
+    public static void collectConstants(final Iterable<? extends Expr<?>> exprs, final Collection<ConstDecl<?>> collectTo) {
         exprs.forEach(e -> collectConstants(e, collectTo));
     }
 
@@ -246,7 +243,8 @@ public final class ExprUtils {
     }
 
     /**
-     * Transform expression into an equivalent new expression without if-then-else constructs.
+     * Transform expression into an equivalent new expression without
+     * if-then-else constructs.
      *
      * @param expr Original expression
      * @return Transformed expression
@@ -262,9 +260,8 @@ public final class ExprUtils {
      * @param val  Valuation
      * @return Simplified expression
      */
-    public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr,
-                                                                  final Valuation val) {
-        return ExprSimplifier.simplify(expr, val);
+    public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr, final Valuation val) {
+        return exprSimplifier.simplify(expr, val);
     }
 
     /**
@@ -339,25 +336,25 @@ public final class ExprUtils {
      * @param mapping Quantifying
      * @return Transformed expression
      */
-    public static <T extends Type> Expr<T> close(final Expr<T> expr,
-                                                 final Map<VarDecl<?>, ParamDecl<?>> mapping) {
+    public static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
         return ExprCloser.close(expr, mapping);
     }
 
     /**
-     * Transform an expression by applying primes to an expression based on an indexing.
+     * Transform an expression by applying primes to an expression based on an
+     * indexing.
      *
      * @param expr     Original expression
      * @param indexing Indexing
      * @return Transformed expression
      */
-    public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr,
-                                                       final VarIndexing indexing) {
+    public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
         return ExprPrimeApplier.applyPrimes(expr, indexing);
     }
 
     /**
-     * Get the size of an expression by counting the nodes in its tree representation.
+     * Get the size of an expression by counting the nodes in its tree
+     * representation.
      *
      * @param expr Expression
      * @return Node count

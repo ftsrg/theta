@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,8 +41,7 @@ import static hu.bme.mit.theta.core.utils.BvUtils.neutralBvLitExprToBigInteger;
 import static hu.bme.mit.theta.core.utils.BvUtils.signedBvLitExprToBigInteger;
 import static hu.bme.mit.theta.core.utils.BvUtils.unsignedBvLitExprToBigInteger;
 
-public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvType>,
-        Comparable<BvLitExpr> {
+public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvType>, Comparable<BvLitExpr> {
 
     private static final int HASH_SEED = 5624;
     private volatile int hashCode = 0;
@@ -100,8 +99,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
         boolean[] extracted = new boolean[untilValue - fromValue];
         for (int i = 0; i < extracted.length; i++) {
-            extracted[extracted.length - i - 1] = this.getValue()[this.getValue().length - (
-                    fromValue + i) - 1];
+            extracted[extracted.length - i - 1] = this.getValue()[this.getValue().length - (fromValue + i) - 1];
         }
         return Bv(extracted);
     }
@@ -141,16 +139,14 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
     public BvLitExpr sub(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigInteger sub = neutralBvLitExprToBigInteger(this).subtract(
-                neutralBvLitExprToBigInteger(that));
+        BigInteger sub = neutralBvLitExprToBigInteger(this).subtract(neutralBvLitExprToBigInteger(that));
         sub = fitBigIntegerIntoNeutralDomain(sub, getType().getSize());
         return bigIntegerToNeutralBvLitExpr(sub, getType().getSize());
     }
 
     public BvLitExpr mul(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigInteger prod = neutralBvLitExprToBigInteger(this).multiply(
-                neutralBvLitExprToBigInteger(that));
+        BigInteger prod = neutralBvLitExprToBigInteger(this).multiply(neutralBvLitExprToBigInteger(that));
         prod = fitBigIntegerIntoNeutralDomain(prod, getType().getSize());
         return bigIntegerToNeutralBvLitExpr(prod, getType().getSize());
     }
@@ -169,16 +165,14 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
     public BvLitExpr udiv(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigInteger div = unsignedBvLitExprToBigInteger(this).divide(
-                unsignedBvLitExprToBigInteger(that));
+        BigInteger div = unsignedBvLitExprToBigInteger(this).divide(unsignedBvLitExprToBigInteger(that));
         div = fitBigIntegerIntoUnsignedDomain(div, getType().getSize());
         return bigIntegerToUnsignedBvLitExpr(div, getType().getSize());
     }
 
     public BvLitExpr sdiv(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        BigInteger div = signedBvLitExprToBigInteger(this).divide(
-                signedBvLitExprToBigInteger(that));
+        BigInteger div = signedBvLitExprToBigInteger(this).divide(signedBvLitExprToBigInteger(that));
         div = fitBigIntegerIntoSignedDomain(div, getType().getSize());
         return bigIntegerToSignedBvLitExpr(div, getType().getSize());
     }
@@ -210,8 +204,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         checkArgument(this.getType().equals(that.getType()));
 
         boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-             i = i.add(BigInteger.ONE)) {
+        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
             for (int j = 0; j < shifted.length - 1; j++) {
                 shifted[j] = shifted[j + 1];
             }
@@ -225,8 +218,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
         boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
         boolean insert = shifted[0];
-        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-             i = i.add(BigInteger.ONE)) {
+        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
             for (int j = shifted.length - 1; j > 0; j--) {
                 shifted[j] = shifted[j - 1];
             }
@@ -240,8 +232,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
         boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
         boolean insert = false;
-        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-             i = i.add(BigInteger.ONE)) {
+        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
             for (int j = shifted.length - 1; j > 0; j--) {
                 shifted[j] = shifted[j - 1];
             }
@@ -254,8 +245,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         checkArgument(this.getType().equals(that.getType()));
 
         boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-             i = i.add(BigInteger.ONE)) {
+        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
             boolean rotated = shifted[0];
             for (int j = 0; j < shifted.length - 1; j++) {
                 shifted[j] = shifted[j + 1];
@@ -269,8 +259,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         checkArgument(this.getType().equals(that.getType()));
 
         boolean[] shifted = Arrays.copyOf(this.getValue(), this.getValue().length);
-        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0;
-             i = i.add(BigInteger.ONE)) {
+        for (BigInteger i = BigInteger.ZERO; i.compareTo(neutralBvLitExprToBigInteger(that)) < 0; i = i.add(BigInteger.ONE)) {
             boolean rotated = shifted[shifted.length - 1];
             for (int j = shifted.length - 1; j > 0; j--) {
                 shifted[j] = shifted[j - 1];
@@ -287,8 +276,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         // 5 mod -3 = 2
         // -5 mod 3 = 1
         // -5 mod -3 = 1
-        BigInteger result = signedBvLitExprToBigInteger(this).mod(
-                signedBvLitExprToBigInteger(that));
+        BigInteger result = signedBvLitExprToBigInteger(this).mod(signedBvLitExprToBigInteger(that));
         if (result.compareTo(BigInteger.ZERO) < 0) {
             result = result.add(signedBvLitExprToBigInteger(that).abs());
         }
@@ -316,11 +304,9 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
         BigInteger thatAbs = thatInt.abs();
         if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
             return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
-        } else if (thisInt.compareTo(BigInteger.ZERO) >= 0
-                && thatInt.compareTo(BigInteger.ZERO) < 0) {
+        } else if (thisInt.compareTo(BigInteger.ZERO) >= 0 && thatInt.compareTo(BigInteger.ZERO) < 0) {
             return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs), getType().getSize());
-        } else if (thisInt.compareTo(BigInteger.ZERO) < 0
-                && thatInt.compareTo(BigInteger.ZERO) >= 0) {
+        } else if (thisInt.compareTo(BigInteger.ZERO) < 0 && thatInt.compareTo(BigInteger.ZERO) >= 0) {
             return bigIntegerToSignedBvLitExpr(thisAbs.mod(thatAbs).negate(), getType().getSize());
         } else {
             return bigIntegerToSignedBvLitExpr(thisInt.mod(thatInt), getType().getSize());
@@ -339,52 +325,42 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
 
     public BoolLitExpr ult(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that)) < 0);
+        return Bool(unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that)) < 0);
     }
 
     public BoolLitExpr ule(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that))
-                        <= 0);
+        return Bool(unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that)) <= 0);
     }
 
     public BoolLitExpr ugt(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that)) > 0);
+        return Bool(unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that)) > 0);
     }
 
     public BoolLitExpr uge(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that))
-                        >= 0);
+        return Bool(unsignedBvLitExprToBigInteger(this).compareTo(unsignedBvLitExprToBigInteger(that)) >= 0);
     }
 
     public BoolLitExpr slt(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) < 0);
+        return Bool(signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) < 0);
     }
 
     public BoolLitExpr sle(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) <= 0);
+        return Bool(signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) <= 0);
     }
 
     public BoolLitExpr sgt(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) > 0);
+        return Bool(signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) > 0);
     }
 
     public BoolLitExpr sge(final BvLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
-        return Bool(
-                signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) >= 0);
+        return Bool(signedBvLitExprToBigInteger(this).compareTo(signedBvLitExprToBigInteger(that)) >= 0);
     }
 
     @Override
@@ -402,7 +378,7 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvLitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvLitExpr that = (BvLitExpr) obj;
             return Arrays.equals(this.value, that.value);
         } else {
@@ -413,8 +389,8 @@ public final class BvLitExpr extends NullaryExpr<BvType> implements LitExpr<BvTy
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(getType().getSize());
-        sb.append("'b");
+//        sb.append(getType().getSize());
+        sb.append("#b");
         for (boolean bit : value) {
             sb.append(bit ? "1" : "0");
         }

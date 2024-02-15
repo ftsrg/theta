@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,23 +16,94 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.common.DispatchTable;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.type.*;
+import hu.bme.mit.theta.core.type.BinaryExpr;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
-import hu.bme.mit.theta.core.type.booltype.*;
-import hu.bme.mit.theta.core.type.bvtype.*;
-import hu.bme.mit.theta.core.type.inttype.*;
-import hu.bme.mit.theta.core.type.rattype.*;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.IffExpr;
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.OrExpr;
+import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
+import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
+import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
+import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
+import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
+import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatExprs;
+import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
+import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
+import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
+import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
+import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public final class ExprCanonizer {
 
@@ -131,6 +202,8 @@ public final class ExprCanonizer {
             .addCase(BvSubExpr.class, ExprCanonizer::canonizeBvSub)
 
             .addCase(BvPosExpr.class, ExprCanonizer::canonizeBvPos)
+
+            .addCase(BvSignChangeExpr.class, ExprCanonizer::canonizeBvSignChange)
 
             .addCase(BvNegExpr.class, ExprCanonizer::canonizeBvNeg)
 
@@ -499,6 +572,10 @@ public final class ExprCanonizer {
     }
 
     private static Expr<BvType> canonizeBvPos(final BvPosExpr expr) {
+        throw new UnsupportedOperationException();
+    }
+
+    private static Expr<BvType> canonizeBvSignChange(final BvSignChangeExpr expr) {
         throw new UnsupportedOperationException();
     }
 

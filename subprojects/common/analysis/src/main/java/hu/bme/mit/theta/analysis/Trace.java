@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package hu.bme.mit.theta.analysis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkElementIndex;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.LispStringBuilder;
+import hu.bme.mit.theta.common.Utils;
 
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.common.LispStringBuilder;
-import hu.bme.mit.theta.common.Utils;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkElementIndex;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Represents an immutable, alternating trace in the form of a (State, Action, State, ..., State,
@@ -120,7 +119,7 @@ public final class Trace<S, A> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof Trace) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final Trace<?, ?> that = (Trace<?, ?>) obj;
             return this.states.equals(that.states) && this.actions.equals(that.actions);
         } else {

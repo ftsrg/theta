@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  */
 package hu.bme.mit.theta.common.dsl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.toList;
-
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.function.Function;
 
-import hu.bme.mit.theta.common.Utils;
+import static com.google.common.base.Preconditions.*;
+import static java.util.stream.Collectors.toList;
 
 public final class Env {
 
@@ -62,6 +60,17 @@ public final class Env {
         return value;
     }
 
+    @Override
+    public String toString() {
+        StringJoiner sj = new StringJoiner("\n", "Env( ", " )");
+        Frame frame = currentFrame;
+        while (frame != null) {
+            sj.add(frame.toString());
+            frame = frame.parent;
+        }
+        return sj.toString();
+    }
+
     public <S extends Symbol, V extends Object> Object compute(final S symbol,
                                                                final Function<? super S, ? extends Object> mapping) {
         checkNotNull(symbol);
@@ -76,7 +85,6 @@ public final class Env {
     }
 
     private static final class Frame {
-
         private final Frame parent;
         private final Map<Symbol, Object> symbolToValue;
 
@@ -86,8 +94,7 @@ public final class Env {
         }
 
         public void define(final Symbol symbol, final Object value) {
-            checkArgument(eval(symbol) == null,
-                    "Symbol " + symbol.getName() + " is already defined");
+            checkArgument(eval(symbol) == null, "Symbol " + symbol.getName() + " is already defined");
             symbolToValue.put(symbol, value);
         }
 
@@ -104,10 +111,8 @@ public final class Env {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName())
-                    .addAll(symbolToValue.entrySet().stream()
-                            .map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
-                    .toString();
+            return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(symbolToValue.entrySet().stream()
+                    .map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList())).toString();
         }
     }
 

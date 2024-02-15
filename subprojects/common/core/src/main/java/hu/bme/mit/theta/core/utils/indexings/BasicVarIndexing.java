@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,19 +18,23 @@ package hu.bme.mit.theta.core.utils.indexings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Math.max;
 
 /**
- * Represents an immutable mapping, where each variable is associated with an index. The inner
- * builder class can also be used to create a new instance.
+ * Represents an immutable mapping, where each variable is associated with an
+ * index. The inner builder class can also be used to create a new instance.
  */
 public class BasicVarIndexing implements VarIndexing {
 
@@ -157,7 +161,6 @@ public class BasicVarIndexing implements VarIndexing {
     }
 
     public static class BasicVarIndexingBuilder implements VarIndexingBuilder {
-
         private int defaultIndex;
         private Map<VarDecl<?>, Integer> varToOffset;
 
@@ -199,16 +202,14 @@ public class BasicVarIndexing implements VarIndexing {
         @Override
         public BasicVarIndexingBuilder add(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof BasicVarIndexingBuilder,
-                    "Only builders of the same type can be added together!");
+            checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be added together!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = this.defaultIndex + that.defaultIndex;
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                    that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -228,8 +229,7 @@ public class BasicVarIndexing implements VarIndexing {
         @Override
         public BasicVarIndexingBuilder sub(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof BasicVarIndexingBuilder,
-                    "Only builders of the same type can be subtracted!");
+            checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be subtracted!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
@@ -237,8 +237,7 @@ public class BasicVarIndexing implements VarIndexing {
             checkArgument(newDefaultIndex >= 0, "Negative default index");
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                    that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -258,16 +257,14 @@ public class BasicVarIndexing implements VarIndexing {
         @Override
         public BasicVarIndexingBuilder join(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof BasicVarIndexingBuilder,
-                    "Only builders of the same type can be joined!");
+            checkArgument(genericThat instanceof BasicVarIndexingBuilder, "Only builders of the same type can be joined!");
 
             BasicVarIndexingBuilder that = (BasicVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = max(this.defaultIndex, that.defaultIndex);
             final Map<VarDecl<?>, Integer> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                    that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
                 final int index1 = this.get(varDecl);
                 final int index2 = that.get(varDecl);
@@ -309,6 +306,25 @@ public class BasicVarIndexing implements VarIndexing {
             sj.add(sb);
         }
         return sj.toString();
+    }
+
+    public static BasicVarIndexing fromString(String content, Scope scope, Env env) {
+        Pattern pattern = Pattern.compile("IndexMap\\((.*)\\)");
+        Matcher matcher = pattern.matcher(content);
+        matcher.find();
+        String mappings = matcher.group(1);
+        BasicVarIndexingBuilder builder = null;
+        for (String s : mappings.split(", ")) {
+            String[] split = s.split(" -> ");
+            if (split.length == 1) {
+                builder = BasicVarIndexing.builder(Integer.parseInt(split[0]));
+            } else {
+                VarDecl<?> var = (VarDecl<?>) env.eval(scope.resolve(split[0]).get());
+                int index = Integer.parseInt(split[1]);
+                checkNotNull(builder).varToOffset.put(var, index);
+            }
+        }
+        return checkNotNull(builder).build();
     }
 
     ////

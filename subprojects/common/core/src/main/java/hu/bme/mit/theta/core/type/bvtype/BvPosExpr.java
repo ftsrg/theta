@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public final class BvPosExpr extends PosExpr<BvType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof BvPosExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final BvPosExpr that = (BvPosExpr) obj;
             return this.getOp().equals(that.getOp());
         } else {

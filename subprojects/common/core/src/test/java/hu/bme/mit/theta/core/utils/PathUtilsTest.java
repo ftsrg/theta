@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,6 +38,7 @@ public class PathUtilsTest {
     final VarDecl<IntType> vx = Decls.Var("x", Int());
     final VarDecl<IntType> vy = Decls.Var("y", Int());
     final VarDecl<IntType> vz = Decls.Var("z", Int());
+    final IndexedConstDecl<IntType> x0 = vx.getConstDecl(0);
     final IndexedConstDecl<IntType> x1 = vx.getConstDecl(1);
     final IndexedConstDecl<IntType> x2 = vx.getConstDecl(2);
     final IndexedConstDecl<IntType> y0 = vy.getConstDecl(0);
@@ -49,6 +51,16 @@ public class PathUtilsTest {
 
         Assert.assertEquals(Eq(x2.getRef(), Add(y1.getRef(), Int(1))),
                 PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 1));
+    }
+
+    @Test
+    public void testUnfoldReversed() {
+        Assert.assertEquals(Eq(x0.getRef(), Add(x1.getRef(), Int(1))),
+                PathUtils.unfoldReverse(Eq(Prime(vx.getRef()), Add(vx.getRef(), Int(1))), VarIndexingFactory.indexing(0)));
+        Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), Int(1))),
+                PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Int(1))), VarIndexingFactory.indexing(0)));
+        Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), x1.getRef())),
+                PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Prime(vx.getRef()))), VarIndexingFactory.indexing(0)));
     }
 
     @Test
@@ -65,8 +77,7 @@ public class PathUtilsTest {
 
     @Test
     public void testExtractValuation() {
-        final Valuation valuation = ImmutableValuation.builder().put(x1, Int(1)).put(x2, Int(2))
-                .put(y1, Int(3))
+        final Valuation valuation = ImmutableValuation.builder().put(x1, Int(1)).put(x2, Int(2)).put(y1, Int(3))
                 .build();
 
         final Valuation extr0 = PathUtils.extractValuation(valuation, 1);

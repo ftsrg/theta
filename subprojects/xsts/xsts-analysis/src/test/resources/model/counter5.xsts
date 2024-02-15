@@ -4,7 +4,7 @@ trans {
     assume x<5;
     x:=x+1;
 } or {
-    x:=x;
+    x:=0;
 }
 
 init {}

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
-import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
@@ -41,8 +41,11 @@ import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitExpr<?>> {
+    private final ParseContext parseContext;
 
-    public static final ValueVisitor instance = new ValueVisitor();
+    public ValueVisitor(ParseContext parseContext) {
+        this.parseContext = parseContext;
+    }
 
     @Override
     public LitExpr<?> visit(CDouble type, String param) {
@@ -50,11 +53,11 @@ public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitEx
                 new BigFloat(
                         param,
                         new BinaryMathContext(
-                                ArchitectureConfig.architecture.getBitWidth("double_e"),
-                                ArchitectureConfig.architecture.getBitWidth("double_s"))),
+                                parseContext.getArchitecture().getBitWidth("double_e"),
+                                parseContext.getArchitecture().getBitWidth("double_s"))),
                 FpType.of(
-                        ArchitectureConfig.architecture.getBitWidth("double_e"),
-                        ArchitectureConfig.architecture.getBitWidth("double_s")));
+                        parseContext.getArchitecture().getBitWidth("double_e"),
+                        parseContext.getArchitecture().getBitWidth("double_s")));
     }
 
     @Override
@@ -63,11 +66,11 @@ public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitEx
                 new BigFloat(
                         param,
                         new BinaryMathContext(
-                                ArchitectureConfig.architecture.getBitWidth("float_e"),
-                                ArchitectureConfig.architecture.getBitWidth("float_s"))),
+                                parseContext.getArchitecture().getBitWidth("float_e"),
+                                parseContext.getArchitecture().getBitWidth("float_s"))),
                 FpType.of(
-                        ArchitectureConfig.architecture.getBitWidth("float_e"),
-                        ArchitectureConfig.architecture.getBitWidth("float_s")));
+                        parseContext.getArchitecture().getBitWidth("float_e"),
+                        parseContext.getArchitecture().getBitWidth("float_s")));
     }
 
     @Override
@@ -76,11 +79,11 @@ public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitEx
                 new BigFloat(
                         param,
                         new BinaryMathContext(
-                                ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
-                                ArchitectureConfig.architecture.getBitWidth("longdouble_s"))),
+                                parseContext.getArchitecture().getBitWidth("longdouble_e"),
+                                parseContext.getArchitecture().getBitWidth("longdouble_s"))),
                 FpType.of(
-                        ArchitectureConfig.architecture.getBitWidth("longdouble_e"),
-                        ArchitectureConfig.architecture.getBitWidth("longdouble_s")));
+                        parseContext.getArchitecture().getBitWidth("longdouble_e"),
+                        parseContext.getArchitecture().getBitWidth("longdouble_s")));
     }
 
     @Override

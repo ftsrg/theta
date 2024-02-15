@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.util.Collection;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class SolverValidatorWrapper implements Solver {
-
     private final Solver solver;
 
     SolverValidatorWrapper(String solver) throws Exception {
@@ -47,8 +46,7 @@ public class SolverValidatorWrapper implements Solver {
             final Valuation model = solver.getModel();
             for (Expr<BoolType> assertion : solver.getAssertions()) {
                 if (!assertion.eval(model).equals(True())) {
-                    throw new RuntimeException(
-                            "Solver problem: " + assertion + " not True over {" + model + "}");
+                    throw new SolverValidationException("Solver problem: " + assertion + " not True over {" + model + "}");
                 }
             }
         }

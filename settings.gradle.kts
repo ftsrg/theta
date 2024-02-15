@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ include(
     "common/analysis",
     "common/common",
     "common/core",
+    "common/grammar",
 
     "frontends/c-frontend",
     "frontends/chc-frontend",
+    "frontends/llvm",
 
     "cfa/cfa",
     "cfa/cfa-analysis",
@@ -32,9 +34,12 @@ include(
     "sts/sts-cli",
 
     "xcfa/xcfa",
+    "xcfa/cat",
+    "xcfa/c2xcfa",
+    "xcfa/litmus2xcfa",
+    "xcfa/llvm2xcfa",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
-    "xcfa/cat",
 
     "xta/xta",
     "xta/xta-analysis",
@@ -47,7 +52,8 @@ include(
     "solver/solver",
     "solver/solver-z3",
     "solver/solver-smtlib",
-    "solver/solver-smtlib-cli"
+    "solver/solver-smtlib-cli",
+    "solver/graph-solver",
 )
 
 for (project in rootProject.children) {

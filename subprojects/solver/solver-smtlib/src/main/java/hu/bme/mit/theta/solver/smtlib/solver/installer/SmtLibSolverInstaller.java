@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -191,7 +191,8 @@ public interface SmtLibSolverInstaller {
 
             final var installDir = home.resolve(version);
             if (!Files.exists(installDir)) {
-                throw new SmtLibSolverInstallerException("The version is not installed");
+                throw new SmtLibSolverInstallerException("The version <" + version
+                        + "> is not installed in <" + home + ">");
             }
 
             try {

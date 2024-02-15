@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,21 +14,17 @@
  *  limitations under the License.
  */
 plugins {
-    id("java-common")
-    id("antlr-grammar")
+    id("kotlin-common")
 }
 
 dependencies {
-    implementation(project(":theta-cfa"))
-    implementation(project(":theta-cfa-analysis"))
-    implementation(project(":theta-xcfa"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-cat"))
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-analysis"))
     implementation(project(":theta-solver"))
-    implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-xcfa"))
     implementation(project(":theta-c-frontend"))
-    implementation(project(":theta-solver-smtlib"))
+    testImplementation(project(":theta-c2xcfa"))
+    testImplementation(project(":theta-solver-z3"))
+    testImplementation(project(":theta-solver"))
 }

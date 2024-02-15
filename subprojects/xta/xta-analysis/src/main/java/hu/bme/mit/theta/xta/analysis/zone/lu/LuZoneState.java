@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,24 @@
  */
 package hu.bme.mit.theta.xta.analysis.zone.lu;
 
+import com.google.common.collect.Lists;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.zone.BoundFunc;
+import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
@@ -23,27 +41,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
-import java.util.ArrayList;
-import java.util.Collection;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.StringJoiner;
-
-import com.google.common.collect.Lists;
-
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.zone.BoundFunc;
-import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 
 public final class LuZoneState implements ExprState {
 
@@ -152,7 +149,7 @@ public final class LuZoneState implements ExprState {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof LuZoneState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final LuZoneState that = (LuZoneState) obj;
             return this.zone.equals(that.zone) && this.boundFunc.equals(that.boundFunc);
         } else {

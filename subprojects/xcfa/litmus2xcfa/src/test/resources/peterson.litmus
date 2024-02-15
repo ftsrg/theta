@@ -1,0 +1,35 @@
+AArch64 LB+data+data-pos
+"DpDatadW Rfe DpDatadW PosWW Rfe"
+Prefetch=0:x=F,0:y=W,1:y=F,1:x=W
+Com=Rf Rf
+Orig=DpDatadW Rfe DpDatadW PosWW Rfe
+{
+0:X1=f0; 0:X2=f1; 0:X3=t; 0:X4=crit;
+1:X1=f0; 1:X2=f1; 1:X3=t; 1:X4=crit;
+}
+ P0             | P1            ;
+ MOV X6,#1      | MOV X6,#1     ;
+ STR X6,[X1]    | STR X6,[X2]   ;
+ MOV X6,#1      | MOV X6,#0     ;
+ STR X6,[X3]    | STR X6,[X3]   ;
+loop:           |loop:          ;
+ LDR X6,[X2]    | LDR X6,[X1]   ;
+ CBNZ X6,endloop| CBNZ X6,endloop;
+ LDR X6,[X3]    | LDR X6,[X3]   ;
+ CBNZ X6,endloop| CBZ X6,endloop;
+ B loop         | B loop        ;
+endloop:        |endloop:       ;
+ LDR X6,[X4]    | LDR X6,[X4]   ;
+ CBNZ X6,err    | CBNZ X6,err   ;
+ MOV X7,#1      | MOV X7,#1     ;
+ STR X7,[X4]    | STR X7,[X4]   ;
+ STR X6,[X4]    | STR X6,[X4]   ;
+ B end          | B end         ;
+err:            |err:           ;
+ DMB SY         | DMB SY        ;
+end:            |end:           ;
+ MOV X6,#0      | MOV X6,#0     ;
+ STR X6,[X1]    | STR X6,[X2]   ;
+
+exists
+(x=2 /\ 0:X0=2 /\ 1:X0=1)

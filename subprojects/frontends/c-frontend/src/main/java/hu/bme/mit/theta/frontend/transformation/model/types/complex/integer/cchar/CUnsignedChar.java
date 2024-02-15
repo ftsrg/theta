@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CUnsignedChar extends CChar implements Unsigned {
 
-    public CUnsignedChar(CSimpleType origin) {
-        super(origin);
+    public CUnsignedChar(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
         unsigned = true;
     }
 

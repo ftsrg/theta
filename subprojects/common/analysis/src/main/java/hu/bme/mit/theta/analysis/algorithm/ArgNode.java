@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,31 +15,27 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.container.Containers;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ArgNode<S extends State, A extends Action> {
-
-    private static final int HASH_SEED = 8543;
-    private volatile int hashCode = 0;
 
     final ARG<S, A> arg;
 
     private final int id;
     private final int depth;
     private final boolean target;
+    private boolean canCover = true;
 
     private S state;
 
@@ -49,10 +45,9 @@ public final class ArgNode<S extends State, A extends Action> {
     Optional<ArgNode<S, A>> coveringNode; // Set by ARG
     final Collection<ArgNode<S, A>> coveredNodes;
 
-    boolean expanded; // Set by ArgBuilder
+    public boolean expanded; // Set by ArgBuilder
 
-    ArgNode(final ARG<S, A> arg, final S state, final int id, final int depth,
-            final boolean target) {
+    ArgNode(final ARG<S, A> arg, final S state, final int id, final int depth, final boolean target) {
         this.arg = arg;
         this.state = state;
         this.id = id;
@@ -72,8 +67,8 @@ public final class ArgNode<S extends State, A extends Action> {
     }
 
     /**
-     * Gets the depth of the node, which is 0 if the node has no parent, and depth(parent) + 1
-     * otherwise.
+     * Gets the depth of the node, which is 0 if the node has no parent, and
+     * depth(parent) + 1 otherwise.
      */
     public int getDepth() {
         return depth;
@@ -89,14 +84,23 @@ public final class ArgNode<S extends State, A extends Action> {
     }
 
     public boolean mayCover(final ArgNode<S, A> node) {
-        if (arg.partialOrd.isLeq(node.getState(), this.getState())) {
+        if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
             return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
         } else {
             return false;
         }
     }
 
+    public boolean mayCoverStandard(final ArgNode<S, A> node) {
+        if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
+            return !(this.equals(node) || this.isSubsumed()); // no need to check ancestors in CEGAR
+        } else {
+            return false;
+        }
+    }
+
     public void setCoveringNode(final ArgNode<S, A> node) {
+        if (!node.canCover) return;
         checkNotNull(node);
         checkArgument(node.arg == this.arg, "Nodes belong to different ARGs");
         unsetCoveringNode();
@@ -159,7 +163,8 @@ public final class ArgNode<S extends State, A extends Action> {
     ////
 
     /**
-     * Checks if the node is covered, i.e., there is a covering edge for the node.
+     * Checks if the node is covered, i.e., there is a covering edge for the
+     * node.
      */
     public boolean isCovered() {
         return coveringNode.isPresent();
@@ -173,21 +178,24 @@ public final class ArgNode<S extends State, A extends Action> {
     }
 
     /**
-     * Checks if the node is subsumed, i.e., the node is covered or not feasible.
+     * Checks if the node is subsumed, i.e., the node is covered or not
+     * feasible.
      */
     public boolean isSubsumed() {
         return isCovered() || !isFeasible();
     }
 
     /**
-     * Checks if the node is excluded, i.e., the node is subsumed or has an excluded parent.
+     * Checks if the node is excluded, i.e., the node is subsumed or has an
+     * excluded parent.
      */
     public boolean isExcluded() {
         return ancestors().anyMatch(ArgNode::isSubsumed);
     }
 
     /**
-     * Checks if the node is target, i.e., the target predicate holds (e.g., it is an error state).
+     * Checks if the node is target, i.e., the target predicate holds (e.g., it
+     * is an error state).
      */
     public boolean isTarget() {
         return target;
@@ -224,8 +232,7 @@ public final class ArgNode<S extends State, A extends Action> {
     ////
 
     public Stream<ArgNode<S, A>> properAncestors() {
-        return getParent().map(p -> Stream.concat(Stream.of(p), p.properAncestors()))
-                .orElse(Stream.empty());
+        return getParent().map(p -> Stream.concat(Stream.of(p), p.properAncestors())).orElse(Stream.empty());
     }
 
     public Stream<ArgNode<S, A>> ancestors() {
@@ -256,32 +263,18 @@ public final class ArgNode<S extends State, A extends Action> {
         if (this.isSubsumed()) {
             return Stream.empty();
         } else {
-            return Stream.concat(Stream.of(this),
-                    this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
+            return Stream.concat(Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
         }
     }
 
     ////
 
     @Override
-    public int hashCode() {
-        int result = hashCode;
-        if (result == 0) {
-            result = HASH_SEED;
-            result = 31 * result + id;
-            hashCode = result;
-        }
-        return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
     public String toString() {
         return Utils.lispStringBuilder("ArgNode").add(id).body().add(state).toString();
     }
 
+    public void disableCoveringAbility() {
+        canCover = false;
+    }
 }

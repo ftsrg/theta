@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,14 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
@@ -30,8 +36,27 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkState;
 
 public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
+    private final ParseContext parseContext;
+    private final FunctionVisitor functionVisitor;
+    private final TypedefVisitor typedefVisitor;
+    private final TypeVisitor typeVisitor;
+    private final Logger uniqueWarningLogger;
 
-    public static final DeclarationVisitor instance = new DeclarationVisitor();
+    public DeclarationVisitor(ParseContext parseContext, FunctionVisitor functionVisitor, Logger uniqueWarningLogger) {
+        this.parseContext = parseContext;
+        this.functionVisitor = functionVisitor;
+        this.uniqueWarningLogger = uniqueWarningLogger;
+        this.typedefVisitor = new TypedefVisitor(this);
+        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext, uniqueWarningLogger);
+    }
+
+    public TypedefVisitor getTypedefVisitor() {
+        return typedefVisitor;
+    }
+
+    public TypeVisitor getTypeVisitor() {
+        return typeVisitor;
+    }
 
     /**
      * From a single declaration context and initialization list this function produces the
@@ -44,7 +69,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext,
                                               CParser.InitDeclaratorListContext initDeclContext) {
         List<CDeclaration> ret = new ArrayList<>();
-        CSimpleType cSimpleType = declSpecContext.accept(TypeVisitor.instance);
+        CSimpleType cSimpleType = declSpecContext.accept(typeVisitor);
         if (cSimpleType.getAssociatedName() != null) {
             CDeclaration cDeclaration = new CDeclaration(cSimpleType.getAssociatedName());
             cDeclaration.setType(cSimpleType);
@@ -61,17 +86,21 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                                 context.initializer().initializerList().designation().size() == 0,
                                 "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList = new CInitializerList(
-                                cSimpleType.getActualType());
-                        for (CParser.InitializerContext initializer : context.initializer()
-                                .initializerList().initializers) {
-                            CStatement expr = initializer.assignmentExpression()
-                                    .accept(FunctionVisitor.instance);
-                            cInitializerList.addStatement(null /* TODO: add designator */, expr);
+                                cSimpleType.getActualType(), parseContext);
+                        try {
+                            for (CParser.InitializerContext initializer : context.initializer()
+                                    .initializerList().initializers) {
+                                CStatement expr = initializer.assignmentExpression().accept(functionVisitor);
+                                cInitializerList.addStatement(null /* TODO: add designator */, expr);
+                            }
+                            initializerExpression = cInitializerList;
+                        } catch (NullPointerException e) {
+                            initializerExpression = new CExpr(new UnsupportedInitializer(), parseContext);
+                            parseContext.getMetadata().create(initializerExpression.getExpression(), "cType", cSimpleType);
                         }
-                        initializerExpression = cInitializerList;
                     } else {
                         initializerExpression = context.initializer().assignmentExpression()
-                                .accept(FunctionVisitor.instance);
+                                .accept(functionVisitor);
                     }
                     declaration.setInitExpr(initializerExpression);
                 }
@@ -89,7 +118,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     @Override
     public CDeclaration visitOrdinaryParameterDeclaration(
             CParser.OrdinaryParameterDeclarationContext ctx) {
-        CSimpleType cSimpleType = ctx.declarationSpecifiers().accept(TypeVisitor.instance);
+        CSimpleType cSimpleType = ctx.declarationSpecifiers().accept(typeVisitor);
         CDeclaration declaration = ctx.declarator().accept(this);
         declaration.setType(cSimpleType);
         return declaration;
@@ -108,7 +137,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     @Override
     public CDeclaration visitAbstractParameterDeclaration(
             CParser.AbstractParameterDeclarationContext ctx) {
-        CSimpleType cSimpleType = ctx.declarationSpecifiers2().accept(TypeVisitor.instance);
+        CSimpleType cSimpleType = ctx.declarationSpecifiers2().accept(typeVisitor);
         checkState(ctx.abstractDeclarator() == null, "Abstract declarators not yet supported!");
         return new CDeclaration(cSimpleType);
     }
@@ -144,7 +173,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
 
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (ctx.assignmentExpression() != null) {
-            decl.addArrayDimension(ctx.assignmentExpression().accept(FunctionVisitor.instance));
+            decl.addArrayDimension(ctx.assignmentExpression().accept(functionVisitor));
         } else {
             decl.addArrayDimension(null);
         }
@@ -171,7 +200,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
             CParser.DirectDeclaratorFunctionDeclContext ctx) {
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
-            System.err.println("WARNING: variable args are not supported!");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!\n");
             decl.setFunc(true);
             return decl;
         }

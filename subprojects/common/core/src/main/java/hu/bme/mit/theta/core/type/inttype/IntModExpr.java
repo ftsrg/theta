@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class IntModExpr extends ModExpr<IntType> {
 
@@ -76,7 +76,7 @@ public final class IntModExpr extends ModExpr<IntType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof IntModExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final IntModExpr that = (IntModExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

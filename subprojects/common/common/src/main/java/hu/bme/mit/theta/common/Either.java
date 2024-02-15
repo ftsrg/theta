@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package hu.bme.mit.theta.common;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.NoSuchElementException;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class Either<L, R> {
 
@@ -88,7 +88,7 @@ public abstract class Either<L, R> {
         public boolean equals(final Object obj) {
             if (this == obj) {
                 return true;
-            } else if (obj instanceof Left) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final Left<?, ?> that = (Left<?, ?>) obj;
                 return this.left.equals(that.left);
             } else {
@@ -149,7 +149,7 @@ public abstract class Either<L, R> {
         public boolean equals(final Object obj) {
             if (this == obj) {
                 return true;
-            } else if (obj instanceof Right) {
+            } else if (obj != null && this.getClass() == obj.getClass()) {
                 final Right<?, ?> that = (Right<?, ?>) obj;
                 return this.right.equals(that.right);
             } else {

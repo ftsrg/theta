@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 package hu.bme.mit.theta.analysis.pred;
 
+import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+import java.util.Set;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-
-import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
-
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class PredState implements ExprState {
 
@@ -126,7 +125,7 @@ public final class PredState implements ExprState {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof PredState) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final PredState that = (PredState) obj;
             return this.preds.equals(that.preds);
         } else {

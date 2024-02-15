@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 public final class DiffLtConstr extends DiffConstr {
 
@@ -58,7 +58,7 @@ public final class DiffLtConstr extends DiffConstr {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof DiffLtConstr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final DiffLtConstr that = (DiffLtConstr) obj;
             return this.getBound() == that.getBound() && this.getLeftVar().equals(that.getLeftVar())
                     && this.getRightVar().equals(that.getRightVar());

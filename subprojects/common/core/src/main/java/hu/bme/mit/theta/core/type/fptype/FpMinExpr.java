@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class FpMinExpr extends BinaryExpr<FpType, FpType> {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpMinExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpMinExpr that = (FpMinExpr) obj;
             return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp()
                     .equals(that.getRightOp());

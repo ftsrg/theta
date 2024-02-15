@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import static hu.bme.mit.theta.common.OsHelper.Architecture.X64;
-import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.*;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.LINUX;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.MAC;
+import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.WINDOWS;
 
 public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
-
     private final List<SemVer.VersionDecoder> versions;
 
     public CVC5SmtLibSolverInstaller(final Logger logger) {
@@ -58,18 +59,23 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
     }
 
     @Override
-    protected void installSolver(final Path installDir, final String version)
-            throws SmtLibSolverInstallerException {
+    protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
         try (
                 final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
-                final var outputChannel = new FileOutputStream(
-                        installDir.resolve(getSolverBinaryName(version)).toAbsolutePath()
-                                .toString()).getChannel()
+                final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
         ) {
-            logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n",
-                    getDownloadUrl(version).toString());
+            logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", getDownloadUrl(version).toString());
             outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
             installDir.resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
+        } catch (IOException e) {
+            throw new SmtLibSolverInstallerException(e);
+        }
+        try (
+                final var inputChannel = Channels.newChannel(getLicenseDownloadUrl().openStream());
+                final var outputChannel = new FileOutputStream(installDir.resolve("COPYING").toAbsolutePath().toString()).getChannel()
+        ) {
+            logger.write(Logger.Level.MAINSTEP, "Starting license download (%s)...\n", getLicenseDownloadUrl().toString());
+            outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
@@ -88,29 +94,33 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
                 "--lang", "smt2",
                 "--output-lang", "smt2",
                 "--quiet",
-                "--incremental"
+                "--incremental",
+                "--fp-exp"
         };
     }
 
     @Override
-    public SolverFactory getSolverFactory(final Path installDir, final String version,
-                                          final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath =
-                solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
+    public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
+        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
         return CVC5SmtLibSolverFactory.create(solverFilePath, solverArgs);
     }
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("1.0.2", "1.0.1", "1.0.0");
+        return Arrays.asList(
+                "1.0.8", "1.0.7", "1.0.6", "1.0.5", "1.0.4", "1.0.3", "1.0.2", "1.0.1", "1.0.0"
+        );
     }
 
-    private URL getDownloadUrl(final String version)
-            throws SmtLibSolverInstallerException, MalformedURLException {
+    private URL getDownloadUrl(final String version) throws SmtLibSolverInstallerException, MalformedURLException {
         return URI.create(String.format(
                 "https://github.com/cvc5/cvc5/releases/download/cvc5-%s/cvc5-%s",
                 version, getArchString(version)
         )).toURL();
+    }
+
+    private URL getLicenseDownloadUrl() throws SmtLibSolverInstallerException, MalformedURLException {
+        return URI.create("https://raw.githubusercontent.com/cvc5/cvc5/main/COPYING").toURL();
     }
 
     private String getArchString(final String version) throws SmtLibSolverInstallerException {
@@ -124,9 +134,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             }
         }
         if (archStr == null) {
-            throw new SmtLibSolverInstallerException(
-                    String.format("MathSAT on operating system %s and architecture %s is not supported",
-                            OsHelper.getOs(), OsHelper.getArch()));
+            throw new SmtLibSolverInstallerException(String.format("MathSAT on operating system %s and architecture %s is not supported", OsHelper.getOs(), OsHelper.getArch()));
         }
 
         return archStr;

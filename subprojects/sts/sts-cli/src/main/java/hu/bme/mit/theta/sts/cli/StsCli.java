@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,15 +15,10 @@
  */
 package hu.bme.mit.theta.sts.cli;
 
-import java.io.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
@@ -40,8 +35,7 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.*;
-import hu.bme.mit.theta.solver.z3.*;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
@@ -50,8 +44,6 @@ import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
 import hu.bme.mit.theta.sts.analysis.StsAction;
 import hu.bme.mit.theta.sts.analysis.StsTraceConcretizer;
-import hu.bme.mit.theta.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.sts.dsl.StsSpec;
 import hu.bme.mit.theta.sts.analysis.config.StsConfig;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Domain;
@@ -59,6 +51,17 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.InitPrec;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Refinement;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Search;
+import hu.bme.mit.theta.sts.dsl.StsDslManager;
+import hu.bme.mit.theta.sts.dsl.StsSpec;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * A command line interface for running a CEGAR configuration on an STS.
@@ -69,8 +72,17 @@ public class StsCli {
     private final String[] args;
     private final TableWriter writer;
 
+    enum Algorithm {
+        CEGAR,
+        KINDUCTION,
+        IMC
+    }
+
     @Parameter(names = {"--domain"}, description = "Abstract domain")
     Domain domain = Domain.PRED_CART;
+
+    @Parameter(names = {"--algorithm"}, description = "Algorithm")
+    Algorithm algorithm = Algorithm.CEGAR;
 
     @Parameter(names = {"--refinement"}, description = "Refinement strategy")
     Refinement refinement = Refinement.SEQ_ITP;
@@ -145,8 +157,14 @@ public class StsCli {
         try {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
-            final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
-            final SafetyResult<?, ?> status = check(configuration);
+
+            SafetyResult<?, ?> status = null;
+            if (algorithm.equals(Algorithm.CEGAR)) {
+                final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
+                status = check(configuration);
+            } else {
+                throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+            }
             sw.stop();
             printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {

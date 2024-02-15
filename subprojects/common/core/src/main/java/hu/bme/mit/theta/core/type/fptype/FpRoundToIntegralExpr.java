@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castFp;
 public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round to integral
 
     private static final int HASH_SEED = 6671;
-    private static final String OPERATOR_LABEL = "fpround";
+    private static final String OPERATOR_LABEL = "fproundtoint";
 
     private final FpRoundingMode roundingMode;
 
@@ -84,7 +84,7 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FpRoundToIntegralExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FpRoundToIntegralExpr that = (FpRoundToIntegralExpr) obj;
             return this.getOp().equals(that.getOp()) && roundingMode.equals(that.roundingMode);
         } else {
@@ -99,7 +99,7 @@ public class FpRoundToIntegralExpr extends UnaryExpr<FpType, FpType> { // round 
 
     @Override
     public String getOperatorLabel() {
-        return OPERATOR_LABEL;
+        return OPERATOR_LABEL + "[" + roundingMode.toString() + "]";
     }
 }
  

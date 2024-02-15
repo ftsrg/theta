@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public final class SkipStmt implements Stmt {
         } else if (obj == null) {
             return false;
         } else {
-            return this.getClass() == obj.getClass();
+            return obj != null && this.getClass() == obj.getClass();
         }
     }
 

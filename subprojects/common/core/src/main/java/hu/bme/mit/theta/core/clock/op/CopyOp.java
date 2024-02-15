@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package hu.bme.mit.theta.core.clock.op;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 
 public final class CopyOp implements ClockOp {
 
@@ -86,7 +85,7 @@ public final class CopyOp implements ClockOp {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof CopyOp) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final CopyOp that = (CopyOp) obj;
             return this.getVar().equals(that.getVar()) && this.getValue().equals(that.getValue());
         } else {

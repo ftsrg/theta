@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class ExplPrec implements Prec {
 
     private final Set<VarDecl<?>> vars;
-    private static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
+    private final static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
 
     private ExplPrec(final Iterable<? extends VarDecl<?>> vars) {
         this.vars = ImmutableSet.copyOf(vars);
@@ -97,7 +97,7 @@ public final class ExplPrec implements Prec {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ExplPrec) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ExplPrec that = (ExplPrec) obj;
             return this.getVars().equals(that.getVars());
         } else {

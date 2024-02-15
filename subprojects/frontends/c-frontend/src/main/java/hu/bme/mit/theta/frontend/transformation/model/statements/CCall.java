@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.frontend.FrontendMetadata;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 
@@ -32,13 +32,14 @@ public class CCall extends CStatement {
     private final String functionId;
     private final List<CStatement> params;
 
-    public CCall(String functionId, List<CStatement> params) {
+    public CCall(String functionId, List<CStatement> params, ParseContext parseContext) {
+        super(parseContext);
         this.functionId = functionId;
         this.params = params;
-        Optional<Object> cTypeOpt = FrontendMetadata.getMetadataValue(functionId, "cType");
-        CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CVoid(null));
+        Optional<Object> cTypeOpt = parseContext.getMetadata().getMetadataValue(functionId, "cType");
+        CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CVoid(null, parseContext));
         ret = Var("call_" + functionId + "_ret" + counter++, type.getSmtType());
-        FrontendMetadata.create(ret.getRef(), "cType", type);
+        parseContext.getMetadata().create(ret.getRef(), "cType", type);
     }
 
     public List<CStatement> getParams() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> extends
-        NullaryExpr<ArrayType<IndexType, ElemType>>
+public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> extends NullaryExpr<ArrayType<IndexType, ElemType>>
         implements LitExpr<ArrayType<IndexType, ElemType>> {
 
     private static final int HASH_SEED = 229;
@@ -47,22 +46,17 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 
     private volatile int hashCode;
 
-    private ArrayLitExpr(
-            final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
-            final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
+    private ArrayLitExpr(final List<Tuple2<? extends Expr<IndexType>, ? extends Expr<ElemType>>> elems,
+                         final Expr<ElemType> elseElem, final ArrayType<IndexType, ElemType> type) {
         this.type = checkNotNull(type);
-        Expr<ElemType> simplifiedElem = ExprSimplifier.simplify(checkNotNull(elseElem),
-                ImmutableValuation.empty());
-        checkState(simplifiedElem instanceof LitExpr,
-                "ArrayLitExprs shall only contain literal values!");
+        final ExprSimplifier exprSimplifier = ExprSimplifier.create();
+        Expr<ElemType> simplifiedElem = exprSimplifier.simplify(checkNotNull(elseElem), ImmutableValuation.empty());
+        checkState(simplifiedElem instanceof LitExpr, "ArrayLitExprs shall only contain literal values!");
         this.elseElem = (LitExpr<ElemType>) simplifiedElem;
         this.elems = checkNotNull(elems).stream().map(elem -> {
-            Expr<IndexType> index = ExprSimplifier.simplify(elem.get1(),
-                    ImmutableValuation.empty());
-            Expr<ElemType> element = ExprSimplifier.simplify(elem.get2(),
-                    ImmutableValuation.empty());
-            checkState(index instanceof LitExpr && element instanceof LitExpr,
-                    "ArrayLitExprs shall only contain literal values");
+            Expr<IndexType> index = exprSimplifier.simplify(elem.get1(), ImmutableValuation.empty());
+            Expr<ElemType> element = exprSimplifier.simplify(elem.get2(), ImmutableValuation.empty());
+            checkState(index instanceof LitExpr && element instanceof LitExpr, "ArrayLitExprs shall only contain literal values");
             return Tuple2.of((LitExpr<IndexType>) index, (LitExpr<ElemType>) element);
         }).collect(Collectors.toList());
     }
@@ -110,10 +104,9 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof ArrayLitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final ArrayLitExpr<?, ?> that = (ArrayLitExpr<?, ?>) obj;
-            return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(
-                    that.elseElem);
+            return this.type.equals(that.type) && this.elems.equals(that.elems) && elseElem.equals(that.elseElem);
         } else {
             return false;
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@ public class VarPoolUtil {
     private VarPoolUtil() {
     }
 
-    private static ArrayDeque<VarDecl<IntType>> intPool = new ArrayDeque<VarDecl<IntType>>();
+    private final static ArrayDeque<VarDecl<IntType>> intPool = new ArrayDeque<VarDecl<IntType>>();
     private static int counter = 0;
 
     public static VarDecl<IntType> requestInt() {
         if (intPool.isEmpty()) {
-            return Decls.Var("temp" + counter++, Int());
+            return Decls.Var("__temp_" + counter++, Int());
         } else {
             return intPool.remove();
         }

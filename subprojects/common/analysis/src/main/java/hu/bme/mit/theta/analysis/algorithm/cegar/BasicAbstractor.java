@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.AbstractArg;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -43,19 +41,16 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Basic implementation for the abstractor, relying on an ArgBuilder.
  */
-public final class BasicAbstractor<S extends State, A extends Action, P extends Prec> implements
-        Abstractor<S, A, P> {
+public class BasicAbstractor<S extends State, A extends Action, P extends Prec> implements Abstractor<S, A, P> {
 
-    private final ArgBuilder<S, A, P> argBuilder;
-    private final Function<? super S, ?> projection;
-    private final Waitlist<ArgNode<S, A>> waitlist;
-    private final StopCriterion<S, A> stopCriterion;
-    private final Logger logger;
+    protected final ArgBuilder<S, A, P> argBuilder;
+    protected final Function<? super S, ?> projection;
+    protected final Waitlist<ArgNode<S, A>> waitlist;
+    protected final StopCriterion<S, A> stopCriterion;
+    protected final Logger logger;
 
-    private BasicAbstractor(final ArgBuilder<S, A, P> argBuilder,
-                            final Function<? super S, ?> projection,
-                            final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion,
-                            final Logger logger) {
+    protected BasicAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
+                              final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {
         this.argBuilder = checkNotNull(argBuilder);
         this.projection = checkNotNull(projection);
         this.waitlist = checkNotNull(waitlist);
@@ -87,17 +82,11 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
         assert arg.isInitialized();
 
-        long startNodes = arg.getNodes().count();
-        long startIncompleteNodes = arg.getIncompleteNodes().count();
-
-        ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S, A, P>(arg, prec));
-        logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n",
-                arg.getNodes().count(),
+        logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
                 arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
         logger.write(Level.SUBSTEP, "|  |  Building ARG...");
 
-        final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(
-                n -> projection.apply(n.getState()));
+        final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
         waitlist.clear();
 
         reachedSet.addAll(arg.getNodes());
@@ -115,16 +104,12 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
                     waitlist.addAll(newNodes);
                 }
 
-                ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S, A, P>(arg, prec));
-                if (stopCriterion.canStop(arg, newNodes)) {
-                    break;
-                }
+                if (stopCriterion.canStop(arg, newNodes)) break;
             }
         }
 
         logger.write(Level.SUBSTEP, "done%n");
-        logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n",
-                arg.getNodes().count(),
+        logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
                 arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
 
         waitlist.clear(); // Optimization
@@ -137,12 +122,12 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         }
     }
 
-    private void close(final ArgNode<S, A> node, final Collection<ArgNode<S, A>> candidates) {
+    protected void close(final ArgNode<S, A> node, final Collection<ArgNode<S, A>> candidates) {
         if (!node.isLeaf()) {
             return;
         }
         for (final ArgNode<S, A> candidate : candidates) {
-            if (candidate.mayCover(node)) {
+            if (candidate.mayCoverStandard(node)) {
                 node.cover(candidate);
                 return;
             }
@@ -154,15 +139,14 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
         return Utils.lispStringBuilder(getClass().getSimpleName()).add(waitlist).toString();
     }
 
-    public static final class Builder<S extends State, A extends Action, P extends Prec> {
+    public static class Builder<S extends State, A extends Action, P extends Prec> {
+        protected final ArgBuilder<S, A, P> argBuilder;
+        protected Function<? super S, ?> projection;
+        protected Waitlist<ArgNode<S, A>> waitlist;
+        protected StopCriterion<S, A> stopCriterion;
+        protected Logger logger;
 
-        private final ArgBuilder<S, A, P> argBuilder;
-        private Function<? super S, ?> projection;
-        private Waitlist<ArgNode<S, A>> waitlist;
-        private StopCriterion<S, A> stopCriterion;
-        private Logger logger;
-
-        private Builder(final ArgBuilder<S, A, P> argBuilder) {
+        protected Builder(final ArgBuilder<S, A, P> argBuilder) {
             this.argBuilder = argBuilder;
             this.projection = s -> 0;
             this.waitlist = FifoWaitlist.create();

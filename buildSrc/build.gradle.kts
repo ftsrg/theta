@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import java.io.FileOutputStream
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -49,7 +48,8 @@ dependencies {
 // Force the embeddable Kotlin compiler version to be the selected kotlinVersion.
 // https://github.com/gradle/kotlin-dsl/issues/1207
 configurations.all {
-    val isKotlinCompiler = name == "embeddedKotlin" || name.startsWith("kotlin") || name.startsWith("kapt")
+    val isKotlinCompiler = name == "embeddedKotlin" || name.startsWith("kotlin") || name.startsWith(
+        "kapt")
     if (!isKotlinCompiler) {
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlin" && requested.module.name == "kotlin-compiler-embeddable") {
@@ -89,6 +89,11 @@ fun generateVersionsSource(): String {
 }
 
 tasks {
+    withType<KotlinCompile>() {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
     val generateVersions by creating {
         description = "Updates Versions.kt from project properties."
         group = "build"

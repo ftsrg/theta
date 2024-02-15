@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.List;
  * signedness, atomicity, etc. of the type.
  */
 public abstract class CSimpleType {
-
     private int pointerLevel = 0;
     private Boolean signed = null;
     private boolean bool = false;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong;
 
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -23,8 +24,8 @@ public abstract class CLong extends CInteger {
 
     private static final int RANK = 40;
 
-    protected CLong(CSimpleType origin) {
-        super(origin);
+    protected CLong(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
         rank = RANK;
     }
 
@@ -40,11 +41,11 @@ public abstract class CLong extends CInteger {
 
     @Override
     public CInteger getSignedVersion() {
-        return new CSignedLong(null);
+        return new CSignedLong(null, parseContext);
     }
 
     @Override
     public CInteger getUnsignedVersion() {
-        return new CUnsignedLong(null);
+        return new CUnsignedLong(null, parseContext);
     }
 }

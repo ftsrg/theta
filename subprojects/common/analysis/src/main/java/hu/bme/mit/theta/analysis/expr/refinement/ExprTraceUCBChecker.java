@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,21 +56,22 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static java.util.stream.Collectors.toList;
 
 /**
- * An ExprTraceChecker that generates new predicates based on the UCB algorithm by Leucker, Martin
- * &amp; Markin, Grigory &amp; Neuhäußer, Martin. (2015). A New Refinement Strategy for CEGAR-Based
- * Industrial Model Checking. 155-170. 10.1007/978-3-319-26287-1_10.
+ * An ExprTraceChecker that generates new predicates based on the UCB algorithm by
+ * Leucker, Martin &amp; Markin, Grigory &amp; Neuhausser, Martin. (2015). A New Refinement
+ * Strategy for CEGAR-Based Industrial Model Checking. 155-170. 10.1007/978-3-319-26287-1_10.
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
     private final UCSolver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
+    private final ExprSimplifier exprSimplifier;
 
-    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target,
-                                final UCSolver solver) {
+    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
+        this.exprSimplifier = ExprSimplifier.create();
     }
 
     public static ExprTraceUCBChecker create(
@@ -81,8 +82,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public ExprTraceStatus<ItpRefutation> check(
-            final Trace<? extends ExprState, ? extends ExprAction> trace) {
+    public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
         checkNotNull(trace);
         try {
             return check2((Trace<? extends ExprState, ? extends StmtAction>) trace);
@@ -91,8 +91,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
         }
     }
 
-    private ExprTraceStatus<ItpRefutation> check2(
-            final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var ftrace = flattenTrace(trace);
         final int stateCount = trace.getStates().size();
 
@@ -170,8 +169,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
                     solver.track(True());
                     dataRegion.add(True());
                 } else /* i > 0 */ {
-                    var spState = SpState.of(
-                            PathUtils.foldin(predicates.get(i - 1), indexings.get(i - 1)), constCount);
+                    var spState = SpState.of(PathUtils.foldin(predicates.get(i - 1), indexings.get(i - 1)), constCount);
                     for (var stmt : trace.getAction(i - 1).getStmts()) {
                         spState = spState.sp(stmt);
                     }
@@ -199,7 +197,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
                 /* Add the negated of the above expression as the new predicate */
                 predicates.add(
-                        ExprSimplifier.simplify(
+                        exprSimplifier.simplify(
                                 Not(And(new HashSet<>(predicate))),
                                 ImmutableValuation.empty()
                         )
@@ -237,8 +235,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
         return wps;
     }
 
-    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(
-            final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
         final var flattenedActions = new ArrayList<StmtAction>(stateCount - 1);
 
@@ -248,8 +245,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
                             ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
                             : Stream.<AssumeStmt>empty();
 
-            var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream()
-                    .map(AssumeStmt::of);
+            var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream().map(AssumeStmt::of);
 
             var actionStream = trace.getAction(i - 1).getStmts().stream();
 
@@ -263,8 +259,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
             flattenedActions.add(
                     UCBAction.of(
-                            Stream.of(initStream, stateStream, actionStream, targetStream).flatMap(e -> e)
-                                    .collect(toList())
+                            Stream.of(initStream, stateStream, actionStream, targetStream).flatMap(e -> e).collect(toList())
                     )
             );
         }
@@ -277,7 +272,6 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     private static class UCBAction extends StmtAction {
-
         private final List<Stmt> stmts;
 
         private UCBAction(List<Stmt> stmts) {
@@ -295,8 +289,7 @@ public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation> {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts)
-                    .toString();
+            return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
         }
     }
 }

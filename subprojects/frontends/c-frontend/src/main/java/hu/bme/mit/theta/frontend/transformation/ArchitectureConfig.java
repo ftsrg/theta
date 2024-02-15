@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector.CastVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector.LimitVisitor;
@@ -32,11 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ArchitectureConfig {
-
-    public static final ArchitectureType architecture = ArchitectureType.ILP32;
-    public static Boolean multiThreading = false;
-    public static ArithmeticType arithmetic = ArithmeticType.efficient;
-
     private ArchitectureConfig() {
     }
 
@@ -77,10 +73,10 @@ public class ArchitectureConfig {
     }
 
     /**
-     * Which arithmetic type to use: - integer: bitvectors are not supported (e.g. floats, bitwise
+     * Which parseContext.getArithmetic() type to use: - integer: bitvectors are not supported (e.g. floats, bitwise
      * ops). This is the most performant. - bitvector: every operation is handled through BV
      * primitives. This can handle virtually anything (in scope). This is not as performant as
-     * integer arithmetic. - efficient: Integer when possible, bitvector when necessary - this is
+     * integer parseContext.getArithmetic(). - efficient: Integer when possible, bitvector when necessary - this is
      * the default (and performance-wise best) option
      */
     public enum ArithmeticType {
@@ -89,49 +85,49 @@ public class ArchitectureConfig {
         efficient
     }
 
-    public static CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> getCastVisitor() {
-        if (arithmetic == ArithmeticType.bitvector) {
-            return CastVisitor.instance;
+    public static CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> getCastVisitor(ParseContext parseContext) {
+        if (parseContext.getArithmetic() == ArithmeticType.bitvector) {
+            return new CastVisitor(parseContext);
         } else {
-            return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.CastVisitor.instance;
+            return new hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.CastVisitor(parseContext);
         }
     }
 
-    public static CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> getLimitVisitor() {
-        if (arithmetic == ArithmeticType.bitvector) {
+    public static CComplexType.CComplexTypeVisitor<Expr<?>, AssumeStmt> getLimitVisitor(ParseContext parseContext) {
+        if (parseContext.getArithmetic() == ArithmeticType.bitvector) {
             return LimitVisitor.instance;
         } else {
-            return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.LimitVisitor.instance;
+            return new hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.LimitVisitor(parseContext);
         }
     }
 
-    public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> getNullValueVisitor() {
-        if (arithmetic == ArithmeticType.bitvector) {
-            return NullValueVisitor.instance;
+    public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> getNullValueVisitor(ParseContext parseContext) {
+        if (parseContext.getArithmetic() == ArithmeticType.bitvector) {
+            return new NullValueVisitor(parseContext);
         } else {
             return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.NullValueVisitor.instance;
         }
     }
 
-    public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> getUnitValueVisitor() {
-        if (arithmetic == ArithmeticType.bitvector) {
-            return UnitValueVisitor.instance;
+    public static CComplexType.CComplexTypeVisitor<Void, LitExpr<?>> getUnitValueVisitor(ParseContext parseContext) {
+        if (parseContext.getArithmetic() == ArithmeticType.bitvector) {
+            return new UnitValueVisitor(parseContext);
         } else {
             return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.UnitValueVisitor.instance;
         }
     }
 
-    public static CComplexType.CComplexTypeVisitor<Void, Type> getTypeVisitor() {
-        if (arithmetic == ArithmeticType.bitvector) {
-            return TypeVisitor.instance;
+    public static CComplexType.CComplexTypeVisitor<Void, Type> getTypeVisitor(ParseContext parseContext) {
+        if (parseContext.getArithmetic() == ArithmeticType.bitvector) {
+            return new TypeVisitor(parseContext);
         } else {
             return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.TypeVisitor.instance;
         }
     }
 
-    public static CComplexType.CComplexTypeVisitor<String, LitExpr<?>> getValueVisitor() {
-        if (arithmetic == ArithmeticType.bitvector) {
-            return ValueVisitor.instance;
+    public static CComplexType.CComplexTypeVisitor<String, LitExpr<?>> getValueVisitor(ParseContext parseContext) {
+        if (parseContext.getArithmetic() == ArithmeticType.bitvector) {
+            return new ValueVisitor(parseContext);
         } else {
             return hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer.ValueVisitor.instance;
         }

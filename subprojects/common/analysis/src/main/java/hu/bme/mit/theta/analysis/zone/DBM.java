@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,57 +15,24 @@
  */
 package hu.bme.mit.theta.analysis.zone;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.Inf;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.Leq;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.Lt;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
-import static hu.bme.mit.theta.analysis.zone.DiffBounds.negate;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
+import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.container.Containers;
+import hu.bme.mit.theta.core.clock.constr.*;
+import hu.bme.mit.theta.core.clock.op.*;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Sets;
-
-import hu.bme.mit.theta.core.clock.constr.AndConstr;
-import hu.bme.mit.theta.core.clock.constr.ClockConstr;
-import hu.bme.mit.theta.core.clock.constr.ClockConstrVisitor;
-import hu.bme.mit.theta.core.clock.constr.DiffEqConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffGeqConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffGtConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffLeqConstr;
-import hu.bme.mit.theta.core.clock.constr.DiffLtConstr;
-import hu.bme.mit.theta.core.clock.constr.FalseConstr;
-import hu.bme.mit.theta.core.clock.constr.TrueConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitEqConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitGeqConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitGtConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr;
-import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
-import hu.bme.mit.theta.core.clock.op.ClockOp;
-import hu.bme.mit.theta.core.clock.op.ClockOpVisitor;
-import hu.bme.mit.theta.core.clock.op.CopyOp;
-import hu.bme.mit.theta.core.clock.op.FreeOp;
-import hu.bme.mit.theta.core.clock.op.GuardOp;
-import hu.bme.mit.theta.core.clock.op.ResetOp;
-import hu.bme.mit.theta.core.clock.op.ShiftOp;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.analysis.zone.DiffBounds.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 final class DBM {
 
@@ -308,8 +275,7 @@ final class DBM {
         return result;
     }
 
-    private static DbmSignature signatureFrom(final DbmSignature interpolantSignature,
-                                              final int[] cycle) {
+    private static DbmSignature signatureFrom(final DbmSignature interpolantSignature, final int[] cycle) {
         final Collection<VarDecl<RatType>> vars = new ArrayList<>();
         for (int i = 0; i + 1 < cycle.length; i++) {
             final VarDecl<RatType> varDecl = interpolantSignature.getVar(cycle[i]);
@@ -380,8 +346,7 @@ final class DBM {
     }
 
     public DbmRelation getRelation(final DBM that) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-                that.signature.toSet());
+        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
         boolean leq = true;
         boolean geq = true;
@@ -396,8 +361,7 @@ final class DBM {
     }
 
     public boolean isLeq(final DBM that) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-                that.signature.toSet());
+        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
         for (final VarDecl<RatType> x : vars) {
             for (final VarDecl<RatType> y : vars) {
@@ -411,8 +375,7 @@ final class DBM {
     }
 
     public boolean isLeq(final DBM that, final Collection<? extends VarDecl<RatType>> activeVars) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-                that.signature.toSet());
+        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
         for (final VarDecl<RatType> x : vars) {
             if (!activeVars.contains(x)) {
@@ -434,8 +397,7 @@ final class DBM {
     }
 
     public boolean isLeq(final DBM that, final BoundFunc bound) {
-        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(),
-                that.signature.toSet());
+        final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
         if (!this.isConsistent()) {
             return true;
@@ -580,18 +542,6 @@ final class DBM {
     ////
 
     @Override
-    public int hashCode() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("TODO: auto-generated method stub");
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("TODO: auto-generated method stub");
-    }
-
-    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
 
@@ -625,8 +575,7 @@ final class DBM {
         }
     }
 
-    private void ifTracksElse(final VarDecl<RatType> varDecl, final IntConsumer consumer,
-                              final Procedure procedure) {
+    private void ifTracksElse(final VarDecl<RatType> varDecl, final IntConsumer consumer, final Procedure procedure) {
         if (tracks(varDecl)) {
             final int x = signature.indexOf(varDecl);
             consumer.accept(x);
@@ -841,7 +790,6 @@ final class DBM {
 
     @FunctionalInterface
     private interface Procedure {
-
         void execute();
     }
 

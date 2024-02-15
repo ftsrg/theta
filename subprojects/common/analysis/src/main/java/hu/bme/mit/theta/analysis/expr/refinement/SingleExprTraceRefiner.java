@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
@@ -34,23 +33,35 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A Refiner implementation that can refine a single trace (of ExprStates and ExprActions) using an
- * ExprTraceChecker and a PrecRefiner.
+ * A Refiner implementation that can refine a single trace (of ExprStates and
+ * ExprActions) using an ExprTraceChecker and a PrecRefiner.
  */
-public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
+public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
         implements Refiner<S, A, P> {
+    protected final ExprTraceChecker<R> exprTraceChecker;
+    protected final PrecRefiner<S, A, P, R> precRefiner;
+    protected final PruneStrategy pruneStrategy;
+    protected final NodePruner<S, A> nodePruner;
+    protected final Logger logger;
 
-    private final ExprTraceChecker<R> exprTraceChecker;
-    private final PrecRefiner<S, A, P, R> precRefiner;
-    private final PruneStrategy pruneStrategy;
-    private final Logger logger;
-
-    private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-                                   final PrecRefiner<S, A, P, R> precRefiner,
-                                   final PruneStrategy pruneStrategy, final Logger logger) {
+    protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+                                     final PrecRefiner<S, A, P, R> precRefiner,
+                                     final PruneStrategy pruneStrategy, final Logger logger) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
+        this.nodePruner = ARG::prune;
+        this.logger = checkNotNull(logger);
+    }
+
+    protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+                                     final PrecRefiner<S, A, P, R> precRefiner,
+                                     final PruneStrategy pruneStrategy, final Logger logger,
+                                     final NodePruner<S, A> nodePruner) {
+        this.exprTraceChecker = checkNotNull(exprTraceChecker);
+        this.precRefiner = checkNotNull(precRefiner);
+        this.pruneStrategy = checkNotNull(pruneStrategy);
+        this.nodePruner = checkNotNull(nodePruner);
         this.logger = checkNotNull(logger);
     }
 
@@ -60,14 +71,19 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
         return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger);
     }
 
+    public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> SingleExprTraceRefiner<S, A, P, R> create(
+            final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
+            final PruneStrategy pruneStrategy, final Logger logger, final NodePruner<S, A> nodePruner) {
+        return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, pruneStrategy, logger, nodePruner);
+    }
+
     @Override
     public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
         checkNotNull(arg);
         checkNotNull(prec);
         assert !arg.isSafe() : "ARG must be unsafe";
 
-        Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs()
-                .filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
+        Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().findFirst();
         final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
         final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
@@ -90,14 +106,11 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
             assert 0 <= pruneIndex : "Pruning index must be non-negative";
             assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 
-            ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
-
             switch (pruneStrategy) {
                 case LAZY:
                     logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
                     final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
-                    arg.prune(nodeToPrune);
-
+                    nodePruner.prune(arg, nodeToPrune);
                     break;
                 case FULL:
                     logger.write(Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex);
@@ -114,8 +127,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(getClass().getSimpleName()).add(exprTraceChecker)
-                .add(precRefiner).toString();
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner).toString();
     }
 
 }

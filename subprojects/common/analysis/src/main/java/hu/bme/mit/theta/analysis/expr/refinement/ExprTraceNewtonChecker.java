@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,19 +72,19 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 
 /**
- * An ExprTraceChecker that generates new predicates based on the Newton-style algorithms described
- * in Daniel Dietsch, Matthias Heizmann, Betim Musa, Alexander Nutz, and Andreas Podelski. 2017.
- * Craig vs. Newton in software model checking. In <i>Proceedings of the 2017 11th Joint Meeting on
- * Foundations of Software Engineering</i> (<i>ESEC/FSE 2017</i>). Association for Computing
- * Machinery, New York, NY, USA, 487–497. DOI:https://doi.org/10.1145/3106237.3106307
+ * An ExprTraceChecker that generates new predicates based on the Newton-style algorithms described in
+ * Daniel Dietsch, Matthias Heizmann, Betim Musa, Alexander Nutz, and Andreas Podelski. 2017.
+ * Craig vs. Newton in software model checking. In <i>Proceedings of the 2017 11th Joint Meeting on Foundations
+ * of Software Engineering</i> (<i>ESEC/FSE 2017</i>). Association for Computing Machinery, New York, NY, USA,
+ * 487-497. DOI:https://doi.org/10.1145/3106237.3106307
  */
 public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
-
     private enum AssertionGeneratorMethod {SP, WP}
 
     private final UCSolver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
+    private final ExprSimplifier exprSimplifier;
 
     private final boolean IT; // Whether to abstract the trace or not
     private final AssertionGeneratorMethod SPorWP; // Whether to use pre- or postconditions
@@ -100,6 +100,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         this.IT = it;
         this.SPorWP = checkNotNull(sPorWP);
         this.LV = lv;
+        this.exprSimplifier = ExprSimplifier.create();
     }
 
     public static ExprTraceNewtonCheckerITBuilder create(
@@ -110,8 +111,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public ExprTraceStatus<ItpRefutation> check(
-            final Trace<? extends ExprState, ? extends ExprAction> trace) {
+    public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
         checkNotNull(trace);
         try {
             return check2((Trace<? extends ExprState, ? extends StmtAction>) trace);
@@ -120,10 +120,8 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         }
     }
 
-    private ExprTraceStatus<ItpRefutation> check2(
-            final Trace<? extends ExprState, ? extends StmtAction> trace) {
-        var ftrace = flattenTrace(
-                trace); // Moves the expressions in the states to the corresponting actions as assumptions
+    private ExprTraceStatus<ItpRefutation> check2(final Trace<? extends ExprState, ? extends StmtAction> trace) {
+        var ftrace = flattenTrace(trace); // Moves the expressions in the states to the corresponting actions as assumptions
 
         final int stateCount = ftrace.getStates().size();
         final List<VarIndexing> indexings = new ArrayList<>(stateCount);
@@ -138,8 +136,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
                 var curIndexing = indexings.get(i - 1);
                 for (var stmt : ftrace.getAction(i - 1).getStmts()) {
                     var stmtUnfoldResult = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
-                    solver.track(PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(),
-                            curIndexing));
+                    solver.track(PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(), curIndexing));
                     curIndexing = curIndexing.add(stmtUnfoldResult.getIndexing());
                 }
                 indexings.add(curIndexing);
@@ -170,8 +167,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         return getClass().getSimpleName();
     }
 
-    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(
-            final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private Trace<? extends ExprState, ? extends StmtAction> flattenTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
         final var flattenedActions = new ArrayList<StmtAction>(stateCount - 1);
 
@@ -181,8 +177,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
                             ? ExprUtils.getConjuncts(init).stream().map(AssumeStmt::of)
                             : Stream.<AssumeStmt>empty();
 
-            var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream()
-                    .map(AssumeStmt::of);
+            var stateStream = ExprUtils.getConjuncts(trace.getState(i - 1).toExpr()).stream().map(AssumeStmt::of);
 
             var actionStream = trace.getAction(i - 1).getStmts().stream();
 
@@ -196,8 +191,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
             flattenedActions.add(
                     NewtonAction.of(
-                            Stream.of(initStream, stateStream, actionStream, targetStream).flatMap(e -> e)
-                                    .collect(toList())
+                            Stream.of(initStream, stateStream, actionStream, targetStream).flatMap(e -> e).collect(toList())
                     )
             );
         }
@@ -255,8 +249,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             final var stmts = new ArrayList<Stmt>();
             for (final var stmt : trace.getAction(i - 1).getStmts()) {
                 final var stmtUnfoldResult = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
-                final var stmtExpr = PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(),
-                        curIndexing);
+                final var stmtExpr = PathUtils.unfold(stmtUnfoldResult.getExprs().iterator().next(), curIndexing);
 
                 if (unsatCore.contains(stmtExpr)) {
                     stmts.add(stmt);
@@ -337,7 +330,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             for (var stmt : trace.getAction(i - 1).getStmts()) {
                 spState = spState.sp(stmt);
             }
-            assertions.add(ExprSimplifier.simplify(spState.getExpr(), ImmutableValuation.empty()));
+            assertions.add(exprSimplifier.simplify(spState.getExpr(), ImmutableValuation.empty()));
             constCount = spState.getConstCount();
         }
 
@@ -345,8 +338,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             var allVariables = collectVariablesInTrace(trace);
             var futureLiveVariables = collectFutureLiveVariablesForTrace(trace);
             return IntStream.range(0, assertions.size())
-                    .mapToObj(i -> existentialProjection(assertions.get(i), futureLiveVariables.get(i),
-                            allVariables))
+                    .mapToObj(i -> existentialProjection(assertions.get(i), futureLiveVariables.get(i), allVariables))
                     .collect(Collectors.toUnmodifiableList());
         } else {
             return assertions;
@@ -357,8 +349,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             final Trace<? extends ExprState, ? extends StmtAction> trace
     ) {
         final int stateCount = trace.getStates().size();
-        final List<Expr<BoolType>> assertions = new ArrayList<>(
-                Collections.nCopies(stateCount, null));
+        final List<Expr<BoolType>> assertions = new ArrayList<>(Collections.nCopies(stateCount, null));
 
         assertions.set(stateCount - 1, True());
         var constCount = 0;
@@ -367,8 +358,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             for (var stmt : Lists.reverse(trace.getAction(i).getStmts())) {
                 wpState = wpState.wep(stmt);
             }
-            assertions.set(i,
-                    ExprSimplifier.simplify(wpState.getExpr(), ImmutableValuation.empty()));
+            assertions.set(i, exprSimplifier.simplify(wpState.getExpr(), ImmutableValuation.empty()));
             constCount = wpState.getConstCount();
         }
 
@@ -376,8 +366,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             var allVariables = collectVariablesInTrace(trace);
             var pastLiveVariables = collectPastLiveVariablesForTrace(trace);
             return IntStream.range(0, assertions.size())
-                    .mapToObj(i -> universalProjection(assertions.get(i), pastLiveVariables.get(i),
-                            allVariables))
+                    .mapToObj(i -> universalProjection(assertions.get(i), pastLiveVariables.get(i), allVariables))
                     .collect(Collectors.toUnmodifiableList());
         } else {
             return assertions;
@@ -388,8 +377,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      * Live variable collection
      */
 
-    private Collection<VarDecl<?>> collectVariablesInTrace(
-            final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private Collection<VarDecl<?>> collectVariablesInTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         var variables = new HashSet<VarDecl<?>>();
 
         for (var state : trace.getStates()) {
@@ -415,14 +403,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt,
-                                                                        Void param) {
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
                 return ExprUtils.getVars(stmt.getExpr());
             }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt,
-                                                                        Void param) {
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
             }
 
@@ -465,14 +451,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt,
-                                                                        Void param) {
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
                 return Collections.singletonList(stmt.getVarDecl());
             }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt,
-                                                                        Void param) {
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
             }
 
@@ -515,14 +499,12 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt,
-                                                                        Void param) {
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
             }
 
             @Override
-            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt,
-                                                                        Void param) {
+            public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.singletonList(stmt.getVarDecl());
             }
 
@@ -553,25 +535,20 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     private Collection<VarDecl<?>> actionReadsVariables(final StmtAction action) {
-        return action.getStmts().stream().flatMap(stmt -> stmtReadsVariables(stmt).stream())
-                .collect(Collectors.toUnmodifiableSet());
+        return action.getStmts().stream().flatMap(stmt -> stmtReadsVariables(stmt).stream()).collect(Collectors.toUnmodifiableSet());
     }
 
     private Collection<VarDecl<?>> actionWritesVariables(final StmtAction action) {
-        return action.getStmts().stream().flatMap(stmt -> stmtWritesVariables(stmt).stream())
-                .collect(Collectors.toUnmodifiableSet());
+        return action.getStmts().stream().flatMap(stmt -> stmtWritesVariables(stmt).stream()).collect(Collectors.toUnmodifiableSet());
     }
 
     private Collection<VarDecl<?>> actionHavocsVariables(final StmtAction action) {
-        return action.getStmts().stream().flatMap(stmt -> stmtHavocsVariables(stmt).stream())
-                .collect(Collectors.toUnmodifiableSet());
+        return action.getStmts().stream().flatMap(stmt -> stmtHavocsVariables(stmt).stream()).collect(Collectors.toUnmodifiableSet());
     }
 
-    private List<Collection<VarDecl<?>>> collectFutureLiveVariablesForTrace(
-            final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private List<Collection<VarDecl<?>>> collectFutureLiveVariablesForTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
-        final var futureLiveVariables = new ArrayList<Collection<VarDecl<?>>>(
-                Collections.nCopies(stateCount, null));
+        final var futureLiveVariables = new ArrayList<Collection<VarDecl<?>>>(Collections.nCopies(stateCount, null));
 
         futureLiveVariables.set(stateCount - 1, Collections.emptySet());
         for (var i = stateCount - 2; i >= 0; i--) {
@@ -585,11 +562,9 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         return futureLiveVariables;
     }
 
-    private List<Collection<VarDecl<?>>> collectPastLiveVariablesForTrace(
-            final Trace<? extends ExprState, ? extends StmtAction> trace) {
+    private List<Collection<VarDecl<?>>> collectPastLiveVariablesForTrace(final Trace<? extends ExprState, ? extends StmtAction> trace) {
         final var stateCount = trace.getStates().size();
-        final var pastLiveVariables = new ArrayList<Collection<VarDecl<?>>>(
-                Collections.nCopies(stateCount, null));
+        final var pastLiveVariables = new ArrayList<Collection<VarDecl<?>>>(Collections.nCopies(stateCount, null));
 
         pastLiveVariables.set(0, Collections.emptySet());
         for (var i = 1; i < stateCount; i++) {
@@ -618,8 +593,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
                 .collect(Collectors.toUnmodifiableSet());
 
         var substitution = BasicSubstitution.builder()
-                .putAll(
-                        params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
+                .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
                 .build();
 
         return params.size() > 0
@@ -638,8 +612,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
                 .collect(Collectors.toUnmodifiableSet());
 
         var substitution = BasicSubstitution.builder()
-                .putAll(
-                        params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
+                .putAll(params.stream().collect(toUnmodifiableMap(Tuple2::get1, e -> e.get2().getRef())))
                 .build();
 
         return params.size() > 0
@@ -652,13 +625,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     public static class ExprTraceNewtonCheckerITBuilder {
-
         private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
-        public ExprTraceNewtonCheckerITBuilder(UCSolver solver, Expr<BoolType> init,
-                                               Expr<BoolType> target) {
+        public ExprTraceNewtonCheckerITBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -674,15 +645,13 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static class ExprTraceNewtonCheckerAssertBuilder {
-
         private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
         private final boolean IT;
 
-        public ExprTraceNewtonCheckerAssertBuilder(UCSolver solver, Expr<BoolType> init,
-                                                   Expr<BoolType> target, boolean it) {
+        public ExprTraceNewtonCheckerAssertBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -690,18 +659,15 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         }
 
         public ExprTraceNewtonCheckerLVBuilder withSP() {
-            return new ExprTraceNewtonCheckerLVBuilder(solver, init, target, IT,
-                    AssertionGeneratorMethod.SP);
+            return new ExprTraceNewtonCheckerLVBuilder(solver, init, target, IT, AssertionGeneratorMethod.SP);
         }
 
         public ExprTraceNewtonCheckerLVBuilder withWP() {
-            return new ExprTraceNewtonCheckerLVBuilder(solver, init, target, IT,
-                    AssertionGeneratorMethod.WP);
+            return new ExprTraceNewtonCheckerLVBuilder(solver, init, target, IT, AssertionGeneratorMethod.WP);
         }
     }
 
     public static class ExprTraceNewtonCheckerLVBuilder {
-
         private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
@@ -709,8 +675,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
         private final boolean IT;
         private final AssertionGeneratorMethod SPorWP;
 
-        public ExprTraceNewtonCheckerLVBuilder(UCSolver solver, Expr<BoolType> init,
-                                               Expr<BoolType> target, boolean it, AssertionGeneratorMethod sPorWP) {
+        public ExprTraceNewtonCheckerLVBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it, AssertionGeneratorMethod sPorWP) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -732,7 +697,6 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     private static class NewtonAction extends StmtAction {
-
         private final List<Stmt> stmts;
 
         private NewtonAction(List<Stmt> stmts) {
@@ -750,8 +714,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
 
         @Override
         public String toString() {
-            return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts)
-                    .toString();
+            return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
         }
     }
 }

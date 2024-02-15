@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,10 +22,16 @@ dependencies {
     val testImplementation: Configuration by configurations
     val libPath: String by rootProject.extra
 
+    implementation(Deps.Kotlin.stdlib)
     implementation(Deps.guava)
+    implementation(Deps.gson)
     implementation(fileTree(mapOf("dir" to libPath, "include" to listOf("*.jar"))))
     implementation("org.fusesource.hawtjni:hawtjni-runtime:1.18")
     testImplementation(Deps.junit4)
+    testImplementation(Deps.junit4engine)
+    testImplementation(Deps.junit5)
+    testImplementation(Deps.junit5param)
+    testImplementation(Deps.junit5engine)
     testImplementation(Deps.Mockito.core)
 }
 
@@ -45,5 +51,9 @@ tasks {
 
     named("jacocoTestReport") {
         dependsOn(named("test"))
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
     }
 }

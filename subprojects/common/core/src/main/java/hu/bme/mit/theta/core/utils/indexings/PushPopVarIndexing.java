@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,16 +33,13 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.max;
 
 /**
- * Represents an immutable mapping, where each variable is associated with a stackable index. The
- * inner builder class can also be used to create a new instance. NOTE: THIS CLASS IS CURRENTLY
- * UNSTABLE.
+ * Represents an immutable mapping, where each variable is associated with a stackable
+ * index. The inner builder class can also be used to create a new instance.
+ * NOTE: THIS CLASS IS CURRENTLY UNSTABLE.
  */
 public class PushPopVarIndexing implements VarIndexing {
-
-    private static final PushPopVarIndexing ALL_ZERO = new PushPopVarIndexing.PushPopVarIndexingBuilder(
-            0).build();
-    private static final PushPopVarIndexing ALL_ONE = new PushPopVarIndexing.PushPopVarIndexingBuilder(
-            1).build();
+    private static final PushPopVarIndexing ALL_ZERO = new PushPopVarIndexing.PushPopVarIndexingBuilder(0).build();
+    private static final PushPopVarIndexing ALL_ONE = new PushPopVarIndexing.PushPopVarIndexingBuilder(1).build();
 
     private final int defaultIndex;
     private final Map<VarDecl<?>, OffsetStack> varToOffset;
@@ -89,6 +86,11 @@ public class PushPopVarIndexing implements VarIndexing {
     @Override
     public PushPopVarIndexing.PushPopVarIndexingBuilder transform() {
         return new PushPopVarIndexing.PushPopVarIndexingBuilder(this);
+    }
+
+    @Override
+    public VarIndexing inc(VarDecl<?> varDecl, int n) {
+        throw new UnsupportedOperationException("");
     }
 
     /**
@@ -174,7 +176,6 @@ public class PushPopVarIndexing implements VarIndexing {
     }
 
     public static class PushPopVarIndexingBuilder implements VarIndexingBuilder {
-
         private int defaultIndex;
         private Map<VarDecl<?>, OffsetStack> varToOffset;
 
@@ -219,24 +220,19 @@ public class PushPopVarIndexing implements VarIndexing {
         }
 
         @Override
-        public PushPopVarIndexing.PushPopVarIndexingBuilder add(
-                final VarIndexingBuilder genericThat) {
+        public PushPopVarIndexing.PushPopVarIndexingBuilder add(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof PushPopVarIndexing.PushPopVarIndexingBuilder,
-                    "Only builders of the same type can be added together!");
+            checkArgument(genericThat instanceof PushPopVarIndexing.PushPopVarIndexingBuilder, "Only builders of the same type can be added together!");
 
             PushPopVarIndexing.PushPopVarIndexingBuilder that = (PushPopVarIndexing.PushPopVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = this.defaultIndex + that.defaultIndex;
             final Map<VarDecl<?>, OffsetStack> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                    that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
-                final OffsetStack offsetStack1 = this.varToOffset.getOrDefault(varDecl,
-                        OffsetStack.create(0));
-                final OffsetStack offsetStack2 = that.varToOffset.getOrDefault(varDecl,
-                        OffsetStack.create(0));
+                final OffsetStack offsetStack1 = this.varToOffset.getOrDefault(varDecl, OffsetStack.create(0));
+                final OffsetStack offsetStack2 = that.varToOffset.getOrDefault(varDecl, OffsetStack.create(0));
 
                 final OffsetStack sum = offsetStack1.add(offsetStack2);
                 newVarToOffset.put(varDecl, sum);
@@ -248,24 +244,19 @@ public class PushPopVarIndexing implements VarIndexing {
         }
 
         @Override
-        public PushPopVarIndexing.PushPopVarIndexingBuilder sub(
-                final VarIndexingBuilder genericThat) {
+        public PushPopVarIndexing.PushPopVarIndexingBuilder sub(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof PushPopVarIndexing.PushPopVarIndexingBuilder,
-                    "Only builders of the same type can be added together!");
+            checkArgument(genericThat instanceof PushPopVarIndexing.PushPopVarIndexingBuilder, "Only builders of the same type can be added together!");
 
             PushPopVarIndexing.PushPopVarIndexingBuilder that = (PushPopVarIndexing.PushPopVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = this.defaultIndex - that.defaultIndex;
             final Map<VarDecl<?>, OffsetStack> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                    that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
-                final OffsetStack offsetStack1 = this.varToOffset.getOrDefault(varDecl,
-                        OffsetStack.create(0));
-                final OffsetStack offsetStack2 = that.varToOffset.getOrDefault(varDecl,
-                        OffsetStack.create(0));
+                final OffsetStack offsetStack1 = this.varToOffset.getOrDefault(varDecl, OffsetStack.create(0));
+                final OffsetStack offsetStack2 = that.varToOffset.getOrDefault(varDecl, OffsetStack.create(0));
 
                 final OffsetStack sum = offsetStack1.sub(offsetStack2);
                 newVarToOffset.put(varDecl, sum);
@@ -277,24 +268,19 @@ public class PushPopVarIndexing implements VarIndexing {
         }
 
         @Override
-        public PushPopVarIndexing.PushPopVarIndexingBuilder join(
-                final VarIndexingBuilder genericThat) {
+        public PushPopVarIndexing.PushPopVarIndexingBuilder join(final VarIndexingBuilder genericThat) {
             checkNotNull(genericThat);
-            checkArgument(genericThat instanceof PushPopVarIndexing.PushPopVarIndexingBuilder,
-                    "Only builders of the same type can be added together!");
+            checkArgument(genericThat instanceof PushPopVarIndexing.PushPopVarIndexingBuilder, "Only builders of the same type can be added together!");
 
             PushPopVarIndexing.PushPopVarIndexingBuilder that = (PushPopVarIndexing.PushPopVarIndexingBuilder) genericThat;
 
             final int newDefaultIndex = max(this.defaultIndex, that.defaultIndex);
             final Map<VarDecl<?>, OffsetStack> newVarToOffset = Containers.createMap();
 
-            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(),
-                    that.varToOffset.keySet());
+            final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
             for (final VarDecl<?> varDecl : varDecls) {
-                final OffsetStack offsetStack1 = this.varToOffset.getOrDefault(varDecl,
-                        OffsetStack.create(0));
-                final OffsetStack offsetStack2 = that.varToOffset.getOrDefault(varDecl,
-                        OffsetStack.create(0));
+                final OffsetStack offsetStack1 = this.varToOffset.getOrDefault(varDecl, OffsetStack.create(0));
+                final OffsetStack offsetStack2 = that.varToOffset.getOrDefault(varDecl, OffsetStack.create(0));
 
                 final OffsetStack sum = offsetStack1.max(offsetStack2);
                 newVarToOffset.put(varDecl, sum);
@@ -321,15 +307,13 @@ public class PushPopVarIndexing implements VarIndexing {
     }
 
     private static class OffsetStack {
-
         private final int currentHeight;
         private final int negativeCount;
         private final List<Integer> offsets;
         private final int prevMax;
         private final int prevMin;
 
-        private OffsetStack(final int currentHeight, final int negativeCount,
-                            final List<Integer> offsets, final int prevMax, final int prevMin) {
+        private OffsetStack(final int currentHeight, final int negativeCount, final List<Integer> offsets, final int prevMax, final int prevMin) {
             checkNotNull(offsets);
             this.currentHeight = currentHeight;
             this.negativeCount = negativeCount;
@@ -345,8 +329,7 @@ public class PushPopVarIndexing implements VarIndexing {
             return OffsetStack.of(newCurrentHeight, 0, newIndices, firstElement, firstElement);
         }
 
-        private static OffsetStack of(final int currentHeight, final int negativeCount,
-                                      final List<Integer> indices, final int prevMax, final int prevMin) {
+        private static OffsetStack of(final int currentHeight, final int negativeCount, final List<Integer> indices, final int prevMax, final int prevMin) {
             return new OffsetStack(currentHeight, negativeCount, indices, prevMax, prevMin);
         }
 
@@ -386,8 +369,7 @@ public class PushPopVarIndexing implements VarIndexing {
         }
 
         private OffsetStack add(final OffsetStack that) {
-            checkArgument(this.currentHeight >= that.negativeCount,
-                    "Cannot add stacks due to mismatched depths!");
+            checkArgument(this.currentHeight >= that.negativeCount, "Cannot add stacks due to mismatched depths!");
 
             int i;
             final List<Integer> newOffsets = new ArrayList<>(this.offsets);
@@ -416,8 +398,7 @@ public class PushPopVarIndexing implements VarIndexing {
                     newOffsets.remove(newOffsets.size() - 1);
                 }
             }
-            return OffsetStack.of(newCurrentHeight, this.negativeCount, newOffsets, newPrevMax,
-                    prevMin);
+            return OffsetStack.of(newCurrentHeight, this.negativeCount, newOffsets, newPrevMax, prevMin);
         }
 
         private OffsetStack sub(final OffsetStack that) {
@@ -438,11 +419,8 @@ public class PushPopVarIndexing implements VarIndexing {
             for (i = 0; i < that.negativeCount; i++) {
                 final int newOffset = prevMin - that.offsets.get(i);
                 if (savedNegativeCount + currentHeight - toPop - (that.negativeCount - i) >= 0) {
-                    newOffsets.remove(
-                            savedNegativeCount + currentHeight - toPop - (that.negativeCount - i));
-                    newOffsets.add(
-                            savedNegativeCount + currentHeight - toPop - (that.negativeCount - i),
-                            newOffset);
+                    newOffsets.remove(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i));
+                    newOffsets.add(savedNegativeCount + currentHeight - toPop - (that.negativeCount - i), newOffset);
                 } else {
                     newOffsets.add(0, newOffset);
                     ++newNegativeCount;
@@ -460,23 +438,18 @@ public class PushPopVarIndexing implements VarIndexing {
                 }
                 newCurrentHeight -= toPop;
             }
-            return OffsetStack.of(newCurrentHeight, newNegativeCount, newOffsets, prevMax,
-                    newPrevMin);
+            return OffsetStack.of(newCurrentHeight, newNegativeCount, newOffsets, prevMax, newPrevMin);
         }
 
         private OffsetStack max(final OffsetStack that) {
-            checkState(this.offsets.size() == that.offsets.size()
-                            && this.currentHeight == that.currentHeight
-                            && this.negativeCount == that.negativeCount,
-                    "Only stacks of the same sizes can be joined!");
+            checkState(this.offsets.size() == that.offsets.size() && this.currentHeight == that.currentHeight && this.negativeCount == that.negativeCount, "Only stacks of the same sizes can be joined!");
             final List<Integer> newOffsets = new ArrayList<>();
             List<Integer> integers = this.offsets;
             for (int i = 0; i < integers.size(); i++) {
                 Integer offset = integers.get(i);
                 newOffsets.add(Math.max(offset, that.offsets.get(i)));
             }
-            return OffsetStack.of(currentHeight, negativeCount, newOffsets,
-                    Math.max(prevMax, that.prevMax), Math.min(prevMin, that.prevMin));
+            return OffsetStack.of(currentHeight, negativeCount, newOffsets, Math.max(prevMax, that.prevMax), Math.min(prevMin, that.prevMin));
         }
 
         private int peek() {
@@ -486,8 +459,7 @@ public class PushPopVarIndexing implements VarIndexing {
 
     @Override
     public String toString() {
-        final StringJoiner sj = new StringJoiner(", ", "PushPopIndexMap(" + defaultIndex + ", ",
-                ")");
+        final StringJoiner sj = new StringJoiner(", ", "PushPopIndexMap(" + defaultIndex + ", ", ")");
         for (final VarDecl<?> varDecl : varToOffset.keySet()) {
             final StringBuilder sb = new StringBuilder();
             sb.append(varDecl.getName());

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bi
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
@@ -58,13 +60,16 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<?>> {
+    private final ParseContext parseContext;
 
-    public static final CastVisitor instance = new CastVisitor();
+    public CastVisitor(ParseContext parseContext) {
+        this.parseContext = parseContext;
+    }
 
     private Expr<? extends Type> handleSignedConversion(CInteger type, Expr<?> param) {
-        CComplexType that = CComplexType.getType(param);
+        CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CPointer) {
-            that = CComplexType.getUnsignedLong();
+            that = CComplexType.getUnsignedLong(parseContext);
         }
         if (that instanceof CReal) {
             //noinspection unchecked
@@ -80,8 +85,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
                         Int(type.width()));
-            } else {
-                return param.withOps(param.getOps());
+            } else { // width equals
+                if (that instanceof Unsigned) {
+                    return BvSignChangeExpr.of((Expr<BvType>) param, BvType.of(((BvType) param.getType()).getSize(), true));
+                } else {
+                    return param;
+                }
             }
         } else {
             throw new IllegalStateException("Compound types are not directly supported!");
@@ -89,9 +98,9 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     }
 
     private Expr<? extends Type> handleUnsignedConversion(CInteger type, Expr<?> param) {
-        CComplexType that = CComplexType.getType(param);
+        CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CPointer) {
-            that = CComplexType.getUnsignedLong();
+            that = CComplexType.getUnsignedLong(parseContext);
         }
         if (that instanceof CReal) {
             //noinspection unchecked
@@ -107,8 +116,12 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
                         Int(type.width()));
-            } else {
-                return param.withOps(param.getOps());
+            } else { // width equals
+                if (that instanceof Signed) {
+                    return BvSignChangeExpr.of((Expr<BvType>) param, BvType.of(((BvType) param.getType()).getSize(), false));
+                } else {
+                    return param;
+                }
             }
         } else {
             throw new IllegalStateException("Compound types are not directly supported!");
@@ -116,7 +129,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     }
 
     private Expr<FpType> handleFp(CReal type, Expr<?> param) {
-        CComplexType that = CComplexType.getType(param);
+        CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CReal) {
             FpType fpType = (FpType) type.getSmtType();
             //noinspection unchecked
@@ -201,7 +214,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CDouble type, Expr<?> param) {
-        CComplexType that = CComplexType.getType(param);
+        CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CDouble) {
             return param.withOps(param.getOps());
         }
@@ -210,7 +223,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CFloat type, Expr<?> param) {
-        CComplexType that = CComplexType.getType(param);
+        CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CFloat) {
             return param.withOps(param.getOps());
         }
@@ -220,7 +233,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CLongDouble type, Expr<?> param) {
-        CComplexType that = CComplexType.getType(param);
+        CComplexType that = CComplexType.getType(param, parseContext);
         if (that instanceof CLongDouble) {
             return param.withOps(param.getOps());
         }
@@ -230,7 +243,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CArray type, Expr<?> param) {
-        checkState(CComplexType.getType(param) instanceof CArray,
+        checkState(CComplexType.getType(param, parseContext) instanceof CArray,
                 "Only arrays can be used in place of arrays!");
         return param.withOps(param.getOps());
     }
@@ -238,6 +251,6 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CPointer type, Expr<?> param) {
-        return handleUnsignedConversion((CInteger) CComplexType.getUnsignedLong(), param);
+        return handleUnsignedConversion((CInteger) CComplexType.getUnsignedLong(parseContext), param);
     }
 }

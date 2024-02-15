@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Collection;
@@ -31,14 +32,15 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Represents an abstract reachability graph (ARG). See the related class ArgBuilder.
+ * Represents an abstract reachability graph (ARG). See the related class
+ * ArgBuilder.
  */
 public final class ARG<S extends State, A extends Action> {
 
     private final Collection<ArgNode<S, A>> initNodes;
-    boolean initialized; // Set by ArgBuilder
+    public boolean initialized; // Set by ArgBuilder
     private int nextId = 0;
-    final PartialOrd<S> partialOrd;
+    private final PartialOrd<S> partialOrd;
 
     private ARG(final PartialOrd<S> partialOrd) {
         initNodes = Containers.createSet();
@@ -46,8 +48,7 @@ public final class ARG<S extends State, A extends Action> {
         this.initialized = false;
     }
 
-    public static <S extends State, A extends Action> ARG<S, A> create(
-            final PartialOrd<S> partialOrd) {
+    public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
         return new ARG<>(partialOrd);
     }
 
@@ -73,11 +74,16 @@ public final class ARG<S extends State, A extends Action> {
         return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> !n.isExpanded());
     }
 
+
+    PartialOrd<S> getPartialOrd() {
+        return partialOrd;
+    }
+
     ////
 
     /**
-     * Checks if the ARG is complete, i.e., whether it is initialized and all of its nodes are
-     * complete.
+     * Checks if the ARG is complete, i.e., whether it is initialized and all of
+     * its nodes are complete.
      */
     public boolean isComplete() {
         return isInitialized() && getNodes().allMatch(ArgNode::isComplete);
@@ -91,7 +97,8 @@ public final class ARG<S extends State, A extends Action> {
     }
 
     /**
-     * Checks if the ARG is initialized, i.e., all of its initial nodes are present.
+     * Checks if the ARG is initialized, i.e., all of its initial nodes are
+     * present.
      */
     public boolean isInitialized() {
         return initialized;
@@ -103,6 +110,7 @@ public final class ARG<S extends State, A extends Action> {
         checkNotNull(initState);
         final ArgNode<S, A> initNode = createNode(initState, 0, target);
         initNodes.add(initNode);
+        ARGWebDebugger.create(initNode);
         return initNode;
     }
 
@@ -124,11 +132,11 @@ public final class ARG<S extends State, A extends Action> {
         return node;
     }
 
-    private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action,
-                                     final ArgNode<S, A> target) {
+    private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
         final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
         source.outEdges.add(edge);
         target.inEdge = Optional.of(edge);
+        ARGWebDebugger.add(source, action, target);
         return edge;
     }
 
@@ -142,6 +150,7 @@ public final class ARG<S extends State, A extends Action> {
             final ArgEdge<S, A> edge = node.getInEdge().get();
             final ArgNode<S, A> parent = edge.getSource();
             parent.outEdges.remove(edge);
+            ARGWebDebugger.remove(edge);
             parent.expanded = false;
         } else {
             assert initNodes.contains(node);
@@ -158,6 +167,13 @@ public final class ARG<S extends State, A extends Action> {
     public void pruneAll() {
         initNodes.clear();
         this.initialized = false;
+    }
+
+    /**
+     * Marks the node for reexpanding without pruning it.
+     */
+    public void markForReExpansion(final ArgNode<S, A> node) {
+        node.expanded = false;
     }
 
     public void minimize() {
@@ -190,8 +206,9 @@ public final class ARG<S extends State, A extends Action> {
     }
 
     /**
-     * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth starts (at the initial
-     * nodes) from 0. Depth is undefined for an empty ARG.
+     * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
+     * starts (at the initial nodes) from 0. Depth is undefined for an empty
+     * ARG.
      */
     public int getDepth() {
         final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
@@ -204,9 +221,7 @@ public final class ARG<S extends State, A extends Action> {
      */
     public double getMeanBranchingFactor() {
         final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(ArgNode::isExpanded);
-        final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average()
-                .orElse(0);
+        final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
         return mean;
     }
-
 }

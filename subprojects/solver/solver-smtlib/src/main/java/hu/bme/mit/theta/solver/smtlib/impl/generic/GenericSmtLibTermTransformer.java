@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -414,7 +414,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         } else if (ctx.exists_term() != null) {
             return transformExistsTerm(ctx.exists_term(), model, vars);
         } else if (ctx.match_term() != null) {
-            throw new UnsupportedOperationException();
+            throw new SmtLibSolverException("");
         } else if (ctx.annotate_term() != null) {
             return transformTerm(ctx.annotate_term().term(), model, vars);
         } else {
@@ -436,7 +436,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         } else if (ctx.binary() != null) {
             return transformBinary(ctx.binary(), model, vars);
         } else if (ctx.string() != null) {
-            throw new UnsupportedOperationException();
+            throw new SmtLibSolverException("");
         } else {
             throw new SmtLibSolverException("Invalid input");
         }
@@ -469,7 +469,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                 final var expr = transformTerm(funAppParams.get(0), model, vars);
                 return createArrayLitExpr(expr, arrayType);
             } else {
-                throw new UnsupportedOperationException();
+                throw new SmtLibSolverException("");
             }
         } else if (funAppTransformer.containsKey(funName)) { // known function application
             return funAppTransformer.get(funName).apply(funParams, funAppParams, model, vars);
@@ -619,7 +619,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                 } else if (symbolTable.definesSymbol(value)) {
                     return symbolTable.getConst(value).getRef();
                 } else {
-                    throw new UnsupportedOperationException();
+                    throw new SmtLibSolverException("Transforation of symbol not supported: " + value);
                 }
         }
     }
@@ -681,7 +681,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                 assert ctx.sort().size() == 2;
                 return Array(transformSort(ctx.sort().get(0)), transformSort(ctx.sort().get(1)));
             default:
-                throw new UnsupportedOperationException();
+                throw new SmtLibSolverException("");
         }
     }
 
@@ -903,7 +903,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             case "RTZ":
                 return FpRoundingMode.RTZ;
             default:
-                throw new UnsupportedOperationException();
+                throw new SmtLibSolverException("");
         }
     }
 

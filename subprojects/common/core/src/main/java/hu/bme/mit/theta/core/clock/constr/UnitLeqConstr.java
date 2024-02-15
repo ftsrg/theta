@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.clock.constr;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 public final class UnitLeqConstr extends UnitConstr {
 
@@ -56,7 +56,7 @@ public final class UnitLeqConstr extends UnitConstr {
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof UnitLeqConstr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final UnitLeqConstr that = (UnitLeqConstr) obj;
             return this.getBound() == that.getBound() && this.getVar().equals(that.getVar());
         } else {

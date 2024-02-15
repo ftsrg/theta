@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,11 +18,24 @@ package hu.bme.mit.theta.core.utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatExprs;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import org.kframework.mpfr.BigFloat;
 
+import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -168,6 +181,22 @@ public final class TypeUtils {
         checkNotNull(op1);
         checkNotNull(op2);
         checkArgument(op1.getType().equals(op2.getType()), "All types must equal");
+    }
+
+    public static <T extends Type> LitExpr<T> getDefaultValue(final T type) {
+        if (type instanceof BoolType) {
+            return (LitExpr<T>) cast(BoolExprs.False(), type);
+        } else if (type instanceof IntType) {
+            return (LitExpr<T>) cast(IntExprs.Int(0), type);
+        } else if (type instanceof RatType) {
+            return (LitExpr<T>) cast(RatExprs.Rat(0, 1), type);
+        } else if (type instanceof BvType) {
+            return (LitExpr<T>) cast(BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, ((BvType) type).getSize()), type);
+        } else if (type instanceof FpType) {
+            return (LitExpr<T>) cast(FpUtils.bigFloatToFpLitExpr(BigFloat.zero(((FpType) type).getSignificand()), (FpType) type), type);
+        } else {
+            throw new AssertionError();
+        }
     }
 
 }

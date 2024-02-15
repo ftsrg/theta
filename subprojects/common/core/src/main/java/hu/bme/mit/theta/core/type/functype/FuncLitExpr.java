@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +15,7 @@
  */
 package hu.bme.mit.theta.core.type.functype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -30,6 +23,12 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 
 public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
         implements LitExpr<FuncType<ParamType, ResultType>> {
@@ -112,7 +111,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
     public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
-        } else if (obj instanceof FuncLitExpr) {
+        } else if (obj != null && this.getClass() == obj.getClass()) {
             final FuncLitExpr<?, ?> that = (FuncLitExpr<?, ?>) obj;
             return this.getParam().equals(that.getParam()) && this.getResult()
                     .equals(that.getResult());
