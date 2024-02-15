@@ -33,9 +33,30 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.SolverBase
+import hu.bme.mit.theta.solver.utils.WithPushPop
 import java.util.*
 
+/**
+ * A checker for bounded model checking.
+ *
+ * @param <S> The state type, must inherit from ExprState.
+ * @param <A> The action type, must inherit from StmtAction.
+ * @param monolithicExpr The monolithic expression to be checked
+ * @param shouldGiveUp A function determining whether to give up checking based on a given iteration count. Use this
+ *                     to implement custom timeout or thread interruption checking subroutines.
+ * @param bmcSolver The solver for bounded model checking.
+ * @param bmcEnabled A function determining whether bounded model checking is enabled. Cannot be disabled per-iteration.
+ *                   Use the capabilities of the lambda parameter to decide on enabledness based on external factors,
+ *                   such as available memory or time limit remaining.
+ * @param lfPathOnly A function determining whether to consider only loop-free paths.
+ * @param itpSolver The solver for interpolation, used in IMC.
+ * @param imcEnabled A function determining whether IMC is enabled. Can be different per-iteration.
+ * @param indSolver The solver for induction checking in KIND.
+ * @param kindEnabled A function determining whether k-induction (KIND) is enabled.
+ * @param valToState A function mapping valuations to expression states, used to construct a counterexample.
+ * @param biValToAction A function mapping pairs of valuations to statements, used to construct a counterexample.
+ * @param logger The logger for logging.
+ */
 class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val monolithicExpr: MonolithicExpr,
     private val shouldGiveUp: (Int) -> Boolean = { false },
@@ -63,14 +84,6 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         check(bmcSolver != indSolver || bmcSolver == null) { "Use distinct solvers for BMC and KInd!" }
         check(itpSolver != indSolver || itpSolver == null) { "Use distinct solvers for IMC and KInd!" }
     }
-
-    private fun <T> SolverBase.pushPop(func: () -> T): T {
-        push()
-        val ret = func()
-        pop()
-        return ret
-    }
-
 
     override fun check(prec: UnitPrec?): SafetyResult<S, A> {
         var iteration = 0
@@ -128,7 +141,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
             }
         }
 
-        return bmcSolver.pushPop {
+        return WithPushPop(bmcSolver).use {
             bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
 
             if (bmcSolver.check().isSat) {
@@ -147,7 +160,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
         exprs.subList(lastIterLookup.first, exprs.size).forEach { indSolver.add(it) }
         indices.subList(lastIterLookup.first, indices.size - 1).forEach { indSolver.add(unfoldedPropExpr(it)) }
 
-        return indSolver.pushPop {
+        return WithPushPop(indSolver).use {
             indSolver.add(Not(unfoldedPropExpr(indices.last())))
 
             if (indSolver.check().isUnsat) {
