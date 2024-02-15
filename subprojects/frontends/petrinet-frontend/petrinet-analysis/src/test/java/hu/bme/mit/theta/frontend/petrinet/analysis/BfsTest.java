@@ -9,6 +9,7 @@ import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.BfsProvider;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.CursorRelationalProductProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.LegacyRelationalProductProvider;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
@@ -48,7 +49,7 @@ public final class BfsTest {
 			variableOrder.createOnTop(MddVariableDescriptor.create(p));
 		}
 		
-		BfsProvider bfs = new BfsProvider(variableOrder, new CursorRelationalProductProvider(variableOrder));
+		BfsProvider bfs = new BfsProvider(variableOrder, new LegacyRelationalProductProvider(variableOrder));
 		
 		final MddHandle stateSpace = bfs.compute(system.getInitializer(),
 			system.getTransitions(),
