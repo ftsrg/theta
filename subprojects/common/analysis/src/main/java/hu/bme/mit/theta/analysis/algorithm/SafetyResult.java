@@ -86,8 +86,8 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Unsafe<>();
     }
 
-    public static Unknown unknown() {
-        return new Unknown();
+    public static <S extends State, A extends Action> Unknown<S, A> unknown() {
+        return new Unknown<>();
     }
 
     public abstract boolean isSafe();
@@ -195,7 +195,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         }
     }
 
-    public static final class Unknown extends SafetyResult<State, Action> {
+    public static final class Unknown<S extends State, A extends Action> extends SafetyResult<S, A> {
         @Override
         public boolean isSafe() {
             return false;
@@ -207,12 +207,12 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         }
 
         @Override
-        public Safe<State, Action> asSafe() {
+        public Safe<S, A> asSafe() {
             return null;
         }
 
         @Override
-        public Unsafe<State, Action> asUnsafe() {
+        public Unsafe<S, A> asUnsafe() {
             return null;
         }
 

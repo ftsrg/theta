@@ -39,7 +39,7 @@ fun getChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: Par
             Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, config, logger)
             Backend.LAZY -> TODO()
             Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-            Backend.NONE -> SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> { _ -> SafetyResult.unknown() as SafetyResult<XcfaState<*>, XcfaAction> }
+            Backend.NONE -> SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> { _ -> SafetyResult.unknown() }
         }
     }
 

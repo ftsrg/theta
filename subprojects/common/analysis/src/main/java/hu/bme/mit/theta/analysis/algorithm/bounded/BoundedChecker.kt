@@ -116,7 +116,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
                 lastIterLookup = lastIterLookup.copy(second = iteration)
             }
         }
-        return SafetyResult.unknown() as SafetyResult<S, A>
+        return SafetyResult.unknown()
     }
 
     private fun bmc(): SafetyResult<S, A>? {
