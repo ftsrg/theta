@@ -12,25 +12,18 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddNodeNextStateDescriptor;
-import hu.bme.mit.theta.analysis.utils.MddNodeCacheVisualizer;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddNodeInitializer;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.inttype.IntExprs;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem;
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory;
@@ -41,7 +34,6 @@ import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -56,7 +48,7 @@ public class XstsTest {
 
         final PetriNet petriNet;
         try {
-            petriNet = PetriNetParser.loadPnml(new File("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\dekker-15.pnml")).parsePTNet().get(0);
+            petriNet = PetriNetParser.loadPnml(new File("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\Philosophers-5.pnml")).parsePTNet().get(0);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -67,7 +59,7 @@ public class XstsTest {
 //        ));
         final List<Place> ordering;
         try {
-            ordering = VariableOrderingFactory.fromFile("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\dekker-15.pnml.gsat.order", petriNet);
+            ordering = VariableOrderingFactory.fromFile("subprojects\\frontends\\petrinet-frontend\\petrinet-analysis\\src\\test\\resources\\Philosophers-5.pnml.order", petriNet);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -98,7 +90,8 @@ public class XstsTest {
         var transSig = transOrder.getDefaultSetSignature();
         var stateSig = stateOrder.getDefaultSetSignature();
 
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+//        MddValuationCollector.collect(initNode.getNode());
 
         final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
         final List<MddHandle> transitionHandles = new ArrayList<>();
@@ -115,7 +108,7 @@ public class XstsTest {
             }
             if(!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
 
-            MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance()::createSolver)));
+            MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
             transitionHandles.add(transitionNode);
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
         }
@@ -135,16 +128,15 @@ public class XstsTest {
         final MddVariableOrder variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
         ordering.forEach(p -> variableOrder.createOnTop(MddVariableDescriptor.create(p)));
 
-        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
-        final MddHandle satResult = gs.compute(system.getInitializer(),
-                system.getTransitions(),
-                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-        );
+//        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
+//        final MddHandle satResult = gs.compute(system.getInitializer(),
+//                system.getTransitions(),
+//                variableOrder.getDefaultSetSignature().getTopVariableHandle()
+//        );
 
-//        var gs = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
+        var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+        var satResult = gs.compute(new MddNodeInitializer(initNode), nextStates, stateSig.getTopVariableHandle());
 //        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
-
-        System.out.println(Z3SolverFactory.solversCreated);
 
         Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
         System.out.println("State space size: "+stateSpaceSize);
@@ -159,6 +151,8 @@ public class XstsTest {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+
 
 //        int i = 0;
 //        for(var handle: transitionHandles){
