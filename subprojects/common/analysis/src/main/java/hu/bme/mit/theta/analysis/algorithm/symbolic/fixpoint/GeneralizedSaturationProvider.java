@@ -3,7 +3,6 @@ package hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
@@ -243,7 +242,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 				assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
 				
 				MddNode s = relProd(cFrom.value(),
-					dsat.getDiagonal(stateSpaceInfo).get(cTo.key()),
+					dsat.getDiagonal(stateSpaceInfo2).get(cTo.key()),
 					cTo.value(),
 					variable.getLower().orElse(null),
 					cache.getLower()
