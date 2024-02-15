@@ -112,17 +112,37 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 		// indent++;
 		
 		final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
-		
-		IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode, MddNode>(n,
-			(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
-				d.getDiagonal(stateSpaceInfo).get(key),
-				variable.getLower().orElse(null),
-				cache.getLower()
-			))
-		);
-		
-		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
-		
+
+//
+//		IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode, MddNode>(n,
+//			(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
+//				d.getDiagonal(stateSpaceInfo).get(key),
+//				variable.getLower().orElse(null),
+//				cache.getLower()
+//			))
+//		);
+//
+//		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
+
+
+		MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
+
+		for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ){
+
+			MddNode s = saturate(cFrom.value(),
+					d.getDiagonal(stateSpaceInfo).get(cFrom.key()),
+					variable.getLower().orElse(null),
+					cache.getLower()
+			);
+
+			templateBuilder.set(cFrom.key(),
+					terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
+			);
+
+		}
+
+		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
+
 		boolean changed;
 		
 		do {
