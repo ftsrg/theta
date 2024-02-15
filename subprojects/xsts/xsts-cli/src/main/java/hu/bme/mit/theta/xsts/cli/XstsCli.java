@@ -26,6 +26,8 @@ import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
@@ -258,7 +260,7 @@ public class XstsCli {
                 }
 
                 final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-                final SafetyResult<? extends ARG<?,?>,? extends Trace<XstsState<?>, XstsAction>> status = check(configuration);
+                final SafetyResult<? extends ARG<?,?>,? extends Trace<? extends State, ? extends Action>> status = check(configuration);
                 sw.stop();
                 printCegarResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
                 if (status.isUnsafe() && cexfile != null) {
@@ -372,9 +374,9 @@ public class XstsCli {
         }
     }
 
-    private SafetyResult<? extends ARG<?,?>,? extends Trace<XstsState<?>, XstsAction>> check(XstsConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?,?>,? extends Trace<? extends State, ? extends Action>> check(XstsConfig<?, ?, ?> configuration) throws Exception {
         try {
-            return (SafetyResult<? extends ARG<?, ?>, ? extends Trace<XstsState<?>, XstsAction>>) configuration.check();
+            return configuration.check();
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
@@ -716,7 +718,7 @@ public class XstsCli {
         }
     }
 
-    private void writeVisualStatus(final SafetyResult<? extends ARG<?,?>,? extends Trace<XstsState<?>, XstsAction>> status, final String filename)
+    private void writeVisualStatus(final SafetyResult<? extends ARG<?,?>,? extends Trace<? extends State, ? extends Action>> status, final String filename)
             throws FileNotFoundException {
         final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
                 : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
