@@ -17,6 +17,7 @@ runs:
       shell: bash
       working-directory: doc/wiki
     - uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
       with:
         branch: gh-pages
         folder: doc/wiki/wiki
