@@ -77,7 +77,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
     private val indices = mutableListOf(VarIndexingFactory.indexing(0))
     private val exprs = mutableListOf<Expr<BoolType>>()
-    private var lastIterLookup = Pair(0, 0)
+    private var kindLastIterLookup = 0
 
     init {
         check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
@@ -108,12 +108,11 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
                     error("Bad configuration: induction check should always be preceded by a BMC/SAT check")
                 }
                 kind()?.let { return it }
-                lastIterLookup = lastIterLookup.copy(first = iteration)
+                kindLastIterLookup = iteration
             }
 
             if (imcEnabled(iteration)) {
                 itp()?.let { return it }
-                lastIterLookup = lastIterLookup.copy(second = iteration)
             }
         }
         return SafetyResult.unknown()
@@ -157,8 +156,8 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
         logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
 
-        exprs.subList(lastIterLookup.first, exprs.size).forEach { indSolver.add(it) }
-        indices.subList(lastIterLookup.first, indices.size - 1).forEach { indSolver.add(unfoldedPropExpr(it)) }
+        exprs.subList(kindLastIterLookup, exprs.size).forEach { indSolver.add(it) }
+        indices.subList(kindLastIterLookup, indices.size - 1).forEach { indSolver.add(unfoldedPropExpr(it)) }
 
         return WithPushPop(indSolver).use {
             indSolver.add(Not(unfoldedPropExpr(indices.last())))

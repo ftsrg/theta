@@ -156,7 +156,7 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
     logger: Logger,
     uniqueLogger: Logger): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
-        SafetyResult.unknown()
+        SafetyResult.unknown<State, Action>()
     } else {
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
             SafetyResult.safe<State, Action>()
