@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.MddValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
@@ -47,7 +48,8 @@ public class MddExpressionTest {
         // x >= 2 && y = x + 1 && x <= 6
         Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 
@@ -77,7 +79,7 @@ public class MddExpressionTest {
 
         final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -99,7 +101,8 @@ public class MddExpressionTest {
 
         Expr<BoolType> expr = And(Or(declA.getRef(), Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
 
-        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         for (var c = rootNode.cursor(); c.moveNext(); ){}
 
@@ -121,7 +124,7 @@ public class MddExpressionTest {
 
         final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -130,6 +133,8 @@ public class MddExpressionTest {
 
     @Test
     public void exprNodeTest3(){
+
+        // TODO need to fix nodeinterpreters and cursors
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -145,7 +150,8 @@ public class MddExpressionTest {
         // y >= 2 && z = y + 1 && y <= 6
         Expr<BoolType> expr = And(Geq(declY.getRef(),Int(2)), Eq(declZ.getRef(),Add(declY.getRef(),Int(1))),Leq(declY.getRef(), Int(6)));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 
@@ -165,7 +171,7 @@ public class MddExpressionTest {
 
         final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -188,7 +194,8 @@ public class MddExpressionTest {
         // x >= 2 && y = x + 1 && x <= 6 && z = y + 2
         Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)), Eq(declZ.getRef(), Add(declY.getRef(), Int(2))));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 
@@ -218,7 +225,7 @@ public class MddExpressionTest {
 
         final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -242,7 +249,8 @@ public class MddExpressionTest {
         // x = y && y = z && z = 2
         Expr<BoolType> expr = And(Eq(declX.getRef(), declY.getRef()), And(Eq(declY.getRef(),declZ.getRef()), Eq(declZ.getRef(), Int(2))));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 
@@ -257,7 +265,7 @@ public class MddExpressionTest {
 
         final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -281,7 +289,8 @@ public class MddExpressionTest {
         // x >= 0 && x <= 2 && y >= x && y <= x + 2 && z >= y && z <= y + 2
         Expr<BoolType> expr = And(And(Geq(declX.getRef(),Int(0)), Leq(declX.getRef(),Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, Z3SolverFactory.getInstance()::createSolver));
+        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 
@@ -305,11 +314,11 @@ public class MddExpressionTest {
 
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
 
-        assertEquals(valuations.size(), 5);
+        assertEquals(27, valuations.size());
 
         final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
         try {
-            GraphvizWriter.getInstance().writeFile(graph, "/home/milan/programming/mdd.dot");
+            GraphvizWriter.getInstance().writeFile(graph, "build\\mddasd.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
