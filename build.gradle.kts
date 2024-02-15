@@ -28,7 +28,7 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.theta"
-    version = "5.0.0"
+    version = "5.0.1"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
