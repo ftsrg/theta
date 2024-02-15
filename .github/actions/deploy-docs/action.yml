@@ -13,6 +13,8 @@ runs:
       shell: bash
     - run: pip install mkdocs==1.3.0
       shell: bash
+    - run: pip install mkdocs-awesome-pages-plugin==2.9.2
+      shell: bash
     - run: mkdocs build --site-dir wiki
       shell: bash
       working-directory: doc/wiki
