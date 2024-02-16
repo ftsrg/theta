@@ -56,10 +56,10 @@ public class MddExpressionTemplate implements MddNode.Template {
         if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
             if (canonizedExpr instanceof FalseExpr) {
                 return mddVariable.getMddGraph().getTerminalZeroNode();
-            } else {
+            } /*else {
                 final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
                 return mddGraph.getNodeFor(canonizedExpr);
-            }
+            }*/
         }
 
         // Check if default
