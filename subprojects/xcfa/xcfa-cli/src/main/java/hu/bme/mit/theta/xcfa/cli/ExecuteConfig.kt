@@ -156,7 +156,7 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
     logger: Logger,
     uniqueLogger: Logger): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
-        SafetyResult.unknown()
+        SafetyResult.unknown<State, Action>()
     } else {
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
             SafetyResult.safe<State, Action>()
@@ -228,7 +228,7 @@ private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
         logger.write(Logger.Level.INFO,
             "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n")
 
-        if (!config.outputConfig.argConfig.disable && safetyResult.arg != null) {
+        if (!config.outputConfig.argConfig.disable && safetyResult.hasArg()) {
             val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
             val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
             argFile.writeText(GraphvizWriter.getInstance().writeString(g))

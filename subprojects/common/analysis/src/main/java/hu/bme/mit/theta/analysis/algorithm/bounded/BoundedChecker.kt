@@ -19,8 +19,8 @@ package hu.bme.mit.theta.analysis.algorithm.bounded
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.Valuation
@@ -33,9 +33,31 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.ItpSolver
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.utils.WithPushPop
 import java.util.*
 
-class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
+/**
+ * A checker for bounded model checking.
+ *
+ * @param <S> The state type, must inherit from ExprState.
+ * @param <A> The action type, must inherit from StmtAction.
+ * @param monolithicExpr The monolithic expression to be checked
+ * @param shouldGiveUp A function determining whether to give up checking based on a given iteration count. Use this
+ *                     to implement custom timeout or thread interruption checking subroutines.
+ * @param bmcSolver The solver for bounded model checking.
+ * @param bmcEnabled A function determining whether bounded model checking is enabled. Cannot be disabled per-iteration.
+ *                   Use the capabilities of the lambda parameter to decide on enabledness based on external factors,
+ *                   such as available memory or time limit remaining.
+ * @param lfPathOnly A function determining whether to consider only loop-free paths.
+ * @param itpSolver The solver for interpolation, used in IMC.
+ * @param imcEnabled A function determining whether IMC is enabled. Can be different per-iteration.
+ * @param indSolver The solver for induction checking in KIND.
+ * @param kindEnabled A function determining whether k-induction (KIND) is enabled.
+ * @param valToState A function mapping valuations to expression states, used to construct a counterexample.
+ * @param biValToAction A function mapping pairs of valuations to statements, used to construct a counterexample.
+ * @param logger The logger for logging.
+ */
+class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
     private val monolithicExpr: MonolithicExpr,
     private val shouldGiveUp: (Int) -> Boolean = { false },
     private val bmcSolver: Solver? = null,
@@ -55,7 +77,7 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
     private val indices = mutableListOf(VarIndexingFactory.indexing(0))
     private val exprs = mutableListOf<Expr<BoolType>>()
-    private var lastIterLookup = Pair(-1, -1)
+    private var kindLastIterLookup = 0
 
     init {
         check(bmcSolver != itpSolver || bmcSolver == null) { "Use distinct solvers for BMC and IMC!" }
@@ -86,15 +108,14 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
                     error("Bad configuration: induction check should always be preceded by a BMC/SAT check")
                 }
                 kind()?.let { return it }
-                lastIterLookup = lastIterLookup.copy(first = iteration)
+                kindLastIterLookup = iteration
             }
 
             if (imcEnabled(iteration)) {
                 itp()?.let { return it }
-                lastIterLookup = lastIterLookup.copy(second = iteration)
             }
         }
-        return SafetyResult.unknown() as SafetyResult<S, A>
+        return SafetyResult.unknown()
     }
 
     private fun bmc(): SafetyResult<S, A>? {
@@ -114,23 +135,20 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
             }
 
             if (bmcSolver.check().isUnsat) {
-                bmcSolver.pop()
                 logger.write(Logger.Level.MAINSTEP, "Safety proven in BMC step\n")
-                return SafetyResult.safe<S, A>()
+                return SafetyResult.safe()
             }
         }
 
-        bmcSolver.push()
-        bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
+        return WithPushPop(bmcSolver).use {
+            bmcSolver.add(Not(unfoldedPropExpr(indices.last())))
 
-        val ret = if (bmcSolver.check().isSat) {
-            val trace = getTrace(bmcSolver.model)
-            logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
-            SafetyResult.unsafe(trace)
-        } else null
-
-        bmcSolver.pop()
-        return ret
+            if (bmcSolver.check().isSat) {
+                val trace = getTrace(bmcSolver.model)
+                logger.write(Logger.Level.MAINSTEP, "CeX found in BMC step (length ${trace.length()})\n")
+                SafetyResult.unsafe(trace)
+            } else null
+        }
     }
 
     private fun kind(): SafetyResult<S, A>? {
@@ -138,18 +156,17 @@ class BoundedChecker<S : ExprState, A : StmtAction> @JvmOverloads constructor(
 
         logger.write(Logger.Level.MAINSTEP, "\tStarting k-induction\n")
 
-        exprs.subList(lastIterLookup.first + 1, exprs.size).forEach { indSolver.add(it) }
+        exprs.subList(kindLastIterLookup, exprs.size).forEach { indSolver.add(it) }
+        indices.subList(kindLastIterLookup, indices.size - 1).forEach { indSolver.add(unfoldedPropExpr(it)) }
 
-        indSolver.push()
-        indSolver.add(Not(unfoldedPropExpr(indices.last())))
+        return WithPushPop(indSolver).use {
+            indSolver.add(Not(unfoldedPropExpr(indices.last())))
 
-        val ret = if (indSolver.check().isUnsat) {
-            logger.write(Logger.Level.MAINSTEP, "Safety proven in k-induction step\n")
-            SafetyResult.safe<S, A>()
-        } else null
-
-        indSolver.pop()
-        return ret
+            if (indSolver.check().isUnsat) {
+                logger.write(Logger.Level.MAINSTEP, "Safety proven in k-induction step\n")
+                SafetyResult.safe<S, A>()
+            } else null
+        }
     }
 
     private fun itp(): SafetyResult<S, A>? {

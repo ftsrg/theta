@@ -17,7 +17,8 @@ package hu.bme.mit.theta.analysis.algorithm
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
-import hu.bme.mit.theta.common.logging.NullLogger
+import hu.bme.mit.theta.common.logging.ConsoleLogger
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
@@ -35,7 +36,8 @@ class BoundedTest {
 
     companion object {
 
-        private var monolithicExpr: MonolithicExpr? = null
+        private var unsafeMonolithicExpr: MonolithicExpr? = null
+        private var safeMonolithicExpr: MonolithicExpr? = null
         private val valToState = { valuation: Valuation ->
             ExprStateStub(valuation.toExpr())
         }
@@ -47,29 +49,52 @@ class BoundedTest {
         init {
             val x = Decls.Var("x", Int())
             val unfoldResult = StmtUtils.toExpr(Assign(x, IntExprs.Add(x.ref, Int(1))), VarIndexingFactory.indexing(0))
-            monolithicExpr = MonolithicExpr(
+            unsafeMonolithicExpr = MonolithicExpr(
                 AbstractExprs.Eq(x.ref, Int(0)),
                 And(unfoldResult.exprs),
                 AbstractExprs.Neq(x.ref, Int(5)),
+                unfoldResult.indexing
+            )
+            safeMonolithicExpr = MonolithicExpr(
+                AbstractExprs.Eq(x.ref, Int(0)),
+                And(unfoldResult.exprs),
+                AbstractExprs.Neq(x.ref, Int(-5)),
                 unfoldResult.indexing
             )
         }
     }
 
     @Test
-    fun testBounded() {
+    fun testBoundedUnsafe() {
         val solver = Z3SolverFactory.getInstance().createSolver()
         val itpSolver = Z3SolverFactory.getInstance().createItpSolver()
         val indSolver = Z3SolverFactory.getInstance().createSolver()
         val checker: BoundedChecker<*, *> = BoundedChecker(
-            monolithicExpr = monolithicExpr!!,
+            monolithicExpr = unsafeMonolithicExpr!!,
             bmcSolver = solver,
             itpSolver = itpSolver,
             indSolver = indSolver,
             valToState = valToState,
             biValToAction = biValToAction,
-            logger = NullLogger.getInstance())
+            logger = ConsoleLogger(Logger.Level.VERBOSE))
         val safetyResult: SafetyResult<*, *> = checker.check()
         Assert.assertTrue(safetyResult.isUnsafe())
+    }
+
+    @Test
+    fun testBoundedSafe() {
+        val solver = Z3SolverFactory.getInstance().createSolver()
+        val itpSolver = Z3SolverFactory.getInstance().createItpSolver()
+        val indSolver = Z3SolverFactory.getInstance().createSolver()
+        val checker: BoundedChecker<*, *> = BoundedChecker(
+            monolithicExpr = safeMonolithicExpr!!,
+            bmcSolver = solver,
+            itpSolver = itpSolver,
+            indSolver = indSolver,
+            valToState = valToState,
+            biValToAction = biValToAction,
+            logger = ConsoleLogger(Logger.Level.VERBOSE))
+        val safetyResult: SafetyResult<*, *> = checker.check()
+        Assert.assertTrue(safetyResult.isSafe())
     }
 }
