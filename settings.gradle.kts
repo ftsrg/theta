@@ -22,6 +22,7 @@ include(
     "common/grammar",
 
     "frontends/c-frontend",
+    "frontends/promela-frontend",
     "frontends/chc-frontend",
     "frontends/llvm",
 
