@@ -22,28 +22,14 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-<<<<<<< HEAD
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
-=======
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
->>>>>>> xcfa-refactor
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-
-<<<<<<< HEAD
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-=======
 import hu.bme.mit.theta.common.visualization.writer.JSONWriter;
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger;
-
->>>>>>> xcfa-refactor
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -95,32 +81,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         WebDebuggerLogger wdl = WebDebuggerLogger.getInstance();
         do {
             ++iteration;
-
-<<<<<<< HEAD
-			// logger.write(Level.INFO, "Printing ARG..." + System.lineSeparator());
-			// Graph g = ArgVisualizer.getDefault().visualize(arg);
-			// logger.write(Level.INFO, GraphvizWriter.getInstance().writeString(g) + System.lineSeparator());
-			/*
-			File argFile = new File("arg.txt");
-			FileWriter w = null;
-			try {
-				w = new FileWriter(argFile);
-				w.write(GraphvizWriter.getInstance().writeString(g));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			*/
-
-			if (abstractorResult.isUnsafe()) {
-				ArgCexCheckHandler.instance.checkAndStop(arg, prec);
-=======
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
             final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             abstractorResult = abstractor.check(arg, prec);
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
             logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
->>>>>>> xcfa-refactor
 
             if (WebDebuggerLogger.enabled()) {
                 String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
