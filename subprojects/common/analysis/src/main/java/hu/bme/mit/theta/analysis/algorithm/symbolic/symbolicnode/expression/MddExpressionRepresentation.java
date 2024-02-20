@@ -147,6 +147,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             MddNode mddNode = mddNodeConstraint.get(mddNodeConstraint.statistics().lowestValue());
             while (true) {
 
+                // This is needed because the constraint node might contain level-skips: of the domain is bounded, then default values are detected
+                if(mddNode.isTerminal()) break;
+
                 final IntStatistics statistics = mddNode.statistics();
                 final Decl<?> decl = variable.getTraceInfo(Decl.class);
                 final LitExpr<?> lowerBound = LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
@@ -466,7 +469,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 final IntSetView remaining = domain.minus(representation.explicitRepresentation.getCacheView().keySet());
                 if (remaining.isEmpty()) {
                     representation.explicitRepresentation.setComplete();
-                    throw new UnsupportedOperationException("Not yet implemented");
+                    // Return the first element
+                    newValue = representation.explicitRepresentation.getCacheView().keySet().statistics().lowestValue();
                 } else {
                     final var cur = remaining.cursor();
                     Preconditions.checkState(cur.moveNext());
