@@ -67,16 +67,17 @@ public class MddExpressionTemplate implements MddNode.Template {
             return mddVariable.getMddGraph().getTerminalZeroNode();
         }
 
-        // Check if default or terminal 1
-        if (!ExprUtils.getConstants(canonizedExpr).contains(decl)) {
-            if (mddVariable.getLower().isPresent()) {
-                final MddNode childNode = mddVariable.getLower().get().checkInNode(new MddExpressionTemplate(canonizedExpr, o -> (Decl) o, solverPool));
-                return MddExpressionRepresentation.ofDefault(canonizedExpr, decl, mddVariable, solverPool, childNode);
-            } else {
-                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                return mddGraph.getNodeFor(canonizedExpr);
-            }
-        }
+        // Check if default
+//        if (!ExprUtils.getConstants(canonizedExpr).contains(decl)) {
+//            final MddNode childNode;
+//            if (mddVariable.getLower().isPresent()) {
+//                childNode = mddVariable.getLower().get().checkInNode(new MddExpressionTemplate(canonizedExpr, o -> (Decl) o, solverPool));
+//            } else {
+//                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+//                childNode = mddGraph.getNodeFor(canonizedExpr);
+//            }
+//            return MddExpressionRepresentation.ofDefault(canonizedExpr, decl, mddVariable, solverPool, childNode);
+//        }
 
         return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool);
 
