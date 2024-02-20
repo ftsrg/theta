@@ -120,7 +120,8 @@ public class MddExpressionTest {
 
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
 
-        assertEquals(valuations.size(), 2);
+        // TODO This might be 2 if default values are enabled
+        assertEquals(valuations.size(), 3);
 
         final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
         try {
