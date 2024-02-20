@@ -51,28 +51,31 @@ public class MddExpressionTemplate implements MddNode.Template {
 
         final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(expr));
 
-        // TODO: we might not need this
-        // Check if terminal 1
-        if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
-            if (canonizedExpr instanceof FalseExpr) {
-                return mddVariable.getMddGraph().getTerminalZeroNode();
-            } /*else {
-                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-                return mddGraph.getNodeFor(canonizedExpr);
-            }*/
+//        // TODO: we might not need this
+//        // Check if terminal 1
+//        if (ExprUtils.getConstants(canonizedExpr).isEmpty()) {
+//            if (canonizedExpr instanceof FalseExpr) {
+//                return mddVariable.getMddGraph().getTerminalZeroNode();
+//            } /*else {
+//                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+//                return mddGraph.getNodeFor(canonizedExpr);
+//            }*/
+//        }
+
+        // Check if terminal 0
+        if (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool)) {
+            return mddVariable.getMddGraph().getTerminalZeroNode();
         }
 
-        // Check if default
+        // Check if default or terminal 1
         if (!ExprUtils.getConstants(canonizedExpr).contains(decl)) {
             if (mddVariable.getLower().isPresent()) {
                 final MddNode childNode = mddVariable.getLower().get().checkInNode(new MddExpressionTemplate(canonizedExpr, o -> (Decl) o, solverPool));
                 return MddExpressionRepresentation.ofDefault(canonizedExpr, decl, mddVariable, solverPool, childNode);
+            } else {
+                final MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
+                return mddGraph.getNodeFor(canonizedExpr);
             }
-        }
-
-        // Check if terminal 0
-        if (!isSat(canonizedExpr, solverPool)) {
-            return mddVariable.getMddGraph().getTerminalZeroNode();
         }
 
         return MddExpressionRepresentation.of(canonizedExpr, decl, mddVariable, solverPool);
