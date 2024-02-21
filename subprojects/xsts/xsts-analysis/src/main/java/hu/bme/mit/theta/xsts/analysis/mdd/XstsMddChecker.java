@@ -68,14 +68,16 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         final var initToExprResult = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
 
         for(var v : xsts.getVars()){
-            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0));
+            final var domainSize = /*v.getType() instanceof BoolType ? 2 :*/ 0;
 
-            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(envTranToExprResult.getIndexing().get(v) == 0 ? 1 : envTranToExprResult.getIndexing().get(v)), 0));
-            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0));
+            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
+
+            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(envTranToExprResult.getIndexing().get(v) == 0 ? 1 : envTranToExprResult.getIndexing().get(v)), domainSize));
+            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
 
             // TODO if indexes are identical, inject v'=v
-            initOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(initToExprResult.getIndexing().get(v) == 0 ? 1 : initToExprResult.getIndexing().get(v)), 0));
-            initOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0));
+            initOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(initToExprResult.getIndexing().get(v) == 0 ? 1 : initToExprResult.getIndexing().get(v)), domainSize));
+            initOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
         }
 
         final var stateSig = stateOrder.getDefaultSetSignature();
