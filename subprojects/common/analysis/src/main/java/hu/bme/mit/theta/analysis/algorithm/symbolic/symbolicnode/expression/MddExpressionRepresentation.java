@@ -115,7 +115,20 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         } else {
             final Expr<BoolType> canonizedExpr = ExprUtils.canonize(ExprUtils.simplify(simplifiedExpr));
             MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
-            childNode = canonizedExpr instanceof FalseExpr ? mddGraph.getTerminalZeroNode() : mddGraph.getNodeFor(canonizedExpr);
+
+            if (canonizedExpr instanceof FalseExpr) {
+                childNode = mddGraph.getTerminalZeroNode();
+            } else {
+                var solver = solverPool.requestSolver();
+                try (var wpp = new WithPushPop(solver)) {
+                    solver.add(canonizedExpr);
+                    if (solver.check().isSat()) {
+                        childNode = mddGraph.getNodeFor(canonizedExpr);
+                    } else {
+                        childNode = mddGraph.getTerminalZeroNode();
+                    }
+                }
+            }
         }
 
         if (!childNode.equals(mddVariable.getMddGraph().getTerminalZeroNode()))
