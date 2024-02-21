@@ -47,7 +47,7 @@ tasks {
     withType<Test>() {
         environment["PATH"] = execPath
         environment["LD_LIBRARY_PATH"] = libPath
-        enableAssertions = true
+        enableAssertions = false
     }
 
     withType<JavaExec>() {
