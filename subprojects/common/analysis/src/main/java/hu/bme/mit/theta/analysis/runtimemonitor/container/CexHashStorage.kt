@@ -17,8 +17,8 @@ package hu.bme.mit.theta.analysis.runtimemonitor.container
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.ArgStructuralEquality
-import hu.bme.mit.theta.analysis.algorithm.ArgTrace
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgStructuralEquality
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 
 class CexHashStorage<S : State?, A : Action?> :
     RuntimeDataCollection<ArgTrace<S, A>?> {
