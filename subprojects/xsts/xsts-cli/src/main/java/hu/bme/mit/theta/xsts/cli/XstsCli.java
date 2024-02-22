@@ -80,14 +80,7 @@ import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.SequenceInputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
