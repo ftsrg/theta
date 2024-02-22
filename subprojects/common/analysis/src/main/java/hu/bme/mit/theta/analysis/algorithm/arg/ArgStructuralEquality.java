@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.arg;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
