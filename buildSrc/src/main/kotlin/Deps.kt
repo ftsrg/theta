@@ -19,6 +19,7 @@ object Deps {
     val gson = "com.google.code.gson:gson:${Versions.gson}"
 
     object Antlr {
+
         val antlr = "org.antlr:antlr4:${Versions.antlr}"
         val runtime = "org.antlr:antlr4-runtime:${Versions.antlr}"
     }
@@ -58,10 +59,12 @@ object Deps {
     val junit5engine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit}"
 
     object Mockito {
+
         val core = "org.mockito:mockito-core:${Versions.mockito}"
     }
 
     object Kotlin {
+
         val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
         val reflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
     }
