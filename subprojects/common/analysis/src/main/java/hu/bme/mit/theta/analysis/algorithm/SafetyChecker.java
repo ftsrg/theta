@@ -26,7 +26,7 @@ public interface SafetyChecker<W extends Witness, C extends Cex, I> extends Chec
     @Override
 	SafetyResult<W, C> check(final I input);
 
-    default SafetyResult<S, A> check() {
+    default SafetyResult<W, C> check() {
         return check(null);
     }
 
