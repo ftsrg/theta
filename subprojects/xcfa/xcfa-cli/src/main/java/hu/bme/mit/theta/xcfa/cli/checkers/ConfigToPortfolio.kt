@@ -17,8 +17,10 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -41,7 +43,7 @@ import javax.script.SimpleBindings
 
 fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
     parseContext: ParseContext, logger: Logger,
-    uniqueLogger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> = SafetyChecker { _ ->
+    uniqueLogger: Logger): SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> = SafetyChecker { _ ->
 
     val sw = Stopwatch.createStarted()
     val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
@@ -71,5 +73,5 @@ fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
     val result = portfolioStm.execute() as Pair<XcfaConfig<*, *>, SafetyResult<*, *>>
 
     logger.write(Logger.Level.RESULT, "Config ${result.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n")
-    result.second as SafetyResult<XcfaState<*>, XcfaAction>?
+    result.second as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>>?
 }

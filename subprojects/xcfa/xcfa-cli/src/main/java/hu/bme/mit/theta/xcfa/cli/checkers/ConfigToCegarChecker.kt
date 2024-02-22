@@ -18,9 +18,11 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
@@ -43,7 +45,7 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getCegarChecker(xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
-    logger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+    logger: Logger): SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
     val cegarConfig = config.backendConfig.specConfig as CegarConfig
     val abstractionSolverFactory: SolverFactory = getSolver(cegarConfig.abstractorConfig.abstractionSolver,
         cegarConfig.abstractorConfig.validateAbstractionSolver)
@@ -119,12 +121,12 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
         MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
     }
 
-    return object : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
-        override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<*>, XcfaAction> {
-            return cegarChecker.check(prec) as SafetyResult<XcfaState<*>, XcfaAction>
+    return object : SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
+        override fun check(prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>> {
+            return cegarChecker.check(prec) as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>>
         }
 
-        override fun check(): SafetyResult<XcfaState<*>, XcfaAction> {
+        override fun check(): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>> {
             return check(cegarConfig.abstractorConfig.domain.initPrec(xcfa, cegarConfig.initPrec))
         }
     }

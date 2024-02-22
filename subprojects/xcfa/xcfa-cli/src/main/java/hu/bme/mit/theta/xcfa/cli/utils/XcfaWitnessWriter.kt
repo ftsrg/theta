@@ -42,9 +42,10 @@ class XcfaWitnessWriter {
         parseContext: ParseContext,
         witnessfile: File,
     ) {
-        if (safetyResult.isUnsafe && safetyResult.asUnsafe().hasTrace()) {
+        // TODO eliminate the need for the instanceof check
+        if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
+                safetyResult.asUnsafe().cex as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
 
             val witnessTrace = traceToWitness(trace = concrTrace, parseContext = parseContext)
             val witness = Witness(witnessTrace, inputFile)

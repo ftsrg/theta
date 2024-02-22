@@ -21,8 +21,11 @@ import com.zaxxer.nuprocess.NuProcess
 import com.zaxxer.nuprocess.NuProcessBuilder
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -45,13 +48,13 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
     val config: XcfaConfig<F, B>,
     val parseContext: ParseContext,
     val logger: Logger,
-) : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+) : SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
 
-    override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<*>, XcfaAction> {
+    override fun check(prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>> {
         return check()
     }
 
-    override fun check(): SafetyResult<XcfaState<*>, XcfaAction> {
+    override fun check(): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>> {
         val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
 
         val xcfaJson = CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
@@ -122,7 +125,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         }
         tempDir.toFile().deleteRecursively()
 
-        return booleanSafetyResult as SafetyResult<XcfaState<*>, XcfaAction>
+        return booleanSafetyResult as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>>
     }
 
     private class ProcessHandler : NuAbstractProcessHandler() {
@@ -142,10 +145,10 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
 
                 stdoutRemainder += str
                 if (stdoutRemainder.contains("SafetyResult Safe")) {
-                    safetyResult = SafetyResult.safe<State, Action>()
+                    safetyResult = SafetyResult.safe<ARG<State, Action>, Trace<State, Action>>(null)
                 }
                 if (stdoutRemainder.contains("SafetyResult Unsafe")) {
-                    safetyResult = SafetyResult.unsafe()
+                    safetyResult = SafetyResult.unsafe(null, null)
                 }
 
                 val newLines = stdoutRemainder.split("\n") // if ends with \n, last element will be ""

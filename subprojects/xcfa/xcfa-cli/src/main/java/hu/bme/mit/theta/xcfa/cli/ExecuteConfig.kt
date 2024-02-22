@@ -20,9 +20,12 @@ import com.google.common.base.Stopwatch
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
@@ -156,10 +159,10 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
     logger: Logger,
     uniqueLogger: Logger): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
-        SafetyResult.unknown<State, Action>()
+        SafetyResult.unknown<EmptyWitness, EmptyCex>()
     } else {
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
-            SafetyResult.safe<State, Action>()
+            SafetyResult.safe<EmptyWitness, EmptyCex>(EmptyWitness.getInstance())
         } else {
             val stopwatch = Stopwatch.createStarted()
 
@@ -228,16 +231,17 @@ private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
         logger.write(Logger.Level.INFO,
             "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n")
 
-        if (!config.outputConfig.argConfig.disable && safetyResult.hasArg()) {
+        // TODO eliminate the need for the instanceof check
+        if (!config.outputConfig.argConfig.disable && safetyResult.witness is ARG<out State, out Action>?) {
             val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
-            val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
+            val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.witness as ARG<out State, out Action>?)
             argFile.writeText(GraphvizWriter.getInstance().writeString(g))
         }
 
         if (!config.outputConfig.witnessConfig.disable) {
-            if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
+            if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
                 val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                    safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?,
+                    safetyResult.asUnsafe().cex as Trace<XcfaState<*>, XcfaAction>?,
                     getSolver(config.outputConfig.witnessConfig.concretizerSolver,
                         config.outputConfig.witnessConfig.validateConcretizerSolver))
 
