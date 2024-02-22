@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,57 +23,57 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
 
 public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
 
-	private static final int HASH_SEED = 4561;
+    private static final int HASH_SEED = 4561;
 
-	private static final String OPERATOR_LABEL = "prime";
+    private static final String OPERATOR_LABEL = "prime";
 
-	private PrimeExpr(final Expr<ExprType> op) {
-		super(op);
-	}
+    private PrimeExpr(final Expr<ExprType> op) {
+        super(op);
+    }
 
-	public static <ExprType extends Type> PrimeExpr<ExprType> of(final Expr<ExprType> op) {
-		return new PrimeExpr<>(op);
-	}
+    public static <ExprType extends Type> PrimeExpr<ExprType> of(final Expr<ExprType> op) {
+        return new PrimeExpr<>(op);
+    }
 
-	@Override
-	public final ExprType getType() {
-		return getOp().getType();
-	}
+    @Override
+    public final ExprType getType() {
+        return getOp().getType();
+    }
 
-	@Override
-	public LitExpr<ExprType> eval(final Valuation val) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public LitExpr<ExprType> eval(final Valuation val) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public final UnaryExpr<ExprType, ExprType> with(final Expr<ExprType> op) {
-		if (op == getOp()) {
-			return this;
-		} else {
-			return PrimeExpr.of(op);
-		}
-	}
+    @Override
+    public final UnaryExpr<ExprType, ExprType> with(final Expr<ExprType> op) {
+        if (op == getOp()) {
+            return this;
+        } else {
+            return PrimeExpr.of(op);
+        }
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof PrimeExpr) {
-			final PrimeExpr<?> that = (PrimeExpr<?>) obj;
-			return this.getOp().equals(that.getOp());
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final PrimeExpr<?> that = (PrimeExpr<?>) obj;
+            return this.getOp().equals(that.getOp());
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected final int getHashSeed() {
-		return HASH_SEED;
-	}
+    @Override
+    protected final int getHashSeed() {
+        return HASH_SEED;
+    }
 
-	@Override
-	public final String getOperatorLabel() {
-		return OPERATOR_LABEL;
-	}
+    @Override
+    public final String getOperatorLabel() {
+        return OPERATOR_LABEL;
+    }
 
 }

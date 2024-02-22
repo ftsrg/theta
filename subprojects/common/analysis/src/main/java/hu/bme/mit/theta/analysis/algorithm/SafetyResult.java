@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
+import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Cex;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.Optional;
@@ -30,6 +32,11 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
 		this.witness = checkNotNull(witness);
 		this.stats = checkNotNull(stats);
 	}
+
+    private SafetyResult() {
+        this.witness = null;
+        this.stats = Optional.empty();
+    }
 
 	@Override
 	public W getWitness() {
@@ -57,6 +64,10 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
 																		  final Statistics stats) {
 		return new Unsafe<>(cex, witness, Optional.of(stats));
 	}
+
+    public static <W extends Witness, C extends Cex> Unknown<W, C> unknown() {
+        return new Unknown<>();
+    }
 
 	public abstract boolean isSafe();
 
@@ -140,5 +151,35 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
 					.add("Trace length: " + cex.length()).toString();
 		}
 	}
+
+    public static final class Unknown<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
+
+        @Override
+        public boolean isSafe() {
+            return false;
+        }
+
+        @Override
+        public boolean isUnsafe() {
+            return false;
+        }
+
+        @Override
+        public Safe<W, C> asSafe() {
+            return null;
+        }
+
+        @Override
+        public Unsafe<W, C> asUnsafe() {
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
+                    .add(Unknown.class.getSimpleName())
+                    .toString();
+        }
+    }
 
 }

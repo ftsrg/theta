@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,296 +49,302 @@ import static com.google.common.base.Preconditions.checkState;
 
 final class Z3Solver implements UCSolver, Solver {
 
-	private final Z3SymbolTable symbolTable;
-	private final Z3TransformationManager transformationManager;
-	private final Z3TermTransformer termTransformer;
+    private final Z3SymbolTable symbolTable;
+    private final Z3TransformationManager transformationManager;
+    private final Z3TermTransformer termTransformer;
 
-	private final com.microsoft.z3.Context z3Context;
-	private final com.microsoft.z3.Solver z3Solver;
+    private final com.microsoft.z3.Context z3Context;
+    private final com.microsoft.z3.Solver z3Solver;
 
-	private final Stack<Expr<BoolType>> assertions;
-	private final Map<String, Expr<BoolType>> assumptions;
+    private final Stack<Expr<BoolType>> assertions;
+    private final Map<String, Expr<BoolType>> assumptions;
 
-	private static final String ASSUMPTION_LABEL = "_LABEL_%d";
-	private int labelNum = 0;
+    private static final String ASSUMPTION_LABEL = "_LABEL_%d";
+    private int labelNum = 0;
 
-	private Valuation model;
-	private Collection<Expr<BoolType>> unsatCore;
-	private SolverStatus status;
+    private Valuation model;
+    private Collection<Expr<BoolType>> unsatCore;
+    private SolverStatus status;
 
-	public Z3Solver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
-					final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
-					final com.microsoft.z3.Solver z3Solver) {
-		this.symbolTable = symbolTable;
-		this.transformationManager = transformationManager;
-		this.termTransformer = termTransformer;
-		this.z3Context = z3Context;
-		this.z3Solver = z3Solver;
+    public Z3Solver(final Z3SymbolTable symbolTable,
+                    final Z3TransformationManager transformationManager,
+                    final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
+                    final com.microsoft.z3.Solver z3Solver) {
+        this.symbolTable = symbolTable;
+        this.transformationManager = transformationManager;
+        this.termTransformer = termTransformer;
+        this.z3Context = z3Context;
+        this.z3Solver = z3Solver;
 
-		assertions = new StackImpl<>();
-		assumptions = Containers.createMap();
-	}
+        assertions = new StackImpl<>();
+        assumptions = Containers.createMap();
+    }
 
-	////
+    ////
 
-	@Override
-	public void add(final Expr<BoolType> assertion) {
-		checkNotNull(assertion);
-		final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
-		add(assertion, term);
-	}
+    @Override
+    public void add(final Expr<BoolType> assertion) {
+        checkNotNull(assertion);
+        final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
+                assertion);
+        add(assertion, term);
+    }
 
-	void add(final Expr<BoolType> assertion, final com.microsoft.z3.BoolExpr term) {
-		assertions.add(assertion);
-		z3Solver.add(term);
-		clearState();
-	}
+    void add(final Expr<BoolType> assertion, final com.microsoft.z3.BoolExpr term) {
+        assertions.add(assertion);
+        z3Solver.add(term);
+        clearState();
+    }
 
-	@Override
-	public void track(final Expr<BoolType> assertion) {
-		checkNotNull(assertion);
+    @Override
+    public void track(final Expr<BoolType> assertion) {
+        checkNotNull(assertion);
 
-		assertions.add(assertion);
-		final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
-		final String label = String.format(ASSUMPTION_LABEL, labelNum++);
-		final com.microsoft.z3.BoolExpr labelTerm = z3Context.mkBoolConst(label);
+        assertions.add(assertion);
+        final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
+                assertion);
+        final String label = String.format(ASSUMPTION_LABEL, labelNum++);
+        final com.microsoft.z3.BoolExpr labelTerm = z3Context.mkBoolConst(label);
 
-		assumptions.put(label, assertion);
+        assumptions.put(label, assertion);
 
-		z3Solver.assertAndTrack(term, labelTerm);
+        z3Solver.assertAndTrack(term, labelTerm);
 
-		clearState();
-	}
+        clearState();
+    }
 
-	@Override
-	public SolverStatus check() {
-		final Status z3Status = z3Solver.check();
-		status = transformStatus(z3Status);
-		return status;
-	}
+    @Override
+    public SolverStatus check() {
+        final Status z3Status = z3Solver.check();
+        status = transformStatus(z3Status);
+        return status;
+    }
 
-	private SolverStatus transformStatus(final Status z3Status) {
-		switch (z3Status) {
-			case SATISFIABLE:
-				return SolverStatus.SAT;
-			case UNSATISFIABLE:
-				return SolverStatus.UNSAT;
-			default:
-				throw new UnknownSolverStatusException();
-		}
-	}
+    private SolverStatus transformStatus(final Status z3Status) {
+        switch (z3Status) {
+            case SATISFIABLE:
+                return SolverStatus.SAT;
+            case UNSATISFIABLE:
+                return SolverStatus.UNSAT;
+            default:
+                throw new UnknownSolverStatusException();
+        }
+    }
 
-	@Override
-	public void push() {
-		assertions.push();
-		z3Solver.push();
-	}
+    @Override
+    public void push() {
+        assertions.push();
+        z3Solver.push();
+    }
 
-	@Override
-	public void pop(final int n) {
-		assertions.pop(n);
-		z3Solver.pop(n);
-		clearState();
-	}
+    @Override
+    public void pop(final int n) {
+        assertions.pop(n);
+        z3Solver.pop(n);
+        clearState();
+    }
 
-	@Override
-	public void reset() {
-		z3Solver.reset();
-		assertions.clear();
-		assumptions.clear();
-		symbolTable.clear();
-		transformationManager.reset();
-		clearState();
-	}
+    @Override
+    public void reset() {
+        z3Solver.reset();
+        assertions.clear();
+        assumptions.clear();
+        symbolTable.clear();
+        transformationManager.reset();
+        clearState();
+    }
 
-	@Override
-	public SolverStatus getStatus() {
-		checkState(status != null, "Solver status is unknown.");
-		return status;
-	}
+    @Override
+    public SolverStatus getStatus() {
+        checkState(status != null, "Solver status is unknown.");
+        return status;
+    }
 
-	@Override
-	public Valuation getModel() {
-		checkState(status == SolverStatus.SAT, "Cannot get model if status is not SAT.");
+    @Override
+    public Valuation getModel() {
+        checkState(status == SolverStatus.SAT, "Cannot get model if status is not SAT.");
 
-		if (model == null) {
-			model = extractModel();
-		}
+        if (model == null) {
+            model = extractModel();
+        }
 
-		assert model != null;
-		return model;
-	}
+        assert model != null;
+        return model;
+    }
 
-	private Valuation extractModel() {
-		assert status == SolverStatus.SAT;
-		assert model == null;
+    private Valuation extractModel() {
+        assert status == SolverStatus.SAT;
+        assert model == null;
 
-		final com.microsoft.z3.Model z3Model = z3Solver.getModel();
-		assert z3Model != null;
+        final com.microsoft.z3.Model z3Model = z3Solver.getModel();
+        assert z3Model != null;
 
-		return new Z3Model(z3Model);
-	}
+        return new Z3Model(z3Model);
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getUnsatCore() {
-		checkState(status == SolverStatus.UNSAT, "Cannot get unsat core if status is not UNSAT");
+    @Override
+    public Collection<Expr<BoolType>> getUnsatCore() {
+        checkState(status == SolverStatus.UNSAT, "Cannot get unsat core if status is not UNSAT");
 
-		if (unsatCore == null) {
-			unsatCore = extractUnsatCore();
-		}
+        if (unsatCore == null) {
+            unsatCore = extractUnsatCore();
+        }
 
-		assert unsatCore != null;
-		return Collections.unmodifiableCollection(unsatCore);
-	}
+        assert unsatCore != null;
+        return Collections.unmodifiableCollection(unsatCore);
+    }
 
-	private Collection<Expr<BoolType>> extractUnsatCore() {
-		assert status == SolverStatus.UNSAT;
-		assert unsatCore == null;
+    private Collection<Expr<BoolType>> extractUnsatCore() {
+        assert status == SolverStatus.UNSAT;
+        assert unsatCore == null;
 
-		final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
+        final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
 
-		final com.microsoft.z3.Expr[] z3UnsatCore = z3Solver.getUnsatCore();
+        final com.microsoft.z3.Expr[] z3UnsatCore = z3Solver.getUnsatCore();
 
-		for (int i = 0; i < z3UnsatCore.length; i = i + 1) {
-			final com.microsoft.z3.Expr term = z3UnsatCore[i];
+        for (int i = 0; i < z3UnsatCore.length; i = i + 1) {
+            final com.microsoft.z3.Expr term = z3UnsatCore[i];
 
-			checkState(term.isConst(), "Term is not constant.");
+            checkState(term.isConst(), "Term is not constant.");
 
-			final String label = term.toString();
-			final Expr<BoolType> assumption = assumptions.get(label);
+            final String label = term.toString();
+            final Expr<BoolType> assumption = assumptions.get(label);
 
-			assert assumption != null;
-			unsatCore.add(assumption);
-		}
+            assert assumption != null;
+            unsatCore.add(assumption);
+        }
 
-		return unsatCore;
-	}
+        return unsatCore;
+    }
 
-	@Override
-	public Collection<Expr<BoolType>> getAssertions() {
-		return assertions.toCollection();
-	}
+    @Override
+    public Collection<Expr<BoolType>> getAssertions() {
+        return assertions.toCollection();
+    }
 
-	private void clearState() {
-		status = null;
-		model = null;
-		unsatCore = null;
-	}
+    private void clearState() {
+        status = null;
+        model = null;
+        unsatCore = null;
+    }
 
-	@Override
-	public void close() {
-		z3Context.interrupt();
-	}
+    @Override
+    public void close() {
+        z3Context.interrupt();
+    }
 
-	////
+    ////
 
-	private final class Z3Model extends Valuation {
-		private final com.microsoft.z3.Model z3Model;
-		private final Map<Decl<?>, LitExpr<?>> constToExpr;
-		private volatile Collection<ConstDecl<?>> constDecls = null;
+    private final class Z3Model extends Valuation {
 
-		public Z3Model(final com.microsoft.z3.Model z3Model) {
-			this.z3Model = z3Model;
-			constToExpr = Containers.createMap();
-		}
+        private final com.microsoft.z3.Model z3Model;
+        private final Map<Decl<?>, LitExpr<?>> constToExpr;
+        private volatile Collection<ConstDecl<?>> constDecls = null;
 
-		@Override
-		public Collection<ConstDecl<?>> getDecls() {
-			Collection<ConstDecl<?>> result = constDecls;
-			if (result == null) {
-				result = constDeclsOf(z3Model);
-				constDecls = result;
-			}
-			return result;
-		}
+        public Z3Model(final com.microsoft.z3.Model z3Model) {
+            this.z3Model = z3Model;
+            constToExpr = Containers.createMap();
+        }
 
-		@Override
-		public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-			checkNotNull(decl);
+        @Override
+        public Collection<ConstDecl<?>> getDecls() {
+            Collection<ConstDecl<?>> result = constDecls;
+            if (result == null) {
+                result = constDeclsOf(z3Model);
+                constDecls = result;
+            }
+            return result;
+        }
 
-			if (!(decl instanceof ConstDecl)) {
-				return Optional.empty();
-			}
+        @Override
+        public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+            checkNotNull(decl);
 
-			final ConstDecl<DeclType> constDecl = (ConstDecl<DeclType>) decl;
+            if (!(decl instanceof ConstDecl)) {
+                return Optional.empty();
+            }
 
-			LitExpr<?> val = constToExpr.get(constDecl);
-			if (val == null) {
-				val = extractLiteral(constDecl);
-				if (val != null) {
-					constToExpr.put(constDecl, val);
-				}
-			}
+            final ConstDecl<DeclType> constDecl = (ConstDecl<DeclType>) decl;
 
-			@SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
-			return Optional.ofNullable(tVal);
-		}
+            LitExpr<?> val = constToExpr.get(constDecl);
+            if (val == null) {
+                val = extractLiteral(constDecl);
+                if (val != null) {
+                    constToExpr.put(constDecl, val);
+                }
+            }
 
-		private <DeclType extends Type> LitExpr<?> extractLiteral(final ConstDecl<DeclType> decl) {
-			final FuncDecl funcDecl = transformationManager.toSymbol(decl);
-			final Type type = decl.getType();
-			if (type instanceof FuncType) {
-				return extractFuncLiteral(funcDecl);
-			} else if (type instanceof ArrayType) {
-				return extractArrayLiteral(funcDecl);
-			} else if (type instanceof BvType) {
-				return extractBvConstLiteral(funcDecl);
-			} else {
-				return extractConstLiteral(funcDecl);
-			}
-		}
+            @SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
+            return Optional.ofNullable(tVal);
+        }
 
-		private LitExpr<?> extractFuncLiteral(final FuncDecl funcDecl) {
-			final Expr<?> expr = termTransformer.toFuncLitExpr(funcDecl, z3Model, new ArrayList<>());
-			return (LitExpr<?>) expr;
-		}
+        private <DeclType extends Type> LitExpr<?> extractLiteral(final ConstDecl<DeclType> decl) {
+            final FuncDecl funcDecl = transformationManager.toSymbol(decl);
+            final Type type = decl.getType();
+            if (type instanceof FuncType) {
+                return extractFuncLiteral(funcDecl);
+            } else if (type instanceof ArrayType) {
+                return extractArrayLiteral(funcDecl);
+            } else if (type instanceof BvType) {
+                return extractBvConstLiteral(funcDecl);
+            } else {
+                return extractConstLiteral(funcDecl);
+            }
+        }
 
-		private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
-			final Expr<?> expr = termTransformer.toArrayLitExpr(funcDecl, z3Model, new ArrayList<>());
-			return (LitExpr<?>) expr;
-		}
+        private LitExpr<?> extractFuncLiteral(final FuncDecl funcDecl) {
+            final Expr<?> expr = termTransformer.toFuncLitExpr(funcDecl, z3Model,
+                    new ArrayList<>());
+            return (LitExpr<?>) expr;
+        }
 
-		private LitExpr<?> extractBvConstLiteral(final FuncDecl funcDecl) {
-			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
-			if (term == null) {
-				return null;
-			} else {
-				return (BvLitExpr) termTransformer.toExpr(term);
-			}
-		}
+        private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
+            final Expr<?> expr = termTransformer.toArrayLitExpr(funcDecl, z3Model,
+                    new ArrayList<>());
+            return (LitExpr<?>) expr;
+        }
 
-		private LitExpr<?> extractConstLiteral(final FuncDecl funcDecl) {
-			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
-			if (term == null) {
-				return null;
-			} else {
-				return (LitExpr<?>) termTransformer.toExpr(term);
-			}
-		}
+        private LitExpr<?> extractBvConstLiteral(final FuncDecl funcDecl) {
+            final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+            if (term == null) {
+                return null;
+            } else {
+                return (BvLitExpr) termTransformer.toExpr(term);
+            }
+        }
 
-		@Override
-		public Map<Decl<?>, LitExpr<?>> toMap() {
-			getDecls().forEach(this::eval);
-			return Collections.unmodifiableMap(constToExpr);
-		}
+        private LitExpr<?> extractConstLiteral(final FuncDecl funcDecl) {
+            final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+            if (term == null) {
+                return null;
+            } else {
+                return (LitExpr<?>) termTransformer.toExpr(term);
+            }
+        }
 
-		////
+        @Override
+        public Map<Decl<?>, LitExpr<?>> toMap() {
+            getDecls().forEach(this::eval);
+            return Collections.unmodifiableMap(constToExpr);
+        }
 
-		private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
-			final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
-			for (final FuncDecl symbol : z3Model.getDecls()) {
-				if (symbolTable.definesSymbol(symbol)) {
-					final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
-					builder.add(constDecl);
-				}
-				/* else {
-					if (!assumptions.containsKey(symbol.getName().toString())) {
-						// Quantifier?
-					}
-				} */
-			}
-			return builder.build();
-		}
-	}
+        ////
+
+        private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
+            final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
+            for (final FuncDecl symbol : z3Model.getDecls()) {
+                if (symbolTable.definesSymbol(symbol)) {
+                    final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
+                    builder.add(constDecl);
+                }
+                /* else {
+                    if (!assumptions.containsKey(symbol.getName().toString())) {
+                        // Quantifier?
+                    }
+                } */
+            }
+            return builder.build();
+        }
+    }
 
 }

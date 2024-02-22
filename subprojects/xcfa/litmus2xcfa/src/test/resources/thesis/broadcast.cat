@@ -1,0 +1,6 @@
+BROADCAST
+
+procedure broadcast(rf, int, W, T, R, ext) =
+    let rf-int = rf; int
+    empty ((W & T) ∗ (R & T)) & ext \ rf \ rf-int as allMustReceive
+end

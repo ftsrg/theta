@@ -1,0 +1,7 @@
+INCLUDE-TEST
+
+(* five constraints, uses po and rf only *)
+
+include "simple.cat"
+
+include "procedure.cat"

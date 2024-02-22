@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.xsts.cli;
 
 import com.beust.jcommander.JCommander;
@@ -17,11 +32,11 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.algorithm.runtimecheck.ArgCexCheckHandler;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -40,7 +55,11 @@ import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PnmlParseException;
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
@@ -48,13 +67,28 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Algorithm;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.AutoExpl;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.OptimizeStmts;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.SequenceInputStream;
+import java.io.StringWriter;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -127,8 +161,17 @@ public class XstsCli {
     @Parameter(names = {"--search"}, description = "Search strategy")
     Search search = Search.BFS;
 
-	@Parameter(names = "--no-stuck-check")
-	boolean noStuckCheck = false;
+    @Parameter(names = {"--refinement-solver"}, description = "Refinement solver name")
+    String refinementSolver = "Z3";
+
+    @Parameter(names = {"--abstraction-solver"}, description = "Abstraction solver name")
+    String abstractionSolver = "Z3";
+
+    @Parameter(names = {"--smt-home"}, description = "The path of the solver registry")
+    String solverHome = SmtLibSolverManager.HOME.toAbsolutePath().toString();
+
+    @Parameter(names = "--no-stuck-check")
+    boolean noStuckCheck = false;
 
     @Parameter(names = {"--predsplit"}, description = "Predicate splitting")
     PredSplit predSplit = PredSplit.WHOLE;
@@ -471,14 +514,18 @@ public class XstsCli {
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
         // set up stopping analysis if it is stuck on same ARGs and precisions
-        if (noStuckCheck) {
-            ArgCexCheckHandler.instance.setArgCexCheck(false, false);
-        } else {
-            ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
-        }
+        //if (noStuckCheck) {
+            //ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+        //} else {
+            //ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
+        //        }
+
+        registerAllSolverManagers(solverHome, logger);
+        SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+        SolverFactory refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
 
         try {
-            return new XstsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+            return new XstsConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
                     .maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
                     .search(search).predSplit(predSplit).optimizeStmts(optimizeStmts).logger(logger).build(xsts);
         } catch (final Exception ex) {
@@ -487,7 +534,8 @@ public class XstsCli {
     }
 
     private void printCegarResult(final SafetyResult<? extends ARG<?,?>,? extends Trace<?,?>> status, final XSTS sts, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
@@ -785,5 +833,14 @@ public class XstsCli {
         }
     }
 
+
+    private void registerAllSolverManagers(String home, Logger logger) throws Exception {
+        SolverManager.closeAll();
+        SolverManager.registerSolverManager(Z3SolverManager.create());
+        if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+            SmtLibSolverManager smtLibSolverManager = SmtLibSolverManager.create(Path.of(home), logger);
+            SolverManager.registerSolverManager(smtLibSolverManager);
+        }
+    }
 
 }

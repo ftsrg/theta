@@ -1,0 +1,25 @@
+name: 'Install LLVM'
+inputs:
+    version:
+        required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run install script
+      shell: bash
+      run: |
+        # wget https://apt.llvm.org/llvm.sh
+        # chmod +x llvm.sh
+        sudo $GITHUB_ACTION_PATH/llvm.sh ${{ inputs.version }}        
+
+        sudo ln -sf $(which clang-${{inputs.version}}) /usr/bin/clang
+        sudo ln -sf $(which llvm-config-${{inputs.version}}) /usr/bin/llvm-config
+
+    - name: Test version
+      shell: bash
+      run: |
+        ls -l $(which clang)
+        ls -l $(which llvm-config)
+        clang --version
+        llvm-config --version

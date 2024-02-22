@@ -1,0 +1,5 @@
+PARTICIPANTNODUP
+
+procedure nodup(rf, id, int) =
+    empty (rf^-1; rf) \ id \ int as intNoDup
+end

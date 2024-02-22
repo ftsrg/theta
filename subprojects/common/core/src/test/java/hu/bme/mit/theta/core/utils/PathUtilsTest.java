@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,47 +35,58 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class PathUtilsTest {
 
-	final VarDecl<IntType> vx = Decls.Var("x", Int());
-	final VarDecl<IntType> vy = Decls.Var("y", Int());
-	final VarDecl<IntType> vz = Decls.Var("z", Int());
-	final IndexedConstDecl<IntType> x1 = vx.getConstDecl(1);
-	final IndexedConstDecl<IntType> x2 = vx.getConstDecl(2);
-	final IndexedConstDecl<IntType> y0 = vy.getConstDecl(0);
-	final IndexedConstDecl<IntType> y1 = vy.getConstDecl(1);
+    final VarDecl<IntType> vx = Decls.Var("x", Int());
+    final VarDecl<IntType> vy = Decls.Var("y", Int());
+    final VarDecl<IntType> vz = Decls.Var("z", Int());
+    final IndexedConstDecl<IntType> x0 = vx.getConstDecl(0);
+    final IndexedConstDecl<IntType> x1 = vx.getConstDecl(1);
+    final IndexedConstDecl<IntType> x2 = vx.getConstDecl(2);
+    final IndexedConstDecl<IntType> y0 = vy.getConstDecl(0);
+    final IndexedConstDecl<IntType> y1 = vy.getConstDecl(1);
 
-	@Test
-	public void testUnfold() {
-		Assert.assertEquals(Eq(x1.getRef(), Add(y0.getRef(), Int(1))),
-				PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 0));
+    @Test
+    public void testUnfold() {
+        Assert.assertEquals(Eq(x1.getRef(), Add(y0.getRef(), Int(1))),
+                PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 0));
 
-		Assert.assertEquals(Eq(x2.getRef(), Add(y1.getRef(), Int(1))),
-				PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 1));
-	}
+        Assert.assertEquals(Eq(x2.getRef(), Add(y1.getRef(), Int(1))),
+                PathUtils.unfold(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))), 1));
+    }
 
-	@Test
-	public void testFold() {
-		Assert.assertEquals(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
-				PathUtils.foldin(Eq(x1.getRef(), Add(y0.getRef(), Int(1))), 0));
+    @Test
+    public void testUnfoldReversed() {
+        Assert.assertEquals(Eq(x0.getRef(), Add(x1.getRef(), Int(1))),
+                PathUtils.unfoldReverse(Eq(Prime(vx.getRef()), Add(vx.getRef(), Int(1))), VarIndexingFactory.indexing(0)));
+        Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), Int(1))),
+                PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Int(1))), VarIndexingFactory.indexing(0)));
+        Assert.assertEquals(Eq(x0.getRef(), Add(x2.getRef(), x1.getRef())),
+                PathUtils.unfoldReverse(Eq(Prime(Prime(vx.getRef())), Add(vx.getRef(), Prime(vx.getRef()))), VarIndexingFactory.indexing(0)));
+    }
 
-		Assert.assertEquals(Eq(Prime(vx.getRef(), 2), Add(Prime(vy.getRef()), Int(1))),
-				PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 0));
+    @Test
+    public void testFold() {
+        Assert.assertEquals(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
+                PathUtils.foldin(Eq(x1.getRef(), Add(y0.getRef(), Int(1))), 0));
 
-		Assert.assertEquals(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
-				PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 1));
-	}
+        Assert.assertEquals(Eq(Prime(vx.getRef(), 2), Add(Prime(vy.getRef()), Int(1))),
+                PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 0));
 
-	@Test
-	public void testExtractValuation() {
-		final Valuation valuation = ImmutableValuation.builder().put(x1, Int(1)).put(x2, Int(2)).put(y1, Int(3))
-				.build();
+        Assert.assertEquals(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
+                PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 1));
+    }
 
-		final Valuation extr0 = PathUtils.extractValuation(valuation, 1);
-		Assert.assertEquals(2, extr0.getDecls().size());
-		Assert.assertEquals(Int(1), extr0.eval(vx).get());
-		Assert.assertEquals(Int(3), extr0.eval(vy).get());
+    @Test
+    public void testExtractValuation() {
+        final Valuation valuation = ImmutableValuation.builder().put(x1, Int(1)).put(x2, Int(2)).put(y1, Int(3))
+                .build();
 
-		final Valuation extr1 = PathUtils.extractValuation(valuation, 1, ImmutableSet.of(vx, vz));
-		Assert.assertEquals(1, extr1.getDecls().size());
-		Assert.assertEquals(Int(1), extr1.eval(vx).get());
-	}
+        final Valuation extr0 = PathUtils.extractValuation(valuation, 1);
+        Assert.assertEquals(2, extr0.getDecls().size());
+        Assert.assertEquals(Int(1), extr0.eval(vx).get());
+        Assert.assertEquals(Int(3), extr0.eval(vy).get());
+
+        final Valuation extr1 = PathUtils.extractValuation(valuation, 1, ImmutableSet.of(vx, vz));
+        Assert.assertEquals(1, extr1.getDecls().size());
+        Assert.assertEquals(Int(1), extr1.eval(vx).get());
+    }
 }

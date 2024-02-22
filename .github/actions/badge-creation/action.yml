@@ -1,0 +1,40 @@
+name: 'Badge creation'
+description: 'Creating a badge'
+inputs:
+    label:
+        required: true
+    status:
+        required: true
+    color:
+        required: true
+    path:
+        required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - name: Create folder
+      shell: bash
+      run: mkdir -p ${{ inputs.path }}
+    - name: Badge creation
+      uses: emibcn/badge-action@4209421db54c8764d8932070ffd0f81715a629bf
+      with:
+        label: ${{ inputs.label }}
+        status: ${{ inputs.status }}
+        color: ${{ inputs.color }}
+        path: ${{ inputs.path }}/badge.svg
+    - name: setup rsync for windows
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        choco install -y rsync
+    - name: Deploy badges
+      if: github.ref == 'refs/heads/master' && always() && github.event_name != 'pull_request'
+      uses: leventeBajczi/github-pages-deploy-action-winfix@6d31a3c68a3912555731864c0d5ef4239b02369d # v0.3
+      with:
+        branch: badges
+        folder: ${{ inputs.path }}
+        target-folder: ${{ inputs.path }}
+        single-commit: true

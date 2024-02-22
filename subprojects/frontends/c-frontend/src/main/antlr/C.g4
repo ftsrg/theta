@@ -31,7 +31,8 @@ grammar C;
 
 
 primaryExpression
-    :   Identifier                                                          # primaryExpressionId
+    :   '__PRETTY_FUNC__'                                                   # gccPrettyFunc
+    |   Identifier                                                          # primaryExpressionId
     |   Constant                                                            # primaryExpressionConstant
     |   StringLiteral+                                                      # primaryExpressionStrings
     |   '(' expression ')'                                                  # primaryExpressionBraceExpression
@@ -932,7 +933,6 @@ LineDirective
 
 PragmaDirective
     :   '#' Whitespace? 'pragma' Whitespace ~[\r\n]*
-        -> skip
     ;
 
 Whitespace

@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.solver.smtlib;
 
 import hu.bme.mit.theta.common.OsHelper;
@@ -28,10 +43,11 @@ import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SmtLibSolverBVTest {
-    private static final String SOLVER = "z3";
-    private static final String VERSION = "4.5.0";
+
     private static boolean solverInstalled = false;
     private static SmtLibSolverManager solverManager;
+    private static final String SOLVER = "z3";
+    private static final String VERSION = "4.11.2";
 
     @Parameterized.Parameter(0)
     public Class<?> exprType;
@@ -44,7 +60,7 @@ public class SmtLibSolverBVTest {
 
     @BeforeClass
     public static void init() throws SmtLibSolverInstallerException, IOException {
-        if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
+        if (OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
             Path home = SmtLibSolverManager.HOME;
 
             solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance());
@@ -58,17 +74,19 @@ public class SmtLibSolverBVTest {
 
     @AfterClass
     public static void destroy() throws SmtLibSolverInstallerException {
-        if(solverInstalled) solverManager.uninstall(SOLVER, VERSION);
+        if (solverInstalled) {
+            solverManager.uninstall(SOLVER, VERSION);
+        }
     }
 
     @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return Stream.concat(
-            BvTestUtils.BasicOperations().stream(),
-            Stream.concat(
-                BvTestUtils.BitvectorOperations().stream(),
-                BvTestUtils.RelationalOperations().stream()
-            )
+                BvTestUtils.BasicOperations().stream(),
+                Stream.concat(
+                        BvTestUtils.BitvectorOperations().stream(),
+                        BvTestUtils.RelationalOperations().stream()
+                )
         ).collect(Collectors.toUnmodifiableList());
     }
 
@@ -83,17 +101,19 @@ public class SmtLibSolverBVTest {
 
         // Type checks
         assertTrue(
-            "The type of actual is " + actual.getClass().getName() + " instead of " + exprType.getName(),
-            exprType.isInstance(actual)
+                "The type of actual is " + actual.getClass().getName() + " instead of "
+                        + exprType.getName(),
+                exprType.isInstance(actual)
         );
         assertEquals(
-            "The type of expected (" + expected.getType() + ") must match the type of actual (" + actual.getType() + ")",
-            expected.getType(),
-            actual.getType()
+                "The type of expected (" + expected.getType() + ") must match the type of actual ("
+                        + actual.getType() + ")",
+                expected.getType(),
+                actual.getType()
         );
 
         // Equality check
-        try(final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
+        try (final Solver solver = solverManager.getSolverFactory(SOLVER, VERSION).createSolver()) {
             solver.push();
 
             solver.add(EqExpr.create2(expected, actual));

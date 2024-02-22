@@ -1,5 +1,5 @@
 /*
- *  Copyright 2022 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,212 +41,221 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
 public final class WpState {
-	private static final int HASH_SEED = 2029;
-	private volatile int hashCode = 0;
 
-	private final Expr<BoolType> expr;
-	private final int constCount;
+    private static final int HASH_SEED = 2029;
+    private volatile int hashCode = 0;
 
-	private WpState(final Expr<BoolType> expr, final int constCount) {
-		checkNotNull(expr);
-		checkArgument(constCount >= 0);
-		this.expr = expr;
-		this.constCount = constCount;
-	}
+    private final Expr<BoolType> expr;
+    private final int constCount;
 
-	public static WpState of(final Expr<BoolType> expr) {
-		return new WpState(expr, 0);
-	}
+    private WpState(final Expr<BoolType> expr, final int constCount) {
+        checkNotNull(expr);
+        checkArgument(constCount >= 0);
+        this.expr = expr;
+        this.constCount = constCount;
+    }
 
-	public static WpState of(final Expr<BoolType> expr, final int constCount) {
-		return new WpState(expr, constCount);
-	}
+    public static WpState of(final Expr<BoolType> expr) {
+        return new WpState(expr, 0);
+    }
 
-	public Expr<BoolType> getExpr() {
-		return expr;
-	}
+    public static WpState of(final Expr<BoolType> expr, final int constCount) {
+        return new WpState(expr, constCount);
+    }
 
-	public int getConstCount() {
-		return constCount;
-	}
+    public Expr<BoolType> getExpr() {
+        return expr;
+    }
 
-	/**
-	 * Compute the weakest precondition w.r.t. a statement
-	 *
-	 * @param stmt Statement
-	 * @return
-	 */
-	public WpState wp(final Stmt stmt) {
-		return stmt.accept(WpVisitor.getInstance(), this);
-	}
+    public int getConstCount() {
+        return constCount;
+    }
 
-	/**
-	 * Compute the weakest existential precondition w.r.t. a statement
-	 *
-	 * @param stmt Statement
-	 * @return
-	 */
-	public WpState wep(final Stmt stmt) {
-		return stmt.accept(WepVisitor.getInstance(), this);
-	}
+    /**
+     * Compute the weakest precondition w.r.t. a statement
+     *
+     * @param stmt Statement
+     * @return
+     */
+    public WpState wp(final Stmt stmt) {
+        return stmt.accept(WpVisitor.getInstance(), this);
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + expr.hashCode();
-			result = 31 * result + constCount;
-			hashCode = result;
-		}
-		return result;
-	}
+    /**
+     * Compute the weakest existential precondition w.r.t. a statement
+     *
+     * @param stmt Statement
+     * @return
+     */
+    public WpState wep(final Stmt stmt) {
+        return stmt.accept(WepVisitor.getInstance(), this);
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof WpState) {
-			final WpState that = (WpState) obj;
-			return this.constCount == that.constCount && this.expr.equals(that.expr);
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + expr.hashCode();
+            result = 31 * result + constCount;
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr).add(Integer.valueOf(constCount))
-				.toString();
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final WpState that = (WpState) obj;
+            return this.constCount == that.constCount && this.expr.equals(that.expr);
+        } else {
+            return false;
+        }
+    }
 
-	private static final class WpVisitor implements StmtVisitor<WpState, WpState> {
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr)
+                .add(Integer.valueOf(constCount))
+                .toString();
+    }
 
-		private WpVisitor() {
-		}
+    private static final class WpVisitor implements StmtVisitor<WpState, WpState> {
 
-		private static class LazyHolder {
-			private static final WpVisitor INSTANCE = new WpVisitor();
-		}
+        private WpVisitor() {
+        }
 
-		public static WpVisitor getInstance() {
-			return LazyHolder.INSTANCE;
-		}
+        private static class LazyHolder {
 
-		@Override
-		public WpState visit(final SkipStmt stmt, final WpState state) {
-			return state;
-		}
+            private static final WpVisitor INSTANCE = new WpVisitor();
+        }
 
-		@Override
-		public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt, final WpState state) {
-			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
-			final Substitution sub = BasicSubstitution.builder().put(varDecl, stmt.getExpr()).build();
-			final Expr<BoolType> expr = sub.apply(state.getExpr());
-			final int constCount = state.constCount;
-			return new WpState(expr, constCount);
-		}
+        public static WpVisitor getInstance() {
+            return LazyHolder.INSTANCE;
+        }
 
-		@Override
-		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
-			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
-			final int constCount = state.constCount + 1;
-			final String valName = String.format("_wp_%d", constCount);
-			final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
-			final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
-			final Expr<BoolType> expr = sub.apply(state.getExpr());
-			return new WpState(expr, constCount);
-		}
+        @Override
+        public WpState visit(final SkipStmt stmt, final WpState state) {
+            return state;
+        }
 
-		@Override
-		public WpState visit(SequenceStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt,
+                                                     final WpState state) {
+            final VarDecl<DeclType> varDecl = stmt.getVarDecl();
+            final Substitution sub = BasicSubstitution.builder().put(varDecl, stmt.getExpr())
+                    .build();
+            final Expr<BoolType> expr = sub.apply(state.getExpr());
+            final int constCount = state.constCount;
+            return new WpState(expr, constCount);
+        }
 
-		@Override
-		public WpState visit(NonDetStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt,
+                                                     final WpState state) {
+            final VarDecl<DeclType> varDecl = stmt.getVarDecl();
+            final int constCount = state.constCount + 1;
+            final String valName = String.format("_wp_%d", constCount);
+            final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
+            final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
+            final Expr<BoolType> expr = sub.apply(state.getExpr());
+            return new WpState(expr, constCount);
+        }
 
-		@Override
-		public WpState visit(OrtStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public WpState visit(SequenceStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public WpState visit(LoopStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public WpState visit(NonDetStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
-		public WpState visit(IfStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public WpState visit(OrtStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public WpState visit(final AssumeStmt stmt, final WpState state) {
-			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
-			final int constCount = state.constCount;
-			return new WpState(expr, constCount);
-		}
-	}
+        @Override
+        public WpState visit(LoopStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
-	private static final class WepVisitor implements StmtVisitor<WpState, WpState> {
+        public WpState visit(IfStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
-		private WepVisitor() {
-		}
+        @Override
+        public WpState visit(final AssumeStmt stmt, final WpState state) {
+            final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
+            final int constCount = state.constCount;
+            return new WpState(expr, constCount);
+        }
+    }
 
-		private static class LazyHolder {
-			private static final WepVisitor INSTANCE = new WepVisitor();
-		}
+    private static final class WepVisitor implements StmtVisitor<WpState, WpState> {
 
-		public static WepVisitor getInstance() {
-			return LazyHolder.INSTANCE;
-		}
+        private WepVisitor() {
+        }
 
-		@Override
-		public WpState visit(final SkipStmt stmt, final WpState state) {
-			return WpVisitor.getInstance().visit(stmt, state);
-		}
+        private static class LazyHolder {
 
-		@Override
-		public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt, final WpState state) {
-			return WpVisitor.getInstance().visit(stmt, state);
-		}
+            private static final WepVisitor INSTANCE = new WepVisitor();
+        }
 
-		@Override
-		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
-			return WpVisitor.getInstance().visit(stmt, state);
-		}
+        public static WepVisitor getInstance() {
+            return LazyHolder.INSTANCE;
+        }
 
-		@Override
-		public WpState visit(SequenceStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public WpState visit(final SkipStmt stmt, final WpState state) {
+            return WpVisitor.getInstance().visit(stmt, state);
+        }
 
-		@Override
-		public WpState visit(NonDetStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt,
+                                                     final WpState state) {
+            return WpVisitor.getInstance().visit(stmt, state);
+        }
 
-		@Override
-		public WpState visit(OrtStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt,
+                                                     final WpState state) {
+            return WpVisitor.getInstance().visit(stmt, state);
+        }
 
-		@Override
-		public WpState visit(LoopStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public WpState visit(SequenceStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
-		public WpState visit(IfStmt stmt, WpState param) {
-			throw new UnsupportedOperationException();
-		}
+        @Override
+        public WpState visit(NonDetStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
 
-		@Override
-		public WpState visit(final AssumeStmt stmt, final WpState state) {
-			final Expr<BoolType> expr = And(stmt.getCond(), state.getExpr());
-			final int constCount = state.constCount;
-			return new WpState(expr, constCount);
-		}
-	}
+        @Override
+        public WpState visit(OrtStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public WpState visit(LoopStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        public WpState visit(IfStmt stmt, WpState param) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public WpState visit(final AssumeStmt stmt, final WpState state) {
+            final Expr<BoolType> expr = And(stmt.getCond(), state.getExpr());
+            final int constCount = state.constCount;
+            return new WpState(expr, constCount);
+        }
+    }
 }

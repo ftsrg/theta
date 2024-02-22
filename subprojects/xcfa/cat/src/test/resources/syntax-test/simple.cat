@@ -1,0 +1,11 @@
+SIMPLE
+
+(* Three constraints, uses po and rf only *)
+
+let porf = po | rf
+acyclic porf
+
+let popoinv = po | po^-1
+irreflexive popoinv
+
+~empty po

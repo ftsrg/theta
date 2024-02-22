@@ -1,0 +1,8 @@
+nav:
+    - Summary: index.md
+    - cfa
+    - xcfa
+    - sts
+    - xsts
+    - xta
+    - cat    

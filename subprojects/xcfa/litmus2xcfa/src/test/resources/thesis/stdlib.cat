@@ -1,0 +1,25 @@
+STDLIB
+
+let ext = ~int
+
+let both-in-trace = (T * T)
+
+empty rf \ both-in-trace as rfMustBeChosen
+empty co \ both-in-trace as coMustBeChosen
+
+empty rf \ (W * R) as rfOnlyBetweenWriteRead
+empty rf \ loc as rfReadsSameVar
+empty (rf; rf^-1)\id as onlyOneRfPerRead
+
+
+empty co \ (W * W) as coOnlyBetweenWrites
+empty co \ loc as coForSameVar
+empty ((IW * W) & loc & both-in-trace) \ id \ co as coInitialFirst
+empty ((W * W) & loc & both-in-trace) \ id \ co \ co^-1 as coTotalOrder0
+acyclic co as coTotalOrder1
+
+empty rf & (IW * R) as noIW
+
+let po-loc = po & loc
+let rfe = rf & ext
+let rfi = rf & int

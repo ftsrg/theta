@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,77 +15,78 @@
  */
 package hu.bme.mit.theta.xta.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+
 public final class RangeType implements Type {
-	private static final int HASH_SEED = 5441;
-	private volatile int hashCode = 0;
 
-	private final int lower;
-	private final int upper;
+    private static final int HASH_SEED = 5441;
+    private volatile int hashCode = 0;
 
-	private RangeType(final int lower, final int upper) {
-		checkArgument(lower <= upper);
-		this.lower = lower;
-		this.upper = upper;
-	}
+    private final int lower;
+    private final int upper;
 
-	public static RangeType Range(final int lower, final int upper) {
-		return new RangeType(lower, upper);
-	}
+    private RangeType(final int lower, final int upper) {
+        checkArgument(lower <= upper);
+        this.lower = lower;
+        this.upper = upper;
+    }
 
-	public IntLitExpr Int(final int value) {
-		checkArgument(value >= lower && value <= upper);
-		return IntExprs.Int(value);
-	}
+    public static RangeType Range(final int lower, final int upper) {
+        return new RangeType(lower, upper);
+    }
 
-	public Stream<IntLitExpr> values() {
-		return IntStream.rangeClosed(lower, upper).mapToObj(IntExprs::Int);
-	}
+    public IntLitExpr Int(final int value) {
+        checkArgument(value >= lower && value <= upper);
+        return IntExprs.Int(value);
+    }
 
-	public int getLower() {
-		return lower;
-	}
+    public Stream<IntLitExpr> values() {
+        return IntStream.rangeClosed(lower, upper).mapToObj(IntExprs::Int);
+    }
 
-	public int getUpper() {
-		return upper;
-	}
+    public int getLower() {
+        return lower;
+    }
 
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + lower;
-			result = 31 * result + upper;
-			hashCode = result;
-		}
-		return result;
-	}
+    public int getUpper() {
+        return upper;
+    }
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof RangeType) {
-			final RangeType that = (RangeType) obj;
-			return this.lower == that.lower && this.upper == that.upper;
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = HASH_SEED;
+            result = 31 * result + lower;
+            result = 31 * result + upper;
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("Range").add(lower).add(upper).toString();
-	}
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj != null && this.getClass() == obj.getClass()) {
+            final RangeType that = (RangeType) obj;
+            return this.lower == that.lower && this.upper == that.upper;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return Utils.lispStringBuilder("Range").add(lower).add(upper).toString();
+    }
 
 }

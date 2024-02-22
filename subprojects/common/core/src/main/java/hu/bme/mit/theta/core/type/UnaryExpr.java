@@ -1,5 +1,5 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,58 +25,59 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
-public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
+public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements
+        Expr<ExprType> {
 
-	private final Expr<OpType> op;
+    private final Expr<OpType> op;
 
-	private volatile int hashCode = 0;
+    private volatile int hashCode = 0;
 
-	public UnaryExpr(final Expr<OpType> op) {
-		this.op = checkNotNull(op);
-	}
+    public UnaryExpr(final Expr<OpType> op) {
+        this.op = checkNotNull(op);
+    }
 
-	public final Expr<OpType> getOp() {
-		return op;
-	}
+    public final Expr<OpType> getOp() {
+        return op;
+    }
 
-	@Override
-	public final List<Expr<OpType>> getOps() {
-		return ImmutableList.of(op);
-	}
+    @Override
+    public final List<Expr<OpType>> getOps() {
+        return ImmutableList.of(op);
+    }
 
-	@Override
-	public final UnaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
-		checkNotNull(ops);
-		checkArgument(ops.size() == 1);
-		final OpType opType = op.getType();
-		final Expr<OpType> newOp = TypeUtils.cast(ops.get(0), opType);
-		return with(newOp);
-	}
+    @Override
+    public final UnaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
+        checkNotNull(ops);
+        checkArgument(ops.size() == 1);
+        final OpType opType = op.getType();
+        final Expr<OpType> newOp = TypeUtils.cast(ops.get(0), opType);
+        return with(newOp);
+    }
 
-	@Override
-	public int getArity() {
-		return 1;
-	}
+    @Override
+    public int getArity() {
+        return 1;
+    }
 
-	@Override
-	public final int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = getHashSeed();
-			result = 37 * result + getOp().hashCode();
-			result = hashCode;
-		}
-		return result;
-	}
+    @Override
+    public final int hashCode() {
+        int result = hashCode;
+        if (result == 0) {
+            result = getHashSeed();
+            result = 37 * result + getOp().hashCode();
+            hashCode = result;
+        }
+        return result;
+    }
 
-	@Override
-	public final String toString() {
-		return Utils.lispStringBuilder(getOperatorLabel()).add(op).toString();
-	}
+    @Override
+    public final String toString() {
+        return Utils.lispStringBuilder(getOperatorLabel()).add(op).toString();
+    }
 
-	public abstract UnaryExpr<OpType, ExprType> with(final Expr<OpType> op);
+    public abstract UnaryExpr<OpType, ExprType> with(final Expr<OpType> op);
 
-	protected abstract int getHashSeed();
+    protected abstract int getHashSeed();
 
-	public abstract String getOperatorLabel();
+    public abstract String getOperatorLabel();
 }

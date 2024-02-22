@@ -1,0 +1,529 @@
+{
+  "name": "",
+  "vars": [],
+  "procedures": [
+    {
+      "name": "reach_error",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "reach_error_ret",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [],
+      "locs": [
+        "reach_error_init {init}",
+        "reach_error_final {final}",
+        "__loc_1171 "
+      ],
+      "edges": [
+        {
+          "source": "reach_error_init",
+          "target": "__loc_1171",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          }
+        },
+        {
+          "source": "__loc_1171",
+          "target": "reach_error_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          }
+        }
+      ]
+    },
+    {
+      "name": "fibonacci",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "fibonacci_ret",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        },
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "fibonacci::i",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "IN"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "fibonacci::i",
+          "type": "Int"
+        },
+        {
+          "name": "fibonacci_ret",
+          "type": "Int"
+        },
+        {
+          "name": "call_fibonacci_ret73",
+          "type": "Int"
+        },
+        {
+          "name": "call_fibonacci_ret74",
+          "type": "Int"
+        }
+      ],
+      "locs": [
+        "fibonacci_init {init}",
+        "fibonacci_final {final}",
+        "__loc_1179 ",
+        "__loc_1185 ",
+        "__loc_1194 ",
+        "__loc_1200 ",
+        "__loc_1211 ",
+        "__loc_1216 ",
+        "__loc_1217 "
+      ],
+      "edges": [
+        {
+          "source": "fibonacci_init",
+          "target": "__loc_1179",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          }
+        },
+        {
+          "source": "__loc_1211",
+          "target": "__loc_1216",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.InvokeLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 6,
+                    "colNumberStart": 16,
+                    "lineNumberStop": 6,
+                    "colNumberStop": 29,
+                    "offsetStart": 116,
+                    "offsetEnd": 129,
+                    "sourceText": "fibonacci(i-1)"
+                  }
+                },
+                "content": "fibonacci(call_fibonacci_ret73, (+ (+ (+ fibonacci::i) (+ (- 1)))))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1216",
+          "target": "__loc_1217",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.InvokeLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 6,
+                    "colNumberStart": 33,
+                    "lineNumberStop": 6,
+                    "colNumberStop": 46,
+                    "offsetStart": 133,
+                    "offsetEnd": 146,
+                    "sourceText": "fibonacci(i-2)"
+                  }
+                },
+                "content": "fibonacci(call_fibonacci_ret74, (+ (+ (+ fibonacci::i) (+ (- 2)))))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1185",
+          "target": "fibonacci_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 4,
+                    "colNumberStart": 15,
+                    "lineNumberStop": 4,
+                    "colNumberStop": 22,
+                    "offsetStart": 60,
+                    "offsetEnd": 67,
+                    "sourceText": "return 0"
+                  }
+                },
+                "content": "(assign fibonacci_ret 0)"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1200",
+          "target": "fibonacci_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 20,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 27,
+                    "offsetStart": 90,
+                    "offsetEnd": 97,
+                    "sourceText": "return 1"
+                  }
+                },
+                "content": "(assign fibonacci_ret 1)"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1217",
+          "target": "fibonacci_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 6,
+                    "colNumberStart": 9,
+                    "lineNumberStop": 6,
+                    "colNumberStop": 46,
+                    "offsetStart": 109,
+                    "offsetEnd": 146,
+                    "sourceText": "return fibonacci(i-1) + fibonacci(i-2)"
+                  }
+                },
+                "content": "(assign fibonacci_ret (+ call_fibonacci_ret73 call_fibonacci_ret74))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1179",
+          "target": "__loc_1185",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 4,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 4,
+                    "colNumberStop": 12,
+                    "offsetStart": 52,
+                    "offsetEnd": 57,
+                    "sourceText": "i \u003d\u003d 0"
+                  }
+                },
+                "content": "(assume (/\u003d (ite (\u003d fibonacci::i 0) 1 0) 0))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1179",
+          "target": "__loc_1194",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 4,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 4,
+                    "colNumberStop": 12,
+                    "offsetStart": 52,
+                    "offsetEnd": 57,
+                    "sourceText": "i \u003d\u003d 0"
+                  }
+                },
+                "content": "(assume (\u003d (ite (\u003d fibonacci::i 0) 1 0) 0))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1194",
+          "target": "__loc_1200",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 12,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 17,
+                    "offsetStart": 82,
+                    "offsetEnd": 87,
+                    "sourceText": "i \u003d\u003d 1"
+                  }
+                },
+                "content": "(assume (/\u003d (ite (\u003d fibonacci::i 1) 1 0) 0))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1194",
+          "target": "__loc_1211",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 5,
+                    "colNumberStart": 12,
+                    "lineNumberStop": 5,
+                    "colNumberStop": 17,
+                    "offsetStart": 82,
+                    "offsetEnd": 87,
+                    "sourceText": "i \u003d\u003d 1"
+                  }
+                },
+                "content": "(assume (\u003d (ite (\u003d fibonacci::i 1) 1 0) 0))"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "params": [
+        {
+          "first": {
+            "type": "hu.bme.mit.theta.core.decl.VarDecl",
+            "value": {
+              "name": "main_ret",
+              "type": "Int"
+            }
+          },
+          "second": {
+            "type": "hu.bme.mit.theta.xcfa.model.ParamDirection",
+            "value": "OUT"
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "call_fibonacci_ret75",
+          "type": "Int"
+        }
+      ],
+      "locs": [
+        "main_init {init}",
+        "main_final {final}",
+        "__loc_1228 ",
+        "__loc_1231 ",
+        "main_error {error}"
+      ],
+      "edges": [
+        {
+          "source": "__loc_1231",
+          "target": "__loc_1228",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.InvokeLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 10,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 10,
+                    "colNumberStop": 18,
+                    "offsetStart": 172,
+                    "offsetEnd": 183,
+                    "sourceText": "fibonacci(8)"
+                  }
+                },
+                "content": "fibonacci(call_fibonacci_ret75, 8)"
+              }
+            ]
+          }
+        },
+        {
+          "source": "main_init",
+          "target": "__loc_1231",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": []
+          }
+        },
+        {
+          "source": "__loc_1228",
+          "target": "main_final",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 10,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 10,
+                    "colNumberStop": 24,
+                    "offsetStart": 172,
+                    "offsetEnd": 189,
+                    "sourceText": "fibonacci(8) !\u003d 21"
+                  }
+                },
+                "content": "(assume (\u003d (ite (/\u003d call_fibonacci_ret75 21) 1 0) 0))"
+              }
+            ]
+          }
+        },
+        {
+          "source": "__loc_1228",
+          "target": "main_error",
+          "label": {
+            "type": "hu.bme.mit.theta.xcfa.model.SequenceLabel",
+            "metadata": {
+              "type": "hu.bme.mit.theta.xcfa.model.EmptyMetaData",
+              "content": {}
+            },
+            "labels": [
+              {
+                "type": "hu.bme.mit.theta.xcfa.model.StmtLabel",
+                "metadata": {
+                  "type": "hu.bme.mit.theta.c2xcfa.CMetaData",
+                  "content": {
+                    "lineNumberStart": 10,
+                    "colNumberStart": 7,
+                    "lineNumberStop": 10,
+                    "colNumberStop": 24,
+                    "offsetStart": 172,
+                    "offsetEnd": 189,
+                    "sourceText": "fibonacci(8) !\u003d 21"
+                  }
+                },
+                "content": "(assume (/\u003d (ite (/\u003d call_fibonacci_ret75 21) 1 0) 0))"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "initProcedures": [
+    {
+      "params": [],
+      "procedure": "main"
+    }
+  ]
+}

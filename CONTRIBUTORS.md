@@ -14,3 +14,5 @@ Contributors:
 * [Vince Molnár](https://github.com/vincemolnar)
 * [Márk Somorjai](https://github.com/s0mark)
 * [Csanád Telbisz](https://github.com/csanadtelbisz)
+* [Botond Sisák](https://github.com/sisakb)
+* [Zalán Mondok](https://github.com/mondokz)

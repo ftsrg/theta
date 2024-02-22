@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.frontend.petrinet.xsts;
 
 import com.google.common.collect.ImmutableList;
@@ -31,50 +46,51 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public class PetriNetToXSTS {
 
-	private PetriNetToXSTS(){
-	}
+	private PetriNetToXSTS() {
+    }
 
-	public static XSTS createXSTS(final PetriNet net, final InputStream propStream){
-		final Map<String, VarDecl<IntType>> placeIdToVar = Containers.createMap();
+    public static XSTS createXSTS(final PetriNet net, final InputStream propStream) {
+        final Map<String, VarDecl<IntType>> placeIdToVar = Containers.createMap();
 
-		final List<Expr<BoolType>> initExprs = new ArrayList<>();
-		// Create a variable for each place and initialize them
-		for (Place place: net.getPlaces()){
-			final VarDecl<IntType> placeVar = Decls.Var(place.getId(),IntType.getInstance());
+        final List<Expr<BoolType>> initExprs = new ArrayList<>();
+        // Create a variable for each place and initialize them
+        for (Place place : net.getPlaces()) {
+            final VarDecl<IntType> placeVar = Decls.Var(place.getId(),IntType.getInstance());
 			placeIdToVar.put(place.getId(),placeVar);
 			initExprs.add(Eq(placeVar.getRef(), IntExprs.Int(BigInteger.valueOf(place.getInitialMarking()))));
-		}
-		final Expr<BoolType> initExpr = And(initExprs);
+        }
+        final Expr<BoolType> initExpr = And(initExprs);
 
-		final List<Stmt> tranStmts = new ArrayList<>();
-		// Create a transition for each variable
-		for (Transition transition: net.getTransitions()){
-			final List<Stmt> stmts = new ArrayList<>();
+        final List<Stmt> tranStmts = new ArrayList<>();
+        // Create a transition for each variable
+        for (Transition transition : net.getTransitions()) {
+            final List<Stmt> stmts = new ArrayList<>();
 			final Map<VarDecl<IntType>, Long> takesPutsMap = new HashMap<>();
 
-			// Check if enough tokens are present and remove input tokens
-			for(PTArc inArc: transition.getIncomingArcs()){
-				final Place sourcePlace = inArc.getSource();
+            // Check if enough tokens are present and remove input tokens
+            for (PTArc inArc: transition.getIncomingArcs()){
+                final Place sourcePlace = inArc.getSource();
 
-				final VarDecl<IntType> placeVar = placeIdToVar.get(sourcePlace.getId());
-				final long weight = inArc.getWeight();
+                final VarDecl<IntType> placeVar = placeIdToVar.get(sourcePlace.getId());
+                final long weight = inArc.getWeight();
 
-				final Stmt enoughTokens = AssumeStmt.of(GeqExpr.create2(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
-				stmts.add(enoughTokens);
+                final Stmt enoughTokens = AssumeStmt.of(
+                        GeqExpr.create2(placeVar.getRef(), Int(BigInteger.valueOf(weight))));
+                stmts.add(enoughTokens);
 
-				takesPutsMap.merge(placeVar, -weight, Long::sum);
+                takesPutsMap.merge(placeVar, -weight, Long::sum);
 //				final Stmt removeTokens = AssignStmt.of(placeVar,Sub(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
 //				stmts.add(removeTokens);
 			}
 
-			// Place output tokens
-			for (TPArc outArc: transition.getOutgoingArcs()){
-				final Place targetPlace = outArc.getTarget();
+            // Place output tokens
+            for (TPArc outArc: transition.getOutgoingArcs()){
+                final Place targetPlace = outArc.getTarget();
 
-				final VarDecl<IntType> placeVar = placeIdToVar.get(targetPlace.getId());
-				final long weight = outArc.getWeight();
+                final VarDecl<IntType> placeVar = placeIdToVar.get(targetPlace.getId());
+                final long weight = outArc.getWeight();
 
-				takesPutsMap.merge(placeVar, weight, Long::sum);
+                takesPutsMap.merge(placeVar, weight, Long::sum);
 //				final Stmt placeTokens = AssignStmt.of(placeVar,Add(placeVar.getRef(),Int(BigInteger.valueOf(weight))));
 //				stmts.add(placeTokens);
 			}
@@ -83,17 +99,17 @@ public class PetriNetToXSTS {
 					(placeVar, weight) -> stmts.add(AssignStmt.of(placeVar, Add(placeVar.getRef(), Int(BigInteger.valueOf(weight)))))
 			);
 
-			tranStmts.add(SequenceStmt.of(stmts));
-		}
+            tranStmts.add(SequenceStmt.of(stmts));
+        }
 
-		final NonDetStmt tran = NonDetStmt.of(tranStmts);
-		final NonDetStmt init = NonDetStmt.of(ImmutableList.of());
-		final NonDetStmt env = NonDetStmt.of(ImmutableList.of());
+        final NonDetStmt tran = NonDetStmt.of(tranStmts);
+        final NonDetStmt init = NonDetStmt.of(ImmutableList.of());
+        final NonDetStmt env = NonDetStmt.of(ImmutableList.of());
 
-		final Map<VarDecl<?>, XstsType<?>> varToType = ImmutableMap.of();
-		final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
+        final Map<VarDecl<?>, XstsType<?>> varToType = ImmutableMap.of();
+        final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
 
-		final Expr<BoolType> propExpr;
+        final Expr<BoolType> propExpr;
 		if(propStream != null){
 			final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
 			final String propertyFile = propScanner.hasNext() ? propScanner.next() : "";
@@ -124,22 +140,25 @@ public class PetriNetToXSTS {
 			propExpr = True();
 		}
 
-		return new XSTS(varToType,ctrlVars,init,tran,env,initExpr,propExpr);
-	}
+        return new XSTS(varToType, ctrlVars, init, tran, env, initExpr, propExpr);
+    }
 
-	private static String stripPropFromPropFile(final String propertyFile){
-		int startingCurlyIndex = -1;
-		int endingCurlyIndex = propertyFile.length();
-		for(int i=0;i<propertyFile.length();i++){
-			if(propertyFile.charAt(i)=='{'){
-				if (startingCurlyIndex == -1) startingCurlyIndex=i+1;
-			}
-			if(propertyFile.charAt(i)=='}'){
-				endingCurlyIndex=i;
-			}
-		}
-		checkArgument(startingCurlyIndex>-1 && endingCurlyIndex<propertyFile.length(),"Illegally formatted property %s",propertyFile);
-		return propertyFile.substring(startingCurlyIndex,endingCurlyIndex);
-	}
+    private static String stripPropFromPropFile(final String propertyFile) {
+        int startingCurlyIndex = -1;
+        int endingCurlyIndex = propertyFile.length();
+        for (int i = 0; i < propertyFile.length(); i++) {
+            if (propertyFile.charAt(i) == '{') {
+                if (startingCurlyIndex == -1) {
+                    startingCurlyIndex = i + 1;
+                }
+            }
+            if (propertyFile.charAt(i) == '}') {
+                endingCurlyIndex = i;
+            }
+        }
+        checkArgument(startingCurlyIndex > -1 && endingCurlyIndex < propertyFile.length(),
+                "Illegally formatted property %s", propertyFile);
+        return propertyFile.substring(startingCurlyIndex, endingCurlyIndex);
+    }
 
 }
