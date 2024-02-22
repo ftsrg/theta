@@ -81,6 +81,7 @@ import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
