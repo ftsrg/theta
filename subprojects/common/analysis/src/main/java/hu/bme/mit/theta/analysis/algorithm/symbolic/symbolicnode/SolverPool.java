@@ -18,28 +18,28 @@ public class SolverPool {
 
     private final SolverFactory solverFactory;
 
-    public SolverPool(SolverFactory solverFactory){
+    public SolverPool(SolverFactory solverFactory) {
         this.solverFactory = solverFactory;
         this.available = new LinkedList<>();
-        for(int i = 0; i< STARTING_SIZE; i++) this.available.add(solverFactory.createSolver());
+        for (int i = 0; i < STARTING_SIZE; i++) this.available.add(solverFactory.createSolver());
     }
 
-    public Solver requestSolver(){
-        if(this.available.size() == 0) createNewSolvers();
+    public Solver requestSolver() {
+        if (this.available.size() == 0) createNewSolvers();
         return this.available.removeFirst();
     }
 
-    public void returnSolver(Solver solver){
+    public void returnSolver(Solver solver) {
         Preconditions.checkState(solver.getAssertions().isEmpty(), "Only empty solvers can be returned");
         this.available.add(solver);
     }
 
-    private void createNewSolvers(){
+    private void createNewSolvers() {
         for (int i = 0; i < GROWING; i++) this.available.add(solverFactory.createSolver());
-        this.created = created+GROWING;
+        this.created = created + GROWING;
     }
 
-    public int size(){
+    public int size() {
         return this.created;
     }
 

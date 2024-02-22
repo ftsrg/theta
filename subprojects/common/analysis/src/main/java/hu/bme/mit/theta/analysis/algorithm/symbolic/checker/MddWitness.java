@@ -12,11 +12,11 @@ public class MddWitness implements Witness {
         this.stateSpace = stateSpace;
     }
 
-    public static MddWitness of(MddHandle stateSpace){
+    public static MddWitness of(MddHandle stateSpace) {
         return new MddWitness(stateSpace);
     }
 
-    public Long size(){
+    public Long size() {
         return MddInterpreter.calculateNonzeroCount(stateSpace);
     }
 }

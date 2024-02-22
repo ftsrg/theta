@@ -40,7 +40,7 @@ public class XstsInitExprNodeTest {
         Expr<BoolType> expr = PathUtils.unfold(xsts.getInitFormula(), 0);
 
         MddVariable lastVar = null;
-        for(var v: xsts.getVars()){
+        for (var v : xsts.getVars()) {
             lastVar = varOrder.createOnTop(hu.bme.mit.delta.mdd.MddVariableDescriptor.create(v.getConstDecl(0), 0));
         }
 
@@ -65,7 +65,7 @@ public class XstsInitExprNodeTest {
 
     }
 
-    private static String nodeToString(MddNode node){
+    private static String nodeToString(MddNode node) {
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

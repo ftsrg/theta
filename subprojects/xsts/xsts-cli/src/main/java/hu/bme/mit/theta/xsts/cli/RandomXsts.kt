@@ -70,7 +70,7 @@ fun main() {
         decls.size == all // all vars are written
     }
     var orig = XstsSerializer.serializeXsts(xsts)
-    orig = orig.replace(Regex("var clock([0-9]+) : integer")) {"var clock${it.groupValues[1]} : clock"}
+    orig = orig.replace(Regex("var clock([0-9]+) : integer")) { "var clock${it.groupValues[1]} : clock" }
     orig = orig.replace(Regex("havoc clock([0-9]+)"), "__delay")
     println(orig)
     println("prop { ${XstsSerializer.serializeExpr(xsts.prop)} }")
@@ -147,11 +147,11 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
     val random = Random(seed)
 
     fun generateRandomXsts(
-            depth: Int,
-            numCtrl: Int,
-            numClock: Int,
-            numOther: Int,
-            constraint: (XSTS) -> Boolean
+        depth: Int,
+        numCtrl: Int,
+        numClock: Int,
+        numOther: Int,
+        constraint: (XSTS) -> Boolean
     ): XSTS {
         var xsts: XSTS
         do {
@@ -159,17 +159,17 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
             val env = Stmts.NonDetStmt(listOf(Stmts.Skip()))
             val init = Stmts.NonDetStmt(listOf(Stmts.Skip()))
             val initExpr = BoolExprs.And(
-                    ctrlVars.map { IntExprs.Eq(it.ref, IntExprs.Int(0)) }
-                            + boolVars.map { BoolExprs.Not(it.ref) }
-                            + intVars.map { IntExprs.Eq(it.ref, IntExprs.Int(0)) }
+                ctrlVars.map { IntExprs.Eq(it.ref, IntExprs.Int(0)) }
+                    + boolVars.map { BoolExprs.Not(it.ref) }
+                    + intVars.map { IntExprs.Eq(it.ref, IntExprs.Int(0)) }
             )
             var expr: Expr<BoolType>
             do expr = randomBoolExpr(0)
             while (ExprUtils.getVars(expr).isEmpty())
             xsts = XSTS(
-                    mapOf(),
-                    ctrlVars.toSet(),
-                    init, NonDetStmt.of(listOf(trans)), env, initExpr, expr
+                mapOf(),
+                ctrlVars.toSet(),
+                init, NonDetStmt.of(listOf(trans)), env, initExpr, expr
             )
         } while (!(constraint(xsts)))
         return xsts
@@ -180,8 +180,8 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
         ctrlVars = Array(numCtrl) { Decls.Var("ctlr${i++}", IntType.getInstance()) }.toList()
         do {
             otherVars = listOf(
-                    Decls.Var("var0", IntType.getInstance()) as VarDecl<Type>,
-                    Decls.Var("var1", BoolType.getInstance()) as VarDecl<Type>,
+                Decls.Var("var0", IntType.getInstance()) as VarDecl<Type>,
+                Decls.Var("var1", BoolType.getInstance()) as VarDecl<Type>,
             ) + Array(numOther - 2) { randomVar("var${i++}") }.toList()
         } while (otherVars.all { it.type is IntType } || otherVars.all { it.type is BoolType })
         boolVars = otherVars.filter { it.type is BoolType }.map { it as VarDecl<BoolType> }
@@ -193,18 +193,18 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
 
     fun randomVar(name: String): VarDecl<Type> {
         return listOf(
-                {Decls.Var(name, IntType.getInstance()) as VarDecl<Type>},
-                {Decls.Var(name, BoolType.getInstance()) as VarDecl<Type>}
+            { Decls.Var(name, IntType.getInstance()) as VarDecl<Type> },
+            { Decls.Var(name, BoolType.getInstance()) as VarDecl<Type> }
         ).random(random)()
     }
 
     fun randomIntermediate(currDepth: Int, maxDepth: Int): Stmt {
         if (currDepth == maxDepth) return randomLeaf()
         return listOf(
-                { randomLeaf() },
-                { randomSeq(currDepth + 1, maxDepth) },
-                { randomNonDet(currDepth + 1, maxDepth) },
-                { randomIf(currDepth + 1, maxDepth) },
+            { randomLeaf() },
+            { randomSeq(currDepth + 1, maxDepth) },
+            { randomNonDet(currDepth + 1, maxDepth) },
+            { randomIf(currDepth + 1, maxDepth) },
 //                { randomLoop(currDepth + 1, maxDepth) },
         ).random(random)()
     }
@@ -212,24 +212,24 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
     fun randomLeaf(): Stmt {
         return listOf(
 //            { Stmts.Skip() },
-                { randomAssign() },
-                { randomAssign() },
-                { randomAssume() },
+            { randomAssign() },
+            { randomAssign() },
+            { randomAssume() },
 //                { randomHavoc() },
         ).random(random)()
     }
 
     fun randomSeq(currDepth: Int, maxDepth: Int): Stmt {
         return Stmts.SequenceStmt(listOf(
-                randomIntermediate(currDepth+1, maxDepth),
-                randomIntermediate(currDepth+1, maxDepth)
+            randomIntermediate(currDepth + 1, maxDepth),
+            randomIntermediate(currDepth + 1, maxDepth)
         ))
     }
 
     fun randomNonDet(currDepth: Int, maxDepth: Int): Stmt {
         return Stmts.NonDetStmt(listOf(
-                randomIntermediate(currDepth+1, maxDepth),
-                randomIntermediate(currDepth+1, maxDepth)
+            randomIntermediate(currDepth + 1, maxDepth),
+            randomIntermediate(currDepth + 1, maxDepth)
         ))
 
     }
@@ -239,96 +239,109 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
         do expr = randomBoolExpr(0)
         while (ExprUtils.getVars(expr).isEmpty())
         return IfStmt.of(expr,
-                randomIntermediate(currDepth+1, maxDepth),
-                randomIntermediate(currDepth+1, maxDepth)
+            randomIntermediate(currDepth + 1, maxDepth),
+            randomIntermediate(currDepth + 1, maxDepth)
         )
     }
 
     fun randomBoolExpr(currDepth: Int): Expr<BoolType> {
-        return (if(currDepth == exprMaxDepth)
+        return (if (currDepth == exprMaxDepth)
             listOf(
-                    { BoolExprs.True() },
-                    { boolVars[random.nextInt((boolVars.size))].ref },
+                { BoolExprs.True() },
+                { boolVars[random.nextInt((boolVars.size))].ref },
             ).random(random)
         else
             listOf(
-                    { BoolExprs.True() },
-                    { boolVars[random.nextInt((boolVars.size))].ref },
-                    { BoolExprs.Not(randomBoolExpr(currDepth + 1)) },
-                    { BoolExprs.And(
-                            randomBoolExpr(currDepth + 1),
-                            randomBoolExpr(currDepth + 1)
-                    ) },
-                    { BoolExprs.Or(
-                            randomBoolExpr(currDepth + 1),
-                            randomBoolExpr(currDepth + 1))
-                    },
-                    { BoolExprs.Imply(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
-                    { BoolExprs.Iff(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
-                    { BoolExprs.Xor(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
-                    { IntExprs.Eq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
-                    { IntExprs.Geq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
-                    { IntExprs.Leq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
-                    { IntExprs.Lt(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
-                    { IntExprs.Gt(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
-                    { IntExprs.Neq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
+                { BoolExprs.True() },
+                { boolVars[random.nextInt((boolVars.size))].ref },
+                { BoolExprs.Not(randomBoolExpr(currDepth + 1)) },
+                {
+                    BoolExprs.And(
+                        randomBoolExpr(currDepth + 1),
+                        randomBoolExpr(currDepth + 1)
+                    )
+                },
+                {
+                    BoolExprs.Or(
+                        randomBoolExpr(currDepth + 1),
+                        randomBoolExpr(currDepth + 1))
+                },
+                { BoolExprs.Imply(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
+                { BoolExprs.Iff(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
+                { BoolExprs.Xor(randomBoolExpr(currDepth + 1), randomBoolExpr(currDepth + 1)) },
+                { IntExprs.Eq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
+                { IntExprs.Geq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
+                { IntExprs.Leq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
+                { IntExprs.Lt(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
+                { IntExprs.Gt(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
+                { IntExprs.Neq(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
             ).random(random))()
     }
 
 
     fun randomIntExpr(currDepth: Int): Expr<IntType> {
-        return (if(currDepth == exprMaxDepth)
+        return (if (currDepth == exprMaxDepth)
             listOf(
-                    {IntExprs.Int(random.nextInt(5))},
-                    {intVars[random.nextInt((intVars.size))].ref},
+                { IntExprs.Int(random.nextInt(5)) },
+                { intVars[random.nextInt((intVars.size))].ref },
             ).random(random)
         else
             listOf(
-                    {IntExprs.Int(random.nextInt(5))},
-                    {intVars[random.nextInt((intVars.size))].ref},
-                    {IntExprs.Neg(randomIntExpr(currDepth+1))},
-                    {IntExprs.Add(randomIntExpr(currDepth+1), randomIntExpr(currDepth+1))},
-                    {
-                        IntExprs.Mul(randomIntExpr(currDepth+1),
-                                randomIntExpr(currDepth+1))
-                    },
-                    {IntExprs.Sub(randomIntExpr(currDepth+1), randomIntExpr(currDepth+1))},
+                { IntExprs.Int(random.nextInt(5)) },
+                { intVars[random.nextInt((intVars.size))].ref },
+                { IntExprs.Neg(randomIntExpr(currDepth + 1)) },
+                { IntExprs.Add(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
+                {
+                    IntExprs.Mul(randomIntExpr(currDepth + 1),
+                        randomIntExpr(currDepth + 1))
+                },
+                { IntExprs.Sub(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
             ).random(random))()
     }
 
     fun randomLoop(currDepth: Int, maxDepth: Int): Stmt {
-        return LoopStmt.of(randomIntermediate(currDepth+1, maxDepth), ctrlVars.random(random),
-                IntExprs.Int(0),
-                randomIntExpr(0) { ctrlVars.containsAll(ExprUtils.getVars(it)) }
+        return LoopStmt.of(randomIntermediate(currDepth + 1, maxDepth), ctrlVars.random(random),
+            IntExprs.Int(0),
+            randomIntExpr(0) { ctrlVars.containsAll(ExprUtils.getVars(it)) }
         )
     }
 
     fun randomAssign(): Stmt {
-        return (listOf({
-            val v = otherVars.random(random)
-            when (v.type) {
-                is IntType -> Stmts.Assign(v as VarDecl<IntType>, randomIntExpr { ExprUtils.getVars(it).size > 0 && it != v.ref})
-                is BoolType -> Stmts.Assign(v as VarDecl<BoolType>, randomBoolExpr { ExprUtils.getVars(it).size > 0 && it != v.ref})
-                else -> throw Exception()
-            }
-        },
-                { Stmts.Assign(ctrlVars.random(random), randomIntExpr(0)) },
-        )+(if (clockVars.isEmpty()) listOf() else listOf({ randomClockReset() }))).random(random)()
+        return (listOf(
+            {
+                val v = otherVars.random(random)
+                when (v.type) {
+                    is IntType -> Stmts.Assign(v as VarDecl<IntType>,
+                        randomIntExpr { ExprUtils.getVars(it).size > 0 && it != v.ref })
+
+                    is BoolType -> Stmts.Assign(v as VarDecl<BoolType>,
+                        randomBoolExpr { ExprUtils.getVars(it).size > 0 && it != v.ref })
+
+                    else -> throw Exception()
+                }
+            },
+            { Stmts.Assign(ctrlVars.random(random), randomIntExpr(0)) },
+        ) + (if (clockVars.isEmpty()) listOf() else listOf({ randomClockReset() }))).random(random)()
     }
 
     fun randomIntExpr(currDepth: Int = 0, constraint: (Expr<IntType>) -> Boolean): Expr<IntType> {
         var res: Expr<IntType>
-        do {res = randomIntExpr(currDepth)} while (!(constraint(res)))
+        do {
+            res = randomIntExpr(currDepth)
+        } while (!(constraint(res)))
         return res
     }
 
-    fun randomBoolExpr(currDepth: Int=0, constraint: (Expr<BoolType>) -> Boolean): Expr<BoolType> {
+    fun randomBoolExpr(currDepth: Int = 0, constraint: (Expr<BoolType>) -> Boolean): Expr<BoolType> {
         var res: Expr<BoolType>
-        do {res = randomBoolExpr(currDepth)} while (!(constraint(res)))
+        do {
+            res = randomBoolExpr(currDepth)
+        } while (!(constraint(res)))
         return res
     }
 
-    fun randomAssume() = (listOf(this::randomDataAssume) + (if (clockVars.isEmpty()) listOf() else listOf(this::randomClockConstraint))).random(random)()
+    fun randomAssume() = (listOf(this::randomDataAssume) + (if (clockVars.isEmpty()) listOf() else listOf(
+        this::randomClockConstraint))).random(random)()
 
     fun randomDataAssume(): Stmt {
         var expr: Expr<BoolType>
@@ -345,26 +358,26 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
     }
 
     fun randomClockConstraint(): Stmt {
-        val c = if(clockVars.size == 1) clockVars[0].ref else listOf(
-                { clockVars.random(random).ref },
-                {
-                    val c1 = clockVars.random(random)
-                    val c2 = (clockVars - listOf(c1)).random()
-                    IntExprs.Sub(c1.ref, c2.ref)
-                }
+        val c = if (clockVars.size == 1) clockVars[0].ref else listOf(
+            { clockVars.random(random).ref },
+            {
+                val c1 = clockVars.random(random)
+                val c2 = (clockVars - listOf(c1)).random()
+                IntExprs.Sub(c1.ref, c2.ref)
+            }
         ).random()()
 
         val compareTo = IntExprs.Int(random.nextInt(10))
         return Stmts.Assume(listOf(
-                {IntExprs.Leq(c, compareTo)},
-                {IntExprs.Lt(c, compareTo)},
-                {IntExprs.Geq(c, compareTo)},
-                {IntExprs.Gt(c, compareTo)},
-                {IntExprs.Eq(c, compareTo)},
+            { IntExprs.Leq(c, compareTo) },
+            { IntExprs.Lt(c, compareTo) },
+            { IntExprs.Geq(c, compareTo) },
+            { IntExprs.Gt(c, compareTo) },
+            { IntExprs.Eq(c, compareTo) },
         ).random(random)())
     }
 
     fun randomHavoc(): Stmt {
-        return Stmts.Havoc((otherVars+clockVars).random(random))
+        return Stmts.Havoc((otherVars + clockVars).random(random))
     }
 }

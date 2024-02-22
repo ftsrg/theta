@@ -96,14 +96,9 @@ public class XMLPnmlToPetrinet {
                         XPathConstants.NUMBER)).intValue();
             }
 
-			final Place place = new Place(id);
-			place.setInitialMarking(initialMarking);
-			idMap.put(id,place);
-			places.add(place);
-		}
-
-            final PnmlPlace place = new PnmlPlace(name, id, initialMarking);
-            idToNodeMap.put(id, place);
+            final Place place = new Place(id);
+            place.setInitialMarking(initialMarking);
+            idMap.put(id, place);
             places.add(place);
         }
 
@@ -125,13 +120,8 @@ public class XMLPnmlToPetrinet {
 //				name = nameText;
 //			}
 
-			final Transition transition = new Transition(id);
-			idMap.put(id,transition);
-			transitions.add(transition);
-		}
-
-            final PnmlTransition transition = new PnmlTransition(name, id);
-            idToNodeMap.put(id, transition);
+            final Transition transition = new Transition(id);
+            idMap.put(id, transition);
             transitions.add(transition);
         }
 
@@ -151,26 +141,32 @@ public class XMLPnmlToPetrinet {
             final Identified target = idMap.get(targetId);
             checkNotNull(source, "Target node not found of arc " + id);
 
-			if(source instanceof Place){
-				checkArgument(target instanceof Transition);
-				final PTArc arc = new PTArc(id);
-				arc.setWeight(weight);
-				arc.setSource((Place) source);
-				arc.setTarget((Transition) target);
-			} else {
-				checkArgument(source instanceof Transition && target instanceof Place);
-				final TPArc arc = new TPArc(id);
-				arc.setWeight(weight);
-				arc.setSource((Transition) source);
-				arc.setTarget((Place) target);
-			}
-		}
+            final XPathExpression toolspecificWeightExpr = xPath.compile(
+                    "./toolspecific/weight/text()");
+            final int toolspecificWeight = ((Double) toolspecificWeightExpr.evaluate(arcElement,
+                    XPathConstants.NUMBER)).intValue();
+            final int weight = toolspecificWeight == 0 ? 1 : toolspecificWeight;
 
-		final PetriNet ptNet = new PetriNet("0");
-		ptNet.getPlaces().addAll(places);
-		ptNet.getTransitions().addAll(transitions);
+            if (source instanceof Place) {
+                checkArgument(target instanceof Transition);
+                final PTArc arc = new PTArc(id);
+                arc.setWeight(weight);
+                arc.setSource((Place) source);
+                arc.setTarget((Transition) target);
+            } else {
+                checkArgument(source instanceof Transition && target instanceof Place);
+                final TPArc arc = new TPArc(id);
+                arc.setWeight(weight);
+                arc.setSource((Transition) source);
+                arc.setTarget((Place) target);
+            }
+        }
 
-		return ptNet;
-	}
+        final PetriNet ptNet = new PetriNet("0");
+        ptNet.getPlaces().addAll(places);
+        ptNet.getTransitions().addAll(transitions);
+
+        return ptNet;
+    }
 
 }

@@ -27,7 +27,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class ExprNodeTest7 {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -41,7 +41,7 @@ public class ExprNodeTest7 {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x >= 0 && x <= 2 && y >= x && y <= x + 2 && z >= y && z <= y + 2
-        Expr<BoolType> expr = And(And(Geq(declX.getRef(),Int(0)), Leq(declX.getRef(),Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
+        Expr<BoolType> expr = And(And(Geq(declX.getRef(), Int(0)), Leq(declX.getRef(), Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
 
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
 
@@ -50,14 +50,14 @@ public class ExprNodeTest7 {
         var recursiveCursor = interpreter.cursor();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()){
+        try (var childCursor = recursiveCursor.valueCursor()) {
             childCursor.moveNext();
             childCursor.moveNext();
         }
 
         recursiveCursor.moveNext();
 
-        try(var childCursor2 = recursiveCursor.valueCursor()) {
+        try (var childCursor2 = recursiveCursor.valueCursor()) {
             childCursor2.moveNext();
             childCursor2.moveNext();
         }
@@ -77,7 +77,7 @@ public class ExprNodeTest7 {
 
     }
 
-    private static String nodeToString(MddNode node){
+    private static String nodeToString(MddNode node) {
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

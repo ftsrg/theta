@@ -44,11 +44,11 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     private final Logger logger;
 
     private MddChecker(Expr<BoolType> initRel,
-                      VarIndexing initIndexing,
-                      A transRel,
-                      Expr<BoolType> safetyProperty,
-                      SolverFactory solverFactory,
-                      Logger logger) {
+                       VarIndexing initIndexing,
+                       A transRel,
+                       Expr<BoolType> safetyProperty,
+                       SolverFactory solverFactory,
+                       Logger logger) {
         this.initRel = initRel;
         this.initIndexing = initIndexing;
         this.transRel = transRel;
@@ -58,11 +58,11 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     }
 
     public static <A extends ExprAction> MddChecker<A> create(Expr<BoolType> initRel,
-                                                                                                         VarIndexing initIndexing,
-                                                                                                         A transRel,
-                                                                                                         Expr<BoolType> safetyProperty,
-                                                                                                         SolverFactory solverFactory,
-                                                                                                         Logger logger) {
+                                                              VarIndexing initIndexing,
+                                                              A transRel,
+                                                              Expr<BoolType> safetyProperty,
+                                                              SolverFactory solverFactory,
+                                                              Logger logger) {
         return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverFactory, logger);
     }
 
@@ -75,7 +75,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
         final MddVariableOrder transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
         final Set<VarDecl<?>> vars = ExprUtils.getVars(List.of(initRel, transRel.toExpr(), safetyProperty));
-        for(var v : vars){
+        for (var v : vars) {
             final var domainSize = v.getType() instanceof BoolType ? 2 : 0;
 
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
@@ -106,11 +106,11 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
         System.out.println("States violating the property: " + violatingSize);
 
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
-        System.out.println("State space size: "+stateSpaceSize);
+        System.out.println("State space size: " + stateSpaceSize);
 
-        System.out.println("Hit count: "+gs.getSaturateCache().getHitCount());
-        System.out.println("Query count: "+gs.getSaturateCache().getQueryCount());
-        System.out.println("Cache size: "+gs.getSaturateCache().getCacheSize());
+        System.out.println("Hit count: " + gs.getSaturateCache().getHitCount());
+        System.out.println("Query count: " + gs.getSaturateCache().getQueryCount());
+        System.out.println("Cache size: " + gs.getSaturateCache().getCacheSize());
 //
         final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(satResult.getNode());
         final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
@@ -121,12 +121,14 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
             e.printStackTrace();
         }
 
-        if(violatingSize != 0) return SafetyResult.unsafe(MddCex.of(propViolating),MddWitness.of(satResult));
+        if (violatingSize != 0)
+            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(satResult));
         else return SafetyResult.safe(MddWitness.of(satResult));
     }
 
-    private static String nodeToString(MddNode node){
-        if(node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?,?>) return "";
+    private static String nodeToString(MddNode node) {
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
+            return "";
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 }

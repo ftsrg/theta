@@ -70,7 +70,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public class XstsConfigBuilder {
 
-	//////////// algorithm selection ////////////
+
+    //////////// algorithm selection ////////////
 
     public enum Algorithm {
         CEGAR,
@@ -79,86 +80,13 @@ public class XstsConfigBuilder {
         SYMBOLIC
     }
 
-	//////////// symbolic configuration ////////////
+    //////////// symbolic configuration ////////////
 
-	public enum IterationStrategy {
-		BFS, SAT, GSAT
-	}
-
-	//////////// CEGAR configuration ////////////
-
-	public enum Domain {
-		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT, EXPL_PRED_BOOL, EXPL_PRED_CART, EXPL_PRED_SPLIT, EXPL_PRED_COMBINED
-	}
-
-    public XstsConfigBuilder(final Domain domain, final Refinement refinement,
-                             final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) {
-        this.domain = domain;
-        this.refinement = refinement;
-        this.abstractionSolverFactory = abstractionSolverFactory;
-        this.refinementSolverFactory = refinementSolverFactory;
+    public enum IterationStrategy {
+        BFS, SAT, GSAT
     }
 
-    public XstsConfigBuilder logger(final Logger logger) {
-        this.logger = logger;
-        return this;
-    }
-
-    public XstsConfigBuilder search(final Search search) {
-        this.search = search;
-        return this;
-    }
-
-    public XstsConfigBuilder predSplit(final PredSplit predSplit) {
-        this.predSplit = predSplit;
-        return this;
-    }
-
-    public XstsConfigBuilder maxEnum(final int maxEnum) {
-        this.maxEnum = maxEnum;
-        return this;
-    }
-
-    public XstsConfigBuilder initPrec(final InitPrec initPrec) {
-        this.initPrec = initPrec;
-        return this;
-    }
-
-    public XstsConfigBuilder pruneStrategy(final PruneStrategy pruneStrategy) {
-        this.pruneStrategy = pruneStrategy;
-        return this;
-    }
-
-    public XstsConfigBuilder optimizeStmts(final OptimizeStmts optimizeStmts) {
-        this.optimizeStmts = optimizeStmts;
-        return this;
-    }
-
-    public XstsConfigBuilder autoExpl(final AutoExpl autoExpl) {
-        this.autoExpl = autoExpl;
-        return this;
-    }
-
-    public XstsConfig<? extends State, ? extends Action, ? extends Prec> build(final XSTS xsts) {
-        if (domain == Domain.EXPL) {
-            return (new ExplStrategy(xsts)).buildConfig();
-        }
-        if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART
-                || domain == Domain.PRED_SPLIT) {
-            return (new PredStrategy(xsts)).buildConfig();
-        }
-        if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART
-                || domain == Domain.EXPL_PRED_SPLIT || domain == Domain.EXPL_PRED_COMBINED) {
-            return (new ProdStrategy(xsts)).buildConfig();
-        }
-        throw new UnsupportedOperationException(domain + " domain is not supported.");
-    }
-
-    public enum Algorithm {
-        CEGAR,
-        KINDUCTION,
-        IMC
-    }
+    //////////// CEGAR configuration ////////////
 
     public enum Domain {
         EXPL(null),

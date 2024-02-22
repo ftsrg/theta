@@ -32,7 +32,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class SatTest {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
 
@@ -55,7 +55,7 @@ public class SatTest {
         var stateSig = stateOrder.getDefaultSetSignature();
 
         // x = 0, y = 0
-        Expr<BoolType> initExpr = And(Eq(declX.getRef(),Int(0)), Eq(declY.getRef(),Int(0)));
+        Expr<BoolType> initExpr = And(Eq(declX.getRef(), Int(0)), Eq(declY.getRef(), Int(0)));
 
         MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
 
@@ -67,13 +67,13 @@ public class SatTest {
 //        c.moveNext();
 
         // x' = x, y' = y - 1, x < 9, y > -9
-        Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(),declX.getRef()), Eq(declYPrime.getRef(),Sub(declY.getRef(),Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(10)), IntExprs.Gt(declYPrime.getRef(), Int(-10)));
+        Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(), declX.getRef()), Eq(declYPrime.getRef(), Sub(declY.getRef(), Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(10)), IntExprs.Gt(declYPrime.getRef(), Int(-10)));
 
         // x' = x + 1, y' = y, x < 9
-        Expr<BoolType> trans2Expr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(),declY.getRef()), IntExprs.Lt(declXPrime.getRef(), Int(10)));
+        Expr<BoolType> trans2Expr = And(Eq(declXPrime.getRef(), Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(), declY.getRef()), IntExprs.Lt(declXPrime.getRef(), Int(10)));
 
         // x' = x - 1, y' = y, x > -9
-        Expr<BoolType> trans3Expr = And(Eq(declXPrime.getRef(),Add(declX.getRef(), Int(-1))), Eq(declYPrime.getRef(),declY.getRef()), IntExprs.Gt(declXPrime.getRef(), Int(-10)));
+        Expr<BoolType> trans3Expr = And(Eq(declXPrime.getRef(), Add(declX.getRef(), Int(-1))), Eq(declYPrime.getRef(), declY.getRef()), IntExprs.Gt(declXPrime.getRef(), Int(-10)));
 
 
         var solverPool = new SolverPool(Z3SolverFactory.getInstance());
@@ -108,8 +108,9 @@ public class SatTest {
 
     }
 
-    private static String nodeToString(MddNode node){
-        if(node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?,?>) return "";
+    private static String nodeToString(MddNode node) {
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
+            return "";
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

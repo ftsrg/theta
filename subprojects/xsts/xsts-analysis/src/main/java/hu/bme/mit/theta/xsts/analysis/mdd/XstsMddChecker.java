@@ -51,7 +51,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         this.solverFactory = solverFactory;
     }
 
-    public static XstsMddChecker create(XSTS xsts, SolverFactory solverFactory){
+    public static XstsMddChecker create(XSTS xsts, SolverFactory solverFactory) {
         return new XstsMddChecker(xsts, solverFactory);
     }
 
@@ -67,7 +67,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         final var envTranToExprResult = StmtUtils.toExpr(envTran, VarIndexingFactory.indexing(0));
         final var initToExprResult = StmtUtils.toExpr(xsts.getInit(), VarIndexingFactory.indexing(0));
 
-        for(var v : xsts.getVars()){
+        for (var v : xsts.getVars()) {
             final var domainSize = /*v.getType() instanceof BoolType ? 2 :*/ 0;
 
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
@@ -90,8 +90,9 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         Preconditions.checkState(initToExprResult.getExprs().size() == 1);
         final var initUnfold = PathUtils.unfold(initToExprResult.getExprs().stream().findFirst().get(), 0);
         final var initIdentityExprs = new ArrayList<Expr<BoolType>>();
-        for(var v : xsts.getVars()){
-            if(initToExprResult.getIndexing().get(v) == 0) initIdentityExprs.add(Eq(v.getConstDecl(0).getRef(),v.getConstDecl(1).getRef()));
+        for (var v : xsts.getVars()) {
+            if (initToExprResult.getIndexing().get(v) == 0)
+                initIdentityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
         }
         final var initExprWithIdentity = And(initUnfold, And(initIdentityExprs));
         final MddHandle initTranNode = initSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExprWithIdentity, o -> (Decl) o, new SolverPool(solverFactory)));
@@ -101,16 +102,18 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         final var initResult = rel.compute(initNode, initNextState, stateSig.getTopVariableHandle());
 
         final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
-        for(Stmt stmt : new ArrayList<>(envTran.getStmts())){
+        for (Stmt stmt : new ArrayList<>(envTran.getStmts())) {
             final var stmtToExpr = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
             var stmtUnfold = PathUtils.unfold(stmtToExpr.getExprs().stream().findFirst().get(), 0);
 
             final var identityExprs = new ArrayList<Expr<BoolType>>();
-            for(var v : xsts.getVars()){
-                if(stmtToExpr.getIndexing().get(v) < envTranToExprResult.getIndexing().get(v)) identityExprs.add(Eq(v.getConstDecl(stmtToExpr.getIndexing().get(v)).getRef(),v.getConstDecl(envTranToExprResult.getIndexing().get(v)).getRef()));
-                if(envTranToExprResult.getIndexing().get(v) == 0) identityExprs.add(Eq(v.getConstDecl(0).getRef(),v.getConstDecl(1).getRef()));
+            for (var v : xsts.getVars()) {
+                if (stmtToExpr.getIndexing().get(v) < envTranToExprResult.getIndexing().get(v))
+                    identityExprs.add(Eq(v.getConstDecl(stmtToExpr.getIndexing().get(v)).getRef(), v.getConstDecl(envTranToExprResult.getIndexing().get(v)).getRef()));
+                if (envTranToExprResult.getIndexing().get(v) == 0)
+                    identityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
             }
-            if(!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
+            if (!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
 
             MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(solverFactory)));
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
@@ -129,11 +132,11 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         System.out.println("States violating the property: " + violatingSize);
 
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
-        System.out.println("State space size: "+stateSpaceSize);
+        System.out.println("State space size: " + stateSpaceSize);
 
-        System.out.println("Hit count: "+gs.getSaturateCache().getHitCount());
-        System.out.println("Query count: "+gs.getSaturateCache().getQueryCount());
-        System.out.println("Cache size: "+gs.getSaturateCache().getCacheSize());
+        System.out.println("Hit count: " + gs.getSaturateCache().getHitCount());
+        System.out.println("Query count: " + gs.getSaturateCache().getQueryCount());
+        System.out.println("Cache size: " + gs.getSaturateCache().getCacheSize());
 //
         final Graph stateSpaceGraph = new MddNodeVisualizer(XstsMddChecker::nodeToString).visualize(satResult.getNode());
         final Graph violatingGraph = new MddNodeVisualizer(XstsMddChecker::nodeToString).visualize(propViolating.getNode());
@@ -144,12 +147,14 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
             e.printStackTrace();
         }
 
-        if(violatingSize != 0) return SafetyResult.unsafe(MddCex.of(propViolating),MddWitness.of(satResult));
+        if (violatingSize != 0)
+            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(satResult));
         else return SafetyResult.safe(MddWitness.of(satResult));
     }
 
-    private static String nodeToString(MddNode node){
-        if(node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?,?>) return "";
+    private static String nodeToString(MddNode node) {
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
+            return "";
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 }

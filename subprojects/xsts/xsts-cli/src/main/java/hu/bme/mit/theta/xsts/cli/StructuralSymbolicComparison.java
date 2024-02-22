@@ -31,14 +31,14 @@ import static hu.bme.mit.theta.xsts.RandomXstsKt.generateXsts;
 
 public class StructuralSymbolicComparison {
 
-    public static void main(String[] asdsad) throws Exception{
+    public static void main(String[] asdsad) throws Exception {
 
         final var upperbound = 5;
 
         var pool = new SolverPool(Z3SolverFactory.getInstance());
 
-        try(BufferedWriter writer = new BufferedWriter(new FileWriter("build\\measurements.csv", true))){
-            for(int i = 0; true; i++) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("build\\measurements.csv", true))) {
+            for (int i = 0; true; i++) {
                 try {
                     var xsts = generateXsts(i);
 
@@ -81,7 +81,7 @@ public class StructuralSymbolicComparison {
                     System.out.println(transGraph.getUniqueTableSize() + ", " + structGraph.getUniqueTableSize() + ", " + symbolicSize + ", " + structuralSize);
                     writer.write(transGraph.getUniqueTableSize() + ", " + structGraph.getUniqueTableSize() + ", " + symbolicSize + ", " + structuralSize);
                     writer.newLine();
-                    if(i%10 == 0) writer.flush();
+                    if (i % 10 == 0) writer.flush();
                 } catch (UnknownSolverStatusException e) {
                     // TODO this is horrible but needed for now
                 }
@@ -101,7 +101,7 @@ public class StructuralSymbolicComparison {
     }
 
     private static Long calculateNonzeroCount(MddHandle node, int level, Map<MddHandle, Long> cache, RecursiveIntObjCursor<? extends MddHandle> cursor) {
-        Long cached = (Long)cache.getOrDefault(node, null);
+        Long cached = (Long) cache.getOrDefault(node, null);
         if (cached != null) {
             return cached;
         } else if (node.isTerminalZero()) {
@@ -113,8 +113,8 @@ public class StructuralSymbolicComparison {
         } else {
             long ret = 0L;
 
-            while (cursor.moveNext()){
-                try(var valueCursor = cursor.valueCursor()){
+            while (cursor.moveNext()) {
+                try (var valueCursor = cursor.valueCursor()) {
                     Long res = calculateNonzeroCount(cursor.value(), level - 1, cache, valueCursor);
                     if (res == null) {
                         return null;

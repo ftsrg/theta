@@ -159,7 +159,7 @@ public class StsCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
 
-            SafetyResult<?, ?> status = null;
+            SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status = null;
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
                 status = check(configuration);
@@ -177,28 +177,16 @@ public class StsCli {
         }
     }
 
-	private void printResult(final SafetyResult<? extends ARG<?,?>,? extends Trace<?,?>> status, final STS sts, final long totalTimeMs) {
-		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-		if (benchmarkMode) {
-			writer.cell(status.isSafe());
-			writer.cell(totalTimeMs);
-			writer.cell(stats.getAlgorithmTimeMs());
-			writer.cell(stats.getAbstractorTimeMs());
-			writer.cell(stats.getRefinerTimeMs());
-			writer.cell(stats.getIterations());
-			writer.cell(status.getWitness().size());
-			writer.cell(status.getWitness().getDepth());
-			writer.cell(status.getWitness().getMeanBranchingFactor());
-			if (status.isUnsafe()) {
-				writer.cell(status.asUnsafe().getCex().length() + "");
-			} else {
-				writer.cell("");
-			}
-			writer.cell(sts.getVars().size());
-			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
-			writer.newRow();
-		}
-	}
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(StsConfig<?, ?, ?> configuration) throws Exception {
+        try {
+            return configuration.check();
+        } catch (final Exception ex) {
+            String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+            throw new Exception(
+                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    ex);
+        }
+    }
 
     private void printHeader() {
         Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
@@ -207,20 +195,95 @@ public class StsCli {
         writer.newRow();
     }
 
-	private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Trace<?,?>> status) throws FileNotFoundException {
-		@SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getCex();
-		final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace, Z3SolverFactory.getInstance());
-		final File file = new File(cexfile);
-		PrintWriter printWriter = null;
-		try {
-			printWriter = new PrintWriter(file);
-			for (Valuation state : concrTrace.getStates()) {
-				printWriter.println(state.toString());
-			}
-		} finally {
-			if (printWriter != null) {
-				printWriter.close();
-			}
-		}
-	}
+    private STS loadModel() throws Exception {
+        try {
+            if (model.endsWith(".aag")) {
+                final AigerSystem aigerSystem = AigerParser.parse(model);
+                AigerCoi.apply(aigerSystem);
+                return AigerToSts.createSts(aigerSystem);
+            } else {
+                try (InputStream inputStream = new FileInputStream(model)) {
+                    final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+                    if (spec.getAllSts().size() != 1) {
+                        throw new UnsupportedOperationException(
+                                "STS contains multiple properties.");
+                    }
+                    return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
+                }
+            }
+        } catch (Exception ex) {
+            throw new Exception("Could not parse STS: " + ex.getMessage(), ex);
+        }
+    }
+
+    private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
+        try {
+            return new StsConfigBuilder(domain, refinement, Z3LegacySolverFactory.getInstance())
+                    .initPrec(initPrec).search(search)
+                    .predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
+        } catch (final Exception ex) {
+            throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void printResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status, final STS sts,
+                             final long totalTimeMs) {
+        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        if (benchmarkMode) {
+            writer.cell(status.isSafe());
+            writer.cell(totalTimeMs);
+            writer.cell(stats.getAlgorithmTimeMs());
+            writer.cell(stats.getAbstractorTimeMs());
+            writer.cell(stats.getRefinerTimeMs());
+            writer.cell(stats.getIterations());
+            writer.cell(status.getWitness().size());
+            writer.cell(status.getWitness().getDepth());
+            writer.cell(status.getWitness().getMeanBranchingFactor());
+            if (status.isUnsafe()) {
+                writer.cell(status.asUnsafe().getCex().length() + "");
+            } else {
+                writer.cell("");
+            }
+            writer.cell(sts.getVars().size());
+            writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+            writer.newRow();
+        }
+    }
+
+    private void printError(final Throwable ex) {
+        final String message = ex.getMessage() == null ? "" : ex.getMessage();
+        if (benchmarkMode) {
+            writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
+            writer.newRow();
+        } else {
+            logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(),
+                    message);
+            if (stacktrace) {
+                final StringWriter errors = new StringWriter();
+                ex.printStackTrace(new PrintWriter(errors));
+                logger.write(Level.RESULT, "Trace:%n%s%n", errors.toString());
+            } else {
+                logger.write(Level.RESULT, "Use --stacktrace for stack trace%n");
+            }
+        }
+    }
+
+    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Trace<?, ?>> status)
+            throws FileNotFoundException {
+        @SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getCex();
+        final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace,
+                Z3LegacySolverFactory.getInstance());
+        final File file = new File(cexfile);
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file);
+            for (Valuation state : concrTrace.getStates()) {
+                printWriter.println(state.toString());
+            }
+        } finally {
+            if (printWriter != null) {
+                printWriter.close();
+            }
+        }
+    }
 }

@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
 public class MddExpressionTest {
 
     @Test
-    public void exprNodeTest1(){
+    public void exprNodeTest1() {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -46,7 +46,7 @@ public class MddExpressionTest {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x >= 2 && y = x + 1 && x <= 6
-        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)));
+        Expr<BoolType> expr = And(Geq(declX.getRef(), Int(2)), Eq(declY.getRef(), Add(declX.getRef(), Int(1))), Leq(declX.getRef(), Int(6)));
 
         SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
@@ -58,14 +58,14 @@ public class MddExpressionTest {
         recursiveCursor.moveNext();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()) {
+        try (var childCursor = recursiveCursor.valueCursor()) {
             childCursor.moveNext();
             childCursor.moveNext();
         }
 
         recursiveCursor.moveNext();
 
-        try(var childCursor2 = recursiveCursor.valueCursor()) {
+        try (var childCursor2 = recursiveCursor.valueCursor()) {
             childCursor2.moveNext();
             childCursor2.moveNext();
         }
@@ -86,7 +86,7 @@ public class MddExpressionTest {
     }
 
     @Test
-    public void exprNodeTest2(){
+    public void exprNodeTest2() {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -104,19 +104,23 @@ public class MddExpressionTest {
         SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
         MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
-        for (var c = rootNode.cursor(); c.moveNext(); ){}
+        for (var c = rootNode.cursor(); c.moveNext(); ) {
+        }
 
         var node2 = rootNode.get(0);
 
-        for (var c = node2.cursor(); c.moveNext(); ){}
+        for (var c = node2.cursor(); c.moveNext(); ) {
+        }
 
         var node3 = node2.get(0);
 
-        for (var c = node3.cursor(); c.moveNext(); ){}
+        for (var c = node3.cursor(); c.moveNext(); ) {
+        }
 
         var node4 = rootNode.get(1);
 
-        for (var c = node4.cursor(); c.moveNext(); ){}
+        for (var c = node4.cursor(); c.moveNext(); ) {
+        }
 
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
 
@@ -133,7 +137,7 @@ public class MddExpressionTest {
     }
 
     @Test
-    public void exprNodeTest3(){
+    public void exprNodeTest3() {
 
         // TODO need to fix nodeinterpreters and cursors
 
@@ -149,7 +153,7 @@ public class MddExpressionTest {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // y >= 2 && z = y + 1 && y <= 6
-        Expr<BoolType> expr = And(Geq(declY.getRef(),Int(2)), Eq(declZ.getRef(),Add(declY.getRef(),Int(1))),Leq(declY.getRef(), Int(6)));
+        Expr<BoolType> expr = And(Geq(declY.getRef(), Int(2)), Eq(declZ.getRef(), Add(declY.getRef(), Int(1))), Leq(declY.getRef(), Int(6)));
 
         SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
@@ -159,7 +163,7 @@ public class MddExpressionTest {
         var recursiveCursor = interpreter.cursor();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()){
+        try (var childCursor = recursiveCursor.valueCursor()) {
             childCursor.moveNext();
             childCursor.moveNext();
             childCursor.moveNext();
@@ -180,7 +184,7 @@ public class MddExpressionTest {
     }
 
     @Test
-    public void exprNodeTest4(){
+    public void exprNodeTest4() {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -193,7 +197,7 @@ public class MddExpressionTest {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x >= 2 && y = x + 1 && x <= 6 && z = y + 2
-        Expr<BoolType> expr = And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Add(declX.getRef(),Int(1))),Leq(declX.getRef(), Int(6)), Eq(declZ.getRef(), Add(declY.getRef(), Int(2))));
+        Expr<BoolType> expr = And(Geq(declX.getRef(), Int(2)), Eq(declY.getRef(), Add(declX.getRef(), Int(1))), Leq(declX.getRef(), Int(6)), Eq(declZ.getRef(), Add(declY.getRef(), Int(2))));
 
         SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
@@ -205,14 +209,14 @@ public class MddExpressionTest {
         recursiveCursor.moveNext();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()){
+        try (var childCursor = recursiveCursor.valueCursor()) {
             childCursor.moveNext();
             childCursor.moveNext();
         }
 
         recursiveCursor.moveNext();
 
-        try(var childCursor2 = recursiveCursor.valueCursor()) {
+        try (var childCursor2 = recursiveCursor.valueCursor()) {
             childCursor2.moveNext();
             childCursor2.moveNext();
         }
@@ -234,7 +238,7 @@ public class MddExpressionTest {
     }
 
     @Test
-    public void exprNodeTest5(){
+    public void exprNodeTest5() {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -248,7 +252,7 @@ public class MddExpressionTest {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x = y && y = z && z = 2
-        Expr<BoolType> expr = And(Eq(declX.getRef(), declY.getRef()), And(Eq(declY.getRef(),declZ.getRef()), Eq(declZ.getRef(), Int(2))));
+        Expr<BoolType> expr = And(Eq(declX.getRef(), declY.getRef()), And(Eq(declY.getRef(), declZ.getRef()), Eq(declZ.getRef(), Int(2))));
 
         SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
@@ -274,7 +278,7 @@ public class MddExpressionTest {
     }
 
     @Test
-    public void exprNodeTest6(){
+    public void exprNodeTest6() {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -288,7 +292,7 @@ public class MddExpressionTest {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x >= 0 && x <= 2 && y >= x && y <= x + 2 && z >= y && z <= y + 2
-        Expr<BoolType> expr = And(And(Geq(declX.getRef(),Int(0)), Leq(declX.getRef(),Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
+        Expr<BoolType> expr = And(And(Geq(declX.getRef(), Int(0)), Leq(declX.getRef(), Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
 
         SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
@@ -298,14 +302,14 @@ public class MddExpressionTest {
         var recursiveCursor = interpreter.cursor();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()){
+        try (var childCursor = recursiveCursor.valueCursor()) {
             childCursor.moveNext();
             childCursor.moveNext();
         }
 
         recursiveCursor.moveNext();
 
-        try(var childCursor2 = recursiveCursor.valueCursor()) {
+        try (var childCursor2 = recursiveCursor.valueCursor()) {
             childCursor2.moveNext();
             childCursor2.moveNext();
         }
@@ -327,7 +331,7 @@ public class MddExpressionTest {
 
     }
 
-    private static String nodeToString(MddNode node){
+    private static String nodeToString(MddNode node) {
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

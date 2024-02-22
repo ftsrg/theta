@@ -70,7 +70,8 @@ public class MddValuationCollector {
                         collect(cursor.value(), valueCursor, assignments, valuations);
                     }
 
-                    if (node.getRepresentation() instanceof MddExpressionRepresentation) assignments.pop();
+                    if (node.getRepresentation() instanceof MddExpressionRepresentation)
+                        assignments.pop();
 
                 }
             }

@@ -12,7 +12,7 @@ public class MddCex implements Cex {
         this.violatingStates = violatingStates;
     }
 
-    public static MddCex of(MddHandle violatingStates){
+    public static MddCex of(MddHandle violatingStates) {
         return new MddCex(violatingStates);
     }
 

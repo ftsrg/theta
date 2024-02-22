@@ -46,24 +46,27 @@ public class ExprNodeTest2 {
 
         MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
 
-        for (var c = rootNode.cursor(); c.moveNext(); ){}
+        for (var c = rootNode.cursor(); c.moveNext(); ) {
+        }
 
         var node2 = rootNode.get(0);
 
-        for (var c = node2.cursor(); c.moveNext(); ){}
+        for (var c = node2.cursor(); c.moveNext(); ) {
+        }
 
         var node3 = node2.get(0);
 
-        for (var c = node3.cursor(); c.moveNext(); ){}
+        for (var c = node3.cursor(); c.moveNext(); ) {
+        }
 
         var node4 = rootNode.get(1);
 
-        for (var c = node4.cursor(); c.moveNext(); ){}
+        for (var c = node4.cursor(); c.moveNext(); ) {
+        }
 
 //        var node5 = node4.get(1);
 //
 //        for (var c = node5.cursor(); c.moveNext(); ){}
-
 
 
 //        MddSymbolicNodeTraverser traverser = ExprVariable.getNodeTraverser(rootNode, Z3SolverFactory.getInstance()::createSolver);
@@ -103,7 +106,7 @@ public class ExprNodeTest2 {
 
     }
 
-    private static String nodeToString(MddNode node){
+    private static String nodeToString(MddNode node) {
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
