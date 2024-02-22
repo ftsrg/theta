@@ -24,7 +24,7 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplOrd
 import hu.bme.mit.theta.analysis.expl.ExplState

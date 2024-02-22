@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
