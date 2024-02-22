@@ -19,6 +19,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.Witness;
+import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger;
 import hu.bme.mit.theta.common.container.Containers;
 
 import java.util.Collection;

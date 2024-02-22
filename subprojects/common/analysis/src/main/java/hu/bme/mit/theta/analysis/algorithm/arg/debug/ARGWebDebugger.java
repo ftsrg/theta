@@ -14,14 +14,14 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.analysis.algorithm.debug;
+package hu.bme.mit.theta.analysis.algorithm.arg.debug;
 
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 
 import java.util.LinkedList;
 import java.util.List;

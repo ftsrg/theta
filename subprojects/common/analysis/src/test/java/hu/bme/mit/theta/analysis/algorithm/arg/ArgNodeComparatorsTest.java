@@ -41,7 +41,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.*;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.*;
 
 public class ArgNodeComparatorsTest {
 
