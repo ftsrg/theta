@@ -29,8 +29,8 @@ public class LitExprConverter {
         if (litExpr instanceof BoolLitExpr) {
             return ((BoolLitExpr) litExpr).getValue() ? 1 : 0;
         }
-        if (litExpr instanceof ArrayLitExpr<?,?>) {
-            if(objToInt.get(litExpr) != null) {
+        if (litExpr instanceof ArrayLitExpr<?, ?>) {
+            if (objToInt.get(litExpr) != null) {
                 return objToInt.get(litExpr);
             }
             final int id = cnt++;
@@ -47,7 +47,7 @@ public class LitExprConverter {
         if (type instanceof BoolType) {
             return BoolLitExpr.of(integer != 0);
         }
-        if (type instanceof ArrayType<?,?>) {
+        if (type instanceof ArrayType<?, ?>) {
             return (LitExpr<?>) objToInt.inverse().get(integer);
         }
         throw new UnsupportedOperationException("Unsupported type");

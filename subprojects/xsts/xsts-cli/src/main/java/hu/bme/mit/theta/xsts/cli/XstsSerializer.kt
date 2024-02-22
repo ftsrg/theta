@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.xsts.XSTS
 
-object XstsSerializer: StmtVisitor<Void?, String> {
+object XstsSerializer : StmtVisitor<Void?, String> {
 
     val typeNames = mapOf(
         BoolType.getInstance() to "boolean",
@@ -30,7 +30,7 @@ object XstsSerializer: StmtVisitor<Void?, String> {
         return builder.toString()
     }
 
-    fun serializeExpr(expr: Expr<*>): String{
+    fun serializeExpr(expr: Expr<*>): String {
         return ExprWriter.instance().write(expr)
     }
 
@@ -55,7 +55,7 @@ object XstsSerializer: StmtVisitor<Void?, String> {
     }
 
     override fun visit(stmt: NonDetStmt, param: Void?): String {
-        return "choice ${stmt.stmts.joinToString(" or ") { "{\n${it.accept(this, null)}\n}"}}"
+        return "choice ${stmt.stmts.joinToString(" or ") { "{\n${it.accept(this, null)}\n}" }}"
     }
 
     override fun visit(stmt: OrtStmt?, param: Void?): String {

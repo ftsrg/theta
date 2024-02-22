@@ -44,7 +44,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class XstsTest {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         final PetriNet petriNet;
         try {
@@ -79,7 +79,7 @@ public class XstsTest {
         final Map<String, VarDecl> nameToDecl = new HashMap<>();
         xsts.getVars().forEach(v -> nameToDecl.put(v.getName(), v));
         Collections.reverse(ordering);
-        for(var place : ordering){
+        for (var place : ordering) {
             var v = nameToDecl.get(place.getId());
             stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), 0));
 
@@ -98,15 +98,16 @@ public class XstsTest {
 //        final List<Stmt> stmts = new ArrayList<>();
 //        for(int i = 0; i<25; i++) stmts.add(tran.getStmts().get(i));
         final var stmts = new ArrayList<>(tran.getStmts());
-        for(Stmt stmt : stmts){
+        for (Stmt stmt : stmts) {
             final var stmtToExpr = StmtUtils.toExpr(stmt, VarIndexingFactory.indexing(0));
             var stmtUnfold = PathUtils.unfold(stmtToExpr.getExprs().stream().findFirst().get(), 0);
 
             final var identityExprs = new ArrayList<Expr<BoolType>>();
-            for(var v : StmtUtils.getVars(tran)){
-                if(stmtToExpr.getIndexing().get(v) < toExprResult.getIndexing().get(v)) identityExprs.add(Eq(v.getConstDecl(stmtToExpr.getIndexing().get(v)).getRef(),v.getConstDecl(toExprResult.getIndexing().get(v)).getRef()));
+            for (var v : StmtUtils.getVars(tran)) {
+                if (stmtToExpr.getIndexing().get(v) < toExprResult.getIndexing().get(v))
+                    identityExprs.add(Eq(v.getConstDecl(stmtToExpr.getIndexing().get(v)).getRef(), v.getConstDecl(toExprResult.getIndexing().get(v)).getRef()));
             }
-            if(!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
+            if (!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
 
             MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
             transitionHandles.add(transitionNode);
@@ -139,11 +140,11 @@ public class XstsTest {
 //        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
-        System.out.println("State space size: "+stateSpaceSize);
+        System.out.println("State space size: " + stateSpaceSize);
 
-        System.out.println("Hit count: "+gs.getSaturateCache().getHitCount());
-        System.out.println("Query count: "+gs.getSaturateCache().getQueryCount());
-        System.out.println("Cache size: "+gs.getSaturateCache().getCacheSize());
+        System.out.println("Hit count: " + gs.getSaturateCache().getHitCount());
+        System.out.println("Query count: " + gs.getSaturateCache().getQueryCount());
+        System.out.println("Cache size: " + gs.getSaturateCache().getCacheSize());
 //
         final Graph graph = new MddNodeVisualizer(XstsTest::nodeToString).visualize(satResult.getNode());
         try {
@@ -151,7 +152,6 @@ public class XstsTest {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
 
 
 //        int i = 0;
@@ -166,8 +166,9 @@ public class XstsTest {
 
     }
 
-    private static String nodeToString(MddNode node){
-        if(node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?,?>) return "";
+    private static String nodeToString(MddNode node) {
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
+            return "";
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

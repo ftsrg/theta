@@ -261,7 +261,7 @@ public class XstsCli {
                 }
 
                 final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-                final SafetyResult<? extends ARG<?,?>,? extends Trace<? extends State, ? extends Action>> status = check(configuration);
+                final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status = check(configuration);
                 sw.stop();
                 printCegarResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
                 if (status.isUnsafe() && cexfile != null) {
@@ -375,7 +375,7 @@ public class XstsCli {
         }
     }
 
-    private SafetyResult<? extends ARG<?,?>,? extends Trace<? extends State, ? extends Action>> check(XstsConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> check(XstsConfig<?, ?, ?> configuration) throws Exception {
         try {
             return configuration.check();
         } catch (final Exception ex) {
@@ -506,6 +506,17 @@ public class XstsCli {
     }
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
+        // set up stopping analysis if it is stuck on same ARGs and precisions
+        //if (noStuckCheck) {
+        //ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+        //} else {
+        //ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
+        //        }
+
+        registerAllSolverManagers(solverHome, logger);
+        SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+        SolverFactory refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+
         try {
             return new XstsConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
                     .maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
@@ -515,8 +526,9 @@ public class XstsCli {
         }
     }
 
-    private void printCegarResult(final SafetyResult<? extends ARG<?,?>,? extends Trace<?,?>> status, final XSTS sts, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+    private void printCegarResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status, final XSTS sts, final long totalTimeMs) {
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
@@ -719,7 +731,7 @@ public class XstsCli {
         }
     }
 
-    private void writeVisualStatus(final SafetyResult<? extends ARG<?,?>,? extends Trace<? extends State, ? extends Action>> status, final String filename)
+    private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)
             throws FileNotFoundException {
         final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
                 : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
@@ -784,7 +796,7 @@ public class XstsCli {
         }
     }
 
-    private void createDepMat(PtNetSystem system) throws Exception{
+    private void createDepMat(PtNetSystem system) throws Exception {
         try {
             final File depMatFile = new File(depMat);
             if (!depMatFile.exists()) {
@@ -800,7 +812,7 @@ public class XstsCli {
         }
     }
 
-    private void createDepMatPng(PtNetSystem system) throws Exception{
+    private void createDepMatPng(PtNetSystem system) throws Exception {
         if (system.getPlaceCount() < 10000 && system.getTransitionCount() < 10000) {
             try {
                 final BufferedImage image = system.dependencyMatrixImage(1);
@@ -809,7 +821,7 @@ public class XstsCli {
                 throw new Exception("Error creating dependency matrix file: " + e.getMessage());
             }
         } else {
-            logger.write(Logger.Level.INFO,"[WARNING] Skipping image generation because the model size exceeds 10k places or " +
+            logger.write(Logger.Level.INFO, "[WARNING] Skipping image generation because the model size exceeds 10k places or " +
                     "transitions.");
         }
     }

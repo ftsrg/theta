@@ -59,52 +59,52 @@ public class MddCheckerTest {
 
     @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}, {4}")
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
+        return Arrays.asList(new Object[][]{
 
-                {  Eq(X.getRef(), Int(0)), // x = 0
-                        Eq(Prime(X.getRef()),X.getRef()), // x'=x
+                {Eq(X.getRef(), Int(0)), // x = 0
+                        Eq(Prime(X.getRef()), X.getRef()), // x'=x
                         Not(Eq(X.getRef(), Int(5))), // not x = 5
                         true,
                         1L},
 
-                {  Eq(X.getRef(), Int(0)),
-                        Eq(Prime(X.getRef()),X.getRef()),
+                {Eq(X.getRef(), Int(0)),
+                        Eq(Prime(X.getRef()), X.getRef()),
                         Not(Eq(X.getRef(), Int(0))),
                         false,
                         1L},
 
-                {  Eq(X.getRef(), Int(0)), // x = 0
-                        And(Eq(Prime(X.getRef()),Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(10))), // x' = x + 1 & x' <= 10
+                {Eq(X.getRef(), Int(0)), // x = 0
+                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(10))), // x' = x + 1 & x' <= 10
                         Not(Eq(X.getRef(), Int(5))),
                         false,
                         11L},
 
-                {  Eq(X.getRef(), Int(0)),
-                        And(Eq(Prime(X.getRef()),Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(5))),
+                {Eq(X.getRef(), Int(0)),
+                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(5))),
                         Not(Eq(X.getRef(), Int(5))),
                         false,
                         6L},
 
-                {  Eq(X.getRef(), Int(0)),
-                        And(Eq(Prime(X.getRef()),Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(4))),
+                {Eq(X.getRef(), Int(0)),
+                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(4))),
                         Not(Eq(X.getRef(), Int(5))),
                         true,
                         5L},
 
-                {  And(Eq(X.getRef(),Int(0)), Eq(Y.getRef(),Int(0)), Eq(Z.getRef(),Int(0))),
-                        And(And(Eq(Prime(X.getRef()),Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(10))),
+                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(10))),
                         Not(Eq(X.getRef(), Int(5))),
                         false,
                         10L},
 
-                {  And(Eq(X.getRef(),Int(0)), Eq(Y.getRef(),Int(0)), Eq(Z.getRef(),Int(0))),
-                        And(And(Eq(Prime(X.getRef()),Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(6))),
+                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(6))),
                         Not(Eq(X.getRef(), Int(5))),
                         false,
                         6L},
 
-                {  And(Eq(X.getRef(),Int(0)), Eq(Y.getRef(),Int(0)), Eq(Z.getRef(),Int(0))),
-                        And(And(Eq(Prime(X.getRef()),Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(5))),
+                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(5))),
                         Not(Eq(X.getRef(), Int(5))),
                         true,
                         5L},

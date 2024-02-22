@@ -7,30 +7,31 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescr
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
 public final class EmptyNextStateDescriptor implements AbstractNextStateDescriptor {
-	private EmptyNextStateDescriptor() {}
-	
-	public static final EmptyNextStateDescriptor INSTANCE = new EmptyNextStateDescriptor();
-	
-	@Override
-	public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-		// TODO: cache this instead of creating on demand
-		return IntObjMapView.empty(INSTANCE);
-	}
-	
-	@Override
-	public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
-			StateSpaceInfo localStateSpace) {
-		// TODO: cache this instead of creating on demand
-		return IntObjMapView.empty(IntObjMapView.empty(INSTANCE));
-	}
+    private EmptyNextStateDescriptor() {
+    }
 
-	@Override
-	public Optional<Iterable<AbstractNextStateDescriptor>> split() {
-		return Optional.empty();
-	}
-	
-	@Override
-	public boolean evaluate() {
-		return false;
-	}
+    public static final EmptyNextStateDescriptor INSTANCE = new EmptyNextStateDescriptor();
+
+    @Override
+    public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+        // TODO: cache this instead of creating on demand
+        return IntObjMapView.empty(INSTANCE);
+    }
+
+    @Override
+    public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
+            StateSpaceInfo localStateSpace) {
+        // TODO: cache this instead of creating on demand
+        return IntObjMapView.empty(IntObjMapView.empty(INSTANCE));
+    }
+
+    @Override
+    public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean evaluate() {
+        return false;
+    }
 }

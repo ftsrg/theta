@@ -123,8 +123,10 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
     }
 
     return object : SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
-        override fun check(prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>> {
-            return cegarChecker.check(prec) as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>>
+        override fun check(
+            prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
+            return cegarChecker.check(
+                prec) as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>>
         }
 
         override fun check(): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {

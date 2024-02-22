@@ -10,160 +10,160 @@ import java.util.Optional;
 
 public interface AbstractNextStateDescriptor {
 
-	interface Precondition extends AbstractNextStateDescriptor {
-		IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace);
-		
-		@Override
-		default boolean isNextStateDefined() {
-			return false;
-		}
-		
-		@Override
-		default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-			return getValuations(localStateSpace);
-		}
-		
-		@Override
-		default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
-			// keep lambda to avoid confusion with overloads
-			//noinspection Convert2MethodRef
-			return new IntObjMapViews.Transforming<>(getValuations(localStateSpace), v -> IntObjMapView.empty(v));
-		}
-	}
-	
-	interface Postcondition extends AbstractNextStateDescriptor {
-		IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace);
-		
-		@Override
-		default boolean isSourceStateDefined() {
-			return false;
-		}
-		
-		@Override
-		default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
-			return getValuations(localStateSpace);
-		}
-		
-		@Override
-		default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
-			return IntObjMapView.empty(getValuations(localStateSpace));
-		}
-	}
-	
-	static AbstractNextStateDescriptor terminalIdentity() {
-		return IdentityNextStateDescriptor.TERMINAL_IDENTITY;
-	}
-	
-	static AbstractNextStateDescriptor terminalEmpty() {
-		return EmptyNextStateDescriptor.INSTANCE;
-	}
-	
-	default boolean isSourceStateDefined() {
-		return true;
-	}
-	
-	default boolean isNextStateDefined() {
-		return true;
-	}
+    interface Precondition extends AbstractNextStateDescriptor {
+        IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace);
+
+        @Override
+        default boolean isNextStateDefined() {
+            return false;
+        }
+
+        @Override
+        default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+            return getValuations(localStateSpace);
+        }
+
+        @Override
+        default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
+            // keep lambda to avoid confusion with overloads
+            //noinspection Convert2MethodRef
+            return new IntObjMapViews.Transforming<>(getValuations(localStateSpace), v -> IntObjMapView.empty(v));
+        }
+    }
+
+    interface Postcondition extends AbstractNextStateDescriptor {
+        IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace);
+
+        @Override
+        default boolean isSourceStateDefined() {
+            return false;
+        }
+
+        @Override
+        default IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
+            return getValuations(localStateSpace);
+        }
+
+        @Override
+        default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
+            return IntObjMapView.empty(getValuations(localStateSpace));
+        }
+    }
+
+    static AbstractNextStateDescriptor terminalIdentity() {
+        return IdentityNextStateDescriptor.TERMINAL_IDENTITY;
+    }
+
+    static AbstractNextStateDescriptor terminalEmpty() {
+        return EmptyNextStateDescriptor.INSTANCE;
+    }
+
+    default boolean isSourceStateDefined() {
+        return true;
+    }
+
+    default boolean isNextStateDefined() {
+        return true;
+    }
 
 
-	IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace);
+    IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace);
 
 
-	IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace);
-	
-	default Optional<Iterable<AbstractNextStateDescriptor>> split() {
-		return Optional.empty();
-	}
-	
-	// Should return true only if there is a valuation that is accepted by the relation and false if there is not.
-	// Must throw an exception if undecidable.
-	default boolean evaluate() {
-		throw new IllegalStateException("Evaluated before reaching a terminal descriptor.");
-	}
-	
-	default boolean isLocallyIdentity(final StateSpaceInfo stateSpaceInfo) {
-		final IntObjMapView<AbstractNextStateDescriptor> diagonal = getDiagonal(stateSpaceInfo);
-		final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = getOffDiagonal(stateSpaceInfo);
-		return  offDiagonal.isEmpty() && isNullOrEmpty(offDiagonal.defaultValue()) && diagonal.isEmpty();
-	}
-	
-	static boolean isNullOrEmpty(AbstractNextStateDescriptor ns) {
-		return ns == null || ns == terminalEmpty();
-	}
-	
-	static boolean isNullOrEmpty(IntObjMapView<? extends AbstractNextStateDescriptor> ns) {
-		return ns == null || (ns.isEmpty() && isNullOrEmpty(ns.defaultValue()));
-	}
+    IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace);
 
-	interface Cursor extends Closeable {
+    default Optional<Iterable<AbstractNextStateDescriptor>> split() {
+        return Optional.empty();
+    }
 
-		int key();
+    // Should return true only if there is a valuation that is accepted by the relation and false if there is not.
+    // Must throw an exception if undecidable.
+    default boolean evaluate() {
+        throw new IllegalStateException("Evaluated before reaching a terminal descriptor.");
+    }
 
-		AbstractNextStateDescriptor value();
+    default boolean isLocallyIdentity(final StateSpaceInfo stateSpaceInfo) {
+        final IntObjMapView<AbstractNextStateDescriptor> diagonal = getDiagonal(stateSpaceInfo);
+        final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = getOffDiagonal(stateSpaceInfo);
+        return offDiagonal.isEmpty() && isNullOrEmpty(offDiagonal.defaultValue()) && diagonal.isEmpty();
+    }
 
-		boolean moveNext();
+    static boolean isNullOrEmpty(AbstractNextStateDescriptor ns) {
+        return ns == null || ns == terminalEmpty();
+    }
 
-		boolean moveTo(int key);
+    static boolean isNullOrEmpty(IntObjMapView<? extends AbstractNextStateDescriptor> ns) {
+        return ns == null || (ns.isEmpty() && isNullOrEmpty(ns.defaultValue()));
+    }
 
-		Cursor valueCursor(int from);
+    interface Cursor extends Closeable {
 
-		void close();
+        int key();
 
-		default Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
-			return Optional.empty();
-		}
+        AbstractNextStateDescriptor value();
 
-		class Singleton implements Cursor {
+        boolean moveNext();
 
-			private final AbstractNextStateDescriptor value;
+        boolean moveTo(int key);
 
-			private int currentPosition;
+        Cursor valueCursor(int from);
 
-			public Singleton(AbstractNextStateDescriptor value) {
-				this.value = value;
-				this.currentPosition = -1;
-			}
+        void close();
 
-			@Override
-			public int key() {
-				return 0;
-			}
+        default Optional<Iterable<AbstractNextStateDescriptor.Cursor>> split() {
+            return Optional.empty();
+        }
 
-			@Override
-			public AbstractNextStateDescriptor value() {
-				return value;
-			}
+        class Singleton implements Cursor {
 
-			@Override
-			public boolean moveNext() {
-				currentPosition++;
-				return currentPosition == 0;
-			}
+            private final AbstractNextStateDescriptor value;
 
-			@Override
-			public boolean moveTo(int key) {
-				return false;
-			}
+            private int currentPosition;
 
-			@Override
-			public Cursor valueCursor(int from) {
-				return value.cursor(from);
-			}
+            public Singleton(AbstractNextStateDescriptor value) {
+                this.value = value;
+                this.currentPosition = -1;
+            }
 
-			@Override
-			public void close() {
+            @Override
+            public int key() {
+                return 0;
+            }
 
-			}
-		}
+            @Override
+            public AbstractNextStateDescriptor value() {
+                return value;
+            }
 
-	}
+            @Override
+            public boolean moveNext() {
+                currentPosition++;
+                return currentPosition == 0;
+            }
 
-	default Cursor cursor(int from) {
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
+            @Override
+            public boolean moveTo(int key) {
+                return false;
+            }
 
-	default Cursor rootCursor() {
-		return new Cursor.Singleton(this);
-	}
+            @Override
+            public Cursor valueCursor(int from) {
+                return value.cursor(from);
+            }
+
+            @Override
+            public void close() {
+
+            }
+        }
+
+    }
+
+    default Cursor cursor(int from) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    default Cursor rootCursor() {
+        return new Cursor.Singleton(this);
+    }
 }

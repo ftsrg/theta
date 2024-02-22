@@ -233,18 +233,14 @@ public class CfaCli {
                 refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
             }
 
-			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
-			final SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> status =  check(configuration);
-			sw.stop();
-			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
-				writeCex(status.asUnsafe());
-			}
-		} catch (final Throwable ex) {
-			printError(ex);
-			System.exit(1);
-		}
-	}
+            final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status;
+            if (algorithm == Algorithm.CEGAR) {
+                final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
+                status = check(configuration);
+                sw.stop();
+            } else {
+                throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+            }
 
             printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {
@@ -286,28 +282,18 @@ public class CfaCli {
         }
     }
 
-	private void printResult(final SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> status, final long totalTimeMs) {
-		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-		if (benchmarkMode) {
-			writer.cell(status.isSafe());
-			writer.cell(totalTimeMs);
-			writer.cell(stats.getAlgorithmTimeMs());
-			writer.cell(stats.getAbstractorTimeMs());
-			writer.cell(stats.getRefinerTimeMs());
-			writer.cell(stats.getIterations());
-			writer.cell(status.getWitness().size());
-			writer.cell(status.getWitness().getDepth());
-			writer.cell(status.getWitness().getMeanBranchingFactor());
-			if (status.isUnsafe()) {
-				writer.cell(status.asUnsafe().getCex().length() + "");
-			} else {
-				writer.cell("");
-			}
-			writer.newRow();
-		}
-	}
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(CfaConfig<?, ?, ?> configuration) throws Exception {
+        try {
+            return configuration.check();
+        } catch (final Exception ex) {
+            String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
+            throw new Exception(
+                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    ex);
+        }
+    }
 
-    private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
+    private void printResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status, final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics)
                 status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {

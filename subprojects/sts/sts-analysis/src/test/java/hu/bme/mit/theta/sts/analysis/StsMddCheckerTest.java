@@ -40,75 +40,75 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
 public class StsMddCheckerTest {
-	@Parameterized.Parameter(value = 0)
-	public String filePath;
+    @Parameterized.Parameter(value = 0)
+    public String filePath;
 
-	@Parameterized.Parameter(value = 1)
-	public boolean safe;
+    @Parameterized.Parameter(value = 1)
+    public boolean safe;
 
-	@Parameterized.Parameters(name = "{index}: {0}, {1}")
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][]{
+    @Parameterized.Parameters(name = "{index}: {0}, {1}")
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
 //				{ "src/test/resources/hw1_false.aag", false },
 //
 //				{ "src/test/resources/hw2_true.aag", true },
 
-				{ "src/test/resources/boolean1.system", false },
+                {"src/test/resources/boolean1.system", false},
 
-				{ "src/test/resources/boolean2.system", false },
+                {"src/test/resources/boolean2.system", false},
 
-				{ "src/test/resources/counter.system", true },
+                {"src/test/resources/counter.system", true},
 
-				{ "src/test/resources/counter_bad.system", false },
+                {"src/test/resources/counter_bad.system", false},
 
-				{ "src/test/resources/counter_parametric.system", true },
+                {"src/test/resources/counter_parametric.system", true},
 
-				{ "src/test/resources/loop.system", true },
+                {"src/test/resources/loop.system", true},
 
-				{ "src/test/resources/loop_bad.system", false },
+                {"src/test/resources/loop_bad.system", false},
 
-				{ "src/test/resources/multipleinitial.system", false },
+                {"src/test/resources/multipleinitial.system", false},
 
-				{ "src/test/resources/readerswriters.system", true },
+                {"src/test/resources/readerswriters.system", true},
 
-				{ "src/test/resources/simple1.system", false },
+                {"src/test/resources/simple1.system", false},
 
-				{ "src/test/resources/simple2.system", true },
+                {"src/test/resources/simple2.system", true},
 
-				{ "src/test/resources/simple3.system", false },
-		});
-	}
+                {"src/test/resources/simple3.system", false},
+        });
+    }
 
-	@Test
-	public void test() throws IOException {
-		final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
+    @Test
+    public void test() throws IOException {
+        final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
-		final STS sts;
-		if (filePath.endsWith("aag")) sts = AigerToSts.createSts(AigerParser.parse(filePath));
-		else {
-			final StsSpec spec = StsDslManager.createStsSpec(new FileInputStream(filePath));
-			if (spec.getAllSts().size() != 1)
-				throw new UnsupportedOperationException("STS contains multiple properties.");
-			sts = Utils.singleElementOf(spec.getAllSts());
-		}
-		final MddChecker<ExprAction> checker = MddChecker.create(sts.getInit(), VarIndexingFactory.indexing(0), new ExprAction() {
-			@Override
-			public Expr<BoolType> toExpr() {
-				return sts.getTrans();
-			}
+        final STS sts;
+        if (filePath.endsWith("aag")) sts = AigerToSts.createSts(AigerParser.parse(filePath));
+        else {
+            final StsSpec spec = StsDslManager.createStsSpec(new FileInputStream(filePath));
+            if (spec.getAllSts().size() != 1)
+                throw new UnsupportedOperationException("STS contains multiple properties.");
+            sts = Utils.singleElementOf(spec.getAllSts());
+        }
+        final MddChecker<ExprAction> checker = MddChecker.create(sts.getInit(), VarIndexingFactory.indexing(0), new ExprAction() {
+            @Override
+            public Expr<BoolType> toExpr() {
+                return sts.getTrans();
+            }
 
-			@Override
-			public VarIndexing nextIndexing() {
-				return VarIndexingFactory.indexing(1);
-			}
-		}, sts.getProp(), Z3SolverFactory.getInstance(), logger);
+            @Override
+            public VarIndexing nextIndexing() {
+                return VarIndexingFactory.indexing(1);
+            }
+        }, sts.getProp(), Z3SolverFactory.getInstance(), logger);
 
-		final SafetyResult<MddWitness, MddCex> status = checker.check(null);
-		if (safe) {
-			assertTrue(status.isSafe());
-		} else {
-			assertTrue(status.isUnsafe());
-		}
-	}
+        final SafetyResult<MddWitness, MddCex> status = checker.check(null);
+        if (safe) {
+            assertTrue(status.isSafe());
+        } else {
+            assertTrue(status.isUnsafe());
+        }
+    }
 
 }

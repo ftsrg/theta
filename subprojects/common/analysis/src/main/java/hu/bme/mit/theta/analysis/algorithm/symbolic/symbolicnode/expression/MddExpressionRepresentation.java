@@ -155,28 +155,28 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         final MddNode mddNodeConstraint = (MddNode) constraint;
         final List<Expr<BoolType>> exprs = new ArrayList<>();
 
-        if(mddVariable.getLower().isPresent()){
+        if (mddVariable.getLower().isPresent()) {
             MddVariable variable = mddVariable.getLower().get();
             MddNode mddNode = mddNodeConstraint.get(mddNodeConstraint.statistics().lowestValue());
             while (true) {
 
                 // This is needed because the constraint node might contain level-skips: of the domain is bounded, then default values are detected
-                if(mddNode.isTerminal()) break;
+                if (mddNode.isTerminal()) break;
 
                 final IntStatistics statistics = mddNode.statistics();
                 final Decl<?> decl = variable.getTraceInfo(Decl.class);
                 final LitExpr<?> lowerBound = LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
                 final LitExpr<?> upperBound = LitExprConverter.toLitExpr(statistics.highestValue(), decl.getType());
-                if(!decl.getType().equals(BoolType.getInstance())){ // TODO delete
-                    if(lowerBound.equals(upperBound)){
+                if (!decl.getType().equals(BoolType.getInstance())) { // TODO delete
+                    if (lowerBound.equals(upperBound)) {
                         exprs.add(Eq(decl.getRef(), lowerBound));
                     } else {
-                        exprs.add(And(Geq(decl.getRef(),lowerBound), Leq(decl.getRef(), upperBound)));
+                        exprs.add(And(Geq(decl.getRef(), lowerBound), Leq(decl.getRef(), upperBound)));
                     }
                 }
 
 
-                if(variable.getLower().isEmpty() || variable.getLower().get().getLower().isEmpty()){
+                if (variable.getLower().isEmpty() || variable.getLower().get().getLower().isEmpty()) {
                     break;
                 } else {
                     variable = variable.getLower().get().getLower().get();
@@ -191,7 +191,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     @Override
     public int size() {
-        if (explicitRepresentation.isComplete()) return explicitRepresentation.getCacheView().size();
+        if (explicitRepresentation.isComplete())
+            return explicitRepresentation.getCacheView().size();
         return -1;
     }
 
@@ -380,7 +381,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     cacheModel(modelToCache);
                     return QueryResult.singleEdge(LitExprConverter.toInt(literal));
                 } else {
-                    if(constrained) {
+                    if (constrained) {
                         return QueryResult.constrainedFailed();
                     } else {
                         currentRepresentation.explicitRepresentation.setComplete();
@@ -422,7 +423,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         private void cacheModel(Valuation valuation) {
             MddExpressionRepresentation representation = currentRepresentation;
 
-            while(true) {
+            while (true) {
 
                 final MddNode childNode;
                 if (representation.explicitRepresentation.getCacheView().defaultValue() != null) {
@@ -523,7 +524,9 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 return new QueryResult(key, QueryResult.Status.SINGLE_EDGE);
             }
 
-            public static QueryResult constrainedFailed() {return new QueryResult(-1, Status.CONSTRAINED_FAILED);}
+            public static QueryResult constrainedFailed() {
+                return new QueryResult(-1, Status.CONSTRAINED_FAILED);
+            }
 
             public static QueryResult failed() {
                 return new QueryResult(-1, QueryResult.Status.FAILED);
@@ -682,7 +685,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     value = currentRepresentation.explicitRepresentation.getCacheView().get(key);
                     initialized = true;
                     return true;
-                } else if(queryResult.getStatus() == Traverser.QueryResult.Status.CONSTRAINED_FAILED) {
+                } else if (queryResult.getStatus() == Traverser.QueryResult.Status.CONSTRAINED_FAILED) {
                     this.constrainedFailed = true;
                 }
             }

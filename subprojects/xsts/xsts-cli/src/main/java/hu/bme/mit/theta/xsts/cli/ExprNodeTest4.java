@@ -27,7 +27,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class ExprNodeTest4 {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -41,7 +41,7 @@ public class ExprNodeTest4 {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // y >= 2 && z = y + 1 && y <= 6
-        Expr<BoolType> expr = And(Geq(declY.getRef(),Int(2)), Eq(declZ.getRef(),Add(declY.getRef(),Int(1))),Leq(declY.getRef(), Int(6)));
+        Expr<BoolType> expr = And(Geq(declY.getRef(), Int(2)), Eq(declZ.getRef(), Add(declY.getRef(), Int(1))), Leq(declY.getRef(), Int(6)));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
@@ -51,7 +51,7 @@ public class ExprNodeTest4 {
         var recursiveCursor = interpreter.cursor();
         recursiveCursor.moveNext();
 
-        try(var childCursor = recursiveCursor.valueCursor()){
+        try (var childCursor = recursiveCursor.valueCursor()) {
             childCursor.moveNext();
             childCursor.moveNext();
             childCursor.moveNext();
@@ -70,7 +70,7 @@ public class ExprNodeTest4 {
 
     }
 
-    private static String nodeToString(MddNode node){
+    private static String nodeToString(MddNode node) {
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

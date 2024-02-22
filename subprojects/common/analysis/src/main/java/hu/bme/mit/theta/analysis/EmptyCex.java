@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis;
 
-public class EmptyCex implements Cex{
+public class EmptyCex implements Cex {
 
     private final static EmptyCex empty = new EmptyCex();
 

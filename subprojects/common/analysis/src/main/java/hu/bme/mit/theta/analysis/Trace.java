@@ -53,13 +53,13 @@ public final class Trace<S, A> implements Cex {
         return new Trace<>(states, actions);
     }
 
-	/**
-	 * Gets the length of the trace, which is the number of actions.
-	 */
-	@Override
-	public int length() {
-		return actions.size();
-	}
+    /**
+     * Gets the length of the trace, which is the number of actions.
+     */
+    @Override
+    public int length() {
+        return actions.size();
+    }
 
     /**
      * Gets a state at a given index.

@@ -110,16 +110,23 @@ public final class XtaCli {
             return;
         }
 
-	private SafetyResult<? extends ARG<?,?>, ? extends Trace<? extends State,? extends Action>> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
-		try {
-			return (SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>) checker.check(UnitPrec.getInstance());
-		} catch (final Exception ex) {
-			String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
-			throw new Exception("Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message, ex);
-		}
-	}
+        try {
+            final XtaSystem system = loadModel();
+            final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system,
+                    dataStrategy,
+                    clockStrategy, searchStrategy);
+            final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> result = check(checker);
+            printResult(result);
+            if (dotfile != null) {
+                writeVisualStatus(result, dotfile);
+            }
+        } catch (final Throwable ex) {
+            printError(ex);
+            System.exit(1);
+        }
+    }
 
-    private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
         try {
             return checker.check(UnitPrec.getInstance());
         } catch (final Exception ex) {
@@ -140,7 +147,7 @@ public final class XtaCli {
         }
     }
 
-    private void printResult(final SafetyResult<?, ?> result) {
+    private void printResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> result) {
         final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
         if (benchmarkMode) {
             stats.writeData(writer);
@@ -149,11 +156,29 @@ public final class XtaCli {
         }
     }
 
-	private void writeVisualStatus(final SafetyResult<? extends ARG<?,?>, ? extends Trace<? extends State,? extends Action>> status, final String filename)
-			throws FileNotFoundException {
-		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
-				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
-		GraphvizWriter.getInstance().writeFile(graph, filename);
-	}
+    private void printError(final Throwable ex) {
+        final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+        if (benchmarkMode) {
+            writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+        } else {
+            System.out.println(ex.getClass().getSimpleName() + " occurred, message: " + message);
+            if (stacktrace) {
+                final StringWriter errors = new StringWriter();
+                ex.printStackTrace(new PrintWriter(errors));
+                System.out.println("Trace:");
+                System.out.println(errors);
+            } else {
+                System.out.println("Use --stacktrace for stack trace");
+            }
+        }
+    }
+
+    private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)
+            throws FileNotFoundException {
+        final Graph graph =
+                status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
+                        : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
+        GraphvizWriter.getInstance().writeFile(graph, filename);
+    }
 
 }

@@ -1,6 +1,9 @@
 ## A simple example
+
 ### Input
+
 Let's give a simple example program as input:
+
 ``` C
 #include <stdio.h>
 
@@ -15,8 +18,11 @@ int main() {
 ```
 
 ### LLVM IR
+
 After compilation with clang and executing the passes, we get the following LLVM IR:
-*(Note: LLVM IR is rather verbose, so some attributes have been cut out from the middle, as they are insignificant in this example)*
+*(Note: LLVM IR is rather verbose, so some attributes have been cut out from the middle, as they are
+insignificant in this example)*
+
 ```llvm
 ; ModuleID = 'example.bc'
 source_filename = "example.c"
@@ -73,22 +79,40 @@ declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 !20 = !DILocation(line: 9, column: 5, scope: !9)
 
 ```
-There are two important parts in the IR:
-- the IR version of the main function, starting from `define dso_local i32 @main() local_unnamed_addr #0 !dbg !9 {`
-- and the metadata in the second half - each line starting with a `!` and a number represents some kind of metadata, e.g. `!14 = !DILocalVariable(name: "a", scope: !9, file: !10, line: 4, type: !13)` tells us, that the register annotated with `!14` is connected to the local variable `a`.
 
-We can also notice the SSA (single static assignment) nature of LLVM IR in this example: `!17` shows in `main` more than once, as each time `b` has a new value assigned, a new register has to be created, as virtual registers in LLVM can only be assigned once.
+There are two important parts in the IR:
+
+- the IR version of the main function, starting
+  from `define dso_local i32 @main() local_unnamed_addr #0 !dbg !9 {`
+- and the metadata in the second half - each line starting with a `!` and a number represents some
+  kind of metadata,
+  e.g. `!14 = !DILocalVariable(name: "a", scope: !9, file: !10, line: 4, type: !13)` tells us, that
+  the register annotated with `!14` is connected to the local variable `a`.
+
+We can also notice the SSA (single static assignment) nature of LLVM IR in this example: `!17` shows
+in `main` more than once, as each time `b` has a new value assigned, a new register has to be
+created, as virtual registers in LLVM can only be assigned once.
 
 ### Our intermediate representation
-The customized representation we use has no textual syntax, as it would be superfluous, rather it can be shown as a class hierarchy, loosely following that of LLVM IR. 
+
+The customized representation we use has no textual syntax, as it would be superfluous, rather it
+can be shown as a class hierarchy, loosely following that of LLVM IR.
 It is noteworthy to mention some of the differences here:
+
 - LLVM IR has no register/operand classes, only instructions
-- We have no separate metadata classes, e.g. the register class contains the above mentioned DILocalVariable itself in the form of the variable name
-- We handle only the fraction of information contained in LLVM IR, e.g. we only store the `name: "a"` part of the `!DILocalVariable` metadata, even though it contains a scope, line, filename, etc. 
-![type-classes](type-classes.png)
+- We have no separate metadata classes, e.g. the register class contains the above mentioned
+  DILocalVariable itself in the form of the variable name
+- We handle only the fraction of information contained in LLVM IR, e.g. we only store
+  the `name: "a"` part of the `!DILocalVariable` metadata, even though it contains a scope, line,
+  filename, etc.
+  ![type-classes](type-classes.png)
 
 ### XCFA
-At the end of our example execution we get the XCFA from Theta, which van be printed into a graphviz (dot) format:
+
+At the end of our example execution we get the XCFA from Theta, which van be printed into a
+graphviz (dot) format:
 ![xcfa](xcfa.png)
 
-Although in the representation before the xcfa we had the registers representing `b`, during the XCFA transformation in Theta the `b = a + 2; main_ret = b` sequence was merged into `main_ret = a + 2`. 
+Although in the representation before the xcfa we had the registers representing `b`, during the
+XCFA transformation in Theta the `b = a + 2; main_ret = b` sequence was merged
+into `main_ret = a + 2`. 
