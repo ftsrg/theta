@@ -19,8 +19,8 @@ package hu.bme.mit.theta.grammar.gson
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.ARG
-import hu.bme.mit.theta.analysis.algorithm.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 
 data class ArgAdapterHelper<S : State, A : Action>(
     val initNodes: Map<Int, Triple<S, Boolean, Boolean>>,
