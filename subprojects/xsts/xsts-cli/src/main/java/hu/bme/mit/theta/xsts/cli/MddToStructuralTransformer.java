@@ -23,9 +23,9 @@ public class MddToStructuralTransformer {
 
         MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
-        while (cursor.moveNext()){
+        while (cursor.moveNext()) {
 
-            try(var valueCursor = cursor.valueCursor()){
+            try (var valueCursor = cursor.valueCursor()) {
 
                 MddHandle s = transform(cursor.value(),
                         variable.getLower().orElse(null), valueCursor

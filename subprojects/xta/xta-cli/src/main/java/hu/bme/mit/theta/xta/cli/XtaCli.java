@@ -115,7 +115,7 @@ public final class XtaCli {
             final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system,
                     dataStrategy,
                     clockStrategy, searchStrategy);
-            final SafetyResult<? extends ARG<?,?>, ? extends Trace<? extends State,? extends Action>> result = check(checker);
+            final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> result = check(checker);
             printResult(result);
             if (dotfile != null) {
                 writeVisualStatus(result, dotfile);
@@ -126,7 +126,7 @@ public final class XtaCli {
         }
     }
 
-    private SafetyResult<? extends ARG<?,?>, ? extends Trace<? extends State,? extends Action>> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
         try {
             return (SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>) checker.check(UnitPrec.getInstance());
         } catch (final Exception ex) {
@@ -147,7 +147,7 @@ public final class XtaCli {
         }
     }
 
-    private void printResult(final SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> result) {
+    private void printResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> result) {
         final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
         if (benchmarkMode) {
             stats.writeData(writer);
@@ -173,7 +173,7 @@ public final class XtaCli {
         }
     }
 
-    private void writeVisualStatus(final SafetyResult<? extends ARG<?,?>, ? extends Trace<? extends State,? extends Action>> status, final String filename)
+    private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)
             throws FileNotFoundException {
         final Graph graph =
                 status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())

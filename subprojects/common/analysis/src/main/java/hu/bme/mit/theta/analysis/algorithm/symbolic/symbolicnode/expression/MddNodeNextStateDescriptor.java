@@ -34,7 +34,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         this.node = node;
     }
 
-    public static AbstractNextStateDescriptor of(MddHandle node){
+    public static AbstractNextStateDescriptor of(MddHandle node) {
         return node.isTerminalZero() ? AbstractNextStateDescriptor.terminalEmpty() : new MddNodeNextStateDescriptor(node);
     }
 
@@ -47,7 +47,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
         final MddNode constraint = localStateSpace.toStructuralRepresentation();
         return new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(node, (n, key) -> {
-            if(key == null) return AbstractNextStateDescriptor.terminalEmpty();
+            if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
             else return MddNodeNextStateDescriptor.of((MddHandle) n.get(key));
         }), constraint);
     }
@@ -56,7 +56,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
         final MddNode constraint = localStateSpace.toStructuralRepresentation();
         return new IntObjMapViews.Transforming<>(node,
-                outerNode -> new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(outerNode, n -> MddNodeNextStateDescriptor.of((MddHandle) n)),constraint));
+                outerNode -> new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(outerNode, n -> MddNodeNextStateDescriptor.of((MddHandle) n)), constraint));
     }
 
     @Override
@@ -69,14 +69,15 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
         private final Runnable closer;
 
-        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, Runnable closer){
+        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, Runnable closer) {
             this.wrapped = wrapped;
             this.closer = closer;
         }
 
-        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped){
+        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped) {
             this.wrapped = wrapped;
-            this.closer = () -> {};
+            this.closer = () -> {
+            };
         }
 
         @Override

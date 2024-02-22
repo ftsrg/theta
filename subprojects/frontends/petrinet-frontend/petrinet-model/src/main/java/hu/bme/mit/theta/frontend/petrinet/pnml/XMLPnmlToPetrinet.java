@@ -96,8 +96,8 @@ public class XMLPnmlToPetrinet {
                         XPathConstants.NUMBER)).intValue();
             }
 
-            final Place place = new Place( id);
-			place.setInitialMarking( initialMarking);
+            final Place place = new Place(id);
+            place.setInitialMarking(initialMarking);
             idMap.put(id, place);
             places.add(place);
         }
@@ -120,7 +120,7 @@ public class XMLPnmlToPetrinet {
 //				name = nameText;
 //			}
 
-            final Transition transition = new Transition( id);
+            final Transition transition = new Transition(id);
             idMap.put(id, transition);
             transitions.add(transition);
         }
@@ -147,26 +147,26 @@ public class XMLPnmlToPetrinet {
                     XPathConstants.NUMBER)).intValue();
             final int weight = toolspecificWeight == 0 ? 1 : toolspecificWeight;
 
-            if(source instanceof Place){
-				checkArgument(target instanceof Transition);
-				final PTArc arc = new PTArc(id);
-				arc.setWeight( weight);
-				arc.setSource((Place) source);
-				arc.setTarget((Transition) target);
-			} else {
-				checkArgument(source instanceof Transition && target instanceof Place);
-				final TPArc arc = new TPArc(id);
-				arc.setWeight(weight);
-				arc.setSource((Transition) source);
-				arc.setTarget((Place) target);
-			}
+            if (source instanceof Place) {
+                checkArgument(target instanceof Transition);
+                final PTArc arc = new PTArc(id);
+                arc.setWeight(weight);
+                arc.setSource((Place) source);
+                arc.setTarget((Transition) target);
+            } else {
+                checkArgument(source instanceof Transition && target instanceof Place);
+                final TPArc arc = new TPArc(id);
+                arc.setWeight(weight);
+                arc.setSource((Transition) source);
+                arc.setTarget((Place) target);
+            }
         }
 
         final PetriNet ptNet = new PetriNet("0");
-		ptNet.getPlaces().addAll(places);
-		ptNet.getTransitions().addAll( transitions);
+        ptNet.getPlaces().addAll(places);
+        ptNet.getTransitions().addAll(transitions);
 
-		return ptNet;
-	}
+        return ptNet;
+    }
 
 }

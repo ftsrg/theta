@@ -24,7 +24,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class ExprNodeTest6 {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
         MddVariableOrder varOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
@@ -38,7 +38,7 @@ public class ExprNodeTest6 {
         MddVariable x = varOrder.createOnTop(MddVariableDescriptor.create(declX, 0));
 
         // x >= 2 && y = x + 1 && x <= 6
-        Expr<BoolType> expr = And(Eq(declX.getRef(), declY.getRef()), And(Eq(declY.getRef(),declZ.getRef()), Eq(declZ.getRef(), Int(2))));
+        Expr<BoolType> expr = And(Eq(declX.getRef(), declY.getRef()), And(Eq(declY.getRef(), declZ.getRef()), Eq(declZ.getRef(), Int(2))));
 //        Expr<BoolType> expr = Or(And(Geq(declX.getRef(),Int(2)), Eq(declY.getRef(),Int(1)),Leq(declX.getRef(), Int(6))),And(Geq(declY.getRef(), Int(5)),Gt(declX.getRef(), Int(3)), IntExprs.Lt(declX.getRef(), Int(6))));
 
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
@@ -62,7 +62,7 @@ public class ExprNodeTest6 {
 
     }
 
-    private static String nodeToString(MddNode node){
+    private static String nodeToString(MddNode node) {
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

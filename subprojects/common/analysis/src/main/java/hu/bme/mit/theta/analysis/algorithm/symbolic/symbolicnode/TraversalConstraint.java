@@ -12,6 +12,7 @@ public interface TraversalConstraint {
 
     /**
      * Gets the bounds for a variable if applicable
+     *
      * @param variable the variable
      * @return the bounds for the variable
      */

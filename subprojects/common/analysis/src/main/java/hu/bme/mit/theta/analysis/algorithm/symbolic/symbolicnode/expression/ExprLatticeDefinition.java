@@ -12,14 +12,14 @@ import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
 public class ExprLatticeDefinition {
 
-    public static LatticeDefinition<Expr> forExpr(){
+    public static LatticeDefinition<Expr> forExpr() {
         return new LatticeDefinition<>(
                 Expr.class,
                 False(),
                 True(),
                 SmartBoolExprs::Or,
                 SmartBoolExprs::And,
-                (a,b) -> And(a, Not(b))
+                (a, b) -> And(a, Not(b))
         );
     }
 

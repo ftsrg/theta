@@ -25,132 +25,132 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SafetyResult<W extends Witness, C extends Cex> implements Result<W> {
-	private final W witness;
-	private final Optional<Statistics> stats;
+    private final W witness;
+    private final Optional<Statistics> stats;
 
-	private SafetyResult(final W witness, final Optional<Statistics> stats) {
-		this.witness = checkNotNull(witness);
-		this.stats = checkNotNull(stats);
-	}
+    private SafetyResult(final W witness, final Optional<Statistics> stats) {
+        this.witness = checkNotNull(witness);
+        this.stats = checkNotNull(stats);
+    }
 
     private SafetyResult() {
         this.witness = null;
         this.stats = Optional.empty();
     }
 
-	@Override
-	public W getWitness() {
-		return witness;
-	}
+    @Override
+    public W getWitness() {
+        return witness;
+    }
 
-	@Override
-	public Optional<Statistics> getStats() {
-		return stats;
-	}
+    @Override
+    public Optional<Statistics> getStats() {
+        return stats;
+    }
 
-	public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness) {
-		return new Safe<>(witness, Optional.empty());
-	}
+    public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness) {
+        return new Safe<>(witness, Optional.empty());
+    }
 
-	public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness) {
-		return new Unsafe<>(cex, witness, Optional.empty());
-	}
+    public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness) {
+        return new Unsafe<>(cex, witness, Optional.empty());
+    }
 
-	public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness, final Statistics stats) {
-		return new Safe<>(witness, Optional.of(stats));
-	}
+    public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness, final Statistics stats) {
+        return new Safe<>(witness, Optional.of(stats));
+    }
 
-	public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness,
-																		  final Statistics stats) {
-		return new Unsafe<>(cex, witness, Optional.of(stats));
-	}
+    public static <W extends Witness, C extends Cex> Unsafe<W, C> unsafe(final C cex, final W witness,
+                                                                         final Statistics stats) {
+        return new Unsafe<>(cex, witness, Optional.of(stats));
+    }
 
     public static <W extends Witness, C extends Cex> Unknown<W, C> unknown() {
         return new Unknown<>();
     }
 
-	public abstract boolean isSafe();
+    public abstract boolean isSafe();
 
-	public abstract boolean isUnsafe();
+    public abstract boolean isUnsafe();
 
-	public abstract Safe<W, C> asSafe();
+    public abstract Safe<W, C> asSafe();
 
-	public abstract Unsafe<W, C> asUnsafe();
+    public abstract Unsafe<W, C> asUnsafe();
 
-	////
+    ////
 
-	public static final class Safe<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
-		private Safe(final W witness, final Optional<Statistics> stats) {
-			super(witness, stats);
-		}
+    public static final class Safe<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
+        private Safe(final W witness, final Optional<Statistics> stats) {
+            super(witness, stats);
+        }
 
-		@Override
-		public boolean isSafe() {
-			return true;
-		}
+        @Override
+        public boolean isSafe() {
+            return true;
+        }
 
-		@Override
-		public boolean isUnsafe() {
-			return false;
-		}
+        @Override
+        public boolean isUnsafe() {
+            return false;
+        }
 
-		@Override
-		public Safe<W, C> asSafe() {
-			return this;
-		}
+        @Override
+        public Safe<W, C> asSafe() {
+            return this;
+        }
 
-		@Override
-		public Unsafe<W, C> asUnsafe() {
-			throw new ClassCastException(
-					"Cannot cast " + Safe.class.getSimpleName() + " to " + Unsafe.class.getSimpleName());
-		}
+        @Override
+        public Unsafe<W, C> asUnsafe() {
+            throw new ClassCastException(
+                    "Cannot cast " + Safe.class.getSimpleName() + " to " + Unsafe.class.getSimpleName());
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
-					.toString();
-		}
-	}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
+                    .toString();
+        }
+    }
 
-	public static final class Unsafe<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
-		private final C cex;
+    public static final class Unsafe<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
+        private final C cex;
 
-		private Unsafe(final C cex, final W witness, final Optional<Statistics> stats) {
-			super(witness, stats);
-			this.cex = checkNotNull(cex);
-		}
+        private Unsafe(final C cex, final W witness, final Optional<Statistics> stats) {
+            super(witness, stats);
+            this.cex = checkNotNull(cex);
+        }
 
-		public C getCex() {
-			return cex;
-		}
+        public C getCex() {
+            return cex;
+        }
 
-		@Override
-		public boolean isSafe() {
-			return false;
-		}
+        @Override
+        public boolean isSafe() {
+            return false;
+        }
 
-		@Override
-		public boolean isUnsafe() {
-			return true;
-		}
+        @Override
+        public boolean isUnsafe() {
+            return true;
+        }
 
-		@Override
-		public Safe<W, C> asSafe() {
-			throw new ClassCastException(
-					"Cannot cast " + Unsafe.class.getSimpleName() + " to " + Safe.class.getSimpleName());
-		}
+        @Override
+        public Safe<W, C> asSafe() {
+            throw new ClassCastException(
+                    "Cannot cast " + Unsafe.class.getSimpleName() + " to " + Safe.class.getSimpleName());
+        }
 
-		@Override
-		public Unsafe<W, C> asUnsafe() {
-			return this;
-		}
+        @Override
+        public Unsafe<W, C> asUnsafe() {
+            return this;
+        }
 
-		@Override
-		public String toString() {
-			return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
-					.add("Trace length: " + cex.length()).toString();
-		}
-	}
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
+                    .add("Trace length: " + cex.length()).toString();
+        }
+    }
 
     public static final class Unknown<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
 

@@ -95,9 +95,9 @@ public class MddNodeVisualizer {
 
         graph.addNode(nodeId, nAttributes);
 
-        if(node.defaultValue() != null){
+        if (node.defaultValue() != null) {
             final MddNode defaultValue = node.defaultValue();
-            try(var valueCursor = cursor.valueCursor()){
+            try (var valueCursor = cursor.valueCursor()) {
                 traverse(graph, defaultValue, valueCursor, traversed);
             }
             final String sourceId = NODE_ID_PREFIX + idFor(node);
@@ -106,14 +106,14 @@ public class MddNodeVisualizer {
                     .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(DEFAULT_EDGE_STYLE).build();
             graph.addEdge(sourceId, targetId, eAttributes);
         } else {
-            while(cursor.moveNext()){
-                if(cursor.value() != null){
-                    try(var valueCursor = cursor.valueCursor()){
+            while (cursor.moveNext()) {
+                if (cursor.value() != null) {
+                    try (var valueCursor = cursor.valueCursor()) {
                         traverse(graph, cursor.value(), valueCursor, traversed);
                     }
                     final String sourceId = NODE_ID_PREFIX + idFor(node);
                     final String targetId = NODE_ID_PREFIX + idFor(cursor.value());
-                    final EdgeAttributes eAttributes = EdgeAttributes.builder().label(cursor.key()+"")
+                    final EdgeAttributes eAttributes = EdgeAttributes.builder().label(cursor.key() + "")
                             .alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(CHILD_EDGE_STYLE).build();
                     graph.addEdge(sourceId, targetId, eAttributes);
                 }

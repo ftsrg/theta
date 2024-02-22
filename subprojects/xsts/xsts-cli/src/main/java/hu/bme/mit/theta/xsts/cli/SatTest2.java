@@ -30,7 +30,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class SatTest2 {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
         MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
 
@@ -58,12 +58,12 @@ public class SatTest2 {
         var stateSig = stateOrder.getDefaultSetSignature();
 
         // x = 0, y = 0, z = 0
-        Expr<BoolType> initExpr = And(Eq(declX.getRef(),Int(0)), Eq(declY.getRef(),Int(0)), Eq(declZ.getRef(),Int(0)));
+        Expr<BoolType> initExpr = And(Eq(declX.getRef(), Int(0)), Eq(declY.getRef(), Int(0)), Eq(declZ.getRef(), Int(0)));
 
         MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
 
         // x' = y + 1, y' = z + 1, z' = z + 1, z' < 10
-        Expr<BoolType> transExpr = And(And(Eq(declXPrime.getRef(),Add(declY.getRef(), Int(1))), Eq(declYPrime.getRef(), Add(declZ.getRef(), Int(1))), Eq(declZPrime.getRef(), Add(declZ.getRef(), Int(1)))), IntExprs.Lt(declZPrime.getRef(), Int(10)));
+        Expr<BoolType> transExpr = And(And(Eq(declXPrime.getRef(), Add(declY.getRef(), Int(1))), Eq(declYPrime.getRef(), Add(declZ.getRef(), Int(1))), Eq(declZPrime.getRef(), Add(declZ.getRef(), Int(1)))), IntExprs.Lt(declZPrime.getRef(), Int(10)));
 
         var solverPool = new SolverPool(Z3SolverFactory.getInstance());
         MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
@@ -90,8 +90,9 @@ public class SatTest2 {
 
     }
 
-    private static String nodeToString(MddNode node){
-        if(node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?,?>) return "";
+    private static String nodeToString(MddNode node) {
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
+            return "";
         return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 

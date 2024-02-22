@@ -37,53 +37,53 @@ public class XstsMddCheckerTest {
 
     @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
+        return Arrays.asList(new Object[][]{
 
 //                { "src/test/resources/model/trafficlight.xsts", "src/test/resources/property/green_and_red.prop", true},
 
-                { "src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true},
+                {"src/test/resources/model/trafficlight_v2.xsts", "src/test/resources/property/green_and_red.prop", true},
 
-                { "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true},
+                {"src/test/resources/model/counter5.xsts", "src/test/resources/property/x_between_0_and_5.prop", true},
 
-                { "src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false},
+                {"src/test/resources/model/counter5.xsts", "src/test/resources/property/x_eq_5.prop", false},
 
-                { "src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true},
+                {"src/test/resources/model/x_and_y.xsts", "src/test/resources/property/x_geq_y.prop", true},
 
-                { "src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true},
+                {"src/test/resources/model/x_powers.xsts", "src/test/resources/property/x_even.prop", true},
 
 //                { "src/test/resources/model/cross_with.xsts", "src/test/resources/property/cross.prop", false},
 
 //                { "src/test/resources/model/cross_without.xsts", "src/test/resources/property/cross.prop", false},
 
-                { "src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false},
+                {"src/test/resources/model/choices.xsts", "src/test/resources/property/choices.prop", false},
 
 //                { "src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop", true},
 
 //                { "src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop", false},
 
-                { "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true},
+                {"src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential.prop", true},
 
-                { "src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false},
+                {"src/test/resources/model/sequential.xsts", "src/test/resources/property/sequential2.prop", false},
 
-                { "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false},
+                {"src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine.prop", false},
 
-                { "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true},
+                {"src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine2.prop", true},
 
-                { "src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false},
+                {"src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false},
 
-                { "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false},
+                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false},
 
-				{ "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false},
+                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false},
 
-                { "src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true},
+                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true},
 
-                { "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false},
+                {"src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false},
 
-                { "src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true},
+                {"src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true},
 
-                { "src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
+                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
 
-                { "src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true},
+                {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true},
 //
 //                { "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false},
 //

@@ -159,7 +159,7 @@ public class StsCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
 
-            SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> status = null;
+            SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status = null;
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
                 status = check(configuration);
@@ -177,7 +177,7 @@ public class StsCli {
         }
     }
 
-    private SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> check(StsConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(StsConfig<?, ?, ?> configuration) throws Exception {
         try {
             return configuration.check();
         } catch (final Exception ex) {
@@ -226,7 +226,7 @@ public class StsCli {
         }
     }
 
-    private void printResult(final SafetyResult<? extends ARG<?,?>,? extends Trace<?,?>> status, final STS sts,
+    private void printResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status, final STS sts,
                              final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics) status.getStats().get();
         if (benchmarkMode) {
@@ -268,7 +268,7 @@ public class StsCli {
         }
     }
 
-    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Trace<?,?>> status)
+    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Trace<?, ?>> status)
             throws FileNotFoundException {
         @SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getCex();
         final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace,

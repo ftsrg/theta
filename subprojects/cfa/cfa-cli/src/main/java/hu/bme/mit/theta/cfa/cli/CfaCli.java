@@ -233,7 +233,7 @@ public class CfaCli {
                 refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
             }
 
-            final SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> status;
+            final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status;
             if (algorithm == Algorithm.CEGAR) {
                 final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
                 status = check(configuration);
@@ -282,7 +282,7 @@ public class CfaCli {
         }
     }
 
-    private SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> check(CfaConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(CfaConfig<?, ?, ?> configuration) throws Exception {
         try {
             return configuration.check();
         } catch (final Exception ex) {
@@ -293,7 +293,7 @@ public class CfaCli {
         }
     }
 
-    private void printResult(final SafetyResult<? extends ARG<?,?>, ? extends Trace<?,?>> status, final long totalTimeMs) {
+    private void printResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status, final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics)
                 status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {

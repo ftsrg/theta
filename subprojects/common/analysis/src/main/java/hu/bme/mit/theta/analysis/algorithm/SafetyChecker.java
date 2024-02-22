@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 public interface SafetyChecker<W extends Witness, C extends Cex, I> extends Checker<W, I> {
 
     @Override
-	SafetyResult<W, C> check(final I input);
+    SafetyResult<W, C> check(final I input);
 
     default SafetyResult<W, C> check() {
         return check(null);

@@ -50,7 +50,8 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
     val logger: Logger,
 ) : SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
 
-    override fun check(prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>> {
+    override fun check(
+        prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>> {
         return check()
     }
 
