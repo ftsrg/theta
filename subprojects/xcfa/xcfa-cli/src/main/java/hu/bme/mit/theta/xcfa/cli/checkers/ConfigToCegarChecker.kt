@@ -18,7 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.algorithm.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
