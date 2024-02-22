@@ -20,9 +20,12 @@ import com.google.common.base.Stopwatch
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -190,10 +193,10 @@ private fun backend(
     throwDontExit: Boolean
 ): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
-        SafetyResult.unknown<State, Action>()
+        SafetyResult.unknown<EmptyWitness, EmptyCex>()
     } else {
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
-            val result = SafetyResult.safe<State, Action>()
+            val result = SafetyResult.safe<EmptyWitness, EmptyCex>(EmptyWitness.getInstance())
             logger.write(Logger.Level.INFO, "Input is trivially safe\n")
 
             logger.write(RESULT, result.toString() + "\n")
