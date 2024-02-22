@@ -16,7 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.analysis
 
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
