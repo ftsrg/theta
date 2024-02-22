@@ -17,8 +17,8 @@ package hu.bme.mit.theta.analysis.runtimemonitor
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.ARG
-import hu.bme.mit.theta.analysis.algorithm.ArgTrace
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.runtimemonitor.container.CexHashStorage
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
