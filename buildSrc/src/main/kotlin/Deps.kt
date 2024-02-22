@@ -60,7 +60,11 @@ object Deps {
 
     val koloboke = "com.koloboke:koloboke-api-jdk8:${Versions.koloboke}"
 
-    val junit4 = "junit:junit:${Versions.junit}"
+    val junit4 = "junit:junit:${Versions.junit4}"
+    val junit4engine = "org.junit.vintage:junit-vintage-engine"
+    val junit5 = "org.junit.jupiter:junit-jupiter-api:${Versions.junit}"
+    val junit5param = "org.junit.jupiter:junit-jupiter-params:${Versions.junit}"
+    val junit5engine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit}"
 
     object Mockito {
 
