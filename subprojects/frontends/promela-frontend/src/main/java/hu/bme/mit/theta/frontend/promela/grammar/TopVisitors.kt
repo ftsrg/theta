@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.promela.visitor
+package hu.bme.mit.theta.frontend.promela.grammar
 
 import hu.bme.mit.theta.frontend.promela.model.*
 import hu.bme.mit.theta.promela.frontend.dsl.gen.promelaBaseVisitor
@@ -9,12 +9,14 @@ class SpecVisitor : promelaBaseVisitor<Spec>() {
         return Spec(ctx.module().map { ModuleVisitor().visitModule(it) })
     }
 }
+
+// TODO add fixed single visitors for each visitor class used
 class ModuleVisitor : promelaBaseVisitor<Module>() {
     override fun visitModule(ctx: promelaParser.ModuleContext): Module {
         return when {
-            ctx.proctype() != null -> ProctypeVisitor().visitProctype(ctx.proctype())
-            ctx.init() != null -> visitInit(ctx.init())
-            ctx.never() != null -> visitNever(ctx.never())
+            ctx.proctype() != null -> ctx.proctype().accept(ProctypeVisitor())
+            ctx.init() != null -> InitVisitor().visitInit(ctx.init())
+            ctx.never() != null -> visitNever(ctx.never()) // TODO add accept and classes
             ctx.trace() != null -> visitTrace(ctx.trace())
             ctx.utype() != null -> visitUtype(ctx.utype())
             ctx.mtype() != null -> visitMtype(ctx.mtype())
@@ -74,8 +76,17 @@ class MtypeVisitor : promelaBaseVisitor<Mtype>() {
 }
 
 class Decl_lstVisitor : promelaBaseVisitor<DeclList>() {
+    val oneDeclVisitor = OneDeclVisitor()
     override fun visitDecl_lst(ctx: promelaParser.Decl_lstContext): DeclList {
-        val declarations = ctx.one_decl().map { it.accept(this) }
-        return DeclList(declarations)
+        val declarations = ctx.one_decl().map { it.accept(oneDeclVisitor) }
+
+    }
+}
+
+class OneDeclVisitor(val exprVisitor : ExprVisitor) : promelaBaseVisitor<OneDecl>() {
+    val variableInitVisitor = VariableInitVisitor(exprVisitor)
+    override fun visitOne_decl(ctx: promelaParser.One_declContext?): OneDecl {
+        ctx!!.typename()
+        ctx.ivar().map { it.accept(variableInitVisitor) }
     }
 }

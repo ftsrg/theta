@@ -1,25 +1,30 @@
+// source: https://spinroot.com/spin/Man/grammar.html
 // WARNING only works on PREPROCESSSED promela files (no #define)
 // use cpp -p to preprocess promela file with macros
+// the implementation is only partial,
+// thus unsupported language elements are commented out
 grammar promela;
 
 spec    : (module(Separator)*)+;
 
 module  : proctype
         | init
-        | never
-        | trace
+        //| never
+        //| trace
         | utype
         | mtype
         | decl_lst;
 
 proctype
-    : (active)? 'proctype' Name '(' (decl_lst)? ')' (priority)? (enabler)? '{' sequence '}';
+//    : (active)? 'proctype' Name '(' (decl_lst)? ')' (priority)? (enabler)? '{' sequence '}';
+    : (active)? 'proctype' Name '(' (decl_lst)? ')' '{' sequence '}';
 
-init    : 'init' (priority)? '{' sequence '}';
+//init    : 'init' (priority)? '{' sequence '}';
+init    : 'init' '{' sequence '}';
 
-never   : 'never' '{' sequence '}';
+//never   : 'never' '{' sequence '}';
 
-trace   : 'trace' '{' sequence '}';
+//trace   : 'trace' '{' sequence '}';
 
 utype   : 'typedef' Name '{' decl_lst '}';
 
@@ -28,8 +33,10 @@ mtype   : 'mtype' '='? '{' Name (',' Name)* '}';
 decl_lst: one_decl (Separator one_decl)*;
 
 one_decl
-    : (visible)? typename ivar (',' ivar)*
-    | (visible)? unsigned_decl;
+//    : (visible)? typename ivar (',' ivar)*
+//    | (visible)? unsigned_decl;
+    : typename ivar (',' ivar)*
+    | unsigned_decl;
 
 unsigned_decl
     : 'unsigned' Name ':' Const('=' any_expr)?;
@@ -39,18 +46,19 @@ typename
 
 active  : 'active' '['Const']';
 
-priority: 'priority' Const;
+//priority: 'priority' Const;
 
-enabler : 'provided' '(' expr ')';
+//enabler : 'provided' '(' expr ')';
 
-visible : 'hidden' | 'show';
+//visible : 'hidden' | 'show';
 
 sequence: step (Separator step)*;
 
-step    : stmnt ('unless' stmnt)?
-        | decl_lst
-        | ('xr') varref (',' varref)*
-        | ('xs') varref (',' varref)*;
+step    : stmnt ('unless' stmnt)?      # stmnts
+        | decl_lst                     # declLst
+        | ('xr') varref (',' varref)*  # xr
+        | ('xs') varref (',' varref)*  # xs
+        ;
 
 ivar    : Name ('['Const']')? (('=' any_expr)|('=' ch_init))?;
 
@@ -81,61 +89,62 @@ assign  : varref '=' any_expr
         | varref '++'
         | varref '--';
 
-stmnt   : 'if' promela_options 'fi'
-        | 'do' promela_options 'od'
-        | 'for' '(' range ')' '{' sequence '}'
-        | 'atomic' '{' sequence '}'
-        | 'd_step' '{' sequence '}'
-        | 'select' '(' range ')'
-        | '{' sequence '}'
-        | send
-        | receive
-        | assign
-        | 'else'
-        | 'break'
-        | 'goto' Name
-        | Name ':' stmnt
-        | 'print' '(' String (',' arg_lst)? ')'
-        | 'assert' expr
-        | expr;
+stmnt   : 'if' promela_options 'fi'             # ifStmnt
+        | 'do' promela_options 'od'             # doStmnt
+        | 'for' '(' range ')' '{' sequence '}'  # forStmnt
+        | 'atomic' '{' sequence '}'             # atomicStmnt
+        | 'd_step' '{' sequence '}'             # dstepStmnt
+        | 'select' '(' range ')'                # selectStmnt
+        | '{' sequence '}'                      # sequenceStmnt
+        | send                                  # sendStmnt
+        | receive                               # receiveStmnt
+        | assign                                # assignStmnt
+        | 'else'                                # elseStmnt
+        | 'break'                               # breakStmnt
+        | 'goto' Name                           # gotoStmnt
+        | Name ':' stmnt                        # nameStmnt
+        | 'print' '(' String (',' arg_lst)? ')' # printStmnt
+        | 'assert' expr                         # assertStmnt
+        | expr                                  # exprStmnt
+        ;
 
 range   : Name ':' any_expr '..' any_expr
         | Name 'in' Name;
 
 promela_options : ('::' sequence)+;
 
-andor   : '&&' | '||';
-
 binarop : '+' | '-' | '*' | '/' | '%'
         | '&' | '^' | '|'
         | '>' | '<' | '>=' | '<=' | '==' | '!='
-        | '<<' | '>>' | andor;
+        | '<<' | '>>' | AndAnd | OrOr;
 
 unarop  : '~' | '-' | '!';
 
-any_expr: '(' any_expr ')'
-        | any_expr binarop any_expr
-        | unarop any_expr
-        | '(' any_expr '->' any_expr ':' any_expr ')'
-        | 'len' '(' varref ')'
-        | poll
-        | varref
-        | Const
-        | 'timeout'
-        | 'np_'
-        | 'enabled' '(' any_expr ')'
-        | 'pc_value' '(' any_expr ')'
-        | Name '[' any_expr ']' '@' Name
-        | 'run' Name '(' (arg_lst)? ')' (priority)?
-        | 'get_priority' '(' expr ')'
-        | 'set_priority' '(' expr ',' expr ')';
+any_expr: '(' any_expr ')'                             # ParenthesesAnyExpr
+        | any_expr binarop any_expr                    # BinaryAnyExpr
+        | unarop any_expr                              # UnaryAnyExpr
+        | '(' any_expr '->' any_expr ':' any_expr ')'  # ImplAnyExpr
+        | 'len' '(' varref ')'                         # LenAnyExpr
+        | poll                                         # PollAnyExpr
+        | varref                                       # VarrefAnyExpr
+        | Const                                        # ConstAnyExpr
+        // | 'timeout'
+        // | 'np_'
+        //| 'enabled' '(' any_expr ')'
+        //| 'pc_value' '(' any_expr ')'
+        //| Name '[' any_expr ']' '@' Name
+        //| 'run' Name '(' (arg_lst)? ')' (priority)?
+        //| 'get_priority' '(' expr ')'
+        //| 'set_priority' '(' expr ',' expr ')'
+        ;
 
-expr    : any_expr
-        | '(' expr ')'
-        | expr andor expr
-        | chanpoll '(' varref ')';
+expr    : any_expr                                      # Any_exprExpr
+        | '(' expr ')'                                  # ParenthesesExpr
+        | expr (AndAnd|OrOr) expr                            # AndorExpr
+        ;
+//        | chanpoll '(' varref ')';
 
-chanpoll: 'full' | 'empty' | 'nfull' | 'nempty';
+//chanpoll: 'full' | 'empty' | 'nfull' | 'nempty';
 
 String  : '"' ~["]* '"';
 
