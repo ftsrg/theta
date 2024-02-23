@@ -32,7 +32,7 @@ runs:
         choco install -y rsync
     - name: Deploy badges
       if: github.ref == 'refs/heads/master' && always() && github.event_name != 'pull_request'
-      uses: leventeBajczi/github-pages-deploy-action-winfix@6d31a3c68a3912555731864c0d5ef4239b02369d # v0.3
+      uses: leventeBajczi/github-pages-deploy-action-winfix@ae3210e0f324c433418826bf51292bcf45f1676f # v0.3
       with:
         branch: badges
         folder: ${{ inputs.path }}
