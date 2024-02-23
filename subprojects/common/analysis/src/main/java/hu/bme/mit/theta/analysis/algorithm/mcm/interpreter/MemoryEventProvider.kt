@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package hu.bme.mit.theta.analysis.algorithm.mcm.interpreter
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.algorithm.mcm.mcm.MemoryEvent
+import hu.bme.mit.theta.analysis.algorithm.mcm.MemoryEvent
 
-interface MemoryEventProvider<A : Action, P : Prec> {
+fun interface MemoryEventProvider<A : Action, P : Prec> {
 
     operator fun get(a: A, p: P): MemoryEvent?
 }

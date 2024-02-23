@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,13 +81,16 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
+        return Arrays.asList("2.5-1256", "2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
     }
 
     private URL getDownloadUrl(final String version)
             throws SmtLibSolverInstallerException, MalformedURLException {
         final String fileName;
         switch (version) {
+            case "2.5-1256":
+                fileName = "2.5-1230-g55d6ba76";
+                break;
             case "2.5-1230":
                 fileName = "2.5-1230-g3eafb46a";
                 break;

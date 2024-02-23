@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -616,6 +616,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
                     PLUS -> AbstractExprs.Pos(op)
                     MINUS -> AbstractExprs.Neg(op)
                     FP_ABS -> FpExprs.Abs(op as Expr<FpType?>)
+                    FP_IS_INF -> FpExprs.IsInfinite(op as Expr<FpType?>)
                     FP_IS_NAN -> FpExprs.IsNan(op as Expr<FpType?>)
                     FPROUNDTOINT -> FpExprs.RoundToIntegral(getRoundingMode(ctx.oper.text),
                         op as Expr<FpType?>)

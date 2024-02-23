@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -91,10 +91,11 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
             logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
-            String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
-            String precString = prec.toString();
-
-            wdl.addIteration(iteration, argGraph, precString);
+            if (WebDebuggerLogger.enabled()) {
+                String argGraph = JSONWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg));
+                String precString = prec.toString();
+                wdl.addIteration(iteration, argGraph, precString);
+            }
 
             if (abstractorResult.isUnsafe()) {
                 MonitorCheckpoint.Checkpoints.execute("CegarChecker.unsafeARG");

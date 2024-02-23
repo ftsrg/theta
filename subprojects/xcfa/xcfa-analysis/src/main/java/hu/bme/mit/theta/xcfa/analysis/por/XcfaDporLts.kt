@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.getXcfaLts
-import hu.bme.mit.theta.xcfa.getGlobalVars
+import hu.bme.mit.theta.xcfa.collectIndirectGlobalVarAccesses
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.util.*
@@ -75,7 +75,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
     companion object {
 
-        var random: Random = Random.Default // use Random(seed) with a seed or Random.Default without seed
+        var random: Random =
+            Random.Default // use Random(seed) with a seed or Random.Default without seed
 
         /**
          * Simple LTS that returns the enabled actions in a state.
@@ -92,8 +93,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          * Partial order of states considering sleep sets (unexplored behavior).
          */
         fun <E : ExprState> getPartialOrder(partialOrd: PartialOrd<E>) = PartialOrd<E> { s1, s2 ->
-            partialOrd.isLeq(s1, s2) && s2.reExplored == true && s1.sleep.containsAll(
-                s2.sleep - s2.explored)
+            partialOrd.isLeq(
+                s1, s2
+            ) && s2.reExplored == true && s1.sleep.containsAll(s2.sleep - s2.explored)
         }
     }
 
@@ -162,7 +164,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             // lazy pruning: goes to the root when the stack is empty
             while (stack.isEmpty() && node.parent.isPresent) node = node.parent.get()
 
-            node.state.reExplored = true // lazy pruning: indicates that the state is explored in the current iteration
+            node.state.reExplored =
+                true // lazy pruning: indicates that the state is explored in the current iteration
             push(node, stack.size)
         }
 
@@ -188,15 +191,17 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                 // when lazy pruning is used the explored parts from previous iterations are reexplored to detect possible races
                 exploreLazily()
             }
-            while (stack.isNotEmpty() &&
-                (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(
-                    last.sleep).isEmpty()))
+            while (stack.isNotEmpty() && (last.node.isSubsumed || (last.node.isExpanded && last.backtrack.subtract(
+                    last.sleep
+                ).isEmpty()))
             ) { // until we need to pop (the last is covered or not feasible, or it has no more actions that need to be explored
                 if (stack.size >= 2) {
                     val lastButOne = stack[stack.size - 2]
-                    val mutexNeverReleased = last.mutexLocks.containsKey("") &&
-                        (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
-                            "")
+                    val mutexNeverReleased =
+                        last.mutexLocks.containsKey(
+                            "") && (last.state.mutexes.keys subtract lastButOne.state.mutexes.keys).contains(
+                            ""
+                        )
                     if (last.node.explored.isEmpty() || mutexNeverReleased) {
                         // if a mutex is never released another action (practically all the others) have to be explored
                         lastButOne.backtrack = lastButOne.state.enabled.toMutableSet()
@@ -238,12 +243,12 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             val newaction = item.inEdge.get().action
             val process = newaction.pid
 
-            val newProcessLastAction = last.processLastAction.toMutableMap()
-                .apply { this[process] = stack.size }
-            var newLastDependents = (last.lastDependents[process]?.toMutableMap()
-                ?: mutableMapOf()).apply {
-                this[process] = stack.size
-            }
+            val newProcessLastAction =
+                last.processLastAction.toMutableMap().apply { this[process] = stack.size }
+            var newLastDependents =
+                (last.lastDependents[process]?.toMutableMap() ?: mutableMapOf()).apply {
+                    this[process] = stack.size
+                }
             val relevantProcesses = (newProcessLastAction.keys - setOf(process)).toMutableSet()
 
             // Race detection
@@ -253,8 +258,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
                 val action = node.inEdge.get().action
                 if (relevantProcesses.contains(action.pid)) {
-                    if (newLastDependents.containsKey(
-                            action.pid) && index <= checkNotNull(newLastDependents[action.pid])) {
+                    if (newLastDependents.containsKey(action.pid) && index <= checkNotNull(
+                            newLastDependents[action.pid])) {
                         // there is an action a' such that  action -> a' -> newaction  (->: happens-before)
                         relevantProcesses.remove(action.pid)
                     } else if (dependent(newaction, action)) {
@@ -272,8 +277,8 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
                         }
 
                         newLastDependents[action.pid] = index
-                        newLastDependents = max(newLastDependents,
-                            checkNotNull(stack[index].lastDependents[action.pid]))
+                        newLastDependents =
+                            max(newLastDependents, checkNotNull(stack[index].lastDependents[action.pid]))
                         relevantProcesses.remove(action.pid)
                     }
                 }
@@ -289,13 +294,14 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             if (!item.state.isBottom) {
                 releasedMutexes.forEach { m ->
                     last.mutexLocks[m]?.let {
-                        stack[it].mutexLocks.remove(m)
+                        stack[it].mutexLocks.remove(
+                            m
+                        )
                     }
                 }
             }
 
-            val isCoveringNode = item.parent.get() != last.node
-            val isVirtualExploration = virtualLimit < stack.size || isCoveringNode
+            val isVirtualExploration = virtualLimit < stack.size || item.parent.get() != last.node
             val newSleep = if (isVirtualExploration) {
                 item.state.sleep
             } else {
@@ -327,13 +333,11 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
             stack.push(
                 StackItem(
                     node = item,
-                    processLastAction = if (!isCoveringNode) newProcessLastAction else last.processLastAction.toMutableMap(),
+                    processLastAction = newProcessLastAction,
                     lastDependents = last.lastDependents.toMutableMap().apply {
-                        if (!isCoveringNode) {
-                            this[process] = newLastDependents
-                            newProcesses.forEach {
-                                this[it] = max(this[it] ?: mutableMapOf(), newLastDependents)
-                            }
+                        this[process] = newLastDependents
+                        newProcesses.forEach {
+                            this[it] = max(this[it] ?: mutableMapOf(), newLastDependents)
                         }
                     },
                     mutexLocks = last.mutexLocks.toMutableMap().apply {
@@ -360,7 +364,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
 
                 if (node != visiting) {
                     if (!push(visiting, startStackSize) || noInfluenceOnRealExploration(
-                            realStackSize)) continue
+                            realStackSize
+                        )
+                    ) continue
                 }
 
                 // visiting is not on the stack: no cycle && further virtual exploration can influence real exploration
@@ -398,7 +404,9 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          */
         private fun max(map1: Map<Int, Int>, map2: Map<Int, Int>) =
             (map1.keys union map2.keys).associateWith { key ->
-                max(map1[key] ?: -1, map2[key] ?: -1)
+                max(
+                    map1[key] ?: -1, map2[key] ?: -1
+                )
             }.toMutableMap()
 
         /**
@@ -406,13 +414,11 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
          */
         private fun notdep(start: Int, action: A): List<A> {
             val e = stack[start].action
-            return stack.slice(start + 1 until stack.size)
-                .filterIndexed { index, item ->
-                    item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(e,
-                        item.action)
-                }
-                .map { it.action }
-                .toMutableList().apply { add(action) }
+            return stack.slice(start + 1 until stack.size).filterIndexed { index, item ->
+                item.node.parent.get() == stack[start + 1 + index - 1].node && !dependent(
+                    e, item.action
+                )
+            }.map { it.action }.toMutableList().apply { add(action) }
         }
 
         /**
@@ -435,13 +441,13 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
         /**
          * Returns true when the virtual exploration cannot detect any more races relevant in the "real" exploration (the part of the search stack before the first covering node).
          */
-        private fun noInfluenceOnRealExploration(
-            realStackSize: Int) = last.processLastAction.keys.all { process ->
-            last.lastDependents.containsKey(
-                process) && checkNotNull(last.lastDependents[process]).all { (otherProcess, index) ->
-                index >= realStackSize || index >= checkNotNull(last.processLastAction[otherProcess])
+        private fun noInfluenceOnRealExploration(realStackSize: Int) =
+            last.processLastAction.keys.all { process ->
+                last.lastDependents.containsKey(process) &&
+                    checkNotNull(last.lastDependents[process]).all { (_, index) ->
+                        index >= realStackSize
+                    }
             }
-        }
     }
 
     /**
@@ -450,11 +456,10 @@ open class XcfaDporLts(private val xcfa: XCFA) : LTS<S, A> {
     protected open fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
-        val aGlobalVars = a.edge.getGlobalVars(xcfa)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa)
+        val aGlobalVars = a.edge.collectIndirectGlobalVarAccesses(xcfa)
+        val bGlobalVars = b.edge.collectIndirectGlobalVarAccesses(xcfa)
         // dependent if they access the same variable (at least one write)
-        return (aGlobalVars.keys intersect bGlobalVars.keys)
-            .any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
+        return (aGlobalVars.keys intersect bGlobalVars.keys).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }
 }
 
@@ -466,13 +471,12 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     /**
      * The current precision of the abstraction.
      */
-    private lateinit var prec: Prec
+    private var prec: Prec? = null
 
     /**
      * Returns actions to be explored from the given state considering the given precision.
      */
-    override fun <P : Prec> getEnabledActionsFor(state: S, exploredActions: Collection<A>,
-        prec: P): Set<A> {
+    override fun <P : Prec> getEnabledActionsFor(state: S, exploredActions: Collection<A>, prec: P): Set<A> {
         this.prec = prec
         return getEnabledActionsFor(state)
     }
@@ -483,9 +487,9 @@ class XcfaAadporLts(private val xcfa: XCFA) : XcfaDporLts(xcfa) {
     override fun dependent(a: A, b: A): Boolean {
         if (a.pid == b.pid) return true
 
-        val aGlobalVars = a.edge.getGlobalVars(xcfa)
-        val bGlobalVars = b.edge.getGlobalVars(xcfa)
-        val precVars = prec.usedVars.toSet()
+        val precVars = prec?.usedVars?.toSet() ?: return super.dependent(a, b)
+        val aGlobalVars = a.edge.collectIndirectGlobalVarAccesses(xcfa)
+        val bGlobalVars = b.edge.collectIndirectGlobalVarAccesses(xcfa)
         // dependent if they access the same variable in the precision (at least one write)
         return (aGlobalVars.keys intersect bGlobalVars.keys intersect precVars).any { aGlobalVars[it].isWritten || bGlobalVars[it].isWritten }
     }

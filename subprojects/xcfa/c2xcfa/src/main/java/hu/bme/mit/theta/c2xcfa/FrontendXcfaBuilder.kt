@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 package hu.bme.mit.theta.c2xcfa
 
 import com.google.common.base.Preconditions
+import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -50,7 +52,8 @@ import java.util.Set
 import java.util.stream.Collectors
 import kotlin.collections.set
 
-class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false) :
+class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false,
+    val uniqueWarningLogger: Logger) :
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
@@ -83,8 +86,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         for (globalDeclaration in cProgram.globalDeclarations) {
             val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
             if (type is CVoid || type is CStruct) {
-                System.err.println(
-                    "WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable")
+                uniqueWarningLogger.write(Level.INFO,
+                    "WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable\n")
                 continue
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
@@ -116,7 +119,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val flatVariables = function.flatVariables
         val funcDecl = function.funcDecl
         val compound = function.compound
-        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext))
+        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
         xcfaBuilder.addProcedure(builder)
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
@@ -129,7 +132,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         } else {
             // TODO we assume later that there is always a ret var, but this should change
             val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
-            val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext)
+            val signedIntType = CSimpleTypeFactory.NamedType("int", parseContext, uniqueWarningLogger)
             signedIntType.setSigned(true)
             parseContext.metadata.create(toAdd.ref, "cType", signedIntType)
             builder.addParam(toAdd, ParamDirection.OUT)
@@ -365,7 +368,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val breakLoc = param.breakLoc
         val continueLoc = param.continueLoc
         val returnLoc = param.returnLoc
-        return statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
+        return statement.statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
     }
 
     override fun visit(statement: CCompound, param: ParamPack): XcfaLocation {
@@ -417,7 +420,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val breakLoc = param.breakLoc
         val continueLoc = param.continueLoc
         val returnLoc = param.returnLoc
-        return statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
+        return statement.statement.accept(this, ParamPack(builder, lastLoc, breakLoc, continueLoc, returnLoc))
     }
 
     override fun visit(statement: CDoWhile, param: ParamPack): XcfaLocation {
@@ -637,19 +640,20 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val breakLoc = param.breakLoc
         val continueLoc = param.continueLoc
         val returnLoc = param.returnLoc
-        val expr = statement.expr ?: return lastLoc
+        val expr = statement.expr
         val initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
         builder.addLoc(initLoc)
         val xcfaEdge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
         builder.addEdge(xcfaEdge)
-        val endExpr = expr.accept(this,
-            ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
+        val endExpr = expr?.accept(this,
+            ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc)) ?: initLoc
         val endLoc = getAnonymousLoc(builder, metadata = getMetadata(statement))
         builder.addLoc(endLoc)
         val key: VarDecl<*> = builder.getParams()[0].first
         check(returnLoc != null)
+        val type = CComplexType.getType(key.ref, parseContext)
         val edge = XcfaEdge(endExpr, returnLoc, StmtLabel(Stmts.Assign(cast(key, key.type),
-            cast(CComplexType.getType(key.ref, parseContext).castTo(expr.expression), key.type)),
+            cast(type.castTo(expr?.expression ?: type.nullValue), key.type)),
             metadata = getMetadata(statement)), metadata = getMetadata(statement))
         builder.addEdge(edge)
         return endLoc

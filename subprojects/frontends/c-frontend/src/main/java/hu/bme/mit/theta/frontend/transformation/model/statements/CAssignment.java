@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,13 +21,17 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public class CAssignment extends CStatement {
 
@@ -90,8 +94,23 @@ public class CAssignment extends CStatement {
             case "-=":
                 ret = AbstractExprs.Sub(lValue, rValue.getExpression());
                 break;
+            case "^=":
+                Expr<?> rExpressionXor = rValue.getExpression();
+                checkState(lValue.getType() instanceof BvType && rExpressionXor.getType() instanceof BvType);
+                ret = BvExprs.Xor(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionXor));
+                break;
+            case "&=":
+                Expr<?> rExpressionAnd = rValue.getExpression();
+                checkState(lValue.getType() instanceof BvType && rExpressionAnd.getType() instanceof BvType);
+                ret = BvExprs.And(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionAnd));
+                break;
+            case "|=":
+                Expr<?> rExpressionOr = rValue.getExpression();
+                checkState(lValue.getType() instanceof BvType && rExpressionOr.getType() instanceof BvType);
+                ret = BvExprs.Or(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionOr));
+                break;
             default:
-                throw new RuntimeException("Bad operator!");
+                throw new RuntimeException("Bad operator: " + operator);
         }
         parseContext.getMetadata().create(ret, "cType", CComplexType.getType(lValue, parseContext));
         ret = CComplexType.getType(lValue, parseContext).castTo(ret);

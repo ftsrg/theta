@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
@@ -27,6 +29,8 @@ public class Struct extends NamedType {
 
     private final Map<String, CSimpleType> fields;
     private final String name;
+    private final Logger uniqueWarningLogger;
+
     private boolean currentlyBeingBuilt;
     private static final Map<String, Struct> definedTypes = new LinkedHashMap<>();
 
@@ -34,8 +38,9 @@ public class Struct extends NamedType {
         return definedTypes.get(name);
     }
 
-    Struct(String name, ParseContext parseContext) {
-        super(parseContext, "struct");
+    Struct(String name, ParseContext parseContext, Logger uniqueWarningLogger) {
+        super(parseContext, "struct", uniqueWarningLogger);
+        this.uniqueWarningLogger = uniqueWarningLogger;
         fields = new LinkedHashMap<>();
         this.name = name;
         if (name != null) {
@@ -51,7 +56,7 @@ public class Struct extends NamedType {
     @Override
     public CComplexType getActualType() {
         if (currentlyBeingBuilt) {
-            System.err.println("WARNING: self-embedded structs! Using long as a placeholder");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: self-embedded structs! Using long as a placeholder\n");
             return CComplexType.getSignedInt(parseContext);
         }
         currentlyBeingBuilt = true;
@@ -73,7 +78,7 @@ public class Struct extends NamedType {
 
     @Override
     public CSimpleType copyOf() {
-        Struct struct = new Struct(name, parseContext);
+        Struct struct = new Struct(name, parseContext, uniqueWarningLogger);
         struct.fields.putAll(fields);
         return struct;
     }

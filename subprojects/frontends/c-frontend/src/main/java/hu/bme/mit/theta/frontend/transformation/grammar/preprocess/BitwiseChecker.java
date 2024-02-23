@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,36 +18,64 @@ package hu.bme.mit.theta.frontend.transformation.grammar.preprocess;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray1Context;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray2Context;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray3Context;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.DirectDeclaratorArray4Context;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.MultiplicativeExpressionContext;
 import hu.bme.mit.theta.frontend.ParseContext;
 
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkState;
+import java.util.Set;
 
 public class BitwiseChecker extends CBaseVisitor<Void> {
-    private BitwiseOption bitwiseOption = null;
+    private final ParseContext parseContext;
 
-    // checks only once, returns the result of the first check after
-    public static BitwiseOption checkIfBitwise(ParseContext parseContext, List<CParser.ExternalDeclarationContext> contexts) {
-        BitwiseChecker instance = new BitwiseChecker();
-        instance.bitwiseOption = BitwiseOption.INTEGER;
+    private BitwiseChecker(ParseContext parseContext) {
+        this.parseContext = parseContext;
+    }
+
+    public static Set<ArithmeticTrait> gatherArithmeticTraits(ParseContext parseContext, List<CParser.ExternalDeclarationContext> contexts) {
+        BitwiseChecker instance = new BitwiseChecker(parseContext);
         for (CParser.ExternalDeclarationContext ctx : contexts) {
             ctx.accept(instance);
         }
-        checkState(instance.bitwiseOption != null);
-        parseContext.setBitwiseOption(instance.bitwiseOption);
-        return instance.bitwiseOption;
+        return instance.parseContext.getArithmeticTraits();
     }
 
     @Override
     public Void visitTypeSpecifierDouble(CParser.TypeSpecifierDoubleContext ctx) {
-        bitwiseOption = BitwiseOption.BITWISE_FLOAT;
+        parseContext.addArithmeticTrait(ArithmeticTrait.FLOAT);
         return null;
     }
 
     @Override
     public Void visitTypeSpecifierFloat(CParser.TypeSpecifierFloatContext ctx) {
-        bitwiseOption = BitwiseOption.BITWISE_FLOAT;
+        parseContext.addArithmeticTrait(ArithmeticTrait.FLOAT);
+        return null;
+    }
+
+    @Override
+    public Void visitDirectDeclaratorArray1(DirectDeclaratorArray1Context ctx) {
+        parseContext.addArithmeticTrait(ArithmeticTrait.ARR);
+        return null;
+    }
+
+    @Override
+    public Void visitDirectDeclaratorArray2(DirectDeclaratorArray2Context ctx) {
+        parseContext.addArithmeticTrait(ArithmeticTrait.ARR);
+        return null;
+    }
+
+    @Override
+    public Void visitDirectDeclaratorArray3(DirectDeclaratorArray3Context ctx) {
+        parseContext.addArithmeticTrait(ArithmeticTrait.ARR);
+        return null;
+    }
+
+    @Override
+    public Void visitDirectDeclaratorArray4(DirectDeclaratorArray4Context ctx) {
+        parseContext.addArithmeticTrait(ArithmeticTrait.ARR);
         return null;
     }
 
@@ -55,7 +83,7 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
     public Void visitPrimaryExpressionConstant(CParser.PrimaryExpressionConstantContext ctx) {
         String text = ctx.getText();
         if (text.contains(".")) {
-            bitwiseOption = BitwiseOption.BITWISE_FLOAT;
+            parseContext.addArithmeticTrait(ArithmeticTrait.FLOAT);
             return null;
         }
         return super.visitPrimaryExpressionConstant(ctx);
@@ -64,11 +92,9 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
     @Override
     public Void visitInclusiveOrExpression(CParser.InclusiveOrExpressionContext ctx) {
         ctx.exclusiveOrExpression(0).accept(this);
-        Boolean b = ctx.exclusiveOrExpression().size() > 1;
+        boolean b = ctx.exclusiveOrExpression().size() > 1;
         if (b) {
-            if (bitwiseOption == BitwiseOption.INTEGER) {
-                bitwiseOption = BitwiseOption.BITWISE;
-            }
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
         }
         return null;
     }
@@ -76,11 +102,9 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
     @Override
     public Void visitExclusiveOrExpression(CParser.ExclusiveOrExpressionContext ctx) {
         ctx.andExpression(0).accept(this);
-        Boolean b = ctx.andExpression().size() > 1;
+        boolean b = ctx.andExpression().size() > 1;
         if (b) {
-            if (bitwiseOption == BitwiseOption.INTEGER) {
-                bitwiseOption = BitwiseOption.BITWISE;
-            }
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
         }
         return null;
     }
@@ -88,11 +112,9 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
     @Override
     public Void visitAndExpression(CParser.AndExpressionContext ctx) {
         ctx.equalityExpression(0).accept(this);
-        Boolean b = ctx.equalityExpression().size() > 1;
+        boolean b = ctx.equalityExpression().size() > 1;
         if (b) {
-            if (bitwiseOption == BitwiseOption.INTEGER) {
-                bitwiseOption = BitwiseOption.BITWISE;
-            }
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
         }
         return null;
     }
@@ -100,13 +122,18 @@ public class BitwiseChecker extends CBaseVisitor<Void> {
     @Override
     public Void visitShiftExpression(CParser.ShiftExpressionContext ctx) {
         ctx.additiveExpression(0).accept(this);
-        Boolean b = ctx.additiveExpression().size() > 1;
+        boolean b = ctx.additiveExpression().size() > 1;
         if (b) {
-            if (bitwiseOption == BitwiseOption.INTEGER) {
-                bitwiseOption = BitwiseOption.BITWISE;
-            }
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE);
         }
         return null;
     }
 
+    @Override
+    public Void visitMultiplicativeExpression(MultiplicativeExpressionContext ctx) {
+        if (ctx.castExpression().size() > 1) {
+            parseContext.addArithmeticTrait(ArithmeticTrait.NONLIN_INT);
+        }
+        return super.visitMultiplicativeExpression(ctx);
+    }
 }

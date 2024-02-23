@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,20 +26,40 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.xcfa.model.*;
-import hu.bme.mit.theta.xcfa.passes.ChcPasses;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.InvokeLabel;
+import hu.bme.mit.theta.xcfa.model.ParamDirection;
+import hu.bme.mit.theta.xcfa.model.SequenceLabel;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
 import kotlin.Pair;
 import org.antlr.v4.runtime.RuleContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.*;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.createVars;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.getTailConditionLabels;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformConst;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformSort;
 
 public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements ChcXcfaBuilder {
     private final Map<String, XcfaProcedureBuilder> procedures = new HashMap<>();
+    private final ProcedurePassManager procedurePassManager;
     private XcfaBuilder xcfaBuilder;
     private int callCount = 0;
+
+    public ChcBackwardXcfaBuilder(final ProcedurePassManager procedurePassManager) {
+        this.procedurePassManager = procedurePassManager;
+    }
 
     @Override
     public XcfaBuilder buildXcfa(CHCParser parser) {
@@ -123,7 +143,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
     }
 
     private XcfaProcedureBuilder createProcedure(String procName) {
-        XcfaProcedureBuilder builder = new XcfaProcedureBuilder(procName, new ChcPasses());
+        XcfaProcedureBuilder builder = new XcfaProcedureBuilder(procName, procedurePassManager);
         builder.setName(procName);
         builder.addParam(Decls.Var(procName + "_ret", Bool()), ParamDirection.OUT);
 

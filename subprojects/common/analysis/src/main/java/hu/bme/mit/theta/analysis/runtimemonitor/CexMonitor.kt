@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,10 +24,15 @@ import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
 import java.lang.RuntimeException
 
-
-// TODO implement mitigation
+/**
+ * This monitor checks whether a new counterexample is found during the current iteration of CEGAR.
+ * In most cases, finding the same counterexample again means that refinement is not progressing.
+ * Warning: With some configurations (e.g. lazy pruning) it is NOT impossible that analysis will
+ * progress even if in some iterations a new cex is not found, but seems to be rare.
+ * However, if you think analysis should NOT be stopped by this monitor, disable it and check results.
+ */
 class CexMonitor<S : State?, A : Action?> constructor(
-    private val mitigate: Boolean, private val logger: Logger, private val arg: ARG<S, A>
+    private val logger: Logger, private val arg: ARG<S, A>
 ) : Monitor {
 
     private val cexHashStorage = CexHashStorage<S, A>()

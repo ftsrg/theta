@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,18 +15,24 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
+import hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType
 import hu.bme.mit.theta.core.type.fptype.FpExprs.FpType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -53,6 +59,7 @@ class PassTests {
 
         private val dummyXcfa = xcfa("") {}
         private val parseContext = ParseContext()
+        private val fpParseContext = ParseContext().also { it.arithmetic = ArchitectureConfig.ArithmeticType.bitvector }
 
         @JvmStatic
         val data: List<Arguments> = listOf(
@@ -89,7 +96,7 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L1" to final) {
                         assume("false")
@@ -97,7 +104,7 @@ class PassTests {
                 },
                 output = {
                     (init to final) {
-                        assume("true")
+                        assume("1 == 1")
                         assume("false")
                     }
                 },
@@ -112,10 +119,10 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L1" to "L2") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L2" to final) {
                         assume("false")
@@ -126,8 +133,8 @@ class PassTests {
                 },
                 output = {
                     (init to final) {
-                        assume("true")
-                        assume("true")
+                        assume("1 == 1")
+                        assume("1 == 1")
                         nondet {
                             assume("false")
                             assume("1 == 2")
@@ -205,11 +212,66 @@ class PassTests {
                 },
             ),
             PassTestData(
-                global = { "x" type FpType(5, 11) init "0.0f"; },
+                global = { "x" type Int() init "0"; },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    FpFunctionsToExprsPass(parseContext),
+                    LoopUnrollPass()
+                ),
+                input = {
+                    (init to "L1") {
+                        "x".assign("0")
+                    }
+                    ("L1" to "L2") {
+                        assume("(< x 3)")
+                        "x".assign("(+ x 1)")
+                    }
+                    ("L2" to "L1") {
+                        skip()
+                    }
+                    ("L1" to final) {
+                        assume("(= x 3)")
+                    }
+                },
+                output = {
+                    (init to "L1") {
+                        "x".assign("0")
+                    }
+                    ("L1" to "loop0_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop0_L2" to "loop0_L1") {
+                        skip()
+                    }
+                    ("loop0_L1" to "loop1_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop1_L2" to "loop1_L1") {
+                        skip()
+                    }
+                    ("loop1_L1" to "loop2_L2") {
+                        nop()
+                        "x".assign("(+ x 1)")
+                    }
+                    ("loop2_L2" to "loop2_L1") {
+                        skip()
+                    }
+                    ("loop2_L1" to final) {
+                        nop()
+                    }
+                },
+            ),
+            PassTestData(
+                global = {
+                    "y" type BvType(32) init "0"
+                    ("x" type FpType(8, 24) init "0.0f").also {
+                        fpParseContext.metadata.create(it.ref, "cType", CFloat(null, fpParseContext))
+                    };
+                },
+                passes = listOf(
+                    NormalizePass(fpParseContext),
+                    DeterministicPass(fpParseContext),
+                    FpFunctionsToExprsPass(fpParseContext),
                 ),
                 input = {
                     (init to final) {
@@ -236,6 +298,12 @@ class PassTests {
                     (init to final) {
                         "ceil".invoke("x", "x")
                     }
+                    (init to final) {
+                        "isinf".invoke("y", "x")
+                    }
+                    (init to final) {
+                        "isfinite".invoke("y", "x")
+                    }
                 },
                 output = {
                     (init to final) {
@@ -261,6 +329,14 @@ class PassTests {
                     }
                     (init to final) {
                         "x".assign("(fproundtoint[RTP] x)")
+                    }
+                    (init to final) {
+                        "y".assign(
+                            "(ite (isinfinite x) #b00000000000000000000000000000001 #b00000000000000000000000000000000)")
+                    }
+                    (init to final) {
+                        "y".assign(
+                            "(ite (isinfinite x) #b00000000000000000000000000000000 #b00000000000000000000000000000001)")
                     }
                 },
             ),
@@ -317,10 +393,10 @@ class PassTests {
                 ),
                 input = {
                     (init to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     (init to "L2") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                     ("L2" to "L3") {
                         assume("false")
@@ -349,7 +425,7 @@ class PassTests {
                 passes = listOf(
                     NormalizePass(parseContext),
                     DeterministicPass(parseContext),
-                    PthreadFunctionsPass(parseContext),
+                    CLibraryFunctionsPass(parseContext),
                 ),
                 input = {
                     (init to "L1") {
@@ -427,7 +503,7 @@ class PassTests {
                 passes = listOf(
                     NormalizePass(parseContext),
                     DeterministicPass(parseContext),
-                    UnusedVarPass(parseContext)
+                    UnusedVarPass(parseContext, NullLogger.getInstance())
                 ),
                 input = {
                     "tmp" type Int()
@@ -444,7 +520,7 @@ class PassTests {
                 ),
                 input = {
                     ("L1" to "L1") {
-                        assume("true")
+                        assume("1 == 1")
                     }
                 },
                 output = null,
@@ -496,7 +572,7 @@ class PassTests {
             }
             procedure("proc1") {
                 (init to final) {
-                    assume("true")
+                    assume("1 == 1")
                 }
             }
         }
@@ -504,6 +580,43 @@ class PassTests {
         assertTrue(xcfaSource.procedures.first { it.name == "main" }.edges.none {
             it.getFlatLabels().any { it is InvokeLabel }
         })
+    }
+
+    @Test
+    fun testCPipeline() {
+        val xcfaSource = xcfa("example") {
+            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
+                (init to final) {
+                    "proc1"()
+                }
+            }
+            procedure("proc1") {
+                (init to final) {
+                    assume("1 == 1")
+                }
+            }
+        }
+
+        assertTrue(xcfaSource.procedures.first { it.name == "main" }.edges.none {
+            it.getFlatLabels().any { it is InvokeLabel }
+        })
+    }
+
+    @Test
+    fun testSplit() {
+        lateinit var edge: XcfaEdge
+        val xcfaSource = xcfa("example") {
+            procedure("main", CPasses(false, parseContext, NullLogger.getInstance())) {
+                edge = (init to final) {
+                    assume("1 == 1")
+                    "proc1"()
+                    assume("1 == 1")
+                }
+            }
+        }
+
+        val newEdges = edge.splitIf { it is InvokeLabel }
+        Assertions.assertTrue(newEdges.size == 3)
     }
 
 }

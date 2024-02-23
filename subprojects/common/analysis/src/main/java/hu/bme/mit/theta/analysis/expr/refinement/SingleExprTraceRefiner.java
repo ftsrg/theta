@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,17 +36,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A Refiner implementation that can refine a single trace (of ExprStates and
  * ExprActions) using an ExprTraceChecker and a PrecRefiner.
  */
-public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
+public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
         implements Refiner<S, A, P> {
-    private final ExprTraceChecker<R> exprTraceChecker;
-    private final PrecRefiner<S, A, P, R> precRefiner;
-    private final PruneStrategy pruneStrategy;
-    private final NodePruner<S, A> nodePruner;
-    private final Logger logger;
+    protected final ExprTraceChecker<R> exprTraceChecker;
+    protected final PrecRefiner<S, A, P, R> precRefiner;
+    protected final PruneStrategy pruneStrategy;
+    protected final NodePruner<S, A> nodePruner;
+    protected final Logger logger;
 
-    private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-                                   final PrecRefiner<S, A, P, R> precRefiner,
-                                   final PruneStrategy pruneStrategy, final Logger logger) {
+    protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+                                     final PrecRefiner<S, A, P, R> precRefiner,
+                                     final PruneStrategy pruneStrategy, final Logger logger) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
@@ -54,10 +54,10 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
         this.logger = checkNotNull(logger);
     }
 
-    private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-                                   final PrecRefiner<S, A, P, R> precRefiner,
-                                   final PruneStrategy pruneStrategy, final Logger logger,
-                                   final NodePruner<S, A> nodePruner) {
+    protected SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+                                     final PrecRefiner<S, A, P, R> precRefiner,
+                                     final PruneStrategy pruneStrategy, final Logger logger,
+                                     final NodePruner<S, A> nodePruner) {
         this.exprTraceChecker = checkNotNull(exprTraceChecker);
         this.precRefiner = checkNotNull(precRefiner);
         this.pruneStrategy = checkNotNull(pruneStrategy);
@@ -83,9 +83,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
         checkNotNull(prec);
         assert !arg.isSafe() : "ARG must be unsafe";
 
-        // TODO use CexMonitor lastCex somehow?
-        // TODO and maybe later smarten ArgTrace up a bit so monitor does not have to explicitly be here?
-        Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().findFirst(); //filter(cex -> ArgCexCheckHandler.instance.checkIfCounterexampleNew(cex)).findFirst();
+        Optional<ArgTrace<S, A>> optionalNewCex = arg.getCexs().findFirst();
         final ArgTrace<S, A> cexToConcretize = optionalNewCex.get();
 
         final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
@@ -107,9 +105,6 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
             final int pruneIndex = refutation.getPruneIndex();
             assert 0 <= pruneIndex : "Pruning index must be non-negative";
             assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
-
-            // TODO change to CexMonitor (right now it is added earlier on, but with mitigation and more options that will have to change)
-            // ArgCexCheckHandler.instance.addCounterexample(cexToConcretize);
 
             switch (pruneStrategy) {
                 case LAZY:

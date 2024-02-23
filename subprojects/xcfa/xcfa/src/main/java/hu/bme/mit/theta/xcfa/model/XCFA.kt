@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,19 +30,29 @@ class XCFA(
 
     var cachedHash: Int? = null
 
-    var procedures: Set<XcfaProcedure> =                                // procedure definitions
-        procedureBuilders.map { it.build(this) }.toSet()
+    var procedures: Set<XcfaProcedure>                                // procedure definitions
         private set
-    var initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>> =      // procedure names and parameter assignments
-        initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+
+    var initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>      // procedure names and parameter assignments
         private set
+
+    init {
+        var phase = 0
+        do {
+            var ready = true
+            procedureBuilders.forEach { ready = it.optimize(phase) && ready }
+            initProcedureBuilders.forEach { ready = it.first.optimize(phase) && ready }
+            phase++
+        } while (!ready)
+
+        procedures = procedureBuilders.map { it.build(this) }.toSet()
+        initProcedures = initProcedureBuilders.map { Pair(it.first.build(this), it.second) }
+    }
 
     /**
      * Recreate an existing XCFA by substituting the procedures and initProcedures fields.
      */
-    fun recreate(procedures: Set<XcfaProcedure>,
-        initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>
-    ): XCFA {
+    fun recreate(procedures: Set<XcfaProcedure>, initProcedures: List<Pair<XcfaProcedure, List<Expr<*>>>>): XCFA {
         this.procedures = procedures
         this.initProcedures = initProcedures
         return this

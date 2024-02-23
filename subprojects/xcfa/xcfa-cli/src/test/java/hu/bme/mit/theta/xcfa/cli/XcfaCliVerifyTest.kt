@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package hu.bme.mit.theta.xcfa.cli
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.*
 import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
@@ -40,14 +40,9 @@ class XcfaCliVerifyTest {
                 Arguments.of("/c/litmustest/singlethread/02types.c", null),
                 Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
                 Arguments.of("/c/litmustest/singlethread/04real.c", null),
-//                Arguments.of("/c/litmustest/singlethread/05math.c", null), // too resource-intensive
                 Arguments.of("/c/litmustest/singlethread/06arrays.c", null),
                 Arguments.of("/c/litmustest/singlethread/07arrayinit.c", null),
                 Arguments.of("/c/litmustest/singlethread/08vararray.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/09struct.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/10ptr.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/11ptrs.c", null),
-//                    Arguments.of("/c/litmustest/singlethread/12ptrtypes.c", null),
                 Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
                 Arguments.of("/c/litmustest/singlethread/14ushort.c", null),
                 Arguments.of("/c/litmustest/singlethread/15addition.c", null),
@@ -55,6 +50,25 @@ class XcfaCliVerifyTest {
                 Arguments.of("/c/litmustest/singlethread/17recursive.c", null),
                 Arguments.of("/c/litmustest/singlethread/18multithread.c", "--search DFS --por-level SPOR"),
                 Arguments.of("/c/litmustest/singlethread/19dportest.c", "--search DFS --por-level SPOR"),
+                Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
+                Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
+                Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
+                Arguments.of("/c/litmustest/singlethread/23overflow.c", "--domain PRED_CART"),
+            )
+        }
+
+        @JvmStatic
+        fun singleThreadedCFiles(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
+                Arguments.of("/c/litmustest/singlethread/01cast.c", null),
+                Arguments.of("/c/litmustest/singlethread/02types.c", null),
+                Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
+                Arguments.of("/c/litmustest/singlethread/04real.c", null),
+                Arguments.of("/c/litmustest/singlethread/06arrays.c", null),
+                Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
+                Arguments.of("/c/litmustest/singlethread/14ushort.c", null),
+                Arguments.of("/c/litmustest/singlethread/15addition.c", null),
                 Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
                 Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
                 Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
@@ -79,7 +93,7 @@ class XcfaCliVerifyTest {
             return Stream.of(
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.FORWARD, "--domain PRED_CART"),
                 Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD,
-                    "--domain PRED_CART"),
+                    "--domain PRED_CART --search BFS"),
             )
         }
     }
@@ -92,6 +106,7 @@ class XcfaCliVerifyTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--debug"
         )
         main(params)
     }
@@ -101,10 +116,10 @@ class XcfaCliVerifyTest {
     fun testCVerifyServer(filePath: String, extraArgs: String?) {
         val params = arrayOf(
             "--input-type", "C",
-            "--strategy", "SERVER_DEBUG",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--debug"
         )
         try {
             main(params)
@@ -120,11 +135,30 @@ class XcfaCliVerifyTest {
     fun testCVerifyPortfolio(filePath: String, extraArgs: String?) {
         val params = arrayOf(
             "--input-type", "C",
-            "--strategy", "PORTFOLIO",
-            "--debug",
+            "--backend", "PORTFOLIO",
             "--portfolio", javaClass.getResource("/simple.kts")!!.path,
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
+            "--debug",
+        )
+        try {
+            main(params)
+        } catch (e: Throwable) {
+            if (!e.toString().contains("Done debugging")) {
+                throw e
+            }
+        }
+    }
+
+    @Test
+    fun testCVerifyBuiltInPortfolio() {
+        val params = arrayOf(
+            "--input-type", "C",
+            "--backend", "PORTFOLIO",
+            "--portfolio", "COMPLEX",
+            "--input", javaClass.getResource("/c/dekker.i")!!.path,
+            "--stacktrace",
+            "--debug",
         )
         try {
             main(params)
@@ -144,8 +178,8 @@ class XcfaCliVerifyTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
-            "--output-results",
-            "--output-directory", temp.absolutePathString()
+            "--output-directory", temp.absolutePathString(),
+            "--debug"
         )
         main(params)
         Assertions.assertTrue(temp.resolve("xcfa.json").exists())
@@ -162,7 +196,47 @@ class XcfaCliVerifyTest {
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+            "--debug"
         ))
+    }
+
+    @ParameterizedTest
+    @MethodSource("singleThreadedCFiles")
+    fun testCVerifyKind(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--backend", "BOUNDED",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
+    }
+
+    @ParameterizedTest
+    @MethodSource("singleThreadedCFiles")
+    fun testCVerifyIMC(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--backend", "BOUNDED",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
+    }
+
+    @ParameterizedTest
+    @MethodSource("singleThreadedCFiles")
+    fun testCVerifyIMCThenKind(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--backend", "BOUNDED",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
     }
 
 }

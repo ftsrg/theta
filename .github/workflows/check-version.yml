@@ -3,6 +3,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency: 
+  group: version-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   check-version:
     runs-on: ubuntu-latest

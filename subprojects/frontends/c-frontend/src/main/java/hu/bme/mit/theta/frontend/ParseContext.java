@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ package hu.bme.mit.theta.frontend;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArchitectureType;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.CStmtCounter;
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class ParseContext {
     private final FrontendMetadata metadata;
     private final CStmtCounter cStmtCounter;
-    private BitwiseOption bitwiseOption;
+    private Set<ArithmeticTrait> arithmeticTraits = new LinkedHashSet<>();
     private ArchitectureType architecture = ArchitectureType.ILP32;
     private Boolean multiThreading = false;
     private ArithmeticType arithmetic = ArithmeticType.efficient;
@@ -34,16 +37,32 @@ public class ParseContext {
         cStmtCounter = new CStmtCounter();
     }
 
+    public ParseContext(
+            final FrontendMetadata metadata,
+            final CStmtCounter cStmtCounter,
+            final Set<ArithmeticTrait> arithmeticTraits,
+            final ArchitectureType architecture,
+            final Boolean multiThreading,
+            final ArithmeticType arithmetic
+    ) {
+        this.metadata = metadata;
+        this.cStmtCounter = cStmtCounter;
+        this.arithmeticTraits = arithmeticTraits;
+        this.architecture = architecture;
+        this.multiThreading = multiThreading;
+        this.arithmetic = arithmetic;
+    }
+
     public FrontendMetadata getMetadata() {
         return metadata;
     }
 
-    public BitwiseOption getBitwiseOption() {
-        return bitwiseOption;
+    public Set<ArithmeticTrait> getArithmeticTraits() {
+        return Set.copyOf(arithmeticTraits);
     }
 
-    public void setBitwiseOption(BitwiseOption bitwiseOption) {
-        this.bitwiseOption = bitwiseOption;
+    public void addArithmeticTrait(ArithmeticTrait arithmeticTrait) {
+        this.arithmeticTraits.add(arithmeticTrait);
     }
 
     public ArchitectureType getArchitecture() {

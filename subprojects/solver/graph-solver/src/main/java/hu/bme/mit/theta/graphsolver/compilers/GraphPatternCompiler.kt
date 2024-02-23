@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ interface GraphPatternCompiler<T1, T2> {
     fun compile(pattern: Difference): T2
     fun compile(pattern: DifferenceNode): T2
     fun compile(pattern: Domain): T2
-    fun compile(pattern: EmptyRelation): T2
+    fun compile(pattern: EmptySet): T2
     fun compile(pattern: EmptyRel): T2
     fun compile(pattern: IdentityClosure): T2
     fun compile(pattern: Intersection): T2

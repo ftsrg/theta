@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,4 +30,8 @@ public abstract class CCompound extends CComplexType {
         return visitor.visit(this, param);
     }
 
+    @Override
+    public int width() {
+        return parseContext.getArchitecture().getBitWidth("int");
+    }
 }

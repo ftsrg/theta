@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -107,15 +107,6 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
         node.expanded = true;
 
         return newSuccNodes;
-    }
-
-    public void close(final ArgNode<S, A> node) {
-        checkNotNull(node);
-        if (!node.isSubsumed()) {
-            final ARG<S, A> arg = node.arg;
-            final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> n.mayCover(node)).findFirst();
-            nodeToCoverWith.ifPresent(node::cover);
-        }
     }
 
 }

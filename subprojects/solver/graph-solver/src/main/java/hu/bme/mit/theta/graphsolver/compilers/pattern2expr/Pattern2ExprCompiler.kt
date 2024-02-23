@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -142,11 +142,11 @@ class Pattern2ExprCompiler : GraphPatternCompiler<Expr<BoolType>, Map<Tuple, Exp
         return ret.toMap()
     }
 
-    override fun compile(pattern: EmptyRelation): Map<Tuple, Expr<BoolType>> {
+    override fun compile(pattern: EmptyRel): Map<Tuple, Expr<BoolType>> {
         return events.map { a -> events.map { b -> Pair(Tuple2.of(a, b), False()) } }.flatten().toMap()
     }
 
-    override fun compile(pattern: EmptyRel): Map<Tuple, Expr<BoolType>> {
+    override fun compile(pattern: EmptySet): Map<Tuple, Expr<BoolType>> {
         return events.associate { a -> Pair(Tuple1.of(a), False()) }
     }
 

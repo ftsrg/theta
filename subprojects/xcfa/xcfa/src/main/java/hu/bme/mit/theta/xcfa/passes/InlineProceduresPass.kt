@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,19 +34,16 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (!builder.canInline()) return builder
         checkNotNull(builder.metaData["deterministic"])
-        check(
-            builder.metaData["inlined"] == null) { "Recursive programs are not supported by inlining." }
+        check(builder.metaData["inlined"] == null) { "Recursive programs are not supported by inlining." }
         builder.metaData["inlined"] = Unit
         while (true) {
             var foundOne = false
             for (edge in ArrayList(builder.getEdges())) {
                 val pred: (XcfaLabel) -> Boolean = { it ->
-                    it is InvokeLabel && builder.parent.getProcedures()
-                        .any { p -> p.name == it.name }
+                    it is InvokeLabel && builder.parent.getProcedures().any { p -> p.name == it.name }
                 }
                 val edges = edge.splitIf(pred)
-                if (edges.size > 1 || (edges.size == 1 && pred(
-                        (edges[0].label as SequenceLabel).labels[0]))) {
+                if (edges.size > 1 || (edges.size == 1 && pred((edges[0].label as SequenceLabel).labels[0]))) {
                     builder.removeEdge(edge)
                     edges.forEach {
                         if (pred((it.label as SequenceLabel).labels[0])) {
@@ -54,10 +51,12 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                             val source = it.source
                             val target = it.target
                             val invokeLabel: InvokeLabel = it.label.labels[0] as InvokeLabel
-                            val procedure = builder.parent.getProcedures()
-                                .find { p -> p.name == invokeLabel.name }
+                            val procedure = builder.parent.getProcedures().find { p -> p.name == invokeLabel.name }
                             checkNotNull(procedure)
-                            procedure.optimize()
+                            val inlineIndex = builder.manager.passes.indexOfFirst { phase ->
+                                phase.any { pass -> pass is InlineProceduresPass }
+                            }
+                            procedure.optimize(inlineIndex)
 
                             val newLocs: MutableMap<XcfaLocation, XcfaLocation> = LinkedHashMap()
                             procedure.getLocs().forEach { newLocs.put(it, it.inlinedCopy()) }
@@ -91,8 +90,7 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                             val finalLoc = procedure.finalLoc
                             val errorLoc = procedure.errorLoc
 
-                            builder.addEdge(
-                                XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts)))
+                            builder.addEdge(XcfaEdge(source, checkNotNull(newLocs[initLoc]), SequenceLabel(inStmts)))
                             if (finalLoc.isPresent)
                                 builder.addEdge(XcfaEdge(checkNotNull(newLocs[finalLoc.get()]), target,
                                     SequenceLabel(outStmts)))
@@ -116,7 +114,6 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
     }
 
     private fun XcfaLocation.inlinedCopy(): XcfaLocation {
-        return copy(name + XcfaLocation.uniqueCounter(), initial = false, final = false,
-            error = false)
+        return copy(name + XcfaLocation.uniqueCounter(), initial = false, final = false, error = false)
     }
 }

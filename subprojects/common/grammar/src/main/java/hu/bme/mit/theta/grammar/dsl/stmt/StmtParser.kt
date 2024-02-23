@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
@@ -69,6 +70,10 @@ class StatementWrapper(val content: String, scope: Scope) {
         init {
             this.scope = Preconditions.checkNotNull(scope)
             this.env = Preconditions.checkNotNull(env)
+        }
+
+        override fun visitSkipStmt(ctx: SkipStmtContext): Stmt {
+            return SkipStmt.getInstance()
         }
 
         override fun visitHavocStmt(ctx: HavocStmtContext): Stmt {

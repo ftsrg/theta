@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
         Preconditions.checkNotNull(trace)
         Preconditions.checkNotNull<Any>(prec)
         Preconditions.checkNotNull<R>(refutation)
+        val checkForPop = !(trace.states.first() as XcfaState<*>).xcfa!!.isInlined
         var runningPrec: P = prec.p
         for (i in trace.states.indices) {
             val reverseLookup = trace.states[i].processes.values.map {
@@ -51,8 +52,8 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
             val additionalLookup = if (i > 0) getTempLookup(
                 trace.actions[i - 1].edge.label).entries.associateBy(
                 { it.value }) { it.key } else emptyMap()
-            val precFromRef = refToPrec.toPrec(refutation, i)
-                .changeVars(reverseLookup + additionalLookup)
+            val varLookup = if (checkForPop) additionalLookup else (reverseLookup + additionalLookup)
+            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(varLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
         }
         return prec.refine(runningPrec)

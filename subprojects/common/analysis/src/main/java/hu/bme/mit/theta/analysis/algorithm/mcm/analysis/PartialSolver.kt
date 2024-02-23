@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import hu.bme.mit.theta.graphsolver.compilers.GraphPatternCompiler
 import hu.bme.mit.theta.graphsolver.patterns.constraints.GraphConstraint
 import hu.bme.mit.theta.graphsolver.solvers.GraphSolver
 
+/**
+ * WiP solver for memory-model related tasks.
+ */
 class PartialSolver<T>(
     private val mcm: Collection<GraphConstraint>,
     private val partialGraph: CandidateExecutionGraph,

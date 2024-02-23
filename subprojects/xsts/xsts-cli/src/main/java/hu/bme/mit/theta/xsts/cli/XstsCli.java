@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,13 +46,27 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Algorithm;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.AutoExpl;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.OptimizeStmts;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.xsts.pnml.PnmlParser;
 import hu.bme.mit.theta.xsts.pnml.PnmlToXSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.PnmlNet;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.SequenceInputStream;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -62,6 +76,9 @@ public class XstsCli {
     private static final String JAR_NAME = "theta-xsts-cli.jar";
     private final String[] args;
     private final TableWriter writer;
+
+    @Parameter(names = {"--algorithm"}, description = "Algorithm")
+    Algorithm algorithm = Algorithm.CEGAR;
 
     @Parameter(names = {"--domain"}, description = "Abstract domain")
     Domain domain = Domain.PRED_CART;
@@ -177,9 +194,15 @@ public class XstsCli {
                 return;
             }
 
-            final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-            final SafetyResult<?, ?> status = check(configuration);
-            sw.stop();
+            final SafetyResult<?, ?> status;
+            if (algorithm.equals(Algorithm.CEGAR)) {
+                final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+                status = check(configuration);
+                sw.stop();
+            } else {
+                throw new IllegalArgumentException("Unknown algorithm: " + algorithm);
+            }
+
             printResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {
                 writeCex(status.asUnsafe(), xsts);
@@ -253,7 +276,8 @@ public class XstsCli {
     }
 
     private void printResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);

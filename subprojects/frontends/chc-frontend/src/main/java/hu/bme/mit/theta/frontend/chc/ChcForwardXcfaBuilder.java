@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,27 +22,41 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xcfa.model.*;
-import hu.bme.mit.theta.xcfa.passes.ChcPasses;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.SequenceLabel;
+import hu.bme.mit.theta.xcfa.model.StmtLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
+import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import hu.bme.mit.theta.xcfa.model.XcfaLabel;
+import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.frontend.chc.ChcUtils.*;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.createVars;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.getTailConditionLabels;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformConst;
+import static hu.bme.mit.theta.frontend.chc.ChcUtils.transformSort;
 
 public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements ChcXcfaBuilder {
+    private final ProcedurePassManager procedurePassManager;
     private XcfaProcedureBuilder builder;
     private XcfaLocation initLocation;
     private XcfaLocation errorLocation;
     private final Map<String, UPred> locations = new HashMap<>();
 
+    public ChcForwardXcfaBuilder(final ProcedurePassManager procedurePassManager) {
+        this.procedurePassManager = procedurePassManager;
+    }
+
     @Override
     public XcfaBuilder buildXcfa(CHCParser parser) {
         XcfaBuilder xcfaBuilder = new XcfaBuilder("chc");
-        builder = new XcfaProcedureBuilder("main", new ChcPasses());
+        builder = new XcfaProcedureBuilder("main", procedurePassManager);
         builder.createInitLoc();
         builder.createErrorLoc();
         builder.createFinalLoc();

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
@@ -42,10 +44,12 @@ public class NamedType extends CSimpleType {
     protected final ParseContext parseContext;
 
     private final String namedType;
+    private final Logger uniqueWarningLogger;
 
-    NamedType(ParseContext parseContext, final String namedType) {
+    NamedType(ParseContext parseContext, final String namedType, Logger uniqueWarningLogger) {
         this.parseContext = parseContext;
         this.namedType = namedType;
+        this.uniqueWarningLogger = uniqueWarningLogger;
     }
 
     @Override
@@ -98,7 +102,7 @@ public class NamedType extends CSimpleType {
                 type = new CVoid(this, parseContext);
                 break;
             default: {
-                System.err.println("WARNING: Unknown simple type " + namedType);
+                uniqueWarningLogger.write(Level.INFO, "WARNING: Unknown simple type " + namedType + "\n");
                 type = new CVoid(this, parseContext);
                 break;
             }
@@ -164,7 +168,7 @@ public class NamedType extends CSimpleType {
 
     @Override
     public CSimpleType getBaseType() {
-        NamedType namedType = new NamedType(parseContext, getNamedType());
+        NamedType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
         namedType.setAtomic(this.isAtomic());
         namedType.setExtern(this.isExtern());
         namedType.setTypedef(this.isTypedef());
@@ -220,7 +224,7 @@ public class NamedType extends CSimpleType {
 
     @Override
     public CSimpleType copyOf() {
-        CSimpleType namedType = new NamedType(parseContext, getNamedType());
+        CSimpleType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
         namedType.setAtomic(this.isAtomic());
         namedType.setExtern(this.isExtern());
         namedType.setTypedef(this.isTypedef());

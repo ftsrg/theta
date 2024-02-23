@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -71,14 +71,31 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                         "ATOMIC_BEGIN" -> changes.add { it.enterMutex("", a.pid) }
                         "ATOMIC_END" -> changes.add { it.exitMutex("", a.pid) }
                         in Regex("mutex_lock\\((.*)\\)") -> changes.add { state ->
-                            state.enterMutex(
-                                label.substring("mutex_lock".length + 1, label.length - 1), a.pid)
+                            state.enterMutex(label.substring("mutex_lock".length + 1, label.length - 1), a.pid)
                         }
 
                         in Regex("mutex_unlock\\((.*)\\)") -> changes.add { state ->
-                            state.exitMutex(
-                                label.substring("mutex_unlock".length + 1, label.length - 1), a.pid)
+                            state.exitMutex(label.substring("mutex_unlock".length + 1, label.length - 1), a.pid)
                         }
+
+                        in Regex("start_cond_wait\\((.*)\\)") -> {
+                            val args = label.substring("start_cond_wait".length + 1, label.length - 1).split(",")
+                            changes.add { state -> state.enterMutex(args[0], -1) }
+                            changes.add { state -> state.exitMutex(args[1], a.pid) }
+                        }
+
+                        in Regex("cond_wait\\((.*)\\)") -> {
+                            val args = label.substring("cond_wait".length + 1, label.length - 1).split(",")
+                            changes.add { state -> state.enterMutex(args[0], a.pid) }
+                            changes.add { state -> state.exitMutex(args[0], a.pid) }
+                            changes.add { state -> state.enterMutex(args[1], a.pid) }
+                        }
+
+                        in Regex("cond_signal\\((.*)\\)") -> changes.add { state ->
+                            state.exitMutex(label.substring("cond_signal".length + 1, label.length - 1), -1)
+                        }
+
+                        else -> error("Unknown fence label $label")
                     }
                 }.let { false }
 
@@ -86,23 +103,18 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                     val proc = xcfa?.procedures?.find { proc -> proc.name == it.name } ?: error(
                         "No such method ${it.name}.")
                     val returnStmt = SequenceLabel(
-                        proc.params.withIndex().filter { it.value.second != ParamDirection.IN }
-                            .map { iVal ->
-                                StmtLabel(Assign(
-                                    cast((it.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>,
-                                        iVal.value.first.type),
-                                    cast(iVal.value.first.ref, iVal.value.first.type)),
-                                    metadata = it.metadata)
-                            })
+                        proc.params.withIndex().filter { it.value.second != ParamDirection.IN }.map { iVal ->
+                            StmtLabel(Assign(cast((it.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>,
+                                iVal.value.first.type), cast(iVal.value.first.ref, iVal.value.first.type)),
+                                metadata = it.metadata)
+                        })
                     changes.add { state ->
-                        state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(),
-                            it.tempLookup)
+                        state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), it.tempLookup)
                     }
                     false
                 }
 
-                is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }
-                    .let { true }
+                is ReturnLabel -> changes.add { state -> state.returnFromFunction(a.pid) }.let { true }
 
                 is JoinLabel -> {
                     changes.add { state -> state.enterMutex("${threadLookup[it.pidVar]}", a.pid) }
@@ -121,12 +133,10 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         }
 
         changes.add { state ->
-            if (checkNotNull(state.processes[a.pid]).locs.isEmpty()) state.endProcess(
-                a.pid) else state
+            if (checkNotNull(state.processes[a.pid]).locs.isEmpty()) state.endProcess(a.pid) else state
         }
 
-        return Pair(changes.fold(this) { current, change -> change(current) },
-            a.withLabel(SequenceLabel(newLabels)))
+        return Pair(changes.fold(this) { current, change -> change(current) }, a.withLabel(SequenceLabel(newLabels)))
     }
 
     private fun start(startLabel: StartLabel): XcfaState<S> {
@@ -151,17 +161,13 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val pid = pidCnt++
         val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
         newThreadLookup[startLabel.pidVar] = pid
-        newProcesses[pid] = XcfaProcessState(
-            LinkedList(listOf(procedure.initLoc)),
-            prefix = "T$pid",
-            varLookup = LinkedList(listOf(lookup)),
-            returnStmts = LinkedList(listOf(returnStmt)),
+        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), prefix = "T$pid",
+            varLookup = LinkedList(listOf(lookup)), returnStmts = LinkedList(listOf(returnStmt)),
             paramStmts = LinkedList(listOf(Pair(
                 /* init */
                 SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
                     StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
-                        cast(it.key.changeVars(tempLookup).ref, it.key.type)),
-                        metadata = EmptyMetaData)
+                        cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata = EmptyMetaData)
                 }),
                 /* deinit */
                 SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
@@ -184,11 +190,9 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 
     private fun invokeFunction(pid: Int, proc: XcfaProcedure, returnStmt: XcfaLabel,
-        paramList: Map<VarDecl<*>, ParamDirection>,
-        tempLookup: Map<VarDecl<*>, VarDecl<*>>): XcfaState<S> {
+        paramList: Map<VarDecl<*>, ParamDirection>, tempLookup: Map<VarDecl<*>, VarDecl<*>>): XcfaState<S> {
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
-        newProcesses[pid] = checkNotNull(
-            processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup))
+        newProcesses[pid] = checkNotNull(processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup))
         return copy(processes = newProcesses)
     }
 
@@ -226,15 +230,12 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 }
 
-data class XcfaProcessState(
-    val locs: LinkedList<XcfaLocation>,
-    val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
+data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
     val returnStmts: LinkedList<XcfaLabel> = LinkedList(listOf(NopLabel)),
-    val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(
-        listOf(Pair(NopLabel, NopLabel))),
-    val paramsInitialized: Boolean = false,
-    val prefix: String = ""
-) {
+    val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(listOf(Pair(NopLabel, NopLabel))),
+    val paramsInitialized: Boolean = false, val prefix: String = "") {
+
+    internal var popped: XcfaLocation? = null // stores if the stack was popped due to abstract stack covering
 
     fun withNewLoc(l: XcfaLocation): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
@@ -249,8 +250,7 @@ data class XcfaProcessState(
         else -> "${locs.peek()!!} [${locs.size}], initilized=$paramsInitialized"
     }
 
-    fun enterFunction(xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel,
-        paramList: Map<VarDecl<*>, ParamDirection>,
+    fun enterFunction(xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>,
         tempLookup: Map<VarDecl<*>, VarDecl<*>>): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(varLookup)
@@ -272,8 +272,8 @@ data class XcfaProcessState(
                     cast(it.key.changeVars(lookup).ref, it.key.type)), metadata = EmptyMetaData)
             }),
         ))
-        return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts,
-            paramStmts = paramStmts, paramsInitialized = false)
+        return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts,
+            paramsInitialized = false)
     }
 
     fun exitFunction(): XcfaProcessState {
@@ -285,8 +285,7 @@ data class XcfaProcessState(
         varLookup.pop()
         returnStmts.pop()
         paramStmts.pop()
-        return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts,
-            paramStmts = paramStmts)
+        return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -303,15 +302,15 @@ data class XcfaProcessState(
 
     override fun hashCode(): Int {
         var result = locs.hashCode()
-        result = 31 * result + paramsInitialized.hashCode() // TODO FRICKIN INNER STATE HASH
+        result = 31 * result + paramsInitialized.hashCode()
         return result
     }
 
     companion object {
 
         fun createLookup(proc: XcfaProcedure, threadPrefix: String,
-            procPrefix: String): Map<VarDecl<*>, VarDecl<*>> =
-            listOf(proc.params.map { it.first }, proc.vars).flatten().associateWith {
+            procPrefix: String): Map<VarDecl<*>, VarDecl<*>> = listOf(proc.params.map { it.first }, proc.vars).flatten()
+            .associateWith {
                 val sj = StringJoiner("::")
                 if (threadPrefix != "") sj.add(threadPrefix)
                 else sj.add("_")

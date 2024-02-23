@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package hu.bme.mit.theta.frontend.chc;
 import hu.bme.mit.theta.chc.frontend.dsl.gen.CHCLexer;
 import hu.bme.mit.theta.chc.frontend.dsl.gen.CHCParser;
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager;
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -35,12 +37,13 @@ public class ChcFrontend {
         chcTransformation = transformation;
     }
 
-    public XcfaBuilder buildXcfa(CharStream charStream) {
+    public XcfaBuilder buildXcfa(CharStream charStream, ProcedurePassManager procedurePassManager) {
         ChcUtils.init(charStream);
         CHCParser parser = new CHCParser(new CommonTokenStream(new CHCLexer(charStream)));
+        parser.setErrorHandler(new BailErrorStrategy());
         ChcXcfaBuilder chcXcfaBuilder = switch (chcTransformation) {
-            case FORWARD -> new ChcForwardXcfaBuilder();
-            case BACKWARD -> new ChcBackwardXcfaBuilder();
+            case FORWARD -> new ChcForwardXcfaBuilder(procedurePassManager);
+            case BACKWARD -> new ChcBackwardXcfaBuilder(procedurePassManager);
             default ->
                     throw new RuntimeException("Should not be here; adapt PORTFOLIO to FW/BW beforehand.");
         };

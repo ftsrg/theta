@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package hu.bme.mit.theta.frontend.transformation.grammar.function;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,9 +28,10 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig;
+import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.ArithmeticType;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor;
+import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseChecker;
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.BitwiseOption;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.GlobalDeclUsageVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
@@ -70,6 +73,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -88,6 +92,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     private final GlobalDeclUsageVisitor globalDeclUsageVisitor;
     private final TypeVisitor typeVisitor;
     private final TypedefVisitor typedefVisitor;
+    private final Logger uniqueWarningLogger;
 
     public void clear() {
         variables.clear();
@@ -127,7 +132,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {
-            System.err.println("WARNING: Variable already exists: " + name);
+            uniqueWarningLogger.write(Level.INFO, "WARNING: Variable already exists: " + name + "\n");
             varDecl = peek.get2().get(name);
         }
         peek.get2().put(name, varDecl);
@@ -137,8 +142,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         declaration.addVarDecl(varDecl);
     }
 
-    public FunctionVisitor(final ParseContext parseContext) {
-        this.declarationVisitor = new DeclarationVisitor(parseContext, this);
+    public FunctionVisitor(final ParseContext parseContext, Logger uniqueWarningLogger) {
+        this.declarationVisitor = new DeclarationVisitor(parseContext, this, uniqueWarningLogger);
+        this.uniqueWarningLogger = uniqueWarningLogger;
         this.typedefVisitor = declarationVisitor.getTypedefVisitor();
         this.typeVisitor = declarationVisitor.getTypeVisitor();
         variables = new ArrayDeque<>();
@@ -163,8 +169,10 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
         // if arithemetic is set on efficient, we change it to either bv or int arithmetic here
         if (parseContext.getArithmetic() == ArchitectureConfig.ArithmeticType.efficient) { // if it wasn't on efficient, the check returns manual
-            BitwiseOption bitwiseOption = BitwiseChecker.checkIfBitwise(parseContext, globalUsages);
-            parseContext.setArithmetic((bitwiseOption == BitwiseOption.INTEGER) ? ArchitectureConfig.ArithmeticType.integer : ArchitectureConfig.ArithmeticType.bitvector);
+            Set<ArithmeticTrait> arithmeticTraits = BitwiseChecker.gatherArithmeticTraits(parseContext, globalUsages);
+            parseContext.setArithmetic(
+                    arithmeticTraits.contains(ArithmeticTrait.BITWISE) || arithmeticTraits.contains(ArithmeticTrait.FLOAT) ?
+                            ArithmeticType.bitvector : ArithmeticType.integer);
         }
 
         CProgram program = new CProgram(parseContext);
@@ -292,7 +300,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     @Override
     public CStatement visitCaseStatement(CParser.CaseStatementContext ctx) {
         parseContext.getCStmtCounter().incrementBranches();
-        CExpr cexpr = new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor)), parseContext);
+        CExpr cexpr = new CExpr(ctx.constantExpression().accept(new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor, uniqueWarningLogger)), parseContext);
         CCase cCase = new CCase(
                 cexpr,
                 ctx.statement().accept(this), parseContext);
@@ -497,7 +505,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitAssignmentExpressionAssignmentExpression(CParser.AssignmentExpressionAssignmentExpressionContext ctx) {
-        ExpressionVisitor expressionVisitor = new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor);
+        ExpressionVisitor expressionVisitor = new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor, uniqueWarningLogger);
         CCompound compound = new CCompound(parseContext);
         CCompound preStatements = new CCompound(parseContext);
         CCompound postStatements = new CCompound(parseContext);
@@ -515,7 +523,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
 
     @Override
     public CStatement visitAssignmentExpressionConditionalExpression(CParser.AssignmentExpressionConditionalExpressionContext ctx) {
-        ExpressionVisitor expressionVisitor = new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor);
+        ExpressionVisitor expressionVisitor = new ExpressionVisitor(parseContext, this, variables, functions, typedefVisitor, typeVisitor, uniqueWarningLogger);
         CCompound compound = new CCompound(parseContext);
         CCompound preStatements = new CCompound(parseContext);
         CCompound postStatements = new CCompound(parseContext);

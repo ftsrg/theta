@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,21 +15,10 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
-
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
@@ -42,6 +31,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Algorithm;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Encoding;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.InitPrec;
@@ -67,6 +57,16 @@ import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -77,6 +77,8 @@ public class CfaCli {
     private static final String JAR_NAME = "theta-cfa-cli.jar";
     private final String[] args;
     private final TableWriter writer;
+    @Parameter(names = {"--algorithm"}, description = "Algorithm")
+    Algorithm algorithm = Algorithm.CEGAR;
 
     @Parameter(names = "--domain", description = "Abstract domain")
     Domain domain = Domain.PRED_CART;
@@ -231,10 +233,15 @@ public class CfaCli {
                 refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
             }
 
-            final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc,
-                    abstractionSolverFactory, refinementSolverFactory);
-            final SafetyResult<?, ?> status = check(configuration);
-            sw.stop();
+            final SafetyResult<?, ?> status;
+            if (algorithm == Algorithm.CEGAR) {
+                final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
+                status = check(configuration);
+                sw.stop();
+            } else {
+                throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+            }
+
             printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {
                 writeCex(status.asUnsafe());
@@ -287,7 +294,8 @@ public class CfaCli {
     }
 
     private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);

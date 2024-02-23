@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.indexings.BasicVarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
+import hu.bme.mit.theta.frontend.FrontendMetadata
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import hu.bme.mit.theta.grammar.dsl.type.TypeWrapper
@@ -62,6 +64,10 @@ class GsonTest {
         gsonBuilder.registerTypeHierarchyAdapter(MetaData::class.java, MetaDataAdapter())
         gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any> { gson })
         gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any> { gson })
+        gsonBuilder.registerTypeHierarchyAdapter(ParseContext::class.java,
+            ParseContextAdapter { gson })
+        gsonBuilder.registerTypeHierarchyAdapter(FrontendMetadata::class.java,
+            FrontendMetadataAdapter { gson })
         gson = gsonBuilder.create()
         return gson
     }
@@ -93,6 +99,22 @@ class GsonTest {
         println(xcfaSource)
         println(output)
         assertEquals(xcfaSource, output)
+    }
+
+    @Test
+    fun testParseContextRoundTrip() {
+        val parseContext = ParseContext()
+        parseContext.metadata.create("owner", "key", "value")
+
+        val symbolTable = XcfaScope(SymbolTable())
+        val x_symbol = NamedSymbol("x")
+        symbolTable.add(x_symbol)
+        val env = Env()
+
+        val gson = getGson(symbolTable, env, true)
+        assertEquals(parseContext.metadata.lookupKeyValue,
+            gson.fromJson(gson.toJson(parseContext), ParseContext::class.java).metadata.lookupKeyValue)
+
     }
 
 }

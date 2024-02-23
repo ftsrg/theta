@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -312,5 +312,5 @@ fun XcfaBuilder.procedure(name: String, passManager: ProcedurePassManager,
 
 fun XcfaBuilder.procedure(name: String,
     lambda: XcfaProcedureBuilderContext.() -> Unit): XcfaProcedureBuilderContext {
-    return procedure(name, ProcedurePassManager(emptyList()), lambda)
+    return procedure(name, ProcedurePassManager(), lambda)
 }

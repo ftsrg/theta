@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
-import hu.bme.mit.theta.common.logging.ConsoleLogger
-import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverManager
+import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.ParamDirection.IN
 import hu.bme.mit.theta.xcfa.model.ParamDirection.OUT
 import hu.bme.mit.theta.xcfa.model.procedure
@@ -85,15 +87,20 @@ class XcfaDslTest {
     @Test
     fun verifyXcfa() {
         SolverManager.registerSolverManager(Z3SolverManager.create())
-        val config = XcfaCegarConfig(maxEnum = 1, search = Search.BFS, initPrec = InitPrec.ALLVARS)
+        val config = XcfaConfig<SpecFrontendConfig, CegarConfig>(
+            backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig()))
         run {
             val xcfa = getSyncXcfa()
-            val safetyResult = config.check(xcfa, ConsoleLogger(Logger.Level.DETAIL))
+            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
+                NullLogger.getInstance())
+            val safetyResult = checker.check()
             Assert.assertTrue(safetyResult.isSafe)
         }
         run {
             val xcfa = getAsyncXcfa()
-            val safetyResult = config.check(xcfa, ConsoleLogger(Logger.Level.DETAIL))
+            val checker = getChecker(xcfa, emptySet(), config, ParseContext(), NullLogger.getInstance(),
+                NullLogger.getInstance())
+            val safetyResult = checker.check()
             Assert.assertTrue(safetyResult.isUnsafe)
         }
     }

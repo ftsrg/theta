@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
-import java.nio.file.FileSystems
-import java.nio.file.Path
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -41,11 +39,10 @@ class XcfaWitnessWriter {
         safetyResult: SafetyResult<*, *>,
         inputFile: File,
         cexSolverFactory: SolverFactory,
-        parseContext: ParseContext
+        parseContext: ParseContext,
+        witnessfile: File,
     ) {
-        if (safetyResult.isUnsafe) {
-            val workdir: Path = FileSystems.getDefault().getPath("").toAbsolutePath()
-            val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")
+        if (safetyResult.isUnsafe && safetyResult.asUnsafe().hasTrace()) {
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
                 safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
 
@@ -54,9 +51,6 @@ class XcfaWitnessWriter {
             val xml = witness.toPrettyXml()
             witnessfile.writeText(xml)
         } else if (safetyResult.isSafe) {
-            val workdir = FileSystems.getDefault().getPath("").toAbsolutePath()
-            val witnessfile = File(workdir.toString() + File.separator + "witness.graphml")
-
             val taskHash = WitnessWriter.createTaskHash(inputFile.absolutePath)
             val dummyWitness = StringBuilder()
             dummyWitness.append(

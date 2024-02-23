@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,5 +60,13 @@ class MonitorCheckpoint internal constructor(private val name: String) {
             { "Checkpoint name $name was not registered (add it in MonitorCheckpoint.kt)" } // see checkpointNames above
             registeredCheckpoints[name]?.executeCheckpoint() ?: error("Checkpoint with name $name not found.")
         }
+
+        fun reset() {
+            registeredCheckpoints.values.forEach { it.reset() }
+        }
+    }
+
+    private fun reset() {
+        registeredMonitors.clear()
     }
 }

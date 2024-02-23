@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import com.google.common.collect.Sets
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVars
@@ -26,7 +27,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  * Remove unused variables from the program.
  * Requires the ProcedureBuilder to be `deterministic` (@see DeterministicPass)
  */
-class UnusedVarPass(val parseContext: ParseContext) : ProcedurePass {
+class UnusedVarPass(val parseContext: ParseContext, val uniqueWarningLogger: Logger) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -38,12 +39,13 @@ class UnusedVarPass(val parseContext: ParseContext) : ProcedurePass {
             builder.parent.getVars().map { it.wrappedVar }.toSet())
         val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
         if (!varsAndParams.containsAll(usedVars)) {
-            System.err.println(
-                "Warning: There are some used variables not present as declarations: \n${
-                    usedVars.filter {
-                        !varsAndParams.contains(it)
-                    }
-                }")
+            uniqueWarningLogger.write(Logger.Level.INFO,
+                "WARNING: There are some used variables not present as declarations: " +
+                    "${
+                        usedVars.filter {
+                            !varsAndParams.contains(it)
+                        }
+                    }\n")
         }
 
         val list = builder.getVars().filter { !usedVars.contains(it) }.toList()

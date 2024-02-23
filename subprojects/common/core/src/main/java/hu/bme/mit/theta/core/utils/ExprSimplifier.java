@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
@@ -145,7 +146,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.SimplifierLevel.*;
+import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
 
 public final class ExprSimplifier {
 
@@ -263,6 +264,8 @@ public final class ExprSimplifier {
             .addCase(BvSubExpr.class, this::simplifyBvSub)
 
             .addCase(BvPosExpr.class, this::simplifyBvPos)
+
+            .addCase(BvSignChangeExpr.class, this::simplifyBvSignChange)
 
             .addCase(BvNegExpr.class, this::simplifyBvNeg)
 
@@ -1286,6 +1289,10 @@ public final class ExprSimplifier {
         return simplify(expr.getOp(), val);
     }
 
+    private Expr<BvType> simplifyBvSignChange(final BvSignChangeExpr expr, final Valuation val) {
+        return simplify(expr.getOp(), val);
+    }
+
     private Expr<BvType> simplifyBvNeg(final BvNegExpr expr, final Valuation val) {
         final Expr<BvType> op = simplify(expr.getOp(), val);
 
@@ -2004,10 +2011,6 @@ public final class ExprSimplifier {
 
         if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
             return Bool(leftOp.equals(rightOp));
-        } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
-                return True();
-            }
         }
 
         return expr.with(leftOp, rightOp);

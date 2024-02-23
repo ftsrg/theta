@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.c2xcfa
 
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,16 +58,26 @@ class TestFrontendXcfaBuilder {
                 arrayOf("/20testinline.c"),
                 arrayOf("/21namecollision.c"),
                 arrayOf("/22nondet.c"),
+                arrayOf("/23exotic.c"),
             )
         }
     }
 
     @Test
     @Throws(IOException::class)
-    fun parse() {
+    fun testReachability() {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, ParseContext(), false, false)
+        getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance())
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun testOverflow() {
+
+        val stream = javaClass.getResourceAsStream(filepath)
+
+        getXcfaFromC(stream!!, ParseContext(), false, true, NullLogger.getInstance())
     }
 }

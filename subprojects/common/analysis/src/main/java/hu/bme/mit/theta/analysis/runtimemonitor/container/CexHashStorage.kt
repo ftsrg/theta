@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.runtimemonitor.container
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.algorithm.ArgStructuralEquality
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace
 
 class CexHashStorage<S : State?, A : Action?> :
@@ -24,10 +25,10 @@ class CexHashStorage<S : State?, A : Action?> :
 
     private val counterexamples: MutableSet<Int> = LinkedHashSet()
     override fun addData(newData: ArgTrace<S, A>?) {
-        counterexamples.add(newData.hashCode())
+        counterexamples.add(ArgStructuralEquality.hashCode(newData))
     }
 
     override operator fun contains(data: ArgTrace<S, A>?): Boolean {
-        return counterexamples.contains(data.hashCode())
+        return counterexamples.contains(ArgStructuralEquality.hashCode(data))
     }
 }

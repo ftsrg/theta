@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,10 +18,14 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
+import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
@@ -36,12 +40,14 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
     private final FunctionVisitor functionVisitor;
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
+    private final Logger uniqueWarningLogger;
 
-    public DeclarationVisitor(ParseContext parseContext, FunctionVisitor functionVisitor) {
+    public DeclarationVisitor(ParseContext parseContext, FunctionVisitor functionVisitor, Logger uniqueWarningLogger) {
         this.parseContext = parseContext;
         this.functionVisitor = functionVisitor;
+        this.uniqueWarningLogger = uniqueWarningLogger;
         this.typedefVisitor = new TypedefVisitor(this);
-        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext);
+        this.typeVisitor = new TypeVisitor(this, typedefVisitor, parseContext, uniqueWarningLogger);
     }
 
     public TypedefVisitor getTypedefVisitor() {
@@ -81,13 +87,17 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                                 "Initializer list designators not yet implemented!");
                         CInitializerList cInitializerList = new CInitializerList(
                                 cSimpleType.getActualType(), parseContext);
-                        for (CParser.InitializerContext initializer : context.initializer()
-                                .initializerList().initializers) {
-                            CStatement expr = initializer.assignmentExpression()
-                                    .accept(functionVisitor);
-                            cInitializerList.addStatement(null /* TODO: add designator */, expr);
+                        try {
+                            for (CParser.InitializerContext initializer : context.initializer()
+                                    .initializerList().initializers) {
+                                CStatement expr = initializer.assignmentExpression().accept(functionVisitor);
+                                cInitializerList.addStatement(null /* TODO: add designator */, expr);
+                            }
+                            initializerExpression = cInitializerList;
+                        } catch (NullPointerException e) {
+                            initializerExpression = new CExpr(new UnsupportedInitializer(), parseContext);
+                            parseContext.getMetadata().create(initializerExpression.getExpression(), "cType", cSimpleType);
                         }
-                        initializerExpression = cInitializerList;
                     } else {
                         initializerExpression = context.initializer().assignmentExpression()
                                 .accept(functionVisitor);
@@ -190,7 +200,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
             CParser.DirectDeclaratorFunctionDeclContext ctx) {
         CDeclaration decl = ctx.directDeclarator().accept(this);
         if (!(ctx.parameterTypeList() == null || ctx.parameterTypeList().ellipses == null)) {
-            System.err.println("WARNING: variable args are not supported!");
+            uniqueWarningLogger.write(Level.INFO, "WARNING: variable args are not supported!\n");
             decl.setFunc(true);
             return decl;
         }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
 import hu.bme.mit.theta.analysis.expl.ExplPrec
@@ -37,21 +36,25 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.getGlobalVars
+import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
-import hu.bme.mit.theta.xcfa.startsAtomic
 import java.util.*
 import java.util.function.Predicate
 
 open class XcfaAnalysis<S : ExprState, P : Prec>(
     private val corePartialOrd: PartialOrd<XcfaState<S>>,
     private val coreInitFunc: InitFunc<XcfaState<S>, XcfaPrec<P>>,
-    private val coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
+    private var coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
 ) : Analysis<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
+
+    init {
+        ConeOfInfluence.coreTransFunc = transFunc as TransFunc<XcfaState<out ExprState>, XcfaAction, XcfaPrec<out Prec>>
+        coreTransFunc = ConeOfInfluence.transFunc as TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>
+    }
 
     override fun getPartialOrd(): PartialOrd<XcfaState<S>> = corePartialOrd
     override fun getInitFunc(): InitFunc<XcfaState<S>, XcfaPrec<P>> = coreInitFunc
@@ -141,21 +144,21 @@ fun getXcfaErrorPredicate(
     ErrorDetection.DATA_RACE -> {
         Predicate<XcfaState<out ExprState>> { s ->
             val xcfa = s.xcfa!!
-            if (s.mutexes.containsKey("")) return@Predicate false
             for (process1 in s.processes)
                 for (process2 in s.processes)
                     if (process1.key != process2.key)
                         for (edge1 in process1.value.locs.peek().outgoingEdges)
                             for (edge2 in process2.value.locs.peek().outgoingEdges) {
-                                val globalVars1 = edge1.getGlobalVars(xcfa)
-                                val globalVars2 = edge2.getGlobalVars(xcfa)
-                                val isAtomic1 = edge1.startsAtomic()
-                                val isAtomic2 = edge2.startsAtomic()
-                                if (!isAtomic1 || !isAtomic2) {
-                                    val intersection = globalVars1.keys intersect globalVars2.keys
-                                    if (intersection.any { globalVars1[it].isWritten || globalVars2[it].isWritten })
-                                        return@Predicate true
-                                }
+                                val mutexes1 = s.mutexes.filterValues { it == process1.key }.keys
+                                val mutexes2 = s.mutexes.filterValues { it == process2.key }.keys
+                                val globalVars1 = edge1.getGlobalVarsWithNeededMutexes(xcfa, mutexes1)
+                                val globalVars2 = edge2.getGlobalVarsWithNeededMutexes(xcfa, mutexes2)
+                                for (v1 in globalVars1)
+                                    for (v2 in globalVars2)
+                                        if (v1.varDecl == v2.varDecl)
+                                            if (v1.access.isWritten || v2.access.isWritten)
+                                                if ((v1.mutexes intersect v2.mutexes).isEmpty())
+                                                    return@Predicate true
                             }
             false
         }
@@ -168,6 +171,20 @@ fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
     PartialOrd<XcfaState<S>> { s1, s2 ->
         s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(
             s1.sGlobal, s2.sGlobal)
+    }
+
+private fun <S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.processes.keys.all { pid ->
+    s1.processes[pid]?.let { ps1 ->
+        val ps2 = s2.processes.getValue(pid)
+        ps1.locs.peek() == ps2.locs.peek() && ps1.paramsInitialized && ps2.paramsInitialized
+    } ?: false
+}
+
+fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<S>) =
+    PartialOrd<XcfaState<S>> { s1, s2 ->
+        s1.processes.size == s2.processes.size && stackIsLeq(s1,
+            s2) && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
+            && partialOrd.isLeq(s1.withGeneralizedVars(), s2.withGeneralizedVars())
     }
 
 private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
@@ -189,9 +206,13 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
     lts: LTS<XcfaState<out ExprState>, XcfaAction>,
     errorDetection: ErrorDetection
 ): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
-    BasicAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
+    XcfaAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
+        .projection {
+            if (it.xcfa!!.isInlined) it.processes
+            else it.processes.map { (_, p) -> p.locs.peek() }
+        }
         .build() // TODO: can we do this nicely?
 
 /// EXPL

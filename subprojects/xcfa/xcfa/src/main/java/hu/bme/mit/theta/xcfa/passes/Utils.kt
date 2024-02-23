@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,12 +28,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
-
-fun label2edge(edge: XcfaEdge, label: XcfaLabel) {
-    val source = edge.source
-    val target = edge.target
-
-}
 
 /**
  * XcfaEdge must be in a `deterministic` ProcedureBuilder
@@ -97,9 +91,13 @@ fun XcfaLabel.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: Par
             is StartLabel -> StartLabel(name, params.map { it.changeVars(varLut, parseContext) },
                 pidVar.changeVars(varLut), metadata = metadata)
 
-            is StmtLabel -> StmtLabel(stmt.changeVars(varLut, parseContext), metadata = metadata)
+            is StmtLabel -> StmtLabel(stmt.changeVars(varLut, parseContext), metadata = metadata,
+                choiceType = this.choiceType)
+
             is WriteLabel -> WriteLabel(local.changeVars(varLut), global.changeVars(varLut), labels,
                 metadata = metadata)
+
+            is ReturnLabel -> ReturnLabel(enclosedLabel.changeVars(varLut))
 
             else -> this
         }
@@ -152,4 +150,34 @@ private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
     tally.pop()
     metaData[if (recursive) "recursive" else "canInline"] = Unit
     return !recursive
+}
+
+internal fun XcfaLabel.removeUnusedWrites(unusedVars: Set<VarDecl<*>>): XcfaLabel {
+    return when (this) {
+        is SequenceLabel -> {
+            val newLabels = mutableListOf<XcfaLabel>()
+            this.labels.forEach { label ->
+                val newLabel = label.removeUnusedWrites(unusedVars)
+                if (newLabel !is NopLabel) newLabels.add(newLabel)
+            }
+            SequenceLabel(newLabels)
+        }
+
+        is NondetLabel -> {
+            val newLabels = mutableSetOf<XcfaLabel>()
+            this.labels.forEach { label ->
+                val newLabel = label.removeUnusedWrites(unusedVars)
+                if (newLabel !is NopLabel) newLabels.add(newLabel)
+            }
+            NondetLabel(newLabels)
+        }
+
+        is StmtLabel -> when (this.stmt) {
+            is AssignStmt<*> -> if (unusedVars.contains(this.stmt.varDecl)) NopLabel else this
+            is HavocStmt<*> -> if (unusedVars.contains(this.stmt.varDecl)) NopLabel else this
+            else -> this
+        }
+
+        else -> this
+    }
 }

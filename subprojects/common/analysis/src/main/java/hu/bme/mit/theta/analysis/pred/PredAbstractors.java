@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.pred;
 
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -23,6 +24,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
@@ -69,6 +71,15 @@ public class PredAbstractors {
         Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
                                                   final VarIndexing exprIndexing,
                                                   final PredPrec prec, final VarIndexing precIndexing);
+
+        default Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
+                                                          final VarIndexing exprIndexing,
+                                                          final PredPrec prec,
+                                                          final VarIndexing precIndexing,
+                                                          final PredState state,
+                                                          final ExprAction action) {
+            return createStatesForExpr(expr, exprIndexing, prec, precIndexing);
+        }
     }
 
     /**
@@ -225,5 +236,23 @@ public class PredAbstractors {
             return Collections.singleton(PredState.of(newStatePreds));
         }
 
+        @Override
+        public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr,
+                                                         final VarIndexing exprIndexing,
+                                                         final PredPrec prec,
+                                                         final VarIndexing precIndexing,
+                                                         final PredState state,
+                                                         final ExprAction action) {
+            var actionExpr = action.toExpr();
+            if (actionExpr.equals(True())) {
+                var filteredPreds = state.getPreds().stream().filter(p -> {
+                    var vars = ExprUtils.getVars(p);
+                    var indexing = action.nextIndexing();
+                    return vars.stream().allMatch(v -> indexing.get(v) == 0);
+                }).collect(Collectors.toList());
+                return Collections.singleton(PredState.of(filteredPreds));
+            }
+            return createStatesForExpr(expr, exprIndexing, prec, precIndexing);
+        }
     }
 }

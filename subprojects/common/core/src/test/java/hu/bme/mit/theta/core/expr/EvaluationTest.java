@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -229,6 +229,19 @@ public class EvaluationTest {
         for (int i = -10; i <= 10; ++i) {
             assertEquals(Rat(i, 1), evaluate(ToRat(Int(i))));
         }
+    }
+
+    @Test
+    public void testDiv() {
+        assertEquals(Int(1), evaluate(Div(Int(5), Int(3))));
+        assertEquals(Int(-1), evaluate(Div(Int(5), Int(-3))));
+        assertEquals(Int(-2), evaluate(Div(Int(-5), Int(3))));
+        assertEquals(Int(2), evaluate(Div(Int(-5), Int(-3))));
+
+        assertEquals(Int(2), evaluate(Div(Int(6), Int(3))));
+        assertEquals(Int(-2), evaluate(Div(Int(6), Int(-3))));
+        assertEquals(Int(-2), evaluate(Div(Int(-6), Int(3))));
+        assertEquals(Int(2), evaluate(Div(Int(-6), Int(-3))));
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ include(
     "frontends/c-frontend",
     "frontends/chc-frontend",
     "frontends/btor2-frontend",
+    "frontends/llvm",
 
     "cfa/cfa",
     "cfa/cfa-analysis",
@@ -35,13 +36,12 @@ include(
 
     "xcfa/xcfa",
     "xcfa/cat",
-    "xcfa/exec-graph-cli",
     "xcfa/c2xcfa",
     "xcfa/btor22xcfa",
     "xcfa/litmus2xcfa",
+    "xcfa/llvm2xcfa",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
-    "xcfa/litmus-cli",
 
     "xta/xta",
     "xta/xta-analysis",

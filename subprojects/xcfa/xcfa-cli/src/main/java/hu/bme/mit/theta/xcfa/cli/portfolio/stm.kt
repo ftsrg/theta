@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.xcfa.cli.XcfaCegarConfig
+import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 
 abstract class Node(val name: String) {
 
@@ -36,17 +36,16 @@ ${innerSTM.visualize()}
 }""".trimIndent()
 }
 
-class ConfigNode(name: String, private val config: XcfaCegarConfig,
-    private val check: (inProcess: Boolean, config: XcfaCegarConfig) -> SafetyResult<*, *>,
-    private val inProcess: Boolean) : Node(name) {
+class ConfigNode(name: String, private val config: XcfaConfig<*, *>,
+    private val check: (config: XcfaConfig<*, *>) -> SafetyResult<*, *>) : Node(name) {
 
     override fun execute(): Pair<Any, Any> {
-        println("Current configuration: $config (inProcess=$inProcess)")
-        return Pair(config, check(inProcess, config))
+        println("Current configuration: $config")
+        return Pair(config, check(config))
     }
 
-    override fun visualize(): String = config.visualize(inProcess).lines()
-        .map { "state $name: $it" }.reduce { a, b -> "$a\n$b" }
+    override fun visualize(): String = config.toString().lines() // TODO: reintroduce visualize()
+        .map { "state ${name.replace(Regex("[:\\.-]+"), "_")}: $it" }.reduce { a, b -> "$a\n$b" }
 }
 
 data class Edge(val source: Node,
@@ -58,7 +57,9 @@ data class Edge(val source: Node,
         source.outEdges.add(this)
     }
 
-    fun visualize(): String = """${source.name} --> ${target.name} : $trigger """
+    fun visualize(): String = """${source.name.replace(Regex("[:\\.-]+"), "_")} --> ${
+        target.name.replace(Regex("[:\\.-]+"), "_")
+    } : $trigger """
 
 }
 
@@ -99,7 +100,7 @@ data class STM(val initNode: Node, val edges: Set<Edge>) {
     fun visualize(): String = """
 ${visualizeNodes()}
 
-[*] --> ${initNode.name}
+[*] --> ${initNode.name.replace(Regex("[:\\.-]+"), "_")}
 ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
 """.trimMargin()
 
@@ -112,6 +113,7 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
                 println("Caught exception: $e")
                 val edge: Edge? = currentNode.outEdges.find { it.trigger(e) }
                 if (edge != null) {
+                    println("Handling exception as ${edge.trigger}")
                     currentNode = edge.target
                 } else {
                     println("Could not handle trigger $e (Available triggers: ${
@@ -124,8 +126,8 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
     }
 }
 
-fun XcfaCegarConfig.visualize(inProcess: Boolean): String =
-    """solvers: $abstractionSolver, $refinementSolver
-    |domain: $domain, search: $search, initprec: $initPrec, por: $porLevel
-    |refinement: $refinement, pruneStrategy: $pruneStrategy
-    |timeout: $timeoutMs ms, inProcess: $inProcess""".trimMargin()
+//fun XcfaConfig<*, CegarConfig>.visualize(inProcess: Boolean): String =
+//    """solvers: $abstractionSolver, $refinementSolver
+//    |domain: $domain, search: $search, initprec: $initPrec, por: $porLevel
+//    |refinement: $refinement, pruneStrategy: $pruneStrategy
+//    |timeout: $timeoutMs ms, inProcess: $inProcess""".trimMargin()

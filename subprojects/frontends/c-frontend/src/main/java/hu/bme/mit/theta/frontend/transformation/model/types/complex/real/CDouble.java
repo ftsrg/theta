@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,5 +30,10 @@ public class CDouble extends CReal {
 
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
         return visitor.visit(this, param);
+    }
+
+    @Override
+    public String getTypeName() {
+        return "double";
     }
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CCompound;
@@ -51,6 +55,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getCastVisitor;
@@ -117,7 +122,7 @@ public abstract class CComplexType {
     }
 
     public String getTypeName() {
-        throw new RuntimeException("Type name could not be queried from this type!");
+        throw new RuntimeException("Type name could not be queried from this type: " + this);
     }
 
     public int width() {
@@ -132,13 +137,77 @@ public abstract class CComplexType {
         return ret;
     }
 
+    public static CComplexType getType(String s, ParseContext parseContext) {
+        return switch (s) {
+            case "_Bool" -> new CBool(null, parseContext);
+            case "char", "signedchar" -> new CSignedChar(null, parseContext);
+            case "short", "signedshort" -> new CSignedShort(null, parseContext);
+            case "unsignedshort" -> new CUnsignedShort(null, parseContext);
+            case "unsignedchar" -> new CUnsignedChar(null, parseContext);
+            case "signed", "int", "signedint" -> new CSignedInt(null, parseContext);
+            case "unsigned", "unsignedint" -> new CUnsignedInt(null, parseContext);
+            case "long", "signedlong", "longint", "signedlongint" ->
+                    new CSignedLong(null, parseContext);
+            case "unsignedlong", "unsignedlongint" -> new CUnsignedLong(null, parseContext);
+            case "longlong", "signedlonglong", "lonlongint", "signedlonglongint" ->
+                    new CSignedLongLong(null, parseContext);
+            case "unsignedlonglong", "unsignedlonglongint" ->
+                    new CUnsignedLongLong(null, parseContext);
+            case "float" -> new CFloat(null, parseContext);
+            case "double" -> new CDouble(null, parseContext);
+            case "longdouble" -> new CLongDouble(null, parseContext);
+            default -> {
+                if (s.endsWith("*")) {
+                    yield new CPointer(null, null, parseContext);
+                } else {
+                    yield null;
+                }
+            }
+        };
+    }
+
     public static CComplexType getType(Expr<?> expr, ParseContext parseContext) {
         Optional<Object> cTypeOptional = parseContext.getMetadata().getMetadataValue(expr, "cType");
         if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CComplexType) {
             return (CComplexType) cTypeOptional.get();
         } else if (cTypeOptional.isPresent() && cTypeOptional.get() instanceof CSimpleType) {
             return ((CSimpleType) cTypeOptional.get()).getActualType();
-        } else throw new RuntimeException("Type not known for expression: " + expr);
+        } else {
+            return getType(expr.getType(), parseContext);
+//            throw new RuntimeException("Type not known for expression: " + expr);
+        }
+    }
+
+    private static CComplexType getType(Type type, ParseContext parseContext) {
+        if (type instanceof IntType) {
+            return new CSignedInt(null, parseContext);
+        } else if (type instanceof ArrayType<?, ?> aType) {
+            return new CArray(null, getType(aType.getElemType(), parseContext), parseContext);
+        } else if (type instanceof BoolType) {
+            return new CBool(null, parseContext);
+        } else if (type instanceof BvType) {
+            for (Entry<String, Integer> entry : parseContext.getArchitecture().standardTypeSizes.entrySet()) {
+                String s = entry.getKey();
+                Integer integer = entry.getValue();
+                if (integer == ((BvType) type).getSize()) {
+                    switch (s) {
+                        case "bool":
+                            return new CBool(null, parseContext);
+                        case "short":
+                            return ((BvType) type).getSigned() ? new CSignedShort(null, parseContext) : new CUnsignedShort(null, parseContext);
+                        case "int":
+                            return ((BvType) type).getSigned() ? new CSignedInt(null, parseContext) : new CUnsignedInt(null, parseContext);
+                        case "long":
+                            return ((BvType) type).getSigned() ? new CSignedLong(null, parseContext) : new CUnsignedLong(null, parseContext);
+                        case "longlong":
+                            return ((BvType) type).getSigned() ? new CSignedLongLong(null, parseContext) : new CUnsignedLongLong(null, parseContext);
+                    }
+                }
+            }
+            throw new RuntimeException("No suitable width found for type: " + type);
+        } else {
+            throw new RuntimeException("Not yet implemented for type: " + type);
+        }
     }
 
 
@@ -204,7 +273,7 @@ public abstract class CComplexType {
 
     public static class CComplexTypeVisitor<T, R> {
         public R visit(CComplexType type, T param) {
-            throw new UnsupportedOperationException("Not (yet) implemented");
+            throw new UnsupportedOperationException("Not (yet) implemented (" + type.getClass().getSimpleName() + " in " + this.getClass().getName() + ")");
         }
 
         public R visit(CVoid type, T param) {

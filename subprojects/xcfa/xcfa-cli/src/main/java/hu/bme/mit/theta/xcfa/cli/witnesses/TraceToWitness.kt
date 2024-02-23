@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Budapest University of Technology and Economics
+ *  Copyright 2024 Budapest University of Technology and Economics
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ fun traceToWitness(
     for (i in 0 until trace.length()) {
         val state = trace.states[i]
         val nextState = trace.states[i + 1]
+        val newThreads = nextState.processes.keys - state.processes.keys
         val node = WitnessNode(
             id = "N${newStates.size}",
             entry = false,
@@ -77,8 +78,11 @@ fun traceToWitness(
         for (xcfaLabel in flattenedSequence) {
             val node = WitnessNode(id = "N${newStates.size}", entry = false, sink = false,
                 violation = false)
-            val edge = labelToEdge(lastNode, node, xcfaLabel, action.pid,
+            var edge = labelToEdge(lastNode, node, xcfaLabel, action.pid,
                 nextState.sGlobal.getVal(), parseContext)
+            if (newThreads.isNotEmpty() && xcfaLabel is StartLabel) {
+                edge = edge.copy(createThread = newThreads.joinToString(","))
+            }
             if (node != WitnessNode(id = "N${newStates.size}") || shouldInclude(edge, verbosity)) {
                 newStates.add(node)
                 newActions.add(edge)
@@ -126,7 +130,8 @@ private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: Xcf
             val varDecl = (xcfaLabel.stmt as HavocStmt<*>).varDecl
             val eval = valuation.eval(varDecl)
             val splitName = varDecl.name.split("::")
-            val rootName = splitName.subList(2, splitName.size).joinToString("::")
+            val rootName = if (splitName[0].matches(Regex("T[0-9]*"))) splitName.subList(2, splitName.size)
+                .joinToString("::") else varDecl.name
             if (parseContext.metadata.getMetadataValue(rootName, "cName").isPresent && eval.isPresent)
                 "${parseContext.metadata.getMetadataValue(rootName, "cName").get()} == ${
                     printLit(eval.get())
@@ -140,8 +145,8 @@ private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: Xcf
 
         startline = xcfaLabel.getCMetaData()?.lineNumberStart,
         endline = xcfaLabel.getCMetaData()?.lineNumberStop,
-        startoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
-        endoffset = xcfaLabel.getCMetaData()?.lineNumberStart,
+        startoffset = xcfaLabel.getCMetaData()?.offsetStart,
+        endoffset = xcfaLabel.getCMetaData()?.offsetEnd,
 
         threadId = if (pid != null) "$pid" else null,
 
