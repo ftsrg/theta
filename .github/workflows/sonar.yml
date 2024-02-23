@@ -43,4 +43,4 @@ jobs:
         if: env.SONAR_TOKEN != '' && github.event_name == 'pull_request_target'
         uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
         with:
-          arguments: build jacocoTestReport sonar --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m  -Dsonar.pullrequest.key=${{ github.event.pull_request.number }
+          arguments: build jacocoTestReport sonar --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m  -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
