@@ -1,13 +1,17 @@
-// source: https://spinroot.com/spin/Man/grammar.html
-// WARNING only works on PREPROCESSSED promela files (no #define)
-// use cpp -p to preprocess promela file with macros
-// the implementation is only partial,
-// thus unsupported language elements are commented out
 grammar promela;
+/**
+  source: https://spinroot.com/spin/Man/grammar.html
 
-spec    : (module(Separator)*)+;
+  WARNING only works on PREPROCESSSED promela files (no #define)
+  use cpp -p to preprocess promela file with macros
 
-module  : proctype
+  the implementation is only partial,
+  thus unsupported language elements are commented out
+*/
+
+spec: (module(Separator)*)+;
+
+module: proctype
         | init
         //| never
         //| trace
@@ -17,18 +21,18 @@ module  : proctype
 
 proctype
 //    : (active)? 'proctype' Name '(' (decl_lst)? ')' (priority)? (enabler)? '{' sequence '}';
-    : (active)? 'proctype' Name '(' (decl_lst)? ')' '{' sequence '}';
+    : 'proctype' Name '(' (decl_lst)? ')' '{' sequence '}';
 
 //init    : 'init' (priority)? '{' sequence '}';
-init    : 'init' '{' sequence '}';
+init: 'init' '{' sequence '}';
 
 //never   : 'never' '{' sequence '}';
 
 //trace   : 'trace' '{' sequence '}';
 
-utype   : 'typedef' Name '{' decl_lst '}';
+utype: 'typedef' Name '{' decl_lst '}';
 
-mtype   : 'mtype' '='? '{' Name (',' Name)* '}';
+mtype: 'mtype' '='? '{' Name (',' Name)* '}';
 
 decl_lst: one_decl (Separator one_decl)*;
 
@@ -42,9 +46,10 @@ unsigned_decl
     : 'unsigned' Name ':' Const('=' any_expr)?;
 
 typename
-    : 'bit' | 'bool' | 'byte' | 'short' | 'int' | 'mtype' | 'chan' | Name;
+//    : 'bit' | 'bool' | 'byte' | 'short' | 'int' | 'mtype' | 'chan' | Name;
+    : 'bit' | 'bool' | 'byte' | 'int' | 'chan' | Name;
 
-active  : 'active' '['Const']';
+//active: 'active' '['Const']';
 
 //priority: 'priority' Const;
 
@@ -52,12 +57,12 @@ active  : 'active' '['Const']';
 
 //visible : 'hidden' | 'show';
 
-sequence: step (Separator step)*;
+sequence: step Separator? (step Separator?)*; // after e.g., atomic {} no separator, after decl separator
 
 step    : stmnt ('unless' stmnt)?      # stmnts
         | decl_lst                     # declLst
         | ('xr') varref (',' varref)*  # xr
-        | ('xs') varref (',' varref)*  # xs
+        //| ('xs') varref (',' varref)*  # xs
         ;
 
 ivar    : Name ('['Const']')? (('=' any_expr)|('=' ch_init))?;
@@ -93,7 +98,7 @@ stmnt   : 'if' promela_options 'fi'             # ifStmnt
         | 'do' promela_options 'od'             # doStmnt
         | 'for' '(' range ')' '{' sequence '}'  # forStmnt
         | 'atomic' '{' sequence '}'             # atomicStmnt
-        | 'd_step' '{' sequence '}'             # dstepStmnt
+        //| 'd_step' '{' sequence '}'             # dstepStmnt
         | 'select' '(' range ')'                # selectStmnt
         | '{' sequence '}'                      # sequenceStmnt
         | send                                  # sendStmnt
@@ -103,7 +108,7 @@ stmnt   : 'if' promela_options 'fi'             # ifStmnt
         | 'break'                               # breakStmnt
         | 'goto' Name                           # gotoStmnt
         | Name ':' stmnt                        # nameStmnt
-        | 'print' '(' String (',' arg_lst)? ')' # printStmnt
+        //| 'print' '(' String (',' arg_lst)? ')' # printStmnt
         | 'assert' expr                         # assertStmnt
         | expr                                  # exprStmnt
         ;
@@ -128,6 +133,7 @@ any_expr: '(' any_expr ')'                             # ParenthesesAnyExpr
         | poll                                         # PollAnyExpr
         | varref                                       # VarrefAnyExpr
         | Const                                        # ConstAnyExpr
+        | 'run' Name '(' (arg_lst)? ')'                # RunAnyExpr
         // | 'timeout'
         // | 'np_'
         //| 'enabled' '(' any_expr ')'
@@ -140,7 +146,7 @@ any_expr: '(' any_expr ')'                             # ParenthesesAnyExpr
 
 expr    : any_expr                                      # Any_exprExpr
         | '(' expr ')'                                  # ParenthesesExpr
-        | expr (AndAnd|OrOr) expr                            # AndorExpr
+        | expr (AndAnd|OrOr) expr                       # AndorExpr
         ;
 //        | chanpoll '(' varref ')';
 
