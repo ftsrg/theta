@@ -38,6 +38,7 @@ dependencies {
     implementation(project(":theta-litmus2xcfa"))
     implementation(project(":theta-graph-solver"))
     implementation(project(":theta-cat"))
+    implementation(files(rootDir.resolve(Deps.z3)))
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
     testImplementation(kotlin("script-runtime"))
