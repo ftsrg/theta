@@ -10,5 +10,5 @@ specification Counter {
 		transition if x < y then x' = x + 1 or x' = 0 else x' = 0
 		transition y' = y
 		
-	} models G(x <= y)
+	} models G(x <= y or x > 20 or x < 0)
 }

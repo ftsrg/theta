@@ -54,7 +54,7 @@ public class StsTest {
     @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                //{"src/test/resources/hw1_false.aag", PRED_CART, SEQ_ITP, false},
+                {"src/test/resources/hw1_false.aag", PRED_CART, SEQ_ITP, false},
 
                 {"src/test/resources/hw2_true.aag", PRED_CART, SEQ_ITP, true},
 
