@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.decl;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 import java.util.Map;
 
@@ -30,7 +31,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  *
  * @param <DeclType>
  */
-public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
+public class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 
     private static final String DECL_LABEL = "var";
 
@@ -38,6 +39,11 @@ public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 
     VarDecl(final String name, final DeclType type) {
         super(name, type);
+        indexToConst = Containers.createMap();
+    }
+
+    VarDecl(final String name, final DeclType type, final RefExpr<DeclType> ref) {
+        super(name, type, ref);
         indexToConst = Containers.createMap();
     }
 

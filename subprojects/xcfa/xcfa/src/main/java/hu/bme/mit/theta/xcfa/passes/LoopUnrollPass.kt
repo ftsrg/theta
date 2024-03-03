@@ -41,7 +41,7 @@ class LoopUnrollPass : ProcedurePass {
 
     companion object {
 
-        var UNROLL_LIMIT = 50
+        var UNROLL_LIMIT = -1
 
         private val solver: Solver = Z3SolverFactory.getInstance().createSolver()
     }
@@ -61,7 +61,7 @@ class LoopUnrollPass : ProcedurePass {
             override fun getStmts() = listOf(stmt)
         }
 
-        private fun count(transFunc: ExplStmtTransFunc): Int {
+        private fun count(transFunc: ExplStmtTransFunc): Int? {
             val prec = ExplPrec.of(listOf(loopVar))
             var state = ExplState.of(ImmutableValuation.empty())
             state = transFunc.getSuccStates(state, BasicStmtAction(loopVarInit), prec).first()
@@ -69,7 +69,7 @@ class LoopUnrollPass : ProcedurePass {
             var cnt = 0
             while (!transFunc.getSuccStates(state, BasicStmtAction(loopCondEdge), prec).first().isBottom) {
                 cnt++
-                if (cnt > UNROLL_LIMIT) return -1
+                if (UNROLL_LIMIT in 0 until cnt) return null
                 state = transFunc.getSuccStates(state, BasicStmtAction(loopVarModifiers), prec).first()
             }
             return cnt
@@ -81,18 +81,14 @@ class LoopUnrollPass : ProcedurePass {
             }
             return when {
                 this == stmtToRemove -> NopLabel
-
-                this is SequenceLabel -> SequenceLabel(
-                    labels.map { it.removeCondition() }, metadata
-                )
-
+                this is SequenceLabel -> SequenceLabel(labels.map { it.removeCondition() }, metadata)
                 else -> this
             }
         }
 
         private fun copyBody(builder: XcfaProcedureBuilder, startLocation: XcfaLocation, index: Int): XcfaLocation {
             val locs = loopLocs.associateWith {
-                val loc = XcfaLocation("loop${index}_${it.name}")
+                val loc = XcfaLocation("${it.name}_loop${index}")
                 builder.addLoc(loc)
                 loc
             }
@@ -108,9 +104,7 @@ class LoopUnrollPass : ProcedurePass {
         }
 
         fun unroll(builder: XcfaProcedureBuilder, transFunc: ExplStmtTransFunc) {
-            val count = count(transFunc)
-            if (count == -1) return
-
+            val count = count(transFunc) ?: return
             (loopLocs - loopStart).forEach(builder::removeLoc)
             loopEdges.forEach(builder::removeEdge)
             builder.removeEdge(exitCondEdge)

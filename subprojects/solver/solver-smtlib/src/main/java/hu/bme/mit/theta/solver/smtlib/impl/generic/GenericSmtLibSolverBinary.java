@@ -57,6 +57,7 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
     @Override
     public void issueCommand(final String command) {
         checkState(solverProcess.isRunning());
+        System.err.println(command);
         processHandler.write(command);
         solverProcess.wantWrite();
     }

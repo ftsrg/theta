@@ -96,8 +96,8 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
 
-    @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll")
-    var loopUnroll: Int = 50,
+    @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
+    var loopUnroll: Int = -1,
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C,
