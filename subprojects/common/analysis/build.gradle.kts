@@ -24,5 +24,9 @@ dependencies {
     implementation(project(":theta-solver"))
     implementation(project(":theta-graph-solver"))
     testImplementation(project(":theta-solver-z3"))
+    testImplementation(project(":theta-cfa"))
+    testImplementation(project(":theta-cfa-analysis"))
+    testImplementation(project(":theta-xsts"))
+    testImplementation(project(":theta-xsts-analysis"))
     implementation("com.corundumstudio.socketio:netty-socketio:2.0.6")
 }
