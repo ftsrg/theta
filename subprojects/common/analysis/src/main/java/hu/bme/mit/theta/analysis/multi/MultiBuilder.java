@@ -29,7 +29,7 @@ public final class MultiBuilder {
 
     public static <LState extends State, LBlank extends State, LAction extends Action, DataState extends State, LPrec extends Prec, LBlankPrec extends Prec>
     LeftSideAdded<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> initWithLeftSide(
-            Analysis<LState, ? super LAction, ? super LPrec> analysis, BiFunction<LBlank, DataState, LState> combineStates, Function<LState, LBlank> stripDataFromState, Function<LState, DataState> extractDataFromState, LTS<? super LState, LAction> lts, InitFunc<LBlank, LBlankPrec> initFunc, Function<LPrec, LBlankPrec> stripDataFromPrec
+            Analysis<LState, ? super LAction, ? super LPrec> analysis, LTS<? super LState, LAction> lts, BiFunction<LBlank, DataState, LState> combineStates, Function<LState, LBlank> stripDataFromState, Function<LState, DataState> extractDataFromState, InitFunc<LBlank, LBlankPrec> initFunc, Function<LPrec, LBlankPrec> stripDataFromPrec
     ) {
         return new LeftSideAdded<>(analysis, combineStates, stripDataFromState, extractDataFromState, lts, initFunc, stripDataFromPrec);
     }
