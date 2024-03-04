@@ -1,10 +1,15 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import com.google.common.collect.BiMap
 import hu.bme.mit.theta.common.DispatchTable
+import hu.bme.mit.theta.core.decl.ParamDecl
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.UCSolver
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser
 import hu.bme.mit.theta.solver.smtlib.impl.generic.*
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager
@@ -20,7 +25,7 @@ internal class OcSolverFactory(solverPath: Path, args: Array<String> = arrayOf("
     private fun createSolver(ucEnabled: Boolean): SmtLibSolver {
         val symbolTable = GenericSmtLibSymbolTable()
         val transformationManager = OcSolverSmtLibTransformationManager(symbolTable)
-        val termTransformer = GenericSmtLibTermTransformer(symbolTable)
+        val termTransformer = OcSolverSmtLibTermTransformer(symbolTable)
         val solverBinary = GenericSmtLibSolverBinary(solverPath, args)
         return SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary, ucEnabled)
     }
@@ -53,4 +58,15 @@ internal class OcSolverSmtLibExprTransformer(transformer: SmtLibTransformationMa
                 val suffix = if ("po" in it.type.toString().lowercase()) "" else toTerm(it.declRef)
                 "(oclt-${it.type.toString().lowercase()} ${toTerm(it.from.clk)} ${toTerm(it.to.clk)} $suffix)"
             }
+}
+
+internal class OcSolverSmtLibTermTransformer(symbolTable: SmtLibSymbolTable)
+    : GenericSmtLibTermTransformer(symbolTable) {
+
+    override fun transformSymbol(ctx: SMTLIBv2Parser.SymbolContext, model: SmtLibModel,
+        vars: BiMap<ParamDecl<*>, String>): Expr<*> {
+        val value = ctx.text
+        if(value.startsWith("Oc!val!")) return OcLitExpr
+        return super.transformSymbol(ctx, model, vars)
+    }
 }

@@ -11,11 +11,13 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.acquiredMutexes
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -23,6 +25,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.releasedMutexes
 import java.nio.file.Path
+import java.util.*
 
 const val SOLVER_PATH = "/mnt/d/Theta/zord-pldi-version/out/z3"
 
@@ -32,7 +35,7 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
 
     private val threads = mutableSetOf<Thread>()
     private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<Event>>>()
-    private val violations = mutableListOf<Expr<BoolType>>() // OR!
+    private val violations = mutableListOf<Violation>() // OR!
     private val pos = mutableListOf<Relation>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
     private val cos = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
@@ -99,8 +102,8 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
             listOf(e)
         }
 
-        val waitList = mutableSetOf<StackItem>()
-        val toVisit = mutableSetOf(StackItem(thread.procedure.initLoc).apply {
+        val waitList = mutableSetOf<SearchItem>()
+        val toVisit = mutableSetOf(SearchItem(thread.procedure.initLoc).apply {
             guards.add(thread.guard)
             mutexes.add(thread.mutex)
             thread.startEvent?.let { lastEvents.add(it) }
@@ -108,38 +111,38 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
         val threads = mutableListOf<Thread>()
 
         while (toVisit.isNotEmpty()) {
-            val top = toVisit.first()
-            toVisit.remove(top)
-            check(top.incoming.size == top.loc.incomingEdges.size)
-            check(top.incoming.size == top.guards.size || top.loc.initial)
-            check(top.incoming.size == top.mutexes.size || top.loc.initial)
-            check(top.incoming.size == top.lastWrites.size) // lastEvents intentionally skipped
-            check(top.incoming.size == top.pidLookups.size)
-            if (top.mutexes.any { it != top.mutexes.first() }) {
+            val current = toVisit.first()
+            toVisit.remove(current)
+            check(current.incoming.size == current.loc.incomingEdges.size)
+            check(current.incoming.size == current.guards.size || current.loc.initial)
+            check(current.incoming.size == current.mutexes.size || current.loc.initial)
+            check(current.incoming.size == current.lastWrites.size) // lastEvents intentionally skipped
+            check(current.incoming.size == current.pidLookups.size)
+            if (current.mutexes.any { it != current.mutexes.first() }) {
                 error("Bad pattern: mutex locked only in a subset of branches. Not supported by this checker.")
             }
             val mergeGuards = { // intersection of guard expressions from incoming edges
-                top.guards.reduce(listOf()) { g1, g2 -> g1.filter { it in g2 } }
+                current.guards.reduce(listOf()) { g1, g2 -> g1.filter { it in g2 } }
             }
             guard = mergeGuards()
 
-            if (top.loc.error) {
-                violations.add(And(guard))
+            if (current.loc.error) {
+                violations.add(Violation(current.loc, And(guard), current.lastEvents))
                 continue
             }
 
-            if (top.loc.final) {
-                top.lastEvents.forEach { final ->
-                    thread.joinEvents.forEach { join -> po(final, join, top.mutexes.first()) }
+            if (current.loc.final) {
+                current.lastEvents.forEach { final ->
+                    thread.joinEvents.forEach { join -> po(final, join, current.mutexes.first()) }
                 }
             }
 
-            for (edge in top.loc.outgoingEdges) {
-                last = top.lastEvents
+            for (edge in current.loc.outgoingEdges) {
+                last = current.lastEvents
                 guard = mergeGuards()
-                mutex = top.mutexes.first()
-                lastWrites = top.lastWrites.merge().toMutableMap()
-                val pidLookup = top.pidLookups.merge { s1, s2 ->
+                mutex = current.mutexes.first()
+                lastWrites = current.lastWrites.merge().toMutableMap()
+                val pidLookup = current.pidLookups.merge { s1, s2 ->
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
                 }.toMutableMap()
 
@@ -152,12 +155,12 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
                                         last = newEvent(it, EventType.READ)
                                     }
                                     last = newEvent(stmt.varDecl, EventType.WRITE)
-                                    last.first().assignment = Eq(stmt.varDecl.ref, stmt.expr)
+                                    last.first().assignment = Eq(stmt.varDecl.constRef, stmt.expr.withConsts())
                                 }
 
                                 is AssumeStmt -> {
                                     if (edge.source.outgoingEdges.size > 1) // TODO remove this condition
-                                        guard = guard + stmt.cond
+                                        guard = guard + stmt.cond.withConsts()
                                     stmt.cond.vars.forEach {
                                         last = newEvent(it, EventType.READ)
                                     }
@@ -180,7 +183,7 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
                                 error("Multi-thread use of pthread_t variables are not supported by this checker.")
                             }
                             val newThread = Thread(procedure, guard, mutex, pidVar, last.first())
-                            last.first().assignment = Eq(label.pidVar.ref, Int(newThread.pid))
+                            last.first().assignment = Eq(label.pidVar.constRef, Int(newThread.pid))
                             pidLookup[pidVar] = setOf(Pair(guard, newThread.pid))
                             threads.add(newThread)
                         }
@@ -208,17 +211,17 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
                     }
                 }
 
-                val stackItem = waitList.find { it.loc == edge.target }
-                    ?: StackItem(edge.target).apply { waitList.add(this) }
-                stackItem.guards.add(guard)
-                stackItem.mutexes.add(mutex)
-                stackItem.lastEvents.addAll(last)
-                stackItem.lastWrites.add(lastWrites)
-                stackItem.pidLookups.add(pidLookup)
-                stackItem.incoming.add(edge)
-                if (stackItem.incoming.size == stackItem.loc.incomingEdges.size) {
-                    waitList.remove(stackItem)
-                    toVisit.add(stackItem)
+                val searchItem = waitList.find { it.loc == edge.target }
+                    ?: SearchItem(edge.target).apply { waitList.add(this) }
+                searchItem.guards.add(guard)
+                searchItem.mutexes.add(mutex)
+                searchItem.lastEvents.addAll(last)
+                searchItem.lastWrites.add(lastWrites)
+                searchItem.pidLookups.add(pidLookup)
+                searchItem.incoming.add(edge)
+                if (searchItem.incoming.size == searchItem.loc.incomingEdges.size) {
+                    waitList.remove(searchItem)
+                    toVisit.add(searchItem)
                 }
             }
         }
@@ -251,7 +254,7 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
         }
 
         // Property violation
-        ocSolver.add(Or(violations))
+        ocSolver.add(Or(violations.map { it.guard }))
 
         // Program order
         ocSolver.add(pos)
@@ -261,7 +264,7 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
             list.groupBy { it.to }.forEach { (event, rels) ->
                 rels.forEach { rel ->
                     ocSolver.add(Imply(rel.declRef,
-                        And(And(rel.from.guard), And(rel.to.guard), Eq(rel.from.decl.ref, rel.to.decl.ref))
+                        And(And(rel.from.guard), And(rel.to.guard), Eq(rel.from.decl.constRef, rel.to.decl.constRef))
                     )) // RF-Val
                     ocSolver.add(Imply(rel.declRef, rel)) // RF-Ord
                 }
@@ -296,11 +299,45 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
     private fun getTrace(model: Valuation): Trace<XcfaState<*>, XcfaAction> {
         val stateList = mutableListOf<XcfaState<*>>()
         val actionList = mutableListOf<XcfaAction>()
-        
+        val valuation = model.toMap()
+        val previousEvents: Collection<Relation>.(Event) -> Collection<Event> = { event ->
+            filter { it.to == event && it.enabled(valuation) }.map { it.from }
+        }
+        val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
+
+        val startEvents = violation.lastEvents.toMutableList()
+        val finished = mutableListOf<Event>() // topological order
+        while (startEvents.isNotEmpty()) { // DFS from startEvents as root nodes
+            val stack = Stack<StackItem>()
+            stack.push(StackItem(startEvents.removeFirst()))
+            while (stack.isNotEmpty()) {
+                val top = stack.peek()
+                if (top.eventsToVisit == null) {
+                    val previous = mutableSetOf<Event>()
+                    previous.addAll(pos.previousEvents(top.event))
+                    when (top.event.type) {
+                        EventType.WRITE -> cos[top.event.decl.original]?.previousEvents(top.event)
+                        EventType.READ -> rfs[top.event.decl.original]?.previousEvents(top.event)
+                    }?.let { previous.addAll(it) }
+                    top.eventsToVisit = previous.toMutableList()
+                }
+
+                if (top.eventsToVisit!!.isEmpty()) {
+                    stack.pop()
+                    finished.add(top.event)
+                    continue
+                }
+
+                val visiting = top.eventsToVisit!!.removeFirst()
+                if (visiting !in finished) {
+                    stack.push(StackItem(visiting))
+                }
+            }
+        }
         return Trace.of(stateList, actionList)
     }
 
-    private val Expr<*>.vars get() = ExprUtils.getVars(this)
+    // Utility functions
 
     private fun po(from: Event?, to: Event, mutex: Mutex? = null) {
         if (from == null) return
@@ -328,4 +365,12 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
     private fun MutableMap<VarDecl<*>, MutableList<Relation>>.add(type: RelationType, from: Event, to: Event) =
         getOrPut(from.decl.original) { mutableListOf() }.add(Relation(type, from, to))
 
+    private val VarDecl<*>.constRef get() = (this as IndexedVarDecl).constRef
+
+    private fun <T : Type> Expr<T>.withConsts(): Expr<T> {
+        if (this is RefExpr<T>) {
+            return (decl as? IndexedVarDecl<T>)?.constRef ?: this
+        }
+        return map { it.withConsts() }
+    }
 }

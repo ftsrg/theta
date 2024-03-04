@@ -15,6 +15,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.ProcedurePass
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 
+internal val Expr<*>.vars get() = ExprUtils.getVars(this)
 
 fun XCFA.toSSA(): XCFA {
     val passManager = ProcedurePassManager(listOf(SSAPass()))
@@ -30,10 +31,7 @@ fun XCFA.toSSA(): XCFA {
         ).also { it.copyMetaLocs(this) }
     }
 
-    val builder = XcfaBuilder(
-        name = "${name}_SSA",
-        vars = vars.toMutableSet()
-    )
+    val builder = XcfaBuilder("${name}_SSA", vars.toMutableSet())
     procedureBuilders.forEach { builder.addProcedure(it.copy()) }
     initProcedureBuilders.forEach { (proc, params) ->
         val initProc = builder.getProcedures().find { it.name == proc.name } ?: proc.copy()
@@ -45,8 +43,6 @@ fun XCFA.toSSA(): XCFA {
 class SSAPass : ProcedurePass {
 
     private var indexing: VarIndexing = VarIndexingFactory.indexing(0)
-
-    val vars = mutableSetOf<VarDecl<*>>()
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         builder.getEdges().toSet().forEach { edge ->
@@ -67,60 +63,28 @@ class SSAPass : ProcedurePass {
                 }
             }
 
-            is StartLabel -> {
-                val newParams = params.map { it.unfold(indexing) }
-                params.flatMap { ExprUtils.getVars(it) }.forEach { indexing = indexing.inc(it) }
-                val newPidVar = pidVar.getIndexedVarDecl(indexing[pidVar])
-                indexing = indexing.inc(pidVar)
-                StartLabel(name, newParams, newPidVar, metadata, tempLookup)
-            }
-
-            is JoinLabel -> {
-                val newPidVar = pidVar.getIndexedVarDecl(indexing[pidVar])
-                indexing = indexing.inc(pidVar)
-                JoinLabel(newPidVar, metadata)
-            }
-
+            is StartLabel -> StartLabel(name, params.map { it.unfold() }, pidVar.newIndexed(), metadata, tempLookup)
+            is JoinLabel -> JoinLabel(pidVar.newIndexed(), metadata)
             is SequenceLabel -> SequenceLabel(labels.map { it.unfold() }, metadata)
             is NopLabel, is FenceLabel -> this
             else -> error("Unsupported label at SSA conversion: $this")
         }
     }
 
-    private fun <T : Type> VarDecl<T>.getIndexedVarDecl(index: Int): VarDecl<T> {
-        val newName = this.name + "#" + index
-        vars.find { it.name == newName }?.let { return it as VarDecl<T> }
-        val newVar = IndexedVarDecl.of(newName, this)
-        vars.add(newVar)
-        return newVar
-    }
-
-    private fun <T : Type> AssignStmt<T>.toSSA(): AssignStmt<T> {
-        val rhsSSA = expr.unfold(indexing)
-        ExprUtils.getVars(expr).forEach { indexing = indexing.inc(it) }
-        val lhsSSA = varDecl.getIndexedVarDecl(indexing[varDecl])
-        indexing = indexing.inc(varDecl)
-        return AssignStmt.of(lhsSSA, rhsSSA)
-    }
-
-    private fun AssumeStmt.toSSA(): AssumeStmt {
-        val condSSA = cond.unfold(indexing)
-        ExprUtils.getVars(cond).forEach { indexing = indexing.inc(it) }
-        return AssumeStmt.of(condSSA)
-    }
-
-    private fun <T : Type> HavocStmt<T>.toSSA(): HavocStmt<T> {
-        val lhsSSA = varDecl.getIndexedVarDecl(indexing[varDecl])
-        indexing = indexing.inc(varDecl)
-        return HavocStmt.of(lhsSSA)
-    }
-
-    private fun <T : Type> Expr<T>.unfold(indexing: VarIndexing): Expr<T> {
+    private fun <T : Type> Expr<T>.unfold(): Expr<T> {
         if (this is RefExpr<T>) {
-            val decl = this.decl
-            if (decl is VarDecl<T>) return decl.getIndexedVarDecl(indexing[decl]).ref
+            return (decl as? VarDecl<T>)?.newIndexed()?.ref ?: this
         }
-        return map { it.unfold(indexing) }
+        return map { it.unfold() }
     }
 
+    private fun <T : Type> VarDecl<T>.newIndexed(): VarDecl<T> {
+        val newName = this.name + "#" + indexing[this]
+        indexing = indexing.inc(this)
+        return IndexedVarDecl.of(newName, this)
+    }
+
+    private fun <T : Type> AssignStmt<T>.toSSA() = AssignStmt.of(varDecl.newIndexed(), expr.unfold())
+    private fun AssumeStmt.toSSA() = AssumeStmt.of(cond.unfold())
+    private fun <T : Type> HavocStmt<T>.toSSA() = HavocStmt.of(varDecl.newIndexed())
 }

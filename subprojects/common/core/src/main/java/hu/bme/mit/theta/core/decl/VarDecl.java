@@ -42,11 +42,6 @@ public class VarDecl<DeclType extends Type> extends Decl<DeclType> {
         indexToConst = Containers.createMap();
     }
 
-    VarDecl(final String name, final DeclType type, final RefExpr<DeclType> ref) {
-        super(name, type, ref);
-        indexToConst = Containers.createMap();
-    }
-
     public static <DeclType extends Type> VarDecl<DeclType> copyOf(VarDecl<DeclType> from) {
         return new VarDecl<>(from.getName(), from.getType());
     }

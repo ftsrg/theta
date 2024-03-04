@@ -1,26 +1,25 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
-import hu.bme.mit.theta.core.decl.ConstDecl
-import hu.bme.mit.theta.core.decl.Decls
-import hu.bme.mit.theta.core.decl.IndexedVarDecl
-import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.decl.*
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.analysis.oc.OcType.Companion.Oc
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-internal class OcType : Type {
-    companion object {
+internal object OcType : Type
 
-        private val INSTANCE = OcType()
-        fun Oc() = INSTANCE
-    }
+internal object OcLitExpr : LitExpr<OcType>, NullaryExpr<OcType>() {
+
+    override fun getType() = OcType
+    override fun eval(`val`: Valuation?) = error("This expression is not meant to be evaluated.")
 }
 
 internal enum class EventType { WRITE, READ }
@@ -31,7 +30,7 @@ internal data class Event(
     val pid: Int,
 ) {
 
-    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${decl.name}\$clk", Oc()))
+    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${decl.name}\$clk", OcType))
     var assignment: Expr<BoolType>? = null
 }
 
@@ -52,7 +51,16 @@ internal data class Relation(
     override fun getOps(): List<Expr<*>> = listOf(from.clk, to.clk)
     override fun eval(v: Valuation) = error("This expression is not meant to be evaluated.")
     override fun withOps(ops: List<Expr<*>>) = error("This expression is not meant to be modified.")
+    fun enabled(valuation: Map<Decl<*>, LitExpr<*>>) = value(valuation) ?: false
+    fun value(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? =
+        if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
 }
+
+internal data class Violation(
+    val errorLoc: XcfaLocation,
+    val guard: Expr<BoolType>,
+    val lastEvents: List<Event>,
+)
 
 internal data class Mutex(
     val mutex: String,
@@ -76,9 +84,7 @@ internal data class Thread(
     }
 }
 
-internal data class StackItem(
-    val loc: XcfaLocation,
-) {
+internal data class SearchItem(val loc: XcfaLocation) {
 
     val guards: MutableList<List<Expr<BoolType>>> = mutableListOf()
     val mutexes: MutableList<Mutex?> = mutableListOf()
@@ -86,4 +92,9 @@ internal data class StackItem(
     val lastWrites: MutableList<Map<VarDecl<*>, Set<Event>>> = mutableListOf()
     val pidLookups: MutableList<Map<VarDecl<*>, Set<Pair<List<Expr<BoolType>>, Int>>>> = mutableListOf()
     val incoming: MutableSet<XcfaEdge> = mutableSetOf()
+}
+
+internal data class StackItem(val event: Event) {
+
+    var eventsToVisit: MutableList<Event>? = null
 }

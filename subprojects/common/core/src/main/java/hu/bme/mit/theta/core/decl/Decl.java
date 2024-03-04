@@ -39,14 +39,6 @@ public abstract class Decl<DeclType extends Type> {
         this.ref = Ref(this);
     }
 
-    public Decl(final String name, final DeclType type, final RefExpr<DeclType> ref) {
-        checkNotNull(name);
-        checkArgument(!name.isEmpty());
-        this.name = name;
-        this.type = checkNotNull(type);
-        this.ref = ref;
-    }
-
     public final String getName() {
         return name;
     }
