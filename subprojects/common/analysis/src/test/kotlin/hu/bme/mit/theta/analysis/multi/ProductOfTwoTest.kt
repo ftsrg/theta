@@ -19,6 +19,7 @@ import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
@@ -42,7 +43,7 @@ class ProductOfTwoTest {
         var xsts: XSTS
         try {
             SequenceInputStream(FileInputStream("src/test/resources/xsts/incrementor.xsts"),
-                FileInputStream("src/test/resources/xsts/xeq7.prop")).use { inputStream ->
+                FileInputStream("src/test/resources/xsts/xneq7.prop")).use { inputStream ->
                 xsts = XstsDslManager.createXsts(inputStream)
             }
         } catch (e: IOException) {
@@ -80,10 +81,11 @@ class ProductOfTwoTest {
         val product = MultiBuilder.initWithLeftSide(cfaAnalysis, cfaLts, cfaCombineStates, cfaStripState, cfaExtractFromState, cfaInitFunc, cfaStripPrec)
                 .addRightSide(xstsAnalysis, xstsLts, xstsCombineStates, xstsStripState, xstsExtractFromState, xstsInitFunc, xstsStripPrec)
                 .build<ExplPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>>(NextSideFunctions::alternating, dataAnalysis.initFunc, { ls, rs, dns, dif -> ExprMultiAnalysis.of(ls, rs, dns, dif)}, { llts, cls, rlts, crs, dns -> ExprMultiLts.of(llts, cls, rlts, crs, dns)})
-        val dataPredicate = ExplStatePredicate(xsts.prop, solver)
+        val prop = Not(xsts.prop)
+        val dataPredicate = ExplStatePredicate(prop, solver)
         val argBuilder = ArgBuilder.create(product.lts, product.analysis) { s -> dataPredicate.test(s.dataState) }
         val abstractor = BasicAbstractor.builder(argBuilder).build()
-        val traceChecker = ExprTraceSeqItpChecker.create(True(), xsts.prop, itpSolver)
+        val traceChecker = ExprTraceSeqItpChecker.create(True(), prop, itpSolver)
         val precRefiner = JoiningPrecRefiner.create<ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>, MultiPrec<CfaPrec<ExplPrec>?, ExplPrec, ExplPrec>, ItpRefutation>(
             RefToMultiPrec(cfaRefToPrec, ItpRefToExplPrec(), ItpRefToExplPrec()))
         val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, PruneStrategy.FULL, logger)
