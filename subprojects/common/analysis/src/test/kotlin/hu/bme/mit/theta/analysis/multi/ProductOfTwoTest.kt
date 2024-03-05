@@ -96,7 +96,6 @@ class ProductOfTwoTest {
         val cfaExtractFromState = { c: CfaState<ExplState> -> c.state }
         val cfaStripPrec = { p: CfaPrec<ExplPrec> -> p }
 
-
         val product = MultiBuilder.initWithLeftSide(
             cfaAnalysis,
             cfaLts,
