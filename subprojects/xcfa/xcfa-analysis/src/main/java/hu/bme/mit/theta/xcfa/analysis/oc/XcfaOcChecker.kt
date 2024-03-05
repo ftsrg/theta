@@ -3,9 +3,12 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.IndexedVarDecl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
@@ -20,7 +23,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.xcfa.acquiredMutexes
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.releasedMutexes
@@ -29,13 +34,16 @@ import java.util.*
 
 const val SOLVER_PATH = "/mnt/d/Theta/zord-pldi-version/out/z3"
 
-class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
+class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
 
+    private val xcfa: XCFA = xcfa.toSSA()
     private val ocSolver = OcSolverFactory(Path.of(SOLVER_PATH)).createSolver()
+    private val ssaUtils = SSAUtils()
 
     private val threads = mutableSetOf<Thread>()
     private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<Event>>>()
     private val violations = mutableListOf<Violation>() // OR!
+    private val branchingConditions = mutableListOf<Expr<BoolType>>()
     private val pos = mutableListOf<Relation>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
     private val cos = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
@@ -51,11 +59,11 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
         }
         if (usedMutexes.size > 1) error("Multiple mutexes are not supported by this checker.")
 
+        logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         addConstraints()
-//        System.err.println(xcfa.toDot())
 
+        logger.write(Logger.Level.MAINSTEP, "Starting OC checker...\n")
         val status = ocSolver.check()
-        System.err.println(status)
         return when {
             status.isUnsat -> SafetyResult.safe()
             status.isSat -> SafetyResult.unsafe(getTrace(ocSolver.model))
@@ -84,11 +92,13 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
         var guard = listOf<Expr<BoolType>>()
         var mutex: Mutex? = null
         var lastWrites: MutableMap<VarDecl<*>, Set<Event>> = mutableMapOf()
+        var inEdge = false
 
         val newEvent: (VarDecl<*>, EventType) -> List<Event> = { decl, type ->
             val v = (decl as IndexedVarDecl).original
             val e = Event(decl, type, guard, pid)
-            last.forEach { po(it, e, mutex) }
+            last.forEach { po(it, e, mutex, inEdge) }
+            inEdge = true
             when (type) {
                 EventType.READ -> lastWrites[v]?.forEach { rfs.add(RelationType.RFI, it, e) }
                 EventType.WRITE -> {
@@ -137,7 +147,28 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
                 }
             }
 
+            if (current.loc.outgoingEdges.size > 1) {
+                val branchingConditionVars = mutableMapOf<VarDecl<*>, MutableSet<VarDecl<*>>>()
+                for (edge in current.loc.outgoingEdges) {
+                    val first = edge.getFlatLabels().first()
+                    if (first !is StmtLabel || first.stmt !is AssumeStmt) {
+                        error("Branching with non-assume labels not supported by this checker.")
+                    }
+                    first.collectVars().forEach { v ->
+                        branchingConditionVars.getOrPut((v as IndexedVarDecl).original) { mutableSetOf() }.add(v)
+                    }
+                }
+                branchingConditionVars.forEach { (_, set) ->
+                    for ((i1, v1) in set.withIndex())
+                        for ((i2, v2) in set.withIndex()) {
+                            if (i1 == i2) break
+                            branchingConditions.add(Eq(v1.constRef, v2.constRef))
+                        }
+                }
+            }
+
             for (edge in current.loc.outgoingEdges) {
+                inEdge = false
                 last = current.lastEvents
                 guard = mergeGuards()
                 mutex = current.mutexes.first()
@@ -253,6 +284,9 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
             }
         }
 
+        // Branching conditions
+        branchingConditions.forEach { ocSolver.add(it) }
+
         // Property violation
         ocSolver.add(Or(violations.map { it.guard }))
 
@@ -299,9 +333,54 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
     private fun getTrace(model: Valuation): Trace<XcfaState<*>, XcfaAction> {
         val stateList = mutableListOf<XcfaState<*>>()
         val actionList = mutableListOf<XcfaAction>()
+        val eventTrace = getEventTrace(model)
+        val valuation = model.toMap()
+        val edges = xcfa.procedures.flatMap { it.edges }
+
+        val processes = events.values.fold(mapOf<Int, Event>()) { acc, map ->
+            (acc.keys + map.keys).associateWith { k -> acc[k] ?: map[k]!!.first() }
+        }.map { (pid, event) ->
+            pid to XcfaProcessState(
+                locs = LinkedList(listOf(
+                    xcfa.procedures.find { p -> p.edges.any { event.decl in it.label.collectVars() } }!!.initLoc
+                )),
+                varLookup = LinkedList(emptyList())
+            )
+        }.toMap()
+        var explState = ExplState.of(ImmutableValuation.from(mapOf()))
+        var state = XcfaState<ExplState>(xcfa, processes, explState)
+        stateList.add(state)
+        var lastEdge: XcfaEdge? = edges.find { eventTrace[0].decl in it.label.collectVars() }
+
+        for ((index, event) in eventTrace.withIndex()) {
+            valuation[event.decl.const]?.let {
+                val newVal = explState.`val`.toMap().toMutableMap().apply { put(event.decl.original, it) }
+                explState = ExplState.of(ImmutableValuation.from(newVal))
+            }
+
+            val nextEdge = eventTrace.getOrNull(index + 1)?.let { e -> edges.find { e.decl in it.label.collectVars() } }
+            if (nextEdge != lastEdge) {
+                actionList.add(XcfaAction(event.pid, ssaUtils.removeSSA(lastEdge!!)))
+                state = state.copy(
+                    processes = state.processes.toMutableMap().apply {
+                        put(event.pid, XcfaProcessState(
+                            locs = LinkedList(listOf(lastEdge!!.target)),
+                            varLookup = LinkedList(emptyList())
+                        ))
+                    },
+                    sGlobal = explState
+                )
+                stateList.add(state)
+                lastEdge = nextEdge
+            }
+        }
+        return Trace.of(stateList, actionList)
+    }
+
+    private fun getEventTrace(model: Valuation): List<Event> {
         val valuation = model.toMap()
         val previousEvents: Collection<Relation>.(Event) -> Collection<Event> = { event ->
-            filter { it.to == event && it.enabled(valuation) }.map { it.from }
+            filter { it.to == event && it.enabled(valuation) && it.from.enabled(model) }.map { it.from }
         }
         val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 
@@ -334,14 +413,14 @@ class XcfaOcChecker(private val xcfa: XCFA) : SafetyChecker<XcfaState<*>, XcfaAc
                 }
             }
         }
-        return Trace.of(stateList, actionList)
+        return finished
     }
 
     // Utility functions
 
-    private fun po(from: Event?, to: Event, mutex: Mutex? = null) {
+    private fun po(from: Event?, to: Event, mutex: Mutex? = null, inEdge: Boolean = false) {
         if (from == null) return
-        val relation = if (mutex == null || !mutex.entered) {
+        val relation = if (!inEdge && (mutex == null || !mutex.entered)) {
             mutex?.let { it.entered = true }
             Relation(RelationType.PO, from, to)
         } else {

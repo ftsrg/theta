@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -32,6 +33,12 @@ internal data class Event(
 
     val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${decl.name}\$clk", OcType))
     var assignment: Expr<BoolType>? = null
+
+    fun enabled(valuation: Valuation): Boolean = try {
+        And(guard).eval(valuation).value
+    } catch (e: Exception) {
+        false
+    }
 }
 
 internal enum class RelationType { PO, EPO, COI, COE, RFI, RFE }
@@ -53,7 +60,8 @@ internal data class Relation(
     override fun withOps(ops: List<Expr<*>>) = error("This expression is not meant to be modified.")
     fun enabled(valuation: Map<Decl<*>, LitExpr<*>>) = value(valuation) ?: false
     fun value(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? =
-        if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
+        if (type == RelationType.PO || type == RelationType.EPO) true
+        else valuation[decl]?.let { (it as BoolLitExpr).value }
 }
 
 internal data class Violation(
