@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.analysis.multi
 
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
@@ -42,8 +57,10 @@ class ProductOfTwoTest {
     fun test() {
         var xsts: XSTS
         try {
-            SequenceInputStream(FileInputStream("src/test/resources/xsts/incrementor.xsts"),
-                FileInputStream("src/test/resources/xsts/xneq7.prop")).use { inputStream ->
+            SequenceInputStream(
+                FileInputStream("src/test/resources/xsts/incrementor.xsts"),
+                FileInputStream("src/test/resources/xsts/xneq7.prop")
+            ).use { inputStream ->
                 xsts = XstsDslManager.createXsts(inputStream)
             }
         } catch (e: IOException) {
@@ -55,9 +72,10 @@ class ProductOfTwoTest {
         )
         val xstsAnalysis = XstsAnalysis.create(dataAnalysis)
         val xstsLts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create<ExplState>()))
-        val xstsInitFunc = XstsInitFunc.create{ _: ExplPrec -> listOf<UnitState>(UnitState.getInstance()) }
+        val xstsInitFunc = XstsInitFunc.create { _: ExplPrec -> listOf<UnitState>(UnitState.getInstance()) }
         val xstsCombineStates = { x: XstsState<UnitState>, d: ExplState -> XstsState.of(d, x.lastActionWasEnv(), true) }
-        val xstsStripState = { x: XstsState<ExplState> -> XstsState.of(UnitState.getInstance(), x.lastActionWasEnv(), true) }
+        val xstsStripState =
+            { x: XstsState<ExplState> -> XstsState.of(UnitState.getInstance(), x.lastActionWasEnv(), true) }
         val xstsExtractFromState = { x: XstsState<ExplState> -> x.state }
         val xstsStripPrec = { p: ExplPrec -> p }
         val variables = xsts.vars
@@ -69,7 +87,8 @@ class ProductOfTwoTest {
         val cfaAnalysis = create(cfa.initLoc, dataAnalysis)
         val cfaLts: CfaLts = CfaSbeLts.getInstance()
         val cfaRefToPrec = RefutationToGlobalCfaPrec(ItpRefToExplPrec(), cfa.initLoc)
-        val cfaInitFunc = { _: CfaPrec<ExplPrec> -> listOf<CfaState<UnitState>>(CfaState.of(cfa.initLoc, UnitState.getInstance())) }
+        val cfaInitFunc =
+            { _: CfaPrec<ExplPrec> -> listOf<CfaState<UnitState>>(CfaState.of(cfa.initLoc, UnitState.getInstance())) }
         val dataInitPrec = ExplPrec.of(variables)
         val cfaInitPrec: CfaPrec<ExplPrec> = GlobalCfaPrec.create(dataInitPrec)
         val cfaCombineStates = { c: CfaState<UnitState>, d: ExplState -> CfaState.of(c.loc, d) }
@@ -78,16 +97,38 @@ class ProductOfTwoTest {
         val cfaStripPrec = { p: CfaPrec<ExplPrec> -> p }
 
 
-        val product = MultiBuilder.initWithLeftSide(cfaAnalysis, cfaLts, cfaCombineStates, cfaStripState, cfaExtractFromState, cfaInitFunc, cfaStripPrec)
-                .addRightSide(xstsAnalysis, xstsLts, xstsCombineStates, xstsStripState, xstsExtractFromState, xstsInitFunc, xstsStripPrec)
-                .build<ExplPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>>(NextSideFunctions::alternating, dataAnalysis.initFunc, { ls, rs, dns, dif -> ExprMultiAnalysis.of(ls, rs, dns, dif)}, { llts, cls, rlts, crs, dns -> ExprMultiLts.of(llts, cls, rlts, crs, dns)})
+        val product = MultiBuilder.initWithLeftSide(
+            cfaAnalysis,
+            cfaLts,
+            cfaCombineStates,
+            cfaStripState,
+            cfaExtractFromState,
+            cfaInitFunc,
+            cfaStripPrec
+        )
+            .addRightSide(
+                xstsAnalysis,
+                xstsLts,
+                xstsCombineStates,
+                xstsStripState,
+                xstsExtractFromState,
+                xstsInitFunc,
+                xstsStripPrec
+            )
+            .build<ExplPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>>(
+                NextSideFunctions::alternating,
+                dataAnalysis.initFunc,
+                { ls, rs, dns, dif -> ExprMultiAnalysis.of(ls, rs, dns, dif) },
+                { llts, cls, rlts, crs, dns -> ExprMultiLts.of(llts, cls, rlts, crs, dns) })
         val prop = Not(xsts.prop)
         val dataPredicate = ExplStatePredicate(prop, solver)
         val argBuilder = ArgBuilder.create(product.lts, product.analysis) { s -> dataPredicate.test(s.dataState) }
         val abstractor = BasicAbstractor.builder(argBuilder).build()
         val traceChecker = ExprTraceSeqItpChecker.create(True(), prop, itpSolver)
-        val precRefiner = JoiningPrecRefiner.create<ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>, MultiPrec<CfaPrec<ExplPrec>?, ExplPrec, ExplPrec>, ItpRefutation>(
-            RefToMultiPrec(cfaRefToPrec, ItpRefToExplPrec(), ItpRefToExplPrec()))
+        val precRefiner =
+            JoiningPrecRefiner.create<ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>, MultiPrec<CfaPrec<ExplPrec>?, ExplPrec, ExplPrec>, ItpRefutation>(
+                RefToMultiPrec(cfaRefToPrec, ItpRefToExplPrec(), ItpRefToExplPrec())
+            )
         val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, PruneStrategy.FULL, logger)
         val checker = CegarChecker.create(abstractor, refiner)
         val result = checker.check(MultiPrec(cfaInitPrec, dataInitPrec, dataInitPrec))
