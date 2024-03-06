@@ -2,7 +2,10 @@ name: Sonar analysis
 on:
   push:
   pull_request_target:
-     types: [opened, synchronize, reopened]
+     types: [opened, synchronize, reopened, labeled]
+
+# Please read https://securitylab.github.com/research/github-actions-preventing-pwn-requests/ before editing this file
+permissions: read-all
 
 concurrency: 
   group: sonar-${{ github.head_ref }}
@@ -37,11 +40,12 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
+          persist-credentials: false
       - name: Analyze in PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        if: env.SONAR_TOKEN != '' && github.event_name == 'pull_request_target'
+        if: env.SONAR_TOKEN != '' && github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'Ready to test')
         uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
         with:
           arguments: build jacocoTestReport sonar --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m  -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
