@@ -25,19 +25,31 @@ internal object OcLitExpr : LitExpr<OcType>, NullaryExpr<OcType>() {
 
 internal enum class EventType { WRITE, READ }
 internal data class Event(
-    val decl: IndexedVarDecl<*>,
+    val const: IndexedConstDecl<*>,
     val type: EventType,
     val guard: List<Expr<BoolType>>,
     val pid: Int,
+    val edge: XcfaEdge,
 ) {
 
-    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${decl.name}\$clk", OcType))
+    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${const.name}\$clk", OcType))
     var assignment: Expr<BoolType>? = null
 
     fun enabled(valuation: Valuation): Boolean = try {
         And(guard).eval(valuation).value
     } catch (e: Exception) {
         false
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is Event) return false
+        return const == other.const && type == other.type
+    }
+
+    override fun hashCode(): Int {
+        var result = const.hashCode()
+        result = 31 * result + type.hashCode()
+        return result
     }
 }
 
@@ -49,10 +61,10 @@ internal data class Relation(
 ) : Expr<BoolType> {
 
     val decl: ConstDecl<BoolType> =
-        Decls.Const("${type.toString().lowercase()}_${from.decl.name}_${to.decl.name}", Bool())
+        Decls.Const("${type.toString().lowercase()}_${from.const.name}_${to.const.name}", Bool())
     val declRef: RefExpr<BoolType> = RefExpr.of(decl)
 
-    override fun toString() = "Relation($type, ${from.decl.name}[${from.type.toString()[0]}], ${to.decl.name}[${to.type.toString()[0]}])"
+    override fun toString() = "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
     override fun getType(): BoolType = Bool()
     override fun getArity() = 2
     override fun getOps(): List<Expr<*>> = listOf(from.clk, to.clk)

@@ -6,7 +6,9 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.IndexedVarDecl
+import hu.bme.mit.theta.core.decl.ConstDecl
+import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
@@ -21,6 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.acquiredMutexes
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
@@ -32,13 +35,11 @@ import hu.bme.mit.theta.xcfa.releasedMutexes
 import java.nio.file.Path
 import java.util.*
 
-const val SOLVER_PATH = "/mnt/d/Theta/zord-pldi-version/out/z3"
+class XcfaOcChecker(private val xcfa: XCFA, private val logger: Logger, solverHome: String) :
+    SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
 
-class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
-
-    private val xcfa: XCFA = xcfa.toSSA()
-    private val ocSolver = OcSolverFactory(Path.of(SOLVER_PATH)).createSolver()
-    private val ssaUtils = SSAUtils()
+    private val ocSolver = OcSolverFactory(Path.of("$solverHome/z3")).createSolver()
+    private var indexing = VarIndexingFactory.indexing(0)
 
     private val threads = mutableSetOf<Thread>()
     private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<Event>>>()
@@ -91,22 +92,22 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
         var last = listOf<Event>()
         var guard = listOf<Expr<BoolType>>()
         var mutex: Mutex? = null
-        var lastWrites: MutableMap<VarDecl<*>, Set<Event>> = mutableMapOf()
+        lateinit var lastWrites: MutableMap<VarDecl<*>, Set<Event>>// = mutableMapOf()
+        lateinit var edge: XcfaEdge
         var inEdge = false
 
         val newEvent: (VarDecl<*>, EventType) -> List<Event> = { decl, type ->
-            val v = (decl as IndexedVarDecl).original
-            val e = Event(decl, type, guard, pid)
+            val e = Event(decl.getNewIndexed(), type, guard, pid, edge)
             last.forEach { po(it, e, mutex, inEdge) }
             inEdge = true
             when (type) {
-                EventType.READ -> lastWrites[v]?.forEach { rfs.add(RelationType.RFI, it, e) }
+                EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RFI, it, e) }
                 EventType.WRITE -> {
-                    lastWrites[v]?.forEach { cos.add(RelationType.COI, it, e) }
-                    lastWrites[v] = setOf(e)
+                    lastWrites[decl]?.forEach { cos.add(RelationType.COI, it, e) }
+                    lastWrites[decl] = setOf(e)
                 }
             }
-            events[v] = (events[v] ?: mutableMapOf()).apply {
+            events[decl] = (events[decl] ?: mutableMapOf()).apply {
                 this[pid] = (this[pid] ?: mutableListOf()).apply { add(e) }
             }
             listOf(e)
@@ -147,27 +148,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
                 }
             }
 
-            if (current.loc.outgoingEdges.size > 1) {
-                val branchingConditionVars = mutableMapOf<VarDecl<*>, MutableSet<VarDecl<*>>>()
-                for (edge in current.loc.outgoingEdges) {
-                    val first = edge.getFlatLabels().first()
-                    if (first !is StmtLabel || first.stmt !is AssumeStmt) {
-                        error("Branching with non-assume labels not supported by this checker.")
-                    }
-                    first.collectVars().forEach { v ->
-                        branchingConditionVars.getOrPut((v as IndexedVarDecl).original) { mutableSetOf() }.add(v)
-                    }
-                }
-                branchingConditionVars.forEach { (_, set) ->
-                    for ((i1, v1) in set.withIndex())
-                        for ((i2, v2) in set.withIndex()) {
-                            if (i1 == i2) break
-                            branchingConditions.add(Eq(v1.constRef, v2.constRef))
-                        }
-                }
-            }
-
-            for (edge in current.loc.outgoingEdges) {
+            val assumeConsts = mutableMapOf<VarDecl<*>, MutableList<ConstDecl<*>>>()
+            for (e in current.loc.outgoingEdges) {
+                edge = e
                 inEdge = false
                 last = current.lastEvents
                 guard = mergeGuards()
@@ -176,22 +159,32 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
                 val pidLookup = current.pidLookups.merge { s1, s2 ->
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
                 }.toMutableMap()
+                var firstLabel = true
 
                 edge.getFlatLabels().forEach { label ->
                     when (label) {
                         is StmtLabel -> {
                             when (val stmt = label.stmt) {
                                 is AssignStmt<*> -> {
+                                    val consts = mutableMapOf<VarDecl<*>, ConstDecl<*>>()
                                     stmt.expr.vars.forEach {
                                         last = newEvent(it, EventType.READ)
+                                        consts[it] = last.first().const
                                     }
                                     last = newEvent(stmt.varDecl, EventType.WRITE)
-                                    last.first().assignment = Eq(stmt.varDecl.constRef, stmt.expr.withConsts())
+                                    last.first().assignment = Eq(last.first().const.ref, stmt.expr.withConsts(consts))
                                 }
 
                                 is AssumeStmt -> {
-                                    if (edge.source.outgoingEdges.size > 1) // TODO remove this condition
-                                        guard = guard + stmt.cond.withConsts()
+                                    if (edge.source.outgoingEdges.size > 1) { // TODO remove this condition
+                                        val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
+                                        guard = guard + stmt.cond.withConsts(consts)
+                                        if (firstLabel) {
+                                            consts.forEach { (v, c) ->
+                                                assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
+                                            }
+                                        }
+                                    }
                                     stmt.cond.vars.forEach {
                                         last = newEvent(it, EventType.READ)
                                     }
@@ -209,18 +202,17 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
                             val procedure = xcfa.procedures.find { it.name == label.name }
                                 ?: error("Procedure not found: ${label.name}")
                             last = newEvent(label.pidVar, EventType.WRITE)
-                            val pidVar = (label.pidVar as IndexedVarDecl).original
-                            if (this.threads.any { it.pidVar == pidVar }) {
+                            if (this.threads.any { it.pidVar == label.pidVar }) {
                                 error("Multi-thread use of pthread_t variables are not supported by this checker.")
                             }
-                            val newThread = Thread(procedure, guard, mutex, pidVar, last.first())
-                            last.first().assignment = Eq(label.pidVar.constRef, Int(newThread.pid))
-                            pidLookup[pidVar] = setOf(Pair(guard, newThread.pid))
+                            val newThread = Thread(procedure, guard, mutex, label.pidVar, last.first())
+                            last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
+                            pidLookup[label.pidVar] = setOf(Pair(guard, newThread.pid))
                             threads.add(newThread)
                         }
 
                         is JoinLabel -> {
-                            val pidVar = (label.pidVar as IndexedVarDecl).original
+                            val pidVar = label.pidVar
                             val guardTemp = guard
                             val lastEvents = mutableListOf<Event>()
                             pidLookup[pidVar]?.forEach { (g, pid) ->
@@ -240,6 +232,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
                         is NopLabel -> {}
                         else -> error("Unsupported label type: $label")
                     }
+                    firstLabel = false
                 }
 
                 val searchItem = waitList.find { it.loc == edge.target }
@@ -253,6 +246,22 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
                 if (searchItem.incoming.size == searchItem.loc.incomingEdges.size) {
                     waitList.remove(searchItem)
                     toVisit.add(searchItem)
+                }
+            }
+
+            if (current.loc.outgoingEdges.size > 1) {
+                for (e in current.loc.outgoingEdges) {
+                    val first = e.getFlatLabels().first()
+                    if (first !is StmtLabel || first.stmt !is AssumeStmt) {
+                        error("Branching with non-assume labels not supported by this checker.")
+                    }
+                }
+                assumeConsts.forEach { (_, set) ->
+                    for ((i1, v1) in set.withIndex())
+                        for ((i2, v2) in set.withIndex()) {
+                            if (i1 == i2) break
+                            branchingConditions.add(Eq(v1.ref, v2.ref))
+                        }
                 }
             }
         }
@@ -298,7 +307,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
             list.groupBy { it.to }.forEach { (event, rels) ->
                 rels.forEach { rel ->
                     ocSolver.add(Imply(rel.declRef,
-                        And(And(rel.from.guard), And(rel.to.guard), Eq(rel.from.decl.constRef, rel.to.decl.constRef))
+                        And(And(rel.from.guard), And(rel.to.guard), Eq(rel.from.const.ref, rel.to.const.ref))
                     )) // RF-Val
                     ocSolver.add(Imply(rel.declRef, rel)) // RF-Ord
                 }
@@ -335,14 +344,13 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
         val actionList = mutableListOf<XcfaAction>()
         val eventTrace = getEventTrace(model)
         val valuation = model.toMap()
-        val edges = xcfa.procedures.flatMap { it.edges }
 
         val processes = events.values.fold(mapOf<Int, Event>()) { acc, map ->
             (acc.keys + map.keys).associateWith { k -> acc[k] ?: map[k]!!.first() }
         }.map { (pid, event) ->
             pid to XcfaProcessState(
                 locs = LinkedList(listOf(
-                    xcfa.procedures.find { p -> p.edges.any { event.decl in it.label.collectVars() } }!!.initLoc
+                    xcfa.procedures.find { p -> p.edges.any { event.const.varDecl in it.label.collectVars() } }!!.initLoc
                 )),
                 varLookup = LinkedList(emptyList())
             )
@@ -350,17 +358,17 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
         var explState = ExplState.of(ImmutableValuation.from(mapOf()))
         var state = XcfaState<ExplState>(xcfa, processes, explState)
         stateList.add(state)
-        var lastEdge: XcfaEdge? = edges.find { eventTrace[0].decl in it.label.collectVars() }
+        var lastEdge: XcfaEdge? = eventTrace[0].edge
 
         for ((index, event) in eventTrace.withIndex()) {
-            valuation[event.decl.const]?.let {
-                val newVal = explState.`val`.toMap().toMutableMap().apply { put(event.decl.original, it) }
+            valuation[event.const]?.let {
+                val newVal = explState.`val`.toMap().toMutableMap().apply { put(event.const.varDecl, it) }
                 explState = ExplState.of(ImmutableValuation.from(newVal))
             }
 
-            val nextEdge = eventTrace.getOrNull(index + 1)?.let { e -> edges.find { e.decl in it.label.collectVars() } }
+            val nextEdge = eventTrace.getOrNull(index + 1)?.edge
             if (nextEdge != lastEdge) {
-                actionList.add(XcfaAction(event.pid, ssaUtils.removeSSA(lastEdge!!)))
+                actionList.add(XcfaAction(event.pid, lastEdge!!))
                 state = state.copy(
                     processes = state.processes.toMutableMap().apply {
                         put(event.pid, XcfaProcessState(
@@ -395,8 +403,8 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
                     val previous = mutableSetOf<Event>()
                     previous.addAll(pos.previousEvents(top.event))
                     when (top.event.type) {
-                        EventType.WRITE -> cos[top.event.decl.original]?.previousEvents(top.event)
-                        EventType.READ -> rfs[top.event.decl.original]?.previousEvents(top.event)
+                        EventType.WRITE -> cos[top.event.const.varDecl]?.previousEvents(top.event)
+                        EventType.READ -> rfs[top.event.const.varDecl]?.previousEvents(top.event)
                     }?.let { previous.addAll(it) }
                     top.eventsToVisit = previous.toMutableList()
                 }
@@ -442,14 +450,18 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) : SafetyChecker<Xcfa
         if (isEmpty()) default else reduce(operation)
 
     private fun MutableMap<VarDecl<*>, MutableList<Relation>>.add(type: RelationType, from: Event, to: Event) =
-        getOrPut(from.decl.original) { mutableListOf() }.add(Relation(type, from, to))
+        getOrPut(from.const.varDecl) { mutableListOf() }.add(Relation(type, from, to))
 
-    private val VarDecl<*>.constRef get() = (this as IndexedVarDecl).constRef
-
-    private fun <T : Type> Expr<T>.withConsts(): Expr<T> {
+    private fun <T : Type> Expr<T>.withConsts(varToConst: Map<out Decl<*>, ConstDecl<*>>): Expr<T> {
         if (this is RefExpr<T>) {
-            return (decl as? IndexedVarDecl<T>)?.constRef ?: this
+            return (varToConst[decl]?.ref as? RefExpr<T>) ?: this
         }
-        return map { it.withConsts() }
+        return map { it.withConsts(varToConst) }
+    }
+
+    private fun <T : Type> VarDecl<T>.getNewIndexed(increment: Boolean = true): IndexedConstDecl<T> {
+        val constDecl = getConstDecl(indexing.get(this))
+        if (increment) indexing = indexing.inc(this)
+        return constDecl
     }
 }

@@ -138,7 +138,7 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
 
     val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
 
-    println(XcfaOcChecker(xcfa, logger).check())
+    println(XcfaOcChecker(xcfa, logger, config.backendConfig.solverHome).check())
     System.exit(0)
 
     val mcm = if (config.inputConfig.catFile != null) {
