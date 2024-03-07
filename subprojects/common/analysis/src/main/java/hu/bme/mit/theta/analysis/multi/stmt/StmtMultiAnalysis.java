@@ -13,41 +13,43 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.multi;
+package hu.bme.mit.theta.analysis.multi.stmt;
 
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.analysis.multi.MultiAnalysis;
+import hu.bme.mit.theta.analysis.multi.MultiSourceSide;
 
 import java.util.function.Function;
 
-public final class ExprMultiAnalysis<LState extends ExprState, RState extends ExprState, DataState extends ExprState, LBlank extends ExprState, RBlank extends ExprState,
+public final class StmtMultiAnalysis<LState extends ExprState, RState extends ExprState, DataState extends ExprState, LBlank extends ExprState, RBlank extends ExprState,
         LAction extends StmtAction, RAction extends StmtAction,
         LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec>
         extends MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, ExprMultiState<LBlank, RBlank, DataState>, StmtMultiAction<LAction, RAction>> {
 
-    private ExprMultiAnalysis(Function<ExprMultiState<LBlank, RBlank, DataState>, MultiSourceSide> defineNextSide, Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide, Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide, InitFunc<DataState, DataPrec> dataInitFunc) {
+    private StmtMultiAnalysis(Function<ExprMultiState<LBlank, RBlank, DataState>, MultiSourceSide> defineNextSide, Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide, Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide, InitFunc<DataState, DataPrec> dataInitFunc) {
         super(defineNextSide, leftSide, rightSide, dataInitFunc);
     }
 
     public static <LState extends ExprState, RState extends ExprState, DataState extends ExprState, LBlank extends ExprState, RBlank extends ExprState,
             LAction extends StmtAction, RAction extends StmtAction,
             LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec>
-    ExprMultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec>
+    StmtMultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec>
     of(Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide, Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide,
        Function<ExprMultiState<LBlank, RBlank, DataState>, MultiSourceSide> defineNextSide,
        InitFunc<DataState, DataPrec> dataInitFunc) {
-        return new ExprMultiAnalysis<>(defineNextSide, leftSide, rightSide, dataInitFunc);
+        return new StmtMultiAnalysis<>(defineNextSide, leftSide, rightSide, dataInitFunc);
     }
 
     @Override
-    ExprMultiState<LBlank, RBlank, DataState> createInitialState(LBlank leftState, RBlank rightState, DataState dataState) {
+    public ExprMultiState<LBlank, RBlank, DataState> createInitialState(LBlank leftState, RBlank rightState, DataState dataState) {
         return ExprMultiState.createInitial(leftState, rightState, dataState);
     }
 
     @Override
-    ExprMultiState<LBlank, RBlank, DataState> createState(LBlank leftState, RBlank rightState, DataState dataState, MultiSourceSide sourceSide) {
+    public ExprMultiState<LBlank, RBlank, DataState> createState(LBlank leftState, RBlank rightState, DataState dataState, MultiSourceSide sourceSide) {
         return ExprMultiState.create(leftState, rightState, dataState, sourceSide, true);
     }
 }

@@ -19,12 +19,19 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.expl.*
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprStatePredicate
 import hu.bme.mit.theta.analysis.expr.refinement.*
+import hu.bme.mit.theta.analysis.multi.stmt.ExprMultiState
+import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiAction
+import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiAnalysis
+import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiLts
+import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer
 import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.analysis.CfaAction
-import hu.bme.mit.theta.cfa.analysis.CfaAnalysis.create
+import hu.bme.mit.theta.cfa.analysis.CfaAnalysis
 import hu.bme.mit.theta.cfa.analysis.CfaPrec
 import hu.bme.mit.theta.cfa.analysis.CfaState
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts
@@ -47,14 +54,14 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.io.SequenceInputStream
 
-class ProductOfTwoTest {
+class MultiOfTwoTest {
 
     val logger: Logger = ConsoleLogger(Logger.Level.SUBSTEP)
     val solver: Solver = Z3SolverFactory.getInstance().createSolver()
     val itpSolver = Z3SolverFactory.getInstance().createItpSolver()
 
     @Test
-    fun test() {
+    fun testExplPrec() {
         var xsts: XSTS
         try {
             SequenceInputStream(
@@ -84,7 +91,7 @@ class ProductOfTwoTest {
         FileInputStream("src/test/resources/cfa/doubler.cfa").use { inputStream ->
             cfa = CfaDslManager.createCfa(inputStream)
         }
-        val cfaAnalysis = create(cfa.initLoc, dataAnalysis)
+        val cfaAnalysis = CfaAnalysis.create(cfa.initLoc, dataAnalysis)
         val cfaLts: CfaLts = CfaSbeLts.getInstance()
         val cfaRefToPrec = RefutationToGlobalCfaPrec(ItpRefToExplPrec(), cfa.initLoc)
         val cfaInitFunc =
@@ -117,8 +124,8 @@ class ProductOfTwoTest {
             .build<ExplPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>>(
                 NextSideFunctions::alternating,
                 dataAnalysis.initFunc,
-                { ls, rs, dns, dif -> ExprMultiAnalysis.of(ls, rs, dns, dif) },
-                { llts, cls, rlts, crs, dns -> ExprMultiLts.of(llts, cls, rlts, crs, dns) })
+                { ls, rs, dns, dif -> StmtMultiAnalysis.of(ls, rs, dns, dif) },
+                { llts, cls, rlts, crs, dns -> StmtMultiLts.of(llts, cls, rlts, crs, dns) })
         val prop = Not(xsts.prop)
         val dataPredicate = ExplStatePredicate(prop, solver)
         val argBuilder = ArgBuilder.create(product.lts, product.analysis) { s -> dataPredicate.test(s.dataState) }
@@ -130,7 +137,93 @@ class ProductOfTwoTest {
             )
         val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, PruneStrategy.FULL, logger)
         val checker = CegarChecker.create(abstractor, refiner)
+
         val result = checker.check(MultiPrec(cfaInitPrec, dataInitPrec, dataInitPrec))
+
+        assertTrue(result.isUnsafe)
+    }
+
+    @Test
+    fun testPredPrec() {
+        var xsts: XSTS
+        try {
+            SequenceInputStream(
+                FileInputStream("src/test/resources/xsts/incrementor.xsts"),
+                FileInputStream("src/test/resources/xsts/xneq7.prop")
+            ).use { inputStream ->
+                xsts = XstsDslManager.createXsts(inputStream)
+            }
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        }
+        val dataAnalysis = PredAnalysis.create<ExprAction>(
+            solver,
+            PredAbstractors.booleanAbstractor(solver),
+            xsts.initFormula
+        )
+        val xstsAnalysis = XstsAnalysis.create(dataAnalysis)
+        val xstsLts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create<PredState>()))
+        val xstsInitFunc = XstsInitFunc.create { _: PredPrec -> listOf<UnitState>(UnitState.getInstance()) }
+        val xstsCombineStates = { x: XstsState<UnitState>, d: PredState -> XstsState.of(d, x.lastActionWasEnv(), true) }
+        val xstsStripState =
+            { x: XstsState<PredState> -> XstsState.of(UnitState.getInstance(), x.lastActionWasEnv(), true) }
+        val xstsExtractFromState = { x: XstsState<PredState> -> x.state }
+        val xstsStripPrec = { p: PredPrec -> p }
+
+        var cfa: CFA
+        FileInputStream("src/test/resources/cfa/doubler.cfa").use { inputStream ->
+            cfa = CfaDslManager.createCfa(inputStream)
+        }
+        val cfaAnalysis = CfaAnalysis.create(cfa.initLoc, dataAnalysis)
+        val cfaLts: CfaLts = CfaSbeLts.getInstance()
+        val cfaRefToPrec = RefutationToGlobalCfaPrec(ItpRefToPredPrec(ExprSplitters.atoms()), cfa.initLoc)
+        val cfaInitFunc =
+            { _: CfaPrec<PredPrec> -> listOf<CfaState<UnitState>>(CfaState.of(cfa.initLoc, UnitState.getInstance())) }
+        val dataInitPrec = PredPrec.of()
+        val cfaInitPrec: CfaPrec<PredPrec> = GlobalCfaPrec.create(dataInitPrec)
+        val cfaCombineStates = { c: CfaState<UnitState>, d: PredState -> CfaState.of(c.loc, d) }
+        val cfaStripState = { c: CfaState<PredState> -> CfaState.of(c.loc, UnitState.getInstance()) }
+        val cfaExtractFromState = { c: CfaState<PredState> -> c.state }
+        val cfaStripPrec = { p: CfaPrec<PredPrec> -> p }
+
+        val product = MultiBuilder.initWithLeftSide(
+            cfaAnalysis,
+            cfaLts,
+            cfaCombineStates,
+            cfaStripState,
+            cfaExtractFromState,
+            cfaInitFunc,
+            cfaStripPrec
+        )
+            .addRightSide(
+                xstsAnalysis,
+                xstsLts,
+                xstsCombineStates,
+                xstsStripState,
+                xstsExtractFromState,
+                xstsInitFunc,
+                xstsStripPrec
+            )
+            .build<PredPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, PredState>, StmtMultiAction<CfaAction, XstsAction>>(
+                NextSideFunctions::alternating,
+                dataAnalysis.initFunc,
+                { ls, rs, dns, dif -> StmtMultiAnalysis.of(ls, rs, dns, dif) },
+                { llts, cls, rlts, crs, dns -> StmtMultiLts.of(llts, cls, rlts, crs, dns) })
+        val prop = Not(xsts.prop)
+        val dataPredicate = ExprStatePredicate(prop, solver)
+        val argBuilder = ArgBuilder.create(product.lts, product.analysis) { s -> dataPredicate.test(s.dataState) }
+        val abstractor = BasicAbstractor.builder(argBuilder).build()
+        val traceChecker = ExprTraceSeqItpChecker.create(True(), prop, itpSolver)
+        val precRefiner =
+            JoiningPrecRefiner.create<ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, PredState>, StmtMultiAction<CfaAction, XstsAction>, MultiPrec<CfaPrec<PredPrec>?, PredPrec, PredPrec>, ItpRefutation>(
+                RefToMultiPrec(cfaRefToPrec, ItpRefToPredPrec(ExprSplitters.atoms()),
+                    ItpRefToPredPrec(ExprSplitters.atoms()))
+            )
+        val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, PruneStrategy.FULL, logger)
+        val checker = CegarChecker.create(abstractor, refiner)
+
+        val result = checker.check(MultiPrec(cfaInitPrec, dataInitPrec, dataInitPrec))
+
         assertTrue(result.isUnsafe)
     }
 

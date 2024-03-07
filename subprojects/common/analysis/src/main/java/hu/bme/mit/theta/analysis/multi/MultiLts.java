@@ -37,9 +37,9 @@ public abstract class MultiLts<LState extends State, RState extends State, DataS
         this.right = right;
     }
 
-    abstract MAction wrapLeftAction(LAction action);
+    protected abstract MAction wrapLeftAction(LAction action);
 
-    abstract MAction wrapRightAction(RAction action);
+    protected abstract MAction wrapRightAction(RAction action);
 
     @Override
     public Collection<MAction> getEnabledActionsFor(MState state) {
@@ -61,7 +61,7 @@ public abstract class MultiLts<LState extends State, RState extends State, DataS
         return defineNextSide;
     }
 
-    protected record Side<S extends State, Data extends State, Blank extends State, A extends Action>(
+    public record Side<S extends State, Data extends State, Blank extends State, A extends Action>(
             LTS<? super S, A> lts, BiFunction<Blank, Data, S> combineStates) {
     }
 

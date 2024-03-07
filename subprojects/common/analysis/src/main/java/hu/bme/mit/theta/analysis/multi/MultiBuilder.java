@@ -92,4 +92,29 @@ public final class MultiBuilder {
 
     }
 
+    @FunctionalInterface
+    public interface MultiAnalysisBuilderFunc<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
+            LAction extends Action, RAction extends Action,
+            LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec,
+            MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>,
+            MAnalysis extends MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction>> {
+
+        MAnalysis build(MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide,
+                        MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide,
+                        Function<MState, MultiSourceSide> defineNextSide,
+                        InitFunc<DataState, DataPrec> dataInitFunc);
+
+    }
+
+    @FunctionalInterface
+    public interface MultiLtsBuilderFunc<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
+            LAction extends Action, RAction extends Action, MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>,
+            MLts extends MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction>> {
+
+        MLts build(LTS<? super LState, LAction> leftLts, BiFunction<LBlank, DataState, LState> combineLeftState,
+                   LTS<? super RState, RAction> rightLts, BiFunction<RBlank, DataState, RState> combineRightState,
+                   Function<MState, MultiSourceSide> defineNextSide);
+
+    }
+
 }

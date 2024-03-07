@@ -62,9 +62,9 @@ public abstract class MultiAnalysis<LState extends State, RState extends State, 
         this.dataInitFunc = dataInitFunc;
     }
 
-    abstract MState createInitialState(LBlank leftState, RBlank rightState, DataState dataState);
+    protected abstract MState createInitialState(LBlank leftState, RBlank rightState, DataState dataState);
 
-    abstract MState createState(LBlank leftState, RBlank rightState, DataState dataState, MultiSourceSide sourceSide);
+    protected abstract MState createState(LBlank leftState, RBlank rightState, DataState dataState, MultiSourceSide sourceSide);
 
     @Override
     public PartialOrd<MState> getPartialOrd() {
