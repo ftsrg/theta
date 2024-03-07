@@ -13,20 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
+package hu.bme.mit.theta.analysis.multi;
 
-dependencies {
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-graph-solver"))
-    testImplementation(project(":theta-solver-z3"))
-    testImplementation(project(":theta-cfa"))
-    testImplementation(project(":theta-cfa-analysis"))
-    testImplementation(project(":theta-xsts"))
-    testImplementation(project(":theta-xsts-analysis"))
-    implementation("com.corundumstudio.socketio:netty-socketio:2.0.6")
+public enum MultiSourceSide {
+    LEFT, RIGHT
 }

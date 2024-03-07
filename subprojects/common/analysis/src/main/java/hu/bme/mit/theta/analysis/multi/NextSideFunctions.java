@@ -13,20 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
+package hu.bme.mit.theta.analysis.multi;
 
-dependencies {
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-graph-solver"))
-    testImplementation(project(":theta-solver-z3"))
-    testImplementation(project(":theta-cfa"))
-    testImplementation(project(":theta-cfa-analysis"))
-    testImplementation(project(":theta-xsts"))
-    testImplementation(project(":theta-xsts-analysis"))
-    implementation("com.corundumstudio.socketio:netty-socketio:2.0.6")
+import hu.bme.mit.theta.analysis.State;
+
+public final class NextSideFunctions {
+
+
+    public static <L extends State, R extends State, D extends State> MultiSourceSide alternating(MultiState<L, R, D> state) {
+        return state.getSourceSide() == MultiSourceSide.LEFT ? MultiSourceSide.RIGHT : MultiSourceSide.LEFT;
+    }
+
 }
