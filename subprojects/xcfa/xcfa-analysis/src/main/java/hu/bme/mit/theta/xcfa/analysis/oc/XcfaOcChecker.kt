@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.acquiredMutexes
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -31,13 +32,18 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
+import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 import hu.bme.mit.theta.xcfa.releasedMutexes
 import java.nio.file.Path
 import java.util.*
 
-class XcfaOcChecker(private val xcfa: XCFA, private val logger: Logger, solverHome: String) :
+private val Expr<*>.vars get() = ExprUtils.getVars(this)
+
+class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) :
     SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
 
+    private val xcfa: XCFA = xcfa.optimizeFurther(listOf(AssumeFalseRemovalPass(), MutexToVarPass()))
     private val ocSolver = OcSolverFactory(Path.of("$solverHome/z3")).createSolver()
     private var indexing = VarIndexingFactory.indexing(0)
 
@@ -92,7 +98,7 @@ class XcfaOcChecker(private val xcfa: XCFA, private val logger: Logger, solverHo
         var last = listOf<Event>()
         var guard = listOf<Expr<BoolType>>()
         var mutex: Mutex? = null
-        lateinit var lastWrites: MutableMap<VarDecl<*>, Set<Event>>// = mutableMapOf()
+        lateinit var lastWrites: MutableMap<VarDecl<*>, Set<Event>>
         lateinit var edge: XcfaEdge
         var inEdge = false
 
@@ -154,7 +160,7 @@ class XcfaOcChecker(private val xcfa: XCFA, private val logger: Logger, solverHo
                 inEdge = false
                 last = current.lastEvents
                 guard = mergeGuards()
-                mutex = current.mutexes.first()
+                mutex = current.mutexes.first()?.copy()
                 lastWrites = current.lastWrites.merge().toMutableMap()
                 val pidLookup = current.pidLookups.merge { s1, s2 ->
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
@@ -463,5 +469,12 @@ class XcfaOcChecker(private val xcfa: XCFA, private val logger: Logger, solverHo
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
         return constDecl
+    }
+
+    fun printXcfa() = xcfa.toDot { edge ->
+        "(${
+            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
+                .joinToString(",") { it.const.name }
+        })"
     }
 }

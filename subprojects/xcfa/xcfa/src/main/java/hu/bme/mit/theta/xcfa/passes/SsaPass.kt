@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.oc
+package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.IndexedVarDecl
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -8,9 +8,23 @@ import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.model.*
+
+class SSAPass : ProcedurePass {
+
+    private val ssaUtils = SSAUtils()
+
+    override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+        builder.getEdges().toSet().forEach { edge ->
+            builder.removeEdge(edge)
+            builder.addEdge(edge.withLabel(ssaUtils.toSSA(edge)))
+        }
+        return builder
+    }
+}
 
 internal class SSAUtils {
 
@@ -44,7 +58,7 @@ internal class SSAUtils {
 
     private fun <T : Type> Expr<T>.toSSA(): Expr<T> {
         val unfolded = toSSAAtomic()
-        this.vars.forEach { indexing = indexing.inc(it) }
+        ExprUtils.getVars(this).forEach { indexing = indexing.inc(it) }
         return unfolded
     }
 
