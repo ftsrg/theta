@@ -73,3 +73,6 @@ val XCFA.isInlined: Boolean by LazyDelegate {
         }
     }
 }
+
+fun XcfaProcessState.foldVarLookup(): Map<VarDecl<*>, VarDecl<*>> =
+    this.varLookup.reduceRight { lookup, acc -> acc + lookup } // right map overrides left's keys
