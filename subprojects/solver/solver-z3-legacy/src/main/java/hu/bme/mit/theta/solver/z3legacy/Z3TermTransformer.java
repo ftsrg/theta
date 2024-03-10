@@ -13,25 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3;
+package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.ArraySort;
-import com.microsoft.z3.BitVecNum;
-import com.microsoft.z3.BitVecSort;
-import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.BoolSort;
 import com.microsoft.z3.FPNum;
 import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.FuncInterp;
-import com.microsoft.z3.IntNum;
-import com.microsoft.z3.IntSort;
 import com.microsoft.z3.Model;
-import com.microsoft.z3.Quantifier;
-import com.microsoft.z3.RatNum;
-import com.microsoft.z3.RealSort;
-import com.microsoft.z3.Sort;
 import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;

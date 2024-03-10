@@ -54,8 +54,8 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.z3.Z3LegacySolverFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 
 import java.io.File;
 import java.io.FileInputStream;

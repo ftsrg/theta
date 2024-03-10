@@ -13,11 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3;
+package hu.bme.mit.theta.solver.z3legacy;
 
 import com.microsoft.z3.Context;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Sort;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;

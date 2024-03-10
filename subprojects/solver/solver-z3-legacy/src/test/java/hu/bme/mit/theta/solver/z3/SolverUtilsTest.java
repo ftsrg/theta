@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.SolverUtils;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Assert;
 import org.junit.Test;
 

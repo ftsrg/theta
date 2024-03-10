@@ -22,7 +22,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
-import hu.bme.mit.theta.solver.z3.Z3SolverManager
+import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
 import java.nio.file.Path
 
 fun getSolver(name: String, validate: Boolean): SolverFactory = if (validate) {

@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.z3.Z3LegacySolverFactory
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.getFlatLabels

@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

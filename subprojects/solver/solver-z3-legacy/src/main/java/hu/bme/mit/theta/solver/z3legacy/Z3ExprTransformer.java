@@ -13,23 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3;
+package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.ArithExpr;
-import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.FPExpr;
-import com.microsoft.z3.FPRMExpr;
 import com.microsoft.z3.FPSort;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.IntExpr;
-import com.microsoft.z3.RealExpr;
-import com.microsoft.z3.Sort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;

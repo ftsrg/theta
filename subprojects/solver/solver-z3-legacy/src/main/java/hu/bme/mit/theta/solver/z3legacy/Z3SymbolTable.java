@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3;
+package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;

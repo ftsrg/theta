@@ -30,7 +30,7 @@ import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;

@@ -19,7 +19,7 @@ package hu.bme.mit.theta.fronted.litmus2xcfa;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.litmus2xcfa.LitmusInterpreter;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure;
 import kotlin.Pair;

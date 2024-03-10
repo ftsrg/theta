@@ -13,16 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3;
+package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.collect.Sets;
-import com.microsoft.z3.BitVecSort;
-import com.microsoft.z3.BoolSort;
 import com.microsoft.z3.Context;
-import com.microsoft.z3.FPSort;
-import com.microsoft.z3.IntSort;
-import com.microsoft.z3.RealSort;
-import com.microsoft.z3.Sort;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;

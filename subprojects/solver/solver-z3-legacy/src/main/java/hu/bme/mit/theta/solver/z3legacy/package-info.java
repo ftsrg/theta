@@ -20,4 +20,4 @@
  * {@link hu.bme.mit.theta.solver.Solver}).
  */
 
-package hu.bme.mit.theta.solver.z3;
+package hu.bme.mit.theta.solver.z3legacy;

@@ -13,38 +13,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3;
-
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.impl.StackImpl;
-
-import java.util.Collection;
+package hu.bme.mit.theta.solver.z3legacy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class Z3ItpMarker implements ItpMarker {
+import java.util.Map;
 
-    private final Stack<com.microsoft.z3.BoolExpr> terms;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.solver.Interpolant;
+import hu.bme.mit.theta.solver.ItpMarker;
 
-    public Z3ItpMarker() {
-        terms = new StackImpl<>();
+final class Z3Interpolant implements Interpolant {
+
+    private final Map<ItpMarker, Expr<BoolType>> itpMap;
+
+    Z3Interpolant(final Map<ItpMarker, Expr<BoolType>> itpMap) {
+        this.itpMap = itpMap;
     }
 
-    public void add(final com.microsoft.z3.BoolExpr term) {
-        terms.add(checkNotNull(term));
-    }
-
-    public void push() {
-        terms.push();
-    }
-
-    public void pop(final int n) {
-        terms.pop(n);
-    }
-
-    public Collection<com.microsoft.z3.BoolExpr> getTerms() {
-        return terms.toCollection();
+    @Override
+    public Expr<BoolType> eval(final ItpMarker marker) {
+        checkNotNull(marker);
+        final Expr<BoolType> itpExpr = itpMap.get(marker);
+        checkNotNull(itpExpr);
+        return itpExpr;
     }
 
 }

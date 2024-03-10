@@ -37,7 +37,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 @RunWith(Parameterized.class)
 public final class ExprOrdLeqTest {

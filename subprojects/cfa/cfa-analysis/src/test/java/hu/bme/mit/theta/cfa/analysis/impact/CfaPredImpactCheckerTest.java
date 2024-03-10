@@ -36,7 +36,7 @@ import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.z3.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 public final class CfaPredImpactCheckerTest {
 
