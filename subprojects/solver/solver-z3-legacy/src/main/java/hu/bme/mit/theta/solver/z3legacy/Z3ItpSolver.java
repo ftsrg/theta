@@ -43,8 +43,8 @@ final class Z3ItpSolver implements ItpSolver, Solver {
     private final Z3TransformationManager transformationManager;
     private final Z3TermTransformer termTransformer;
 
-    private final com.microsoft.z3.InterpolationContext z3Context;
-    private final com.microsoft.z3.Solver z3Solver;
+    private final com.microsoft.z3legacy.InterpolationContext z3Context;
+    private final com.microsoft.z3legacy.Solver z3Solver;
 
     private final Z3Solver solver;
 
@@ -53,8 +53,8 @@ final class Z3ItpSolver implements ItpSolver, Solver {
     public Z3ItpSolver(final Z3SymbolTable symbolTable,
                        final Z3TransformationManager transformationManager,
                        final Z3TermTransformer termTransformer,
-                       final com.microsoft.z3.InterpolationContext z3Context,
-                       final com.microsoft.z3.Solver z3Solver) {
+                       final com.microsoft.z3legacy.InterpolationContext z3Context,
+                       final com.microsoft.z3legacy.Solver z3Solver) {
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
         this.z3Context = z3Context;
@@ -85,7 +85,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         checkNotNull(assertion);
         checkArgument(markers.toCollection().contains(marker), "Marker not found in solver");
         final Z3ItpMarker z3Marker = (Z3ItpMarker) marker;
-        final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
+        final com.microsoft.z3legacy.BoolExpr term = (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(
                 assertion);
         solver.add(assertion, term);
         z3Marker.add(term);
@@ -98,14 +98,14 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         checkArgument(pattern instanceof Z3ItpPattern);
         final Z3ItpPattern z3ItpPattern = (Z3ItpPattern) pattern;
 
-        final com.microsoft.z3.Expr proof = z3Solver.getProof();
-        final com.microsoft.z3.Expr term = patternToTerm(z3ItpPattern.getRoot());
-        final com.microsoft.z3.Params params = z3Context.mkParams();
+        final com.microsoft.z3legacy.Expr proof = z3Solver.getProof();
+        final com.microsoft.z3legacy.Expr term = patternToTerm(z3ItpPattern.getRoot());
+        final com.microsoft.z3legacy.Params params = z3Context.mkParams();
 
-        final com.microsoft.z3.BoolExpr[] itpArray = z3Context.GetInterpolant(proof, term, params);
+        final com.microsoft.z3legacy.BoolExpr[] itpArray = z3Context.GetInterpolant(proof, term, params);
         final List<Expr<BoolType>> itpList = new LinkedList<>();
 
-        for (final com.microsoft.z3.BoolExpr itpTerm : itpArray) {
+        for (final com.microsoft.z3legacy.BoolExpr itpTerm : itpArray) {
             @SuppressWarnings("unchecked") final Expr<BoolType> itpExpr = (Expr<BoolType>) termTransformer.toExpr(
                     itpTerm);
             itpList.add(itpExpr);
@@ -117,20 +117,20 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         return new Z3Interpolant(itpMap);
     }
 
-    private com.microsoft.z3.BoolExpr patternToTerm(final ItpMarkerTree<Z3ItpMarker> markerTree) {
-        final Collection<com.microsoft.z3.BoolExpr> opTerms = new LinkedList<>();
+    private com.microsoft.z3legacy.BoolExpr patternToTerm(final ItpMarkerTree<Z3ItpMarker> markerTree) {
+        final Collection<com.microsoft.z3legacy.BoolExpr> opTerms = new LinkedList<>();
 
         final Z3ItpMarker marker = (Z3ItpMarker) markerTree.getMarker();
         opTerms.addAll(marker.getTerms());
 
         for (final ItpMarkerTree<Z3ItpMarker> child : markerTree.getChildren()) {
-            final com.microsoft.z3.BoolExpr childTerm = patternToTerm(child);
+            final com.microsoft.z3legacy.BoolExpr childTerm = patternToTerm(child);
             opTerms.add(childTerm);
         }
 
-        final com.microsoft.z3.BoolExpr andTerm = z3Context
-                .mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
-        final com.microsoft.z3.BoolExpr term = z3Context.MkInterpolant(andTerm);
+        final com.microsoft.z3legacy.BoolExpr andTerm = z3Context
+                .mkAnd(opTerms.toArray(new com.microsoft.z3legacy.BoolExpr[opTerms.size()]));
+        final com.microsoft.z3legacy.BoolExpr term = z3Context.MkInterpolant(andTerm);
         return term;
     }
 

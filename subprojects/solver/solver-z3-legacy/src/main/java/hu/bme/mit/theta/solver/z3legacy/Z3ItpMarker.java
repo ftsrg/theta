@@ -25,13 +25,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 final class Z3ItpMarker implements ItpMarker {
 
-    private final Stack<com.microsoft.z3.BoolExpr> terms;
+    private final Stack<com.microsoft.z3legacy.BoolExpr> terms;
 
     public Z3ItpMarker() {
         terms = new StackImpl<>();
     }
 
-    public void add(final com.microsoft.z3.BoolExpr term) {
+    public void add(final com.microsoft.z3legacy.BoolExpr term) {
         terms.add(checkNotNull(term));
     }
 
@@ -43,7 +43,7 @@ final class Z3ItpMarker implements ItpMarker {
         terms.pop(n);
     }
 
-    public Collection<com.microsoft.z3.BoolExpr> getTerms() {
+    public Collection<com.microsoft.z3legacy.BoolExpr> getTerms() {
         return terms.toCollection();
     }
 

@@ -18,11 +18,11 @@ package hu.bme.mit.theta.solver.z3legacy;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.BitVecExpr;
-import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Context;
-import com.microsoft.z3.FPExpr;
-import com.microsoft.z3.FPSort;
+import com.microsoft.z3legacy.BitVecExpr;
+import com.microsoft.z3legacy.BoolExpr;
+import com.microsoft.z3legacy.Context;
+import com.microsoft.z3legacy.FPExpr;
+import com.microsoft.z3legacy.FPSort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -156,8 +156,8 @@ final class Z3ExprTransformer {
     private final Z3TransformationManager transformer;
     private final Context context;
 
-    private final Cache<Expr<?>, com.microsoft.z3.Expr> exprToTerm;
-    private final DispatchTable<com.microsoft.z3.Expr> table;
+    private final Cache<Expr<?>, com.microsoft.z3legacy.Expr> exprToTerm;
+    private final DispatchTable<com.microsoft.z3legacy.Expr> table;
     private final Env env;
 
     public Z3ExprTransformer(final Z3TransformationManager transformer, final Context context) {
@@ -167,7 +167,7 @@ final class Z3ExprTransformer {
 
         exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
-        table = DispatchTable.<com.microsoft.z3.Expr>builder()
+        table = DispatchTable.<com.microsoft.z3legacy.Expr>builder()
 
                 // General
 
@@ -428,7 +428,7 @@ final class Z3ExprTransformer {
      * General
      */
 
-    public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
+    public com.microsoft.z3legacy.Expr toTerm(final Expr<?> expr) {
         try {
             return exprToTerm.get(expr, () -> table.dispatch(expr));
         } catch (final ExecutionException e) {
@@ -436,13 +436,13 @@ final class Z3ExprTransformer {
         }
     }
 
-    private com.microsoft.z3.Expr transformRef(final RefExpr<?> expr) {
+    private com.microsoft.z3legacy.Expr transformRef(final RefExpr<?> expr) {
         final Decl<?> decl = expr.getDecl();
         if (decl instanceof ConstDecl) {
-            final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
+            final com.microsoft.z3legacy.FuncDecl funcDecl = transformer.toSymbol(decl);
             return context.mkConst(funcDecl);
         } else if (decl instanceof ParamDecl) {
-            final com.microsoft.z3.FuncDecl funcDecl = (com.microsoft.z3.FuncDecl) env.eval(
+            final com.microsoft.z3legacy.FuncDecl funcDecl = (com.microsoft.z3legacy.FuncDecl) env.eval(
                     DeclSymbol.of(decl));
             return context.mkConst(funcDecl);
         } else {
@@ -455,82 +455,82 @@ final class Z3ExprTransformer {
      * Booleans
      */
 
-    private com.microsoft.z3.Expr transformIte(final IteExpr<?> expr) {
+    private com.microsoft.z3legacy.Expr transformIte(final IteExpr<?> expr) {
         final BoolExpr condTerm = (BoolExpr) toTerm(expr.getCond());
-        final com.microsoft.z3.Expr thenTerm = toTerm(expr.getThen());
-        final com.microsoft.z3.Expr elzeTerm = toTerm(expr.getElse());
+        final com.microsoft.z3legacy.Expr thenTerm = toTerm(expr.getThen());
+        final com.microsoft.z3legacy.Expr elzeTerm = toTerm(expr.getElse());
         return context.mkITE(condTerm, thenTerm, elzeTerm);
     }
 
-    private com.microsoft.z3.Expr transformFalse(final FalseExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFalse(final FalseExpr expr) {
         return context.mkFalse();
 
     }
 
-    private com.microsoft.z3.Expr transformTrue(final TrueExpr expr) {
+    private com.microsoft.z3legacy.Expr transformTrue(final TrueExpr expr) {
         return context.mkTrue();
     }
 
-    private com.microsoft.z3.Expr transformNot(final NotExpr expr) {
+    private com.microsoft.z3legacy.Expr transformNot(final NotExpr expr) {
         final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
         return context.mkNot(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformImply(final ImplyExpr expr) {
+    private com.microsoft.z3legacy.Expr transformImply(final ImplyExpr expr) {
         final BoolExpr leftOpTerm = (BoolExpr) toTerm(expr.getLeftOp());
         final BoolExpr rightOpTerm = (BoolExpr) toTerm(expr.getRightOp());
         return context.mkImplies(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIff(final IffExpr expr) {
+    private com.microsoft.z3legacy.Expr transformIff(final IffExpr expr) {
         final BoolExpr leftOpTerm = (BoolExpr) toTerm(expr.getLeftOp());
         final BoolExpr rightOpTerm = (BoolExpr) toTerm(expr.getRightOp());
         return context.mkIff(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformXor(final XorExpr expr) {
+    private com.microsoft.z3legacy.Expr transformXor(final XorExpr expr) {
         final BoolExpr leftOpTerm = (BoolExpr) toTerm(expr.getLeftOp());
         final BoolExpr rightOpTerm = (BoolExpr) toTerm(expr.getRightOp());
         return context.mkXor(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformAnd(final AndExpr expr) {
+    private com.microsoft.z3legacy.Expr transformAnd(final AndExpr expr) {
         final BoolExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BoolExpr) toTerm(e))
                 .toArray(BoolExpr[]::new);
         return context.mkAnd(opTerms);
     }
 
-    private com.microsoft.z3.Expr transformOr(final OrExpr expr) {
+    private com.microsoft.z3legacy.Expr transformOr(final OrExpr expr) {
         final BoolExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BoolExpr) toTerm(e))
                 .toArray(BoolExpr[]::new);
         return context.mkOr(opTerms);
     }
 
-    private com.microsoft.z3.Expr transformExists(final ExistsExpr expr) {
+    private com.microsoft.z3legacy.Expr transformExists(final ExistsExpr expr) {
         env.push();
-        final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
+        final com.microsoft.z3legacy.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
         final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
         final BoolExpr result = context.mkExists(paramTerms, opTerm, 1, null, null, null, null);
         env.pop();
         return result;
     }
 
-    private com.microsoft.z3.Expr transformForall(final ForallExpr expr) {
+    private com.microsoft.z3legacy.Expr transformForall(final ForallExpr expr) {
         env.push();
-        final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
+        final com.microsoft.z3legacy.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
         final BoolExpr opTerm = (BoolExpr) toTerm(expr.getOp());
         final BoolExpr result = context.mkForall(paramTerms, opTerm, 1, null, null, null, null);
         env.pop();
         return result;
     }
 
-    private com.microsoft.z3.Expr[] transformParamDecls(final List<ParamDecl<?>> paramDecls) {
-        final com.microsoft.z3.Expr[] paramTerms = new com.microsoft.z3.Expr[paramDecls.size()];
+    private com.microsoft.z3legacy.Expr[] transformParamDecls(final List<ParamDecl<?>> paramDecls) {
+        final com.microsoft.z3legacy.Expr[] paramTerms = new com.microsoft.z3legacy.Expr[paramDecls.size()];
         int i = 0;
         for (final ParamDecl<?> paramDecl : paramDecls) {
-            final com.microsoft.z3.FuncDecl paramSymbol = transformParamDecl(paramDecl);
+            final com.microsoft.z3legacy.FuncDecl paramSymbol = transformParamDecl(paramDecl);
             paramTerms[i] = context.mkConst(paramSymbol);
             env.define(DeclSymbol.of(paramDecl), paramSymbol);
             i++;
@@ -542,101 +542,101 @@ final class Z3ExprTransformer {
      * Rationals
      */
 
-    private com.microsoft.z3.FuncDecl transformParamDecl(final ParamDecl<?> paramDecl) {
+    private com.microsoft.z3legacy.FuncDecl transformParamDecl(final ParamDecl<?> paramDecl) {
         final Type type = paramDecl.getType();
         if (type instanceof FuncType<?, ?>) {
             throw new UnsupportedOperationException("Only simple types are supported");
         } else {
-            final com.microsoft.z3.Sort sort = transformer.toSort(type);
+            final com.microsoft.z3legacy.Sort sort = transformer.toSort(type);
             return context.mkConstDecl(paramDecl.getName(), sort);
         }
     }
 
-    private com.microsoft.z3.Expr transformRatLit(final RatLitExpr expr) {
+    private com.microsoft.z3legacy.Expr transformRatLit(final RatLitExpr expr) {
         var num = context.mkReal(expr.getNum().toString());
         var denom = context.mkReal(expr.getDenom().toString());
         return context.mkDiv(num, denom);
     }
 
-    private com.microsoft.z3.Expr transformRatAdd(final RatAddExpr expr) {
-        final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-                .toArray(com.microsoft.z3.ArithExpr[]::new);
+    private com.microsoft.z3legacy.Expr transformRatAdd(final RatAddExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr[] opTerms = expr.getOps().stream()
+                .map(e -> (com.microsoft.z3legacy.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3legacy.ArithExpr[]::new);
         return context.mkAdd(opTerms);
     }
 
-    private com.microsoft.z3.Expr transformRatSub(final RatSubExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformRatSub(final RatSubExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkSub(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformRatPos(final RatPosExpr expr) {
+    private com.microsoft.z3legacy.Expr transformRatPos(final RatPosExpr expr) {
         return toTerm(expr.getOp());
     }
 
-    private com.microsoft.z3.Expr transformRatNeg(final RatNegExpr expr) {
-        final com.microsoft.z3.ArithExpr opTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
+    private com.microsoft.z3legacy.Expr transformRatNeg(final RatNegExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr opTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(expr.getOp());
         return context.mkUnaryMinus(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformRatMul(final RatMulExpr expr) {
-        final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-                .toArray(com.microsoft.z3.ArithExpr[]::new);
+    private com.microsoft.z3legacy.Expr transformRatMul(final RatMulExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr[] opTerms = expr.getOps().stream()
+                .map(e -> (com.microsoft.z3legacy.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3legacy.ArithExpr[]::new);
         return context.mkMul(opTerms);
     }
 
-    private com.microsoft.z3.Expr transformRatDiv(final RatDivExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformRatDiv(final RatDivExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkDiv(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformRatEq(final RatEqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformRatEq(final RatEqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkEq(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformRatNeq(final RatNeqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformRatNeq(final RatNeqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
     }
 
-    private com.microsoft.z3.Expr transformRatGeq(final RatGeqExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformRatGeq(final RatGeqExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkGe(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformRatGt(final RatGtExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformRatGt(final RatGtExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkGt(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformRatLeq(final RatLeqExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformRatLeq(final RatLeqExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkLe(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformRatLt(final RatLtExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformRatLt(final RatLtExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkLt(leftOpTerm, rightOpTerm);
     }
@@ -645,110 +645,110 @@ final class Z3ExprTransformer {
      * Integers
      */
 
-    private com.microsoft.z3.Expr transformRatToInt(final RatToIntExpr expr) {
-        final com.microsoft.z3.RealExpr opTerm = (com.microsoft.z3.RealExpr) toTerm(expr.getOp());
+    private com.microsoft.z3legacy.Expr transformRatToInt(final RatToIntExpr expr) {
+        final com.microsoft.z3legacy.RealExpr opTerm = (com.microsoft.z3legacy.RealExpr) toTerm(expr.getOp());
         return context.mkReal2Int(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntLit(final IntLitExpr expr) {
+    private com.microsoft.z3legacy.Expr transformIntLit(final IntLitExpr expr) {
         return context.mkInt(expr.getValue().toString());
     }
 
-    private com.microsoft.z3.Expr transformIntAdd(final IntAddExpr expr) {
-        final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-                .toArray(com.microsoft.z3.ArithExpr[]::new);
+    private com.microsoft.z3legacy.Expr transformIntAdd(final IntAddExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr[] opTerms = expr.getOps().stream()
+                .map(e -> (com.microsoft.z3legacy.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3legacy.ArithExpr[]::new);
         return context.mkAdd(opTerms);
     }
 
-    private com.microsoft.z3.Expr transformIntSub(final IntSubExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntSub(final IntSubExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkSub(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntPos(final IntPosExpr expr) {
+    private com.microsoft.z3legacy.Expr transformIntPos(final IntPosExpr expr) {
         return toTerm(expr.getOp());
     }
 
-    private com.microsoft.z3.Expr transformIntNeg(final IntNegExpr expr) {
-        final com.microsoft.z3.ArithExpr opTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
+    private com.microsoft.z3legacy.Expr transformIntNeg(final IntNegExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr opTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(expr.getOp());
         return context.mkUnaryMinus(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntMul(final IntMulExpr expr) {
-        final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream()
-                .map(e -> (com.microsoft.z3.ArithExpr) toTerm(e))
-                .toArray(com.microsoft.z3.ArithExpr[]::new);
+    private com.microsoft.z3legacy.Expr transformIntMul(final IntMulExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr[] opTerms = expr.getOps().stream()
+                .map(e -> (com.microsoft.z3legacy.ArithExpr) toTerm(e))
+                .toArray(com.microsoft.z3legacy.ArithExpr[]::new);
         return context.mkMul(opTerms);
     }
 
-    private com.microsoft.z3.Expr transformIntDiv(final IntDivExpr expr) {
-        final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntDiv(final IntDivExpr expr) {
+        final com.microsoft.z3legacy.IntExpr leftOpTerm = (com.microsoft.z3legacy.IntExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(
+        final com.microsoft.z3legacy.IntExpr rightOpTerm = (com.microsoft.z3legacy.IntExpr) toTerm(
                 expr.getRightOp());
         return context.mkDiv(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntMod(final IntModExpr expr) {
-        final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntMod(final IntModExpr expr) {
+        final com.microsoft.z3legacy.IntExpr leftOpTerm = (com.microsoft.z3legacy.IntExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(
+        final com.microsoft.z3legacy.IntExpr rightOpTerm = (com.microsoft.z3legacy.IntExpr) toTerm(
                 expr.getRightOp());
         return context.mkMod(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntRem(final IntRemExpr expr) {
-        final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntRem(final IntRemExpr expr) {
+        final com.microsoft.z3legacy.IntExpr leftOpTerm = (com.microsoft.z3legacy.IntExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(
+        final com.microsoft.z3legacy.IntExpr rightOpTerm = (com.microsoft.z3legacy.IntExpr) toTerm(
                 expr.getRightOp());
         return context.mkRem(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntEq(final IntEqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformIntEq(final IntEqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkEq(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntNeq(final IntNeqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformIntNeq(final IntNeqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
     }
 
-    private com.microsoft.z3.Expr transformIntGeq(final IntGeqExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntGeq(final IntGeqExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkGe(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntGt(final IntGtExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntGt(final IntGtExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkGt(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntLeq(final IntLeqExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntLeq(final IntLeqExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkLe(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformIntLt(final IntLtExpr expr) {
-        final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformIntLt(final IntLtExpr expr) {
+        final com.microsoft.z3legacy.ArithExpr leftOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getLeftOp());
-        final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(
+        final com.microsoft.z3legacy.ArithExpr rightOpTerm = (com.microsoft.z3legacy.ArithExpr) toTerm(
                 expr.getRightOp());
         return context.mkLt(leftOpTerm, rightOpTerm);
     }
@@ -757,29 +757,29 @@ final class Z3ExprTransformer {
      * Bitvectors
      */
 
-    private com.microsoft.z3.Expr transformIntToRat(final IntToRatExpr expr) {
-        final com.microsoft.z3.IntExpr opTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getOp());
+    private com.microsoft.z3legacy.Expr transformIntToRat(final IntToRatExpr expr) {
+        final com.microsoft.z3legacy.IntExpr opTerm = (com.microsoft.z3legacy.IntExpr) toTerm(expr.getOp());
         return context.mkInt2Real(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvLit(final BvLitExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvLit(final BvLitExpr expr) {
         return context.mkBV(BvUtils.neutralBvLitExprToBigInteger(expr).toString(),
                 expr.getType().getSize());
     }
 
-    private com.microsoft.z3.Expr transformBvEq(final BvEqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformBvEq(final BvEqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkEq(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvNeq(final BvNeqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformBvNeq(final BvNeqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
     }
 
-    private com.microsoft.z3.Expr transformBvConcat(final BvConcatExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvConcat(final BvConcatExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BitVecExpr) toTerm(e))
                 .toArray(BitVecExpr[]::new);
@@ -787,7 +787,7 @@ final class Z3ExprTransformer {
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkConcat);
     }
 
-    private com.microsoft.z3.Expr transformBvExtract(final BvExtractExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvExtract(final BvExtractExpr expr) {
         final BitVecExpr bitvecTerm = (BitVecExpr) toTerm(expr.getBitvec());
         final int from = expr.getFrom().getValue().intValue();
         final int until = expr.getUntil().getValue().intValue();
@@ -795,21 +795,21 @@ final class Z3ExprTransformer {
         return context.mkExtract(until - 1, from, bitvecTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvZExt(final BvZExtExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvZExt(final BvZExtExpr expr) {
         final BitVecExpr bitvecTerm = (BitVecExpr) toTerm(expr.getOp());
         final int extendWith = expr.getExtendType().getSize() - expr.getOp().getType().getSize();
 
         return context.mkZeroExt(extendWith, bitvecTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvSExt(final BvSExtExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSExt(final BvSExtExpr expr) {
         final BitVecExpr bitvecTerm = (BitVecExpr) toTerm(expr.getOp());
         final int extendWith = expr.getExtendType().getSize() - expr.getOp().getType().getSize();
 
         return context.mkSignExt(extendWith, bitvecTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvAdd(final BvAddExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvAdd(final BvAddExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BitVecExpr) toTerm(e))
                 .toArray(BitVecExpr[]::new);
@@ -817,26 +817,26 @@ final class Z3ExprTransformer {
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVAdd);
     }
 
-    private com.microsoft.z3.Expr transformBvSub(final BvSubExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSub(final BvSubExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
         return context.mkBVSub(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvPos(final BvPosExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvPos(final BvPosExpr expr) {
         return toTerm(expr.getOp());
     }
 
-    private com.microsoft.z3.Expr transformBvSignChange(final BvSignChangeExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSignChange(final BvSignChangeExpr expr) {
         return toTerm(expr.getOp());
     }
 
-    private com.microsoft.z3.Expr transformBvNeg(final BvNegExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvNeg(final BvNegExpr expr) {
         final BitVecExpr opTerm = (BitVecExpr) toTerm(expr.getOp());
         return context.mkBVNeg(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvMul(final BvMulExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvMul(final BvMulExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BitVecExpr) toTerm(e))
                 .toArray(BitVecExpr[]::new);
@@ -844,42 +844,42 @@ final class Z3ExprTransformer {
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVMul);
     }
 
-    private com.microsoft.z3.Expr transformBvUDiv(final BvUDivExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvUDiv(final BvUDivExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVUDiv(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvSDiv(final BvSDivExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSDiv(final BvSDivExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVSDiv(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvSMod(final BvSModExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSMod(final BvSModExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVSMod(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvURem(final BvURemExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvURem(final BvURemExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVURem(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvSRem(final BvSRemExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSRem(final BvSRemExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVSRem(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvAnd(final BvAndExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvAnd(final BvAndExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BitVecExpr) toTerm(e))
                 .toArray(BitVecExpr[]::new);
@@ -887,7 +887,7 @@ final class Z3ExprTransformer {
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVAND);
     }
 
-    private com.microsoft.z3.Expr transformBvOr(final BvOrExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvOr(final BvOrExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BitVecExpr) toTerm(e))
                 .toArray(BitVecExpr[]::new);
@@ -895,7 +895,7 @@ final class Z3ExprTransformer {
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVOR);
     }
 
-    private com.microsoft.z3.Expr transformBvXor(final BvXorExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvXor(final BvXorExpr expr) {
         final BitVecExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (BitVecExpr) toTerm(e))
                 .toArray(BitVecExpr[]::new);
@@ -903,90 +903,90 @@ final class Z3ExprTransformer {
         return Stream.of(opTerms).skip(1).reduce(opTerms[0], context::mkBVXOR);
     }
 
-    private com.microsoft.z3.Expr transformBvNot(final BvNotExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvNot(final BvNotExpr expr) {
         final BitVecExpr opTerm = (BitVecExpr) toTerm(expr.getOp());
 
         return context.mkBVNot(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvShiftLeft(final BvShiftLeftExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvShiftLeft(final BvShiftLeftExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVSHL(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvArithShiftRight(final BvArithShiftRightExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvArithShiftRight(final BvArithShiftRightExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVASHR(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvLogicShiftRight(final BvLogicShiftRightExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvLogicShiftRight(final BvLogicShiftRightExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVLSHR(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvRotateLeft(final BvRotateLeftExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvRotateLeft(final BvRotateLeftExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVRotateLeft(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvRotateRight(final BvRotateRightExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvRotateRight(final BvRotateRightExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVRotateRight(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvUGeq(final BvUGeqExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvUGeq(final BvUGeqExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVUGE(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvUGt(final BvUGtExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvUGt(final BvUGtExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVUGT(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvULeq(final BvULeqExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvULeq(final BvULeqExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVULE(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvULt(final BvULtExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvULt(final BvULtExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVULT(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvSGeq(final BvSGeqExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSGeq(final BvSGeqExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVSGE(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvSGt(final BvSGtExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSGt(final BvSGtExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVSGT(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformBvSLeq(final BvSLeqExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSLeq(final BvSLeqExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
@@ -997,19 +997,19 @@ final class Z3ExprTransformer {
      * Floating points
      */
 
-    private com.microsoft.z3.Expr transformBvSLt(final BvSLtExpr expr) {
+    private com.microsoft.z3legacy.Expr transformBvSLt(final BvSLtExpr expr) {
         final BitVecExpr leftOpTerm = (BitVecExpr) toTerm(expr.getLeftOp());
         final BitVecExpr rightOpTerm = (BitVecExpr) toTerm(expr.getRightOp());
 
         return context.mkBVSLT(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpLit(final FpLitExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpLit(final FpLitExpr expr) {
         return context.mkFP(context.mkBV(expr.getHidden() ? 1 : 0, 1),
                 (BitVecExpr) toTerm(expr.getExponent()), (BitVecExpr) toTerm(expr.getSignificand()));
     }
 
-    private com.microsoft.z3.Expr transformFpAdd(final FpAddExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpAdd(final FpAddExpr expr) {
         final FPExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (FPExpr) toTerm(e))
                 .toArray(FPExpr[]::new);
@@ -1019,48 +1019,48 @@ final class Z3ExprTransformer {
                         op2));
     }
 
-    private com.microsoft.z3.Expr transformFpSub(final FpSubExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpSub(final FpSubExpr expr) {
         final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
         final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
         return context.mkFPSub(transformFpRoundingMode(expr.getRoundingMode()), leftOpTerm,
                 rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpPos(final FpPosExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpPos(final FpPosExpr expr) {
         return toTerm(expr.getOp());
     }
 
-    private com.microsoft.z3.Expr transformFpNeg(final FpNegExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpNeg(final FpNegExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPNeg(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpAbs(final FpAbsExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpAbs(final FpAbsExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPAbs(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpIsNan(final FpIsNanExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpIsNan(final FpIsNanExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPIsNaN(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpIsInfinite(final FpIsInfiniteExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpIsInfinite(final FpIsInfiniteExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPIsInfinite(opTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpSqrt(final FpSqrtExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpSqrt(final FpSqrtExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPSqrt(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpRoundToIntegral(final FpRoundToIntegralExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpRoundToIntegral(final FpRoundToIntegralExpr expr) {
         final FPExpr opTerm = (FPExpr) toTerm(expr.getOp());
         return context.mkFPRoundToIntegral(transformFpRoundingMode(expr.getRoundingMode()), opTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpMul(final FpMulExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpMul(final FpMulExpr expr) {
         final FPExpr[] opTerms = expr.getOps().stream()
                 .map(e -> (FPExpr) toTerm(e))
                 .toArray(FPExpr[]::new);
@@ -1070,7 +1070,7 @@ final class Z3ExprTransformer {
                         op2));
     }
 
-    private com.microsoft.z3.Expr transformFpDiv(final FpDivExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpDiv(final FpDivExpr expr) {
         final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
         final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
 
@@ -1078,55 +1078,55 @@ final class Z3ExprTransformer {
                 rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpRem(final FpRemExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpRem(final FpRemExpr expr) {
         final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
         final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
         return context.mkFPRem(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpEq(final FpEqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformFpEq(final FpEqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpAssign(final FpAssignExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformFpAssign(final FpAssignExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkEq(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpNeq(final FpNeqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformFpNeq(final FpNeqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkNot(context.mkFPEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm));
     }
 
-    private com.microsoft.z3.Expr transformFpGeq(final FpGeqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformFpGeq(final FpGeqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkFPGEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpLeq(final FpLeqExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformFpLeq(final FpLeqExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkFPLEq((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpGt(final FpGtExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformFpGt(final FpGtExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkFPGt((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpLt(final FpLtExpr expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformFpLt(final FpLtExpr expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkFPLt((FPExpr) leftOpTerm, (FPExpr) rightOpTerm);
     }
 
-    private com.microsoft.z3.FPRMExpr transformFpRoundingMode(final FpRoundingMode roundingMode) {
+    private com.microsoft.z3legacy.FPRMExpr transformFpRoundingMode(final FpRoundingMode roundingMode) {
         switch (roundingMode) {
             case RNE:
                 return context.mkFPRoundNearestTiesToEven();
@@ -1143,19 +1143,19 @@ final class Z3ExprTransformer {
         }
     }
 
-    private com.microsoft.z3.Expr transformFpMax(final FpMaxExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpMax(final FpMaxExpr expr) {
         final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
         final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
         return context.mkFPMax(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpMin(final FpMinExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpMin(final FpMinExpr expr) {
         final FPExpr leftOpTerm = (FPExpr) toTerm(expr.getLeftOp());
         final FPExpr rightOpTerm = (FPExpr) toTerm(expr.getRightOp());
         return context.mkFPMin(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformFpFromBv(final FpFromBvExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpFromBv(final FpFromBvExpr expr) {
         final BitVecExpr val = (BitVecExpr) toTerm(expr.getOp());
         final FPSort fpSort = context.mkFPSort(expr.getFpType().getExponent(),
                 expr.getFpType().getSignificand());
@@ -1163,7 +1163,7 @@ final class Z3ExprTransformer {
                 expr.isSigned());
     }
 
-    private com.microsoft.z3.Expr transformFpToBv(final FpToBvExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpToBv(final FpToBvExpr expr) {
         boolean sgn = expr.getSgn();
         int size = expr.getSize();
         final FPExpr op = (FPExpr) toTerm(expr.getOp());
@@ -1174,37 +1174,37 @@ final class Z3ExprTransformer {
      * Arrays
      */
 
-    private com.microsoft.z3.Expr transformFpToFp(final FpToFpExpr expr) {
+    private com.microsoft.z3legacy.Expr transformFpToFp(final FpToFpExpr expr) {
         final FPExpr op = (FPExpr) toTerm(expr.getOp());
 
         return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), op,
                 new FPSort(context, expr.getExpBits(), expr.getSignBits()));
     }
 
-    private com.microsoft.z3.Expr transformArrayRead(final ArrayReadExpr<?, ?> expr) {
-        final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformArrayRead(final ArrayReadExpr<?, ?> expr) {
+        final com.microsoft.z3legacy.ArrayExpr arrayTerm = (com.microsoft.z3legacy.ArrayExpr) toTerm(
                 expr.getArray());
-        final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
+        final com.microsoft.z3legacy.Expr indexTerm = toTerm(expr.getIndex());
         return context.mkSelect(arrayTerm, indexTerm);
     }
 
-    private com.microsoft.z3.Expr transformArrayWrite(final ArrayWriteExpr<?, ?> expr) {
-        final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(
+    private com.microsoft.z3legacy.Expr transformArrayWrite(final ArrayWriteExpr<?, ?> expr) {
+        final com.microsoft.z3legacy.ArrayExpr arrayTerm = (com.microsoft.z3legacy.ArrayExpr) toTerm(
                 expr.getArray());
-        final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
-        final com.microsoft.z3.Expr elemTerm = toTerm(expr.getElem());
+        final com.microsoft.z3legacy.Expr indexTerm = toTerm(expr.getIndex());
+        final com.microsoft.z3legacy.Expr elemTerm = toTerm(expr.getElem());
         return context.mkStore(arrayTerm, indexTerm, elemTerm);
     }
 
-    private com.microsoft.z3.Expr transformArrayEq(final ArrayEqExpr<?, ?> expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformArrayEq(final ArrayEqExpr<?, ?> expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkEq(leftOpTerm, rightOpTerm);
     }
 
-    private com.microsoft.z3.Expr transformArrayNeq(final ArrayNeqExpr<?, ?> expr) {
-        final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
-        final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+    private com.microsoft.z3legacy.Expr transformArrayNeq(final ArrayNeqExpr<?, ?> expr) {
+        final com.microsoft.z3legacy.Expr leftOpTerm = toTerm(expr.getLeftOp());
+        final com.microsoft.z3legacy.Expr rightOpTerm = toTerm(expr.getRightOp());
         return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
     }
 
@@ -1212,8 +1212,8 @@ final class Z3ExprTransformer {
      * Functions
      */
 
-    private com.microsoft.z3.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
-        com.microsoft.z3.ArrayExpr running = context.mkConstArray(
+    private com.microsoft.z3legacy.Expr transformArrayLit(final ArrayLitExpr<?, ?> expr) {
+        com.microsoft.z3legacy.ArrayExpr running = context.mkConstArray(
                 transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
             running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
@@ -1221,8 +1221,8 @@ final class Z3ExprTransformer {
         return running;
     }
 
-    private com.microsoft.z3.Expr transformArrayInit(final ArrayInitExpr<?, ?> expr) {
-        com.microsoft.z3.ArrayExpr running = context.mkConstArray(
+    private com.microsoft.z3legacy.Expr transformArrayInit(final ArrayInitExpr<?, ?> expr) {
+        com.microsoft.z3legacy.ArrayExpr running = context.mkConstArray(
                 transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
         for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
             running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
@@ -1230,17 +1230,17 @@ final class Z3ExprTransformer {
         return running;
     }
 
-    private com.microsoft.z3.Expr transformFuncApp(final FuncAppExpr<?, ?> expr) {
+    private com.microsoft.z3legacy.Expr transformFuncApp(final FuncAppExpr<?, ?> expr) {
         final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
         final Expr<?> func = funcAndArgs.get1();
         if (func instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) func;
             final Decl<?> decl = ref.getDecl();
-            final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
+            final com.microsoft.z3legacy.FuncDecl funcDecl = transformer.toSymbol(decl);
             final List<Expr<?>> args = funcAndArgs.get2();
-            final com.microsoft.z3.Expr[] argTerms = args.stream()
+            final com.microsoft.z3legacy.Expr[] argTerms = args.stream()
                     .map(this::toTerm)
-                    .toArray(com.microsoft.z3.Expr[]::new);
+                    .toArray(com.microsoft.z3legacy.Expr[]::new);
             return context.mkApp(funcDecl, argTerms);
         } else {
             throw new UnsupportedOperationException(

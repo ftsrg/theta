@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
-import com.microsoft.z3.Context;
+import com.microsoft.z3legacy.Context;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -32,15 +32,15 @@ final class Z3TransformationManager {
         this.exprTransformer = new Z3ExprTransformer(this, context);
     }
 
-    public com.microsoft.z3.Sort toSort(final Type type) {
+    public com.microsoft.z3legacy.Sort toSort(final Type type) {
         return typeTransformer.toSort(type);
     }
 
-    public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
+    public com.microsoft.z3legacy.FuncDecl toSymbol(final Decl<?> decl) {
         return declTransformer.toSymbol(decl);
     }
 
-    public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
+    public com.microsoft.z3legacy.Expr toTerm(final Expr<?> expr) {
         return exprTransformer.toTerm(expr);
     }
 

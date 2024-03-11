@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.Context;
+import com.microsoft.z3legacy.Context;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -43,7 +43,7 @@ final class Z3DeclTransformer {
         this.symbolCount = 0;
     }
 
-    public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
+    public com.microsoft.z3legacy.FuncDecl toSymbol(final Decl<?> decl) {
         if (decl instanceof ConstDecl) {
             return transformConst((ConstDecl<?>) decl);
         } else {
@@ -51,8 +51,8 @@ final class Z3DeclTransformer {
         }
     }
 
-    private com.microsoft.z3.FuncDecl transformConst(final ConstDecl<?> decl) {
-        final com.microsoft.z3.FuncDecl symbol;
+    private com.microsoft.z3legacy.FuncDecl transformConst(final ConstDecl<?> decl) {
+        final com.microsoft.z3legacy.FuncDecl symbol;
 
         if (symbolTable.definesConst(decl)) {
             symbol = symbolTable.getSymbol(decl);
@@ -63,10 +63,10 @@ final class Z3DeclTransformer {
             final List<Type> paramTypes = extractedTypes.get1();
             final Type returnType = extractedTypes.get2();
 
-            final com.microsoft.z3.Sort returnSort = transformer.toSort(returnType);
-            final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream()
+            final com.microsoft.z3legacy.Sort returnSort = transformer.toSort(returnType);
+            final com.microsoft.z3legacy.Sort[] paramSorts = paramTypes.stream()
                     .map(t -> transformer.toSort(t))
-                    .toArray(size -> new com.microsoft.z3.Sort[size]);
+                    .toArray(size -> new com.microsoft.z3legacy.Sort[size]);
 
             symbol = context.mkFuncDecl(symbolNameFor(decl), paramSorts, returnSort);
             symbolTable.put(decl, symbol);

@@ -16,8 +16,8 @@
 package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.Status;
+import com.microsoft.z3legacy.FuncDecl;
+import com.microsoft.z3legacy.Status;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -53,8 +53,8 @@ final class Z3Solver implements UCSolver, Solver {
     private final Z3TransformationManager transformationManager;
     private final Z3TermTransformer termTransformer;
 
-    private final com.microsoft.z3.Context z3Context;
-    private final com.microsoft.z3.Solver z3Solver;
+    private final com.microsoft.z3legacy.Context z3Context;
+    private final com.microsoft.z3legacy.Solver z3Solver;
 
     private final Stack<Expr<BoolType>> assertions;
     private final Map<String, Expr<BoolType>> assumptions;
@@ -68,8 +68,8 @@ final class Z3Solver implements UCSolver, Solver {
 
     public Z3Solver(final Z3SymbolTable symbolTable,
                     final Z3TransformationManager transformationManager,
-                    final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
-                    final com.microsoft.z3.Solver z3Solver) {
+                    final Z3TermTransformer termTransformer, final com.microsoft.z3legacy.Context z3Context,
+                    final com.microsoft.z3legacy.Solver z3Solver) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
@@ -85,12 +85,12 @@ final class Z3Solver implements UCSolver, Solver {
     @Override
     public void add(final Expr<BoolType> assertion) {
         checkNotNull(assertion);
-        final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
+        final com.microsoft.z3legacy.BoolExpr term = (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(
                 assertion);
         add(assertion, term);
     }
 
-    void add(final Expr<BoolType> assertion, final com.microsoft.z3.BoolExpr term) {
+    void add(final Expr<BoolType> assertion, final com.microsoft.z3legacy.BoolExpr term) {
         assertions.add(assertion);
         z3Solver.add(term);
         clearState();
@@ -101,10 +101,10 @@ final class Z3Solver implements UCSolver, Solver {
         checkNotNull(assertion);
 
         assertions.add(assertion);
-        final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
+        final com.microsoft.z3legacy.BoolExpr term = (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(
                 assertion);
         final String label = String.format(ASSUMPTION_LABEL, labelNum++);
-        final com.microsoft.z3.BoolExpr labelTerm = z3Context.mkBoolConst(label);
+        final com.microsoft.z3legacy.BoolExpr labelTerm = z3Context.mkBoolConst(label);
 
         assumptions.put(label, assertion);
 
@@ -176,7 +176,7 @@ final class Z3Solver implements UCSolver, Solver {
         assert status == SolverStatus.SAT;
         assert model == null;
 
-        final com.microsoft.z3.Model z3Model = z3Solver.getModel();
+        final com.microsoft.z3legacy.Model z3Model = z3Solver.getModel();
         assert z3Model != null;
 
         return new Z3Model(z3Model);
@@ -200,10 +200,10 @@ final class Z3Solver implements UCSolver, Solver {
 
         final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
 
-        final com.microsoft.z3.Expr[] z3UnsatCore = z3Solver.getUnsatCore();
+        final com.microsoft.z3legacy.Expr[] z3UnsatCore = z3Solver.getUnsatCore();
 
         for (int i = 0; i < z3UnsatCore.length; i = i + 1) {
-            final com.microsoft.z3.Expr term = z3UnsatCore[i];
+            final com.microsoft.z3legacy.Expr term = z3UnsatCore[i];
 
             checkState(term.isConst(), "Term is not constant.");
 
@@ -237,11 +237,11 @@ final class Z3Solver implements UCSolver, Solver {
 
     private final class Z3Model extends Valuation {
 
-        private final com.microsoft.z3.Model z3Model;
+        private final com.microsoft.z3legacy.Model z3Model;
         private final Map<Decl<?>, LitExpr<?>> constToExpr;
         private volatile Collection<ConstDecl<?>> constDecls = null;
 
-        public Z3Model(final com.microsoft.z3.Model z3Model) {
+        public Z3Model(final com.microsoft.z3legacy.Model z3Model) {
             this.z3Model = z3Model;
             constToExpr = Containers.createMap();
         }
@@ -305,7 +305,7 @@ final class Z3Solver implements UCSolver, Solver {
         }
 
         private LitExpr<?> extractBvConstLiteral(final FuncDecl funcDecl) {
-            final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+            final com.microsoft.z3legacy.Expr term = z3Model.getConstInterp(funcDecl);
             if (term == null) {
                 return null;
             } else {
@@ -314,7 +314,7 @@ final class Z3Solver implements UCSolver, Solver {
         }
 
         private LitExpr<?> extractConstLiteral(final FuncDecl funcDecl) {
-            final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+            final com.microsoft.z3legacy.Expr term = z3Model.getConstInterp(funcDecl);
             if (term == null) {
                 return null;
             } else {
@@ -330,7 +330,7 @@ final class Z3Solver implements UCSolver, Solver {
 
         ////
 
-        private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
+        private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3legacy.Model z3Model) {
             final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
             for (final FuncDecl symbol : z3Model.getDecls()) {
                 if (symbolTable.definesSymbol(symbol)) {

@@ -25,8 +25,8 @@ object Deps {
         val runtime = "org.antlr:antlr4-runtime:${Versions.antlr}"
     }
 
-    val z3 = "lib/current/com.microsoft.z3.jar"
-    val z3legacy = "lib/legacy/com.microsoft.z3.jar"
+    val z3 = "lib/com.microsoft.z3.jar"
+    val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
     val jcommander = "com.beust:jcommander:${Versions.jcommander}"
 
