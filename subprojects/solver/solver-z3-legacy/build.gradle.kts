@@ -23,6 +23,5 @@ dependencies {
     implementation(project(":theta-solver"))
     implementation(files(rootDir.resolve(Deps.z3legacy)))
     testImplementation(testFixtures(project(":theta-core")))
-    implementation(Deps.junit4)         // we need this to disable interpolation tests on macos
-    implementation(Deps.junit4engine)   // ^--
+    implementation(Deps.junit4)         // we need this to disable interpolation tests on macOS
 }
