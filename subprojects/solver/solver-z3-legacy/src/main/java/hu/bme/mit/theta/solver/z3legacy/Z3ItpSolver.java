@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.z3legacy;
 
+import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -37,6 +39,7 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.junit.Assume.assumeFalse;
 
 final class Z3ItpSolver implements ItpSolver, Solver {
 
@@ -93,6 +96,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
 
     @Override
     public Interpolant getInterpolant(final ItpPattern pattern) {
+        assumeFalse(OsHelper.getOs().equals(OperatingSystem.MAC)); // currently, MacOS does not have interpolation
         checkState(solver.getStatus() == SolverStatus.UNSAT,
                 "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof Z3ItpPattern);

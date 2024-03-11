@@ -22,8 +22,6 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.common.OsHelper;
-import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -48,7 +46,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -92,7 +89,6 @@ public final class ExprTraceCheckersTest {
 
     @Test
     public void testInfeasable() {
-        assumeFalse(OsHelper.getOs().equals(OperatingSystem.MAC));
         // Arrange
         final Expr<IntType> x = Var("x", Int()).getRef();
         final Expr<BoolType> trans1 = Eq(Prime(x), Int(0));
