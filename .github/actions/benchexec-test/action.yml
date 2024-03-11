@@ -20,19 +20,19 @@ runs:
       run: |
         mkdir -p xml
         cp $GITHUB_ACTION_PATH/theta.xml xml/
-    - name: Get sv-benchmarks
+    - name: Get sv-benchmarks (retry max. 3 times)
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
+      with:
+        timeout_minutes: 15
+        max_attempts: 3
+        shell: bash
+        command: git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
+    - name: Checkout C folder
       shell: bash
       run: |
-        git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
         cd sv-benchmarks
         git sparse-checkout add c
         git checkout
-    - name: Get archive
-      shell: bash
-      run: |
-        wget https://github.com/ftsrg/theta/releases/download/svcomp24/theta.zip
-        unzip theta.zip
-        mv Theta theta
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
       name: Get zip
       with:
