@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 public final class Z3SolverManager extends SolverManager {
 
-    private static final String NAME = "Z3";
+    private static final String NAME = "Z3:4.13";
 
     private boolean closed = false;
     private final Set<SolverBase> instantiatedSolvers = new HashSet<>();
