@@ -34,15 +34,14 @@ runs:
         unzip theta.zip
         mv Theta theta
     - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-      name: Get JAR
+      name: Get zip
       with:
-        name: ThetaJars
-        path: jar/
-    - name: Add new jar to archive
+        name: Theta_SV-COMP
+        path: release/
+    - name: Unzip 
       shell: bash
       run: |
-        mv jar/xcfa/xcfa-cli/build/libs/*-all.jar theta/theta.jar
-        ls -l theta
+        unzip release/Theta.zip
     - name: Cut setfile if too long
       id: setfile 
       shell: bash
@@ -56,7 +55,7 @@ runs:
       shell: bash
       if: steps.setfile.outputs.length != '0'
       run: |
-        benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ inputs.task }}
+        benchexec xml/theta.xml --no-container --tool-directory Theta -t ${{ inputs.task }}
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       if: steps.setfile.outputs.length != '0'
