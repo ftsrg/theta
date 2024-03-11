@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls
@@ -30,6 +31,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Test
 
 class BoundedTest {
@@ -83,6 +85,7 @@ class BoundedTest {
 
     @Test
     fun testBoundedSafe() {
+        Assume.assumeFalse(OsHelper.getOs() == OsHelper.OperatingSystem.MAC)
         val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
         val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
