@@ -162,7 +162,7 @@ jobs:
   test-docker:
     strategy:
       matrix:
-        dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
+        dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
