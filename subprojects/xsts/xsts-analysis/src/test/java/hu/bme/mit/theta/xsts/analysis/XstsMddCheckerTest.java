@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddWitness;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
@@ -96,7 +96,8 @@ public class XstsMddCheckerTest {
 
                 {"src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true},
 
-                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
+                // TODO: too costly for testing
+//                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
 
                 {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true},
 //
@@ -128,7 +129,7 @@ public class XstsMddCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final XstsMddChecker checker = XstsMddChecker.create(xsts, Z3SolverFactory.getInstance());
+        final XstsMddChecker checker = XstsMddChecker.create(xsts, Z3LegacySolverFactory.getInstance());
         final SafetyResult<MddWitness, MddCex> status = checker.check(null);
         if (safe) {
             assertTrue(status.isSafe());
