@@ -31,25 +31,23 @@ public final class MultiBuilder {
     LeftSideAdded<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> initWithLeftSide(
             Analysis<LState, ? super LAction, ? super LPrec> analysis, LTS<? super LState, LAction> lts, BiFunction<LBlank, DataState, LState> combineStates, Function<LState, LBlank> stripDataFromState, Function<LState, DataState> extractDataFromState, InitFunc<LBlank, LBlankPrec> initFunc, Function<LPrec, LBlankPrec> stripDataFromPrec
     ) {
-        return new LeftSideAdded<>(analysis, combineStates, stripDataFromState, extractDataFromState, lts, initFunc, stripDataFromPrec);
+        return new LeftSideAdded<>(new MultiAnalysis.Side<>(analysis, initFunc, combineStates, stripDataFromState, extractDataFromState, stripDataFromPrec), lts);
     }
 
-    public record Result<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
-            LAction extends Action, RAction extends Action,
-            LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec,
-            MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>>
-            (MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction> analysis,
-             MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction> lts) {
+    public static <LState extends State, LBlank extends State, LAction extends Action, DataState extends State, LPrec extends Prec, LBlankPrec extends Prec>
+    LeftSideAdded<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> initWithLeftSide(
+            final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side, LTS<? super LState, LAction> lts
+    ) {
+        return new LeftSideAdded<>(side, lts);
     }
 
     public static class LeftSideAdded<LState extends State, DataState extends State, LBlank extends State, LAction extends Action, LPrec extends Prec, LBlankPrec extends Prec> {
         private final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side;
         private final LTS<? super LState, LAction> lts;
 
-        LeftSideAdded(Analysis<LState, ? super LAction, ? super LPrec> analysis, BiFunction<LBlank, DataState, LState> combineStates, Function<LState, LBlank> stripDataFromState,
-                      Function<LState, DataState> extractDataFromState, LTS<? super LState, LAction> lts, InitFunc<LBlank, LBlankPrec> initFunc, Function<LPrec, LBlankPrec> stripDataFromPrec) {
+        LeftSideAdded(final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side, final LTS<? super LState, LAction> lts) {
             this.lts = lts;
-            this.side = new MultiAnalysis.Side<>(analysis, initFunc, combineStates, stripDataFromState, extractDataFromState, stripDataFromPrec);
+            this.side = side;
         }
 
         public <RState extends State, RBlank extends State, RAction extends Action, RPrec extends Prec, RBlankPrec extends Prec>
@@ -61,6 +59,14 @@ public final class MultiBuilder {
             return new BothSidesDone<>(side, lts, rightSide, rightLts);
         }
 
+    }
+
+    public record Result<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
+            LAction extends Action, RAction extends Action,
+            LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec,
+            MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>>
+            (MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction> analysis,
+             MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction> lts) {
     }
 
     public static class BothSidesDone<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
