@@ -15,27 +15,47 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.java.mdd.MddNode;
+import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
 public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondition {
 
-    private final MddHandle node;
+    private final MddNode node;
 
-    public MddNodeInitializer(final MddHandle node) {
-        this.node = node;
+    private final MddVariableHandle variableHandle;
+
+    private MddNodeInitializer(final MddNode node, final MddVariableHandle variableHandle) {
+        this.node = Preconditions.checkNotNull(node);
+        this.variableHandle = Preconditions.checkNotNull(variableHandle);
+        Preconditions.checkArgument((variableHandle.isTerminal() && node.isTerminal()) || node.isOn(variableHandle.getVariable().orElseThrow()));
+
+    }
+
+    private static AbstractNextStateDescriptor.Postcondition of(final MddNode node, final MddVariableHandle variableHandle) {
+        if(node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) {
+            return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
+        } else {
+            return new MddNodeInitializer(node, variableHandle);
+        }
+    }
+
+    public static AbstractNextStateDescriptor.Postcondition of(final MddHandle handle) {
+        return of(handle.getNode(), handle.getVariableHandle());
     }
 
     @Override
     public boolean evaluate() {
-        return !node.isTerminalZero();
+        return true;
     }
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
-        return new IntObjMapViews.Transforming<>(node, n -> new MddNodeInitializer((MddHandle) n));
+        return new IntObjMapViews.Transforming<>(node, n -> of(n, variableHandle.getLower().orElseThrow()));
     }
 }
