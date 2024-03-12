@@ -13,16 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
 
-dependencies {
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-xsts"))
-    testImplementation(project(":theta-solver-z3"))
+package hu.bme.mit.theta.xsts.analysis
+
+import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.unit.UnitState
+
+fun <P : Prec> xstsUnitInitFunc(): XstsInitFunc<UnitState, P> {
+    return XstsInitFunc.create { _: P -> listOf<UnitState>(UnitState.getInstance()) }
 }

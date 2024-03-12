@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.multi
 
+import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
@@ -79,12 +80,7 @@ class MultiOfTwoTest {
         )
         val xstsAnalysis = XstsAnalysis.create(dataAnalysis)
         val xstsLts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create<ExplState>()))
-        val xstsInitFunc = XstsInitFunc.create { _: ExplPrec -> listOf<UnitState>(UnitState.getInstance()) }
-        val xstsCombineStates = { x: XstsState<UnitState>, d: ExplState -> XstsState.of(d, x.lastActionWasEnv(), true) }
-        val xstsStripState =
-            { x: XstsState<ExplState> -> XstsState.of(UnitState.getInstance(), x.lastActionWasEnv(), true) }
-        val xstsExtractFromState = { x: XstsState<ExplState> -> x.state }
-        val xstsStripPrec = { p: ExplPrec -> p }
+
         val variables = xsts.vars
 
         var cfa: CFA
@@ -115,10 +111,10 @@ class MultiOfTwoTest {
             .addRightSide(
                 xstsAnalysis,
                 xstsLts,
-                xstsCombineStates,
-                xstsStripState,
-                xstsExtractFromState,
-                xstsInitFunc,
+                ::xstsCombineStates,
+                ::xstsStripState,
+                ::xstsExtractFromState,
+                xstsUnitInitFunc(),
                 xstsStripPrec
             )
             .build<ExplPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>>(
@@ -163,12 +159,6 @@ class MultiOfTwoTest {
         )
         val xstsAnalysis = XstsAnalysis.create(dataAnalysis)
         val xstsLts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create<PredState>()))
-        val xstsInitFunc = XstsInitFunc.create { _: PredPrec -> listOf<UnitState>(UnitState.getInstance()) }
-        val xstsCombineStates = { x: XstsState<UnitState>, d: PredState -> XstsState.of(d, x.lastActionWasEnv(), true) }
-        val xstsStripState =
-            { x: XstsState<PredState> -> XstsState.of(UnitState.getInstance(), x.lastActionWasEnv(), true) }
-        val xstsExtractFromState = { x: XstsState<PredState> -> x.state }
-        val xstsStripPrec = { p: PredPrec -> p }
 
         var cfa: CFA
         FileInputStream("src/test/resources/cfa/doubler.cfa").use { inputStream ->
@@ -198,10 +188,10 @@ class MultiOfTwoTest {
             .addRightSide(
                 xstsAnalysis,
                 xstsLts,
-                xstsCombineStates,
-                xstsStripState,
-                xstsExtractFromState,
-                xstsInitFunc,
+                ::xstsCombineStates,
+                ::xstsStripState,
+                ::xstsExtractFromState,
+                xstsUnitInitFunc(),
                 xstsStripPrec
             )
             .build<PredPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, PredState>, StmtMultiAction<CfaAction, XstsAction>>(
