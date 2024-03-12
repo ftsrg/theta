@@ -54,8 +54,8 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -336,7 +336,7 @@ public class CfaCli {
     private void writeCex(final Unsafe<?, ?> status) throws FileNotFoundException {
         @SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
         final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(
-                trace, Z3SolverFactory.getInstance());
+                trace, Z3LegacySolverFactory.getInstance());
         final File file = new File(cexfile);
         PrintWriter printWriter = null;
         try {

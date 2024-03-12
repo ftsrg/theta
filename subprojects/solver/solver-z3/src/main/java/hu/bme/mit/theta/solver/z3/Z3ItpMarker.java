@@ -15,23 +15,25 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Collection;
-
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 final class Z3ItpMarker implements ItpMarker {
 
-    private final Stack<com.microsoft.z3.BoolExpr> terms;
+    private final Stack<Expr<BoolType>> terms;
 
     public Z3ItpMarker() {
         terms = new StackImpl<>();
     }
 
-    public void add(final com.microsoft.z3.BoolExpr term) {
+    public void add(final Expr<BoolType> term) {
         terms.add(checkNotNull(term));
     }
 
@@ -43,7 +45,7 @@ final class Z3ItpMarker implements ItpMarker {
         terms.pop(n);
     }
 
-    public Collection<com.microsoft.z3.BoolExpr> getTerms() {
+    public Collection<Expr<BoolType>> getTerms() {
         return terms.toCollection();
     }
 

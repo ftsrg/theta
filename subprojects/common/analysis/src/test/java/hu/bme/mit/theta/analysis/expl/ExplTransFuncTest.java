@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,7 +44,7 @@ public class ExplTransFuncTest {
     private final ExplState state = ExplState.of(
             ImmutableValuation.builder().put(x, Int(1)).build());
 
-    ExplTransFunc transFunc = ExplTransFunc.create(Z3SolverFactory.getInstance().createSolver());
+    ExplTransFunc transFunc = ExplTransFunc.create(Z3LegacySolverFactory.getInstance().createSolver());
 
     @Test
     public void testNormal() {

@@ -24,7 +24,7 @@ import hu.bme.mit.theta.graphsolver.patterns.constraints.*
 import hu.bme.mit.theta.graphsolver.patterns.patterns.*
 import hu.bme.mit.theta.graphsolver.solvers.GraphSolver
 import hu.bme.mit.theta.graphsolver.solvers.SATGraphSolver
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -101,7 +101,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallLine.first,
                     smallLine.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -109,7 +110,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallCycle.first,
                     smallCycle.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
                 arrayOf(
@@ -117,7 +119,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
                 arrayOf(
@@ -125,7 +128,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallLine.first,
                     smallLine.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
                 arrayOf(
@@ -133,7 +137,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallCycle.first,
                     smallCycle.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -141,7 +146,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -149,7 +155,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallLine.first,
                     smallLine.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
                 arrayOf(
@@ -157,7 +164,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallCycle.first,
                     smallCycle.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
                 arrayOf(
@@ -165,7 +173,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -173,7 +182,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallLine.first,
                     smallLine.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -181,7 +191,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallCycle.first,
                     smallCycle.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -189,7 +200,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
                 arrayOf(
@@ -197,7 +209,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -205,7 +218,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
                 arrayOf(
@@ -213,7 +227,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -221,7 +236,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -229,7 +245,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -237,7 +254,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -245,7 +263,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -253,7 +272,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -261,7 +281,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -269,7 +290,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -277,7 +299,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -285,7 +308,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -293,7 +317,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -301,7 +326,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -309,7 +335,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     true
                 ),
                 arrayOf(
@@ -317,7 +344,8 @@ class GraphSolverTest<T> {
                     Pattern2ExprCompiler(),
                     smallFull.first,
                     smallFull.second,
-                    SATGraphSolver(Z3SolverFactory.getInstance().createSolver()),
+                    SATGraphSolver(
+                        Z3LegacySolverFactory.getInstance().createSolver()),
                     false
                 ),
             )
