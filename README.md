@@ -6,6 +6,13 @@
 ![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-Linux/badge.svg)
 ![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-Windows/badge.svg)
 ![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-macOS/badge.svg)
+
+[![](https://img.shields.io/docker/v/ftsrg/theta-cfa-cli?label=cfa&logo=docker)](https://hub.docker.com/r/ftsrg/theta-cfa-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-xsts-cli?label=xsts&logo=docker)](https://hub.docker.com/r/ftsrg/theta-xsts-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-xcfa-cli?label=xcfa&logo=docker)](https://hub.docker.com/r/ftsrg/theta-xcfa-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-xta-cli?label=xta&logo=docker)](https://hub.docker.com/r/ftsrg/theta-xta-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-sts-cli?label=sts&logo=docker)](https://hub.docker.com/r/ftsrg/theta-sts-cli/)
+
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
@@ -13,7 +20,7 @@
 [![Check formatting](https://github.com/ftsrg/theta/actions/workflows/check-formatting.yml/badge.svg)](https://github.com/ftsrg/theta/actions/workflows/check-formatting.yml)
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache--2-brightgreen.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
-![Theta logo](doc/theta-logo.png)
+![Theta logo](https://raw.githubusercontent.com/ftsrg/theta/master/doc/theta-logo.png)
 
 ## About
 
@@ -53,7 +60,7 @@ Theta can be divided into the following four layers.
   Formalisms are usually low level, mathematical representations based on first order logic expressions and graph like structures.
   Formalisms can also support higher level languages that can be mapped to that particular formalism by a language front-end (consisting of a specific parser and possibly reductions for simplification of the model).
   The common features of the different formalisms reside in the [`core`](subprojects/common/core) project (e.g., expressions and statements) and each formalism has its own project.
-  Currently, the following formalisms are supported: (extended) symbolic transition systems ([`sts`](subprojects/sts/sts) / [`xsts`](subprojects/xsts/xsts)), control-flow automata ([`cfa`](subprojects/cfa/cfa)) and timed automata ([`xta`](subprojects/xta/xta)).
+  Currently, the following formalisms are supported: (extended) symbolic transition systems ([`sts`](subprojects/sts/sts) / [`xsts`](subprojects/xsts/xsts)), (extended) control-flow automata ([`cfa`](subprojects/cfa/cfa) / [`xcfa`](subprojects/xcfa/xcfa)) and timed automata ([`xta`](subprojects/xta/xta)).
 * **Analysis back-end**: The analysis back-end provides the verification algorithms that can formally prove whether a model meets certain requirements.
   There is an interpreter for each formalism, providing a common interface towards the algorithms (e.g., calculating initial states and successors).
   This ensures that most components of the algorithms work for all formalisms (as long as they provide the interpreter).

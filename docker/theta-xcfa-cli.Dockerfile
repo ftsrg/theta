@@ -8,9 +8,9 @@ RUN mkdir theta
 COPY . theta
 WORKDIR /theta
 RUN ./gradlew clean && \
-    ./gradlew theta-xsts-cli:build && \
-    mv subprojects/xsts/xsts-cli/build/libs/theta-xsts-cli-*-all.jar /theta-xsts-cli.jar
+    ./gradlew theta-xcfa-cli:build && \
+    mv subprojects/xcfa/xcfa-cli/build/libs/theta-xcfa-cli-*-all.jar /theta-xcfa-cli.jar
 WORKDIR /
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./theta/lib/"
-ENTRYPOINT ["java", "-jar", "theta-xsts-cli.jar"]
+ENTRYPOINT ["java", "-jar", "theta-xcfa-cli.jar"]
