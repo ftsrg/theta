@@ -46,7 +46,7 @@ import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 
 import java.io.File;
@@ -105,7 +105,7 @@ public class XstsTest {
         var transSig = transOrder.getDefaultSetSignature();
         var stateSig = stateOrder.getDefaultSetSignature();
 
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 //        MddValuationCollector.collect(initNode.getNode());
 
         final List<AbstractNextStateDescriptor> descriptors = new ArrayList<>();
@@ -124,7 +124,7 @@ public class XstsTest {
             }
             if (!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
 
-            MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+            MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
             transitionHandles.add(transitionNode);
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
         }
