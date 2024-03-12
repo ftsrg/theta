@@ -146,7 +146,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 }
             }
         }
-        if(!mddVariable.isNullOrZero(childNode)) explicitRepresentation.cacheNode(key, childNode);
+        if (!mddVariable.isNullOrZero(childNode)) explicitRepresentation.cacheNode(key, childNode);
         return childNode;
     }
 
