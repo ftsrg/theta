@@ -6,6 +6,13 @@
 ![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-Linux/badge.svg)
 ![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-Windows/badge.svg)
 ![](https://raw.githubusercontent.com/ftsrg/theta/badges/badges/test-macOS/badge.svg)
+
+[![](https://img.shields.io/docker/v/ftsrg/theta-cfa-cli?label=cfa&logo=docker)](https://hub.docker.com/r/ftsrg/theta-cfa-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-xsts-cli?label=xsts&logo=docker)](https://hub.docker.com/r/ftsrg/theta-xsts-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-xcfa-cli?label=xcfa&logo=docker)](https://hub.docker.com/r/ftsrg/theta-xcfa-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-xta-cli?label=xta&logo=docker)](https://hub.docker.com/r/ftsrg/theta-xta-cli/)
+[![](https://img.shields.io/docker/v/ftsrg/theta-sts-cli?label=sts&logo=docker)](https://hub.docker.com/r/ftsrg/theta-sts-cli/)
+
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ftsrg_theta&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ftsrg_theta)
