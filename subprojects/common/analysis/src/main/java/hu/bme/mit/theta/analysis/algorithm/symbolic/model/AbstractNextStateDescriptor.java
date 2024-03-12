@@ -63,6 +63,25 @@ public interface AbstractNextStateDescriptor {
         default IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
             return IntObjMapView.empty(getValuations(localStateSpace));
         }
+
+        static AbstractNextStateDescriptor.Postcondition terminalEmpty() {
+            return new AbstractNextStateDescriptor.Postcondition() {
+                @Override
+                public IntObjMapView<AbstractNextStateDescriptor> getValuations(StateSpaceInfo localStateSpace) {
+                    return IntObjMapView.empty(terminalEmpty());
+                }
+
+                @Override
+                public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+                    return Optional.empty();
+                }
+
+                @Override
+                public boolean evaluate() {
+                    return false;
+                }
+            };
+        }
     }
 
     static AbstractNextStateDescriptor terminalIdentity() {
