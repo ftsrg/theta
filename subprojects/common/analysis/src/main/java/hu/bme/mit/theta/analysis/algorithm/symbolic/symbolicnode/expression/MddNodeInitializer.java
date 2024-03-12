@@ -38,7 +38,7 @@ public class MddNodeInitializer implements AbstractNextStateDescriptor.Postcondi
     }
 
     private static AbstractNextStateDescriptor.Postcondition of(final MddNode node, final MddVariableHandle variableHandle) {
-        if(node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) {
+        if (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) {
             return AbstractNextStateDescriptor.Postcondition.terminalEmpty();
         } else {
             return new MddNodeInitializer(node, variableHandle);
