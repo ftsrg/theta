@@ -110,7 +110,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
         final AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
 
         final var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        final MddHandle satResult = gs.compute(new MddNodeInitializer(initNode), nextStates, stateSig.getTopVariableHandle());
+        final MddHandle satResult = gs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
         final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, new SolverPool(solverFactory)));
@@ -129,9 +129,13 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
 //
         final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(satResult.getNode());
         final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
+//        final Graph transGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(transitionNode.getNode());
+        final Graph initGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(initNode.getNode());
         try {
             GraphvizWriter.getInstance().writeFile(stateSpaceGraph, "build\\statespace.dot");
             GraphvizWriter.getInstance().writeFile(violatingGraph, "build\\violating.dot");
+//            GraphvizWriter.getInstance().writeFile(transGraph, "build\\trans.dot");
+            GraphvizWriter.getInstance().writeFile(initGraph, "build\\init.dot");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
