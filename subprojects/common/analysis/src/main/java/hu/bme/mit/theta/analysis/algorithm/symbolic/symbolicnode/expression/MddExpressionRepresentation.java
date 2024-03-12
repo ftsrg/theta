@@ -118,6 +118,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
     public MddNode get(int key) {
         final var cached = explicitRepresentation.getCacheView().get(key);
         if (cached != null || this.explicitRepresentation.isComplete()) return cached;
+        // TODO: this way null values are never cached and have to be recomputed every time
 
         final MutableValuation val = new MutableValuation();
         val.put(decl, LitExprConverter.toLitExpr(key, decl.getType()));
@@ -132,7 +133,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             MddGraph<Expr> mddGraph = (MddGraph<Expr>) mddVariable.getMddGraph();
 
             if (canonizedExpr instanceof FalseExpr) {
-                childNode = mddGraph.getTerminalZeroNode();
+                childNode = null;
             } else {
                 var solver = solverPool.requestSolver();
                 try (var wpp = new WithPushPop(solver)) {
@@ -140,18 +141,13 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     if (solver.check().isSat()) {
                         childNode = mddGraph.getNodeFor(canonizedExpr);
                     } else {
-                        childNode = mddGraph.getTerminalZeroNode();
+                        childNode = null;
                     }
                 }
             }
         }
-
-        if (!childNode.equals(mddVariable.getMddGraph().getTerminalZeroNode()))
-            explicitRepresentation.cacheNode(key, childNode);
+        if(!mddVariable.isNullOrZero(childNode)) explicitRepresentation.cacheNode(key, childNode);
         return childNode;
-
-//        getLazyTraverser().queryEdge(key);
-//        return explicitRepresentation.getCacheView().get(key);
     }
 
     @Override
@@ -464,9 +460,11 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         } else {
                             final Expr<BoolType> canonizedExpr = ExprUtils.canonize(substitutedExpr);
                             MddGraph<Expr> mddGraph = (MddGraph<Expr>) representation.mddVariable.getMddGraph();
-                            childNode = canonizedExpr instanceof FalseExpr ? mddGraph.getTerminalZeroNode() : mddGraph.getNodeFor(canonizedExpr);
+                            assert !(canonizedExpr instanceof FalseExpr);
+                            childNode = mddGraph.getNodeFor(canonizedExpr);
                         }
 
+                        assert !representation.mddVariable.isNullOrZero(childNode) : "This would mean the model returned by the solver is incorrect";
                         representation.explicitRepresentation.cacheNode(LitExprConverter.toInt(literalToCache), childNode);
                         // TODO update domainSize
                     }
