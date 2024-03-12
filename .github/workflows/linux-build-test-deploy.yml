@@ -13,7 +13,7 @@ on:
 permissions: write-all
 
 concurrency: 
-  group: deploy-${{ github.head_ref }}
+  group: deploy-${{ github.head_ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -196,7 +196,7 @@ jobs:
     if: "${{ github.event.inputs.message != '' && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}"
     strategy:
       matrix:
-        dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli"]
+        dockerprojects: ["theta-cfa-cli", "theta-sts-cli", "theta-xsts-cli", "theta-xta-cli", "theta-xcfa-cli"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
