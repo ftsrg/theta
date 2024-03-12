@@ -92,7 +92,7 @@ public class SatTest2 {
 //        var bfsResult = bfs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         var saturation = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        var satResult = saturation.compute(new MddNodeInitializer(initNode), nextStates, stateSig.getTopVariableHandle());
+        var satResult = saturation.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
 
         System.out.println(mddGraph.getUniqueTableSize());
 

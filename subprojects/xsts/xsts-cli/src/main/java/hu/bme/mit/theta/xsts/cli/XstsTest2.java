@@ -125,7 +125,7 @@ public class XstsTest2 {
         AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
 
         var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        final MddHandle satResult = gs.compute(new MddNodeInitializer(initResult), nextStates, stateSig.getTopVariableHandle());
+        final MddHandle satResult = gs.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
 //        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);

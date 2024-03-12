@@ -136,7 +136,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         final AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
 
         final var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        final MddHandle satResult = gs.compute(new MddNodeInitializer(initResult), nextStates, stateSig.getTopVariableHandle());
+        final MddHandle satResult = gs.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
         final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, new SolverPool(solverFactory)));
