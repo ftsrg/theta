@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, macos-13, macos-12, macos-11]
+        os: [macos-latest, macos-13, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository

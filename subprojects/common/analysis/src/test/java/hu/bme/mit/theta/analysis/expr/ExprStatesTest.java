@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,7 +38,7 @@ public class ExprStatesTest {
 
     private final VarDecl<IntType> vx = Var("x", Int());
     private final ExplPrec prec = ExplPrec.of(Collections.singleton(vx));
-    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    private final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
 
     @Test
     public void test1() {

@@ -37,7 +37,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 @RunWith(Parameterized.class)
 public final class ExprOrdLeqTest {
@@ -72,7 +72,7 @@ public final class ExprOrdLeqTest {
 
     @Test
     public void testIsTop() {
-        final Solver solver = Z3SolverFactory.getInstance().createSolver();
+        final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
         final PartialOrd<ExprState> ord = ExprOrd.create(solver);
         assertEquals(ord.isLeq(state1, state2), leq);
     }

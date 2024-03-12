@@ -1,7 +1,7 @@
 FROM openjdk:17.0.2-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libgomp1 && \
+    apt-get install -y --no-install-recommends libgomp1 libmpfr-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir theta

@@ -23,5 +23,5 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-sts"))
     implementation(project(":theta-solver"))
-    testImplementation(project(":theta-solver-z3"))
+    testImplementation(project(":theta-solver-z3-legacy"))
 }

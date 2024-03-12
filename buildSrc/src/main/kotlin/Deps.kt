@@ -13,6 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 object Deps {
 
     val guava = "com.google.guava:guava:${Versions.guava}"
@@ -25,6 +26,7 @@ object Deps {
     }
 
     val z3 = "lib/com.microsoft.z3.jar"
+    val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
     val jcommander = "com.beust:jcommander:${Versions.jcommander}"
 
