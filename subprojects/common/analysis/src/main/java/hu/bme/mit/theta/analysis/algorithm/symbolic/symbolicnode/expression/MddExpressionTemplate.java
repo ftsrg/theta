@@ -79,7 +79,7 @@ public class MddExpressionTemplate implements MddNode.Template {
 
         // Check if terminal 0
         if (canonizedExpr instanceof FalseExpr || !isSat(canonizedExpr, solverPool)) {
-            return mddVariable.getMddGraph().getTerminalZeroNode();
+            return null;
         }
 
         // Check if default
