@@ -15,12 +15,14 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
+import hu.bme.mit.delta.java.mdd.MddVariableHandle;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.StateSpaceInfo;
 
@@ -30,32 +32,39 @@ import java.util.Optional;
 
 public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
-    private final MddHandle node;
+    private final MddNode node;
+
+    private final MddVariableHandle variableHandle;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MddNodeNextStateDescriptor that = (MddNodeNextStateDescriptor) o;
-        return Objects.equals(node, that.node);
+        return Objects.equals(node, that.node) && Objects.equals(variableHandle, that.variableHandle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(node);
+        return Objects.hash(node, variableHandle);
     }
 
-    private MddNodeNextStateDescriptor(MddHandle node) {
-        this.node = node;
+    private MddNodeNextStateDescriptor(MddNode node, MddVariableHandle variableHandle) {
+        this.node = Preconditions.checkNotNull(node);
+        this.variableHandle = Preconditions.checkNotNull(variableHandle);
+        Preconditions.checkArgument((variableHandle.isTerminal() && node.isTerminal()) || node.isOn(variableHandle.getVariable().orElseThrow()));
     }
 
-    public static AbstractNextStateDescriptor of(MddHandle node) {
-        return node.isTerminalZero() ? AbstractNextStateDescriptor.terminalEmpty() : new MddNodeNextStateDescriptor(node);
+    private static AbstractNextStateDescriptor of(MddNode node, MddVariableHandle variableHandle) {
+        return (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) ? AbstractNextStateDescriptor.terminalEmpty() : new MddNodeNextStateDescriptor(node, variableHandle);
+    }
+    public static AbstractNextStateDescriptor of(MddHandle handle) {
+        return of(handle.getNode(), handle.getVariableHandle());
     }
 
     @Override
     public boolean evaluate() {
-        return !node.isTerminalZero();
+        return true;
     }
 
     @Override
@@ -63,7 +72,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         final MddNode constraint = localStateSpace.toStructuralRepresentation();
         return new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(node, (n, key) -> {
             if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
-            else return MddNodeNextStateDescriptor.of((MddHandle) n.get(key));
+            else return MddNodeNextStateDescriptor.of(n.get(key), variableHandle.getLower().orElseThrow().getLower().orElseThrow());
         }), constraint);
     }
 
@@ -71,7 +80,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(StateSpaceInfo localStateSpace) {
         final MddNode constraint = localStateSpace.toStructuralRepresentation();
         return new IntObjMapViews.Transforming<>(node,
-                outerNode -> new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(outerNode, n -> MddNodeNextStateDescriptor.of((MddHandle) n)), constraint));
+                outerNode -> new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(outerNode, mddNode -> MddNodeNextStateDescriptor.of(mddNode, variableHandle.getLower().orElseThrow().getLower().orElseThrow())), constraint));
     }
 
     @Override
@@ -79,17 +88,17 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         return new Cursor(RecursiveIntObjCursor.singleton(0, this.node));
     }
 
-    public static class Cursor implements AbstractNextStateDescriptor.Cursor {
-        private final RecursiveIntObjCursor<? extends MddHandle> wrapped;
+    public class Cursor implements AbstractNextStateDescriptor.Cursor {
+        private final RecursiveIntObjCursor<? extends MddNode> wrapped;
 
         private final Runnable closer;
 
-        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped, Runnable closer) {
+        private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped, Runnable closer) {
             this.wrapped = wrapped;
             this.closer = closer;
         }
 
-        private Cursor(RecursiveIntObjCursor<? extends MddHandle> wrapped) {
+        private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped) {
             this.wrapped = wrapped;
             this.closer = () -> {
             };
@@ -102,7 +111,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
         @Override
         public AbstractNextStateDescriptor value() {
-            return MddNodeNextStateDescriptor.of(wrapped.value());
+            return MddNodeNextStateDescriptor.of(wrapped.value(), variableHandle.getLower().orElseThrow().getLower().orElseThrow());
         }
 
         @Override
