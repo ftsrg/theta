@@ -35,7 +35,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.io.FileNotFoundException;
 
@@ -75,12 +75,12 @@ public class SatTest2 {
         // x = 0, y = 0, z = 0
         Expr<BoolType> initExpr = And(Eq(declX.getRef(), Int(0)), Eq(declY.getRef(), Int(0)), Eq(declZ.getRef(), Int(0)));
 
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 
         // x' = y + 1, y' = z + 1, z' = z + 1, z' < 10
         Expr<BoolType> transExpr = And(And(Eq(declXPrime.getRef(), Add(declY.getRef(), Int(1))), Eq(declYPrime.getRef(), Add(declZ.getRef(), Int(1))), Eq(declZPrime.getRef(), Add(declZ.getRef(), Int(1)))), IntExprs.Lt(declZPrime.getRef(), Int(10)));
 
-        var solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
 
         AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);

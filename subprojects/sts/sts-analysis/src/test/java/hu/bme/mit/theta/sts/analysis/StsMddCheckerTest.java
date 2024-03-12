@@ -30,7 +30,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
@@ -116,7 +116,7 @@ public class StsMddCheckerTest {
             public VarIndexing nextIndexing() {
                 return VarIndexingFactory.indexing(1);
             }
-        }, sts.getProp(), Z3SolverFactory.getInstance(), logger);
+        }, sts.getProp(), Z3LegacySolverFactory.getInstance(), logger);
 
         final SafetyResult<MddWitness, MddCex> status = checker.check(null);
         if (safe) {

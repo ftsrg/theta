@@ -31,7 +31,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -142,7 +142,7 @@ public class MddCheckerTest {
             public VarIndexing nextIndexing() {
                 return VarIndexingFactory.indexing(1);
             }
-        }, propExpr, Z3SolverFactory.getInstance(), logger);
+        }, propExpr, Z3LegacySolverFactory.getInstance(), logger);
         final SafetyResult<MddWitness, MddCex> status = checker.check(null);
         if (safe) {
             assertTrue(status.isSafe());

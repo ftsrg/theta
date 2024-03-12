@@ -60,6 +60,9 @@ public class LitExprConverter {
             return IntLitExpr.of(BigInteger.valueOf(integer));
         }
         if (type instanceof BoolType) {
+//            if(integer > 1 || integer < 0) {
+//                throw new IllegalArgumentException("Invalid integer for boolean type");
+//            }
             return BoolLitExpr.of(integer != 0);
         }
         if (type instanceof ArrayType<?, ?>) {

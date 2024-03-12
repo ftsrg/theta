@@ -31,7 +31,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.io.FileNotFoundException;
 import java.util.Set;
@@ -58,7 +58,7 @@ public class ExprNodeTest7 {
         // x >= 0 && x <= 2 && y >= x && y <= x + 2 && z >= y && z <= y + 2
         Expr<BoolType> expr = And(And(Geq(declX.getRef(), Int(0)), Leq(declX.getRef(), Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
 
-        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 
         var interpreter = x.getNodeInterpreter(rootNode);
 

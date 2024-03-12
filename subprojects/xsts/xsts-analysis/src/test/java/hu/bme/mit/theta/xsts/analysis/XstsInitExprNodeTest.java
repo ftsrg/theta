@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import org.junit.Test;
@@ -59,7 +59,7 @@ public class XstsInitExprNodeTest {
             lastVar = varOrder.createOnTop(hu.bme.mit.delta.mdd.MddVariableDescriptor.create(v.getConstDecl(0), 0));
         }
 
-        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddNode rootNode = lastVar.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var recursiveCursor = rootNode.cursor();

@@ -29,7 +29,7 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.UnknownSolverStatusException;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -50,7 +50,7 @@ public class StructuralSymbolicComparison {
 
         final var upperbound = 5;
 
-        var pool = new SolverPool(Z3SolverFactory.getInstance());
+        var pool = new SolverPool(Z3LegacySolverFactory.getInstance());
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("build\\measurements.csv", true))) {
             for (int i = 0; true; i++) {

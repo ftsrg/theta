@@ -31,7 +31,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Test;
 
 import java.io.FileNotFoundException;
@@ -63,7 +63,7 @@ public class MddExpressionTest {
         // x >= 2 && y = x + 1 && x <= 6
         Expr<BoolType> expr = And(Geq(declX.getRef(), Int(2)), Eq(declY.getRef(), Add(declX.getRef(), Int(1))), Leq(declX.getRef(), Int(6)));
 
-        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
@@ -116,7 +116,7 @@ public class MddExpressionTest {
 
         Expr<BoolType> expr = And(Or(declA.getRef(), Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
 
-        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         for (var c = rootNode.cursor(); c.moveNext(); ) {
@@ -170,7 +170,7 @@ public class MddExpressionTest {
         // y >= 2 && z = y + 1 && y <= 6
         Expr<BoolType> expr = And(Geq(declY.getRef(), Int(2)), Eq(declZ.getRef(), Add(declY.getRef(), Int(1))), Leq(declY.getRef(), Int(6)));
 
-        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
@@ -214,7 +214,7 @@ public class MddExpressionTest {
         // x >= 2 && y = x + 1 && x <= 6 && z = y + 2
         Expr<BoolType> expr = And(Geq(declX.getRef(), Int(2)), Eq(declY.getRef(), Add(declX.getRef(), Int(1))), Leq(declX.getRef(), Int(6)), Eq(declZ.getRef(), Add(declY.getRef(), Int(2))));
 
-        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
@@ -269,7 +269,7 @@ public class MddExpressionTest {
         // x = y && y = z && z = 2
         Expr<BoolType> expr = And(Eq(declX.getRef(), declY.getRef()), And(Eq(declY.getRef(), declZ.getRef()), Eq(declZ.getRef(), Int(2))));
 
-        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
@@ -309,7 +309,7 @@ public class MddExpressionTest {
         // x >= 0 && x <= 2 && y >= x && y <= x + 2 && z >= y && z <= y + 2
         Expr<BoolType> expr = And(And(Geq(declX.getRef(), Int(0)), Leq(declX.getRef(), Int(2))), And(Geq(declY.getRef(), declX.getRef()), Leq(declY.getRef(), Add(declX.getRef(), Int(2)))), And(Geq(declZ.getRef(), declY.getRef()), Leq(declZ.getRef(), Add(declY.getRef(), Int(2)))));
 
-        SolverPool solverPool = new SolverPool(Z3SolverFactory.getInstance());
+        SolverPool solverPool = new SolverPool(Z3LegacySolverFactory.getInstance());
         MddNode rootNode = x.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, solverPool));
 
         var interpreter = x.getNodeInterpreter(rootNode);
