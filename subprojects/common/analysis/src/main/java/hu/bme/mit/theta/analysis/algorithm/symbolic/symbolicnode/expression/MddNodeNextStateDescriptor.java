@@ -58,6 +58,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
     private static AbstractNextStateDescriptor of(MddNode node, MddVariableHandle variableHandle) {
         return (node == null || node == variableHandle.getMddGraph().getTerminalZeroNode()) ? AbstractNextStateDescriptor.terminalEmpty() : new MddNodeNextStateDescriptor(node, variableHandle);
     }
+
     public static AbstractNextStateDescriptor of(MddHandle handle) {
         return of(handle.getNode(), handle.getVariableHandle());
     }
@@ -72,7 +73,8 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         final MddNode constraint = localStateSpace.toStructuralRepresentation();
         return new ConstrainedIntObjMapView<>(new IntObjMapViews.Transforming<>(node, (n, key) -> {
             if (key == null) return AbstractNextStateDescriptor.terminalEmpty();
-            else return MddNodeNextStateDescriptor.of(n.get(key), variableHandle.getLower().orElseThrow().getLower().orElseThrow());
+            else
+                return MddNodeNextStateDescriptor.of(n.get(key), variableHandle.getLower().orElseThrow().getLower().orElseThrow());
         }), constraint);
     }
 

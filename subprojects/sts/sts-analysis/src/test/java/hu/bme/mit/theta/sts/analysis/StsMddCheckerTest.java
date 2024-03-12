@@ -64,9 +64,9 @@ public class StsMddCheckerTest {
     @Parameterized.Parameters(name = "{index}: {0}, {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-				{ "src/test/resources/hw1_false.aag", false },
+                {"src/test/resources/hw1_false.aag", false},
 
-				{ "src/test/resources/hw2_true.aag", true },
+                {"src/test/resources/hw2_true.aag", true},
 
                 {"src/test/resources/boolean1.system", false},
 
