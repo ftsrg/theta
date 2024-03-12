@@ -34,7 +34,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.io.FileNotFoundException;
 
@@ -69,12 +69,12 @@ public class RelProdTest {
         // x = 0, y = 0
         Expr<BoolType> initExpr = And(Eq(declX.getRef(), Int(0)), Eq(declY.getRef(), Int(0)));
 
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 
         // x' = x + 1, y' = y - 1, x < 9
         Expr<BoolType> transExpr = And(Eq(declXPrime.getRef(), Add(declX.getRef(), Int(1))), Eq(declYPrime.getRef(), Sub(declY.getRef(), Int(1))), IntExprs.Lt(declXPrime.getRef(), Int(9)));
 
-        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
         AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
 
         var relprod = new CursorRelationalProductProvider(stateSig.getVariableOrder());

@@ -33,7 +33,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.io.FileNotFoundException;
 import java.util.Set;
@@ -59,7 +59,7 @@ public class ExprNodeTest2 {
 
         Expr<BoolType> expr = And(Or(declA.getRef(), Not(declB.getRef())), Eq(declX.getRef(), Int(2)));
 
-        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddNode rootNode = a.checkInNode(MddExpressionTemplate.of(expr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 
         for (var c = rootNode.cursor(); c.moveNext(); ) {
         }

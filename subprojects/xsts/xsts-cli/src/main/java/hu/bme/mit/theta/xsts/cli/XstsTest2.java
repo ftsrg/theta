@@ -40,7 +40,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 
@@ -90,7 +90,7 @@ public class XstsTest2 {
         var initSig = initOrder.getDefaultSetSignature();
 
         final Expr<BoolType> initExpr = PathUtils.unfold(xsts.getInitFormula(), 0);
-        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 
         var initUnfold = PathUtils.unfold(initToExprResult.getExprs().stream().findFirst().get(), 0);
         final var initIdentityExprs = new ArrayList<Expr<BoolType>>();
@@ -99,7 +99,7 @@ public class XstsTest2 {
                 initIdentityExprs.add(Eq(v.getConstDecl(0).getRef(), v.getConstDecl(1).getRef()));
         }
         final var initExprWithIdentity = And(initUnfold, And(initIdentityExprs));
-        MddHandle initTranNode = initSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExprWithIdentity, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        MddHandle initTranNode = initSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExprWithIdentity, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
         AbstractNextStateDescriptor initNextState = MddNodeNextStateDescriptor.of(initTranNode);
 
         var rel = new LegacyRelationalProductProvider(stateSig.getVariableOrder());
@@ -119,7 +119,7 @@ public class XstsTest2 {
             }
             if (!identityExprs.isEmpty()) stmtUnfold = And(stmtUnfold, And(identityExprs));
 
-            MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+            MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(stmtUnfold, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
             descriptors.add(MddNodeNextStateDescriptor.of(transitionNode));
         }
         AbstractNextStateDescriptor nextStates = OrNextStateDescriptor.create(descriptors);
@@ -129,7 +129,7 @@ public class XstsTest2 {
 //        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
-        final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, new SolverPool(Z3SolverFactory.getInstance())));
+        final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, new SolverPool(Z3LegacySolverFactory.getInstance())));
 
         final MddHandle propViolating = (MddHandle) satResult.intersection(propNode);
 
