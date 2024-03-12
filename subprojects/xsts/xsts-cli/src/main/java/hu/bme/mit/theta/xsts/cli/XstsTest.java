@@ -151,7 +151,7 @@ public class XstsTest {
 //        );
 
         var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        var satResult = gs.compute(new MddNodeInitializer(initNode), nextStates, stateSig.getTopVariableHandle());
+        var satResult = gs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
 //        var satResult = gs.compute(initNode, nextStates, stateSig.getTopVariableHandle());
 
         Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
