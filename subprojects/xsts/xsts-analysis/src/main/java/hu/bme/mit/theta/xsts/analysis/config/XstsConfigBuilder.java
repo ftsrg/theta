@@ -130,51 +130,7 @@ public class XstsConfigBuilder {
 			return (new ExplStrategy(xsts)).buildConfig();
 		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART
 				|| domain == Domain.PRED_SPLIT) {
-			PredAbstractors.PredAbstractor predAbstractor = domain.predAbstractorFunction.apply(abstractionSolver);
-
-			final LTS<XstsState<PredState>, XstsAction> lts;
-			if (optimizeStmts == OptimizeStmts.ON) {
-				lts = XstsLts.create(xsts,
-						XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()));
-			} else {
-				lts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create()));
-			}
-
-			final Predicate<XstsState<PredState>> target = new XstsStatePredicate<>(
-					new ExprStatePredicate(negProp, abstractionSolver));
-			final Analysis<XstsState<PredState>, XstsAction, PredPrec> analysis = XstsAnalysis.create(
-					PredAnalysis.create(abstractionSolver, predAbstractor,
-							xsts.getInitFormula()));
-			final ArgBuilder<XstsState<PredState>, XstsAction, PredPrec> argBuilder = ArgBuilder.create(
-					lts, analysis, target,
-					true);
-			final Abstractor<XstsState<PredState>, XstsAction, PredPrec> abstractor = BasicAbstractor.builder(
-							argBuilder)
-					.waitlist(PriorityWaitlist.create(search.comparator))
-					.stopCriterion(refinement.getStopCriterion())
-					.logger(logger).build();
-
-			ExprTraceChecker<ItpRefutation> exprTraceChecker = switch (refinement) {
-				case FW_BIN_ITP -> ExprTraceFwBinItpChecker.create(xsts.getInitFormula(),
-						negProp, refinementSolverFactory.createItpSolver());
-				case BW_BIN_ITP -> ExprTraceBwBinItpChecker.create(xsts.getInitFormula(),
-						negProp, refinementSolverFactory.createItpSolver());
-				case SEQ_ITP, MULTI_SEQ -> ExprTraceSeqItpChecker.create(xsts.getInitFormula(), negProp,
-						refinementSolverFactory.createItpSolver());
-				default -> throw new UnsupportedOperationException(
-						domain + " domain does not support " + refinement + " refinement.");
-			};
-			Refiner<XstsState<PredState>, XstsAction, PredPrec> refiner = refinement.createRefiner(
-					exprTraceChecker,
-					new ItpRefToPredPrec(predSplit.splitter),
-					pruneStrategy,
-					logger);
-			final SafetyChecker<XstsState<PredState>, XstsAction, PredPrec> checker = CegarChecker.create(
-					abstractor, refiner,
-					logger);
-
-			final PredPrec prec = initPrec.builder.createPred(xsts);
-			return XstsConfig.create(checker, prec);
+			return (new PredStrategy(xsts)).buildConfig();
 		} else if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART
 				|| domain == Domain.EXPL_PRED_SPLIT || domain == Domain.EXPL_PRED_COMBINED) {
 			final LTS<XstsState<Prod2State<ExplState, PredState>>, XstsAction> lts;
@@ -456,12 +412,9 @@ public class XstsConfigBuilder {
 					logger);
 		}
 
-		;
-
-		public abstract P getPrec();
+		public abstract P getInitPrec();
 
 		XstsConfig<XstsState<S>, XstsAction, P> buildConfig() {
-//			final PredAbstractors.PredAbstractor predAbstractor = domain.predAbstractorFunction.apply(abstractionSolver);
 			final LTS<XstsState<S>, XstsAction> lts = getLts();
 			final Predicate<XstsState<S>> target = getPredicate();
 			final Analysis<XstsState<S>, XstsAction, P> analysis = getAnalysis();
@@ -477,7 +430,7 @@ public class XstsConfigBuilder {
 			final SafetyChecker<XstsState<S>, XstsAction, P> checker = CegarChecker.create(
 					abstractor, refiner,
 					logger);
-			return XstsConfig.create(checker, getPrec());
+			return XstsConfig.create(checker, getInitPrec());
 		}
 
 	}
@@ -520,7 +473,7 @@ public class XstsConfigBuilder {
 		}
 
 		@Override
-		public ExplPrec getPrec() {
+		public ExplPrec getInitPrec() {
 			return initPrec.builder.createExpl(xsts);
 		}
 
@@ -543,7 +496,10 @@ public class XstsConfigBuilder {
 
 		@Override
 		public Analysis<PredState, ? super XstsAction, ? super PredPrec> getDataAnalysis() {
-			return null;
+			return PredAnalysis.create(
+					abstractionSolver,
+					domain.predAbstractorFunction.apply(abstractionSolver),
+					xsts.getInitFormula());
 		}
 
 		@Override
@@ -552,18 +508,8 @@ public class XstsConfigBuilder {
 		}
 
 		@Override
-		public Refiner<XstsState<PredState>, XstsAction, PredPrec> getRefiner() {
-//			return refinement.createRefiner(
-//					exprTraceChecker,
-//					new ItpRefToPredPrec(predSplit.splitter),
-//					pruneStrategy,
-//					logger);
-			return null;
-		}
-
-		@Override
-		public PredPrec getPrec() {
-			return null;
+		public PredPrec getInitPrec() {
+			return initPrec.builder.createPred(xsts);
 		}
 	}
 
