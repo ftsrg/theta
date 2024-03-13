@@ -15,112 +15,113 @@
  */
 package hu.bme.mit.theta.analysis.multi;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.*;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class MultiBuilder {
 
-    public static <LState extends State, LBlank extends State, LAction extends Action, DataState extends State, LPrec extends Prec, LBlankPrec extends Prec>
-    LeftSideAdded<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> initWithLeftSide(
-            Analysis<LState, ? super LAction, ? super LPrec> analysis, LTS<? super LState, LAction> lts, BiFunction<LBlank, DataState, LState> combineStates, Function<LState, LBlank> stripDataFromState, Function<LState, DataState> extractDataFromState, InitFunc<LBlank, LBlankPrec> initFunc, Function<LPrec, LBlankPrec> stripDataFromPrec
-    ) {
-        return new LeftSideAdded<>(new MultiAnalysis.Side<>(analysis, initFunc, combineStates, stripDataFromState, extractDataFromState, stripDataFromPrec), lts);
-    }
+	public static <LState extends State, LBlank extends State, LAction extends Action, DataState extends State, LPrec extends Prec, LBlankPrec extends Prec>
+	LeftSideAdded<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> initWithLeftSide(
+			Analysis<LState, ? super LAction, ? super LPrec> analysis, LTS<? super LState, LAction> lts, BiFunction<LBlank, DataState, LState> combineStates, Function<LState, LBlank> stripDataFromState, Function<LState, DataState> extractDataFromState, InitFunc<LBlank, LBlankPrec> initFunc, Function<LPrec, LBlankPrec> stripDataFromPrec
+	) {
+		return new LeftSideAdded<>(new MultiAnalysis.Side<>(analysis, initFunc, combineStates, stripDataFromState, extractDataFromState, stripDataFromPrec), lts);
+	}
 
-    public static <LState extends State, LBlank extends State, LAction extends Action, DataState extends State, LPrec extends Prec, LBlankPrec extends Prec>
-    LeftSideAdded<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> initWithLeftSide(
-            final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side, LTS<? super LState, LAction> lts
-    ) {
-        return new LeftSideAdded<>(side, lts);
-    }
+	public static <LState extends State, LBlank extends State, LAction extends Action, DataState extends State, LPrec extends Prec, LBlankPrec extends Prec>
+	LeftSideAdded<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> initWithLeftSide(
+			final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side, LTS<? super LState, LAction> lts
+	) {
+		return new LeftSideAdded<>(side, lts);
+	}
 
-    public static class LeftSideAdded<LState extends State, DataState extends State, LBlank extends State, LAction extends Action, LPrec extends Prec, LBlankPrec extends Prec> {
-        private final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side;
-        private final LTS<? super LState, LAction> lts;
+	public static class LeftSideAdded<LState extends State, DataState extends State, LBlank extends State, LAction extends Action, LPrec extends Prec, LBlankPrec extends Prec> {
+		private final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side;
+		private final LTS<? super LState, LAction> lts;
 
-        LeftSideAdded(final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side, final LTS<? super LState, LAction> lts) {
-            this.lts = lts;
-            this.side = side;
-        }
+		LeftSideAdded(final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> side, final LTS<? super LState, LAction> lts) {
+			this.lts = lts;
+			this.side = side;
+		}
 
-        public <RState extends State, RBlank extends State, RAction extends Action, RPrec extends Prec, RBlankPrec extends Prec>
-        BothSidesDone<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, LBlankPrec, RBlankPrec>
-        addRightSide(Analysis<RState, ? super RAction, ? super RPrec> analysis, LTS<RState, RAction> rightLts,
-                     BiFunction<RBlank, DataState, RState> combineStates, Function<RState, RBlank> stripDataFromState, Function<RState, DataState> extractDataFromState,
-                     InitFunc<RBlank, RBlankPrec> initFunc, Function<RPrec, RBlankPrec> stripDataFromPrec) {
-            MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide = new MultiAnalysis.Side<>(analysis, initFunc, combineStates, stripDataFromState, extractDataFromState, stripDataFromPrec);
-            return new BothSidesDone<>(side, lts, rightSide, rightLts);
-        }
+		public <RState extends State, RBlank extends State, RAction extends Action, RPrec extends Prec, RBlankPrec extends Prec>
+		BothSidesDone<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, LBlankPrec, RBlankPrec>
+		addRightSide(Analysis<RState, ? super RAction, ? super RPrec> analysis, LTS<RState, RAction> rightLts,
+					 BiFunction<RBlank, DataState, RState> combineStates, Function<RState, RBlank> stripDataFromState, Function<RState, DataState> extractDataFromState,
+					 InitFunc<RBlank, RBlankPrec> initFunc, Function<RPrec, RBlankPrec> stripDataFromPrec) {
+			MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide = new MultiAnalysis.Side<>(analysis, initFunc, combineStates, stripDataFromState, extractDataFromState, stripDataFromPrec);
+			return addRightSide(rightSide, rightLts);
+		}
 
-    }
+		public <RState extends State, RBlank extends State, RAction extends Action, RPrec extends Prec, RBlankPrec extends Prec>
+		BothSidesDone<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, LBlankPrec, RBlankPrec>
+		addRightSide(MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide, LTS<RState, RAction> rightLts) {
+			return new BothSidesDone<>(side, lts, rightSide, rightLts);
+		}
 
-    public record Result<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
-            LAction extends Action, RAction extends Action,
-            LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec,
-            MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>>
-            (MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction> analysis,
-             MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction> lts) {
-    }
+	}
 
-    public static class BothSidesDone<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
-            LAction extends Action, RAction extends Action,
-            LPrec extends Prec, RPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec> {
-        private final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide;
-        private final LTS<? super LState, LAction> leftLts;
-        private final MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide;
-        private final LTS<? super RState, RAction> rightLts;
+	public record Result<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
+			LAction extends Action, RAction extends Action,
+			LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec,
+			MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>>
+			(MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction> analysis,
+			 MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction> lts) {
+	}
 
-        BothSidesDone(MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide, LTS<? super LState, LAction> leftLts, MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide, LTS<? super RState, RAction> rightLts) {
-            this.leftSide = leftSide;
-            this.leftLts = leftLts;
-            this.rightSide = rightSide;
-            this.rightLts = rightLts;
-        }
+	public static class BothSidesDone<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
+			LAction extends Action, RAction extends Action,
+			LPrec extends Prec, RPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec> {
+		private final MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide;
+		private final LTS<? super LState, LAction> leftLts;
+		private final MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide;
+		private final LTS<? super RState, RAction> rightLts;
 
-        public <DataPrec extends Prec, MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>>
-        Result<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction>
-        build(Function<MState, MultiSourceSide> defineNextSide, InitFunc<DataState, DataPrec> dataInitFunc,
-              MultiAnalysisBuilderFunc<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction,
-                      MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction>> analysisBuilderFunc,
-              MultiLtsBuilderFunc<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction, MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction>> ltsBuilderFunc) {
-            return new Result<>(
-                    analysisBuilderFunc.build(leftSide, rightSide, defineNextSide, dataInitFunc),
-                    ltsBuilderFunc.build(leftLts, leftSide.combineStates(), rightLts, rightSide.combineStates(), defineNextSide)
-            );
-        }
+		BothSidesDone(MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide, LTS<? super LState, LAction> leftLts, MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide, LTS<? super RState, RAction> rightLts) {
+			this.leftSide = leftSide;
+			this.leftLts = leftLts;
+			this.rightSide = rightSide;
+			this.rightLts = rightLts;
+		}
 
-    }
+		public <DataPrec extends Prec, MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>>
+		Result<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction>
+		build(Function<MState, MultiSourceSide> defineNextSide, InitFunc<DataState, DataPrec> dataInitFunc,
+			  MultiAnalysisBuilderFunc<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction,
+					  MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction>> analysisBuilderFunc,
+			  MultiLtsBuilderFunc<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction, MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction>> ltsBuilderFunc) {
+			return new Result<>(
+					analysisBuilderFunc.build(leftSide, rightSide, defineNextSide, dataInitFunc),
+					ltsBuilderFunc.build(leftLts, leftSide.combineStates(), rightLts, rightSide.combineStates(), defineNextSide)
+			);
+		}
 
-    @FunctionalInterface
-    public interface MultiAnalysisBuilderFunc<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
-            LAction extends Action, RAction extends Action,
-            LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec,
-            MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>,
-            MAnalysis extends MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction>> {
+	}
 
-        MAnalysis build(MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide,
-                        MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide,
-                        Function<MState, MultiSourceSide> defineNextSide,
-                        InitFunc<DataState, DataPrec> dataInitFunc);
+	@FunctionalInterface
+	public interface MultiAnalysisBuilderFunc<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
+			LAction extends Action, RAction extends Action,
+			LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec, LBlankPrec extends Prec, RBlankPrec extends Prec,
+			MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>,
+			MAnalysis extends MultiAnalysis<LState, RState, DataState, LBlank, RBlank, LAction, RAction, LPrec, RPrec, DataPrec, LBlankPrec, RBlankPrec, MState, MAction>> {
 
-    }
+		MAnalysis build(MultiAnalysis.Side<LState, DataState, LBlank, LAction, LPrec, LBlankPrec> leftSide,
+						MultiAnalysis.Side<RState, DataState, RBlank, RAction, RPrec, RBlankPrec> rightSide,
+						Function<MState, MultiSourceSide> defineNextSide,
+						InitFunc<DataState, DataPrec> dataInitFunc);
 
-    @FunctionalInterface
-    public interface MultiLtsBuilderFunc<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
-            LAction extends Action, RAction extends Action, MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>,
-            MLts extends MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction>> {
+	}
 
-        MLts build(LTS<? super LState, LAction> leftLts, BiFunction<LBlank, DataState, LState> combineLeftState,
-                   LTS<? super RState, RAction> rightLts, BiFunction<RBlank, DataState, RState> combineRightState,
-                   Function<MState, MultiSourceSide> defineNextSide);
+	@FunctionalInterface
+	public interface MultiLtsBuilderFunc<LState extends State, RState extends State, DataState extends State, LBlank extends State, RBlank extends State,
+			LAction extends Action, RAction extends Action, MState extends MultiState<LBlank, RBlank, DataState>, MAction extends MultiAction<LAction, RAction>,
+			MLts extends MultiLts<LState, RState, DataState, LBlank, RBlank, LAction, RAction, MState, MAction>> {
 
-    }
+		MLts build(LTS<? super LState, LAction> leftLts, BiFunction<LBlank, DataState, LState> combineLeftState,
+				   LTS<? super RState, RAction> rightLts, BiFunction<RBlank, DataState, RState> combineRightState,
+				   Function<MState, MultiSourceSide> defineNextSide);
+
+	}
 
 }
