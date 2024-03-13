@@ -15,20 +15,23 @@
  */
 package hu.bme.mit.theta.analysis.multi
 
-import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
-import hu.bme.mit.theta.analysis.expl.*
-import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expl.ExplPrec
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expl.ExplStatePredicate
+import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.multi.stmt.ExprMultiState
 import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiAction
 import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiAnalysis
 import hu.bme.mit.theta.analysis.multi.stmt.StmtMultiLts
-import hu.bme.mit.theta.analysis.pred.*
-import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer
+import hu.bme.mit.theta.analysis.pred.ExprSplitters
+import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec
+import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.unit.UnitState
 import hu.bme.mit.theta.cfa.CFA
 import hu.bme.mit.theta.cfa.analysis.CfaAction
@@ -47,7 +50,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xsts.XSTS
-import hu.bme.mit.theta.xsts.analysis.*
+import hu.bme.mit.theta.xsts.analysis.XstsAction
+import hu.bme.mit.theta.xsts.analysis.XstsState
+import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -74,12 +79,14 @@ class MultiOfTwoTest {
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
-        val dataAnalysis = ExplAnalysis.create(
-            solver,
-            xsts.initFormula
+
+        val xstsConfigBuilder = XstsConfigBuilder(
+            XstsConfigBuilder.Domain.EXPL,
+            XstsConfigBuilder.Refinement.SEQ_ITP,
+            Z3SolverFactory.getInstance(),
+            Z3SolverFactory.getInstance()
         )
-        val xstsAnalysis = XstsAnalysis.create(dataAnalysis)
-        val xstsLts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create<ExplState>()))
+        val xstsExplBuilder = xstsConfigBuilder.ExplStrategy(xsts)
 
         val variables = xsts.vars
 
@@ -87,6 +94,7 @@ class MultiOfTwoTest {
         FileInputStream("src/test/resources/cfa/doubler.cfa").use { inputStream ->
             cfa = CfaDslManager.createCfa(inputStream)
         }
+        val dataAnalysis = xstsExplBuilder.dataAnalysis
         val cfaAnalysis = CfaAnalysis.create(cfa.initLoc, dataAnalysis)
         val cfaLts: CfaLts = CfaSbeLts.getInstance()
         val cfaRefToPrec = RefutationToGlobalCfaPrec(ItpRefToExplPrec(), cfa.initLoc)
@@ -108,15 +116,7 @@ class MultiOfTwoTest {
             cfaInitFunc,
             cfaStripPrec
         )
-            .addRightSide(
-                xstsAnalysis,
-                xstsLts,
-                ::xstsCombineStates,
-                ::xstsStripState,
-                ::xstsExtractFromState,
-                xstsUnitInitFunc(),
-                xstsStripPrec
-            )
+            .addRightSide(xstsExplBuilder.multiSide, xstsExplBuilder.lts)
             .build<ExplPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, ExplState>, StmtMultiAction<CfaAction, XstsAction>>(
                 NextSideFunctions::alternating,
                 dataAnalysis.initFunc,
@@ -152,13 +152,16 @@ class MultiOfTwoTest {
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
-        val dataAnalysis = PredAnalysis.create<ExprAction>(
-            solver,
-            PredAbstractors.booleanAbstractor(solver),
-            xsts.initFormula
+
+        val xstsConfigBuilder = XstsConfigBuilder(
+            XstsConfigBuilder.Domain.PRED_BOOL,
+            XstsConfigBuilder.Refinement.SEQ_ITP,
+            Z3SolverFactory.getInstance(),
+            Z3SolverFactory.getInstance()
         )
-        val xstsAnalysis = XstsAnalysis.create(dataAnalysis)
-        val xstsLts = XstsLts.create(xsts, XstsStmtOptimizer.create(DefaultStmtOptimizer.create<PredState>()))
+        val xstsPredBuilder = xstsConfigBuilder.PredStrategy(xsts)
+        val dataAnalysis = xstsPredBuilder.dataAnalysis
+
 
         var cfa: CFA
         FileInputStream("src/test/resources/cfa/doubler.cfa").use { inputStream ->
@@ -185,15 +188,7 @@ class MultiOfTwoTest {
             cfaInitFunc,
             cfaStripPrec
         )
-            .addRightSide(
-                xstsAnalysis,
-                xstsLts,
-                ::xstsCombineStates,
-                ::xstsStripState,
-                ::xstsExtractFromState,
-                xstsUnitInitFunc(),
-                xstsStripPrec
-            )
+            .addRightSide(xstsPredBuilder.multiSide, xstsPredBuilder.lts)
             .build<PredPrec, ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, PredState>, StmtMultiAction<CfaAction, XstsAction>>(
                 NextSideFunctions::alternating,
                 dataAnalysis.initFunc,
@@ -206,8 +201,10 @@ class MultiOfTwoTest {
         val traceChecker = ExprTraceSeqItpChecker.create(True(), prop, itpSolver)
         val precRefiner =
             JoiningPrecRefiner.create<ExprMultiState<CfaState<UnitState>, XstsState<UnitState>, PredState>, StmtMultiAction<CfaAction, XstsAction>, MultiPrec<CfaPrec<PredPrec>?, PredPrec, PredPrec>, ItpRefutation>(
-                RefToMultiPrec(cfaRefToPrec, ItpRefToPredPrec(ExprSplitters.atoms()),
-                    ItpRefToPredPrec(ExprSplitters.atoms()))
+                RefToMultiPrec(
+                    cfaRefToPrec, ItpRefToPredPrec(ExprSplitters.atoms()),
+                    ItpRefToPredPrec(ExprSplitters.atoms())
+                )
             )
         val refiner = SingleExprTraceRefiner.create(traceChecker, precRefiner, PruneStrategy.FULL, logger)
         val checker = CegarChecker.create(abstractor, refiner)

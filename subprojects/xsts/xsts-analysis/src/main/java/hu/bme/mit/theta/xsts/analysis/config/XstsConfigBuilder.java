@@ -29,7 +29,9 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
+import hu.bme.mit.theta.analysis.multi.MultiAnalysis;
 import hu.bme.mit.theta.analysis.pred.*;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
@@ -38,6 +40,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.prod2.prod2explpred.*;
 import hu.bme.mit.theta.analysis.stmtoptimizer.DefaultStmtOptimizer;
 import hu.bme.mit.theta.analysis.stmtoptimizer.StmtOptimizer;
+import hu.bme.mit.theta.analysis.unit.UnitState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
@@ -234,7 +237,7 @@ public class XstsConfigBuilder {
 
 		public final ArgNodeComparators.ArgNodeComparator comparator;
 
-		private Search(final ArgNodeComparators.ArgNodeComparator comparator) {
+		Search(final ArgNodeComparators.ArgNodeComparator comparator) {
 			this.comparator = comparator;
 		}
 
@@ -249,7 +252,7 @@ public class XstsConfigBuilder {
 
 		public final ExprSplitters.ExprSplitter splitter;
 
-		private PredSplit(final ExprSplitters.ExprSplitter splitter) {
+		PredSplit(final ExprSplitters.ExprSplitter splitter) {
 			this.splitter = splitter;
 		}
 	}
@@ -265,7 +268,7 @@ public class XstsConfigBuilder {
 
 		public final XstsInitPrec builder;
 
-		private InitPrec(final XstsInitPrec builder) {
+		InitPrec(final XstsInitPrec builder) {
 			this.builder = builder;
 		}
 
@@ -280,7 +283,7 @@ public class XstsConfigBuilder {
 
 		public final XstsAutoExpl builder;
 
-		private AutoExpl(final XstsAutoExpl builder) {
+		AutoExpl(final XstsAutoExpl builder) {
 			this.builder = builder;
 		}
 	}
@@ -316,7 +319,7 @@ public class XstsConfigBuilder {
 
 		public abstract Predicate<XstsState<S>> getPredicate();
 
-		public abstract Analysis<S, ? super XstsAction, ? super P> getDataAnalysis();
+		public abstract Analysis<S, StmtAction, ? super P> getDataAnalysis();
 
 		public XstsAnalysis<S, P> getAnalysis() {
 			return XstsAnalysis.create(getDataAnalysis());
@@ -356,6 +359,16 @@ public class XstsConfigBuilder {
 			return XstsConfig.create(checker, getInitPrec());
 		}
 
+		public MultiAnalysis.Side<XstsState<S>, S, XstsState<UnitState>, XstsAction, P, P> getMultiSide() {
+			return new MultiAnalysis.Side<>(
+					getAnalysis(),
+					XstsUnitInitFuncKt.xstsUnitInitFunc(),
+					XstsInUnWrappersKt::xstsCombineStates,
+                	XstsInUnWrappersKt::xstsStripState,
+					XstsInUnWrappersKt::xstsExtractFromState,
+					XstsInUnWrappersKt::xstsStripPrecFun);
+		}
+
 	}
 
 	public class ExplStrategy extends BuilderStrategy<ExplState, ExplPrec> {
@@ -375,7 +388,7 @@ public class XstsConfigBuilder {
 		}
 
 		@Override
-		public Analysis<ExplState, ? super XstsAction, ? super ExplPrec> getDataAnalysis() {
+		public Analysis<ExplState, StmtAction, ExplPrec> getDataAnalysis() {
 			return ExplStmtAnalysis.create(abstractionSolver, xsts.getInitFormula(), maxEnum);
 		}
 
@@ -418,7 +431,7 @@ public class XstsConfigBuilder {
 		}
 
 		@Override
-		public Analysis<PredState, ? super XstsAction, ? super PredPrec> getDataAnalysis() {
+		public Analysis<PredState, StmtAction, PredPrec> getDataAnalysis() {
 			return PredAnalysis.create(
 					abstractionSolver,
 					domain.predAbstractorFunction.apply(abstractionSolver),
@@ -456,7 +469,7 @@ public class XstsConfigBuilder {
 		}
 
 		@Override
-		public Analysis<Prod2State<ExplState, PredState>, ? super XstsAction, ? super Prod2Prec<ExplPrec, PredPrec>> getDataAnalysis() {
+		public Analysis<Prod2State<ExplState, PredState>, StmtAction, Prod2Prec<ExplPrec, PredPrec>> getDataAnalysis() {
 			if (domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_CART
 					|| domain == Domain.EXPL_PRED_SPLIT) {
 				final PredAbstractors.PredAbstractor predAbstractor = domain.predAbstractorFunction.apply(abstractionSolver);
