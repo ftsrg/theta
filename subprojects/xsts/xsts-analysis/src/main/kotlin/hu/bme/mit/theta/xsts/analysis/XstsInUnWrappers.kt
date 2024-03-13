@@ -34,6 +34,4 @@ fun <S : ExprState> xstsExtractFromState(xstsState: XstsState<S>): S {
 
 val xstsStripPrec: (Prec) -> Prec = { it }
 
-fun <P: Prec> xstsStripPrecFun(p: P): P {
-    return p
-}
+fun <P: Prec> xstsStripPrecFun(p: P) = p

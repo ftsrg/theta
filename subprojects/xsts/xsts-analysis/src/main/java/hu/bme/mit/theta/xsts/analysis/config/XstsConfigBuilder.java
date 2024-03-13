@@ -375,6 +375,9 @@ public class XstsConfigBuilder {
 
 		public ExplStrategy(XSTS xsts) {
 			super(xsts);
+			if (domain != Domain.EXPL) {
+				throw new UnsupportedOperationException(domain + " does not support EXPL builder strategy");
+			}
 		}
 
 		@Override
@@ -418,6 +421,9 @@ public class XstsConfigBuilder {
 	public class PredStrategy extends BuilderStrategy<PredState, PredPrec> {
 		public PredStrategy(XSTS xsts) {
 			super(xsts);
+			if (domain != Domain.PRED_BOOL && domain != Domain.PRED_SPLIT && domain != Domain.PRED_CART) {
+				throw new UnsupportedOperationException(domain + " does not support PRED builder strategy");
+			}
 		}
 
 		@Override
@@ -453,6 +459,10 @@ public class XstsConfigBuilder {
 
 		public ProdStrategy(XSTS xsts) {
 			super(xsts);
+			if (domain != Domain.EXPL_PRED_BOOL && domain != Domain.EXPL_PRED_SPLIT
+					&& domain != Domain.EXPL_PRED_CART && domain != Domain.EXPL_PRED_COMBINED) {
+				throw new UnsupportedOperationException(domain + " does not support PROD builder strategy");
+			}
 		}
 
 		@Override
