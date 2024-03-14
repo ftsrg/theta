@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.xcfa.acquiredMutexes
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -34,7 +34,6 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import hu.bme.mit.theta.xcfa.releasedMutexes
 import java.nio.file.Path
 import java.util.*
 
@@ -45,6 +44,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
 
     private val xcfa: XCFA = xcfa.optimizeFurther(listOf(AssumeFalseRemovalPass(), MutexToVarPass()))
     private val ocSolver = OcSolverFactory(Path.of("$solverHome/z3")).createSolver()
+    private val solver = Z3SolverFactory.getInstance().createSolver();
     private var indexing = VarIndexingFactory.indexing(0)
 
     private val threads = mutableSetOf<Thread>()
@@ -53,18 +53,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     private val branchingConditions = mutableListOf<Expr<BoolType>>()
     private val pos = mutableListOf<Relation>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
-    private val cos = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
 
     override fun check(prec: UnitPrec?): SafetyResult<XcfaState<*>, XcfaAction> {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
-        val usedMutexes = mutableSetOf<String>()
-        xcfa.procedures.forEach { p ->
-            p.edges.forEach { edge ->
-                edge.label.getFlatLabels().filterIsInstance<FenceLabel>()
-                    .forEach { usedMutexes.addAll(it.acquiredMutexes) }
-            }
-        }
-        if (usedMutexes.size > 1) error("Multiple mutexes are not supported by this checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         addConstraints()
@@ -97,21 +88,17 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         val pid = thread.pid
         var last = listOf<Event>()
         var guard = listOf<Expr<BoolType>>()
-        var mutex: Mutex? = null
         lateinit var lastWrites: MutableMap<VarDecl<*>, Set<Event>>
         lateinit var edge: XcfaEdge
         var inEdge = false
 
         val newEvent: (VarDecl<*>, EventType) -> List<Event> = { decl, type ->
             val e = Event(decl.getNewIndexed(), type, guard, pid, edge)
-            last.forEach { po(it, e, mutex, inEdge) }
+            last.forEach { po(it, e, inEdge) }
             inEdge = true
             when (type) {
                 EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RFI, it, e) }
-                EventType.WRITE -> {
-                    lastWrites[decl]?.forEach { cos.add(RelationType.COI, it, e) }
-                    lastWrites[decl] = setOf(e)
-                }
+                EventType.WRITE -> lastWrites[decl] = setOf(e)
             }
             events[decl] = (events[decl] ?: mutableMapOf()).apply {
                 this[pid] = (this[pid] ?: mutableListOf()).apply { add(e) }
@@ -122,7 +109,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         val waitList = mutableSetOf<SearchItem>()
         val toVisit = mutableSetOf(SearchItem(thread.procedure.initLoc).apply {
             guards.add(thread.guard)
-            mutexes.add(thread.mutex)
             thread.startEvent?.let { lastEvents.add(it) }
         })
         val threads = mutableListOf<Thread>()
@@ -132,12 +118,8 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
             toVisit.remove(current)
             check(current.incoming.size == current.loc.incomingEdges.size)
             check(current.incoming.size == current.guards.size || current.loc.initial)
-            check(current.incoming.size == current.mutexes.size || current.loc.initial)
             check(current.incoming.size == current.lastWrites.size) // lastEvents intentionally skipped
             check(current.incoming.size == current.pidLookups.size)
-            if (current.mutexes.any { it != current.mutexes.first() }) {
-                error("Bad pattern: mutex locked only in a subset of branches. Not supported by this checker.")
-            }
             val mergeGuards = { // intersection of guard expressions from incoming edges
                 current.guards.reduce(listOf()) { g1, g2 -> g1.filter { it in g2 } }
             }
@@ -150,7 +132,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
 
             if (current.loc.final) {
                 current.lastEvents.forEach { final ->
-                    thread.joinEvents.forEach { join -> po(final, join, current.mutexes.first()) }
+                    thread.joinEvents.forEach { join -> po(final, join) }
                 }
             }
 
@@ -160,7 +142,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 inEdge = false
                 last = current.lastEvents
                 guard = mergeGuards()
-                mutex = current.mutexes.first()?.copy()
                 lastWrites = current.lastWrites.merge().toMutableMap()
                 val pidLookup = current.pidLookups.merge { s1, s2 ->
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
@@ -182,15 +163,15 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                                 }
 
                                 is AssumeStmt -> {
-                                    if (edge.source.outgoingEdges.size > 1) { // TODO remove this condition
-                                        val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
-                                        guard = guard + stmt.cond.withConsts(consts)
-                                        if (firstLabel) {
-                                            consts.forEach { (v, c) ->
-                                                assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
-                                            }
+//                                    if (edge.source.outgoingEdges.size > 1) { // TODO remove this condition
+                                    val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
+                                    guard = guard + stmt.cond.withConsts(consts)
+                                    if (firstLabel) {
+                                        consts.forEach { (v, c) ->
+                                            assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
                                         }
                                     }
+//                                    }
                                     stmt.cond.vars.forEach {
                                         last = newEvent(it, EventType.READ)
                                     }
@@ -211,7 +192,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                             if (this.threads.any { it.pidVar == label.pidVar }) {
                                 error("Multi-thread use of pthread_t variables are not supported by this checker.")
                             }
-                            val newThread = Thread(procedure, guard, mutex, label.pidVar, last.first())
+                            val newThread = Thread(procedure, guard, label.pidVar, last.first())
                             last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
                             pidLookup[label.pidVar] = setOf(Pair(guard, newThread.pid))
                             threads.add(newThread)
@@ -230,13 +211,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                             last = lastEvents
                         }
 
-                        is FenceLabel -> {
-                            label.acquiredMutexes.firstOrNull()?.let { mutex = Mutex(it) }
-                            label.releasedMutexes.firstOrNull()?.let { mutex = null }
-                        }
-
                         is NopLabel -> {}
-                        else -> error("Unsupported label type: $label")
+                        is FenceLabel -> error("Untransformed fence label: $label")
+                        else -> error("Unsupported label type by this checker: $label")
                     }
                     firstLabel = false
                 }
@@ -244,7 +221,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 val searchItem = waitList.find { it.loc == edge.target }
                     ?: SearchItem(edge.target).apply { waitList.add(this) }
                 searchItem.guards.add(guard)
-                searchItem.mutexes.add(mutex)
                 searchItem.lastEvents.addAll(last)
                 searchItem.lastWrites.add(lastWrites)
                 searchItem.pidLookups.add(pidLookup)
@@ -282,11 +258,8 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 for ((pid2, list2) in map)
                     if (pid1 != pid2)
                         for (e1 in list1.filter { it.type == EventType.WRITE })
-                            for (e2 in list2)
-                                when (e2.type) {
-                                    EventType.WRITE -> cos.add(RelationType.COE, e1, e2)
-                                    EventType.READ -> rfs.add(RelationType.RFE, e1, e2)
-                                }
+                            for (e2 in list2.filter { it.type == EventType.READ })
+                                rfs.add(RelationType.RFE, e1, e2)
     }
 
     private fun addToSolver() {
@@ -318,29 +291,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                     ocSolver.add(Imply(rel.declRef, rel)) // RF-Ord
                 }
                 ocSolver.add(Imply(And(event.guard), Or(rels.map { it.declRef }))) // RF-Some
-            }
-        }
-
-        // CO
-        cos.forEach { (_, list) ->
-            val paired = mutableListOf<Relation>()
-            for ((i1, rel1) in list.withIndex()) {
-                ocSolver.add(Imply(rel1.declRef, And(And(rel1.from.guard), And(rel1.to.guard)))) // WS-Cond
-                ocSolver.add(Imply(rel1.declRef, rel1)) // WS-Ord
-
-                for ((i2, rel2) in list.withIndex()) {
-                    if (i1 == i2) break
-                    if (rel1.from == rel2.to && rel1.to == rel2.from) {
-                        ocSolver.add(Imply(And(And(rel1.from.guard), And(rel1.to.guard)),
-                            Or(rel1.declRef, rel2.declRef))) // WS-Some
-                        paired.add(rel1)
-                        paired.add(rel2)
-                        break
-                    }
-                }
-            }
-            (list - paired.toSet()).forEach { rel ->
-                ocSolver.add(Imply(And(And(rel.from.guard), And(rel.to.guard)), rel.declRef)) // WS-Some
             }
         }
     }
@@ -394,7 +344,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     private fun getEventTrace(model: Valuation): List<Event> {
         val valuation = model.toMap()
         val previousEvents: Collection<Relation>.(Event) -> Collection<Event> = { event ->
-            filter { it.to == event && it.enabled(valuation) && it.from.enabled(model) }.map { it.from }
+            filter { it.to == event && it.enabled(valuation) && it.from.enabled(model) == true }.map { it.from }
         }
         val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 
@@ -408,10 +358,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 if (top.eventsToVisit == null) {
                     val previous = mutableSetOf<Event>()
                     previous.addAll(pos.previousEvents(top.event))
-                    when (top.event.type) {
-                        EventType.WRITE -> cos[top.event.const.varDecl]?.previousEvents(top.event)
-                        EventType.READ -> rfs[top.event.const.varDecl]?.previousEvents(top.event)
-                    }?.let { previous.addAll(it) }
+                    if (top.event.type == EventType.READ) {
+                        rfs[top.event.const.varDecl]?.previousEvents(top.event)?.let { previous.addAll(it) }
+                    }
                     top.eventsToVisit = previous.toMutableList()
                 }
 
@@ -432,15 +381,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
 
     // Utility functions
 
-    private fun po(from: Event?, to: Event, mutex: Mutex? = null, inEdge: Boolean = false) {
-        if (from == null) return
-        val relation = if (!inEdge && (mutex == null || !mutex.entered)) {
-            mutex?.let { it.entered = true }
-            Relation(RelationType.PO, from, to)
-        } else {
-            Relation(RelationType.EPO, from, to)
-        }
-        pos.add(relation)
+    private fun po(from: Event?, to: Event, inEdge: Boolean = false) {
+        from ?: return
+        pos.add(Relation(if (inEdge) RelationType.EPO else RelationType.PO, from, to))
     }
 
     private fun <K, V> List<Map<K, Set<V>>>.merge(merge: (Set<V>, Set<V>) -> Set<V> = { a, b -> a + b }) =
@@ -476,5 +419,102 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
             events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
                 .joinToString(",") { it.const.name }
         })"
+    }
+
+    // ~DPLL(OC)
+    private lateinit var modifiableRels: List<Relation>
+
+    private class DecisionPoint(
+        val relation: Relation? = null,
+        val event: Event? = null,
+        val rels: Array<Array<Boolean>>
+    ) {
+
+        companion object {
+
+            private fun initRels(rels: Array<Array<Boolean>>) =
+                Array(rels.size) { i -> Array(rels.size) { j -> rels[i][j] } }
+        }
+
+        constructor(rels: Array<Array<Boolean>>, e: Event) : this(event = e, rels = initRels(rels))
+        constructor(rels: Array<Array<Boolean>>, r: Relation) : this(relation = r, rels = initRels(rels))
+    }
+
+    private fun dpll() {
+        modifiableRels = rfs.values.flatten() // modifiable relation vars
+        val flatEvents = events.values.flatMap { it.values.flatten() }
+        val initialRels = Array(flatEvents.size) { Array(flatEvents.size) { false } }
+        pos.forEach { setAndClose(initialRels, it) }
+        val decisionStack = Stack<DecisionPoint>()
+        decisionStack.push(DecisionPoint(rels = initialRels)) // not really a decision point (initial)
+
+        while (solver.check().isSat) {
+            val valuation = solver.model.toMap()
+            val changedRfs = modifiableRels.filter {
+                val oldValue = it.value
+                it.value(valuation) != oldValue
+            }
+            val changedEnabledEvents = flatEvents.filter {
+                val oldValue = it.enabled
+                it.type == EventType.WRITE && it.enabled(solver.model) != oldValue
+            }
+
+            // backtrack
+            changedRfs.forEach { r -> decisionStack.popUntil { it.relation == r } }
+            changedEnabledEvents.forEach { e -> decisionStack.popUntil { it.event == e } }
+
+            // propagate
+            changedRfs.filter { it.value == true }.forEach { rf ->
+                val decision = DecisionPoint(decisionStack.peek().rels, rf)
+                setAndClose(decision.rels, rf)
+                decisionStack.push(decision)
+                events[rf.from.const.varDecl]!!.values.flatten()
+                    .filter { it.type == EventType.WRITE && it.id != rf.from.id }
+                    .forEach { w -> derive(decision.rels, rf, w) }
+            }
+            changedEnabledEvents.forEach { w ->
+                val decision = DecisionPoint(decisionStack.peek().rels, w)
+                decisionStack.push(decision)
+                rfs[w.const.varDecl]!!
+                    .filter { it.from.id != w.id }
+                    .forEach { rf -> derive(decision.rels, rf, w) }
+            }
+        }
+    }
+
+    private fun derive(rels: Array<Array<Boolean>>, rf: Relation, w: Event) {
+        if (rels[w.id][rf.to.id]) {
+            setAndClose(rels, w.id, rf.from.id) // WS derivation
+        } else if (rels[rf.from.id][w.id]) {
+            setAndClose(rels, rf.to.id, w.id) // FR derivation
+        }
+    }
+
+    private fun setAndClose(rels: Array<Array<Boolean>>, rel: Relation) = setAndClose(rels, rel.from.id, rel.to.id)
+
+    private fun setAndClose(rels: Array<Array<Boolean>>, from: Int, to: Int) {
+        val toClose = mutableListOf(from to to)
+        while (toClose.isNotEmpty()) {
+            val (i1, i2) = toClose.first()
+            toClose.removeFirst() // toClose.remove(i1 to i2)
+            if (rels[i1][i2]) continue
+
+            rels[i1][i2] = true
+            rels[i2].forEachIndexed { i2next, b ->
+                if (b && !rels[i1][i2next]) {
+                    toClose.add(i1 to i2next)
+                }
+            }
+            rels.forEachIndexed { i1previous, b ->
+                if (b[i1] && !rels[i1previous][i2]) {
+                    toClose.add(i1previous to i2)
+                }
+            }
+        }
+    }
+
+    private fun <T> Stack<T>.popUntil(predicate: (T) -> Boolean) {
+        val index = indexOfFirst(predicate)
+        if (index > -1) while (size > index) pop()
     }
 }

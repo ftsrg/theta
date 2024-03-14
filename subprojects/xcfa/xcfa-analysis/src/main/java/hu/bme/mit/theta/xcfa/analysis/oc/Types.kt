@@ -30,30 +30,39 @@ internal data class Event(
     val guard: List<Expr<BoolType>>,
     val pid: Int,
     val edge: XcfaEdge,
+    val id: Int = uniqueId()
 ) {
 
-    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${const.name}\$clk", OcType))
+    var enabled: Boolean? = null
+
+    companion object {
+
+        private var cnt: Int = 0
+        private fun uniqueId(): Int = cnt++
+    }
+
+    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${const.name}\$clk_$pid", OcType))
     var assignment: Expr<BoolType>? = null
 
-    fun enabled(valuation: Valuation): Boolean = try {
-        And(guard).eval(valuation).value
-    } catch (e: Exception) {
-        false
+    fun enabled(valuation: Valuation): Boolean? {
+        val e = try {
+            And(guard).eval(valuation).value
+        } catch (e: Exception) {
+            null
+        }
+        enabled = e
+        return e
     }
 
     override fun equals(other: Any?): Boolean {
         if (other !is Event) return false
-        return const == other.const && type == other.type
+        return id == other.id
     }
 
-    override fun hashCode(): Int {
-        var result = const.hashCode()
-        result = 31 * result + type.hashCode()
-        return result
-    }
+    override fun hashCode(): Int = id
 }
 
-internal enum class RelationType { PO, EPO, COI, COE, RFI, RFE }
+internal enum class RelationType { PO, EPO, RFI, RFE }
 internal data class Relation(
     val type: RelationType,
     val from: Event,
@@ -63,6 +72,7 @@ internal data class Relation(
     val decl: ConstDecl<BoolType> =
         Decls.Const("${type.toString().lowercase()}_${from.const.name}_${to.const.name}", Bool())
     val declRef: RefExpr<BoolType> = RefExpr.of(decl)
+    var value: Boolean? = null
 
     override fun toString() = "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
     override fun getType(): BoolType = Bool()
@@ -71,9 +81,11 @@ internal data class Relation(
     override fun eval(v: Valuation) = error("This expression is not meant to be evaluated.")
     override fun withOps(ops: List<Expr<*>>) = error("This expression is not meant to be modified.")
     fun enabled(valuation: Map<Decl<*>, LitExpr<*>>) = value(valuation) ?: false
-    fun value(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? =
-        if (type == RelationType.PO || type == RelationType.EPO) true
+    fun value(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
+        value = if (type == RelationType.PO || type == RelationType.EPO) true
         else valuation[decl]?.let { (it as BoolLitExpr).value }
+        return value
+    }
 }
 
 internal data class Violation(
@@ -82,15 +94,9 @@ internal data class Violation(
     val lastEvents: List<Event>,
 )
 
-internal data class Mutex(
-    val mutex: String,
-    var entered: Boolean = false,
-)
-
 internal data class Thread(
     val procedure: XcfaProcedure,
     val guard: List<Expr<BoolType>> = listOf(),
-    val mutex: Mutex? = null,
     val pidVar: VarDecl<*>? = null,
     val startEvent: Event? = null,
     val joinEvents: MutableSet<Event> = mutableSetOf(),
@@ -100,14 +106,13 @@ internal data class Thread(
     companion object {
 
         private var cnt: Int = 0
-        fun uniqueId(): Int = cnt++
+        private fun uniqueId(): Int = cnt++
     }
 }
 
 internal data class SearchItem(val loc: XcfaLocation) {
 
     val guards: MutableList<List<Expr<BoolType>>> = mutableListOf()
-    val mutexes: MutableList<Mutex?> = mutableListOf()
     val lastEvents: MutableList<Event> = mutableListOf()
     val lastWrites: MutableList<Map<VarDecl<*>, Set<Event>>> = mutableListOf()
     val pidLookups: MutableList<Map<VarDecl<*>, Set<Pair<List<Expr<BoolType>>, Int>>>> = mutableListOf()

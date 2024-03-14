@@ -26,22 +26,25 @@ class MutexToVarPass : ProcedurePass {
         return when (this) {
             is SequenceLabel -> SequenceLabel(labels.map { it.replaceMutex() }, metadata)
             is FenceLabel -> {
-                val actions = mutableListOf<XcfaLabel>(FenceLabel(setOf("MUTEX_FLAG_SET"), EmptyMetaData))
+                val actions = mutableListOf<XcfaLabel>()
                 acquiredMutexes.forEach {
-                    val cond = AssumeStmt.of(mutexVars.getOrPut(it) { Decls.Var(it, Bool()) }.ref)
+                    val cond = AssumeStmt.of(Not(it.mutexFlag.ref))
                     actions.add(StmtLabel(cond, metadata = EmptyMetaData))
-                    val assign = AssignStmt.of(mutexVars[it]!!, True())
+                    val assign = AssignStmt.of(it.mutexFlag, True())
                     actions.add(StmtLabel(assign, metadata = EmptyMetaData))
                 }
                 releasedMutexes.forEach {
-                    val assign = AssignStmt.of(mutexVars.getOrPut(it) { Decls.Var(it, Bool()) }, False())
+                    val assign = AssignStmt.of(it.mutexFlag, False())
                     actions.add(StmtLabel(assign, metadata = EmptyMetaData))
                 }
-                actions.add(FenceLabel(setOf("MUTEX_FLAG_UNSET"), EmptyMetaData))
+                // Labels are atomic in XCFA semantics, so no need to wrap them in an atomic block
                 SequenceLabel(actions)
             }
 
             else -> this
         }
     }
+
+    private val String.mutexFlag
+        get() = mutexVars.getOrPut(this) { Decls.Var("_mutex_var_${ifEmpty { "atomic" }}", Bool()) }
 }
