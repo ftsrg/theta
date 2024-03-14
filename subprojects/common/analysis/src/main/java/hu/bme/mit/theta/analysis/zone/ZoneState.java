@@ -61,6 +61,7 @@ public final class ZoneState implements ExprState {
 
 	////
 
+	public static ZoneState of(DBM dbm){return new ZoneState(dbm);}
 	public static ZoneState region(final Valuation valuation, final Collection<VarDecl<RatType>> vars) {
 		checkNotNull(valuation);
 		final Iterable<VarDecl<RatType>> constrainedVars = Iterables.filter(vars, v -> valuation.eval(v).isPresent());

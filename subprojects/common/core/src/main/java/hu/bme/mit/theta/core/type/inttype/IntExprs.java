@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.type.inttype;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.math.BigInteger;
 
@@ -45,6 +46,7 @@ public final class IntExprs {
 	public static IntToRatExpr ToRat(final Expr<IntType> op) {
 		return IntToRatExpr.of(op);
 	}
+
 
 	public static IntAddExpr Add(final Iterable<? extends Expr<IntType>> ops) {
 		return IntAddExpr.of(ops);

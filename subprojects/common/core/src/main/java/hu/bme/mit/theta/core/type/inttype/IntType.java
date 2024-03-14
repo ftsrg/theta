@@ -18,7 +18,12 @@ package hu.bme.mit.theta.core.type.inttype;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+
+import java.math.BigInteger;
 
 public final class IntType implements Additive<IntType>, Multiplicative<IntType>, Divisible<IntType>, Equational<IntType>, Ordered<IntType>,
 		Castable<IntType> {
@@ -126,7 +131,13 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 		if (type instanceof RatType) {
 			@SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
 			return result;
-		} else {
+		}
+		if(type instanceof BoolType){
+			IntLitExpr intLitExpr = (IntLitExpr) op;
+			if(intLitExpr.getValue().compareTo(BigInteger.ZERO) == 1) return (Expr<TargetType>) TrueExpr.getInstance();
+			return (Expr<TargetType>) FalseExpr.getInstance();
+		}
+		else {
 			throw new ClassCastException("Int cannot be cast to " + type);
 		}
 	}

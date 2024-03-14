@@ -31,7 +31,6 @@ import hu.bme.mit.theta.xta.utils.MixedDataTimeNotSupportedException;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -117,17 +116,18 @@ public final class XtaProcess {
             for (VarDecl<?> var : system.getDataVars()) {
                 //count : if we find both of the location bool variable we can break the cycle
                 if (!target.equals(source) && count < 2) {
-                    if (var.getName().contains(target.name)) {
+                    if (var.getName().equals("__" + target.name)) {
                         updates.add(AssignStmt.create(var, BoolLitExpr.of(true)));
                         count++;
                     }
-                    if (var.getName().contains(source.name)) {
+                    if (var.getName().equals("__" + source.name)) {
                         updates.add(AssignStmt.create(var, BoolLitExpr.of(false)));
                         count++;
                     }
                 } else break;
             }
         }
+
         final Edge edge = new Edge(source, target, guards, sync, updates);
         source.outEdges.add(edge);
         target.inEdges.add(edge);
@@ -301,6 +301,7 @@ public final class XtaProcess {
         private final Optional<Sync> sync;
         private final List<Update> updates;
 
+
         private Edge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
                      final Optional<Sync> sync, final List<Stmt> updates) {
             this.source = checkNotNull(source);
@@ -309,7 +310,29 @@ public final class XtaProcess {
             this.sync = checkNotNull(sync);
             this.updates = createUpdates(updates);
         }
+        private Edge(final Loc source, final Loc target, final Collection<Guard> guards,
+                     final Optional<Sync> sync, final Collection<Update> updates){
+            this.source = checkNotNull(source);
+            this.target = checkNotNull(target);
+            this.guards = checkNotNull(guards);
+            this.sync = checkNotNull(sync);
+            checkNotNull(updates);
+            this.updates = updates.stream().toList();
+        }
 
+        public Edge pruneClocksFromEdge(){
+            final ImmutableList.Builder<Guard> guardBuilder = ImmutableList.builder();
+            final ImmutableList.Builder<Update> updateBuilder = ImmutableList.builder();
+            for(Guard guard : guards){
+                if(guard.isDataGuard())
+                    guardBuilder.add(guard);
+            }
+            for(Update update : updates){
+                if(update.isDataUpdate())
+                    updateBuilder.add(update);
+            }
+            return new Edge(source, target, guardBuilder.build(), sync, updateBuilder.build());
+        }
         public Loc getSource() {
             return source;
         }

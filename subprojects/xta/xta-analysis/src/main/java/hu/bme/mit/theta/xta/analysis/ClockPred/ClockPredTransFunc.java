@@ -19,7 +19,9 @@ public class ClockPredTransFunc implements TransFunc<ZoneState, XtaAction, Clock
 
         ZoneState succState = XtaClockPredUtils.post(state, action, prec);
 
-
+//        if(action.getTargetLocs().stream().map(loc -> loc.getName()).toList().contains("Circuit_UpdatedLbenchn13_becomes1")){
+//            int x= 0;
+//        }
         //ne legyen x-y inf
         succState.clockPredicate(prec);
 //új változó debughoz

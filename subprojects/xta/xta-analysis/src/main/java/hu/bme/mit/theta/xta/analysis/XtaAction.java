@@ -27,13 +27,10 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.xta.Guard;
-import hu.bme.mit.theta.xta.Label;
-import hu.bme.mit.theta.xta.Sync;
+import hu.bme.mit.theta.xta.*;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
-import hu.bme.mit.theta.xta.XtaSystem;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -66,6 +63,12 @@ public abstract class XtaAction extends StmtAction {
 		this.clockVars = system.getClockVars();
 		this.sourceLocs = ImmutableList.copyOf(checkNotNull(source));
 	}
+	private XtaAction(final Collection<VarDecl<RatType>> clocks, final List<Loc> source){
+		checkNotNull(clocks);
+		checkNotNull((source));
+		this.clockVars = clocks;
+		this.sourceLocs=source;
+	}
 
 	public static BasicXtaAction basic(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
 		return new BasicXtaAction(system, sourceLocs, edge);
@@ -80,6 +83,7 @@ public abstract class XtaAction extends StmtAction {
 											   final List<Edge> recvEdges) {
 		return new BroadcastXtaAction(system, sourceLocs, emitEdge, recvEdges);
 	}
+	public abstract XtaAction pruneClocks();
 
 	public Collection<VarDecl<RatType>> getClockVars() {
 		return clockVars;
@@ -115,6 +119,8 @@ public abstract class XtaAction extends StmtAction {
 		throw new ClassCastException();
 	}
 
+
+
 	public static final class BasicXtaAction extends XtaAction {
 		private final Edge edge;
 		private final List<Loc> targetLocs;
@@ -141,9 +147,22 @@ public abstract class XtaAction extends StmtAction {
 			checkArgument(matched);
 			targetLocs = builder.build();
 		}
+		private BasicXtaAction(final Collection<VarDecl<RatType>> clocks, final List<Loc> sourceLocs, final List<Loc> targetLocs, final Edge edge){
+			super(clocks, sourceLocs);
+			this.edge = checkNotNull(edge);
+
+
+			this.targetLocs = checkNotNull(targetLocs);
+		}
+
 
 		public Edge getEdge() {
 			return edge;
+		}
+
+		@Override
+		public XtaAction pruneClocks() {
+			return new BasicXtaAction(getClockVars(), getSourceLocs(), getTargetLocs(), edge.pruneClocksFromEdge());
 		}
 
 		@Override
@@ -195,6 +214,13 @@ public abstract class XtaAction extends StmtAction {
 
 		private volatile List<Stmt> stmts = null;
 
+		private BinaryXtaAction(final Collection<VarDecl<RatType>> clocks, final List<Loc> sourceLocs, final List<Loc> targetLocs,
+								final Edge emitEdge, final Edge recvEdge){
+			super(clocks,sourceLocs);
+			this.emitEdge = checkNotNull(emitEdge);
+			this.recvEdge = checkNotNull(recvEdge);
+			this.targetLocs = checkNotNull(targetLocs);
+		}
 		private BinaryXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
 								final Edge recvEdge) {
 			super(system, sourceLocs);
@@ -238,6 +264,12 @@ public abstract class XtaAction extends StmtAction {
 
 		public Edge getRecvEdge() {
 			return recvEdge;
+		}
+
+		@Override
+		public XtaAction pruneClocks() {
+			return new BinaryXtaAction(getClockVars(), getSourceLocs(), this.targetLocs, emitEdge.pruneClocksFromEdge(),
+					recvEdge.pruneClocksFromEdge());
 		}
 
 		@Override
@@ -294,6 +326,8 @@ public abstract class XtaAction extends StmtAction {
 
 		private volatile List<Stmt> stmts = null;
 
+//		private BroadcastXtaAction(final Collection<VarDecl<RatType>> clocks, final List<Loc> sourceLocs, final List<Loc> targetLocs,
+//								   final Edge emitEdge, final List<Edge> recvEdge, List<>)
 		private BroadcastXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge, List<Edge> recvEdges) {
 			super(system, sourceLocs);
 			this.emitEdge = checkNotNull(emitEdge);
@@ -383,6 +417,11 @@ public abstract class XtaAction extends StmtAction {
 
 		public List<Collection<Edge>> getNonRecvEdges() {
 			return nonRecvEdges;
+		}
+
+		@Override
+		public XtaAction pruneClocks() {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

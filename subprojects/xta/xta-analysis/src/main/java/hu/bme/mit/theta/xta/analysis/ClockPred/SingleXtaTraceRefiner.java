@@ -20,6 +20,8 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -74,10 +76,16 @@ public final class SingleXtaTraceRefiner <S extends ExprState, P extends Prec, R
 
         List<ZoneState> zoneStates = cexToConcretize.nodes().stream().map(ArgNode::getState).map(XtaState::getState).map(Prod2State::getState2).collect(Collectors.toList());
         List<XtaAction> actions = cexToConcretize.edges().stream().map(ArgEdge::getAction).toList();
+        List<XtaAction> zoneActions = actions;
+        ArrayList<XtaAction> exprActions = new ArrayList<XtaAction>();
+        for(final XtaAction action : actions){
+
+            exprActions.add(action.pruneClocks());
+        }
         List<S> exprStates = cexToConcretize.nodes().stream().map(ArgNode::getState).map(XtaState::getState).map(Prod2State::getState1).collect(Collectors.toList());
-        //elvesztődnek az xta state infok, a exprtrace nél amikor megadom a configba át kell adni az init valuation okat
-        final Trace<ZoneState, XtaAction> zoneTrace = Trace.of(zoneStates, actions);
-        final Trace<S, XtaAction> exprTrace = Trace.of(exprStates, actions);
+
+        final Trace<ZoneState, XtaAction> zoneTrace = Trace.of(zoneStates, zoneActions);
+        final Trace<S, XtaAction> exprTrace = Trace.of(exprStates, exprActions);
 
 
         final ExprTraceStatus<ZoneRefutation> cexZoneStatus = zoneTraceChecker.check(zoneTrace);

@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.analysis.zone.ClockPredPrec;
+import hu.bme.mit.theta.analysis.zone.DBM;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -33,6 +34,8 @@ import hu.bme.mit.theta.xta.analysis.*;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.xta.analysis.ClockPred.*;
 import hu.bme.mit.theta.xta.analysis.prec.*;
+
+import java.util.List;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -168,11 +171,25 @@ public class XtaConfigBuilder_ClockPred {
         final XtaLts lts = XtaLts.create(xta);
         //final Expr<BoolType> negProp = xta
         final Expr<BoolType> initval = xta.getInitVal().toExpr();
+        final DBM initDBM = DBM.zero(xta.getClockVars());
+        List<XtaProcess.Loc> initLocs = xta.getInitLocs();
+        boolean shouldApplyDelay = true;
+        for(XtaProcess.Loc loc : initLocs){
+            if( loc.getKind().equals(XtaProcess.LocKind.COMMITTED) || loc.getKind().equals(XtaProcess.LocKind.URGENT)){
+               shouldApplyDelay = false;
+
+                break;
+                //csinálni egy zero dbm-et majd ezt odaadni bool helyett, a initprec-be kell rakni a <minden óra > <=0-t majd a clockpredprecbe
+                // egy vetítő függvényt (ExplPrec create state, csak valuation helyett a dbm-em kapja)
+            }
+        }
+        XtaInitClockPredPrec.setShouldApplyDelay(shouldApplyDelay);
+        if(shouldApplyDelay) initDBM.up();
 
         if(domain == Domain.EXPL){
             final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<ExplPrec, ClockPredPrec>> prod2Analysis = Prod2Analysis.create(
                     ExplStmtAnalysis.create(abstractionSolverFactory.createSolver(), xta.getInitVal().toExpr(), maxEnum),
-                    ClockPredAnalysis.getInstance()
+                    ClockPredAnalysis.create(initDBM)
             );
             final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, XtaPrec<Prod2Prec<ExplPrec, ClockPredPrec>>> analysis = XtaAnalysis.create(xta,prod2Analysis);
 
@@ -191,7 +208,7 @@ public class XtaConfigBuilder_ClockPred {
             switch (refinement) {
                 case FW_BIN_ITP:
                     refiner = SingleXtaTraceRefiner.create(
-                                XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                                XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                                 ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
                                 precGranularity.createRefiner(reftoprec),
                                 pruneStrategy, logger, emptyRefutation
@@ -199,7 +216,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case BW_BIN_ITP:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
@@ -207,7 +224,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case SEQ_ITP:
                     refiner =SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval,initDBM,  True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
@@ -215,7 +232,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case MULTI_SEQ:
                     refiner =SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
@@ -229,7 +246,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;*/
                 case UCB:
                     refiner =SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
@@ -237,13 +254,13 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_SP:
                     refiner =SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withoutIT().withSP().withoutLV(),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
                     );
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withoutIT().withSP().withoutLV(),
                             precGranularity.createRefiner(reftoprec ),
                             pruneStrategy,
@@ -252,7 +269,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_WP:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withoutIT().withWP().withoutLV(),
                             precGranularity.createRefiner(reftoprec ),
                             pruneStrategy,
@@ -261,7 +278,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_SP_LV:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withoutIT().withSP().withLV(),
                             precGranularity.createRefiner(reftoprec ),
                             pruneStrategy,
@@ -270,7 +287,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_WP_LV:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval,initDBM,  True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withoutIT().withWP().withLV(),
                             precGranularity.createRefiner(reftoprec ),
                             pruneStrategy,
@@ -279,7 +296,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_IT_SP:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withIT().withSP().withoutLV(),
                             precGranularity.createRefiner(reftoprec ),
                             pruneStrategy,
@@ -288,7 +305,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_IT_WP:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withIT().withWP().withoutLV(),
                             precGranularity.createRefiner(reftoprec ),
                             pruneStrategy,
@@ -297,7 +314,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_IT_SP_LV:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withIT().withSP().withLV(),
                             precGranularity.createRefiner( reftoprec ),
                             pruneStrategy,
@@ -306,7 +323,7 @@ public class XtaConfigBuilder_ClockPred {
                     break;
                 case NWT_IT_WP_LV:
                     refiner = SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             ExprTraceNewtonChecker.create(initval, True(), refinementSolverFactory.createUCSolver()).withIT().withWP().withLV(),
                             precGranularity.createRefiner(reftoprec ),
                             pruneStrategy,
@@ -324,16 +341,16 @@ public class XtaConfigBuilder_ClockPred {
 
             switch (initPrec) {
                 case EMPTY:
-                    prec = precGranularity.createPrec(XtaInitClockPredPrec.createEmptyProd2ExplZone(xta));
+                    prec = precGranularity.createPrec(XtaInitClockPredPrec.createEmptyProd2ExplClockPred(xta));
                     break;
                 case ALLASSUMES:
                     switch (precGranularity) {
                         case LOCAL:
-                            prec = XtaInitClockPredPrec.collectLocalProd2ExplZone(xta);
+                            prec = XtaInitClockPredPrec.collectLocalProd2ExplClockPred(xta);
                             break;
                         case GLOBAL:
                             //It returns the same as empty prec
-                            prec = XtaInitClockPredPrec.collectGlobalProd2ExplZone(xta);
+                            prec = XtaInitClockPredPrec.collectGlobalProd2ExplClockPred(xta);
                             break;
                         default:
                             throw new UnsupportedOperationException(precGranularity +
@@ -368,7 +385,7 @@ public class XtaConfigBuilder_ClockPred {
             }
             final Analysis<Prod2State<PredState, ZoneState>, XtaAction, Prod2Prec<PredPrec, ClockPredPrec>> prod2Analysis = Prod2Analysis.create(
                     PredAnalysis.create(analysisSolver, predAbstractor, xta.getInitVal().toExpr()),
-                    ClockPredAnalysis.getInstance()
+                    ClockPredAnalysis.create(initDBM)
             );
             final Analysis<XtaState<Prod2State<PredState, ZoneState>>, XtaAction, XtaPrec<Prod2Prec<PredPrec, ClockPredPrec>>> analysis = XtaAnalysis.create(xta,prod2Analysis);
 
@@ -432,7 +449,7 @@ public class XtaConfigBuilder_ClockPred {
             ItpRefutation emptyRefutation = ItpRefutation.emptyRefutation();
             Refiner<XtaState<Prod2State<PredState, ZoneState>>, XtaAction, XtaPrec<Prod2Prec<PredPrec, ClockPredPrec>>> refiner =
                     SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
+                            XtaTraceChecker.create(initval,initDBM,  True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
                             exprTraceChecker,
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy,
@@ -454,16 +471,16 @@ public class XtaConfigBuilder_ClockPred {
             XtaPrec<Prod2Prec<PredPrec, ClockPredPrec>> prec;
             switch (initPrec) {
                 case EMPTY:
-                    prec = precGranularity.createPrec(XtaInitClockPredPrec.createEmptyProd2PredZone(xta));
+                    prec = precGranularity.createPrec(XtaInitClockPredPrec.createEmptyProd2PredClockPred(xta));
                     break;
                 case ALLASSUMES:
                     switch (precGranularity) {
                         case LOCAL:
-                            prec = XtaInitClockPredPrec.collectLocalProd2PredZone(xta);
+                            prec = XtaInitClockPredPrec.collectLocalProd2PredClockPred(xta);
                             break;
                         case GLOBAL:
                             //It returns the same as empty prec
-                            prec = XtaInitClockPredPrec.collectGlobalProd2PredZone(xta);
+                            prec = XtaInitClockPredPrec.collectGlobalProd2PredClockPred(xta);
                             break;
                         default:
                             throw new UnsupportedOperationException(precGranularity +

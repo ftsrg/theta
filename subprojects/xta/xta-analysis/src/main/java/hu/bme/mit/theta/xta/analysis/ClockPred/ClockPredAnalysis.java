@@ -4,22 +4,19 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.zone.ClockPredPrec;
-import hu.bme.mit.theta.analysis.zone.ZoneOrd;
-import hu.bme.mit.theta.analysis.zone.ZonePrec;
-import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.analysis.zone.*;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 
 import java.time.Clock;
 
 public class ClockPredAnalysis implements Analysis<ZoneState,XtaAction,ClockPredPrec> {
 
-    private static final ClockPredAnalysis INSTANCE = new ClockPredAnalysis();
+    private final InitFunc<ZoneState, ClockPredPrec> initFunc;
 
-    private ClockPredAnalysis(){
-
+    private ClockPredAnalysis(DBM initDBM){
+        this.initFunc = ClockPredInitFunc.create(initDBM);
     }
-    public static ClockPredAnalysis getInstance(){return INSTANCE;}
+    public static ClockPredAnalysis create(DBM initDBM){return new ClockPredAnalysis(initDBM);}
     @Override
     public PartialOrd<ZoneState> getPartialOrd() {
         return ZoneOrd.getInstance();
@@ -27,7 +24,7 @@ public class ClockPredAnalysis implements Analysis<ZoneState,XtaAction,ClockPred
 
     @Override
     public InitFunc<ZoneState, ClockPredPrec> getInitFunc() {
-        return ClockPredInitFunc.getInstance();
+        return initFunc;
     }
 
     @Override

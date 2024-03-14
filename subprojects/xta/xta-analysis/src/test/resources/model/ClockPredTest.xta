@@ -6,16 +6,20 @@ process P1(){
 
     state
         idle ,
-        A {y <= 2},
+        A {y <= 1},
         B;
 
+    urgent
+        idle;
 
     init
         idle;
 
+
+
     trans
         idle -> A {guard x <= 5; assign y = 0;},
-        A -> B {guard x >=7   ;assign a = 3;};
+        A -> B {guard x >= 7   ;assign a = 3;};
 
 }
 system P1;

@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.type.abstracttype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -29,6 +30,9 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public final class AbstractExprs {
 
@@ -283,7 +287,6 @@ public final class AbstractExprs {
 				return bind(expr1, t1Expr2);
 			}
 		}
-
 		throw new ClassCastException("Types " + expr1.getType() + " and " + expr2.getType() + " can not be unified");
 	}
 

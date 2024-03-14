@@ -38,7 +38,7 @@ public class Test_ClockPred {
     }
 
     public void check() throws Exception{
-        domain = XtaConfigBuilder_ClockPred.Domain.PRED_CART;
+        domain = XtaConfigBuilder_ClockPred.Domain.PRED_SPLIT;
         refinement = XtaConfigBuilder_ClockPred.Refinement.SEQ_ITP;
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
