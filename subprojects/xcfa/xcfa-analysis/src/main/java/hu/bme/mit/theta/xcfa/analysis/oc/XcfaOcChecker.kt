@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
@@ -53,6 +52,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     private val branchingConditions = mutableListOf<Expr<BoolType>>()
     private val pos = mutableListOf<Relation>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
+    private val mutexVars = mutableMapOf<String, VarDecl<BoolType>>()
 
     override fun check(prec: UnitPrec?): SafetyResult<XcfaState<*>, XcfaAction> {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
@@ -93,7 +93,10 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         var inEdge = false
 
         val newEvent: (VarDecl<*>, EventType) -> List<Event> = { decl, type ->
-            val e = Event(decl.getNewIndexed(), type, guard, pid, edge)
+            check(!inEdge || last.size == 1)
+            val e =
+                if (inEdge) Event(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
+                else Event(decl.getNewIndexed(), type, guard, pid, edge)
             last.forEach { po(it, e, inEdge) }
             inEdge = true
             when (type) {
@@ -444,15 +447,17 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 val reason0 = setAndClose(decision.rels, rf)
                 if (reason0 != null) {
                     solver.add(Not(reason0.expr))
+                    System.err.println(Not(reason0.expr).toString())
                     continue@dpllLoop
                 }
 
                 val writes = events[rf.from.const.varDecl]!!.values.flatten()
-                    .filter { it.type == EventType.WRITE && it.id != rf.from.id && it.enabled == true }
+                    .filter { it.type == EventType.WRITE && it.clkId != rf.from.clkId && it.clkId != rf.to.clkId && it.enabled == true }
                 for (w in writes) {
                     val reason = derive(decision.rels, rf, w)
                     if (reason != null) {
                         solver.add(Not(reason.expr))
+                        System.err.println(Not(reason.expr).toString())
                         continue@dpllLoop
                     }
                 }
@@ -461,10 +466,11 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
             for (w in changedEnabledEvents) {
                 val decision = DecisionPoint(decisionStack.peek().rels, w)
                 decisionStack.push(decision)
-                for (rf in rfs[w.const.varDecl]!!.filter { it.from.id != w.id }) {
+                for (rf in rfs[w.const.varDecl]!!.filter { it.from.clkId != w.clkId && it.to.clkId != w.clkId }) {
                     val reason = derive(decision.rels, rf, w)
                     if (reason != null) {
                         solver.add(Not(reason.expr))
+                        System.err.println(Not(reason.expr).toString())
                         continue@dpllLoop
                     }
                 }
@@ -476,24 +482,26 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     }
 
     private fun derive(rels: Array<Array<Reason?>>, rf: Relation, w: Event): Reason? = when {
-        rels[w.id][rf.to.id] != null -> { // WS derivation
-            val reason = WriteSerializationReason(rf, w, rels[w.id][rf.to.id]!!)
-            setAndClose(rels, w.id, rf.from.id, reason)
+        rels[w.clkId][rf.to.clkId] != null -> { // WS derivation
+            val reason = WriteSerializationReason(rf, w, rels[w.clkId][rf.to.clkId]!!)
+            setAndClose(rels, w.clkId, rf.from.clkId, reason)
         }
 
-        rels[rf.from.id][w.id] != null -> { // FR derivation
-            val reason = FromReadReason(rf, w, rels[rf.from.id][w.id]!!)
-            setAndClose(rels, rf.to.id, w.id, reason)
+        rels[rf.from.clkId][w.clkId] != null -> { // FR derivation
+            val reason = FromReadReason(rf, w, rels[rf.from.clkId][w.clkId]!!)
+            setAndClose(rels, rf.to.clkId, w.clkId, reason)
         }
 
         else -> null
     }
 
-    private fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation): Reason? =
-        setAndClose(rels, rel.from.id, rel.to.id, when (rel.type) {
+    private fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation): Reason? {
+        if (rel.from.clkId == rel.to.clkId) return null // within an atomic block
+        return setAndClose(rels, rel.from.clkId, rel.to.clkId, when (rel.type) {
             RelationType.PO, RelationType.EPO -> PoReason
             else -> RelationReason(rel)
         })
+    }
 
     private fun setAndClose(rels: Array<Array<Reason?>>, from: Int, to: Int, reason: Reason): Reason? {
         if (from == to) return reason // cycle (self-loop) found

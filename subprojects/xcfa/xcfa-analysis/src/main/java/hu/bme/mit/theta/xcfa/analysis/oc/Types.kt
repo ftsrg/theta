@@ -36,19 +36,19 @@ internal data class Event(
     val guard: List<Expr<BoolType>>,
     val pid: Int,
     val edge: XcfaEdge,
-    val id: Int = uniqueId()
+    val clkId: Int = uniqueId()
 ) {
     val guardExpr: Expr<BoolType> = guard.toAnd()
     var enabled: Boolean? = null
+
+    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${const.name}\$clk_$pid", OcType))
+    var assignment: Expr<BoolType>? = null
 
     companion object {
 
         private var cnt: Int = 0
         private fun uniqueId(): Int = cnt++
     }
-
-    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${const.name}\$clk_$pid", OcType))
-    var assignment: Expr<BoolType>? = null
 
     fun enabled(valuation: Valuation): Boolean? {
         val e = try {
@@ -60,12 +60,12 @@ internal data class Event(
         return e
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (other !is Event) return false
-        return id == other.id
-    }
-
-    override fun hashCode(): Int = id
+//    override fun equals(other: Any?): Boolean {
+//        if (other !is Event) return false
+//        return id == other.id
+//    }
+//
+//    override fun hashCode(): Int = id
 }
 
 internal enum class RelationType { PO, EPO, RFI, RFE }
