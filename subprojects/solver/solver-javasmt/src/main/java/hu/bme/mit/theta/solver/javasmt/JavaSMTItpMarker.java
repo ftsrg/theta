@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
@@ -25,15 +23,15 @@ import java.util.Collection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class JavaSMTItpMarker implements ItpMarker {
+final class JavaSMTItpMarker<T> implements ItpMarker {
 
-    private final Stack<Expr<BoolType>> terms;
+    private final Stack<T> terms;
 
     public JavaSMTItpMarker() {
         terms = new StackImpl<>();
     }
 
-    public void add(final Expr<BoolType> term) {
+    public void add(final T term) {
         terms.add(checkNotNull(term));
     }
 
@@ -45,7 +43,7 @@ final class JavaSMTItpMarker implements ItpMarker {
         terms.pop(n);
     }
 
-    public Collection<Expr<BoolType>> getTerms() {
+    public Collection<T> getTerms() {
         return terms.toCollection();
     }
 

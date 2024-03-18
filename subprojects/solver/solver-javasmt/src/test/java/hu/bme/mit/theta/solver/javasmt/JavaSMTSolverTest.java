@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -79,11 +81,18 @@ public final class JavaSMTSolverTest {
 
     @Parameters(name = "solver: {0}")
     public static Collection<?> operations() {
-        return Arrays.asList(new Object[][]{
-                {Solvers.Z3, JavaSMTSolverFactory.create(Solvers.Z3, new String[]{}).createSolver()},
-                {Solvers.CVC5, JavaSMTSolverFactory.create(Solvers.CVC5, new String[]{}).createSolver()},
-                {Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createSolver()},
-        });
+        if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
+            return Arrays.asList(new Object[][]{
+                    {Solvers.Z3, JavaSMTSolverFactory.create(Solvers.Z3, new String[]{}).createSolver()},
+                    {Solvers.CVC5, JavaSMTSolverFactory.create(Solvers.CVC5, new String[]{}).createSolver()},
+                    {Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createSolver()},
+            });
+        } else {
+            return Arrays.asList(new Object[][]{
+                    {Solvers.Z3, JavaSMTSolverFactory.create(Solvers.Z3, new String[]{}).createSolver()},
+                    {Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createSolver()},
+            });
+        }
     }
 
     @Test

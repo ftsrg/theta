@@ -94,14 +94,16 @@ final class JavaSMTSolver implements UCSolver, Solver {
         add(assertion, term);
     }
 
-    void add(final Expr<BoolType> assertion, final BooleanFormula term) {
+    Object add(final Expr<BoolType> assertion, final BooleanFormula term) {
         assertions.add(assertion);
+        Object ret;
         try {
-            solver.addConstraint(term);
+            ret = solver.addConstraint(term);
         } catch (InterruptedException e) {
             throw new JavaSMTSolverException(e);
         }
         clearState();
+        return ret;
     }
 
 

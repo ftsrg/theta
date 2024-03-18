@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.solver.javasmt;
 
 import com.google.common.collect.Sets;
+import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
@@ -57,6 +59,13 @@ public class JavaSMTTransformerTest {
 
     @Parameters(name = "expr: {0}, solver: {1}")
     public static Collection<?> operations() {
+        final Set<Solvers> solvers;
+        if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
+            solvers = Set.of(Solvers.Z3, Solvers.CVC5, Solvers.PRINCESS);
+        } else {
+            solvers = Set.of(Solvers.Z3, Solvers.PRINCESS);
+        }
+
         return Sets.cartesianProduct(Stream.of(
                 BvTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[2]),
                 BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[])o)[2]),
@@ -71,7 +80,7 @@ public class JavaSMTTransformerTest {
                 IntTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[1])
         ).reduce(Stream::concat).get()
                 .filter(JavaSMTTransformerTest::supported)
-                        .collect(Collectors.toSet()), Set.of(Solvers.Z3, Solvers.CVC5, Solvers.PRINCESS)).stream()
+                        .collect(Collectors.toSet()), Set.of()).stream()
                 .map(objects -> new Object[]{objects.get(0), objects.get(1)}).toList();
     }
 

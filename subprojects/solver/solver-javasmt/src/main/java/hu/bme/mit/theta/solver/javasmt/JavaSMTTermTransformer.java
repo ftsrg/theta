@@ -23,6 +23,7 @@ import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
@@ -36,6 +37,7 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import org.sosy_lab.common.rationals.Rational;
 import org.sosy_lab.java_smt.api.ArrayFormula;
 import org.sosy_lab.java_smt.api.BitvectorFormula;
@@ -219,6 +221,10 @@ final class JavaSMTTermTransformer {
             BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
             final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
             return BvSExtExpr.of(op, BvType.of(type.getSize()));
+        });
+        environment.put(Tuple2.of("EqZero", 1), (term, args, model, vars) -> {
+            final Expr<?> op = transform(args.get(0), model, vars);
+            return AbstractExprs.Eq(op, TypeUtils.getDefaultValue(op.getType()));
         });
     }
 
