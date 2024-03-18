@@ -22,10 +22,12 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -34,7 +36,6 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import java.nio.file.Path
 import java.util.*
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
@@ -43,8 +44,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(listOf(AssumeFalseRemovalPass(), MutexToVarPass()))
-    private val ocSolver = OcSolverFactory(Path.of("$solverHome/z3")).createSolver()
-    private val solver = Z3SolverFactory.getInstance().createSolver();
+    private val solver = SolverManager.resolveSolverFactory("Z3").createSolver()
     private var indexing = VarIndexingFactory.indexing(0)
 
     private val threads = mutableSetOf<Thread>()
@@ -60,11 +60,11 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         addConstraints()
 
-        logger.write(Logger.Level.MAINSTEP, "Starting OC checker...\n")
-        val status = ocSolver.check()
+        logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
+        val status = dpll()
         return when {
-            status.isUnsat -> SafetyResult.safe()
-            status.isSat -> SafetyResult.unsafe(getTrace(ocSolver.model))
+            status?.isUnsat == true -> SafetyResult.safe()
+            status?.isSat == true -> SafetyResult.unsafe(getTrace(solver.model))
             else -> SafetyResult.unknown()
         }
     }
@@ -163,15 +163,15 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                                 }
 
                                 is AssumeStmt -> {
-//                                    if (edge.source.outgoingEdges.size > 1) { // TODO remove this condition
-                                    val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
-                                    guard = guard + stmt.cond.withConsts(consts)
-                                    if (firstLabel) {
-                                        consts.forEach { (v, c) ->
-                                            assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
+                                    if (edge.source.outgoingEdges.size > 1) { // TODO remove this condition
+                                        val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
+                                        guard = guard + stmt.cond.withConsts(consts)
+                                        if (firstLabel) {
+                                            consts.forEach { (v, c) ->
+                                                assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
+                                            }
                                         }
                                     }
-//                                    }
                                     stmt.cond.vars.forEach {
                                         last = newEvent(it, EventType.READ)
                                     }
@@ -265,32 +265,25 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     private fun addToSolver() {
         // Value assignment
         events.values.flatMap { it.values.flatten() }.filter { it.assignment != null }.forEach { event ->
-            when (event.guard.size) {
-                0 -> ocSolver.add(event.assignment)
-                1 -> ocSolver.add(Imply(event.guard.first(), event.assignment))
-                else -> ocSolver.add(Imply(And(event.guard), event.assignment))
-            }
+            if (event.guard.isEmpty()) solver.add(event.assignment)
+            else solver.add(Imply(event.guardExpr, event.assignment))
         }
 
         // Branching conditions
-        branchingConditions.forEach { ocSolver.add(it) }
+        branchingConditions.forEach { solver.add(it) }
 
         // Property violation
-        ocSolver.add(Or(violations.map { it.guard }))
-
-        // Program order
-        ocSolver.add(pos)
+        solver.add(Or(violations.map { it.guard }))
 
         // RF
         rfs.forEach { (_, list) ->
             list.groupBy { it.to }.forEach { (event, rels) ->
                 rels.forEach { rel ->
-                    ocSolver.add(Imply(rel.declRef,
-                        And(And(rel.from.guard), And(rel.to.guard), Eq(rel.from.const.ref, rel.to.const.ref))
+                    solver.add(Imply(rel.declRef,
+                        And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
                     )) // RF-Val
-                    ocSolver.add(Imply(rel.declRef, rel)) // RF-Ord
                 }
-                ocSolver.add(Imply(And(event.guard), Or(rels.map { it.declRef }))) // RF-Some
+                solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
             }
         }
     }
@@ -422,99 +415,120 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     }
 
     // ~DPLL(OC)
-    private lateinit var modifiableRels: List<Relation>
 
-    private class DecisionPoint(
-        val relation: Relation? = null,
-        val event: Event? = null,
-        val rels: Array<Array<Boolean>>
-    ) {
-
-        companion object {
-
-            private fun initRels(rels: Array<Array<Boolean>>) =
-                Array(rels.size) { i -> Array(rels.size) { j -> rels[i][j] } }
-        }
-
-        constructor(rels: Array<Array<Boolean>>, e: Event) : this(event = e, rels = initRels(rels))
-        constructor(rels: Array<Array<Boolean>>, r: Relation) : this(relation = r, rels = initRels(rels))
-    }
-
-    private fun dpll() {
-        modifiableRels = rfs.values.flatten() // modifiable relation vars
+    private fun dpll(): SolverStatus? {
+        val modifiableRels = rfs.values.flatten() // modifiable relation vars
         val flatEvents = events.values.flatMap { it.values.flatten() }
-        val initialRels = Array(flatEvents.size) { Array(flatEvents.size) { false } }
+        val initialRels = Array(flatEvents.size) { Array<Reason?>(flatEvents.size) { null } }
         pos.forEach { setAndClose(initialRels, it) }
         val decisionStack = Stack<DecisionPoint>()
         decisionStack.push(DecisionPoint(rels = initialRels)) // not really a decision point (initial)
 
+        dpllLoop@
         while (solver.check().isSat) {
             val valuation = solver.model.toMap()
-            val changedRfs = modifiableRels.filter {
-                val oldValue = it.value
-                it.value(valuation) != oldValue
+            val changedRfs = modifiableRels.filter { rel ->
+                val value = rel.value(valuation)
+                decisionStack.popUntil({ it.relation == rel }, value) && value == true
             }
-            val changedEnabledEvents = flatEvents.filter {
-                val oldValue = it.enabled
-                it.type == EventType.WRITE && it.enabled(solver.model) != oldValue
+            val changedEnabledEvents = flatEvents.filter { ev ->
+                if (ev.type != EventType.WRITE) return@filter false
+                val enabled = ev.enabled(solver.model)
+                decisionStack.popUntil({ it.event == ev }, enabled) && enabled == true
             }
-
-            // backtrack
-            changedRfs.forEach { r -> decisionStack.popUntil { it.relation == r } }
-            changedEnabledEvents.forEach { e -> decisionStack.popUntil { it.event == e } }
 
             // propagate
-            changedRfs.filter { it.value == true }.forEach { rf ->
+            for (rf in changedRfs) {
                 val decision = DecisionPoint(decisionStack.peek().rels, rf)
-                setAndClose(decision.rels, rf)
                 decisionStack.push(decision)
-                events[rf.from.const.varDecl]!!.values.flatten()
-                    .filter { it.type == EventType.WRITE && it.id != rf.from.id }
-                    .forEach { w -> derive(decision.rels, rf, w) }
+                val reason0 = setAndClose(decision.rels, rf)
+                if (reason0 != null) {
+                    solver.add(Not(reason0.expr))
+                    continue@dpllLoop
+                }
+
+                val writes = events[rf.from.const.varDecl]!!.values.flatten()
+                    .filter { it.type == EventType.WRITE && it.id != rf.from.id && it.enabled == true }
+                for (w in writes) {
+                    val reason = derive(decision.rels, rf, w)
+                    if (reason != null) {
+                        solver.add(Not(reason.expr))
+                        continue@dpllLoop
+                    }
+                }
             }
-            changedEnabledEvents.forEach { w ->
+
+            for (w in changedEnabledEvents) {
                 val decision = DecisionPoint(decisionStack.peek().rels, w)
                 decisionStack.push(decision)
-                rfs[w.const.varDecl]!!
-                    .filter { it.from.id != w.id }
-                    .forEach { rf -> derive(decision.rels, rf, w) }
+                for (rf in rfs[w.const.varDecl]!!.filter { it.from.id != w.id }) {
+                    val reason = derive(decision.rels, rf, w)
+                    if (reason != null) {
+                        solver.add(Not(reason.expr))
+                        continue@dpllLoop
+                    }
+                }
             }
+
+            return solver.status // no conflict found, counterexample is valid
         }
+        return solver.status
     }
 
-    private fun derive(rels: Array<Array<Boolean>>, rf: Relation, w: Event) {
-        if (rels[w.id][rf.to.id]) {
-            setAndClose(rels, w.id, rf.from.id) // WS derivation
-        } else if (rels[rf.from.id][w.id]) {
-            setAndClose(rels, rf.to.id, w.id) // FR derivation
+    private fun derive(rels: Array<Array<Reason?>>, rf: Relation, w: Event): Reason? = when {
+        rels[w.id][rf.to.id] != null -> { // WS derivation
+            val reason = WriteSerializationReason(rf, w, rels[w.id][rf.to.id]!!)
+            setAndClose(rels, w.id, rf.from.id, reason)
         }
+
+        rels[rf.from.id][w.id] != null -> { // FR derivation
+            val reason = FromReadReason(rf, w, rels[rf.from.id][w.id]!!)
+            setAndClose(rels, rf.to.id, w.id, reason)
+        }
+
+        else -> null
     }
 
-    private fun setAndClose(rels: Array<Array<Boolean>>, rel: Relation) = setAndClose(rels, rel.from.id, rel.to.id)
+    private fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation): Reason? =
+        setAndClose(rels, rel.from.id, rel.to.id, when (rel.type) {
+            RelationType.PO, RelationType.EPO -> PoReason
+            else -> RelationReason(rel)
+        })
 
-    private fun setAndClose(rels: Array<Array<Boolean>>, from: Int, to: Int) {
-        val toClose = mutableListOf(from to to)
+    private fun setAndClose(rels: Array<Array<Reason?>>, from: Int, to: Int, reason: Reason): Reason? {
+        if (from == to) return reason // cycle (self-loop) found
+        val toClose = mutableListOf(from to to to reason)
         while (toClose.isNotEmpty()) {
-            val (i1, i2) = toClose.first()
-            toClose.removeFirst() // toClose.remove(i1 to i2)
-            if (rels[i1][i2]) continue
+            val (fromTo, r) = toClose.removeFirst()
+            val (i1, i2) = fromTo
+            check(i1 != i2)
+            if (rels[i1][i2] != null) continue
 
-            rels[i1][i2] = true
+            rels[i1][i2] = r
             rels[i2].forEachIndexed { i2next, b ->
-                if (b && !rels[i1][i2next]) {
-                    toClose.add(i1 to i2next)
+                if (b != null && rels[i1][i2next] == null) { // i2 -> i2next, not i1 -> i2next
+                    val combinedReason = r and b
+                    if (i1 == i2next) return combinedReason // cycle (self-loop) found
+                    toClose.add(i1 to i2next to combinedReason)
                 }
             }
             rels.forEachIndexed { i1previous, b ->
-                if (b[i1] && !rels[i1previous][i2]) {
-                    toClose.add(i1previous to i2)
+                if (b[i1] != null && rels[i1previous][i2] == null) { // i1previous -> i1, not i1previous -> i2
+                    val combinedReason = r and b[i1]!!
+                    if (i1previous == i2) return combinedReason // cycle (self-loop) found
+                    toClose.add(i1previous to i2 to combinedReason)
                 }
             }
         }
+        return null
     }
 
-    private fun <T> Stack<T>.popUntil(predicate: (T) -> Boolean) {
-        val index = indexOfFirst(predicate)
-        if (index > -1) while (size > index) pop()
+    // returns true if obj is not on the stack (in other words, if the value of obj is changed in the new model)
+    private fun <T> Stack<T>.popUntil(obj: (T) -> Boolean, value: Boolean?): Boolean {
+        val index = indexOfFirst(obj)
+        if (index == -1) return true
+        if (value == true) return false
+        while (size > index) pop()
+        return true
     }
 }

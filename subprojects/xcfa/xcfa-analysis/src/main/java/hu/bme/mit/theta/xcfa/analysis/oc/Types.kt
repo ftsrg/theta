@@ -7,13 +7,19 @@ import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.NullaryExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+
+internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when(size) {
+    0 -> True()
+    1 -> first()
+    else -> And(this)
+}
 
 internal object OcType : Type
 
@@ -32,7 +38,7 @@ internal data class Event(
     val edge: XcfaEdge,
     val id: Int = uniqueId()
 ) {
-
+    val guardExpr: Expr<BoolType> = guard.toAnd()
     var enabled: Boolean? = null
 
     companion object {
@@ -46,7 +52,7 @@ internal data class Event(
 
     fun enabled(valuation: Valuation): Boolean? {
         val e = try {
-            And(guard).eval(valuation).value
+            (guardExpr.eval(valuation) as? BoolLitExpr)?.value
         } catch (e: Exception) {
             null
         }
@@ -122,4 +128,52 @@ internal data class SearchItem(val loc: XcfaLocation) {
 internal data class StackItem(val event: Event) {
 
     var eventsToVisit: MutableList<Event>? = null
+}
+
+
+// ~DPLL(OC)
+
+internal sealed class Reason {
+
+    open val reasons: List<Reason> get() = listOf(this)
+    val expr: Expr<BoolType> get() = toExprs().toAnd()
+    infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
+    open fun toExprs(): List<Expr<BoolType>> = reasons.map { it.toExprs() }.flatten().filter { it !is TrueExpr }
+}
+
+internal class CombinedReason(override val reasons: List<Reason>) : Reason()
+internal object PoReason : Reason() {
+
+    override val reasons get() = emptyList<Reason>()
+    override fun toExprs(): List<Expr<BoolType>> = listOf()
+}
+
+internal class RelationReason(val relation: Relation) : Reason() {
+
+    override fun toExprs(): List<Expr<BoolType>> = listOf(relation.declRef)
+}
+
+internal open class DerivedReason(val rf: Relation, val w: Event, val wRfRelation: Reason) : Reason() {
+
+    override fun toExprs(): List<Expr<BoolType>> = listOf(rf.declRef, w.guardExpr) + wRfRelation.toExprs()
+}
+
+internal class WriteSerializationReason(rf: Relation, w: Event, wBeforeRf: Reason) : DerivedReason(rf, w, wBeforeRf)
+internal class FromReadReason(rf: Relation, w: Event, wAfterRf: Reason) : DerivedReason(rf, w, wAfterRf)
+
+internal class DecisionPoint(
+    val relation: Relation? = null,
+    val event: Event? = null,
+    val rels: Array<Array<Reason?>>
+) {
+
+    companion object {
+
+        private fun initRels(rels: Array<Array<Reason?>>) =
+            Array(rels.size) { i -> Array(rels.size) { j -> rels[i][j] } }
+    }
+
+    constructor(rels: Array<Array<Reason?>>, e: Event) : this(event = e, rels = initRels(rels))
+
+    constructor(rels: Array<Array<Reason?>>, r: Relation) : this(relation = r, rels = initRels(rels))
 }
