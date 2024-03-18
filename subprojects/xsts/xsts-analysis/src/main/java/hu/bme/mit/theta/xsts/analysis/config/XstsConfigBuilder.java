@@ -101,6 +101,9 @@ import hu.bme.mit.theta.xsts.analysis.initprec.XstsEmptyInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsPropInitPrec;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -342,9 +345,15 @@ public class XstsConfigBuilder {
         protected final XSTS xsts;
         protected final Solver abstractionSolver;
         protected final Expr<BoolType> negProp;
-        protected static final String DOMAIN_STRATEGY_INCOMPATIBLE = "%s does not support %s builder strategy";
+        protected static final String UNSUPPORTED_CONFIG_VALUE = "Builder strategy %s does not support configuration value %s as %s";
+
+        abstract Set<Domain> getSupportedDomains();
+
+        abstract Set<Refinement> getSupportedRefinements();
 
         protected BuilderStrategy(XSTS xsts) {
+            checkState(getSupportedDomains().contains(domain), UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), domain, "domain");
+            checkState(getSupportedRefinements().contains(refinement), UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), refinement, "refinement");
             this.xsts = xsts;
             abstractionSolver = abstractionSolverFactory.createSolver();
             negProp = Not(xsts.getProp());
@@ -419,10 +428,20 @@ public class XstsConfigBuilder {
 
     public class ExplStrategy extends BuilderStrategy<ExplState, ExplPrec> {
 
+        @Override
+        Set<Domain> getSupportedDomains() {
+            return new HashSet<>(List.of(Domain.EXPL));
+        }
+
+        @Override
+        Set<Refinement> getSupportedRefinements() {
+            return new HashSet<>(List.of(Refinement.values()));
+        }
+
         public ExplStrategy(XSTS xsts) {
             super(xsts);
             checkState(domain == Domain.EXPL,
-                    DOMAIN_STRATEGY_INCOMPATIBLE, domain, this.getClass().getSimpleName());
+                    UNSUPPORTED_CONFIG_VALUE, this.getClass().getSimpleName(), domain, "domain");
         }
 
         @Override
@@ -464,10 +483,20 @@ public class XstsConfigBuilder {
     }
 
     public class PredStrategy extends BuilderStrategy<PredState, PredPrec> {
+        @Override
+        Set<Domain> getSupportedDomains() {
+            return new HashSet<>(List.of(Domain.PRED_CART, Domain.PRED_BOOL, Domain.PRED_SPLIT));
+        }
+
+        @Override
+        Set<Refinement> getSupportedRefinements() {
+            return new HashSet<>(List.of(Refinement.FW_BIN_ITP, Refinement.BW_BIN_ITP, Refinement.SEQ_ITP, Refinement.MULTI_SEQ));
+        }
+
         public PredStrategy(XSTS xsts) {
             super(xsts);
             checkState(domain == Domain.PRED_BOOL || domain == Domain.PRED_SPLIT || domain == Domain.PRED_CART,
-                    DOMAIN_STRATEGY_INCOMPATIBLE, domain, this.getClass().getSimpleName());
+                    UNSUPPORTED_CONFIG_VALUE, this.getClass().getSimpleName(), domain, "domain");
         }
 
         @Override
@@ -501,11 +530,22 @@ public class XstsConfigBuilder {
 
     public class ProdStrategy extends BuilderStrategy<Prod2State<ExplState, PredState>, Prod2Prec<ExplPrec, PredPrec>> {
 
+        @Override
+        Set<Domain> getSupportedDomains() {
+            return new HashSet<>(List.of(Domain.EXPL_PRED_BOOL, Domain.EXPL_PRED_CART, Domain.EXPL_PRED_SPLIT, Domain.EXPL_PRED_COMBINED));
+        }
+
+        @Override
+        Set<Refinement> getSupportedRefinements() {
+            return new HashSet<>(List.of(Refinement.FW_BIN_ITP, Refinement.BW_BIN_ITP, Refinement.SEQ_ITP, Refinement.MULTI_SEQ));
+        }
+
         public ProdStrategy(XSTS xsts) {
             super(xsts);
             checkState(domain == Domain.EXPL_PRED_BOOL || domain == Domain.EXPL_PRED_SPLIT
                             || domain == Domain.EXPL_PRED_CART || domain == Domain.EXPL_PRED_COMBINED,
-                    DOMAIN_STRATEGY_INCOMPATIBLE, domain, this.getClass().getSimpleName());
+                    UNSUPPORTED_CONFIG_VALUE, this.getClass().getSimpleName(), domain, "domain");
+            checkState(refinement != Refinement.UNSAT_CORE, UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), refinement, "refinement");
         }
 
         @Override
