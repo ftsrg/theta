@@ -64,7 +64,7 @@ public final class JavaSMTItpSolverTest {
 
     @Before
     public void initialize() {
-        solver = JavaSMTSolverFactory.create(Solvers.CVC5, new String[]{}).createItpSolver();
+        solver = JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[]{}).createItpSolver();
 
         final ConstDecl<IntType> ad = Const("a", Int());
         final ConstDecl<IntType> bd = Const("b", Int());
@@ -158,7 +158,7 @@ public final class JavaSMTItpSolverTest {
         System.out.println("----------");
     }
 
-    //    @Test
+    @Test
     public void testLIA() {
         final ItpMarker A = solver.createMarker();
         final ItpMarker B = solver.createMarker();

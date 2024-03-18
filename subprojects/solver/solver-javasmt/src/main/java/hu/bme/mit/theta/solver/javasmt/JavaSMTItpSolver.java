@@ -87,8 +87,8 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         checkArgument(markers.toCollection().contains(marker), "Marker not found in solver");
         final JavaSMTItpMarker z3Marker = (JavaSMTItpMarker) marker;
         BooleanFormula term = (BooleanFormula) transformationManager.toTerm(assertion);
-        solver.add(assertion, term);
-        z3Marker.add(assertion);
+        Object c = solver.add(assertion, term);
+        z3Marker.add(c);
     }
 
     @Override
@@ -100,17 +100,9 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
 
 
         try {
-            final List<BooleanFormula> interpolants = interpolatingProverEnvironment.getSeqInterpolants(z3ItpPattern.stream().
-                    map(javaSMTItpMarker -> javaSMTItpMarker.getTerms().stream().
-                            map(expr1 -> {
-                                var term = transformationManager.toTerm(expr1);
-                                try {
-                                    return interpolatingProverEnvironment.addConstraint((BooleanFormula) term);
-                                } catch (InterruptedException e) {
-                                    throw new JavaSMTSolverException(e);
-                                }
-                            }).toList()).
-                    toList());
+            final List<BooleanFormula> interpolants =
+                    interpolatingProverEnvironment.getSeqInterpolants(
+                            z3ItpPattern.stream().map(JavaSMTItpMarker::getTerms).toList());
             Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
             for (int i = 0; i < interpolants.size(); i++) {
                 BooleanFormula term = interpolants.get(i);
