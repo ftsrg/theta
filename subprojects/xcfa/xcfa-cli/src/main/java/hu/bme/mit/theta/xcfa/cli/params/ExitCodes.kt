@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.cli.params
 import com.microsoft.z3.Z3Exception
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.solver.UnknownSolverStatusException
+import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverException
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException
 import hu.bme.mit.theta.solver.validator.SolverValidationException
 import kotlin.system.exitProcess
@@ -56,6 +57,9 @@ fun <T> exitOnError(stacktrace: Boolean, debug: Boolean, body: () -> T): T {
     try {
         return body()
     } catch (e: SmtLibSolverException) {
+        e.printCauseAndTrace(stacktrace)
+        exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code)
+    } catch (e: JavaSMTSolverException) {
         e.printCauseAndTrace(stacktrace)
         exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code)
     } catch (e: SolverValidationException) {

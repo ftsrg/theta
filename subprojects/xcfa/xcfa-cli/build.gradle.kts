@@ -31,6 +31,7 @@ dependencies {
     implementation(project(":theta-c2xcfa"))
     implementation(project(":theta-solver-z3-legacy"))
     implementation(project(":theta-solver-smtlib"))
+    implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-c-frontend"))
     implementation(project(":theta-grammar"))

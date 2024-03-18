@@ -28,6 +28,8 @@ object Deps {
     val z3 = "lib/com.microsoft.z3.jar"
     val z3legacy = "lib/com.microsoft.z3legacy.jar"
 
+    val javasmt = "org.sosy-lab:java-smt:${Versions.javasmt}"
+
     val jcommander = "com.beust:jcommander:${Versions.jcommander}"
 
     val junit4 = "junit:junit:${Versions.junit4}"
