@@ -164,7 +164,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                                 }
 
                                 is AssumeStmt -> {
-                                    val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
+                                    val consts = stmt.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) }
                                     val condWithConsts = stmt.cond.withConsts(consts)
                                     if (edge.source.outgoingEdges.size > 1) {
                                         guard = guard + condWithConsts
