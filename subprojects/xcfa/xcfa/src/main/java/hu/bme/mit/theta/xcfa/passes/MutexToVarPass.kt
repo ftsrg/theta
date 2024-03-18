@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.acquiredMutexes
+import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.releasedMutexes
 
@@ -18,6 +19,24 @@ class MutexToVarPass : ProcedurePass {
         builder.getEdges().toSet().forEach { edge ->
             builder.removeEdge(edge)
             builder.addEdge(edge.withLabel(edge.label.replaceMutex()))
+        }
+
+        mutexVars.forEach { (_, v) ->
+            builder.parent.addVar(XcfaGlobalVar(v, False()))
+        }
+
+        builder.parent.getInitProcedures().forEach { (proc, _) ->
+            val initEdge = proc.initLoc.outgoingEdges.first()
+            val initLabels = initEdge.getFlatLabels()
+            mutexVars.forEach { (_, v) ->
+                if (initLabels.none { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == v }) {
+                    val assign = StmtLabel(AssignStmt.of(v, False()), metadata = EmptyMetaData)
+                    val label = SequenceLabel(initLabels + assign, metadata = initEdge.label.metadata)
+                    proc.addEdge(initEdge.withLabel(label))
+                    proc.removeEdge(initEdge)
+                }
+            }
+
         }
         return builder
     }

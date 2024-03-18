@@ -6,10 +6,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.ConstDecl
-import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.decl.IndexedConstDecl
-import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.decl.*
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -45,6 +42,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     private val xcfa: XCFA = xcfa.optimizeFurther(listOf(AssumeFalseRemovalPass(), MutexToVarPass()))
     private val solver = SolverManager.resolveSolverFactory("Z3").createSolver()
     private var indexing = VarIndexingFactory.indexing(0)
+    private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
 
     private val threads = mutableSetOf<Thread>()
     private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<Event>>>()
@@ -52,7 +50,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     private val branchingConditions = mutableListOf<Expr<BoolType>>()
     private val pos = mutableListOf<Relation>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
-    private val mutexVars = mutableMapOf<String, VarDecl<BoolType>>()
 
     override fun check(prec: UnitPrec?): SafetyResult<XcfaState<*>, XcfaAction> {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
@@ -92,8 +89,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         lateinit var edge: XcfaEdge
         var inEdge = false
 
-        val newEvent: (VarDecl<*>, EventType) -> List<Event> = { decl, type ->
+        val newEvent: (VarDecl<*>, EventType) -> List<Event> = { d, type ->
             check(!inEdge || last.size == 1)
+            val decl = d.threadVar(pid)
             val e =
                 if (inEdge) Event(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
                 else Event(decl.getNewIndexed(), type, guard, pid, edge)
@@ -166,9 +164,10 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                                 }
 
                                 is AssumeStmt -> {
-                                    if (edge.source.outgoingEdges.size > 1) { // TODO remove this condition
-                                        val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
-                                        guard = guard + stmt.cond.withConsts(consts)
+                                    val consts = stmt.cond.vars.associateWith { it.getNewIndexed(false) }
+                                    val condWithConsts = stmt.cond.withConsts(consts)
+                                    if (edge.source.outgoingEdges.size > 1) {
+                                        guard = guard + condWithConsts
                                         if (firstLabel) {
                                             consts.forEach { (v, c) ->
                                                 assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
@@ -177,6 +176,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                                     }
                                     stmt.cond.vars.forEach {
                                         last = newEvent(it, EventType.READ)
+                                    }
+                                    if (edge.source.outgoingEdges.size == 1) {
+                                        last.first().assignment = condWithConsts
                                     }
                                 }
 
@@ -189,23 +191,24 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                         }
 
                         is StartLabel -> {
+                            // TODO StartLabel params
                             val procedure = xcfa.procedures.find { it.name == label.name }
                                 ?: error("Procedure not found: ${label.name}")
                             last = newEvent(label.pidVar, EventType.WRITE)
-                            if (this.threads.any { it.pidVar == label.pidVar }) {
+                            val pidVar = label.pidVar.threadVar(pid)
+                            if (this.threads.any { it.pidVar == pidVar }) {
                                 error("Multi-thread use of pthread_t variables are not supported by this checker.")
                             }
-                            val newThread = Thread(procedure, guard, label.pidVar, last.first())
+                            val newThread = Thread(procedure, guard, pidVar, last.first())
                             last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
-                            pidLookup[label.pidVar] = setOf(Pair(guard, newThread.pid))
+                            pidLookup[pidVar] = setOf(Pair(guard, newThread.pid))
                             threads.add(newThread)
                         }
 
                         is JoinLabel -> {
-                            val pidVar = label.pidVar
                             val guardTemp = guard
                             val lastEvents = mutableListOf<Event>()
-                            pidLookup[pidVar]?.forEach { (g, pid) ->
+                            pidLookup[label.pidVar.threadVar(pid)]?.forEach { (g, pid) ->
                                 guard = g
                                 lastEvents.addAll(newEvent(label.pidVar, EventType.READ))
                                 threads.find { it.pid == pid }?.joinEvents?.add(lastEvents.last())
@@ -404,6 +407,13 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         return map { it.withConsts(varToConst) }
     }
 
+    private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
+        if (xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }) { // if not global var
+            localVars.getOrPut(this) { mutableMapOf() }.getOrPut(pid) {
+                Decls.Var("t$pid::$name", type)
+            } as VarDecl<T>
+        } else this
+
     private fun <T : Type> VarDecl<T>.getNewIndexed(increment: Boolean = true): IndexedConstDecl<T> {
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
@@ -435,7 +445,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 decisionStack.popUntil({ it.relation == rel }, value) && value == true
             }
             val changedEnabledEvents = flatEvents.filter { ev ->
-                if (ev.type != EventType.WRITE) return@filter false
+                if (ev.type != EventType.WRITE || !rfs.containsKey(ev.const.varDecl)) return@filter false
                 val enabled = ev.enabled(solver.model)
                 decisionStack.popUntil({ it.event == ev }, enabled) && enabled == true
             }
@@ -447,7 +457,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 val reason0 = setAndClose(decision.rels, rf)
                 if (reason0 != null) {
                     solver.add(Not(reason0.expr))
-                    System.err.println(Not(reason0.expr).toString())
                     continue@dpllLoop
                 }
 
@@ -457,7 +466,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                     val reason = derive(decision.rels, rf, w)
                     if (reason != null) {
                         solver.add(Not(reason.expr))
-                        System.err.println(Not(reason.expr).toString())
                         continue@dpllLoop
                     }
                 }
@@ -470,7 +478,6 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                     val reason = derive(decision.rels, rf, w)
                     if (reason != null) {
                         solver.add(Not(reason.expr))
-                        System.err.println(Not(reason.expr).toString())
                         continue@dpllLoop
                     }
                 }
