@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import hu.bme.mit.theta.common.QuadFunction;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -22,8 +23,15 @@ import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -55,9 +63,12 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -71,7 +82,7 @@ final class JavaSMTTermTransformer {
 
     private final JavaSMTSymbolTable symbolTable;
     private final SolverContext context;
-    private final Map<Tuple2<String, Integer>, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> environment;
+    private final Map<Tuple2<String, Integer>, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> environment;
 
     public JavaSMTTermTransformer(final JavaSMTSymbolTable symbolTable, SolverContext context) {
         this.symbolTable = symbolTable;
@@ -117,7 +128,6 @@ final class JavaSMTTermTransformer {
         addFunc("fp.lt", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpLtExpr::create));
         addFunc("fp.geq", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGeqExpr::create));
         addFunc("fp.gt", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGtExpr::create));
-//        addFunc("fp.frombv", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpFromBvExpr::create));
         addFunc("fp.eq", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpEqExpr::create));
         addFunc("fp.isnan", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
         addFunc("fp.isNaN", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
@@ -127,8 +137,6 @@ final class JavaSMTTermTransformer {
         addFunc("fp.sqrt", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpSqrtExpr::create));
         addFunc("fp.max", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMaxExpr::create));
         addFunc("fp.min", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMinExpr::create));
-//        addFunc("fp.tobv", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpToBvExpr::create));
-//        addFunc("fp.tofp", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpToFpExpr::create));
         addFunc("to_fp", exprFpLitUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpLitExpr::of));
         addFunc("++", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
         addFunc("concat", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
@@ -164,9 +172,57 @@ final class JavaSMTTermTransformer {
         addFunc("bvsge", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr::create));
         addFunc("read", exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
         addFunc("write", exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
+
+        environment.put(Tuple2.of("fp.frombv", 1), (term, args, model, vars) -> {
+            FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
+            final var roundingmode = getRoundingMode(args.get(0).toString());
+            final Expr<BvType> op = (Expr<BvType>) transform(args.get(1), model, vars);
+            return FpFromBvExpr.of(roundingmode, op, FpType.of(type.getExponentSize(), type.getMantissaSize()), true); // TODO: is signedness given here?
+        });
+        environment.put(Tuple2.of("fp.to_sbv", 2), (term, args, model, vars) -> {
+            BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
+            final var roundingmode = getRoundingMode(args.get(0).toString());
+            final Expr<FpType> op = (Expr<FpType>) transform(args.get(1), model, vars);
+            return FpToBvExpr.of(roundingmode, op, type.getSize(), true);
+        });
+        environment.put(Tuple2.of("fp.to_ubv", 2), (term, args, model, vars) -> {
+            BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
+            final var roundingmode = getRoundingMode(args.get(0).toString());
+            final Expr<FpType> op = (Expr<FpType>) transform(args.get(1), model, vars);
+            return FpToBvExpr.of(roundingmode, op, type.getSize(), false);
+        });
+        environment.put(Tuple2.of("to_fp", 2), (term, args, model, vars) -> {
+            FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
+            final var roundingmode = getRoundingMode(args.get(0).toString());
+            final Expr<FpType> op = (Expr<FpType>) transform(args.get(1), model, vars);
+            return FpToFpExpr.of(roundingmode, op, type.getExponentSize(), type.getMantissaSize() + 1);
+        });
+
+        environment.put(Tuple2.of("extract", 1), (term, args, model, vars) -> {
+            final Pattern pattern = Pattern.compile("extract ([0-9]+) ([0-9]+)");
+            final String termStr = term.toString();
+            final Matcher match = pattern.matcher(termStr);
+            if (match.find()) {
+                final int to = Integer.parseInt(match.group(1)) + 1;
+                final int from = Integer.parseInt(match.group(2));
+                final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
+                return BvExtractExpr.of(op, Int(from), Int(to));
+            }
+            throw new JavaSMTSolverException("Not supported: " + term);
+        });
+        environment.put(Tuple2.of("zero_extend", 1), (term, args, model, vars) -> {
+            BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
+            final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
+            return BvZExtExpr.of(op, BvType.of(type.getSize()));
+        });
+        environment.put(Tuple2.of("sign_extend", 1), (term, args, model, vars) -> {
+            BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
+            final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
+            return BvSExtExpr.of(op, BvType.of(type.getSize()));
+        });
     }
 
-    private void addFunc(String name, Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> func) {
+    private void addFunc(String name, Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> func) {
         checkArgument(!environment.containsKey(Tuple2.of(name, func.get1())), "Duplicate key: " + Tuple2.of(name, func.get1()));
         environment.put(Tuple2.of(name, func.get1()), func.get2());
     }
@@ -194,12 +250,12 @@ final class JavaSMTTermTransformer {
             return context.getFormulaManager().visit(term, new FormulaVisitor<Expr<?>>() {
                 @Override
                 public Expr<?> visitFreeVariable(Formula f, String name) {
-                    return transformVar(f, vars);
+                    return transformVar(f, name, vars);
                 }
 
                 @Override
                 public Expr<?> visitBoundVariable(Formula f, int deBruijnIdx) {
-                    return transformVar(f, vars);
+                    throw new JavaSMTSolverException("Not supported: " + f);
                 }
 
                 @Override
@@ -231,7 +287,7 @@ final class JavaSMTTermTransformer {
 
                 @Override
                 public Expr<?> visitFunction(Formula f, List<Formula> args, FunctionDeclaration<?> functionDeclaration) {
-                    return transformApp(functionDeclaration, args, model, vars);
+                    return transformApp(f, functionDeclaration, args, model, vars);
                 }
 
                 @Override
@@ -295,7 +351,7 @@ final class JavaSMTTermTransformer {
 //        return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
     }
 
-    private Expr<?> transformApp(final FunctionDeclaration<?> funcDecl,
+    private Expr<?> transformApp(Formula f, final FunctionDeclaration<?> funcDecl,
                                  final List<Formula> args,
                                  final Model model,
                                  final List<Decl<?>> vars) {
@@ -303,9 +359,9 @@ final class JavaSMTTermTransformer {
         final var key1 = Tuple2.of(funcDecl.getName(), args.size());
         final var key2 = Tuple2.of(funcDecl.getName(), -1);
         if(environment.containsKey(key1)) {
-            return environment.get(key1).apply(args, model, vars);
+            return environment.get(key1).apply(f, args, model, vars);
         } else if (environment.containsKey(key2)) {
-            return environment.get(key2).apply(args, model, vars);
+            return environment.get(key2).apply(f, args, model, vars);
         } else {
             var sj = new StringJoiner(", ", "Not supported: %s(".formatted(funcDecl.getName()), ")");
             args.stream().map(Formula::toString).forEach(sj::add);
@@ -318,8 +374,23 @@ final class JavaSMTTermTransformer {
         throw new JavaSMTSolverException("Not supported: " + term);
     }
 
-    private Expr<?> transformVar(final Formula term, final List<Decl<?>> vars) {
-        throw new JavaSMTSolverException("Not supported: " + term);
+    private Expr<?> transformVar(final Formula term, String name, final List<Decl<?>> vars) {
+        FormulaType type = context.getFormulaManager().getFormulaType(term);
+        Type thetaType = null;
+        if (type.isIntegerType()) {
+            thetaType = Int();
+        } else if (type.isRationalType()) {
+            thetaType = Rat();
+        } else if (type.isBitvectorType()) {
+            BitvectorType bvType = (BitvectorType) type;
+            thetaType = BvType.of(bvType.getSize());
+        } else if (type.isFloatingPointType()) {
+            FloatingPointType fpType = (FloatingPointType) type;
+            thetaType = FpType.of(fpType.getExponentSize(), fpType.getMantissaSize());
+        }
+        final var c = symbolTable.getConst(term);
+        checkState(c.getType().equals(thetaType));
+        return c.getRef();
     }
 
     private <P extends Type, R extends Type> Expr<?> transformFuncApp(final Expr<?> expr,
@@ -343,26 +414,26 @@ final class JavaSMTTermTransformer {
 
     ////
 
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprNullaryOperator(
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprNullaryOperator(
             final Supplier<Expr<?>> function) {
-        return Tuple2.of(0, (args, model, vars) -> {
+        return Tuple2.of(0, (term, args, model, vars) -> {
             checkArgument(args.isEmpty(), "Number of arguments must be zero");
             return function.get();
         });
     }
 
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprUnaryOperator(
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprUnaryOperator(
             final UnaryOperator<Expr<?>> function) {
-        return Tuple2.of(1, (args, model, vars) -> {
+        return Tuple2.of(1, (term, args, model, vars) -> {
             checkArgument(args.size() == 1, "Number of arguments must be one");
             final Expr<?> op = transform(args.get(0), model, vars);
             return function.apply(op);
         });
     }
 
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprBinaryOperator(
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprBinaryOperator(
             final BinaryOperator<Expr<?>> function) {
-        return Tuple2.of(2, (args, model, vars) -> {
+        return Tuple2.of(2, (term, args, model, vars) -> {
             checkArgument(args.size() == 2, "Number of arguments must be two");
             final Expr<?> op1 = transform(args.get(0), model, vars);
             final Expr<?> op2 = transform(args.get(1), model, vars);
@@ -370,9 +441,9 @@ final class JavaSMTTermTransformer {
         });
     }
 
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprTernaryOperator(
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprTernaryOperator(
             final TernaryOperator<Expr<?>> function) {
-        return Tuple2.of(3, (args, model, vars) -> {
+        return Tuple2.of(3, (term, args, model, vars) -> {
             checkArgument(args.size() == 3, "Number of arguments must be three");
             final Expr<?> op1 = transform(args.get(0), model, vars);
             final Expr<?> op2 = transform(args.get(1), model, vars);
@@ -381,9 +452,9 @@ final class JavaSMTTermTransformer {
         });
     }
 
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprMultiaryOperator(
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprMultiaryOperator(
             final Function<List<Expr<?>>, Expr<?>> function) {
-        return Tuple2.of(-1, (args, model, vars) -> {
+        return Tuple2.of(-1, (term, args, model, vars) -> {
             final List<Expr<?>> ops = args.stream().map(arg -> transform(arg, model, vars))
                     .collect(toImmutableList());
             return function.apply(ops);
@@ -391,19 +462,19 @@ final class JavaSMTTermTransformer {
     }
 
 
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpUnaryOperator(
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpUnaryOperator(
             final BiFunction<FpRoundingMode, Expr<?>, Expr<?>> function) {
-        return Tuple2.of(2, (args, model, vars) -> {
+        return Tuple2.of(2, (term, args, model, vars) -> {
             checkArgument(args.size() == 2, "Number of arguments must be two");
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final Expr<?> op2 = transform(args.get(1), model, vars);
             return function.apply(roundingmode, op2);
         });
     }
-    
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpBinaryOperator(
+
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpBinaryOperator(
             final TriFunction<FpRoundingMode, Expr<?>, Expr<?>, Expr<?>> function) {
-        return Tuple2.of(3, (args, model, vars) -> {
+        return Tuple2.of(3, (term, args, model, vars) -> {
             checkArgument(args.size() == 3, "Number of arguments must be three");
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final Expr<?> op1 = transform(args.get(1), model, vars);
@@ -411,10 +482,10 @@ final class JavaSMTTermTransformer {
             return function.apply(roundingmode, op1, op2);
         });
     }
-    
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpMultiaryOperator(
+
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpMultiaryOperator(
             final BiFunction<FpRoundingMode, List<Expr<?>>, Expr<?>> function) {
-        return Tuple2.of(-1, (args, model, vars) -> {
+        return Tuple2.of(-1, (term, args, model, vars) -> {
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final List<Expr<?>> ops = args.stream().skip(1).map(arg -> transform(arg, model, vars))
                     .collect(toImmutableList());
@@ -422,9 +493,9 @@ final class JavaSMTTermTransformer {
         });
     }
 
-    private Tuple2<Integer, TriFunction<List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpLitUnaryOperator(
+    private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpLitUnaryOperator(
         final BiFunction<BvLitExpr, FpType, Expr<?>> function) {
-        return Tuple2.of(3, (args, model, vars) -> {
+        return Tuple2.of(3, (term, args, model, vars) -> {
             final BvLitExpr op1 = (BvLitExpr) transform(args.get(0), model, vars);
             final IntLitExpr op2 = (IntLitExpr) transform(args.get(1), model, vars);
             final IntLitExpr op3 = (IntLitExpr) transform(args.get(2), model, vars);

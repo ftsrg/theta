@@ -40,6 +40,7 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 final class JavaSMTItpSolver implements ItpSolver, Solver {
 
@@ -97,10 +98,18 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         checkArgument(pattern instanceof JavaSMTItpPattern);
         final List<JavaSMTItpMarker> z3ItpPattern = ((JavaSMTItpPattern) pattern).getSequence();
 
+
         try {
             final List<BooleanFormula> interpolants = interpolatingProverEnvironment.getSeqInterpolants(z3ItpPattern.stream().
                     map(javaSMTItpMarker -> javaSMTItpMarker.getTerms().stream().
-                            map(transformationManager::toTerm).toList()).
+                            map(expr1 -> {
+                                var term = transformationManager.toTerm(expr1);
+                                try {
+                                    return interpolatingProverEnvironment.addConstraint((BooleanFormula) term);
+                                } catch (InterruptedException e) {
+                                    throw new JavaSMTSolverException(e);
+                                }
+                            }).toList()).
                     toList());
             Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
             for (int i = 0; i < interpolants.size(); i++) {
@@ -108,6 +117,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
                 Expr<BoolType> expr = (Expr<BoolType>) termTransformer.toExpr(term);
                 itpMap.put(z3ItpPattern.get(i), expr);
             }
+            itpMap.put(z3ItpPattern.get(interpolants.size()), False());
             return new JavaSMTInterpolant(itpMap);
         } catch (SolverException | InterruptedException e) {
             throw new JavaSMTSolverException(e);
