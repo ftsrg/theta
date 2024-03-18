@@ -15,16 +15,12 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import com.google.common.collect.Sets;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.IntTestUtils;
@@ -32,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
@@ -41,6 +38,7 @@ import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
 import org.sosy_lab.java_smt.api.SolverContext;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,12 +49,15 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class JavaSMTTransformerTest {
 
-    @Parameterized.Parameter(0)
+    @Parameter(0)
     public Expr<?> expr;
 
-    @Parameters(name = "expr: {0}")
+    @Parameter(1)
+    public Solvers solver;
+
+    @Parameters(name = "expr: {0}, solver: {1}")
     public static Collection<?> operations() {
-        return Stream.of(
+        return Sets.cartesianProduct(Stream.of(
                 BvTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[2]),
                 BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[])o)[2]),
                 BvTestUtils.RelationalOperations().stream().map(o -> ((Object[])o)[2]),
@@ -70,19 +71,15 @@ public class JavaSMTTransformerTest {
                 IntTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[1])
         ).reduce(Stream::concat).get()
                 .filter(JavaSMTTransformerTest::supported)
-                .collect(Collectors.toSet());
+                        .collect(Collectors.toSet()), Set.of(Solvers.Z3, Solvers.CVC5, Solvers.PRINCESS)).stream()
+                .map(objects -> new Object[]{objects.get(0), objects.get(1)}).toList();
     }
 
-    private static boolean supported(Object o) {
+    static boolean supported(Object o) {
         return !(o instanceof BvRotateLeftExpr) &&
                 !(o instanceof BvRotateRightExpr) &&
-                !(o instanceof FpToBvExpr) &&
-                !(o instanceof FpFromBvExpr) &&
-                !(o instanceof FpToFpExpr) &&
-                !(o instanceof BvZExtExpr) &&
-                !(o instanceof BvSExtExpr) &&
-                !(o instanceof BvExtractExpr) &&
                 !(o instanceof FpRemExpr) &&
+                !(o instanceof BvSModExpr) &&
                 (!(o instanceof Expr<?>) || ((Expr<?>) o).getOps().stream().allMatch(JavaSMTTransformerTest::supported));
     }
 

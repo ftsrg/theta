@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -63,6 +64,7 @@ public class SolverUtilsTest {
     }
 
     // https://github.com/sosy-lab/java-smt/issues/359
+    // if this no longer fails, clean up the FpToFp mitigations in ExprTransformer
     @Test
     public void testBugreport() throws InvalidConfigurationException {
         final Configuration config = Configuration.fromCmdLineArguments(new String[]{});
@@ -75,12 +77,13 @@ public class SolverUtilsTest {
                 FormulaType.getFloatingPointType(5, 10)
         );
 
+        Assert.assertThrows(Z3Exception.class, () ->
         context.getFormulaManager().visit(term, new DefaultFormulaVisitor<Void>() {
             @Override
             protected Void visitDefault(Formula f) {
                 return null;
             }
-        });
+        }));
 
     }
 

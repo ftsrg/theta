@@ -22,5 +22,6 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
     implementation(Deps.javasmt)
+    implementation(files(rootDir.resolve(Deps.cvc5)))
     testImplementation(testFixtures(project(":theta-core")))
 }

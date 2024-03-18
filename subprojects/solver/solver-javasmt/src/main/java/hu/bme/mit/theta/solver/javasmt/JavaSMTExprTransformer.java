@@ -161,6 +161,7 @@ import org.sosy_lab.java_smt.api.SolverContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 final class JavaSMTExprTransformer {
@@ -186,13 +187,13 @@ final class JavaSMTExprTransformer {
         this.transformer = transformer;
         this.env = new Env();
 
-        booleanFormulaManager = context.getFormulaManager().getBooleanFormulaManager();
-        integerFormulaManager = context.getFormulaManager().getIntegerFormulaManager();
-        rationalFormulaManager = context.getFormulaManager().getRationalFormulaManager();
-        bitvectorFormulaManager = context.getFormulaManager().getBitvectorFormulaManager();
-        floatingPointFormulaManager = context.getFormulaManager().getFloatingPointFormulaManager();
-        quantifiedFormulaManager = context.getFormulaManager().getQuantifiedFormulaManager();
-        arrayFormulaManager= context.getFormulaManager().getArrayFormulaManager();
+        booleanFormulaManager = orElseNull(() -> context.getFormulaManager().getBooleanFormulaManager());
+        integerFormulaManager = orElseNull(() -> context.getFormulaManager().getIntegerFormulaManager());
+        rationalFormulaManager = orElseNull(() -> context.getFormulaManager().getRationalFormulaManager());
+        bitvectorFormulaManager = orElseNull(() -> context.getFormulaManager().getBitvectorFormulaManager());
+        floatingPointFormulaManager = orElseNull(() -> context.getFormulaManager().getFloatingPointFormulaManager());
+        quantifiedFormulaManager = orElseNull(() -> context.getFormulaManager().getQuantifiedFormulaManager());
+        arrayFormulaManager = orElseNull(() -> context.getFormulaManager().getArrayFormulaManager());
 
         exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
@@ -435,6 +436,13 @@ final class JavaSMTExprTransformer {
                 .build();
     }
 
+    private static <T> T orElseNull(Supplier<T> supplier) {
+        try {
+            return supplier.get();
+        } catch (UnsupportedOperationException uoe) {
+            return null;
+        }
+    }
     private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
         final Expr<?> func = expr.getFunc();
         final Expr<?> arg = expr.getParam();
@@ -887,7 +895,7 @@ final class JavaSMTExprTransformer {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.modulo(leftOpTerm, rightOpTerm, true);
+        return bitvectorFormulaManager.modulo(leftOpTerm, rightOpTerm, true); // TODO: this will create an SREM instruction, which is faulty.
     }
 
     private Formula transformBvURem(final BvURemExpr expr) {
@@ -1208,7 +1216,7 @@ final class JavaSMTExprTransformer {
     private Formula transformFpToBv(final FpToBvExpr expr) {
         final FloatingPointFormula op = (FloatingPointFormula) toTerm(expr.getOp());
 
-        return floatingPointFormulaManager.toIeeeBitvector(op);
+        return floatingPointFormulaManager.castTo(op, expr.getSgn(), FormulaType.getBitvectorTypeWithSize(expr.getSize()));
     }
     /*
      * Arrays
@@ -1220,7 +1228,7 @@ final class JavaSMTExprTransformer {
         return floatingPointFormulaManager.castTo(
                 op,
                 true, // ignored
-                FloatingPointType.getFloatingPointType(expr.getExpBits(), expr.getSignBits()),
+                FloatingPointType.getFloatingPointType(expr.getExpBits(), expr.getSignBits() - 1),
                 transformFpRoundingMode(expr.getRoundingMode()));
     }
 

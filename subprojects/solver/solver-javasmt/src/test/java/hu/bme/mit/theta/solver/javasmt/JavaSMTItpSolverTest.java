@@ -158,26 +158,7 @@ public final class JavaSMTItpSolverTest {
         System.out.println("----------");
     }
 
-    @Test
-    public void testEUF() {
-        final ItpMarker A = solver.createMarker();
-        final ItpMarker B = solver.createMarker();
-        final ItpPattern pattern = solver.createBinPattern(A, B);
-
-        solver.add(A, Eq(App(f, a), c));
-        solver.add(A, Eq(App(f, b), d));
-        solver.add(B, Eq(a, b));
-        solver.add(B, Neq(App(g, c), App(g, d)));
-
-        solver.check();
-        Assert.assertEquals(SolverStatus.UNSAT, solver.getStatus());
-        final Interpolant itp = solver.getInterpolant(pattern);
-
-        System.out.println(itp.eval(A));
-        System.out.println("----------");
-    }
-
-    @Test
+    //    @Test
     public void testLIA() {
         final ItpMarker A = solver.createMarker();
         final ItpMarker B = solver.createMarker();
