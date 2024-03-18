@@ -227,12 +227,7 @@ public class XstsConfigBuilder {
             public ExprTraceChecker<ItpRefutation> getItpExprTraceChecker(Expr<BoolType> init, Expr<BoolType> target, ItpSolver solver) {
                 return ExprTraceSeqItpChecker.create(init, target, solver);
             }
-        }, UNSAT_CORE {
-            @Override
-            public ExprTraceChecker<ItpRefutation> getItpExprTraceChecker(Expr<BoolType> init, Expr<BoolType> target, ItpSolver solver) {
-                throw new UnsupportedOperationException(String.format("%s domain can't provide trace checker of ItpRefutation", this.getClass().getSimpleName()));
-            }
-        },
+        }, UNSAT_CORE,
         MULTI_SEQ {
             @Override
             public <S extends ExprState> StopCriterion<S, XstsAction> getStopCriterion() {
@@ -260,11 +255,15 @@ public class XstsConfigBuilder {
             return StopCriterions.firstCex();
         }
 
-        public abstract ExprTraceChecker<ItpRefutation> getItpExprTraceChecker(
+        public ExprTraceChecker<ItpRefutation> getItpExprTraceChecker(
                 final Expr<BoolType> init,
                 final Expr<BoolType> target,
                 final ItpSolver solver
-        );
+        ) {
+            throw new UnsupportedOperationException(String.format("%s domain can't provide trace checker of ItpRefutation", this.getClass().getSimpleName()));
+        }
+
+        ;
 
         public <S extends ExprState, P extends Prec, R extends Refutation> Refiner<XstsState<S>, XstsAction, P>
         createRefiner(
