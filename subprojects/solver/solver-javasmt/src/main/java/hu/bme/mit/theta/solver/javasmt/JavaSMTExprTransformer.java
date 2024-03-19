@@ -807,21 +807,21 @@ final class JavaSMTExprTransformer {
         final int from = expr.getFrom().getValue().intValue();
         final int until = expr.getUntil().getValue().intValue();
 
-        return bitvectorFormulaManager.extract(bitvecTerm, until - 1, from); // TODO: cross-check params
+        return bitvectorFormulaManager.extract(bitvecTerm, until - 1, from);
     }
 
     private Formula transformBvZExt(final BvZExtExpr expr) {
         final BitvectorFormula bitvecTerm = (BitvectorFormula) toTerm(expr.getOp());
         final int extendWith = expr.getExtendType().getSize() - expr.getOp().getType().getSize();
 
-        return bitvectorFormulaManager.extend(bitvecTerm, extendWith, false); // TODO: cross-check signedness
+        return bitvectorFormulaManager.extend(bitvecTerm, extendWith, false);
     }
 
     private Formula transformBvSExt(final BvSExtExpr expr) {
         final BitvectorFormula bitvecTerm = (BitvectorFormula) toTerm(expr.getOp());
         final int extendWith = expr.getExtendType().getSize() - expr.getOp().getType().getSize();
 
-        return bitvectorFormulaManager.extend(bitvecTerm, extendWith, true); // TODO: cross-check signedness
+        return bitvectorFormulaManager.extend(bitvecTerm, extendWith, true);
     }
 
     private Formula transformBvAdd(final BvAddExpr expr) {
@@ -1040,7 +1040,7 @@ final class JavaSMTExprTransformer {
                         BvUtils.neutralBvLitExprToBigInteger(BvLitExpr.of(literal))),
                 integerFormulaManager.makeNumber(expr.getType().getExponent()),
                 integerFormulaManager.makeNumber(expr.getType().getSignificand() - 1)
-        ); // TODO: this is an uninterpreted function right now. Will not work properly.
+        );
     }
 
     private Formula transformFpAdd(final FpAddExpr expr) {
