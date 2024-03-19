@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
@@ -39,6 +40,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
@@ -70,6 +72,7 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Neg;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Neq;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Not;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Or;
+import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Pos;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.RotateLeft;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.RotateRight;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.SDiv;
@@ -132,6 +135,10 @@ public class BvTestUtils {
                 {BvAddExpr.class, SBv16(-32768), Add(List.of(SBv16(32767), SBv16(1)))},
                 {BvSubExpr.class, SBv16(32767), Sub(SBv16(-32768), SBv16(1))},
                 {BvMulExpr.class, SBv16(-32768), Mul(List.of(SBv16(16384), SBv16(2)))},
+
+                {BvPosExpr.class, SBv16(-5), Pos(SBv16(-5))},
+                {BvNegExpr.class, SBv16(5), Neg(SBv16(-5))},
+                {BvSignChangeExpr.class, SBv16(5), BvSignChangeExpr.of(SBv16(-5), SBv16(5).getType())},
         });
     }
 

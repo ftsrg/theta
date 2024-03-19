@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
+import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
 
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
@@ -47,6 +49,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Pos;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 
@@ -56,6 +59,8 @@ public class IntTestUtils {
     }
 
     public static Collection<?> BasicOperations() {
+        final var c1 = Const("x", Int());
+
         return Arrays.asList(new Object[][]{
 
                 {IntAddExpr.class, Int(4), Add(List.of(Int(1), Int(3)))},
@@ -89,6 +94,8 @@ public class IntTestUtils {
                 {IntLeqExpr.class, True(), Leq(Int(3), Int(3))},
                 {IntLtExpr.class, True(), Lt(Int(1), Int(3))},
                 {IntLtExpr.class, False(), Lt(Int(3), Int(3))},
+
+                {IntPosExpr.class, c1.getRef(), Pos(c1.getRef())},
         });
     }
 
