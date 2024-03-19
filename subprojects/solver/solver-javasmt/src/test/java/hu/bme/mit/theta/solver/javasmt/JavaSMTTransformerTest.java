@@ -36,7 +36,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
-import org.sosy_lab.common.configuration.InvalidConfigurationException;
 import org.sosy_lab.common.log.BasicLogManager;
 import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers;
@@ -104,7 +103,7 @@ public class JavaSMTTransformerTest {
 
 
     @Test
-    public void testRoundtripTransformer() throws InvalidConfigurationException {
+    public void testRoundtripTransformer() throws Exception {
         // Sanity check
         assertNotNull(expr);
 
@@ -112,23 +111,21 @@ public class JavaSMTTransformerTest {
         final var config = Configuration.fromCmdLineArguments(new String[]{});
         final var logger = BasicLogManager.create(config);
         final var shutdownManager = ShutdownManager.create();
-        final SolverContext context = SolverContextFactory.createSolverContext(config, logger, shutdownManager.getNotifier(), Solvers.Z3);
-        final JavaSMTTransformationManager javaSMTExprTransformer = new JavaSMTTransformationManager(javaSMTSymbolTable, context);
-        final JavaSMTTermTransformer javaSMTTermTransformer = new JavaSMTTermTransformer(javaSMTSymbolTable, context);
+        try (final SolverContext context = SolverContextFactory.createSolverContext(config, logger, shutdownManager.getNotifier(), Solvers.Z3)) {
+            final JavaSMTTransformationManager javaSMTExprTransformer = new JavaSMTTransformationManager(javaSMTSymbolTable, context);
+            final JavaSMTTermTransformer javaSMTTermTransformer = new JavaSMTTermTransformer(javaSMTSymbolTable, context);
 
-        final var expTerm = javaSMTExprTransformer.toTerm(expr);
-        final var expExpr = javaSMTTermTransformer.toExpr(expTerm);
+            final var expTerm = javaSMTExprTransformer.toTerm(expr);
+            final var expExpr = javaSMTTermTransformer.toExpr(expTerm);
 
-        System.err.println("expected: " + expr.toString());
-        System.err.println("term: " + expTerm.toString());
-        System.err.println("actual: " + expExpr.toString());
-
-        try {
-            Assert.assertEquals(expr, expExpr);
-        } catch (AssertionError e) {
-            final var solver = JavaSMTSolverFactory.create(Solvers.Z3, new String[]{}).createSolver();
-            solver.add(Eq(expr, expExpr));
-            Assert.assertTrue(solver.check().isSat());
+            try {
+                Assert.assertEquals(expr, expExpr);
+            } catch (AssertionError e) {
+                try (final var solver = JavaSMTSolverFactory.create(this.solver, new String[]{}).createSolver()) {
+                    solver.add(Eq(expr, expExpr));
+                    Assert.assertTrue(solver.check().isSat());
+                }
+            }
         }
 
     }

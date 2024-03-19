@@ -76,8 +76,6 @@ public class JavaSMTSolverBooleanTest {
         solver.add(EqExpr.create2(expected, actual));
 
         SolverStatus status = solver.check();
-        System.err.println("expected: " + expected.toString());
-        System.err.println("actual: " + actual.toString());
         assertTrue(status.isSat());
     }
 }
