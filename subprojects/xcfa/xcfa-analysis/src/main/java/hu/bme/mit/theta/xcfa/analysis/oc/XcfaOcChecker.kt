@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
@@ -29,6 +30,8 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.isAtomicBegin
+import hu.bme.mit.theta.xcfa.isAtomicEnd
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
@@ -58,7 +61,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
-        if(!addConstraints()) return SafetyResult.safe() // no violations
+        if (!addConstraints()) return SafetyResult.safe() // no violations
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status = dpll()
@@ -91,15 +94,18 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         lateinit var lastWrites: MutableMap<VarDecl<*>, Set<Event>>
         lateinit var edge: XcfaEdge
         var inEdge = false
+        var atomicEntered: Boolean? = null
 
         val newEvent: (VarDecl<*>, EventType) -> List<Event> = { d, type ->
             check(!inEdge || last.size == 1)
             val decl = d.threadVar(pid)
+            val useLastClk = inEdge || atomicEntered == true
             val e =
-                if (inEdge) Event(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
+                if (useLastClk) Event(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
                 else Event(decl.getNewIndexed(), type, guard, pid, edge)
-            last.forEach { po(it, e, inEdge) }
+            last.forEach { po(it, e, useLastClk) }
             inEdge = true
+            if (atomicEntered == false) atomicEntered = true
             when (type) {
                 EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RFI, it, e) }
                 EventType.WRITE -> lastWrites[decl] = setOf(e)
@@ -120,17 +126,18 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         while (toVisit.isNotEmpty()) {
             val current = toVisit.first()
             toVisit.remove(current)
-            check(current.incoming.size == current.loc.incomingEdges.size)
-            check(current.incoming.size == current.guards.size || current.loc.initial)
-            check(current.incoming.size == current.lastWrites.size) // lastEvents intentionally skipped
-            check(current.incoming.size == current.pidLookups.size)
+            check(current.incoming == current.loc.incomingEdges.size)
+            check(current.incoming == current.guards.size || current.loc.initial)
+            check(current.incoming == current.lastWrites.size) // lastEvents intentionally skipped
+            check(current.incoming == current.pidLookups.size)
+            check(current.incoming == current.atomics.size)
+            check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
             val mergeGuards = { // intersection of guard expressions from incoming edges
                 current.guards.reduce(listOf()) { g1, g2 -> g1.filter { it in g2 } }
             }
-            guard = mergeGuards()
 
             if (current.loc.error) {
-                violations.add(Violation(current.loc, And(guard), current.lastEvents))
+                violations.add(Violation(current.loc, And(mergeGuards()), current.lastEvents))
                 continue
             }
 
@@ -151,6 +158,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
                 }.toMutableMap()
                 var firstLabel = true
+                atomicEntered = current.atomics.firstOrNull()
 
                 edge.getFlatLabels().forEach { label ->
                     when (label) {
@@ -220,8 +228,15 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                             last = lastEvents
                         }
 
+                        is FenceLabel -> {
+                            if (label.labels.size > 1 || label.labels.firstOrNull()?.contains("ATOMIC") != true) {
+                                error("Untransformed fence label: $label")
+                            }
+                            if (label.isAtomicBegin) atomicEntered = false
+                            if (label.isAtomicEnd) atomicEntered = null
+                        }
+
                         is NopLabel -> {}
-                        is FenceLabel -> error("Untransformed fence label: $label")
                         else -> error("Unsupported label type by this checker: $label")
                     }
                     firstLabel = false
@@ -233,8 +248,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 searchItem.lastEvents.addAll(last)
                 searchItem.lastWrites.add(lastWrites)
                 searchItem.pidLookups.add(pidLookup)
-                searchItem.incoming.add(edge)
-                if (searchItem.incoming.size == searchItem.loc.incomingEdges.size) {
+                searchItem.atomics.add(atomicEntered)
+                searchItem.incoming++
+                if (searchItem.incoming == searchItem.loc.incomingEdges.size) {
                     waitList.remove(searchItem)
                     toVisit.add(searchItem)
                 }
@@ -272,7 +288,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     }
 
     private fun addToSolver(): Boolean {
-        if(violations.isEmpty()) return false
+        if (violations.isEmpty()) return false
 
         // Value assignment
         events.values.flatMap { it.values.flatten() }.filter { it.assignment != null }.forEach { event ->
@@ -409,16 +425,16 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
 
     private fun <T : Type> Expr<T>.withConsts(varToConst: Map<out Decl<*>, ConstDecl<*>>): Expr<T> {
         if (this is RefExpr<T>) {
-            return (varToConst[decl]?.ref as? RefExpr<T>) ?: this
+            return varToConst[decl]?.ref?.let { cast(it, type) } ?: this
         }
         return map { it.withConsts(varToConst) }
     }
 
     private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
         if (xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }) { // if not global var
-            localVars.getOrPut(this) { mutableMapOf() }.getOrPut(pid) {
+            cast(localVars.getOrPut(this) { mutableMapOf() }.getOrPut(pid) {
                 Decls.Var("t$pid::$name", type)
-            } as VarDecl<T>
+            }, type)
         } else this
 
     private fun <T : Type> VarDecl<T>.getNewIndexed(increment: Boolean = true): IndexedConstDecl<T> {
@@ -468,7 +484,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 }
 
                 val writes = events[rf.from.const.varDecl]!!.values.flatten()
-                    .filter { it.type == EventType.WRITE && it.clkId != rf.from.clkId && it.clkId != rf.to.clkId && it.enabled == true }
+                    .filter { it.type == EventType.WRITE && it.enabled == true }
                 for (w in writes) {
                     val reason = derive(decision.rels, rf, w)
                     if (reason != null) {
@@ -481,7 +497,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
             for (w in changedEnabledEvents) {
                 val decision = DecisionPoint(decisionStack.peek().rels, w)
                 decisionStack.push(decision)
-                for (rf in rfs[w.const.varDecl]!!.filter { it.from.clkId != w.clkId && it.to.clkId != w.clkId }) {
+                for (rf in rfs[w.const.varDecl]!!) {
                     val reason = derive(decision.rels, rf, w)
                     if (reason != null) {
                         solver.add(Not(reason.expr))
@@ -497,6 +513,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
 
     private fun derive(rels: Array<Array<Reason?>>, rf: Relation, w: Event): Reason? = when {
         rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
+        w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null // w within an atomic block with an rf end
 
         rels[w.clkId][rf.to.clkId] != null -> { // WS derivation
             val reason = WriteSerializationReason(rf, w, rels[w.clkId][rf.to.clkId]!!)

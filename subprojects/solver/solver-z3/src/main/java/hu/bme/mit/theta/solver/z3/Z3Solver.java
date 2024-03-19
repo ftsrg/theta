@@ -85,7 +85,6 @@ final class Z3Solver implements UCSolver, Solver {
     @Override
     public void add(final Expr<BoolType> assertion) {
         checkNotNull(assertion);
-        System.err.println(assertion);
         final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
                 assertion);
         add(assertion, term);

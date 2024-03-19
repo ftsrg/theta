@@ -15,7 +15,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when(size) {
+internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when (size) {
     0 -> True()
     1 -> first()
     else -> And(this)
@@ -38,6 +38,7 @@ internal data class Event(
     val edge: XcfaEdge,
     val clkId: Int = uniqueId()
 ) {
+
     val guardExpr: Expr<BoolType> = guard.toAnd()
     var enabled: Boolean? = null
 
@@ -122,7 +123,8 @@ internal data class SearchItem(val loc: XcfaLocation) {
     val lastEvents: MutableList<Event> = mutableListOf()
     val lastWrites: MutableList<Map<VarDecl<*>, Set<Event>>> = mutableListOf()
     val pidLookups: MutableList<Map<VarDecl<*>, Set<Pair<List<Expr<BoolType>>, Int>>>> = mutableListOf()
-    val incoming: MutableSet<XcfaEdge> = mutableSetOf()
+    val atomics: MutableList<Boolean?> = mutableListOf()
+    var incoming: Int = 0
 }
 
 internal data class StackItem(val event: Event) {
