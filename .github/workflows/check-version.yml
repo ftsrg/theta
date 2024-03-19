@@ -65,7 +65,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          reviewdog -f=diff -reporter=github-pr-check
+          reviewdog -f=diff -reporter=github-pr-review
       - name: version is incorrect, reporting
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
