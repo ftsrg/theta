@@ -70,26 +70,26 @@ public class JavaSMTTransformerTest {
         }
 
         return Sets.cartesianProduct(Stream.of(
-                BvTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[2]),
-                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[])o)[2]),
-                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[])o)[2]),
-                FpTestUtils.GetOperations().map(o -> ((Object[])o)[2]),
-                IntTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[2]),
+                                BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[2]),
+                                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[2]),
+                                FpTestUtils.GetOperations().map(o -> ((Object[]) o)[2]),
+                                IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
                                 RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
                                 BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
                                 ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
 
 
-                BvTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[1]),
-                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[])o)[1]),
-                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[])o)[1]),
-                FpTestUtils.GetOperations().map(o -> ((Object[])o)[1]),
+                                BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[1]),
+                                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[1]),
+                                FpTestUtils.GetOperations().map(o -> ((Object[]) o)[1]),
                                 IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
                                 RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
                                 BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
                                 ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1])
-        ).reduce(Stream::concat).get()
-                .filter(JavaSMTTransformerTest::supported)
+                        ).reduce(Stream::concat).get()
+                        .filter(JavaSMTTransformerTest::supported)
                         .collect(Collectors.toSet()), solvers).stream()
                 .map(objects -> new Object[]{objects.get(0), objects.get(1)}).toList();
     }

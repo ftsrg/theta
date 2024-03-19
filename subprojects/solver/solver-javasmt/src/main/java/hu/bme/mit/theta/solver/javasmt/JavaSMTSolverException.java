@@ -16,7 +16,7 @@
 
 package hu.bme.mit.theta.solver.javasmt;
 
-public class JavaSMTSolverException extends RuntimeException{
+public class JavaSMTSolverException extends RuntimeException {
 
     public JavaSMTSolverException(String message) {
         super(message);

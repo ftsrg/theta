@@ -71,7 +71,7 @@ final class JavaSMTDeclTransformer {
                     .toList();
 
 
-            if(paramSorts.isEmpty()) {
+            if (paramSorts.isEmpty()) {
                 symbol = context.getFormulaManager().makeVariable(returnSort, symbolNameFor(decl));
             } else {
                 throw new JavaSMTSolverException("Function consts not yet supported.");

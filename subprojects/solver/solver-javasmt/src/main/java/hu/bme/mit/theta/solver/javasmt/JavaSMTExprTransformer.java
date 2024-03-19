@@ -1027,10 +1027,10 @@ final class JavaSMTExprTransformer {
         final boolean[] significand = expr.getSignificand().getValue();
         int i = 0;
         literal[i] = expr.getHidden();
-        for(i = 0; i < expr.getType().getExponent(); ++i) {
+        for (i = 0; i < expr.getType().getExponent(); ++i) {
             literal[i + 1] = exponent[i];
         }
-        for(i = 0; i < expr.getType().getSignificand() - 1; ++i) {
+        for (i = 0; i < expr.getType().getSignificand() - 1; ++i) {
             literal[i + 1 + expr.getType().getExponent()] = significand[i];
         }
         return context.getFormulaManager().getUFManager().declareAndCallUF("to_fp",
