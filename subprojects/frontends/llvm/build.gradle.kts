@@ -53,15 +53,18 @@ val llvmConfigBinary = try {
     }
 }
 
-val clangBinary = run {
+val clangBinary = try {
     val output = runCommandForOutput("clang", "--version")
     val version = output[0].replace("clang version ", "").split('.')
     val major = version[0]
-    if (major == "15")
-        return@run "clang"
-    else
+    if (major == "15") {
+        "clang"
+    } else {
         println("clang-15 not installed (or clang does not point to clang-15), not building native library.")
-    return@run null
+        null
+    }
+} catch (e: IOException) {
+    null
 }
 
 val taskEnabled = current().isLinux && llvmConfigBinary != null && clangBinary != null
