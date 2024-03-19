@@ -63,6 +63,7 @@ val clangBinary = try {
             break
         }
     }
+
     val major = version[0]
     if (major == "15") {
         "clang"
