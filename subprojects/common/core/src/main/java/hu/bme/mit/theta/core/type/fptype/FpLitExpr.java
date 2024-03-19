@@ -171,6 +171,13 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         return BoolExprs.Bool(this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand));
     }
 
+    public BoolLitExpr assign(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
+        return BoolExprs.Bool(this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand));
+    }
+
     public BoolLitExpr gt(final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);

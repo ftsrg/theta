@@ -25,7 +25,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.castBv;
 public final class BvSignChangeExpr extends PosExpr<BvType> {
 
     private static final int HASH_SEED = 8963;
-    private static final String OPERATOR_LABEL = "bvsign";
+    private static final String OPERATOR_LABEL = "bvpos";
 
     private final BvType newType;
 
