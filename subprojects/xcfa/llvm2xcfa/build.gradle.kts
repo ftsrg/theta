@@ -30,8 +30,10 @@ dependencies {
 tasks.test {
     if (OperatingSystem.current().isLinux) {
         val nativeLibTasks = project(":theta-llvm").tasks
-        dependsOn(nativeLibTasks.build)
-
+        val task = nativeLibTasks.withType(LinkSharedLibrary::class)
+        if (task.any { !it.enabled }) {
+            enabled = false
+        }
         val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
         systemProperty("java.library.path",
             linkTask.linkedFile.get().asFile.parent + ":/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib")

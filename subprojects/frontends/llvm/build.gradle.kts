@@ -55,15 +55,23 @@ val llvmConfigBinary = try {
 
 val clangBinary = try {
     val output = runCommandForOutput("clang", "--version")
-    val version = output[0].replace("clang version ", "").split('.')
+    lateinit var version: List<String>;
+    for (token in output) {
+        val tryVersion = token.split('.')
+        if (tryVersion.size == 3 && tryVersion.all { it.all(Char::isDigit) }) {
+            version = tryVersion
+            break
+        }
+    }
     val major = version[0]
     if (major == "15") {
         "clang"
     } else {
-        println("clang-15 not installed (or clang does not point to clang-15), not building native library.")
+        println("clang does not point to clang-15, not building native library. Found version: $version")
         null
     }
 } catch (e: IOException) {
+    println("clang-15 not installed , not building native library.")
     null
 }
 
@@ -76,7 +84,7 @@ fun runCommandForOutput(vararg args: String): Array<String> {
     process.waitFor()
     val ret = outputStream.toString()
         .trim()
-        .split(" ")
+        .split(" ", "\n", "\r")
         .filter { it.length > 1 }
         .map { it.trim() }
         .toTypedArray()
@@ -116,9 +124,9 @@ library {
             "-fpic",
             *jniConfigFlags(),
             *llvmConfigFlags("--cxxflags")))
-        onlyIf {
+        if (!taskEnabled) {
             println("CppCompile is enabled: $taskEnabled")
-            this@Build_gradle.taskEnabled
+            enabled = false
         }
     }
 
@@ -127,9 +135,9 @@ library {
             "-rdynamic",
             *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
             "-ldl"))
-        onlyIf {
+        if (!taskEnabled) {
             println("LinkSharedLibrary is enabled: $taskEnabled")
-            this@Build_gradle.taskEnabled
+            enabled = false
         }
     }
 }
