@@ -55,7 +55,7 @@ val llvmConfigBinary = try {
 
 val clangBinary = try {
     val output = runCommandForOutput("clang", "--version")
-    lateinit var version: List<String>;
+    var version: List<String> = listOf("0")
     for (token in output) {
         val tryVersion = token.split('.')
         if (tryVersion.size == 3 && tryVersion.all { it.all(Char::isDigit) }) {
