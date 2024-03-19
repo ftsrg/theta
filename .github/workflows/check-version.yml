@@ -45,23 +45,23 @@ jobs:
           compare_versions new_arr master_arr && echo status="ok" >> $GITHUB_OUTPUT || echo status="notok" >> $GITHUB_OUTPUT 
 
       - name: version is correct
-        if: ${{ steps.version_test.outputs.status == "ok" }}
+        if: ${{ steps.version_test.outputs.status }} == "ok"
         run: echo "New version ${{ steps.new_version.outputs.version }} is OK"
 
 
       - name: version is incorrect, creating suggestion
-        if: ${{ steps.version_test.outputs.status == "notok" }}
+        if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
           IFS='.' read -r -a array <<< "${{ steps.new_version.outputs.version }}"
           new_version="${array[0]}.${array[1]}.$((array[2]+1))"
           sed -i "s/version = \".*\"/version = \"$new_version\"/" build.gradle.kts
       - name: version is incorrect, posting suggestion
-        if: ${{ steps.version_test.outputs.status == "notok" }}
+        if: ${{ steps.version_test.outputs.status }} == "notok"
         uses: reviewdog/action-suggester@3d7fde6859623ad6174df5fd662677a0eb63310a #v1.11.0
         with:
           level: error
       - name: version is incorrect, reporting
-        if: ${{ steps.version_test.outputs.status == "notok" }}
+        if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
           echo "New version ${{ steps.new_version.outputs.version }} is NOT OK"
           exit 1
