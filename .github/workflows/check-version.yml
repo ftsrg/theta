@@ -57,7 +57,7 @@ jobs:
           sed -i "s/version = \".*\"/version = \"$new_version\"/" build.gradle.kts
       - name: version is incorrect, posting suggestion
         if: ${{ steps.version_test.outputs.status == "notok" }}
-        uses: reviewdog/action-suggester@v1
+        uses: reviewdog/action-suggester@3d7fde6859623ad6174df5fd662677a0eb63310a #v1.11.0
         with:
           level: error
       - name: version is incorrect, reporting
