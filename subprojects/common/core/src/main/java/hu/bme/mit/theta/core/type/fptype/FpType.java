@@ -68,7 +68,7 @@ public class FpType implements Equational<FpType>, Additive<FpType>, Multiplicat
 
     @Override
     public EqExpr<FpType> Eq(Expr<FpType> leftOp, Expr<FpType> rightOp) {
-        return FpEqExpr.of(leftOp, rightOp); // TODO: shouldn't this be assign?
+        return FpAssignExpr(leftOp, rightOp);
     }
 
     @Override
