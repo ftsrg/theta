@@ -60,13 +60,12 @@ jobs:
         if: ${{ steps.version_test.outputs.status }} == "ok"
         run: echo "New version ${{ steps.new_version.outputs.version }} is OK"
 
-
       - name: version is incorrect, creating suggestion
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
           IFS='.' read -r -a array <<< "${{ steps.new_version.outputs.version }}"
           new_version="${array[0]}.${array[1]}.$((array[2]+1))"
-#          sed -i "s/version = \".*\"/version = \"$new_version\"/" build.gradle.kts
+          #sed -i "s/version = \".*\"/version = \"$new_version\"/" build.gradle.kts
           sed -i "s/proba/proba2/g" .github/workflows/check-version.yml
       - name: version is incorrect, posting suggestion
         if: ${{ steps.version_test.outputs.status }} == "notok"
