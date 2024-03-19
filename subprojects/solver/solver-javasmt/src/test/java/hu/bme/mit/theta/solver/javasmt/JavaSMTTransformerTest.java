@@ -80,7 +80,7 @@ public class JavaSMTTransformerTest {
                 IntTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[1])
         ).reduce(Stream::concat).get()
                 .filter(JavaSMTTransformerTest::supported)
-                        .collect(Collectors.toSet()), Set.of()).stream()
+                        .collect(Collectors.toSet()), solvers).stream()
                 .map(objects -> new Object[]{objects.get(0), objects.get(1)}).toList();
     }
 
