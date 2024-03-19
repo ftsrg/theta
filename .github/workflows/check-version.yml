@@ -73,7 +73,7 @@ jobs:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git diff
-          git diff | reviewdog -f=diff -reporter=github-pr-review -tee
+          git diff | reviewdog -f=diff -reporter=github-pr-review -tee -fail-on-error=true
       - name: version is incorrect, reporting
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
