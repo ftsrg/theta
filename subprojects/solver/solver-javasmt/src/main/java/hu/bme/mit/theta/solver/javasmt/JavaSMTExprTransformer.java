@@ -17,9 +17,7 @@ package hu.bme.mit.theta.solver.javasmt;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.DispatchTable;
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -444,21 +442,6 @@ final class JavaSMTExprTransformer {
             return null;
         }
     }
-    private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
-        final Expr<?> func = expr.getFunc();
-        final Expr<?> arg = expr.getParam();
-        if (func instanceof FuncAppExpr) {
-            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
-            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
-            final Expr<?> resFunc = funcAndArgs.get1();
-            final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
-                    .build();
-            return Tuple2.of(resFunc, resArgs);
-        } else {
-            return Tuple2.of(func, ImmutableList.of(arg));
-        }
-    }
 
     ////
 
@@ -573,10 +556,6 @@ final class JavaSMTExprTransformer {
         return paramTerms;
     }
 
-    /*
-     * Rationals
-     */
-
     private Formula transformParamDecl(final ParamDecl<?> paramDecl) {
         final Type type = paramDecl.getType();
         if (type instanceof FuncType<?, ?>) {
@@ -586,6 +565,10 @@ final class JavaSMTExprTransformer {
             return context.getFormulaManager().makeVariable(sort, paramDecl.getName());
         }
     }
+
+    /*
+     * Rationals
+     */
 
     private Formula transformRatLit(final RatLitExpr expr) {
         var num = rationalFormulaManager.makeNumber(expr.getNum().toString());
@@ -1261,23 +1244,12 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformArrayLit(final ArrayLitExpr<?, ?> expr) {
-        throw new JavaSMTSolverException("Not supported: " + expr);
-//        ArrayFormula running = arrayFormulaManager.makeArray()
-//                transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
-//        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-//            running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
-//        }
-//        return running;
+        throw new JavaSMTSolverException("Array literals not yet supported: " + expr);
+
     }
 
     private Formula transformArrayInit(final ArrayInitExpr<?, ?> expr) {
-        throw new JavaSMTSolverException("Not supported: " + expr);
-//        ArrayFormula running = context.mkConstArray(
-//                transformer.toSort(expr.getType().getIndexType()), toTerm(expr.getElseElem()));
-//        for (Tuple2<? extends Expr<?>, ? extends Expr<?>> elem : expr.getElements()) {
-//            running = context.mkStore(running, toTerm(elem.get1()), toTerm(elem.get2()));
-//        }
-//        return running;
+        throw new JavaSMTSolverException("Array literals not yet supported: " + expr);
     }
 
 
@@ -1286,22 +1258,7 @@ final class JavaSMTExprTransformer {
      */
 
     private Formula transformFuncApp(final FuncAppExpr<?, ?> expr) {
-        throw new JavaSMTSolverException("Not yet supported: " + expr);
-//        final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
-//        final Expr<?> func = funcAndArgs.get1();
-//        if (func instanceof RefExpr) {
-//            final RefExpr<?> ref = (RefExpr<?>) func;
-//            final Decl<?> decl = ref.getDecl();
-//            final FunctionDeclaration<?> funcDecl = (FunctionDeclaration<?>) transformer.toSymbol(decl);
-//            final List<Expr<?>> args = funcAndArgs.get2();
-//            final List<Formula> argTerms = args.stream()
-//                    .map(this::toTerm)
-//                    .toList();
-//            return context.getFormulaManager().makeApplication(funcDecl, argTerms);
-//        } else {
-//            throw new UnsupportedOperationException(
-//                    "Higher order functions are not supported: " + func);
-//        }
+        throw new JavaSMTSolverException("Function application not yet supported: " + expr);
     }
 
     public void reset() {

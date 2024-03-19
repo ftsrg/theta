@@ -23,9 +23,12 @@ import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
+import hu.bme.mit.theta.core.utils.ArrayTestUtils;
+import hu.bme.mit.theta.core.utils.BoolTestUtils;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
 import hu.bme.mit.theta.core.utils.FpTestUtils;
 import hu.bme.mit.theta.core.utils.IntTestUtils;
+import hu.bme.mit.theta.core.utils.RatTestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,12 +75,19 @@ public class JavaSMTTransformerTest {
                 BvTestUtils.RelationalOperations().stream().map(o -> ((Object[])o)[2]),
                 FpTestUtils.GetOperations().map(o -> ((Object[])o)[2]),
                 IntTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[2]),
+                                RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                                BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                                ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+
 
                 BvTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[1]),
                 BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[])o)[1]),
                 BvTestUtils.RelationalOperations().stream().map(o -> ((Object[])o)[1]),
                 FpTestUtils.GetOperations().map(o -> ((Object[])o)[1]),
-                IntTestUtils.BasicOperations().stream().map(o -> ((Object[])o)[1])
+                                IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                                RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                                BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                                ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1])
         ).reduce(Stream::concat).get()
                 .filter(JavaSMTTransformerTest::supported)
                         .collect(Collectors.toSet()), solvers).stream()
