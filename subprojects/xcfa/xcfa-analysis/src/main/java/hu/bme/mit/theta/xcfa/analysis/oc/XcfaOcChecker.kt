@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
+import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 import java.util.*
 
@@ -39,7 +40,9 @@ private val Expr<*>.vars get() = ExprUtils.getVars(this)
 class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) :
     SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
 
-    private val xcfa: XCFA = xcfa.optimizeFurther(listOf(AssumeFalseRemovalPass(), MutexToVarPass()))
+    private val xcfa: XCFA = xcfa.optimizeFurther(
+        listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
+    )
     private val solver = SolverManager.resolveSolverFactory("Z3").createSolver()
     private var indexing = VarIndexingFactory.indexing(0)
     private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
@@ -55,7 +58,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
-        addConstraints()
+        if(!addConstraints()) return SafetyResult.safe() // no violations
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status = dpll()
@@ -66,7 +69,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         }
     }
 
-    private fun addConstraints() {
+    private fun addConstraints(): Boolean {
         val threads = xcfa.initProcedures.map { Thread(it.first) }.toMutableSet()
         this.threads.addAll(threads)
         while (threads.isNotEmpty()) {
@@ -78,7 +81,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         }
 
         addCrossThreadRelations()
-        addToSolver()
+        return addToSolver()
     }
 
     private fun processThread(thread: Thread): List<Thread> {
@@ -268,7 +271,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                                 rfs.add(RelationType.RFE, e1, e2)
     }
 
-    private fun addToSolver() {
+    private fun addToSolver(): Boolean {
+        if(violations.isEmpty()) return false
+
         // Value assignment
         events.values.flatMap { it.values.flatten() }.filter { it.assignment != null }.forEach { event ->
             if (event.guard.isEmpty()) solver.add(event.assignment)
@@ -292,6 +297,8 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
             }
         }
+
+        return true
     }
 
     private fun getTrace(model: Valuation): Trace<XcfaState<*>, XcfaAction> {
@@ -489,6 +496,8 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     }
 
     private fun derive(rels: Array<Array<Reason?>>, rf: Relation, w: Event): Reason? = when {
+        rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
+
         rels[w.clkId][rf.to.clkId] != null -> { // WS derivation
             val reason = WriteSerializationReason(rf, w, rels[w.clkId][rf.to.clkId]!!)
             setAndClose(rels, w.clkId, rf.from.clkId, reason)

@@ -6,10 +6,8 @@ import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.xcfa.acquiredMutexes
-import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.releasedMutexes
 
 class MutexToVarPass : ProcedurePass {
 
@@ -21,22 +19,18 @@ class MutexToVarPass : ProcedurePass {
             builder.addEdge(edge.withLabel(edge.label.replaceMutex()))
         }
 
-        mutexVars.forEach { (_, v) ->
-            builder.parent.addVar(XcfaGlobalVar(v, False()))
-        }
-
+        mutexVars.forEach { (_, v) -> builder.parent.addVar(XcfaGlobalVar(v, False())) }
         builder.parent.getInitProcedures().forEach { (proc, _) ->
             val initEdge = proc.initLoc.outgoingEdges.first()
             val initLabels = initEdge.getFlatLabels()
             mutexVars.forEach { (_, v) ->
                 if (initLabels.none { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == v }) {
-                    val assign = StmtLabel(AssignStmt.of(v, False()), metadata = EmptyMetaData)
+                    val assign = StmtLabel(AssignStmt.of(v, False()))
                     val label = SequenceLabel(initLabels + assign, metadata = initEdge.label.metadata)
-                    proc.addEdge(initEdge.withLabel(label))
                     proc.removeEdge(initEdge)
+                    proc.addEdge(initEdge.withLabel(label))
                 }
             }
-
         }
         return builder
     }
@@ -46,18 +40,19 @@ class MutexToVarPass : ProcedurePass {
             is SequenceLabel -> SequenceLabel(labels.map { it.replaceMutex() }, metadata)
             is FenceLabel -> {
                 val actions = mutableListOf<XcfaLabel>()
-                acquiredMutexes.forEach {
-                    val cond = AssumeStmt.of(Not(it.mutexFlag.ref))
-                    actions.add(StmtLabel(cond, metadata = EmptyMetaData))
-                    val assign = AssignStmt.of(it.mutexFlag, True())
-                    actions.add(StmtLabel(assign, metadata = EmptyMetaData))
+                acquiredMutexes.filter { it != "" }.forEach {
+                    actions.add(StmtLabel(AssumeStmt.of(Not(it.mutexFlag.ref))))
+                    actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, True())))
                 }
-                releasedMutexes.forEach {
-                    val assign = AssignStmt.of(it.mutexFlag, False())
-                    actions.add(StmtLabel(assign, metadata = EmptyMetaData))
+                releasedMutexes.filter { it != "" }.forEach {
+                    actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, False())))
                 }
+                SequenceLabel(
+                    (if (isAtomicBegin) listOf(FenceLabel(setOf("ATOMIC_BEGIN"))) else listOf())
+                        + actions +
+                        (if (isAtomicEnd) listOf(FenceLabel(setOf("ATOMIC_END"))) else listOf())
+                )
                 // Labels are atomic in XCFA semantics, so no need to wrap them in an atomic block
-                SequenceLabel(actions)
             }
 
             else -> this

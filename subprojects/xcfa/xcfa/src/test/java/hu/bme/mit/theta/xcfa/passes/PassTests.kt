@@ -550,7 +550,7 @@ class PassTests {
         val x = Var("x", Int())
         val y = Var("y", Int())
         val xcfaLabel = { a: VarDecl<IntType>, b: VarDecl<IntType> ->
-            StmtLabel(Assign(a, b.ref), metadata = EmptyMetaData)
+            StmtLabel(Assign(a, b.ref))
         }
 
         val x_prime = Var("x'", Int())

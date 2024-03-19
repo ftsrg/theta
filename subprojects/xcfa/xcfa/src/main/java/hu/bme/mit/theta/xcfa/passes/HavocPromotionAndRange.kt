@@ -76,7 +76,7 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                             val havoc = Havoc(varDecl)
                             newLabels.add(
                                 StmtLabel(havoc, metadata = edge.label.labels[index].metadata))
-//                            newLabels.add(StmtLabel(type.limit(varDecl.ref), metadata = EmptyMetaData))
+//                            newLabels.add(StmtLabel(type.limit(varDecl.ref)))
                         } else if (index == indices[offset] + 1) {
                             offset++
                         } else {

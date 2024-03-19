@@ -119,7 +119,7 @@ public class FunctionState {
                 }
                 return stmt;
             }).collect(Collectors.toUnmodifiableList());
-            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt, EmptyMetaData.INSTANCE)).toList()), new LlvmMetadata(edgeTup.get4()));
+            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()), new LlvmMetadata(edgeTup.get4()));
             procedureBuilder.addEdge(edge);
         });
     }

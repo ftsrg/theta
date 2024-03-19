@@ -163,7 +163,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ }
+    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
     is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
