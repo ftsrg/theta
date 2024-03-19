@@ -75,9 +75,9 @@ jobs:
           TMPFILE=$(mktemp)
           git diff >"${TMPFILE}"
           git stash -u && git stash drop
-          reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review -tee < "${TMPFILE}"
+          reviewdog -f=diff -f.diff.strip=1 -filter-mode=nofilter -reporter=github-pr-review -tee < "${TMPFILE}"
       - name: version is incorrect, reporting
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
           echo "New version ${{ steps.new_version.outputs.version }} is NOT OK"
-#          exit 1
+          exit 1
