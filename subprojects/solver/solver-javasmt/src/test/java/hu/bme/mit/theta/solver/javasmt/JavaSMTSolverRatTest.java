@@ -44,7 +44,7 @@ public class JavaSMTSolverRatTest {
     @Parameterized.Parameter(2)
     public Expr<?> actual;
 
-    @Parameters(name = "expr: {0}, expected: {1}, actual: {2}")
+    @Parameters(name = "expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return RatTestUtils.BasicOperations();
     }
@@ -76,6 +76,8 @@ public class JavaSMTSolverRatTest {
         solver.add(EqExpr.create2(expected, actual));
 
         SolverStatus status = solver.check();
+        System.err.println("expected: " + expected.toString());
+        System.err.println("actual: " + actual.toString());
         assertTrue(status.isSat());
     }
 }

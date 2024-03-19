@@ -15,15 +15,19 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import com.google.common.collect.Lists;
 import hu.bme.mit.theta.common.QuadFunction;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
@@ -34,17 +38,16 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import org.sosy_lab.common.rationals.Rational;
-import org.sosy_lab.java_smt.api.ArrayFormula;
 import org.sosy_lab.java_smt.api.BitvectorFormula;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.FloatingPointFormula;
 import org.sosy_lab.java_smt.api.Formula;
 import org.sosy_lab.java_smt.api.FormulaType;
+import org.sosy_lab.java_smt.api.FormulaType.ArrayFormulaType;
 import org.sosy_lab.java_smt.api.FormulaType.BitvectorType;
 import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
 import org.sosy_lab.java_smt.api.FunctionDeclaration;
@@ -56,7 +59,6 @@ import org.sosy_lab.java_smt.api.visitors.FormulaVisitor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -72,9 +74,11 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
@@ -134,6 +138,7 @@ final class JavaSMTTermTransformer {
         addFunc("fp.isnan", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
         addFunc("fp.isNaN", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
         addFunc("isinfinite", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+        addFunc("fp.isInfinite", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
         addFunc("fp.roundtoint", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
         addFunc("fp.roundToIntegral", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
         addFunc("fp.sqrt", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpSqrtExpr::create));
@@ -174,6 +179,8 @@ final class JavaSMTTermTransformer {
         addFunc("bvsge", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr::create));
         addFunc("read", exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
         addFunc("write", exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
+        addFunc("select", exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
+        addFunc("store", exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
 
         environment.put(Tuple2.of("fp.frombv", 1), (term, args, model, vars) -> {
             FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
@@ -237,16 +244,6 @@ final class JavaSMTTermTransformer {
         return transform(term, null, new ArrayList<>());
     }
 
-    public Expr<?> toFuncLitExpr(final FunctionDeclaration<?> funcDecl, final Model model,
-                                 final List<Decl<?>> vars) {
-        throw new JavaSMTSolverException("Not supported: " + funcDecl);
-    }
-
-    private Expr<?> createArrayLitExpr(ArrayFormula<?, ?> sort,
-                                       List<Tuple2<List<Expr<?>>, Expr<?>>> entryExprs, Expr<?> elseExpr) {
-        throw new JavaSMTSolverException("Not supported: " + sort);
-    }
-
     ////////
 
     private Expr<?> transform(final Formula term, final Model model,
@@ -261,7 +258,7 @@ final class JavaSMTTermTransformer {
 
                 @Override
                 public Expr<?> visitBoundVariable(Formula f, int deBruijnIdx) {
-                    throw new JavaSMTSolverException("Not supported: " + f);
+                    return Lists.reverse(vars).get(deBruijnIdx).getRef(); // I think the reverse list is necessary here.
                 }
 
                 @Override
@@ -271,8 +268,12 @@ final class JavaSMTTermTransformer {
                         checkArgument(value instanceof BigInteger, "Type mismatch (Expected BigInteger): " + value);
                         return transformIntLit(f, (BigInteger) value);
                     } else if (type.isRationalType()) {
-                        checkArgument(value instanceof Rational, "Type mismatch (Expected Rational): " + value);
-                        return transformRatLit(f, (Rational) value);
+                        checkArgument(value instanceof Rational || value instanceof BigInteger, "Type mismatch (Expected Rational or BigInteger): " + value);
+                        if (value instanceof Rational) {
+                            return transformRatLit(f, (Rational) value);
+                        } else if (value instanceof BigInteger) {
+                            return transformRatLit(f, (BigInteger) value);
+                        }
                     } else if (type.isBitvectorType()) {
                         checkArgument(value instanceof BigInteger, "Type mismatch (Expected BigInteger): " + value);
                         return transformBvLit(f, (BigInteger) value);
@@ -298,7 +299,7 @@ final class JavaSMTTermTransformer {
 
                 @Override
                 public Expr<?> visitQuantifier(BooleanFormula f, Quantifier quantifier, List<Formula> boundVariables, BooleanFormula body) {
-                    return transformQuantifier(quantifier, model, vars);
+                    return transformQuantifier(quantifier, boundVariables, model, body, vars);
                 }
             });
         } catch (JavaSMTSolverException e) {
@@ -312,6 +313,9 @@ final class JavaSMTTermTransformer {
         return Int(value);
     }
 
+    private Expr<?> transformRatLit(final Formula term, BigInteger value) {
+        return Rat(value, BigInteger.ONE);
+    }
     private Expr<?> transformRatLit(final Formula term, Rational value) {
         return Rat(value.getNum(), value.getDen());
     }
@@ -375,47 +379,70 @@ final class JavaSMTTermTransformer {
         }
     }
 
-    private Expr<?> transformQuantifier(final Quantifier term, final Model model,
-                                        final List<Decl<?>> vars) {
-        throw new JavaSMTSolverException("Not supported: " + term);
+    private ParamDecl<?> transformParam(Formula term) {
+        final var type = context.getFormulaManager().getFormulaType(term);
+        final var thetaType = transformType(type);
+        return Param(term.toString(), thetaType);
+    }
+
+    private Expr<?> transformQuantifier(final Quantifier term, final List<Formula> boundVars,
+                                        final Model model, final BooleanFormula body, final List<Decl<?>> vars) {
+
+        final List<ParamDecl<?>> params = boundVars
+                .stream()
+                .map(this::transformParam)
+                .collect(Collectors.toList());
+        final Expr<BoolType> ret;
+
+        pushParams(vars, params);
+        final Expr<BoolType> expr = (Expr<BoolType>) transform(body, model, vars);
+        popParams(vars, params);
+
+        if (term == Quantifier.EXISTS) {
+            ret = Exists(params, expr);
+        } else {
+            ret = Forall(params, expr);
+        }
+
+        return ret;
+    }
+
+    private void pushParams(final List<Decl<?>> vars, final List<ParamDecl<?>> paramDecls) {
+        vars.addAll(paramDecls);
+    }
+
+    private void popParams(final List<Decl<?>> vars, final List<ParamDecl<?>> paramDecls) {
+        for (int i = 0; i < paramDecls.size(); i++) {
+            vars.remove(vars.size() - 1);
+        }
     }
 
     private Expr<?> transformVar(final Formula term, String name, final List<Decl<?>> vars) {
         FormulaType type = context.getFormulaManager().getFormulaType(term);
-        Type thetaType = null;
-        if (type.isIntegerType()) {
-            thetaType = Int();
-        } else if (type.isRationalType()) {
-            thetaType = Rat();
-        } else if (type.isBitvectorType()) {
-            BitvectorType bvType = (BitvectorType) type;
-            thetaType = BvType.of(bvType.getSize());
-        } else if (type.isFloatingPointType()) {
-            FloatingPointType fpType = (FloatingPointType) type;
-            thetaType = FpType.of(fpType.getExponentSize(), fpType.getMantissaSize());
-        }
+        Type thetaType = transformType(type);
         final var c = symbolTable.getConst(term);
-        checkState(c.getType().equals(thetaType));
+        checkState(thetaType == null || c.getType().equals(thetaType));
         return c.getRef();
     }
 
-    private <P extends Type, R extends Type> Expr<?> transformFuncApp(final Expr<?> expr,
-                                                                      final Formula[] argTerms, final Model model, final List<Decl<?>> vars) {
-        final List<Formula> terms = Arrays.stream(argTerms)
-                .collect(Collectors.toList());
-        return toApp((Expr<FuncType<P, R>>) expr, terms, model, vars);
-    }
-
-    private <P extends Type, R extends Type> Expr<?> toApp(Expr<FuncType<P, R>> expr,
-                                                           List<Formula> terms, Model model, List<Decl<?>> vars) {
-        if (terms.isEmpty()) {
-            return expr;
+    private Type transformType(FormulaType type) {
+        if (type.isIntegerType()) {
+            return Int();
+        } else if (type.isRationalType()) {
+            return Rat();
+        } else if (type.isBitvectorType()) {
+            BitvectorType bvType = (BitvectorType) type;
+            return BvType.of(bvType.getSize());
+        } else if (type.isFloatingPointType()) {
+            FloatingPointType fpType = (FloatingPointType) type;
+            return FpType.of(fpType.getExponentSize(), fpType.getMantissaSize());
+        } else if (type.isArrayType()) {
+            ArrayFormulaType<?, ?> arrayFormulaType = (ArrayFormulaType<?, ?>) type;
+            final var indexType = arrayFormulaType.getIndexType();
+            final var elemType = arrayFormulaType.getElementType();
+            return ArrayType.of(transformType(indexType), transformType(elemType));
         }
-        final Formula term = terms.get(0);
-        terms.remove(0);
-        final Expr<P> transformed = (Expr<P>) transform(term, model, vars);
-        return toApp((Expr<FuncType<FuncType<P, R>, R>>) App(expr, transformed), terms, model,
-                vars);
+        throw new JavaSMTSolverException("Type not supported: " + type);
     }
 
     ////
