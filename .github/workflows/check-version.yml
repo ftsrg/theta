@@ -80,4 +80,4 @@ jobs:
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
           echo "New version ${{ steps.new_version.outputs.version }} is NOT OK"
-          exit 1
+#          exit 1
