@@ -33,7 +33,7 @@ jobs:
         if: env.SONAR_TOKEN != '' && github.event_name == 'push'
         uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
         with:
-          arguments: build jacocoTestReport sonar --info -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m
+          arguments: build jacocoTestReport sonar --stacktrace --info  --max-workers 2 --no-daemon -Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m
       - name: Checkout source branch
         if: github.event_name == 'pull_request_target'
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
