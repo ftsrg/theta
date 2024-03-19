@@ -72,6 +72,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
+          git diff
           git diff | reviewdog -f=diff -reporter=github-pr-review
       - name: version is incorrect, reporting
         if: ${{ steps.version_test.outputs.status }} == "notok"
