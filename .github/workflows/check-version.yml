@@ -70,7 +70,7 @@ jobs:
       - name: version is incorrect, posting suggestion
         if: ${{ steps.version_test.outputs.status }} == "notok"
         env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ steps.generate-token.outputs.token }}
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git diff
           git diff | reviewdog -f=diff -reporter=github-pr-review
