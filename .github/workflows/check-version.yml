@@ -11,6 +11,9 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     steps:
+      - uses: reviewdog/action-setup@3f401fe1d58fe77e10d665ab713057375e39b887 # v1.3.0
+        with:
+          reviewdog_version: v0.17.2
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
         with:
@@ -59,12 +62,10 @@ jobs:
           sed -i "s/version = \".*\"/version = \"$new_version\"/" build.gradle.kts
       - name: version is incorrect, posting suggestion
         if: ${{ steps.version_test.outputs.status }} == "notok"
-        uses: reviewdog/action-suggester@3d7fde6859623ad6174df5fd662677a0eb63310a #v1.11.0
-        with:
-          level: error
-          reviewdog_flags: "-reporter github-pr-review"
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          golint ./... | reviewdog -f=diff -reporter=github-pr-check
       - name: version is incorrect, reporting
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
