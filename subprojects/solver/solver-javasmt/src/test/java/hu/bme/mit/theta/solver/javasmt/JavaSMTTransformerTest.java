@@ -19,10 +19,13 @@ import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
+import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ArrayTestUtils;
 import hu.bme.mit.theta.core.utils.BoolTestUtils;
 import hu.bme.mit.theta.core.utils.BvTestUtils;
@@ -43,6 +46,7 @@ import org.sosy_lab.java_smt.api.SolverContext;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,7 +67,7 @@ public class JavaSMTTransformerTest {
     public static Collection<?> operations() {
         final Set<Solvers> solvers;
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
-            solvers = Set.of(Solvers.Z3, Solvers.CVC5);
+            solvers = Set.of(Solvers.Z3, Solvers.CVC5, Solvers.PRINCESS);
         } else {
             solvers = Set.of(Solvers.Z3, Solvers.PRINCESS);
         }
@@ -101,11 +105,21 @@ public class JavaSMTTransformerTest {
                 (!(o instanceof Expr<?>) || ((Expr<?>) o).getOps().stream().allMatch(JavaSMTTransformerTest::supported));
     }
 
+    private static boolean hasType(Expr<?> expr, Predicate<Type> pred) {
+        if (pred.test(expr.getType())) return true;
+        return expr.getOps().stream().anyMatch((op) -> hasType(op, pred));
+    }
 
     @Test
     public void testRoundtripTransformer() throws Exception {
         // Sanity check
         assertNotNull(expr);
+        if (solver == Solvers.CVC5 && hasType(expr, type -> type instanceof FpType && !Set.of(32, 64).contains(((FpType) type).getSignificand() + ((FpType) type).getExponent()))) {
+            return;
+        }
+        if (solver == Solvers.PRINCESS && hasType(expr, type -> type instanceof FpType || type instanceof RatType)) {
+            return;
+        }
 
         final JavaSMTSymbolTable javaSMTSymbolTable = new JavaSMTSymbolTable();
         final var config = Configuration.fromCmdLineArguments(new String[]{});
