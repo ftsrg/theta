@@ -28,6 +28,8 @@ import java.util.List;
 
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
@@ -45,16 +47,26 @@ public class BoolTestUtils {
 
     public static Collection<?> BasicOperations() {
         final var p1 = Param("x", Int());
+        final var p2 = Param("y", Int());
+        final var p3 = Param("z", Int());
 
         return Arrays.asList(new Object[][]{
 
                 {IteExpr.class, Int(1), Ite(False(), Int(2), Int(1))},
                 {ImplyExpr.class, False(), Imply(True(), False())},
                 {XorExpr.class, False(), Xor(True(), True())},
-                {OrExpr.class, False(), Or(True(), True())},
-                {ExistsExpr.class, False(), Exists(List.of(p1), Eq(p1.getRef(), Int(0)))},
+                {OrExpr.class, True(), Or(True(), True())},
+                {ExistsExpr.class, True(), Exists(List.of(p1), Eq(p1.getRef(), Int(0)))},
                 {ForallExpr.class, False(), Forall(List.of(p1), Eq(p1.getRef(), Int(0)))},
 
+                {ExistsExpr.class, True(), Exists(List.of(p1), Exists(List.of(p2), Eq(p1.getRef(), p2.getRef())))},
+                {ForallExpr.class, False(), Forall(List.of(p1), Forall(List.of(p2), Eq(p1.getRef(), p2.getRef())))},
+
+                {ExistsExpr.class, False(), Exists(List.of(p1, p2), Exists(List.of(p3), And(List.of(
+                        Lt(p1.getRef(), p2.getRef()),
+                        Lt(p2.getRef(), p3.getRef()),
+                        Lt(p3.getRef(), p1.getRef())
+                ))))},
 
         });
     }

@@ -119,6 +119,10 @@ public class JavaSMTTransformerTest {
         final var expTerm = javaSMTExprTransformer.toTerm(expr);
         final var expExpr = javaSMTTermTransformer.toExpr(expTerm);
 
+        System.err.println("expected: " + expr.toString());
+        System.err.println("term: " + expTerm.toString());
+        System.err.println("actual: " + expExpr.toString());
+
         try {
             Assert.assertEquals(expr, expExpr);
         } catch (AssertionError e) {

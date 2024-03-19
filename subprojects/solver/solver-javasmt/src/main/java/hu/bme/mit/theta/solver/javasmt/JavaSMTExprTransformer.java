@@ -546,12 +546,10 @@ final class JavaSMTExprTransformer {
 
     private List<Formula> transformParamDecls(final List<ParamDecl<?>> paramDecls) {
         final List<Formula> paramTerms = new ArrayList<>(paramDecls.size());
-        int i = 0;
         for (final ParamDecl<?> paramDecl : paramDecls) {
             final Formula paramSymbol = transformParamDecl(paramDecl);
-            paramTerms.set(i, paramSymbol);
+            paramTerms.add(paramSymbol);
             env.define(DeclSymbol.of(paramDecl), paramSymbol);
-            i++;
         }
         return paramTerms;
     }
@@ -845,7 +843,7 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformBvSignChange(final BvSignChangeExpr expr) {
-        return toTerm(expr.getOp());
+        return bitvectorFormulaManager.negate((BitvectorFormula) toTerm(expr.getOp()));
     }
 
     private Formula transformBvNeg(final BvNegExpr expr) {
