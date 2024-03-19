@@ -34,7 +34,8 @@ tasks.test {
         if (task.any { !it.enabled }) {
             enabled = false
         }
-        val linkTask = nativeLibTasks.withType(LinkSharedLibrary::class).first()
+        val linkTask = task.first()
+        dependsOn(linkTask)
         systemProperty("java.library.path",
             linkTask.linkedFile.get().asFile.parent + ":/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib")
     }
