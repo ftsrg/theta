@@ -72,10 +72,7 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TMPFILE=$(mktemp)
-          git diff >"${TMPFILE}"
-          git stash -u && git stash drop
-          reviewdog -f=diff -f.diff.strip=1 -filter-mode=nofilter -reporter=github-pr-review -tee < "${TMPFILE}"
+          git diff | reviewdog -f=diff -f.diff.strip=1 -filter-mode=nofilter -reporter=github-pr-review -tee -fail-on-error
       - name: version is incorrect, reporting
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
