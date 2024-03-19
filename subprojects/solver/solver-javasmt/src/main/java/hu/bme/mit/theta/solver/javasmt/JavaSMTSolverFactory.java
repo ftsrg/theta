@@ -52,10 +52,12 @@ public final class JavaSMTSolverFactory implements SolverFactory {
             throw new JavaSMTSolverException(e);
         }
     }
+
     public static JavaSMTSolverFactory create(Solvers solver, Map<String, String> args) {
         return create(solver, args.entrySet().stream().flatMap(e -> Stream.of(e.getKey(), e.getValue())).toList());
     }
-    public static JavaSMTSolverFactory create(Solvers solver, List<String> args)  {
+
+    public static JavaSMTSolverFactory create(Solvers solver, List<String> args) {
         return create(solver, args.toArray(new String[]{}));
     }
 

@@ -50,7 +50,7 @@ final class JavaSMTTypeTransformer {
             return FormulaType.getBitvectorTypeWithSize(bvType.getSize());
         } else if (type instanceof FpType fpType) {
             return FormulaType.getFloatingPointType(fpType.getExponent(),
-                        fpType.getSignificand());
+                    fpType.getSignificand());
         } else if (type instanceof ArrayType<?, ?> arrayType) {
             final FormulaType<?> indexSort = toSort(arrayType.getIndexType());
             final FormulaType<?> elemSort = toSort(arrayType.getElemType());

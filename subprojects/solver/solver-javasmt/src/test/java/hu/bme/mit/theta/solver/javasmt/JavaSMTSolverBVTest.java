@@ -50,11 +50,11 @@ public class JavaSMTSolverBVTest {
     @Parameters(name = "expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return Stream.concat(
-                BvTestUtils.BasicOperations().stream(),
-                Stream.concat(
-                        BvTestUtils.BitvectorOperations().stream(),
-                        BvTestUtils.RelationalOperations().stream()
-                )
+                        BvTestUtils.BasicOperations().stream(),
+                        Stream.concat(
+                                BvTestUtils.BitvectorOperations().stream(),
+                                BvTestUtils.RelationalOperations().stream()
+                        )
                 )
                 .filter(o -> supported(((Object[]) o)[2]))
                 .collect(Collectors.toUnmodifiableList());

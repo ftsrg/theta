@@ -283,9 +283,9 @@ final class JavaSMTTermTransformer {
                     } else if (type.isArrayType()) {
                         return transformArrLit(f, value, model, vars);
                     } else if (type.isBooleanType()) {
-                        if(Boolean.TRUE.equals(value)) {
+                        if (Boolean.TRUE.equals(value)) {
                             return True();
-                        } else if(Boolean.FALSE.equals(value)) {
+                        } else if (Boolean.FALSE.equals(value)) {
                             return False();
                         }
                     }
@@ -316,6 +316,7 @@ final class JavaSMTTermTransformer {
     private Expr<?> transformRatLit(final Formula term, BigInteger value) {
         return Rat(value, BigInteger.ONE);
     }
+
     private Expr<?> transformRatLit(final Formula term, Rational value) {
         return Rat(value.getNum(), value.getDen());
     }
@@ -368,7 +369,7 @@ final class JavaSMTTermTransformer {
 
         final var key1 = Tuple2.of(funcDecl.getName(), args.size());
         final var key2 = Tuple2.of(funcDecl.getName(), -1);
-        if(environment.containsKey(key1)) {
+        if (environment.containsKey(key1)) {
             return environment.get(key1).apply(f, args, model, vars);
         } else if (environment.containsKey(key2)) {
             return environment.get(key2).apply(f, args, model, vars);
@@ -527,7 +528,7 @@ final class JavaSMTTermTransformer {
     }
 
     private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprFpLitUnaryOperator(
-        final BiFunction<BvLitExpr, FpType, Expr<?>> function) {
+            final BiFunction<BvLitExpr, FpType, Expr<?>> function) {
         return Tuple2.of(3, (term, args, model, vars) -> {
             final BvLitExpr op1 = (BvLitExpr) transform(args.get(0), model, vars);
             final IntLitExpr op2 = (IntLitExpr) transform(args.get(1), model, vars);

@@ -212,7 +212,7 @@ public final class JavaSMTSolverTest {
         assertEquals(Int(4), Read(valLit, Int(2)).eval(ImmutableValuation.empty()));
     }
 
-//    @Test
+    //    @Test
     public void testReset() {
         final ConstDecl<IntType> cx = Const("x", Int());
         final ConstDecl<IntType> cy = Const("y", Int());

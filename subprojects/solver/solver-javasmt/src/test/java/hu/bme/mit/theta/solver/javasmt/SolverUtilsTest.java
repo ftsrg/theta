@@ -78,12 +78,12 @@ public class SolverUtilsTest {
         );
 
         Assert.assertThrows(Z3Exception.class, () ->
-        context.getFormulaManager().visit(term, new DefaultFormulaVisitor<Void>() {
-            @Override
-            protected Void visitDefault(Formula f) {
-                return null;
-            }
-        }));
+                context.getFormulaManager().visit(term, new DefaultFormulaVisitor<Void>() {
+                    @Override
+                    protected Void visitDefault(Formula f) {
+                        return null;
+                    }
+                }));
 
     }
 
