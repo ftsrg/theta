@@ -152,6 +152,7 @@ import org.sosy_lab.java_smt.api.Formula;
 import org.sosy_lab.java_smt.api.FormulaType;
 import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
 import org.sosy_lab.java_smt.api.IntegerFormulaManager;
+import org.sosy_lab.java_smt.api.NumeralFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.RationalFormula;
 import org.sosy_lab.java_smt.api.QuantifiedFormulaManager;
@@ -680,7 +681,7 @@ final class JavaSMTExprTransformer {
      */
 
     private Formula transformRatToInt(final RatToIntExpr expr) {
-        throw new JavaSMTSolverException("Not supported: " + expr);
+        return rationalFormulaManager.floor((NumeralFormula) toTerm(expr.getOp()));
     }
 
     private Formula transformIntLit(final IntLitExpr expr) {
@@ -787,7 +788,7 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformIntToRat(final IntToRatExpr expr) {
-        throw new JavaSMTSolverException("Not supported: " + expr);
+        return rationalFormulaManager.sum(List.of((IntegerFormula) toTerm(expr.getOp())));
     }
 
     /*
