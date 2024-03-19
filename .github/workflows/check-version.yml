@@ -18,13 +18,15 @@ jobs:
       - name: Master version
         id: master_version
         run: |
-          echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+          #echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+          echo version=$(grep -o 'version = ".*"' build.gradle.kts | grep -o '[0-9\.]*') >> $GITHUB_OUTPUT
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: New version
         id: new_version
         run: |
-          echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+          #echo version=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}') >> $GITHUB_OUTPUT
+          echo version=$(grep -o 'version = ".*"' build.gradle.kts | grep -o '[0-9\.]*') >> $GITHUB_OUTPUT
 
       - name: test version
         id: version_test
@@ -60,6 +62,9 @@ jobs:
         uses: reviewdog/action-suggester@3d7fde6859623ad6174df5fd662677a0eb63310a #v1.11.0
         with:
           level: error
+          reviewdog_flags: "-reporter github-pr-review"
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: version is incorrect, reporting
         if: ${{ steps.version_test.outputs.status }} == "notok"
         run: |
