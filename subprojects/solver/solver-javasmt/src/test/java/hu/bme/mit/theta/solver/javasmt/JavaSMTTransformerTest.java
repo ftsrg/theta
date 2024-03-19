@@ -64,7 +64,7 @@ public class JavaSMTTransformerTest {
     public static Collection<?> operations() {
         final Set<Solvers> solvers;
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
-            solvers = Set.of(Solvers.Z3, Solvers.CVC5, Solvers.PRINCESS);
+            solvers = Set.of(Solvers.Z3, Solvers.CVC5);
         } else {
             solvers = Set.of(Solvers.Z3, Solvers.PRINCESS);
         }
