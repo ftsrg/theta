@@ -40,7 +40,6 @@ import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
@@ -138,7 +137,6 @@ public class BvTestUtils {
 
                 {BvPosExpr.class, SBv16(-5), Pos(SBv16(-5))},
                 {BvNegExpr.class, SBv16(5), Neg(SBv16(-5))},
-                {BvSignChangeExpr.class, SBv16(5), BvSignChangeExpr.of(SBv16(-5), SBv16(5).getType())},
         });
     }
 

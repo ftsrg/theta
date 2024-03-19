@@ -843,7 +843,7 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformBvSignChange(final BvSignChangeExpr expr) {
-        return bitvectorFormulaManager.negate((BitvectorFormula) toTerm(expr.getOp()));
+        return (BitvectorFormula) toTerm(expr.getOp());
     }
 
     private Formula transformBvNeg(final BvNegExpr expr) {
