@@ -30,19 +30,19 @@ jobs:
         id: version_test
         run: |
           compare_versions() {
-              local i
-              for ((i = 0; i < 3; i++)); do
-                if (( ${1[$i]} > ${2[$i]} )); then
-                  return 0
-                elif (( ${1[$i]} < ${2[$i]} )); then
-                  return 1
-                fi
-              done
-              return 2
+            IFS='.' read -r -a new_arr <<< $1
+            IFS='.' read -r -a master_arr <<< $2
+            local i
+            for ((i = 0; i < 3; i++)); do
+              if [ ${new_arr[$i]} -gt ${master_arr[$i]} ]; then
+                return 0
+              elif [ ${new_arr[$i]} -lt ${master_arr[$i]} ]; then
+                return 1
+              fi
+            done
+            return 2
           }
-          IFS='.' read -r -a new_arr <<< "${{ steps.new_version.outputs.version }}"
-          IFS='.' read -r -a master_arr <<< "${{ steps.new_version.outputs.version }}"
-          compare_versions new_arr master_arr && echo status="ok" >> $GITHUB_OUTPUT || echo status="notok" >> $GITHUB_OUTPUT 
+          compare_versions "${{ steps.new_version.outputs.version }}" "${{ steps.master_version.outputs.version }}" && echo status="ok" >> $GITHUB_OUTPUT || echo status="notok" >> $GITHUB_OUTPUT 
 
       - name: version is correct
         if: ${{ steps.version_test.outputs.status }} == "ok"
