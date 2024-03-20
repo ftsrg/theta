@@ -42,6 +42,61 @@ public final class JavaSMTSolverFactory implements SolverFactory {
     private final LogManager logger;
     private final ShutdownManager shutdownManager;
 
+    /**
+     * Available options (mined from javasmt sources):
+     * Prefix: solver
+     * Options:
+     * *   private boolean logAllQueries  Export solver queries in SmtLib format into a file.
+     * *   @FileOption(FileOption.Type.OUTPUT_FILE)  private @Nullable PathCounterTemplate logfile  Export solver queries in SmtLib format into a file.
+     * *   private boolean renameLogfileToAvoidConflicts  If logging from the same application, avoid conflicting logfile names.
+     * *   private long randomSeed  Random seed for SMT solver.
+     * *   private Solvers solver  Which SMT solver to use.
+     * *   private boolean useLogger  Log solver actions, this may be slow!
+     * *   private boolean synchronize  Sequentialize all solver actions to allow concurrent access!
+     * *   private boolean collectStatistics  Counts all operations and interactions towards the SMT solver.
+     * *   private FloatingPointRoundingMode floatingPointRoundingMode  Default rounding mode for floating point operations.
+     * *   private NonLinearArithmetic nonLinearArithmetic  Use non-linear arithmetic of the solver if supported and throw exception otherwise,
+     * Prefix: solver.synchronized
+     * Options:
+     * *   private boolean useSeperateProvers  Use provers from a seperate context to solve queries.
+     * Prefix:   solver.boolector
+     * Options:
+     * *     private SatSolver satSolver  The SAT solver used by Boolector.
+     * *     private String furtherOptions  Further options for Boolector in addition to the default options.
+     * Prefix:   solver.cvc5
+     * Options:
+     * *     private boolean validateInterpolants  apply additional validation checks for interpolation results
+     * Prefix:   solver.mathsat5
+     * Options:
+     * *     private String furtherOptions  Further options that will be passed to Mathsat in addition to the default options.
+     * *     boolean loadOptimathsat5  Load less stable optimizing version of mathsat5 solver.
+     * Prefix:   solver.opensmt
+     * Options:
+     * *     Logics logic  SMT-LIB2 name of the logic to be used by the solver.
+     * *     int algBool  Algorithm for boolean interpolation
+     * *     int algUf  Algorithm for UF interpolation
+     * *     int algLra  Algorithm for LRA interpolation
+     * Prefix: solver.princess
+     * Options:
+     * *   private int minAtomsForAbbreviation  The number of atoms a term has to have before
+     * *   private boolean enableAssertions  Enable additional assertion checks within Princess.
+     * *   private boolean logAllQueriesAsScala  log all queries as Princess-specific Scala code
+     * *   @FileOption(FileOption.Type.OUTPUT_FILE)  private PathCounterTemplate logAllQueriesAsScalaFile  file for Princess-specific dump of queries as Scala code
+     * Prefix:   solver.smtinterpol
+     * Options:
+     * *     private boolean checkResults  Double check generated results like interpolants and models whether they are correct
+     * *     private List<String> furtherOptions  Further options that will be set to true for SMTInterpol
+     * Prefix: solver.z3
+     * Options:
+     * *   private boolean usePhantomReferences  Whether to use PhantomReferences for discarding Z3 AST
+     * Prefix:   solver.z3
+     * Options:
+     * *     boolean requireProofs  Require proofs from SMT solver
+     * *     @FileOption(FileOption.Type.OUTPUT_FILE)    @Nullable Path log  Activate replayable logging in Z3.
+     * *     String optimizationEngine  Engine to use for the optimization
+     * *     String objectivePrioritizationMode  Ordering for objectives in the optimization context
+     */
+
     private JavaSMTSolverFactory(Solvers solver, String[] args) {
         try {
             this.solver = solver;
