@@ -60,13 +60,6 @@ internal data class Event(
         enabled = e
         return e
     }
-
-//    override fun equals(other: Any?): Boolean {
-//        if (other !is Event) return false
-//        return id == other.id
-//    }
-//
-//    override fun hashCode(): Int = id
 }
 
 internal enum class RelationType { PO, EPO, RFI, RFE }

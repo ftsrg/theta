@@ -40,7 +40,6 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiSingleThread
-import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaDporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
 import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
@@ -136,9 +135,6 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
     }
 
     val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
-
-    println(XcfaOcChecker(xcfa, logger, config.backendConfig.solverHome).check())
-    System.exit(0)
 
     val mcm = if (config.inputConfig.catFile != null) {
         CatDslManager.createMCM(config.inputConfig.catFile!!)

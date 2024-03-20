@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.collectVars
@@ -41,7 +42,7 @@ import java.util.*
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) :
-    SafetyChecker<XcfaState<*>, XcfaAction, UnitPrec> {
+    SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
@@ -57,7 +58,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
     private val pos = mutableListOf<Relation>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
 
-    override fun check(prec: UnitPrec?): SafetyResult<XcfaState<*>, XcfaAction> {
+    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
@@ -468,8 +469,8 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 decisionStack.popUntil({ it.relation == rel }, value) && value == true
             }
             val changedEnabledEvents = flatEvents.filter { ev ->
-                if (ev.type != EventType.WRITE || !rfs.containsKey(ev.const.varDecl)) return@filter false
                 val enabled = ev.enabled(solver.model)
+                if (ev.type != EventType.WRITE || !rfs.containsKey(ev.const.varDecl)) return@filter false
                 decisionStack.popUntil({ it.event == ev }, enabled) && enabled == true
             }
 
@@ -497,7 +498,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
             for (w in changedEnabledEvents) {
                 val decision = DecisionPoint(decisionStack.peek().rels, w)
                 decisionStack.push(decision)
-                for (rf in rfs[w.const.varDecl]!!) {
+                for (rf in rfs[w.const.varDecl]!!.filter { it.value == true }) {
                     val reason = derive(decision.rels, rf, w)
                     if (reason != null) {
                         solver.add(Not(reason.expr))
@@ -564,7 +565,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
         return null
     }
 
-    // returns true if obj is not on the stack (in other words, if the value of obj is changed in the new model)
+    /**
+     *  Returns true if obj is not on the stack (in other words, if the value of obj is changed in the new model)
+     */
     private fun <T> Stack<T>.popUntil(obj: (T) -> Boolean, value: Boolean?): Boolean {
         val index = indexOfFirst(obj)
         if (index == -1) return true

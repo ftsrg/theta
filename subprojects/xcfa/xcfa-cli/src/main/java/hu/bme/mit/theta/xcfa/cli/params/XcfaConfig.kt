@@ -149,6 +149,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         specConfig = when (backend) {
             Backend.CEGAR -> CegarConfig() as T
             Backend.BOUNDED -> BoundedConfig() as T
+            Backend.OC -> OcConfig() as T
             Backend.LAZY -> null
             Backend.PORTFOLIO -> PortfolioConfig() as T
             Backend.NONE -> null
@@ -286,6 +287,10 @@ data class InterpolationConfig(
     var validateItpSolver: Boolean = false,
 
     ) : Config
+
+data class OcConfig(
+    private val dummy: Boolean = false
+) : SpecBackendConfig
 
 data class PortfolioConfig(
     @Parameter(names = ["--portfolio"], description = "Portfolio to run")
