@@ -44,6 +44,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpolSmtLibItpMarker> {
 
-    private final Map<Expr<BoolType>, String> assertionNames = new HashMap<>();
+    private final Map<Expr<BoolType>, String> assertionNames = new IdentityHashMap<>();
     private static final String assertionNamePattern = "_smtinterpol_assertion_%d";
     private static long assertionCount = 0;
 
