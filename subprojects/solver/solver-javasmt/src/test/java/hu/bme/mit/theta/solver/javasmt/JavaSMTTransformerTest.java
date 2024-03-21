@@ -20,18 +20,15 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.core.utils.ArrayTestUtils;
-import hu.bme.mit.theta.core.utils.BoolTestUtils;
-import hu.bme.mit.theta.core.utils.BvTestUtils;
-import hu.bme.mit.theta.core.utils.FpTestUtils;
-import hu.bme.mit.theta.core.utils.IntTestUtils;
-import hu.bme.mit.theta.core.utils.RatTestUtils;
+import hu.bme.mit.theta.core.utils.ExpressionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +45,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static org.junit.Assert.assertNotNull;
@@ -67,33 +63,16 @@ public class JavaSMTTransformerTest {
     public static Collection<?> operations() {
         final Set<Solvers> solvers;
         if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
-            solvers = Set.of(Solvers.Z3, Solvers.CVC5, Solvers.PRINCESS);
+            solvers = Set.of(Solvers.Z3, Solvers.SMTINTERPOL, Solvers.CVC5, Solvers.PRINCESS);
         } else {
-            solvers = Set.of(Solvers.Z3, Solvers.PRINCESS);
+            solvers = Set.of(Solvers.Z3, Solvers.SMTINTERPOL, Solvers.PRINCESS);
         }
 
-        return Sets.cartesianProduct(Stream.of(
-                                BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[2]),
-                                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[2]),
-                                FpTestUtils.GetOperations().map(o -> ((Object[]) o)[2]),
-                                IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                                RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                                BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                                ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-
-
-                                BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[1]),
-                                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[1]),
-                                FpTestUtils.GetOperations().map(o -> ((Object[]) o)[1]),
-                                IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                                RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                                BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                                ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1])
-                        ).reduce(Stream::concat).get()
-                        .filter(JavaSMTTransformerTest::supported)
-                        .collect(Collectors.toSet()), solvers).stream()
+        return Sets.cartesianProduct(
+                        ExpressionUtils.AllExpressions().values().stream()
+                                .filter(JavaSMTTransformerTest::supported)
+                                .collect(Collectors.toSet()),
+                        solvers).stream()
                 .map(objects -> new Object[]{objects.get(0), objects.get(1)}).toList();
     }
 
@@ -118,6 +97,9 @@ public class JavaSMTTransformerTest {
             return;
         }
         if (solver == Solvers.PRINCESS && hasType(expr, type -> type instanceof FpType || type instanceof RatType)) {
+            return;
+        }
+        if (solver == Solvers.SMTINTERPOL && (hasType(expr, type -> type instanceof BvType || type instanceof FpType) || expr instanceof QuantifiedExpr)) {
             return;
         }
 
