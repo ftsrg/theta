@@ -42,6 +42,7 @@ import hu.bme.mit.theta.cfa.analysis.lts.CfaLts
 import hu.bme.mit.theta.cfa.analysis.lts.CfaSbeLts
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec
 import hu.bme.mit.theta.cfa.analysis.prec.RefutationToGlobalCfaPrec
+import hu.bme.mit.theta.cfa.copyWithReplacingVars
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
@@ -90,10 +91,11 @@ class MultiOfTwoTest {
 
         val variables = xsts.vars
 
-        var cfa: CFA
+        var originalCfa: CFA
         FileInputStream("src/test/resources/cfa/doubler.cfa").use { inputStream ->
-            cfa = CfaDslManager.createCfa(inputStream)
+            originalCfa = CfaDslManager.createCfa(inputStream)
         }
+        val cfa = originalCfa.copyWithReplacingVars(mapOf(*(variables.map { Pair(it.name, it) }.toTypedArray())))
         val dataAnalysis = xstsExplBuilder.dataAnalysis
         val cfaAnalysis = CfaAnalysis.create(cfa.initLoc, dataAnalysis)
         val cfaLts: CfaLts = CfaSbeLts.getInstance()
@@ -161,7 +163,6 @@ class MultiOfTwoTest {
         )
         val xstsPredBuilder = xstsConfigBuilder.PredStrategy(xsts)
         val dataAnalysis = xstsPredBuilder.dataAnalysis
-
 
         var cfa: CFA
         FileInputStream("src/test/resources/cfa/doubler.cfa").use { inputStream ->

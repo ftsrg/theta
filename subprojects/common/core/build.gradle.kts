@@ -17,6 +17,7 @@ plugins {
     id("java-common")
     id("antlr-grammar")
     id("java-test-fixtures")
+    id("kotlin-common")
 }
 
 dependencies {
