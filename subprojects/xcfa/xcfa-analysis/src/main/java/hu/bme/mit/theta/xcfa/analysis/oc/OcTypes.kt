@@ -15,6 +15,9 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
+/**
+ * Important! Empty collection is converted to true (not false).
+ */
 internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when (size) {
     0 -> True()
     1 -> first()

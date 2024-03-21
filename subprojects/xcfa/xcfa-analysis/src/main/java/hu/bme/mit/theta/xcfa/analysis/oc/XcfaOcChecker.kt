@@ -41,7 +41,7 @@ import java.util.*
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
-class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) :
+class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) :
     SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
@@ -133,12 +133,9 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
             check(current.incoming == current.pidLookups.size)
             check(current.incoming == current.atomics.size)
             check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
-            val mergeGuards = { // intersection of guard expressions from incoming edges
-                current.guards.reduce(listOf()) { g1, g2 -> g1.filter { it in g2 } }
-            }
 
             if (current.loc.error) {
-                violations.add(Violation(current.loc, And(mergeGuards()), current.lastEvents))
+                violations.add(Violation(current.loc, Or(current.guards.map { it.toAnd() }), current.lastEvents))
                 continue
             }
 
@@ -153,7 +150,8 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
                 edge = e
                 inEdge = false
                 last = current.lastEvents
-                guard = mergeGuards()
+                // intersection of guards of incoming edges:
+                guard = current.guards.reduce(listOf()) { g1, g2 -> g1.filter { it in g2 } }
                 lastWrites = current.lastWrites.merge().toMutableMap()
                 val pidLookup = current.pidLookups.merge { s1, s2 ->
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
@@ -514,7 +512,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger, solverHome: String) 
 
     private fun derive(rels: Array<Array<Reason?>>, rf: Relation, w: Event): Reason? = when {
         rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
-        w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null // w within an atomic block with an rf end
+        w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null // w within an atomic block with one of the rf ends
 
         rels[w.clkId][rf.to.clkId] != null -> { // WS derivation
             val reason = WriteSerializationReason(rf, w, rels[w.clkId][rf.to.clkId]!!)
