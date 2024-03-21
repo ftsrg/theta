@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 public class ExpressionUtils {
 
     private static Stream<Expr<?>> getWithAllOps(Expr<?> e) {
-        if(e instanceof QuantifiedExpr) { // we don't want their body to be unwrapped, as they contain ParamDecls
+        if (e instanceof QuantifiedExpr) { // we don't want their body to be unwrapped, as they contain ParamDecls
             return Stream.of(e);
         }
         return Stream.concat(Stream.of(e), e.getOps().stream());
@@ -34,27 +34,27 @@ public class ExpressionUtils {
 
     public static Map<String, ? extends Expr<?>> AllExpressions() {
         return Stream.of(
-                BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[2]),
-                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[2]),
-                FpTestUtils.GetOperations().map(o -> ((Object[]) o)[2]),
-                IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
-                ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                        BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                        BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[2]),
+                        BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[2]),
+                        FpTestUtils.GetOperations().map(o -> ((Object[]) o)[2]),
+                        IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                        RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                        BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
+                        ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[2]),
 
 
-                BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[1]),
-                BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[1]),
-                FpTestUtils.GetOperations().map(o -> ((Object[]) o)[1]),
-                IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
-                ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]))
+                        BvTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                        BvTestUtils.BitvectorOperations().stream().map(o -> ((Object[]) o)[1]),
+                        BvTestUtils.RelationalOperations().stream().map(o -> ((Object[]) o)[1]),
+                        FpTestUtils.GetOperations().map(o -> ((Object[]) o)[1]),
+                        IntTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                        RatTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                        BoolTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]),
+                        ArrayTestUtils.BasicOperations().stream().map(o -> ((Object[]) o)[1]))
 
                 .reduce(Stream::concat).get()
-                .map(o -> (Expr<?>)o)
+                .map(o -> (Expr<?>) o)
                 .flatMap(ExpressionUtils::getWithAllOps)
                 .collect(Collectors.toMap(o -> o.getClass().getSimpleName(), o -> o, (expr, expr2) -> expr2));
     }
