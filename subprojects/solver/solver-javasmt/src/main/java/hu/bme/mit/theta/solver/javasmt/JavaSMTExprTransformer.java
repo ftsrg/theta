@@ -151,6 +151,7 @@ import org.sosy_lab.java_smt.api.FloatingPointRoundingMode;
 import org.sosy_lab.java_smt.api.Formula;
 import org.sosy_lab.java_smt.api.FormulaType;
 import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
+import org.sosy_lab.java_smt.api.FunctionDeclaration;
 import org.sosy_lab.java_smt.api.IntegerFormulaManager;
 import org.sosy_lab.java_smt.api.NumeralFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
@@ -163,6 +164,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class JavaSMTExprTransformer {
@@ -177,13 +179,15 @@ final class JavaSMTExprTransformer {
     private final ArrayFormulaManager arrayFormulaManager;
 
     private final JavaSMTTransformationManager transformer;
+    private final JavaSMTSymbolTable symbolTable;
     private final SolverContext context;
 
     private final Cache<Expr<?>, Formula> exprToTerm;
     private final DispatchTable<Formula> table;
     private final Env env;
 
-    public JavaSMTExprTransformer(final JavaSMTTransformationManager transformer, final SolverContext context) {
+    public JavaSMTExprTransformer(final JavaSMTTransformationManager transformer, final JavaSMTSymbolTable symbolTable, final SolverContext context) {
+        this.symbolTable = symbolTable;
         this.context = context;
         this.transformer = transformer;
         this.env = new Env();
@@ -1262,7 +1266,7 @@ final class JavaSMTExprTransformer {
         final Expr<?> func = funcAndArgs.get1();
         if (func instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) func;
-            final Decl<?> decl = ref.getDecl();
+            final ConstDecl<?> decl = (ConstDecl<?>) ref.getDecl();
             final String name = decl.getName();
 
             final List<Expr<?>> args = funcAndArgs.get2();
@@ -1270,11 +1274,20 @@ final class JavaSMTExprTransformer {
                     .map(this::toTerm)
                     .toList();
 
-            return context.getFormulaManager().getUFManager().declareAndCallUF(
-                    name,
-                    transformer.toSort(expr.getType()),
-                    argTerms
-            );
+
+            final FunctionDeclaration<?> funcDecl;
+            if (symbolTable.definesConstAsFunction(decl)) {
+                funcDecl = symbolTable.getSymbolAsFunction(decl);
+            } else {
+                funcDecl = context.getFormulaManager().getUFManager().declareUF(
+                        name,
+                        transformer.toSort(expr.getType()),
+                        argTerms.stream().map(context.getFormulaManager()::getFormulaType).collect(Collectors.toList()));
+
+                symbolTable.put(decl, funcDecl);
+            }
+
+            return context.getFormulaManager().getUFManager().callUF(funcDecl, argTerms);
         } else {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);

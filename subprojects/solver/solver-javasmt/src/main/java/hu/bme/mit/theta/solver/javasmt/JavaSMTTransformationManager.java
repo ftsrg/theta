@@ -31,7 +31,7 @@ final class JavaSMTTransformationManager {
     public JavaSMTTransformationManager(final JavaSMTSymbolTable symbolTable, final SolverContext context) {
         this.typeTransformer = new JavaSMTTypeTransformer();
         this.declTransformer = new JavaSMTDeclTransformer(this, symbolTable, context);
-        this.exprTransformer = new JavaSMTExprTransformer(this, context);
+        this.exprTransformer = new JavaSMTExprTransformer(this, symbolTable, context);
     }
 
     public FormulaType<?> toSort(final Type type) {

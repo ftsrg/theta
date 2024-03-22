@@ -23,11 +23,10 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import org.junit.Test;
-import org.sosy_lab.java_smt.api.BooleanFormula;
-import org.sosy_lab.java_smt.api.PropagatorBackend;
 
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
@@ -42,7 +41,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3;
 
-public class UserPropagatorTest {
+public class JavaSMTUserPropagatorTest {
 
     @Test
     public void testUserPropagatorBool() throws Exception {
@@ -103,37 +102,20 @@ public class UserPropagatorTest {
 
     private static class TestConsequencePropagator extends JavaSMTUserPropagator {
         @Override
-        public void onKnownValue(BooleanFormula expr, boolean value) {
+        public void onKnownValue(Expr<BoolType> expr, boolean value) {
             System.err.printf("%s := %s\n", expr, value);
-            FuncAppExpr<?, ?> appOuter = (FuncAppExpr<?, ?>) termTransformer.toExpr(expr);
+            FuncAppExpr<?, ?> appOuter = (FuncAppExpr<?, ?>) expr;
             FuncAppExpr<?, ?> appInner = (FuncAppExpr<?, ?>) appOuter.getFunc();
 
-            final var consequence = Lt((Expr<IntType>) appOuter.getParam(), (Expr<IntType>) appInner.getParam());
-            System.err.printf("Consequence: %s\n", consequence);
+            final var consequence = Lt((Expr<IntType>) appInner.getParam(), (Expr<IntType>) appOuter.getParam());
 
             if (value) {
-                getBackend().propagateConsequence(new BooleanFormula[]{expr},
-                        (BooleanFormula) transformationManager.toTerm(consequence));
+                System.err.printf("Consequence: %s\n", consequence);
+                propagateConsequence(List.of(expr), consequence);
             } else {
-                getBackend().propagateConsequence(new BooleanFormula[]{expr},
-                        (BooleanFormula) transformationManager.toTerm(Not(consequence)));
+                System.err.printf("Consequence: %s\n", Not(consequence));
+                propagateConsequence(List.of(expr), Not(consequence));
             }
-        }
-
-        @Override
-        public void initializeWithBackend(PropagatorBackend backend) {
-            super.initializeWithBackend(backend);
-            backend.notifyOnKnownValue();
-            backend.notifyOnFinalCheck();
-        }
-
-        public void registerExpression(Expr<BoolType> expr) {
-            this.registerExpression((BooleanFormula) transformationManager.toTerm(expr));
-        }
-
-        @Override
-        public void registerExpression(BooleanFormula expr) {
-            super.registerExpression(expr);
         }
     }
 
@@ -143,29 +125,16 @@ public class UserPropagatorTest {
         private final Map<Expr<BoolType>, Boolean> setExpressions = new LinkedHashMap<>();
 
         @Override
-        public void onKnownValue(BooleanFormula expr, boolean value) {
+        public void onKnownValue(Expr<BoolType> expr, boolean value) {
             System.err.printf("%s := %s\n", expr, value);
-            Expr<?> tExpr = termTransformer.toExpr(expr);
-            if (setExpressions.containsKey(tExpr) && value != setExpressions.get(tExpr)) {
-                getBackend().propagateConflict(new BooleanFormula[]{expr});
+            if (setExpressions.containsKey(expr) && value != setExpressions.get(expr)) {
+                propagateConflict(List.of(expr));
             }
-        }
-
-        @Override
-        public void initializeWithBackend(PropagatorBackend backend) {
-            super.initializeWithBackend(backend);
-            backend.notifyOnKnownValue();
-            backend.notifyOnFinalCheck();
         }
 
         public void registerExpression(Expr<BoolType> expr, boolean value) {
             setExpressions.put(expr, value);
-            this.registerExpression((BooleanFormula) transformationManager.toTerm(expr));
-        }
-
-        @Override
-        public void registerExpression(BooleanFormula expr) {
-            super.registerExpression(expr);
+            this.registerExpression(expr);
         }
     }
 }

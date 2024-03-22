@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExpressionUtils;
 import org.junit.Assert;
@@ -117,6 +118,9 @@ public class JavaSMTTransformerTest {
             try {
                 Assert.assertEquals(expr, expExpr);
             } catch (AssertionError e) {
+                if (hasType(expr, type -> type instanceof FuncType<?, ?>)) {
+                    throw e; // for functions, we don't want the solver to step in
+                }
                 try (final var solver = JavaSMTSolverFactory.create(this.solver, new String[]{}).createSolver()) {
                     solver.add(Eq(expr, expExpr));
                     Assert.assertTrue(solver.check().isSat());
