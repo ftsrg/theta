@@ -21,6 +21,7 @@ import org.sosy_lab.java_smt.basicimpl.AbstractUserPropagator;
 public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     protected JavaSMTTransformationManager transformationManager;
     protected JavaSMTTermTransformer termTransformer;
+
     public void setTransformationManager(JavaSMTTransformationManager transformationManager) {
         this.transformationManager = transformationManager;
     }
