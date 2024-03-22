@@ -149,8 +149,8 @@ public final class JavaSMTSolverFactory implements SolverFactory {
                 if (!prover.registerUserPropagator(propagator)) {
                     throw new JavaSMTSolverException("Could not register user propagator " + propagator);
                 }
-                propagator.setTermTransformer(termTransformer);
-                propagator.setTransformationManager(transformationManager);
+                propagator.setToExpr(termTransformer::toExpr);
+                propagator.setToTerm(transformationManager::toTerm);
             }
 
             return new JavaSMTSolver(symbolTable, transformationManager, termTransformer, context, prover);
