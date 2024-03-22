@@ -11,6 +11,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
@@ -128,7 +130,6 @@ internal data class StackItem(val event: Event) {
     var eventsToVisit: MutableList<Event>? = null
 }
 
-
 // ~DPLL(OC)
 
 internal sealed class Reason {
@@ -174,4 +175,10 @@ internal class DecisionPoint(
     constructor(rels: Array<Array<Reason?>>, e: Event) : this(event = e, rels = initRels(rels))
 
     constructor(rels: Array<Array<Reason?>>, r: Relation) : this(relation = r, rels = initRels(rels))
+}
+
+internal interface OcDecisionProcedure {
+
+    fun check(solver: Solver, events: MutableMap<VarDecl<*>, MutableMap<Int, MutableList<Event>>>,
+        pos: MutableList<Relation>, rfs: MutableMap<VarDecl<*>, MutableList<Relation>>): SolverStatus?
 }
