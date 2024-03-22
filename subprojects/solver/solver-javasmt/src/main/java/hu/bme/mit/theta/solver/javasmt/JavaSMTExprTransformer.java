@@ -17,7 +17,9 @@ package hu.bme.mit.theta.solver.javasmt;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.DispatchTable;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -1256,7 +1258,43 @@ final class JavaSMTExprTransformer {
      */
 
     private Formula transformFuncApp(final FuncAppExpr<?, ?> expr) {
-        throw new JavaSMTSolverException("Function application not yet supported: " + expr);
+        final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
+        final Expr<?> func = funcAndArgs.get1();
+        if (func instanceof RefExpr) {
+            final RefExpr<?> ref = (RefExpr<?>) func;
+            final Decl<?> decl = ref.getDecl();
+            final String name = decl.getName();
+
+            final List<Expr<?>> args = funcAndArgs.get2();
+            final List<Formula> argTerms = args.stream()
+                    .map(this::toTerm)
+                    .toList();
+
+            return context.getFormulaManager().getUFManager().declareAndCallUF(
+                    name,
+                    transformer.toSort(expr.getType()),
+                    argTerms
+            );
+        } else {
+            throw new UnsupportedOperationException(
+                    "Higher order functions are not supported: " + func);
+        }
+    }
+
+    private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
+        final Expr<?> func = expr.getFunc();
+        final Expr<?> arg = expr.getParam();
+        if (func instanceof FuncAppExpr) {
+            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
+            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
+            final Expr<?> resFunc = funcAndArgs.get1();
+            final List<Expr<?>> args = funcAndArgs.get2();
+            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
+                    .build();
+            return Tuple2.of(resFunc, resArgs);
+        } else {
+            return Tuple2.of(func, ImmutableList.of(arg));
+        }
     }
 
     public void reset() {

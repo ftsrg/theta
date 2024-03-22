@@ -56,8 +56,8 @@ final class JavaSMTDeclTransformer {
     private Formula transformConst(final ConstDecl<?> decl) {
         final Formula symbol;
 
-        if (symbolTable.definesConst(decl)) {
-            symbol = symbolTable.getSymbol(decl);
+        if (symbolTable.definesConstAsFormula(decl)) {
+            symbol = symbolTable.getSymbolAsFormula(decl);
         } else {
             final Type type = decl.getType();
 

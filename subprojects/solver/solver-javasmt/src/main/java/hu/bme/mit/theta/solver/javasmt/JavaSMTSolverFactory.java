@@ -136,6 +136,29 @@ public final class JavaSMTSolverFactory implements SolverFactory {
         }
     }
 
+
+    public Solver createSolverWithPropagators(JavaSMTUserPropagator... propagators) {
+        try {
+            final SolverContext context = SolverContextFactory.createSolverContext(config, logger, shutdownManager.getNotifier(), solver);
+            final JavaSMTSymbolTable symbolTable = new JavaSMTSymbolTable();
+            final JavaSMTTransformationManager transformationManager = new JavaSMTTransformationManager(symbolTable, context);
+            final JavaSMTTermTransformer termTransformer = new JavaSMTTermTransformer(symbolTable, context);
+
+            final ProverEnvironment prover = context.newProverEnvironment(ProverOptions.GENERATE_MODELS);
+            for (JavaSMTUserPropagator propagator : propagators) {
+                if (!prover.registerUserPropagator(propagator)) {
+                    throw new JavaSMTSolverException("Could not register user propagator " + propagator);
+                }
+                propagator.setTermTransformer(termTransformer);
+                propagator.setTransformationManager(transformationManager);
+            }
+
+            return new JavaSMTSolver(symbolTable, transformationManager, termTransformer, context, prover);
+        } catch (InvalidConfigurationException e) {
+            throw new JavaSMTSolverException(e);
+        }
+    }
+
     @Override
     public UCSolver createUCSolver() {
         try {

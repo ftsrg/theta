@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
-import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -77,13 +76,12 @@ public class SolverUtilsTest {
                 FormulaType.getFloatingPointType(5, 10)
         );
 
-        Assert.assertThrows(Z3Exception.class, () ->
-                context.getFormulaManager().visit(term, new DefaultFormulaVisitor<Void>() {
-                    @Override
-                    protected Void visitDefault(Formula f) {
-                        return null;
-                    }
-                }));
+        context.getFormulaManager().visit(term, new DefaultFormulaVisitor<Void>() {
+            @Override
+            protected Void visitDefault(Formula f) {
+                return null;
+            }
+        });
 
     }
 

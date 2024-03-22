@@ -20,6 +20,7 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import org.sosy_lab.java_smt.api.Formula;
+import org.sosy_lab.java_smt.api.FunctionDeclaration;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,28 +29,49 @@ import static com.google.common.base.Preconditions.checkState;
 final class JavaSMTSymbolTable {
 
     private final BiMap<ConstDecl<?>, Formula> constToSymbol;
+    private final BiMap<ConstDecl<?>, FunctionDeclaration<?>> constToFuncDecl;
 
     public JavaSMTSymbolTable() {
         constToSymbol = Maps.synchronizedBiMap(HashBiMap.create());
+        constToFuncDecl = Maps.synchronizedBiMap(HashBiMap.create());
     }
 
-    public boolean definesConst(final ConstDecl<?> constDecl) {
+    public boolean definesConstAsFormula(final ConstDecl<?> constDecl) {
         return constToSymbol.containsKey(constDecl);
+    }
+
+    public boolean definesConstAsFunction(final ConstDecl<?> constDecl) {
+        return constToFuncDecl.containsKey(constDecl);
     }
 
     public boolean definesSymbol(final Formula symbol) {
         return constToSymbol.inverse().containsKey(symbol);
     }
 
-    public Formula getSymbol(final ConstDecl<?> constDecl) {
-        checkArgument(definesConst(constDecl), "Declaration %s not found in symbol table",
+    public boolean definesSymbol(final FunctionDeclaration<?> symbol) {
+        return constToFuncDecl.inverse().containsKey(symbol);
+    }
+
+    public Formula getSymbolAsFormula(final ConstDecl<?> constDecl) {
+        checkArgument(definesConstAsFormula(constDecl), "Declaration %s not found in symbol table",
                 constDecl);
         return constToSymbol.get(constDecl);
+    }
+
+    public FunctionDeclaration<?> getSymbolAsFunction(final ConstDecl<?> constDecl) {
+        checkArgument(definesConstAsFunction(constDecl), "Declaration %s not found in symbol table",
+                constDecl);
+        return constToFuncDecl.get(constDecl);
     }
 
     public ConstDecl<?> getConst(final Formula symbol) {
         checkArgument(definesSymbol(symbol), "Symbol %s not found in symbol table", symbol);
         return constToSymbol.inverse().get(symbol);
+    }
+
+    public ConstDecl<?> getConst(final FunctionDeclaration<?> symbol) {
+        checkArgument(definesSymbol(symbol), "Symbol %s not found in symbol table", symbol);
+        return constToFuncDecl.inverse().get(symbol);
     }
 
     public void put(final ConstDecl<?> constDecl, final Formula symbol) {
@@ -59,8 +81,16 @@ final class JavaSMTSymbolTable {
         constToSymbol.put(constDecl, symbol);
     }
 
+    public void put(final ConstDecl<?> constDecl, final FunctionDeclaration<?> symbol) {
+        checkNotNull(constDecl);
+        checkNotNull(symbol);
+        checkState(!constToFuncDecl.containsKey(constDecl), "Constant %s not found.", constDecl);
+        constToFuncDecl.put(constDecl, symbol);
+    }
+
     public void clear() {
         constToSymbol.clear();
+        constToFuncDecl.clear();
     }
 
 }

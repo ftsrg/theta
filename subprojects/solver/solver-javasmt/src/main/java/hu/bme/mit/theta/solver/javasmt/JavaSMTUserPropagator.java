@@ -13,16 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-}
 
-dependencies {
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(files(rootDir.resolve(Deps.javasmtLocal)))
-    implementation(Deps.javasmt)
-    implementation(files(rootDir.resolve(Deps.cvc5)))
-    testImplementation(testFixtures(project(":theta-core")))
+package hu.bme.mit.theta.solver.javasmt;
+
+import org.sosy_lab.java_smt.basicimpl.AbstractUserPropagator;
+
+public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
+    protected JavaSMTTransformationManager transformationManager;
+    protected JavaSMTTermTransformer termTransformer;
+    public void setTransformationManager(JavaSMTTransformationManager transformationManager) {
+        this.transformationManager = transformationManager;
+    }
+
+    public void setTermTransformer(JavaSMTTermTransformer termTransformer) {
+        this.termTransformer = termTransformer;
+    }
 }
