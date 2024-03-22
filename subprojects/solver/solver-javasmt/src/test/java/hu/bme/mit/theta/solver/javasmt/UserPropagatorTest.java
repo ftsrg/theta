@@ -48,7 +48,7 @@ public class UserPropagatorTest {
     public void testUserPropagatorBool() throws Exception {
         TestKnownValuePropagator testPropagator = new TestKnownValuePropagator();
 
-        try(final var solver = JavaSMTSolverFactory.create(Z3, new String[]{}).createSolverWithPropagators(testPropagator)) {
+        try (final var solver = JavaSMTSolverFactory.create(Z3, new String[]{}).createSolverWithPropagators(testPropagator)) {
             final var c1 = Const("x", Bool());
             final var c2 = Const("y", Bool());
             final var c3 = Const("z", Bool());
@@ -69,7 +69,7 @@ public class UserPropagatorTest {
     public void testUserPropagatorFunc() throws Exception {
         TestConsequencePropagator testPropagator = new TestConsequencePropagator();
 
-        try(final var solver = JavaSMTSolverFactory.create(Z3, new String[]{}).createSolverWithPropagators(testPropagator)) {
+        try (final var solver = JavaSMTSolverFactory.create(Z3, new String[]{}).createSolverWithPropagators(testPropagator)) {
             final var c1 = Const("x", Int());
             final var c2 = Const("y", Int());
             final var c3 = Const("z", Int());
@@ -111,7 +111,7 @@ public class UserPropagatorTest {
             final var consequence = Lt((Expr<IntType>) appOuter.getParam(), (Expr<IntType>) appInner.getParam());
             System.err.printf("Consequence: %s\n", consequence);
 
-            if(value) {
+            if (value) {
                 getBackend().propagateConsequence(new BooleanFormula[]{expr},
                         (BooleanFormula) transformationManager.toTerm(consequence));
             } else {
@@ -138,7 +138,6 @@ public class UserPropagatorTest {
     }
 
 
-
     private static class TestKnownValuePropagator extends JavaSMTUserPropagator {
 
         private final Map<Expr<BoolType>, Boolean> setExpressions = new LinkedHashMap<>();
@@ -147,7 +146,7 @@ public class UserPropagatorTest {
         public void onKnownValue(BooleanFormula expr, boolean value) {
             System.err.printf("%s := %s\n", expr, value);
             Expr<?> tExpr = termTransformer.toExpr(expr);
-            if(setExpressions.containsKey(tExpr) && value != setExpressions.get(tExpr)) {
+            if (setExpressions.containsKey(tExpr) && value != setExpressions.get(tExpr)) {
                 getBackend().propagateConflict(new BooleanFormula[]{expr});
             }
         }
