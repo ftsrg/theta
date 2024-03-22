@@ -42,7 +42,7 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
 
     protected JavaSMTUserPropagator() {
         super();
-        registeredTerms = new LinkedHashMap<Expr<BoolType>, BooleanFormula>();
+        registeredTerms = new LinkedHashMap<>();
     }
 
     final void setToTerm(final Function<Expr<?>, Formula> toTerm) {
@@ -127,9 +127,7 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
         final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
         checkState(Arrays.stream(terms).noneMatch(Objects::isNull), "Registered terms failed to look up one or more expressions from %s. Registered terms: %s", exprs, registeredTerms.keySet());
         final BooleanFormula consequenceTerm = (BooleanFormula) toTerm.apply(consequence);
-        System.err.println(Arrays.stream(terms).map(BooleanFormula::toString).toList());
         getBackend().propagateConsequence(terms, consequenceTerm);
-        System.err.println("Done");
     }
 
     public final boolean propagateNextDecision(final Expr<BoolType> formula, Optional<Boolean> optional) {
