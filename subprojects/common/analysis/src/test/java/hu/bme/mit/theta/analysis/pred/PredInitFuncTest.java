@@ -35,13 +35,13 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 public class PredInitFuncTest {
 
     private final VarDecl<IntType> x = Var("x", Int());
     private final VarDecl<IntType> y = Var("y", Int());
-    private final Solver solver = Z3SolverFactory.getInstance().createSolver();
+    private final Solver solver = Z3LegacySolverFactory.getInstance().createSolver();
     private final PredAbstractor predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
 
     @Test

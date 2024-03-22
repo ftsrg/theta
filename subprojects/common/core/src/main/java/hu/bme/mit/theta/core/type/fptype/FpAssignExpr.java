@@ -56,7 +56,7 @@ public final class FpAssignExpr extends EqExpr<FpType> {
         final FpLitExpr leftOpVal = (FpLitExpr) getLeftOp().eval(val);
         final FpLitExpr rightOpVal = (FpLitExpr) getRightOp().eval(val);
 
-        return leftOpVal.eq(rightOpVal);
+        return leftOpVal.assign(rightOpVal);
     }
 
     @Override

@@ -48,7 +48,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 import org.junit.Test;
@@ -94,8 +94,8 @@ public class StsExplTest {
 
         final STS sts = builder.build();
 
-        final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
-        final UCSolver refinementSolver = Z3SolverFactory.getInstance().createUCSolver();
+        final Solver abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
+        final UCSolver refinementSolver = Z3LegacySolverFactory.getInstance().createUCSolver();
 
         final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(
                 abstractionSolver, sts.getInit());

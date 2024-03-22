@@ -20,9 +20,10 @@ import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.solver.validator.SolverValidatorWrapperFactory
-import hu.bme.mit.theta.solver.z3.Z3SolverManager
+import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager
 import java.nio.file.Path
 
 fun getSolver(name: String, validate: Boolean): SolverFactory = if (validate) {
@@ -35,7 +36,11 @@ fun registerAllSolverManagers(home: String, logger: Logger) {
     SolverManager.closeAll()
     // register solver managers
     SolverManager.registerSolverManager(Z3SolverManager.create())
+    logger.write(Logger.Level.INFO, "Registered Legacy-Z3 SolverManager\n")
+    SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create())
     logger.write(Logger.Level.INFO, "Registered Z3 SolverManager\n")
+    SolverManager.registerSolverManager(JavaSMTSolverManager.create())
+    logger.write(Logger.Level.INFO, "Registered JavaSMT SolverManager\n")
     if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
         val homePath = Path.of(home)
         val smtLibSolverManager: SmtLibSolverManager = SmtLibSolverManager.create(homePath, logger)

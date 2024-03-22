@@ -31,7 +31,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
@@ -71,7 +71,7 @@ class XcfaExplAnalysisTest {
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
-            Z3SolverFactory.getInstance().createSolver(),
+            Z3LegacySolverFactory.getInstance().createSolver(),
             1,
             getPartialOrder(ExplOrd.getInstance())
         )
@@ -91,7 +91,7 @@ class XcfaExplAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
@@ -115,7 +115,7 @@ class XcfaExplAnalysisTest {
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
-            Z3SolverFactory.getInstance().createSolver(),
+            Z3LegacySolverFactory.getInstance().createSolver(),
             1,
             getPartialOrder(ExplOrd.getInstance())
         )
@@ -135,7 +135,7 @@ class XcfaExplAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
@@ -160,7 +160,7 @@ class XcfaExplAnalysisTest {
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
-            Z3SolverFactory.getInstance().createSolver(),
+            Z3LegacySolverFactory.getInstance().createSolver(),
             1,
             XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance()))
         )
@@ -179,7 +179,7 @@ class XcfaExplAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 ConsoleLogger(Logger.Level.DETAIL)) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
@@ -203,7 +203,7 @@ class XcfaExplAnalysisTest {
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
-            Z3SolverFactory.getInstance().createSolver(),
+            Z3LegacySolverFactory.getInstance().createSolver(),
             1,
             getPartialOrder(ExplOrd.getInstance())
         )
@@ -224,7 +224,7 @@ class XcfaExplAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
                 atomicNodePruner) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 
@@ -249,7 +249,7 @@ class XcfaExplAnalysisTest {
 
         val analysis = ExplXcfaAnalysis(
             xcfa,
-            Z3SolverFactory.getInstance().createSolver(),
+            Z3LegacySolverFactory.getInstance().createSolver(),
             1,
             XcfaDporLts.getPartialOrder(getPartialOrder(ExplOrd.getInstance()))
         )
@@ -268,7 +268,7 @@ class XcfaExplAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 NullLogger.getInstance()) as Refiner<XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>>
 

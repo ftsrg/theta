@@ -61,15 +61,15 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 
 public class StsPredTest {
 
     final Logger logger = new ConsoleLogger(Level.VERBOSE);
-    final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
-    final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
+    final Solver abstractionSolver = Z3LegacySolverFactory.getInstance().createSolver();
+    final ItpSolver refinementSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
     STS sts = null;
 
     @Before

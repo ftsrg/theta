@@ -13,6 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 object Deps {
 
     val guava = "com.google.guava:guava:${Versions.guava}"
@@ -25,6 +26,13 @@ object Deps {
     }
 
     val z3 = "lib/com.microsoft.z3.jar"
+    val z3legacy = "lib/com.microsoft.z3legacy.jar"
+
+    val cvc5 = "lib/cvc5.jar"
+
+    val javasmt = "org.sosy-lab:java-smt:${Versions.javasmt}"
+    val javasmtLocal = "lib/javasmt.jar"
+    val sosylabCommon = "org.sosy-lab:common:${Versions.sosylab}"
 
     val jcommander = "com.beust:jcommander:${Versions.jcommander}"
 

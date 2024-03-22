@@ -31,7 +31,7 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
 import hu.bme.mit.theta.xcfa.analysis.coi.XcfaCoiMultiThread
 import hu.bme.mit.theta.xcfa.analysis.por.*
@@ -69,7 +69,7 @@ class XcfaPredAnalysisTest {
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val solver = Z3SolverFactory.getInstance().createSolver()
+        val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val analysis = PredXcfaAnalysis(
             xcfa,
             solver,
@@ -93,7 +93,7 @@ class XcfaPredAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 NullLogger.getInstance()) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 
@@ -115,7 +115,7 @@ class XcfaPredAnalysisTest {
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val solver = Z3SolverFactory.getInstance().createSolver()
+        val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val analysis = PredXcfaAnalysis(
             xcfa,
             solver,
@@ -139,7 +139,7 @@ class XcfaPredAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 NullLogger.getInstance()) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 
@@ -162,7 +162,7 @@ class XcfaPredAnalysisTest {
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val solver = Z3SolverFactory.getInstance().createSolver()
+        val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val analysis = PredXcfaAnalysis(
             xcfa,
             solver,
@@ -185,7 +185,7 @@ class XcfaPredAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 ConsoleLogger(Logger.Level.DETAIL)) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 
@@ -207,7 +207,7 @@ class XcfaPredAnalysisTest {
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val solver = Z3SolverFactory.getInstance().createSolver()
+        val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val analysis = PredXcfaAnalysis(
             xcfa,
             solver,
@@ -231,7 +231,7 @@ class XcfaPredAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
                 atomicNodePruner) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 
@@ -254,7 +254,7 @@ class XcfaPredAnalysisTest {
         val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
-        val solver = Z3SolverFactory.getInstance().createSolver()
+        val solver = Z3LegacySolverFactory.getInstance().createSolver()
         val analysis = PredXcfaAnalysis(
             xcfa,
             solver,
@@ -276,7 +276,7 @@ class XcfaPredAnalysisTest {
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
-                    Z3SolverFactory.getInstance().createItpSolver()),
+                    Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
                 NullLogger.getInstance()) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
 

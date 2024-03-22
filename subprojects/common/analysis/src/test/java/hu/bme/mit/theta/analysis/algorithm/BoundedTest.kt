@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 import org.junit.Assert
 import org.junit.Test
 
@@ -66,9 +66,9 @@ class BoundedTest {
 
     @Test
     fun testBoundedUnsafe() {
-        val solver = Z3SolverFactory.getInstance().createSolver()
-        val itpSolver = Z3SolverFactory.getInstance().createItpSolver()
-        val indSolver = Z3SolverFactory.getInstance().createSolver()
+        val solver = Z3LegacySolverFactory.getInstance().createSolver()
+        val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
+        val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
         val checker: BoundedChecker<*, *> = BoundedChecker(
             monolithicExpr = unsafeMonolithicExpr!!,
             bmcSolver = solver,
@@ -83,9 +83,9 @@ class BoundedTest {
 
     @Test
     fun testBoundedSafe() {
-        val solver = Z3SolverFactory.getInstance().createSolver()
-        val itpSolver = Z3SolverFactory.getInstance().createItpSolver()
-        val indSolver = Z3SolverFactory.getInstance().createSolver()
+        val solver = Z3LegacySolverFactory.getInstance().createSolver()
+        val itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver()
+        val indSolver = Z3LegacySolverFactory.getInstance().createSolver()
         val checker: BoundedChecker<*, *> = BoundedChecker(
             monolithicExpr = safeMonolithicExpr!!,
             bmcSolver = solver,

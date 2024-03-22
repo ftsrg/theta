@@ -15,10 +15,12 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import hu.bme.mit.theta.common.container.Containers;
+import com.microsoft.z3.Native;
+import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpMarkerTree;
@@ -28,42 +30,70 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.StackImpl;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTransformationManager;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 final class Z3ItpSolver implements ItpSolver, Solver {
 
     private final Z3TransformationManager transformationManager;
-    private final Z3TermTransformer termTransformer;
 
-    private final com.microsoft.z3.InterpolationContext z3Context;
-    private final com.microsoft.z3.Solver z3Solver;
-
+    private final com.microsoft.z3.Context z3Context;
     private final Z3Solver solver;
 
     private final Stack<Z3ItpMarker> markers;
 
+    private final Stack<ConstDecl<?>> declarationStack;
+
+
+    private final GenericSmtLibSymbolTable smtLibSymbolTable;
+    private final SmtLibTransformationManager smtLibTransformationManager;
+    private final SmtLibTermTransformer smtLibTermTransformer;
+
     public Z3ItpSolver(final Z3SymbolTable symbolTable,
                        final Z3TransformationManager transformationManager,
                        final Z3TermTransformer termTransformer,
-                       final com.microsoft.z3.InterpolationContext z3Context,
+                       final com.microsoft.z3.Context z3Context,
                        final com.microsoft.z3.Solver z3Solver) {
         this.transformationManager = transformationManager;
-        this.termTransformer = termTransformer;
         this.z3Context = z3Context;
-        this.z3Solver = z3Solver;
 
         solver = new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
                 z3Solver);
 
         markers = new StackImpl<>();
+        declarationStack = new StackImpl<>();
+
+
+        smtLibSymbolTable = new GenericSmtLibSymbolTable();
+        smtLibTransformationManager = new GenericSmtLibTransformationManager(smtLibSymbolTable);
+        smtLibTermTransformer = new GenericSmtLibTermTransformer(smtLibSymbolTable);
     }
 
     @Override
@@ -88,7 +118,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(
                 assertion);
         solver.add(assertion, term);
-        z3Marker.add(term);
+        z3Marker.add(assertion);
     }
 
     @Override
@@ -97,53 +127,71 @@ final class Z3ItpSolver implements ItpSolver, Solver {
                 "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof Z3ItpPattern);
         final Z3ItpPattern z3ItpPattern = (Z3ItpPattern) pattern;
+        final List<Z3ItpMarker> markers = z3ItpPattern.getSequence();
 
-        final com.microsoft.z3.Expr proof = z3Solver.getProof();
-        final com.microsoft.z3.Expr term = patternToTerm(z3ItpPattern.getRoot());
-        final com.microsoft.z3.Params params = z3Context.mkParams();
+        final List<Z3ItpMarker> A = new ArrayList<>();
+        final List<Z3ItpMarker> B = new ArrayList<>(markers);
 
-        final com.microsoft.z3.BoolExpr[] itpArray = z3Context.GetInterpolant(proof, term, params);
-        final List<Expr<BoolType>> itpList = new LinkedList<>();
+        final Map<ItpMarker, Expr<BoolType>> itpMap = new HashMap<>();
+        for (final var marker : markers) {
+            B.remove(marker);
+            A.add(marker);
 
-        for (final com.microsoft.z3.BoolExpr itpTerm : itpArray) {
-            @SuppressWarnings("unchecked") final Expr<BoolType> itpExpr = (Expr<BoolType>) termTransformer.toExpr(
-                    itpTerm);
-            itpList.add(itpExpr);
+            if (B.size() != 0) {
+                final var localConstDecls = new LinkedHashSet<ConstDecl<?>>();
+                final var aTerm = A.stream().flatMap(m -> m.getTerms().stream())
+                        .peek(boolTypeExpr -> localConstDecls.addAll(ExprUtils.getConstants(boolTypeExpr)))
+                        .map(smtLibTransformationManager::toTerm);
+                final var bTerm = B.stream().flatMap(m -> m.getTerms().stream())
+                        .peek(boolTypeExpr -> localConstDecls.addAll(ExprUtils.getConstants(boolTypeExpr)))
+                        .map(smtLibTransformationManager::toTerm);
+
+                final var smtLibString = String.format("(get-interpolant (and %s) (and %s))",
+                        aTerm.collect(Collectors.joining(" ")),
+                        bTerm.collect(Collectors.joining(" ")));
+
+                localConstDecls.removeAll(declarationStack.toCollection());
+                declarationStack.add(localConstDecls);
+
+                final var smtLibDeclString = localConstDecls.stream()
+                        .map(smtLibSymbolTable::getDeclaration)
+                        .collect(Collectors.joining(" "));
+
+                Native.evalSmtlib2String(z3Context.nCtx(), smtLibDeclString);
+                final var response = Native.evalSmtlib2String(z3Context.nCtx(), smtLibString);
+
+                itpMap.put(marker,
+                        smtLibTermTransformer.toExpr(parseItpResponse(response), Bool(),
+                                new SmtLibModel(Collections.emptyMap())));
+            } else {
+                itpMap.put(marker, False());
+            }
         }
-
-        final Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
-        buildItpMapFormList(z3ItpPattern.getRoot(), itpList, itpMap);
-
         return new Z3Interpolant(itpMap);
     }
 
-    private com.microsoft.z3.BoolExpr patternToTerm(final ItpMarkerTree<Z3ItpMarker> markerTree) {
-        final Collection<com.microsoft.z3.BoolExpr> opTerms = new LinkedList<>();
-
-        final Z3ItpMarker marker = (Z3ItpMarker) markerTree.getMarker();
-        opTerms.addAll(marker.getTerms());
-
-        for (final ItpMarkerTree<Z3ItpMarker> child : markerTree.getChildren()) {
-            final com.microsoft.z3.BoolExpr childTerm = patternToTerm(child);
-            opTerms.add(childTerm);
+    private static String parseItpResponse(final String response) {
+        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(response));
+        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+        try {
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(new ThrowExceptionErrorListener());
+            parser.removeErrorListeners();
+            parser.addErrorListener(new ThrowExceptionErrorListener());
+            return extractString(parser.term());
+        } catch (Exception e) {
+            try {
+                throw new SmtLibSolverException(
+                        parser.response().general_response_error().reason.getText());
+            } catch (Exception ex) {
+                throw new SmtLibSolverException("Could not parse solver output: " + response, e);
+            }
         }
-
-        final com.microsoft.z3.BoolExpr andTerm = z3Context
-                .mkAnd(opTerms.toArray(new com.microsoft.z3.BoolExpr[opTerms.size()]));
-        final com.microsoft.z3.BoolExpr term = z3Context.MkInterpolant(andTerm);
-        return term;
     }
 
-    private void buildItpMapFormList(final ItpMarkerTree<Z3ItpMarker> pattern,
-                                     final List<Expr<BoolType>> itpList,
-                                     final Map<ItpMarker, Expr<BoolType>> itpMap) {
-        for (final ItpMarkerTree<Z3ItpMarker> child : pattern.getChildren()) {
-            buildItpMapFormList(child, itpList, itpMap);
-        }
-        final ItpMarker marker = pattern.getMarker();
-        final Expr<BoolType> itpExpr = itpList.get(0);
-        itpMap.put(marker, itpExpr);
-        itpList.remove(0);
+    private static String extractString(final ParserRuleContext ctx) {
+        return ctx.start.getInputStream()
+                .getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
     }
 
     @Override
@@ -170,6 +218,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         for (final Z3ItpMarker marker : markers) {
             marker.push();
         }
+//        declarationStack.push();
         solver.push();
     }
 
@@ -179,6 +228,7 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         for (final Z3ItpMarker marker : markers) {
             marker.pop(n);
         }
+//        declarationStack.pop(n);
         solver.pop(n);
     }
 

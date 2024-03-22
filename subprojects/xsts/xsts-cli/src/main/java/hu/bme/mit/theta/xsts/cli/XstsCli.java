@@ -37,8 +37,8 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
@@ -318,7 +318,7 @@ public class XstsCli {
     private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
 
         @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-        final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
+        final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3LegacySolverFactory.getInstance(), xsts);
         final File file = new File(cexfile);
         try (PrintWriter printWriter = new PrintWriter(file)) {
             printWriter.write(concrTrace.toString());

@@ -56,4 +56,8 @@ tasks {
     withType<Test> {
         useJUnitPlatform()
     }
+
+    withType<Test> {
+        jvmArgs("-Xss5m", "-Xms512m", "-Xmx1g")
+    }
 }
