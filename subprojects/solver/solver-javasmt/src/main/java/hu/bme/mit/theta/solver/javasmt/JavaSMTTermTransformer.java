@@ -38,6 +38,8 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
+import hu.bme.mit.theta.core.type.functype.FuncExprs;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
@@ -61,7 +63,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -72,9 +73,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
@@ -374,9 +378,27 @@ final class JavaSMTTermTransformer {
         } else if (environment.containsKey(key2)) {
             return environment.get(key2).apply(f, args, model, vars);
         } else {
-            var sj = new StringJoiner(", ", "Not supported: %s(".formatted(funcDecl.getName()), ")");
-            args.stream().map(Formula::toString).forEach(sj::add);
-            throw new JavaSMTSolverException(sj.toString());
+            final var paramExprs = args.stream().map((Formula term) -> (Expr) toExpr(term)).toList();
+
+            final Expr<FuncType<Type, Type>> funcExpr;
+            if (symbolTable.definesSymbol(funcDecl)) {
+                funcExpr = (Expr<FuncType<Type, Type>>) checkNotNull(symbolTable.getConst(funcDecl).getRef());
+            } else {
+                funcExpr = Const(funcDecl.getName(), getFuncType(
+                        transformType(context.getFormulaManager().getFormulaType(f)),
+                        args.stream().map(context.getFormulaManager()::getFormulaType).map(this::transformType).toList()
+                )).getRef();
+            }
+
+            return FuncExprs.App(funcExpr, paramExprs);
+        }
+    }
+
+    private <P extends Type, R extends Type> FuncType<P, R> getFuncType(final R resultType, final List<P> paramTypes) {
+        if (paramTypes.size() == 1) {
+            return FuncType.of(paramTypes.get(0), resultType);
+        } else {
+            return (FuncType<P, R>) FuncType.of(paramTypes.get(0), getFuncType(resultType, paramTypes.subList(1, paramTypes.size())));
         }
     }
 
@@ -442,6 +464,8 @@ final class JavaSMTTermTransformer {
             final var indexType = arrayFormulaType.getIndexType();
             final var elemType = arrayFormulaType.getElementType();
             return ArrayType.of(transformType(indexType), transformType(elemType));
+        } else if (type.isBooleanType()) {
+            return Bool();
         }
         throw new JavaSMTSolverException("Type not supported: " + type);
     }

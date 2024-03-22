@@ -19,6 +19,10 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+
 public final class FuncExprs {
 
     private FuncExprs() {
@@ -37,6 +41,25 @@ public final class FuncExprs {
     public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
             final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
         return FuncAppExpr.of(func, param);
+    }
+
+    private static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
+            final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> paramHead, final List<Expr> paramTail) {
+        if (!paramTail.isEmpty()) {
+            final var newParamHead = paramTail.get(0);
+            final var newParamTail = paramTail.subList(1, paramTail.size());
+            return App(App(func, newParamHead, newParamTail), paramHead);
+        } else {
+            return App(func, paramHead);
+        }
+    }
+
+    public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
+            final Expr<FuncType<ParamType, ResultType>> func, final List<Expr> params) {
+        checkArgument(!params.isEmpty());
+        final var paramHead = params.get(0);
+        final var paramTail = params.subList(1, params.size());
+        return App(func, paramHead, paramTail);
     }
 
 }
