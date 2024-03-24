@@ -296,6 +296,9 @@ data class OutputConfig(
     @Parameter(names = ["--version"], description = "Display version", help = true)
     var versionInfo: Boolean = false,
 
+    @Parameter(names = ["--enable-output"], description = "Enable output files")
+    var enableOutput: Boolean = false,
+
     @Parameter(names = ["--output-directory"], description = "Specify the directory where the result files are stored")
     var resultFolder: File = Paths.get("./").toFile(),
 
