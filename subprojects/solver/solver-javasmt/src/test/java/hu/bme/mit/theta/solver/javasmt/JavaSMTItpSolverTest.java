@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.solver.javasmt;
 
 import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -76,11 +78,18 @@ public final class JavaSMTItpSolverTest {
 
     @Parameters(name = "solver: {0}")
     public static Collection<?> operations() {
-        return List.of(
-                new Object[]{Solvers.SMTINTERPOL, JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[]{}).createItpSolver()},
-                new Object[]{Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createItpSolver()},
-                new Object[]{Solvers.CVC5, JavaSMTSolverFactory.create(Solvers.CVC5, new String[]{}).createItpSolver()}
-        );
+        if (OsHelper.getOs().equals(OperatingSystem.LINUX)) {
+            return List.of(
+                    new Object[]{Solvers.SMTINTERPOL, JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[]{}).createItpSolver()},
+                    new Object[]{Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createItpSolver()},
+                    new Object[]{Solvers.CVC5, JavaSMTSolverFactory.create(Solvers.CVC5, new String[]{}).createItpSolver()}
+            );
+        } else {
+            return List.of(
+                    new Object[]{Solvers.SMTINTERPOL, JavaSMTSolverFactory.create(Solvers.SMTINTERPOL, new String[]{}).createItpSolver()},
+                    new Object[]{Solvers.PRINCESS, JavaSMTSolverFactory.create(Solvers.PRINCESS, new String[]{}).createItpSolver()}
+            );
+        }
     }
 
     @Before
