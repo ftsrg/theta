@@ -60,6 +60,14 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
                 BvLitExpr.of(Arrays.copyOfRange(literal, fpType.getExponent() + 1, fpType.getExponent() + fpType.getSignificand() + 1)));
     }
 
+    public static FpLitExpr of(final BvLitExpr hidden, final BvLitExpr exponent, final BvLitExpr significand) {
+        boolean[] hiddenLit = hidden.getValue();
+        return new FpLitExpr(
+                hiddenLit[0],
+                exponent,
+                significand);
+    }
+
     public boolean getHidden() {
         return hidden;
     }

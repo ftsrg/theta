@@ -26,7 +26,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
@@ -49,10 +51,12 @@ public class BoolTestUtils {
         final var p1 = Param("x", Int());
         final var p2 = Param("y", Int());
         final var p3 = Param("z", Int());
+        final var c1 = Const("c", Int());
 
         return Arrays.asList(new Object[][]{
 
-                {IteExpr.class, Int(1), Ite(False(), Int(2), Int(1))},
+                {IteExpr.class, Ite(Geq(c1.getRef(), Int(0)), Int(1), Int(2)), Ite(Lt(c1.getRef(), Int(0)), Int(2), Int(1))},
+                {ImplyExpr.class, False(), Imply(True(), False())},
                 {ImplyExpr.class, False(), Imply(True(), False())},
                 {XorExpr.class, False(), Xor(True(), True())},
                 {OrExpr.class, True(), Or(True(), True())},
