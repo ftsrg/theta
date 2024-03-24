@@ -46,6 +46,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.runners.Parameterized.Parameters;
@@ -114,8 +115,14 @@ public class JavaSMTTransformerTest {
                     throw e; // for functions, we don't want the solver to step in
                 }
                 try (final var solver = JavaSMTSolverFactory.create(this.solver, new String[]{}).createSolver()) {
+                    solver.push();
                     solver.add(Eq(expr, expExpr));
-                    Assert.assertTrue(solver.check().isSat());
+                    Assert.assertTrue("(= %s %s) is unsat\n".formatted(expr, expExpr), solver.check().isSat());
+                    solver.pop();
+                    solver.push();
+                    solver.add(Not(Eq(expr, expExpr)));
+                    Assert.assertTrue("(not (= %s %s)) is sat with model %s\n".formatted(expr, expExpr, solver.check().isSat() ? solver.getModel() : ""), solver.check().isUnsat());
+                    solver.pop();
                 }
             }
         }

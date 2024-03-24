@@ -112,6 +112,7 @@ final class JavaSMTTermTransformer {
         addFunc("xor", exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.XorExpr::create));
         addFunc("or", exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.OrExpr::create));
         addFunc("ite", exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
+        addFunc("if", exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
         addFunc("prime", exprUnaryOperator(hu.bme.mit.theta.core.type.anytype.PrimeExpr::of));
         addFunc("=", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Eq));
         addFunc(">=", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Geq));
@@ -172,7 +173,9 @@ final class JavaSMTTermTransformer {
         addFunc("bvashr", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr::create));
         addFunc("bvlshr", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr::create));
         addFunc("bvrol", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
+        addFunc("ext_rotate_left", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
         addFunc("bvror", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
+        addFunc("ext_rotate_right", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
         addFunc("bvult", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULtExpr::create));
         addFunc("bvule", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULeqExpr::create));
         addFunc("bvugt", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUGtExpr::create));
