@@ -55,7 +55,8 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-fun runConfig(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): SafetyResult<*, *> {
+fun runConfig(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger,
+    throwDontExit: Boolean): SafetyResult<*, *> {
     propagateInputOptions(config, logger, uniqueLogger)
 
     registerAllSolverManagers(config.backendConfig.solverHome, logger)
@@ -66,7 +67,7 @@ fun runConfig(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): S
 
     preVerificationLogging(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
-    val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+    val result = backend(xcfa, mcm, parseContext, config, logger, uniqueLogger, throwDontExit)
 
     postVerificationLogging(result, mcm, parseContext, config, logger, uniqueLogger)
 
@@ -154,7 +155,8 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
 
 private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
     logger: Logger,
-    uniqueLogger: Logger): SafetyResult<*, *> =
+    uniqueLogger: Logger,
+    throwDontExit: Boolean): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
         SafetyResult.unknown<State, Action>()
     } else {
@@ -167,7 +169,7 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
                 "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n")
 
             val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-            val result = exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug) {
+            val result = exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
                 checker.check()
             }
 
