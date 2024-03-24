@@ -73,7 +73,7 @@ The GNU MP Library is distributed in the hope that it will be useful, but WITHOU
 You should have received a copy of the GNU Lesser General Public License along with the GNU MP Library; see the file COPYING.LIB.  If not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. 
 ```
 
-JavaSMT is licensed under the following license: [Apache License Version 2.0](https://github.com/leventeBajczi/java-smt/blob/fix-modulo/LICENSE)
+JavaSMT is licensed under the following license: [Apache License Version 2.0](https://github.com/sosy-lab/java-smt/blob/fix-modulo/LICENSE)
 
 CVC5 is licensed under the following license:
 ```
