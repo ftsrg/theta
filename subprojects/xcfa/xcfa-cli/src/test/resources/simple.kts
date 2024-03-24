@@ -36,7 +36,7 @@ fun portfolio(
     logger: Logger,
     uniqueLogger: Logger): STM {
 
-    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger) }
+    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
     var baseConfig = XcfaConfig(
         inputConfig = InputConfig(

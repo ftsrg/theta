@@ -35,7 +35,7 @@ fun complexPortfolio23(xcfa: XCFA, mcm: MCM,
     logger: Logger,
     uniqueLogger: Logger): STM {
 
-    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger) }
+    val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
     var baseConfig = XcfaConfig(
         inputConfig = InputConfig(
