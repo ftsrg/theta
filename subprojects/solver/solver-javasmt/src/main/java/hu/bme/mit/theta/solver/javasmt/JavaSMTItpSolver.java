@@ -34,6 +34,7 @@ import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.SolverException;
 
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +53,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
     private final Stack<JavaSMTItpMarker> markers;
 
     private final JavaSMTTermTransformer termTransformer;
+    private final SolverContext context;
 
     public JavaSMTItpSolver(final JavaSMTSymbolTable symbolTable,
                             final JavaSMTTransformationManager transformationManager,
@@ -60,6 +62,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
                             final InterpolatingProverEnvironment interpolatingProverEnvironment) {
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
+        this.context = context;
 
         this.solver = new JavaSMTSolver(symbolTable, transformationManager, termTransformer, context, interpolatingProverEnvironment);
         this.interpolatingProverEnvironment = interpolatingProverEnvironment;
@@ -96,24 +99,47 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         checkState(solver.getStatus() == SolverStatus.UNSAT,
                 "Cannot get interpolant if status is not UNSAT.");
         checkArgument(pattern instanceof JavaSMTItpPattern);
-        final List<JavaSMTItpMarker> z3ItpPattern = ((JavaSMTItpPattern) pattern).getSequence();
 
+        checkArgument(pattern instanceof JavaSMTItpPattern);
+        final JavaSMTItpPattern javaSMTItpPattern = (JavaSMTItpPattern) pattern;
+
+        final List<JavaSMTItpMarker> markerList = new LinkedList<>();
+        final List<Collection<?>> termList = new LinkedList<>();
+        final List<Integer> indexList = new LinkedList<>();
+
+        getInterpolantParams(javaSMTItpPattern.getRoot(), markerList, termList, indexList);
 
         try {
-            final List<BooleanFormula> interpolants =
-                    interpolatingProverEnvironment.getSeqInterpolants(
-                            z3ItpPattern.stream().map(JavaSMTItpMarker::getTerms).toList());
+            final List<BooleanFormula> interpolants = interpolatingProverEnvironment.getTreeInterpolants(termList, indexList.stream().mapToInt(i -> i).toArray());
+
             Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
             for (int i = 0; i < interpolants.size(); i++) {
                 BooleanFormula term = interpolants.get(i);
                 Expr<BoolType> expr = (Expr<BoolType>) termTransformer.toExpr(term);
-                itpMap.put(z3ItpPattern.get(i), expr);
+                itpMap.put(markerList.get(i), expr);
             }
-            itpMap.put(z3ItpPattern.get(interpolants.size()), False());
+            itpMap.put(markerList.get(interpolants.size()), False());
             return new JavaSMTInterpolant(itpMap);
         } catch (SolverException | InterruptedException e) {
             throw new JavaSMTSolverException(e);
         }
+    }
+
+    private int getInterpolantParams(final ItpMarkerTree<JavaSMTItpMarker> root, List<JavaSMTItpMarker> markerList, final List<Collection<?>> terms, final List<Integer> indices) {
+        int leftmostIndex = -1;
+        for (ItpMarkerTree<JavaSMTItpMarker> child : root.getChildren()) {
+            final int index = getInterpolantParams(child, markerList, terms, indices);
+            if (leftmostIndex == -1) {
+                leftmostIndex = index;
+            }
+        }
+        if (leftmostIndex == -1) {
+            leftmostIndex = indices.size();
+        }
+        markerList.add(root.getMarker());
+        terms.add(root.getMarker().getTerms());
+        indices.add(leftmostIndex);
+        return leftmostIndex;
     }
 
 

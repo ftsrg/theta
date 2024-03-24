@@ -130,7 +130,7 @@ public final class JavaSMTItpSolverTest {
         System.out.println("----------");
     }
 
-    //@Test
+    @Test
     public void testTreeInterpolation() {
         final ItpMarker I1 = solver.createMarker();
         final ItpMarker I2 = solver.createMarker();
