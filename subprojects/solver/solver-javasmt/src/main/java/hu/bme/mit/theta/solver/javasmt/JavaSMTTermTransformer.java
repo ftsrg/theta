@@ -255,7 +255,7 @@ final class JavaSMTTermTransformer {
             final Expr<BvType> op1 = (Expr<BvType>) transform(args.get(0), model, vars);
             final Expr<BvType> op2 = (Expr<BvType>) transform(args.get(1), model, vars);
             final Expr<BvType> op3 = (Expr<BvType>) transform(args.get(2), model, vars);
-            return FpLitExpr.create((BvLitExpr) op1, (BvLitExpr) op2, (BvLitExpr) op3);
+            return FpLitExpr.of((BvLitExpr) op1, (BvLitExpr) op2, (BvLitExpr) op3);
         });
         environment.put(Tuple2.of("const", 1), (term, args, model, vars) -> {
             return transformLit(term, transform(args.get(0), model, vars));
