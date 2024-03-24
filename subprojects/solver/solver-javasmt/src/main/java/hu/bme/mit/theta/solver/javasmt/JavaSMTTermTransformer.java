@@ -154,9 +154,6 @@ final class JavaSMTTermTransformer {
         addFunc("fp.min", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMinExpr::create));
         addFunc("++", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
         addFunc("concat", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
-//        addFunc("extract", exprTernaryOperator(hu.bme.mit.theta.core.type.bvtype.BvExtractExpr::create));
-//        addFunc("bv_zero_extend", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvZExtExpr::create));
-//        addFunc("bv_sign_extend", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSExtExpr::create));
         addFunc("bvadd", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvAddExpr::create));
         addFunc("bvsub", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSubExpr::create));
         addFunc("bvpos", exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvPosExpr::create));
