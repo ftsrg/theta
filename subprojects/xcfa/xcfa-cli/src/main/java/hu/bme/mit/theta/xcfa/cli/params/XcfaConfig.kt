@@ -25,6 +25,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import java.io.File
@@ -96,7 +97,8 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
 
-    @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
+    @Parameter(names = ["--unroll"],
+        description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
     var loopUnroll: Int = -1,
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
@@ -289,7 +291,8 @@ data class InterpolationConfig(
     ) : Config
 
 data class OcConfig(
-    private val dummy: Boolean = false
+    @Parameter(names = ["--decision-procedure"], description = "Decision procedure for ordering-consistency check")
+    var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

@@ -39,10 +39,13 @@ import java.util.*
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
-class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) :
+class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
     SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
-    private val ocDecisionProcedure = UserPropagatorOcDecisionProcedure()
+    private val ocDecisionProcedure = when (decisionProcedure) {
+        OcDecisionProcedureType.BASIC -> BasicOcDecisionProcedure()
+        OcDecisionProcedureType.PROPAGATOR -> UserPropagatorOcDecisionProcedure()
+    }
     private val solver = ocDecisionProcedure.solver
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
@@ -440,12 +443,5 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) :
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
         return constDecl
-    }
-
-    fun printXcfa() = xcfa.toDot { edge ->
-        "(${
-            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
-                .joinToString(",") { it.const.name }
-        })"
     }
 }

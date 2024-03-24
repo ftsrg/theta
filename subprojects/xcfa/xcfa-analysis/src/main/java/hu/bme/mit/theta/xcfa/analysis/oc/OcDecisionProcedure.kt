@@ -6,7 +6,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
-import java.util.*
+
+enum class OcDecisionProcedureType {
+    BASIC, PROPAGATOR
+}
 
 
 internal sealed class Reason {

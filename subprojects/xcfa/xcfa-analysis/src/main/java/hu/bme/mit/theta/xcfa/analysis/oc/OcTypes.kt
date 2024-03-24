@@ -4,15 +4,10 @@ import hu.bme.mit.theta.core.decl.*
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
-import hu.bme.mit.theta.core.type.NullaryExpr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.TrueExpr
-import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
@@ -26,14 +21,6 @@ internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when (size) {
     else -> And(this)
 }
 
-internal object OcType : Type
-
-internal object OcLitExpr : LitExpr<OcType>, NullaryExpr<OcType>() {
-
-    override fun getType() = OcType
-    override fun eval(`val`: Valuation?) = error("This expression is not meant to be evaluated.")
-}
-
 internal enum class EventType { WRITE, READ }
 internal data class Event(
     val const: IndexedConstDecl<*>,
@@ -45,10 +32,8 @@ internal data class Event(
 ) {
 
     val guardExpr: Expr<BoolType> = guard.toAnd()
-    var enabled: Boolean? = null
-
-    val clk: RefExpr<OcType> = RefExpr.of(Decls.Const("${const.name}\$clk_$pid", OcType))
     var assignment: Expr<BoolType>? = null
+    var enabled: Boolean? = null
 
     companion object {
 
@@ -72,7 +57,7 @@ internal data class Relation(
     val type: RelationType,
     val from: Event,
     val to: Event,
-) : Expr<BoolType> {
+) {
 
     val decl: ConstDecl<BoolType> =
         Decls.Const("${type.toString().lowercase()}_${from.const.name}_${to.const.name}", Bool())
@@ -80,11 +65,6 @@ internal data class Relation(
     var enabled: Boolean? = null
 
     override fun toString() = "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
-    override fun getType(): BoolType = Bool()
-    override fun getArity() = 2
-    override fun getOps(): List<Expr<*>> = listOf(from.clk, to.clk)
-    override fun eval(v: Valuation) = error("This expression is not meant to be evaluated.")
-    override fun withOps(ops: List<Expr<*>>) = error("This expression is not meant to be modified.")
     fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
         enabled = if (type == RelationType.PO || type == RelationType.EPO) true
         else valuation[decl]?.let { (it as BoolLitExpr).value }
