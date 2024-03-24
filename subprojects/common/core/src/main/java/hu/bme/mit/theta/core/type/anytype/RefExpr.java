@@ -23,14 +23,14 @@ import hu.bme.mit.theta.core.type.Type;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
+public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
     private static final int HASH_SEED = 167;
     private volatile int hashCode = 0;
 
     private final Decl<DeclType> decl;
 
-    protected RefExpr(final Decl<DeclType> decl) {
+    private RefExpr(final Decl<DeclType> decl) {
         this.decl = checkNotNull(decl);
     }
 

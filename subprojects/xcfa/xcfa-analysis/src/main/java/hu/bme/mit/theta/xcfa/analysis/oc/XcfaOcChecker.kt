@@ -23,8 +23,6 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.solver.SolverManager
-import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
@@ -44,8 +42,8 @@ private val Expr<*>.vars get() = ExprUtils.getVars(this)
 class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) :
     SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
-    private val solver = SolverManager.resolveSolverFactory("Z3").createSolver()
-    private val ocDecisionProcedure = BasicOcDecisionProcedure()
+    private val ocDecisionProcedure = UserPropagatorOcDecisionProcedure()
+    private val solver = ocDecisionProcedure.solver
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
@@ -67,7 +65,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) :
         if (!addConstraints()) return SafetyResult.safe() // no violations
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
-        val status = ocDecisionProcedure.check(solver, events, pos, rfs)
+        val status = ocDecisionProcedure.check(events, pos, rfs)
         return when {
             status?.isUnsat == true -> SafetyResult.safe()
             status?.isSat == true -> SafetyResult.unsafe(getTrace(solver.model))
@@ -367,7 +365,7 @@ class XcfaOcChecker(xcfa: XCFA, private val logger: Logger) :
     private fun getEventTrace(model: Valuation): List<Event> {
         val valuation = model.toMap()
         val previousEvents: Collection<Relation>.(Event) -> Collection<Event> = { event ->
-            filter { it.to == event && it.enabled(valuation) && it.from.enabled(model) == true }.map { it.from }
+            filter { it.to == event && it.enabled(valuation) == true && it.from.enabled(model) == true }.map { it.from }
         }
         val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 

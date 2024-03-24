@@ -77,7 +77,7 @@ internal data class Relation(
     val decl: ConstDecl<BoolType> =
         Decls.Const("${type.toString().lowercase()}_${from.const.name}_${to.const.name}", Bool())
     val declRef: RefExpr<BoolType> = RefExpr.of(decl)
-    var value: Boolean? = null
+    var enabled: Boolean? = null
 
     override fun toString() = "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
     override fun getType(): BoolType = Bool()
@@ -85,11 +85,10 @@ internal data class Relation(
     override fun getOps(): List<Expr<*>> = listOf(from.clk, to.clk)
     override fun eval(v: Valuation) = error("This expression is not meant to be evaluated.")
     override fun withOps(ops: List<Expr<*>>) = error("This expression is not meant to be modified.")
-    fun enabled(valuation: Map<Decl<*>, LitExpr<*>>) = value(valuation) ?: false
-    fun value(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
-        value = if (type == RelationType.PO || type == RelationType.EPO) true
+    fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
+        enabled = if (type == RelationType.PO || type == RelationType.EPO) true
         else valuation[decl]?.let { (it as BoolLitExpr).value }
-        return value
+        return enabled
     }
 }
 
@@ -128,57 +127,4 @@ internal data class SearchItem(val loc: XcfaLocation) {
 internal data class StackItem(val event: Event) {
 
     var eventsToVisit: MutableList<Event>? = null
-}
-
-// ~DPLL(OC)
-
-internal sealed class Reason {
-
-    open val reasons: List<Reason> get() = listOf(this)
-    val expr: Expr<BoolType> get() = toExprs().toAnd()
-    infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
-    open fun toExprs(): List<Expr<BoolType>> = reasons.map { it.toExprs() }.flatten().filter { it !is TrueExpr }
-}
-
-internal class CombinedReason(override val reasons: List<Reason>) : Reason()
-internal object PoReason : Reason() {
-
-    override val reasons get() = emptyList<Reason>()
-    override fun toExprs(): List<Expr<BoolType>> = listOf()
-}
-
-internal class RelationReason(val relation: Relation) : Reason() {
-
-    override fun toExprs(): List<Expr<BoolType>> = listOf(relation.declRef)
-}
-
-internal open class DerivedReason(val rf: Relation, val w: Event, val wRfRelation: Reason) : Reason() {
-
-    override fun toExprs(): List<Expr<BoolType>> = listOf(rf.declRef, w.guardExpr) + wRfRelation.toExprs()
-}
-
-internal class WriteSerializationReason(rf: Relation, w: Event, wBeforeRf: Reason) : DerivedReason(rf, w, wBeforeRf)
-internal class FromReadReason(rf: Relation, w: Event, wAfterRf: Reason) : DerivedReason(rf, w, wAfterRf)
-
-internal class DecisionPoint(
-    val relation: Relation? = null,
-    val event: Event? = null,
-    val rels: Array<Array<Reason?>>
-) {
-
-    companion object {
-
-        private fun initRels(rels: Array<Array<Reason?>>) =
-            Array(rels.size) { i -> Array(rels.size) { j -> rels[i][j] } }
-    }
-
-    constructor(rels: Array<Array<Reason?>>, e: Event) : this(event = e, rels = initRels(rels))
-
-    constructor(rels: Array<Array<Reason?>>, r: Relation) : this(relation = r, rels = initRels(rels))
-}
-
-internal interface OcDecisionProcedure {
-
-    fun check(solver: Solver, events: MutableMap<VarDecl<*>, MutableMap<Int, MutableList<Event>>>,
-        pos: MutableList<Relation>, rfs: MutableMap<VarDecl<*>, MutableList<Relation>>): SolverStatus?
 }
