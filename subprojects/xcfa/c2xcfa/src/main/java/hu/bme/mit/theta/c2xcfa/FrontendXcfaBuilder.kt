@@ -181,7 +181,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         builder.addLoc(location)
         initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
         Preconditions.checkState(
-            lValue is Dereference<*, *> || lValue is ArrayReadExpr<*, *> || lValue is RefExpr<*> && lValue.decl is VarDecl<*>,
+            lValue is Dereference<*, *, *> || lValue is ArrayReadExpr<*, *> || lValue is RefExpr<*> && lValue.decl is VarDecl<*>,
             "lValue must be a variable, pointer dereference or an array element!")
         val rExpression = statement.getrExpression()
         val label: StmtLabel = if (lValue is ArrayReadExpr<*, *>) {
@@ -190,8 +190,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 exprs)
             StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)),
                 metadata = getMetadata(statement))
-        } else if (lValue is Dereference<*, *>) {
-            val op = lValue.op
+        } else if (lValue is Dereference<*, *, *>) { // TODO: modify this to also take offset into account
+            val op = lValue.array
             val type = op.type
             val ptrType = CComplexType.getUnsignedLong(parseContext).smtType
             if (!memoryMaps.containsKey(type)) {
@@ -206,10 +206,10 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             parseContext.metadata.create(op, "dereferenced", true)
             parseContext.metadata.create(op, "refSubstitute", memoryMap)
             val write = ArrayExprs.Write(cast(memoryMap.ref, ArrayType.of(ptrType, type)),
-                cast(lValue.op, ptrType),
+                cast(lValue.array, ptrType),
                 cast(rExpression, type))
             parseContext.metadata.create(write, "cType",
-                CArray(null, CComplexType.getType(lValue.op, parseContext), parseContext))
+                CArray(null, CComplexType.getType(lValue.array, parseContext), parseContext))
             StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write),
                 metadata = getMetadata(statement))
         } else {

@@ -54,6 +54,7 @@ class XcfaCliParseTest {
                 Arguments.of("/c/litmustest/singlethread/21namecollision.c"),
                 Arguments.of("/c/litmustest/singlethread/22nondet.c"),
                 Arguments.of("/c/litmustest/singlethread/23overflow.c"),
+                Arguments.of("/c/litmustest/singlethread/25malloc.c"),
             )
         }
 
