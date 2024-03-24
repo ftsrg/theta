@@ -174,6 +174,7 @@ class XcfaCliVerifyTest {
     fun testCWitness(filePath: String, extraArgs: String?) {
         val temp = createTempDirectory()
         val params = arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",

@@ -67,6 +67,7 @@ class XcfaCliWitnessTest {
     fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
         val temp = createTempDirectory()
         val params = arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
