@@ -573,7 +573,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     private Expr<?> dereference(Expr<?> accept, CPointer type) {
         checkState(!(CComplexType.getType(accept, parseContext) instanceof CReal), "Float pointers are not yet supported!", parseContext);
-        Dereference<?, Type> of = Dereference.of(accept, type.getEmbeddedType().getSmtType());
+        Dereference<?, ?, Type> of = Dereference.of(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), type.getEmbeddedType().getSmtType());
         parseContext.getMetadata().create(of, "cType", type.getEmbeddedType());
         return of;
     }
@@ -609,10 +609,19 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 int size = ctx.postfixExpressionBrackets().size();
                 for (int i = 0; i < size; i++) {
                     CComplexType arrayType = CComplexType.getType(primary, parseContext);
-                    checkState(arrayType instanceof CArray, "Non-array expression used as array!");
-                    Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                    primary = ArrayReadExpr.create(primary, index);
-                    parseContext.getMetadata().create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
+                    if (arrayType instanceof CArray) {
+                        Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
+                        primary = ArrayReadExpr.create(primary, index);
+                        parseContext.getMetadata().create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
+                    } else if (arrayType instanceof CPointer) {
+                        CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
+                        Type type = elemType.getSmtType();
+                        Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
+                        primary = Dereference.of(cast(primary, type), cast(index, type), type);
+                        parseContext.getMetadata().create(primary, "cType", ((CPointer) arrayType).getEmbeddedType());
+                    } else {
+                        throw new RuntimeException("Non-array expression used as array!");
+                    }
                 }
                 size = ctx.postfixExpressionMemberAccess().size();
                 if (size > 0) {
