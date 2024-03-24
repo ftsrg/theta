@@ -229,6 +229,7 @@ class XcfaCliParseTest {
     fun testJSONParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
         main(arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",
@@ -252,6 +253,7 @@ class XcfaCliParseTest {
     fun testCParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
         main(arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",

@@ -52,6 +52,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(
         // handling remaining function calls
+        NoSideEffectPass(parseContext),
         NondetFunctionPass(parseContext),
         LbePass(parseContext),
         NormalizePass(parseContext), // needed after lbe, TODO
