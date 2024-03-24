@@ -727,7 +727,11 @@ final class JavaSMTExprTransformer {
                 expr.getLeftOp());
         final IntegerFormula rightOpTerm = (IntegerFormula) toTerm(
                 expr.getRightOp());
-        return integerFormulaManager.modulo(leftOpTerm, rightOpTerm); // TODO: this is mod, not rem. Is this OK?
+        return booleanFormulaManager.ifThenElse(
+                integerFormulaManager.greaterOrEquals(rightOpTerm, integerFormulaManager.makeNumber(0)),
+                integerFormulaManager.modulo(leftOpTerm, rightOpTerm),
+                integerFormulaManager.negate(integerFormulaManager.modulo(leftOpTerm, rightOpTerm))
+        );
     }
 
     private Formula transformIntEq(final IntEqExpr expr) {
@@ -883,21 +887,21 @@ final class JavaSMTExprTransformer {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.modulo(leftOpTerm, rightOpTerm, true); // TODO: this will create an SREM instruction, which is faulty.
+        return bitvectorFormulaManager.smod(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformBvURem(final BvURemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.modulo(leftOpTerm, rightOpTerm, false); // TODO: this is rem, not mod
+        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, false);
     }
 
     private Formula transformBvSRem(final BvSRemExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.modulo(leftOpTerm, rightOpTerm, true); // TODO: this is rem, not mod
+        return bitvectorFormulaManager.rem(leftOpTerm, rightOpTerm, true);
     }
 
     private Formula transformBvAnd(final BvAndExpr expr) {
@@ -941,28 +945,28 @@ final class JavaSMTExprTransformer {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.shiftRight(leftOpTerm, rightOpTerm, true); // TODO: cross-check signedness
+        return bitvectorFormulaManager.shiftRight(leftOpTerm, rightOpTerm, true);
     }
 
     private Formula transformBvLogicShiftRight(final BvLogicShiftRightExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        return bitvectorFormulaManager.shiftRight(leftOpTerm, rightOpTerm, false); // TODO: cross-check signedness
+        return bitvectorFormulaManager.shiftRight(leftOpTerm, rightOpTerm, false);
     }
 
     private Formula transformBvRotateLeft(final BvRotateLeftExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        throw new JavaSMTSolverException("Not supported: " + expr);
+        return bitvectorFormulaManager.rotateLeft(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformBvRotateRight(final BvRotateRightExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
 
-        throw new JavaSMTSolverException("Not supported: " + expr);
+        return bitvectorFormulaManager.rotateRight(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformBvUGeq(final BvUGeqExpr expr) {
@@ -1026,26 +1030,12 @@ final class JavaSMTExprTransformer {
      */
 
 
-    private Formula transformFpLit(final FpLitExpr expr) { // TODO: This could be done better
-        final int size = expr.getType().getExponent() + expr.getType().getSignificand();
-        final boolean[] literal = new boolean[size];
-        final boolean[] exponent = expr.getExponent().getValue();
-        final boolean[] significand = expr.getSignificand().getValue();
-        int i = 0;
-        literal[i] = expr.getHidden();
-        for (i = 0; i < expr.getType().getExponent(); ++i) {
-            literal[i + 1] = exponent[i];
-        }
-        for (i = 0; i < expr.getType().getSignificand() - 1; ++i) {
-            literal[i + 1 + expr.getType().getExponent()] = significand[i];
-        }
-        return context.getFormulaManager().getUFManager().declareAndCallUF("to_fp",
-                FormulaType.getFloatingPointType(expr.getType().getExponent(), expr.getType().getSignificand() - 1),
-                bitvectorFormulaManager.makeBitvector(
-                        size,
-                        BvUtils.neutralBvLitExprToBigInteger(BvLitExpr.of(literal))),
-                integerFormulaManager.makeNumber(expr.getType().getExponent()),
-                integerFormulaManager.makeNumber(expr.getType().getSignificand() - 1)
+    private Formula transformFpLit(final FpLitExpr expr) {
+        return floatingPointFormulaManager.makeNumber(
+                BvUtils.neutralBvLitExprToBigInteger(expr.getExponent()),
+                BvUtils.neutralBvLitExprToBigInteger(expr.getSignificand()),
+                expr.getHidden(),
+                FloatingPointType.getFloatingPointType(expr.getType().getExponent(), expr.getType().getSignificand() - 1)
         );
     }
 
@@ -1117,10 +1107,9 @@ final class JavaSMTExprTransformer {
     }
 
     private Formula transformFpRem(final FpRemExpr expr) {
-        throw new JavaSMTSolverException("Not supported: " + expr);
-//        final FloatingPointFormula leftOpTerm = (FloatingPointFormula) toTerm(expr.getLeftOp());
-//        final FloatingPointFormula rightOpTerm = (FloatingPointFormula) toTerm(expr.getRightOp());
-//        return floatingPointFormulaManager.rem(leftOpTerm, rightOpTerm);
+        final FloatingPointFormula leftOpTerm = (FloatingPointFormula) toTerm(expr.getLeftOp());
+        final FloatingPointFormula rightOpTerm = (FloatingPointFormula) toTerm(expr.getRightOp());
+        return floatingPointFormulaManager.remainder(leftOpTerm, rightOpTerm);
     }
 
     private Formula transformFpEq(final FpEqExpr expr) {
@@ -1192,19 +1181,24 @@ final class JavaSMTExprTransformer {
         final FloatingPointType fpSort = FloatingPointType.getFloatingPointType(
                 expr.getFpType().getExponent(),
                 expr.getFpType().getSignificand() - 1);
-//        return floatingPointFormulaManager.fromIeeeBitvector(val, fpSort);
-        return context.getFormulaManager().getUFManager().declareAndCallUF("to_fp",
-                fpSort,
-                val,
-                integerFormulaManager.makeNumber(expr.getType().getExponent()),
-                integerFormulaManager.makeNumber(expr.getType().getSignificand() - 1)
-        );
+        return floatingPointFormulaManager.castFrom(val, expr.isSigned(), fpSort);
     }
 
     private Formula transformFpToBv(final FpToBvExpr expr) {
         final FloatingPointFormula op = (FloatingPointFormula) toTerm(expr.getOp());
+        final FloatingPointRoundingMode roundingMode = transformRoundingMode(expr.getRoundingMode());
 
-        return floatingPointFormulaManager.castTo(op, expr.getSgn(), FormulaType.getBitvectorTypeWithSize(expr.getSize()));
+        return floatingPointFormulaManager.castTo(op, expr.getSgn(), FormulaType.getBitvectorTypeWithSize(expr.getSize()), roundingMode);
+    }
+
+    private static FloatingPointRoundingMode transformRoundingMode(final FpRoundingMode fpRoundingMode) {
+        return switch (fpRoundingMode) {
+            case RNE -> FloatingPointRoundingMode.NEAREST_TIES_TO_EVEN;
+            case RNA -> FloatingPointRoundingMode.NEAREST_TIES_AWAY;
+            case RTP -> FloatingPointRoundingMode.TOWARD_POSITIVE;
+            case RTN -> FloatingPointRoundingMode.TOWARD_NEGATIVE;
+            case RTZ -> FloatingPointRoundingMode.TOWARD_ZERO;
+        };
     }
     /*
      * Arrays

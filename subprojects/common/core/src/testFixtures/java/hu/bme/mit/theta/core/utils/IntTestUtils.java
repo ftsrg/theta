@@ -76,9 +76,9 @@ public class IntTestUtils {
                 {IntDivExpr.class, Int(-4), Div(Int(12), Int(-3))},
                 {IntModExpr.class, Int(2), Mod(Int(-13), Int(3))},
                 {IntRemExpr.class, Int(1), Rem(Int(13), Int(3))},
-                {IntRemExpr.class, Int(1), Rem(Int(13), Int(-3))},
+                {IntRemExpr.class, Int(-1), Rem(Int(13), Int(-3))},
                 {IntRemExpr.class, Int(2), Rem(Int(-13), Int(3))},
-                {IntRemExpr.class, Int(2), Rem(Int(-13), Int(-3))},
+                {IntRemExpr.class, Int(-2), Rem(Int(-13), Int(-3))},
                 {IntNegExpr.class, Int(-13), Neg(Int(13))},
 
 

@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static hu.bme.mit.theta.solver.javasmt.JavaSMTTransformerTest.supported;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +55,6 @@ public class JavaSMTSolverBVTest {
                                 BvTestUtils.RelationalOperations().stream()
                         )
                 )
-                .filter(o -> supported(((Object[]) o)[2]))
                 .collect(Collectors.toUnmodifiableList());
     }
 

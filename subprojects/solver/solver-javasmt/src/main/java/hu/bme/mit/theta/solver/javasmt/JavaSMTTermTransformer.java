@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
@@ -47,6 +48,7 @@ import org.sosy_lab.common.rationals.Rational;
 import org.sosy_lab.java_smt.api.BitvectorFormula;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.FloatingPointFormula;
+import org.sosy_lab.java_smt.api.FloatingPointNumber;
 import org.sosy_lab.java_smt.api.Formula;
 import org.sosy_lab.java_smt.api.FormulaType;
 import org.sosy_lab.java_smt.api.FormulaType.ArrayFormulaType;
@@ -58,7 +60,6 @@ import org.sosy_lab.java_smt.api.QuantifiedFormulaManager.Quantifier;
 import org.sosy_lab.java_smt.api.SolverContext;
 import org.sosy_lab.java_smt.api.visitors.FormulaVisitor;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -148,7 +149,6 @@ final class JavaSMTTermTransformer {
         addFunc("fp.sqrt", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpSqrtExpr::create));
         addFunc("fp.max", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMaxExpr::create));
         addFunc("fp.min", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMinExpr::create));
-        addFunc("to_fp", exprFpLitUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpLitExpr::of));
         addFunc("++", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
         addFunc("concat", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
 //        addFunc("extract", exprTernaryOperator(hu.bme.mit.theta.core.type.bvtype.BvExtractExpr::create));
@@ -190,7 +190,7 @@ final class JavaSMTTermTransformer {
             FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final Expr<BvType> op = (Expr<BvType>) transform(args.get(1), model, vars);
-            return FpFromBvExpr.of(roundingmode, op, FpType.of(type.getExponentSize(), type.getMantissaSize()), true); // TODO: is signedness given here?
+            return FpFromBvExpr.of(roundingmode, op, FpType.of(type.getExponentSize(), type.getMantissaSize() + 1), true);
         });
         environment.put(Tuple2.of("fp.to_sbv", 2), (term, args, model, vars) -> {
             BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
@@ -207,8 +207,19 @@ final class JavaSMTTermTransformer {
         environment.put(Tuple2.of("to_fp", 2), (term, args, model, vars) -> {
             FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
             final var roundingmode = getRoundingMode(args.get(0).toString());
-            final Expr<FpType> op = (Expr<FpType>) transform(args.get(1), model, vars);
-            return FpToFpExpr.of(roundingmode, op, type.getExponentSize(), type.getMantissaSize() + 1);
+            final Expr<?> op = transform(args.get(1), model, vars);
+            if (op.getType() instanceof FpType) {
+                return FpToFpExpr.of(roundingmode, (Expr<FpType>) op, type.getExponentSize(), type.getMantissaSize() + 1);
+            } else if (op.getType() instanceof BvType) {
+                return FpFromBvExpr.of(roundingmode, (Expr<BvType>) op, FpType.of(type.getExponentSize(), type.getMantissaSize() + 1), false);
+            } else {
+                throw new JavaSMTSolverException("Unsupported:" + op.getType());
+            }
+        });
+        environment.put(Tuple2.of("to_fp", 1), (term, args, model, vars) -> {
+            FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
+            final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
+            return FpFromBvExpr.of(FpRoundingMode.getDefaultRoundingMode(), op, FpType.of(type.getExponentSize(), type.getMantissaSize() + 1), true);
         });
 
         environment.put(Tuple2.of("extract", 1), (term, args, model, vars) -> {
@@ -236,6 +247,12 @@ final class JavaSMTTermTransformer {
         environment.put(Tuple2.of("EqZero", 1), (term, args, model, vars) -> {
             final Expr<?> op = transform(args.get(0), model, vars);
             return AbstractExprs.Eq(op, TypeUtils.getDefaultValue(op.getType()));
+        });
+        environment.put(Tuple2.of("fp", 3), (term, args, model, vars) -> {
+            final Expr<BvType> op1 = (Expr<BvType>) transform(args.get(0), model, vars);
+            final Expr<BvType> op2 = (Expr<BvType>) transform(args.get(1), model, vars);
+            final Expr<BvType> op3 = (Expr<BvType>) transform(args.get(2), model, vars);
+            return FpLitExpr.create((BvLitExpr) op1, (BvLitExpr) op2, (BvLitExpr) op3);
         });
     }
 
@@ -282,8 +299,8 @@ final class JavaSMTTermTransformer {
                         checkArgument(value instanceof BigInteger, "Type mismatch (Expected BigInteger): " + value);
                         return transformBvLit(f, (BigInteger) value);
                     } else if (type.isFloatingPointType()) {
-                        checkArgument(value instanceof BigDecimal, "Type mismatch (Expected BigFloat): " + value);
-                        return transformFpLit(f, (BigDecimal) value);
+                        checkArgument(value instanceof FloatingPointNumber, "Type mismatch (Expected FloatingPointNumber): " + value);
+                        return transformFpLit((FloatingPointNumber) value);
                     } else if (type.isArrayType()) {
                         return transformArrLit(f, value, model, vars);
                     } else if (type.isBooleanType()) {
@@ -337,33 +354,11 @@ final class JavaSMTTermTransformer {
         return BvUtils.bigIntegerToNeutralBvLitExpr(value, formulaType.getSize());
     }
 
-    private Expr<?> transformFpLit(final Formula term, BigDecimal value) {
-        final var fpNum = (FloatingPointFormula) term;
-        FloatingPointType formulaType = (FloatingPointType) context.getFormulaManager().getFormulaType(fpNum);
-        FpType type = FpType.of(formulaType.getExponentSize(), formulaType.getMantissaSize());
-        throw new JavaSMTSolverException("Not supported: " + value);
-
-//        if (value) {
-//            return FpUtils.bigFloatToFpLitExpr(BigFloat.positiveInfinity(type.getSignificand()),
-//                    type);
-//        } else if (printed.equals("-oo")) {
-//            return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeInfinity(type.getSignificand()),
-//                    type);
-//        } else if (printed.equals("NaN")) {
-//            return FpUtils.bigFloatToFpLitExpr(BigFloat.NaN(type.getSignificand()), type);
-//        } else if (printed.equals("+zero")) {
-//            return FpUtils.bigFloatToFpLitExpr(BigFloat.zero(type.getSignificand()), type);
-//        } else if (printed.equals("-zero")) {
-//            return FpUtils.bigFloatToFpLitExpr(BigFloat.negativeZero(type.getSignificand()), type);
-//        }
-//        BigFloat bigFloat = new BigFloat((fpTerm).getSignificand(),
-//                FpUtils.getMathContext(type, FpRoundingMode.RNE)).multiply(
-//                new BigFloat("2", FpUtils.getMathContext(type, FpRoundingMode.RNE)).pow(
-//                        new BigFloat((fpTerm).getExponent(true),
-//                                FpUtils.getMathContext(type, FpRoundingMode.RNE)),
-//                        FpUtils.getMathContext(type, FpRoundingMode.RNE)),
-//                FpUtils.getMathContext(type, FpRoundingMode.RNE));
-//        return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
+    private Expr<?> transformFpLit(FloatingPointNumber value) {
+        return FpLitExpr.of(
+                value.getSign(),
+                BvUtils.bigIntegerToNeutralBvLitExpr(value.getExponent(), value.getExponentSize()),
+                BvUtils.bigIntegerToNeutralBvLitExpr(value.getMantissa(), value.getMantissaSize()));
     }
 
     private Expr<?> transformApp(Formula f, final FunctionDeclaration<?> funcDecl,
@@ -458,7 +453,7 @@ final class JavaSMTTermTransformer {
             return BvType.of(bvType.getSize());
         } else if (type.isFloatingPointType()) {
             FloatingPointType fpType = (FloatingPointType) type;
-            return FpType.of(fpType.getExponentSize(), fpType.getMantissaSize());
+            return FpType.of(fpType.getExponentSize(), fpType.getMantissaSize() + 1);
         } else if (type.isArrayType()) {
             ArrayFormulaType<?, ?> arrayFormulaType = (ArrayFormulaType<?, ?>) type;
             final var indexType = arrayFormulaType.getIndexType();
@@ -557,7 +552,7 @@ final class JavaSMTTermTransformer {
             final BvLitExpr op1 = (BvLitExpr) transform(args.get(0), model, vars);
             final IntLitExpr op2 = (IntLitExpr) transform(args.get(1), model, vars);
             final IntLitExpr op3 = (IntLitExpr) transform(args.get(2), model, vars);
-            return function.apply(op1, FpType.of(op2.getValue().intValue(), op3.getValue().intValue()));
+            return function.apply(op1, FpType.of(op2.getValue().intValue(), op3.getValue().intValue() + 1));
         });
     }
 
@@ -565,6 +560,7 @@ final class JavaSMTTermTransformer {
         return switch (s) {
             case "roundNearestTiesToAway" -> FpRoundingMode.RNA;
             case "roundNearestTiesToEven" -> FpRoundingMode.RNE;
+            case "roundTowardZero" -> FpRoundingMode.RTZ;
             default -> throw new JavaSMTSolverException("Unexpected value: " + s);
         };
     }
