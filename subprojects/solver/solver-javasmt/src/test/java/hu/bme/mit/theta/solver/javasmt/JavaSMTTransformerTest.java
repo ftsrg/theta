@@ -21,11 +21,7 @@ import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -71,19 +67,11 @@ public class JavaSMTTransformerTest {
 
         return Sets.cartesianProduct(
                         ExpressionUtils.AllExpressions().values().stream()
-                                .filter(JavaSMTTransformerTest::supported)
                                 .collect(Collectors.toSet()),
                         solvers).stream()
                 .map(objects -> new Object[]{objects.get(0), objects.get(1)}).toList();
     }
 
-    static boolean supported(Object o) {
-        return !(o instanceof BvRotateLeftExpr) &&
-                !(o instanceof BvRotateRightExpr) &&
-                !(o instanceof FpRemExpr) &&
-                !(o instanceof BvSModExpr) &&
-                (!(o instanceof Expr<?>) || ((Expr<?>) o).getOps().stream().allMatch(JavaSMTTransformerTest::supported));
-    }
 
     private static boolean hasType(Expr<?> expr, Predicate<Type> pred) {
         if (pred.test(expr.getType())) return true;

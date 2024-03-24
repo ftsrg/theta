@@ -38,7 +38,6 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Sub;
 import static hu.bme.mit.theta.core.type.fptype.FpRoundingMode.RNE;
-import static hu.bme.mit.theta.solver.javasmt.JavaSMTTransformerTest.supported;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -59,7 +58,6 @@ public class JavaSMTSolverFPTest {
     @Parameters(name = "expected: {1}, actual: {2}")
     public static Collection<?> operations() {
         return FpTestUtils.GetOperations()
-                .filter(o -> supported(((Object[]) o)[2]))
                 .collect(Collectors.toUnmodifiableList());
     }
 
