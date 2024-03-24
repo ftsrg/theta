@@ -20,6 +20,8 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
@@ -78,19 +81,20 @@ public class JavaSMTTransformerTest {
         return expr.getOps().stream().anyMatch((op) -> hasType(op, pred));
     }
 
+    private static boolean hasExpr(Expr<?> expr, Predicate<Expr<?>> pred) {
+        if (pred.test(expr)) return true;
+        return expr.getOps().stream().anyMatch((op) -> hasExpr(op, pred));
+    }
+
     @Test
     public void testRoundtripTransformer() throws Exception {
         // Sanity check
         assertNotNull(expr);
-        if (solver == Solvers.CVC5 && hasType(expr, type -> type instanceof FpType && !Set.of(32, 64).contains(((FpType) type).getSignificand() + ((FpType) type).getExponent()))) {
-            return;
-        }
-        if (solver == Solvers.PRINCESS && hasType(expr, type -> type instanceof FpType || type instanceof RatType)) {
-            return;
-        }
-        if (solver == Solvers.SMTINTERPOL && (hasType(expr, type -> type instanceof BvType || type instanceof FpType) || expr instanceof QuantifiedExpr)) {
-            return;
-        }
+        assumeFalse(solver == Solvers.CVC5 && hasType(expr, type -> type instanceof FpType && !Set.of(32, 64).contains(((FpType) type).getSignificand() + ((FpType) type).getExponent())));
+        assumeFalse(solver == Solvers.PRINCESS && hasType(expr, type -> type instanceof FpType || type instanceof RatType));
+        assumeFalse(solver == Solvers.SMTINTERPOL && (hasType(expr, type -> type instanceof BvType || type instanceof FpType) || expr instanceof QuantifiedExpr));
+        assumeFalse(solver == Solvers.SMTINTERPOL && (hasType(expr, type -> type instanceof BvType || type instanceof FpType) || expr instanceof QuantifiedExpr));
+        assumeFalse((solver == Solvers.SMTINTERPOL || solver == Solvers.PRINCESS) && hasExpr(expr, e -> e instanceof ArrayInitExpr<?, ?> || e instanceof ArrayLitExpr<?, ?>));
 
         final JavaSMTSymbolTable javaSMTSymbolTable = new JavaSMTSymbolTable();
         final var config = Configuration.fromCmdLineArguments(new String[]{});

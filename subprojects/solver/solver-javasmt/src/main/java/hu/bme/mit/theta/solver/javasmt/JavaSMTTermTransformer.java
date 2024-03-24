@@ -24,8 +24,11 @@ import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
+import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
@@ -254,6 +257,9 @@ final class JavaSMTTermTransformer {
             final Expr<BvType> op3 = (Expr<BvType>) transform(args.get(2), model, vars);
             return FpLitExpr.create((BvLitExpr) op1, (BvLitExpr) op2, (BvLitExpr) op3);
         });
+        environment.put(Tuple2.of("const", 1), (term, args, model, vars) -> {
+            return transformLit(term, transform(args.get(0), model, vars));
+        });
     }
 
     private void addFunc(String name, Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> func) {
@@ -284,33 +290,7 @@ final class JavaSMTTermTransformer {
 
                 @Override
                 public Expr<?> visitConstant(Formula f, Object value) {
-                    FormulaType<Formula> type = context.getFormulaManager().getFormulaType(f);
-                    if (type.isIntegerType()) {
-                        checkArgument(value instanceof BigInteger, "Type mismatch (Expected BigInteger): " + value);
-                        return transformIntLit(f, (BigInteger) value);
-                    } else if (type.isRationalType()) {
-                        checkArgument(value instanceof Rational || value instanceof BigInteger, "Type mismatch (Expected Rational or BigInteger): " + value);
-                        if (value instanceof Rational) {
-                            return transformRatLit(f, (Rational) value);
-                        } else if (value instanceof BigInteger) {
-                            return transformRatLit(f, (BigInteger) value);
-                        }
-                    } else if (type.isBitvectorType()) {
-                        checkArgument(value instanceof BigInteger, "Type mismatch (Expected BigInteger): " + value);
-                        return transformBvLit(f, (BigInteger) value);
-                    } else if (type.isFloatingPointType()) {
-                        checkArgument(value instanceof FloatingPointNumber, "Type mismatch (Expected FloatingPointNumber): " + value);
-                        return transformFpLit((FloatingPointNumber) value);
-                    } else if (type.isArrayType()) {
-                        return transformArrLit(f, value, model, vars);
-                    } else if (type.isBooleanType()) {
-                        if (Boolean.TRUE.equals(value)) {
-                            return True();
-                        } else if (Boolean.FALSE.equals(value)) {
-                            return False();
-                        }
-                    }
-                    throw new JavaSMTSolverException("Not supported: " + f);
+                    return transformLit(f, value);
                 }
 
                 @Override
@@ -328,6 +308,37 @@ final class JavaSMTTermTransformer {
         }
     }
 
+    private Expr<? extends Type> transformLit(Formula f, Object value) {
+        FormulaType<Formula> type = context.getFormulaManager().getFormulaType(f);
+        if (type.isIntegerType()) {
+            checkArgument(value instanceof BigInteger, "Type mismatch (Expected BigInteger): " + value + " (" + value.getClass().getSimpleName() + ")");
+            return transformIntLit(f, (BigInteger) value);
+        } else if (type.isRationalType()) {
+            checkArgument(value instanceof Rational || value instanceof BigInteger, "Type mismatch (Expected Rational or BigInteger): " + value + " (" + value.getClass().getSimpleName() + ")");
+            if (value instanceof Rational) {
+                return transformRatLit(f, (Rational) value);
+            } else if (value instanceof BigInteger) {
+                return transformRatLit(f, (BigInteger) value);
+            }
+        } else if (type.isBitvectorType()) {
+            checkArgument(value instanceof BigInteger, "Type mismatch (Expected BigInteger): " + value + " (" + value.getClass().getSimpleName() + ")");
+            return transformBvLit(f, (BigInteger) value);
+        } else if (type.isFloatingPointType()) {
+            checkArgument(value instanceof FloatingPointNumber, "Type mismatch (Expected FloatingPointNumber): " + value + " (" + value.getClass().getSimpleName() + ")");
+            return transformFpLit((FloatingPointNumber) value);
+        } else if (type.isArrayType()) {
+            checkArgument(value instanceof Expr<?>, "Typ mismatch (Expected Expr): " + value + " (" + value.getClass().getSimpleName() + ")");
+            return transformArrLit(f, (Expr<?>) value);
+        } else if (type.isBooleanType()) {
+            if (Boolean.TRUE.equals(value)) {
+                return True();
+            } else if (Boolean.FALSE.equals(value)) {
+                return False();
+            }
+        }
+        throw new JavaSMTSolverException("Not supported: " + f);
+    }
+
     ////
 
     private Expr<?> transformIntLit(final Formula term, final BigInteger value) {
@@ -342,9 +353,13 @@ final class JavaSMTTermTransformer {
         return Rat(value.getNum(), value.getDen());
     }
 
-    private Expr<?> transformArrLit(final Formula term, Object value, final Model model,
-                                    final List<Decl<?>> vars) {
-        throw new JavaSMTSolverException("Not supported: " + term);
+    private <T extends Type> Expr<?> transformArrLit(final Formula term, Expr<T> value) {
+        final ArrayType<?, T> type = (ArrayType<?, T>) transformType(context.getFormulaManager().getFormulaType(term));
+        if (value instanceof LitExpr<?>) {
+            return ArrayLitExpr.of(List.of(), value, type);
+        } else {
+            return ArrayInitExpr.of(List.of(), value, type);
+        }
     }
 
     private Expr<?> transformBvLit(final Formula term, BigInteger value) {
