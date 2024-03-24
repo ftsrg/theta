@@ -110,7 +110,12 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         getInterpolantParams(javaSMTItpPattern.getRoot(), markerList, termList, indexList);
 
         try {
-            final List<BooleanFormula> interpolants = interpolatingProverEnvironment.getTreeInterpolants(termList, indexList.stream().mapToInt(i -> i).toArray());
+            final List<BooleanFormula> interpolants;
+            if (indexList.stream().allMatch(i -> i == 0)) {
+                interpolants = interpolatingProverEnvironment.getSeqInterpolants(termList);
+            } else {
+                interpolants = interpolatingProverEnvironment.getTreeInterpolants(termList, indexList.stream().mapToInt(i -> i).toArray());
+            }
 
             Map<ItpMarker, Expr<BoolType>> itpMap = Containers.createMap();
             for (int i = 0; i < interpolants.size(); i++) {
