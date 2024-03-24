@@ -152,7 +152,7 @@ public final class JavaSMTItpSolverTest {
     @Test
     public void testTreeInterpolation() {
         assumeFalse(solver == Solvers.CVC5);
-        
+
         final ItpMarker I1 = itpSolver.createMarker();
         final ItpMarker I2 = itpSolver.createMarker();
         final ItpMarker I3 = itpSolver.createMarker();
