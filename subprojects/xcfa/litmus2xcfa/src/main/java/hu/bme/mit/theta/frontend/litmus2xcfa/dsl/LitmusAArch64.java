@@ -203,13 +203,10 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             final Expr<BvType> a = ctx.rV32.accept(expressionVisitor);
             final Expr<BvType> b = ctx.expr32().accept(expressionVisitor);
             return switch (ctx.arithmeticInstruction().getText()) {
-                case "ADD" ->
-                        new StmtLabel(Assign(target, Add(List.of(a, b))));
+                case "ADD" -> new StmtLabel(Assign(target, Add(List.of(a, b))));
                 case "SUB" -> new StmtLabel(Assign(target, Sub(a, b)));
-                case "EOR" ->
-                        new StmtLabel(Assign(target, Xor(List.of(a, b))));
-                case "AND" ->
-                        new StmtLabel(Assign(target, And(List.of(a, b))));
+                case "EOR" -> new StmtLabel(Assign(target, Xor(List.of(a, b))));
+                case "AND" -> new StmtLabel(Assign(target, And(List.of(a, b))));
                 default ->
                         throw new UnsupportedOperationException("Arithmetic instruction " + ctx.arithmeticInstruction().getText() + " not supported.");
             };
@@ -221,13 +218,10 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             final Expr<BvType> a = ctx.rV64.accept(expressionVisitor);
             final Expr<BvType> b = ctx.expr64().accept(expressionVisitor);
             return switch (ctx.arithmeticInstruction().getText()) {
-                case "ADD" ->
-                        new StmtLabel(Assign(target, Add(List.of(a, b))));
+                case "ADD" -> new StmtLabel(Assign(target, Add(List.of(a, b))));
                 case "SUB" -> new StmtLabel(Assign(target, Sub(a, b)));
-                case "EOR" ->
-                        new StmtLabel(Assign(target, Xor(List.of(a, b))));
-                case "AND" ->
-                        new StmtLabel(Assign(target, And(List.of(a, b))));
+                case "EOR" -> new StmtLabel(Assign(target, Xor(List.of(a, b))));
+                case "AND" -> new StmtLabel(Assign(target, And(List.of(a, b))));
                 default ->
                         throw new UnsupportedOperationException("Arithmetic instruction " + ctx.arithmeticInstruction().getText() + " not supported.");
             };
