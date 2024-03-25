@@ -235,28 +235,28 @@ class PassTests {
                     (init to "L1") {
                         "x".assign("0")
                     }
-                    ("L1" to "loop0_L2") {
+                    ("L1" to "L2_loop0") {
                         nop()
                         "x".assign("(+ x 1)")
                     }
-                    ("loop0_L2" to "loop0_L1") {
+                    ("L2_loop0" to "L1_loop0") {
                         skip()
                     }
-                    ("loop0_L1" to "loop1_L2") {
+                    ("L1_loop0" to "L2_loop1") {
                         nop()
                         "x".assign("(+ x 1)")
                     }
-                    ("loop1_L2" to "loop1_L1") {
+                    ("L2_loop1" to "L1_loop1") {
                         skip()
                     }
-                    ("loop1_L1" to "loop2_L2") {
+                    ("L1_loop1" to "L2_loop2") {
                         nop()
                         "x".assign("(+ x 1)")
                     }
-                    ("loop2_L2" to "loop2_L1") {
+                    ("L2_loop2" to "L1_loop2") {
                         skip()
                     }
-                    ("loop2_L1" to final) {
+                    ("L1_loop2" to final) {
                         nop()
                     }
                 },
