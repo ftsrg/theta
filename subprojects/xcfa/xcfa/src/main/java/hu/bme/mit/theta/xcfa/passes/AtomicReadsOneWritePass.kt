@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.Decl
@@ -15,6 +31,13 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
 
+/**
+ * One atomic unit (atomic block or edge) can have at most one write operation on a global variable and no read can
+ * happen after writing a global variable. Therefore, each atomic unit that violates this rule is transformed so that
+ * each global variable is replaced with a local variable that is assigned the value of the global variable at the
+ * beginning of the atomic unit and the global variable is assigned the value of the local variable at the end of the
+ * atomic unit.
+ */
 class AtomicReadsOneWritePass : ProcedurePass {
 
     private lateinit var builder: XcfaProcedureBuilder
