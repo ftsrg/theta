@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.oc
+package hu.bme.mit.theta.analysis.algorithm.oc
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
@@ -7,20 +7,20 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import java.util.*
 
-internal class BasicOcDecisionProcedure : OcDecisionProcedure {
+class BasicOcChecker<E : Event> : OcCheckerBase<E> {
 
     override val solver: Solver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
 
     override fun check(
-        events: Map<VarDecl<*>, Map<Int, List<Event>>>,
-        pos: List<Relation>,
-        rfs: Map<VarDecl<*>, List<Relation>>,
+        events: Map<VarDecl<*>, Map<Int, List<E>>>,
+        pos: List<Relation<E>>,
+        rfs: Map<VarDecl<*>, List<Relation<E>>>,
     ): SolverStatus? {
         val modifiableRels = rfs.values.flatten() // modifiable relation vars
         val flatEvents = events.values.flatMap { it.values.flatten() }
         val initialRels = Array(flatEvents.size) { Array<Reason?>(flatEvents.size) { null } }
         pos.forEach { setAndClose(initialRels, it) }
-        val decisionStack = Stack<OcAssignment>()
+        val decisionStack = Stack<OcAssignment<E>>()
         decisionStack.push(OcAssignment(rels = initialRels)) // not really a decision point (initial)
 
         dpllLoop@

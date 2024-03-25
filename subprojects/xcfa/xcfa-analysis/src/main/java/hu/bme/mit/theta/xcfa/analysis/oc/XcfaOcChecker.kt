@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
@@ -37,16 +38,19 @@ import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 import java.util.*
 
+private typealias E = XcfaEvent
+private typealias R = Relation<XcfaEvent>
+
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
     SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
-    private val ocDecisionProcedure = when (decisionProcedure) {
-        OcDecisionProcedureType.BASIC -> BasicOcDecisionProcedure()
-        OcDecisionProcedureType.PROPAGATOR -> UserPropagatorOcDecisionProcedure()
+    private val ocChecker: OcChecker<XcfaEvent> = when (decisionProcedure) {
+        OcDecisionProcedureType.BASIC -> BasicOcChecker()
+        OcDecisionProcedureType.PROPAGATOR -> UserPropagatorOcChecker()
     }
-    private val solver = ocDecisionProcedure.solver
+    private val solver = ocChecker.solver
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
@@ -55,11 +59,11 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
 
     private val threads = mutableSetOf<Thread>()
-    private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<Event>>>()
+    private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<E>>>()
     private val violations = mutableListOf<Violation>() // OR!
     private val branchingConditions = mutableListOf<Expr<BoolType>>()
-    private val pos = mutableListOf<Relation>()
-    private val rfs = mutableMapOf<VarDecl<*>, MutableList<Relation>>()
+    private val pos = mutableListOf<R>()
+    private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
@@ -68,7 +72,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         if (!addConstraints()) return SafetyResult.safe() // no violations
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
-        val status = ocDecisionProcedure.check(events, pos, rfs)
+        val status = ocChecker.check(events, pos, rfs)
         return when {
             status?.isUnsat == true -> SafetyResult.safe()
             status?.isSat == true -> SafetyResult.unsafe(getTrace(solver.model))
@@ -93,20 +97,20 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
 
     private fun processThread(thread: Thread): List<Thread> {
         val pid = thread.pid
-        var last = listOf<Event>()
+        var last = listOf<E>()
         var guard = listOf<Expr<BoolType>>()
-        lateinit var lastWrites: MutableMap<VarDecl<*>, Set<Event>>
+        lateinit var lastWrites: MutableMap<VarDecl<*>, Set<E>>
         lateinit var edge: XcfaEdge
         var inEdge = false
         var atomicEntered: Boolean? = null
 
-        val newEvent: (VarDecl<*>, EventType) -> List<Event> = { d, type ->
+        val newEvent: (VarDecl<*>, EventType) -> List<E> = { d, type ->
             check(!inEdge || last.size == 1)
             val decl = d.threadVar(pid)
             val useLastClk = inEdge || atomicEntered == true
             val e =
-                if (useLastClk) Event(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
-                else Event(decl.getNewIndexed(), type, guard, pid, edge)
+                if (useLastClk) E(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
+                else E(decl.getNewIndexed(), type, guard, pid, edge)
             last.forEach { po(it, e) }
             inEdge = true
             if (atomicEntered == false) atomicEntered = true
@@ -220,7 +224,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
 
                         is JoinLabel -> {
                             val guardTemp = guard
-                            val lastEvents = mutableListOf<Event>()
+                            val lastEvents = mutableListOf<E>()
                             pidLookup[label.pidVar.threadVar(pid)]?.forEach { (g, pid) ->
                                 guard = g
                                 lastEvents.addAll(newEvent(label.pidVar, EventType.READ))
@@ -325,7 +329,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         val eventTrace = getEventTrace(model)
         val valuation = model.toMap()
 
-        val processes = events.values.fold(mapOf<Int, Event>()) { acc, map ->
+        val processes = events.values.fold(mapOf<Int, E>()) { acc, map ->
             (acc.keys + map.keys).associateWith { k -> acc[k] ?: map[k]!!.first() }
         }.map { (pid, event) ->
             pid to XcfaProcessState(
@@ -365,22 +369,22 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         return Trace.of(stateList, actionList)
     }
 
-    private fun getEventTrace(model: Valuation): List<Event> {
+    private fun getEventTrace(model: Valuation): List<E> {
         val valuation = model.toMap()
-        val previousEvents: Collection<Relation>.(Event) -> Collection<Event> = { event ->
+        val previousEvents: Collection<R>.(E) -> Collection<E> = { event ->
             filter { it.to == event && it.enabled(valuation) == true && it.from.enabled(model) == true }.map { it.from }
         }
         val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
 
         val startEvents = violation.lastEvents.toMutableList()
-        val finished = mutableListOf<Event>() // topological order
+        val finished = mutableListOf<E>() // topological order
         while (startEvents.isNotEmpty()) { // DFS from startEvents as root nodes
             val stack = Stack<StackItem>()
             stack.push(StackItem(startEvents.removeFirst()))
             while (stack.isNotEmpty()) {
                 val top = stack.peek()
                 if (top.eventsToVisit == null) {
-                    val previous = mutableSetOf<Event>()
+                    val previous = mutableSetOf<E>()
                     previous.addAll(pos.previousEvents(top.event))
                     if (top.event.type == EventType.READ) {
                         rfs[top.event.const.varDecl]?.previousEvents(top.event)?.let { previous.addAll(it) }
@@ -405,7 +409,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
 
     // Utility functions
 
-    private fun po(from: Event?, to: Event) {
+    private fun po(from: E?, to: E) {
         from ?: return
         pos.add(Relation(RelationType.PO, from, to))
     }
@@ -422,7 +426,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private inline fun <T> Collection<T>.reduce(default: T, operation: (T, T) -> T): T =
         if (isEmpty()) default else reduce(operation)
 
-    private fun MutableMap<VarDecl<*>, MutableList<Relation>>.add(type: RelationType, from: Event, to: Event) =
+    private fun MutableMap<VarDecl<*>, MutableList<R>>.add(type: RelationType, from: E, to: E) =
         getOrPut(from.const.varDecl) { mutableListOf() }.add(Relation(type, from, to))
 
     private fun <T : Type> Expr<T>.withConsts(varToConst: Map<out Decl<*>, ConstDecl<*>>): Expr<T> {

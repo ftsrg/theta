@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.analysis.oc
+package hu.bme.mit.theta.analysis.algorithm.oc
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
@@ -10,21 +10,21 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.util.*
 
-internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTUserPropagator() {
+class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>, JavaSMTUserPropagator() {
 
-    private val partialAssignment = Stack<OcAssignment>()
+    private val partialAssignment = Stack<OcAssignment<E>>()
     override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(this)
     private var solverLevel: Int = 0
 
-    private lateinit var writes: Map<VarDecl<*>, Map<Int, List<Event>>>
-    private lateinit var flatWrites: List<Event>
-    private lateinit var rfs: Map<VarDecl<*>, List<Relation>>
-    private lateinit var flatRfs: List<Relation>
+    private lateinit var writes: Map<VarDecl<*>, Map<Int, List<E>>>
+    private lateinit var flatWrites: List<E>
+    private lateinit var rfs: Map<VarDecl<*>, List<Relation<E>>>
+    private lateinit var flatRfs: List<Relation<E>>
 
     override fun check(
-        events: Map<VarDecl<*>, Map<Int, List<Event>>>,
-        pos: List<Relation>,
-        rfs: Map<VarDecl<*>, List<Relation>>,
+        events: Map<VarDecl<*>, Map<Int, List<E>>>,
+        pos: List<Relation<E>>,
+        rfs: Map<VarDecl<*>, List<Relation<E>>>,
     ): SolverStatus? {
         this.writes = events.keys.associateWith { v -> events[v]!!.keys.associateWith { p -> events[v]!![p]!!.filter { it.type == EventType.WRITE } } }
         flatWrites = this.writes.values.flatMap { it.values.flatten() }
@@ -65,7 +65,7 @@ internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTU
         }
     }
 
-    private fun propagate(rf: Relation) {
+    private fun propagate(rf: Relation<E>) {
         check(rf.type == RelationType.RFI || rf.type == RelationType.RFE)
         val assignement = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
         partialAssignment.push(assignement)
@@ -84,7 +84,7 @@ internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTU
         }
     }
 
-    private fun propagate(w: Event) {
+    private fun propagate(w: E) {
         check(w.type == EventType.WRITE)
         rfs[w.const.varDecl]?.filter { r -> partialAssignment.any { it.relation == r } }?.let { rfs ->
             val assignment = OcAssignment(partialAssignment.peek().rels, w, solverLevel)
