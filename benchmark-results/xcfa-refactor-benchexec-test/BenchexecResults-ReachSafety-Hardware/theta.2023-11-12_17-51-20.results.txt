@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Hardware, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-12 17:51:20 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1543-140
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3249.456 MHz
+ram:                     16757.796864 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Hardware
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                            status                       cpu time   wall time        host
+------------------------------------------------------------------------------------------------------------------
+btor2c-lazyMod.arbitrated_top_n4_w16_d32_e0.yml      TIMEOUT                        120.32      115.70        None
+btor2c-lazyMod.lup.2.prop1-func-interl.yml           ERROR (solver error)            16.44        8.87        None
+btor2c-lazyMod.train-gate.6.prop1-func-interl.yml    ERROR (solver error)            16.47        9.56        None
+btor2c-lazyMod.msmie.4.prop1-func-interl.yml         ERROR (solver error)            98.12       81.07        None
+btor2c-lazyMod.brp.1.prop1-func-interl.yml           ERROR (solver error)             9.23        3.53        None
+btor2c-lazyMod.brp2.5.prop3-back-serstep.yml         ERROR (solver error)            12.30        5.84        None
+btor2c-lazyMod.shift_register_top_w64_d8_e0.yml      TIMEOUT                        120.24      117.70        None
+btor2c-lazyMod.sw_ball2004_1.yml                     ERROR (solver error)             3.20        1.22        None
+btor2c-lazyMod.at.7.prop1-back-serstep.yml           ERROR (solver error)            17.87       10.00        None
+btor2c-lazyMod.peterson.7.prop1-func-interl.yml      ERROR (solver error)            10.46        4.54        None
+------------------------------------------------------------------------------------------------------------------
+Run set 1                                            done                           184.33      359.28           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:              10
+  Score:                 0 (max: 18)

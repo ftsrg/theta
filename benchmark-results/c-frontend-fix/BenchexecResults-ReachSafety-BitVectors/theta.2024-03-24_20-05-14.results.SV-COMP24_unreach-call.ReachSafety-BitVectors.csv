@@ -1,0 +1,8 @@
+tool		Theta 5.0.7	Theta 5.0.7	Theta 5.0.7	Theta 5.0.7
+run set		SV-COMP24_unreach-call.ReachSafety-BitVectors	SV-COMP24_unreach-call.ReachSafety-BitVectors	SV-COMP24_unreach-call.ReachSafety-BitVectors	SV-COMP24_unreach-call.ReachSafety-BitVectors
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+bitvector/gcd_4.yml	true	true	8.717571	3.9259273719999896	478.437376
+bitvector/soft_float_1-3a.c.cil.yml	false	false(unreach-call)	39.000345	23.975809862000006	730.652672
+bitvector-regression/integerpromotion-3.yml	false	false(unreach-call)	5.477076	2.5935792950000405	358.080512
+bitvector/sum02-1.yml	false	TIMEOUT (Parsing OK)	120.633516	108.080063742	491.192320
+bitvector-loops/diamond_2-1.yml	false	false(unreach-call)	24.940554	10.115374626000005	480.890880
