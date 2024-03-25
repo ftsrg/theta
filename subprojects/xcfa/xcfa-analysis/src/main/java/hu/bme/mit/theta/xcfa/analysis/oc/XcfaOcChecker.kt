@@ -444,4 +444,11 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         if (increment) indexing = indexing.inc(this)
         return constDecl
     }
+
+    fun printXcfa() = xcfa.toDot { edge ->
+        "(${
+            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
+                .joinToString(",") { it.const.name }
+        })"
+    }
 }

@@ -16,8 +16,8 @@ internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTU
     override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(this)
     private var solverLevel: Int = 0
 
-    private lateinit var events: Map<VarDecl<*>, Map<Int, List<Event>>>
-    private lateinit var flatEvents: List<Event>
+    private lateinit var writes: Map<VarDecl<*>, Map<Int, List<Event>>>
+    private lateinit var flatWrites: List<Event>
     private lateinit var rfs: Map<VarDecl<*>, List<Relation>>
     private lateinit var flatRfs: List<Relation>
 
@@ -26,8 +26,8 @@ internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTU
         pos: List<Relation>,
         rfs: Map<VarDecl<*>, List<Relation>>,
     ): SolverStatus? {
-        this.events = events.keys.associateWith { v -> events[v]!!.keys.associateWith { p -> events[v]!![p]!!.filter { it.type == EventType.WRITE } } }
-        flatEvents = this.events.values.flatMap { it.values.flatten() }
+        this.writes = events.keys.associateWith { v -> events[v]!!.keys.associateWith { p -> events[v]!![p]!!.filter { it.type == EventType.WRITE } } }
+        flatWrites = this.writes.values.flatMap { it.values.flatten() }
         this.rfs = rfs
         flatRfs = rfs.values.flatten()
 
@@ -37,54 +37,67 @@ internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTU
         partialAssignment.push(OcAssignment(rels = initialRels))
 
         flatRfs.forEach { rf -> registerExpression(rf.declRef) }
-        flatEvents.forEach { w -> registerExpression(w.guardExpr) }
+        flatWrites.forEach { w -> if (w.guard.isNotEmpty()) registerExpression(w.guardExpr) }
 
         return solver.check()
     }
 
     override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
-        flatRfs.find { it.declRef == expr }?.let { rf ->
-            if (value) {
-                val assignement = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
-                partialAssignment.push(assignement)
-                val reason0 = setAndClose(assignement.rels, rf)
-                if (reason0 != null) {
-                    propagateConflict(reason0.exprs)
-                }
-
-                val writes = events[rf.from.const.varDecl]!!.values.flatten()
-                    .filter { w -> partialAssignment.any { it.event == w } }
-                for (w in writes) {
-                    val reason = derive(assignement.rels, rf, w)
-                    if (reason != null) {
-                        propagateConflict(reason.exprs)
-                    }
-                }
-            }
-        } ?: flatEvents.filter { it.guardExpr == expr }.forEach { w ->
-            if (value) {
-                rfs[w.const.varDecl]?.filter { r -> partialAssignment.any { it.relation == r } }?.let { rfs ->
-                    val assignment = OcAssignment(partialAssignment.peek().rels, w, solverLevel)
-                    partialAssignment.push(assignment)
-                    for (rf in rfs) {
-                        val reason = derive(assignment.rels, rf, w)
-                        if (reason != null) {
-                            propagateConflict(reason.exprs)
-                        }
-                    }
-                }
-            }
+        System.err.println("known: $expr = $value")
+        if (value) {
+            flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }
+                ?: flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
         }
     }
 
+    override fun onFinalCheck() =
+        flatWrites.filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }.forEach { w ->
+            propagate(w)
+        }
+
     override fun onPush() {
+        System.err.println("PUSH")
         solverLevel++
     }
 
     override fun onPop(levels: Int) {
+        System.err.println("POP $levels")
         solverLevel -= levels
         while (partialAssignment.isNotEmpty() && partialAssignment.peek().solverLevel > solverLevel) {
             partialAssignment.pop()
+        }
+    }
+
+    private fun propagate(rf: Relation) {
+        check(rf.type == RelationType.RFI || rf.type == RelationType.RFE)
+        val assignement = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
+        partialAssignment.push(assignement)
+        val reason0 = setAndClose(assignement.rels, rf)
+        if (reason0 != null) {
+            propagateConflict(reason0.exprs)
+        }
+
+        val writes = writes[rf.from.const.varDecl]!!.values.flatten()
+            .filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }
+        for (w in writes) {
+            val reason = derive(assignement.rels, rf, w)
+            if (reason != null) {
+                propagateConflict(reason.exprs)
+            }
+        }
+    }
+
+    private fun propagate(w: Event) {
+        check(w.type == EventType.WRITE)
+        rfs[w.const.varDecl]?.filter { r -> partialAssignment.any { it.relation == r } }?.let { rfs ->
+            val assignment = OcAssignment(partialAssignment.peek().rels, w, solverLevel)
+            partialAssignment.push(assignment)
+            for (rf in rfs) {
+                val reason = derive(assignment.rels, rf, w)
+                if (reason != null) {
+                    propagateConflict(reason.exprs)
+                }
+            }
         }
     }
 }
