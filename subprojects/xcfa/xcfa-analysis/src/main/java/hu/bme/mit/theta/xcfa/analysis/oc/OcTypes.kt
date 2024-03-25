@@ -52,7 +52,7 @@ internal data class Event(
     }
 }
 
-internal enum class RelationType { PO, EPO, RFI, RFE }
+internal enum class RelationType { PO, RFI, RFE }
 internal data class Relation(
     val type: RelationType,
     val from: Event,
@@ -66,8 +66,7 @@ internal data class Relation(
 
     override fun toString() = "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
     fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
-        enabled = if (type == RelationType.PO || type == RelationType.EPO) true
-        else valuation[decl]?.let { (it as BoolLitExpr).value }
+        enabled = if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
         return enabled
     }
 }

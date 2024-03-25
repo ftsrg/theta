@@ -43,7 +43,6 @@ internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTU
     }
 
     override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
-        System.err.println("known: $expr = $value")
         if (value) {
             flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }
                 ?: flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
@@ -56,12 +55,10 @@ internal class UserPropagatorOcDecisionProcedure : OcDecisionProcedure, JavaSMTU
         }
 
     override fun onPush() {
-        System.err.println("PUSH")
         solverLevel++
     }
 
     override fun onPop(levels: Int) {
-        System.err.println("POP $levels")
         solverLevel -= levels
         while (partialAssignment.isNotEmpty() && partialAssignment.peek().solverLevel > solverLevel) {
             partialAssignment.pop()

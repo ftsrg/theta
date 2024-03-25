@@ -107,7 +107,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             val e =
                 if (useLastClk) Event(decl.getNewIndexed(), type, guard, pid, edge, last.first().clkId)
                 else Event(decl.getNewIndexed(), type, guard, pid, edge)
-            last.forEach { po(it, e, useLastClk) }
+            last.forEach { po(it, e) }
             inEdge = true
             if (atomicEntered == false) atomicEntered = true
             when (type) {
@@ -405,9 +405,9 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
 
     // Utility functions
 
-    private fun po(from: Event?, to: Event, inEdge: Boolean = false) {
+    private fun po(from: Event?, to: Event) {
         from ?: return
-        pos.add(Relation(if (inEdge) RelationType.EPO else RelationType.PO, from, to))
+        pos.add(Relation(RelationType.PO, from, to))
     }
 
     private fun <K, V> List<Map<K, Set<V>>>.merge(merge: (Set<V>, Set<V>) -> Set<V> = { a, b -> a + b }) =
@@ -443,12 +443,5 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
         return constDecl
-    }
-
-    fun printXcfa() = xcfa.toDot { edge ->
-        "(${
-            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
-                .joinToString(",") { it.const.name }
-        })"
     }
 }

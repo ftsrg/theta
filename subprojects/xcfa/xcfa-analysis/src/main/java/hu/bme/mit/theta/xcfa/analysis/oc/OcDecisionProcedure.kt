@@ -87,10 +87,8 @@ internal interface OcDecisionProcedure {
 
     fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation): Reason? {
         if (rel.from.clkId == rel.to.clkId) return null // within an atomic block
-        return setAndClose(rels, rel.from.clkId, rel.to.clkId, when (rel.type) {
-            RelationType.PO, RelationType.EPO -> PoReason
-            else -> RelationReason(rel)
-        })
+        return setAndClose(rels, rel.from.clkId, rel.to.clkId,
+            if (rel.type == RelationType.PO) PoReason else RelationReason(rel))
     }
 
     private fun setAndClose(rels: Array<Array<Reason?>>, from: Int, to: Int, reason: Reason): Reason? {
