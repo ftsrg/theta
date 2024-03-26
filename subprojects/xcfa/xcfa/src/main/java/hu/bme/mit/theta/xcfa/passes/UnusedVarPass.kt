@@ -21,6 +21,10 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVars
+import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.isRead
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 /**
@@ -33,7 +37,32 @@ class UnusedVarPass(val parseContext: ParseContext, val uniqueWarningLogger: Log
         checkNotNull(builder.metaData["deterministic"])
 
         val usedVars = LinkedHashSet<VarDecl<*>>()
-        builder.getEdges().forEach { usedVars.addAll(it.label.collectVars()) }
+
+        var edges = LinkedHashSet(builder.getEdges())
+        lateinit var lastEdges: Set<XcfaEdge>
+        do {
+            lastEdges = edges
+
+            usedVars.clear()
+            builder.getEdges()
+                .forEach {
+                    usedVars.addAll(it.label.collectVarsWithAccessType().filter { it.value.isRead }.map { it.key })
+                }
+
+            for (edge in edges.filter { it.label.collectVars().any { !usedVars.contains(it) } }) {
+                val newLabels = (edge.label as SequenceLabel).labels.mapNotNull {
+                    if (it.collectVars().any { !usedVars.contains(it) }) {
+                        null
+                    } else it
+                }
+                if (newLabels != edge.label.labels) {
+                    builder.removeEdge(edge)
+                    val newEdge = edge.withLabel(SequenceLabel(newLabels))
+                    builder.addEdge(newEdge)
+                }
+            }
+            edges = LinkedHashSet(builder.getEdges())
+        } while (lastEdges != edges)
 
         val allVars = Sets.union(builder.getVars(),
             builder.parent.getVars().map { it.wrappedVar }.toSet())

@@ -43,6 +43,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         // optimizing
         SimplifyExprsPass(parseContext),
         LoopUnrollPass(),
+        SimplifyExprsPass(parseContext),
     ),
     listOf(
         // trying to inline procedures

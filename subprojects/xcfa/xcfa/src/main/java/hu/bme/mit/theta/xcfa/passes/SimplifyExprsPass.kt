@@ -22,15 +22,13 @@ import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
-import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.ExprUtils.simplify
+import hu.bme.mit.theta.core.utils.StmtSimplifier.StmtSimplifierVisitor
 import hu.bme.mit.theta.core.utils.StmtUtils
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
@@ -49,38 +47,64 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         removeUnusedGlobalVarWrites(builder)
-        val valuation = findConstVariables(builder)
-        val edges = LinkedHashSet(builder.getEdges())
-        for (edge in edges) {
-            val newLabels = (edge.label as SequenceLabel).labels.map {
-                if (it is StmtLabel) when (it.stmt) {
-                    is AssignStmt<*> -> {
-                        val simplified = simplify(it.stmt.expr, valuation)
-                        if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
-                            parseContext.metadata.create(simplified, "cType",
-                                CComplexType.getType(it.stmt.expr, parseContext))
-                        StmtLabel(Assign(cast(it.stmt.varDecl, it.stmt.varDecl.type),
-                            cast(simplified, it.stmt.varDecl.type)), metadata = it.metadata)
-                    }
+        val valuations = LinkedHashMap<XcfaEdge, Valuation>()
+        var edges = LinkedHashSet(builder.getEdges())
+        lateinit var lastEdges: LinkedHashSet<XcfaEdge>
+        do {
+            lastEdges = edges
+            for (edge in edges) {
+                val incomingValuations = edge.source.incomingEdges.map(valuations::get)
+                    .reduceOrNull(this::intersect)
+                val localValuation = MutableValuation.copyOf(incomingValuations ?: ImmutableValuation.empty())
+                val newLabels = (edge.label as SequenceLabel).labels.map {
+                    if (it is StmtLabel) {
+                        val simplified = it.stmt.accept(StmtSimplifierVisitor(), localValuation).stmt
+                        when (it.stmt) {
+                            is MemoryAssignStmt<*, *> -> {
+                                simplified as MemoryAssignStmt<*, *>
+                                if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
+                                    parseContext.metadata.create(simplified.expr, "cType",
+                                        CComplexType.getType(it.stmt.expr, parseContext))
+                                if (parseContext.metadata.getMetadataValue(it.stmt.deref, "cType").isPresent)
+                                    parseContext.metadata.create(simplified.deref, "cType",
+                                        CComplexType.getType(it.stmt.deref, parseContext))
+                                StmtLabel(simplified, metadata = it.metadata)
+                            }
 
-                    is AssumeStmt -> {
-                        val simplified = simplify(it.stmt.cond, valuation)
-                        if (parseContext.metadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
-                            parseContext.metadata.create(simplified, "cType",
-                                CComplexType.getType(it.stmt.cond, parseContext))
+                            is AssignStmt<*> -> {
+                                simplified as AssignStmt<*>
+                                if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
+                                    parseContext.metadata.create(simplified.expr, "cType",
+                                        CComplexType.getType(it.stmt.expr, parseContext))
+                                StmtLabel(simplified, metadata = it.metadata)
+                            }
+
+                            is AssumeStmt -> {
+                                simplified as AssumeStmt
+                                if (parseContext.metadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
+                                    parseContext.metadata.create(simplified.cond, "cType",
+                                        CComplexType.getType(it.stmt.cond, parseContext))
+                                }
+                                parseContext.metadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
+                                StmtLabel(simplified, metadata = it.metadata, choiceType = it.choiceType)
+                            }
+
+                            else -> it
                         }
-                        parseContext.metadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
-                        StmtLabel(Assume(simplified), metadata = it.metadata, choiceType = it.choiceType)
-                    }
-
-                    else -> it
-                } else it
+                    } else it
+                }
+                if (newLabels != edge.label.labels) {
+                    builder.removeEdge(edge)
+                    val newEdge = edge.withLabel(SequenceLabel(newLabels))
+                    builder.addEdge(newEdge)
+                    valuations[newEdge] = localValuation
+                    valuations.remove(edge)
+                } else {
+                    valuations[edge] = localValuation
+                }
             }
-            if (newLabels != edge.label.labels) {
-                builder.removeEdge(edge)
-                builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
-            }
-        }
+            edges = LinkedHashSet(builder.getEdges())
+        } while (lastEdges != edges)
         builder.metaData["simplifiedExprs"] = Unit
         return builder
     }
@@ -104,62 +128,10 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         }
     }
 
-    private fun findConstVariables(builder: XcfaProcedureBuilder): Valuation {
-        val valuation = MutableValuation()
-        builder.parent.getProcedures()
-            .flatMap { it.getEdges() }
-            .map { it.label.collectVarsWithLabels() }
-            .filter { it.isNotEmpty() }.merge()
-            .map {
-                val writes = it.value.filter { label -> label.isWrite(it.key) }
-                if (writes.size == 1 && writes.first() is StmtLabel) {
-                    val label = writes.first() as StmtLabel
-                    if (label.stmt is AssignStmt<*> && label.stmt.expr.isConst()) {
-                        return@map label.stmt
-                    }
-                }
-                null
-            }
-            .filterNotNull()
-            .forEach { assignment ->
-                try {
-                    valuation.put(assignment.varDecl, assignment.expr.eval(ImmutableValuation.empty()))
-                } catch (_: UnsupportedOperationException) {
-                }
-            }
-        return valuation
-    }
-
-    private fun List<Map<VarDecl<*>, List<XcfaLabel>>>.merge(): Map<VarDecl<*>, List<XcfaLabel>> =
-        this.fold(mapOf()) { acc, next ->
-            (acc.keys + next.keys).associateWith {
-                mutableListOf<XcfaLabel>().apply {
-                    acc[it]?.let { addAll(it) }
-                    next[it]?.let { addAll(it) }
-                }
-            }
-        }
-
-    private fun XcfaLabel.collectVarsWithLabels(): Map<VarDecl<*>, List<XcfaLabel>> = when (this) {
-        is StmtLabel -> StmtUtils.getVars(stmt).associateWith { listOf(this) }
-        is NondetLabel -> labels.map { it.collectVarsWithLabels() }.merge()
-        is SequenceLabel -> labels.map { it.collectVarsWithLabels() }.merge()
-        is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { listOf(this) }
-        is JoinLabel -> mapOf(pidVar to listOf(this))
-        is ReadLabel -> mapOf(global to listOf(this), local to listOf(this))
-        is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten()
-            .associateWith { listOf(this) } + mapOf(pidVar to listOf(this))
-
-        is WriteLabel -> mapOf(global to listOf(this), local to listOf(this))
-        else -> emptyMap()
-    }
-
-    private fun XcfaLabel.isWrite(v: VarDecl<*>) =
-        this is StmtLabel && this.stmt is AssignStmt<*> && this.stmt.varDecl == v
-
-    private fun <T : Type> Expr<T>.isConst(): Boolean {
-        val vars = mutableListOf<VarDecl<*>>()
-        ExprUtils.collectVars(this, vars)
-        return vars.isEmpty()
+    private fun intersect(v1: Valuation?, v2: Valuation?): Valuation {
+        if (v1 == null || v2 == null) return ImmutableValuation.empty()
+        val v1map = v1.toMap()
+        val v2map = v2.toMap()
+        return ImmutableValuation.from(v1map.filter { v2map.containsKey(it.key) && v2map[it.key] == it.value })
     }
 }
