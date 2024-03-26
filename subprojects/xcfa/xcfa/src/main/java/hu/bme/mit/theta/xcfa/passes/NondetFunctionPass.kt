@@ -52,6 +52,6 @@ class NondetFunctionPass(val parseContext: ParseContext) : ProcedurePass {
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && it.name.startsWith("__VERIFIER_nondet")
+        return it is InvokeLabel && (it.name.startsWith("__VERIFIER_nondet") || it.name == "malloc")
     }
 }

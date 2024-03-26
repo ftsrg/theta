@@ -43,8 +43,8 @@ class EmptyEdgeRemovalPass(val parseContext: ParseContext) : ProcedurePass {
 
     private fun XcfaLabel.isNop(): Boolean =
         when (this) {
-            is NondetLabel -> labels.all { it.isNop() }
-            is SequenceLabel -> labels.all { it.isNop() }
+            is NondetLabel -> labels.all { it.isNop() } && labels.size > 1 // if 0, it is assume(true)
+            is SequenceLabel -> labels.all { it.isNop() } && labels.size > 1 // same
             is NopLabel -> true
             is StmtLabel -> stmt == Assume(False())
             else -> false

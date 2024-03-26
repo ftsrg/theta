@@ -47,6 +47,7 @@ class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
     private fun predicate(label: XcfaLabel): Boolean {
         return label is InvokeLabel && listOf(
             Regex("sleep"),
+            Regex("free"),
             Regex("pthread_mutex_destroy"), // TODO: is this safe?
         ).any { label.name.matches(it) }
     }

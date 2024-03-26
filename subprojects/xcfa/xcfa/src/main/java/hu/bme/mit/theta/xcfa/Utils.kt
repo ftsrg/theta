@@ -25,6 +25,8 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
@@ -155,7 +157,14 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
             is AssignStmt<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
-            is MemoryAssignStmt<*, *> -> ExprUtils.getVars(stmt.expr).associateWith { READ }
+            is MemoryAssignStmt<*, *> -> {
+                var expr: Expr<*> = stmt.deref
+                while (expr is Dereference<*, *>) {
+                    expr = expr.array
+                }
+                expr as RefExpr<*>
+                ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(expr.decl as VarDecl<*> to WRITE)
+            }
             else -> StmtUtils.getVars(stmt).associateWith { READ }
         }
     }

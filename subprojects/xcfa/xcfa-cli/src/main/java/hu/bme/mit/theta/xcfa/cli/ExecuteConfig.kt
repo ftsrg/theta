@@ -46,6 +46,8 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -161,9 +163,21 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
         SafetyResult.unknown<State, Action>()
     } else {
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
-            SafetyResult.safe<State, Action>()
+            val result = SafetyResult.safe<State, Action>()
+            logger.write(Logger.Level.INFO, "Input is trivially safe\n")
+
+            logger.write(Logger.Level.RESULT, result.toString() + "\n")
+            result
         } else {
             val stopwatch = Stopwatch.createStarted()
+
+            if (xcfa.procedures.any {
+                    it.edges.any {
+                        it.getFlatLabels().any { it is StmtLabel && it.stmt.toString().contains("deref") }
+                    }
+                }) {
+                logger.write(Logger.Level.RESULT, "Program contains dereferences, unsafe results are unreliable.")
+            }
 
             logger.write(Logger.Level.INFO,
                 "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n")

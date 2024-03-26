@@ -1210,7 +1210,7 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     }
 
     protected String transformDereference(final Dereference<?, ?> expr) {
-        return "(deref %s %s %s %s)".formatted(transformer.toTerm(expr.getArray()), transformer.toTerm(expr.getOffset()), transformer.toSort(expr.getType()));
+        return "(deref %s %s %s)".formatted(transformer.toTerm(expr.getArray()), transformer.toTerm(expr.getOffset()), transformer.toSort(expr.getType()));
     }
 
     protected String transformReference(final Reference<?, ?> expr) {
