@@ -37,7 +37,9 @@ import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
 import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
@@ -126,6 +128,8 @@ final class Z3TermTransformer {
         environment.put("to_real", exprUnaryOperator(IntToRatExpr::create));
         environment.put("to_int", exprUnaryOperator(RatToIntExpr::create));
         environment.put("mod", exprBinaryOperator(IntModExpr::create));
+        environment.put("deref", dereference());
+        environment.put("ref", reference());
     }
 
     public Expr<?> toExpr(final com.microsoft.z3legacy.Expr term) {
@@ -497,6 +501,25 @@ final class Z3TermTransformer {
             final Expr<?> op1 = transform(args[0], model, vars);
             final Expr<?> op2 = transform(args[1], model, vars);
             return function.apply(op1, op2);
+        };
+    }
+
+    private TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>> reference() {
+        return (term, model, vars) -> {
+            final com.microsoft.z3legacy.Expr[] args = term.getArgs();
+            checkArgument(args.length == 1, "Number of arguments must be one");
+            final Expr<?> op = transform(args[0], model, vars);
+            return Reference.of(op, transformSort(term.getSort()));
+        };
+    }
+
+    private <T extends Type> TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>> dereference() {
+        return (term, model, vars) -> {
+            final com.microsoft.z3legacy.Expr[] args = term.getArgs();
+            checkArgument(args.length == 3, "Number of arguments must be three");
+            final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
+            final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
+            return Dereference.of(op1, op2, transformSort(term.getSort()));
         };
     }
 

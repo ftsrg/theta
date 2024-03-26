@@ -89,7 +89,7 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL + "-" + expr.getType()).add(getExpr())
+        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getExpr()).add(type)
                 .toString();
     }
 }

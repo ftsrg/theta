@@ -48,9 +48,9 @@ public final class MemoryAssignStmt<PtrType extends Type, DeclType extends Type>
     }
 
     @SuppressWarnings("unchecked")
-    public static <PtrType extends Type, DeclType extends Type> MemoryAssignStmt<?, ?> create(
-            final Dereference<?, ?> deref,
-            final Expr<?> expr) {
+    public static <PtrType extends Type, DeclType extends Type> MemoryAssignStmt<PtrType, DeclType> create(
+            final Dereference<PtrType, ?> deref,
+            final Expr<DeclType> expr) {
         final Dereference<PtrType, DeclType> typedDeref = (Dereference<PtrType, DeclType>) deref;
         final Expr<DeclType> typedExpr = (Expr<DeclType>) expr;
         return MemoryAssignStmt.of(typedDeref, typedExpr);

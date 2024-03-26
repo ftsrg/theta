@@ -42,8 +42,13 @@ public final class Exprs {
     }
 
     public static <ArrType extends Type, ExprType extends Type>
-    Dereference<ArrType, ExprType> Deref(final Expr<ArrType> arr, final Expr<ArrType> offset, final ExprType type) {
+    Dereference<ArrType, ExprType> Dereference(final Expr<ArrType> arr, final Expr<ArrType> offset, final ExprType type) {
         return Dereference.of(arr, offset, type);
+    }
+
+    public static <ArrType extends Type, ExprType extends Type>
+    Reference<ArrType, ExprType> Reference(final Expr<ExprType> expr, final ArrType type) {
+        return Reference.of(expr, type);
     }
 
     /*
