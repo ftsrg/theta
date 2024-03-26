@@ -88,7 +88,6 @@ final class Z3ItpSolver implements ItpSolver, Solver {
         final com.microsoft.z3legacy.BoolExpr term = (com.microsoft.z3legacy.BoolExpr) transformationManager.toTerm(
                 assertion);
         solver.add(assertion, term);
-        System.err.println(term);
         z3Marker.add(term);
     }
 

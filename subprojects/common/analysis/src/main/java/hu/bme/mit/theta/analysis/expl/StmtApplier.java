@@ -38,6 +38,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.util.ArrayList;
@@ -91,6 +92,20 @@ public final class StmtApplier {
     }
 
     private static ApplyResult applyMemAssign(MemoryAssignStmt<?, ?> stmt, MutableValuation val, boolean approximate) {
+        final var expr = ExprUtils.simplify(stmt.getDeref(), val);
+        final var deref = stmt.getDeref();
+        final var newOffset = ExprUtils.simplify(deref.getOffset(), val);
+        if (expr instanceof LitExpr<?> litExpr && deref.getArray() instanceof RefExpr<?> refExpr && newOffset instanceof LitExpr<?> litOffset) {
+            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
+            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
+            val.put(varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
+            return ApplyResult.SUCCESS;
+        } else if (approximate && deref.getArray() instanceof RefExpr<?> refExpr && newOffset instanceof LitExpr<?> litOffset) {
+            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
+            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
+            val.remove(varDecl.getConstDecl(intLitOffset.getValue().intValue()));
+            return ApplyResult.SUCCESS;
+        }
         return ApplyResult.FAILURE;
     }
     private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,
