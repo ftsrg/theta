@@ -28,9 +28,10 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
@@ -56,7 +57,6 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -571,19 +571,16 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         return accept;
     }
 
-    private Expr<?> dereference(Expr<?> accept, CPointer type) {
-        checkState(!(CComplexType.getType(accept, parseContext) instanceof CReal), "Float pointers are not yet supported!", parseContext);
-        Dereference<?, ?, Type> of = Dereference.of(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), type.getEmbeddedType().getSmtType());
+    @SuppressWarnings("unchecked")
+    private <T extends Type> Expr<?> dereference(Expr<?> accept, CPointer type) {
+        Dereference<T, Type> of = Dereference.of((Expr<T>) accept, (Expr<T>) CComplexType.getUnsignedLong(parseContext).getNullValue(), type.getEmbeddedType().getSmtType());
         parseContext.getMetadata().create(of, "cType", type.getEmbeddedType());
         return of;
     }
 
     private Expr<?> reference(RefExpr<?> accept) {
-        checkState(!(CComplexType.getType(accept, parseContext) instanceof CReal), "Float pointers are not yet supported!", parseContext);
         Reference<Type, ?> of = Reference.of(accept, CComplexType.getUnsignedLong(parseContext).getSmtType());
         parseContext.getMetadata().create(of, "cType", new CPointer(null, CComplexType.getType(accept, parseContext), parseContext));
-        parseContext.getMetadata().create(accept, "referenced", true);
-        parseContext.getMetadata().create(accept, "ptrValue", of.getId());
         return of;
     }
 
@@ -610,14 +607,18 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 for (int i = 0; i < size; i++) {
                     CComplexType arrayType = CComplexType.getType(primary, parseContext);
                     if (arrayType instanceof CArray) {
+                        CComplexType elemType = ((CArray) arrayType).getEmbeddedType();
+                        Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
+                        Type type = elemType.getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = ArrayReadExpr.create(primary, index);
+                        primary = Dereference.of(cast(primary, ptrType), cast(index, ptrType), type);
                         parseContext.getMetadata().create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
                     } else if (arrayType instanceof CPointer) {
                         CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
                         Type type = elemType.getSmtType();
+                        Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = Dereference.of(cast(primary, type), cast(index, type), type);
+                        primary = Dereference.of(cast(primary, ptrType), cast(index, ptrType), type);
                         parseContext.getMetadata().create(primary, "cType", ((CPointer) arrayType).getEmbeddedType());
                     } else {
                         throw new RuntimeException("Non-array expression used as array!");

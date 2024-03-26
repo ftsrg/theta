@@ -373,7 +373,7 @@ public abstract class CComplexType {
         }
 
         public R visit(CArray type, T param) {
-            return visit(((CCompound) type), param);
+            return CComplexType.getUnsignedLong(type.getParseContext()).accept(this, param);
         }
 
         public R visit(CFunction type, T param) {

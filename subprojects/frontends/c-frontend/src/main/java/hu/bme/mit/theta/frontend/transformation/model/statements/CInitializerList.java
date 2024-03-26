@@ -64,7 +64,7 @@ public class CInitializerList extends CStatement {
             list.add(Tuple2.of(currentValue, expr));
             currentValue = (LitExpr<I>) Add(currentValue, unitValue).eval(ImmutableValuation.empty());
         }
-        ArrayInitExpr<I, E> aie = ArrayInitExpr.of(list,
+        ArrayInitExpr<I, E> aie = ArrayInitExpr.of(list, // TODO: rewrite to pointer semantics
                 (Expr<E>) type.getNullValue(),
                 (ArrayType<I, E>) ArrayType.of(CComplexType.getUnsignedLong(parseContext).getSmtType(), type.getSmtType()));
         parseContext.getMetadata().create(aie, "cType", new CArray(type.getOrigin(), type, parseContext));

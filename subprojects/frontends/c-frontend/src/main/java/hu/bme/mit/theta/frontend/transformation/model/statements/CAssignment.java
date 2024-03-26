@@ -16,19 +16,14 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -38,7 +33,6 @@ public class CAssignment extends CStatement {
     private final Expr<?> lValue;
     private final CStatement rValue;
     private final String operator;
-    private static final Map<Type, VarDecl<ArrayType<?, ?>>> memoryMaps = new LinkedHashMap<>();
 
     public CAssignment(Expr<?> lValue, CStatement rValue, String operator, ParseContext parseContext) {
         super(parseContext);
@@ -58,10 +52,6 @@ public class CAssignment extends CStatement {
 
     public String getOperator() {
         return operator;
-    }
-
-    public static Map<Type, VarDecl<ArrayType<?, ?>>> getMemoryMaps() {
-        return memoryMaps;
     }
 
     @Override

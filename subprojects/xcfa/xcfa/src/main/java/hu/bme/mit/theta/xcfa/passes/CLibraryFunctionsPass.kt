@@ -19,9 +19,9 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -56,7 +56,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
                             "printf" -> listOf(NopLabel)
                             "pthread_join" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *>) handle = handle.expr
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 listOf(JoinLabel((handle as RefExpr<out Type>).decl as VarDecl<*>, metadata))
@@ -64,7 +64,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_create" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *>) handle = handle.expr
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 val funcptr = invokeLabel.params[3]
@@ -79,7 +79,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_mutex_lock" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *>) handle = handle.expr
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 listOf(FenceLabel(setOf("mutex_lock(${handle.decl.name})"), metadata))
@@ -87,7 +87,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_mutex_unlock" -> {
                                 var handle = invokeLabel.params[1]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *>) handle = handle.expr
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 listOf(FenceLabel(setOf("mutex_unlock(${handle.decl.name})"), metadata))
@@ -95,9 +95,9 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_cond_wait" -> {
                                 var cond = invokeLabel.params[1]
-                                while (cond is Reference<*, *>) cond = cond.op
+                                while (cond is Reference<*, *>) cond = cond.expr
                                 var handle = invokeLabel.params[2]
-                                while (handle is Reference<*, *>) handle = handle.op
+                                while (handle is Reference<*, *>) handle = handle.expr
                                 check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
@@ -110,7 +110,7 @@ class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
 
                             "pthread_cond_signal" -> {
                                 var cond = invokeLabel.params[1]
-                                while (cond is Reference<*, *>) cond = cond.op
+                                while (cond is Reference<*, *>) cond = cond.expr
                                 check(cond is RefExpr && (cond as RefExpr<out Type>).decl is VarDecl)
 
                                 listOf(FenceLabel(setOf("cond_signal(${cond.decl.name})"), metadata))
