@@ -44,6 +44,8 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         SimplifyExprsPass(parseContext),
         LoopUnrollPass(),
         SimplifyExprsPass(parseContext),
+        EmptyEdgeRemovalPass(parseContext),
+        UnusedLocRemovalPass(parseContext),
     ),
     listOf(
         // trying to inline procedures

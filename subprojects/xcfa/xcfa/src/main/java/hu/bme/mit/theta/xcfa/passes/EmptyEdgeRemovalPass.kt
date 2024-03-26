@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -44,6 +46,7 @@ class EmptyEdgeRemovalPass(val parseContext: ParseContext) : ProcedurePass {
             is NondetLabel -> labels.all { it.isNop() }
             is SequenceLabel -> labels.all { it.isNop() }
             is NopLabel -> true
+            is StmtLabel -> stmt == Assume(False())
             else -> false
         }
 }
