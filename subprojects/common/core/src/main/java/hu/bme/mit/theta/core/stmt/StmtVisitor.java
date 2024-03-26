@@ -25,6 +25,8 @@ public interface StmtVisitor<P, R> {
 
     <DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
 
+    <PtrType extends Type, DeclType extends Type> R visit(MemoryAssignStmt<PtrType, DeclType> stmt, P param);
+
     <DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 
     R visit(SequenceStmt stmt, P param);

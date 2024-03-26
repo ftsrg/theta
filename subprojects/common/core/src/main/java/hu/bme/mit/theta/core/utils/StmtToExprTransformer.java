@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -119,6 +120,15 @@ final class StmtToExprTransformer {
                 expr = Eq(lhs, rhs);
             }
             return StmtUnfoldResult.of(ImmutableList.of(expr), newIndexing);
+        }
+
+        @Override
+        public <PtrType extends Type, DeclType extends Type> StmtUnfoldResult visit(MemoryAssignStmt<PtrType, DeclType> stmt, VarIndexing indexing) {
+            final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
+            final Expr<DeclType> lhs = ExprUtils.applyPrimes(stmt.getDeref(), indexing);
+
+            final var expr = Eq(lhs, rhs);
+            return StmtUnfoldResult.of(ImmutableList.of(expr), indexing);
         }
 
         @Override

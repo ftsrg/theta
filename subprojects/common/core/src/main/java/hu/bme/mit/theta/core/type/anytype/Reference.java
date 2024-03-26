@@ -26,72 +26,62 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public final class Dereference<A extends Type, T extends Type> implements Expr<T> {
+public final class Reference<A extends Type, T extends Type> implements Expr<A> {
 
-    private static final String OPERATOR_LABEL = "deref";
-    private final Expr<A> array;
-    private final Expr<A> offset;
-    private final T type;
+    private static final String OPERATOR_LABEL = "ref";
+    private final Expr<T> expr;
+    private final A type;
 
-    private Dereference(Expr<A> array, Expr<A> offset, T type) {
-        this.array = array;
-        this.offset = offset;
+    private Reference(Expr<T> expr, A type) {
+        this.expr = expr;
         this.type = type;
     }
 
-    public Expr<A> getArray() {
-        return array;
+    public Expr<T> getExpr() {
+        return expr;
     }
 
-    public Expr<A> getOffset() {
-        return offset;
-    }
-
-
-    public static <A extends Type, T extends Type> Dereference<A, T> of(Expr<A> array, Expr<A> offset, T type) {
-        return new Dereference<>(array, offset, type);
+    public static <A extends Type, T extends Type> Reference<A, T> of(Expr<T> expr, A type) {
+        return new Reference<>(expr, type);
     }
 
     @Override
     public int getArity() {
-        return 2;
+        return 1;
     }
 
     @Override
-    public T getType() {
+    public A getType() {
         return type;
     }
 
     @Override
-    public LitExpr<T> eval(Valuation val) {
+    public LitExpr<A> eval(Valuation val) {
         throw new IllegalStateException(
                 "Reference/Dereference expressions are not meant to be evaluated!");
     }
 
     @Override
     public List<? extends Expr<?>> getOps() {
-        return List.of(array, offset);
+        return List.of(expr);
     }
 
     @Override
-    public Expr<T> withOps(List<? extends Expr<?>> ops) {
-        checkState(ops.size() == 2);
-        @SuppressWarnings("unchecked") final T ptrType = (T) ops.get(0).getType();
-        return Dereference.of(cast(ops.get(0), ptrType), cast(ops.get(1), ptrType), type);
+    public Expr<A> withOps(List<? extends Expr<?>> ops) {
+        checkState(ops.size() == 1);
+        return Reference.of(ops.get(0), type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(array, offset, type);
+        return Objects.hash(expr, type);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Dereference<?, ?> that) {
-            return Objects.equals(this.array, that.array) &&
-                    Objects.equals(this.offset, that.offset) &&
+        if (obj instanceof Reference<?, ?> that) {
+            return Objects.equals(this.expr, that.expr) &&
                     Objects.equals(this.type, that.type);
         }
         return false;
@@ -99,7 +89,7 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL + "-" + type).add(getArray()).add(getOffset())
+        return Utils.lispStringBuilder(OPERATOR_LABEL + "-" + expr.getType()).add(getExpr())
                 .toString();
     }
 }

@@ -15,13 +15,9 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -29,6 +25,10 @@ import hu.bme.mit.theta.core.type.booltype.IffExpr;
 import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
+
+import java.util.Collection;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 final class ExprAtomCollector {
 
@@ -45,6 +45,7 @@ final class ExprAtomCollector {
             .add(OrExpr.class)
 
             // .add(IteExpr.class)
+            .add(Dereference.class)
 
             .add(PrimeExpr.class)
 

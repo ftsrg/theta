@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -145,6 +146,11 @@ public class SpState {
             final Expr<DeclType> eqExpr = sub.apply(stmt.getExpr());
             final Expr<BoolType> expr = And(stateExpr, Eq(varDecl.getRef(), eqExpr));
             return new SpState(expr, constCount);
+        }
+
+        @Override
+        public <PtrType extends Type, DeclType extends Type> SpState visit(MemoryAssignStmt<PtrType, DeclType> stmt, SpState param) {
+            throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 
         @Override

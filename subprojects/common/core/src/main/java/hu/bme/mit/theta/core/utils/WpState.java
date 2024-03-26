@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -153,6 +154,11 @@ public final class WpState {
         }
 
         @Override
+        public <PtrType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, DeclType> stmt, WpState param) {
+            throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
+        }
+
+        @Override
         public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt,
                                                      final WpState state) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
@@ -219,6 +225,11 @@ public final class WpState {
         public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt,
                                                      final WpState state) {
             return WpVisitor.getInstance().visit(stmt, state);
+        }
+
+        @Override
+        public <PtrType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, DeclType> stmt, WpState param) {
+            throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 
         @Override
