@@ -149,8 +149,18 @@ primeExpr
     ;
 
 bvExtract
-    :   primaryExpr
+    :   derefExpr
     |   LPAREN EXTRACT op=expr from=expr until=expr RPAREN
+    ;
+
+derefExpr
+    :   refExpr
+    |   LPAREN DEREF base=expr offset=expr type RPAREN
+    ;
+
+refExpr
+    :   primaryExpr
+    |   LPAREN REF expr type RPAREN
     ;
 
 primaryExpr

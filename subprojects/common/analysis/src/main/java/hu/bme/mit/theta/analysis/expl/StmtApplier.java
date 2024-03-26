@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -59,6 +60,8 @@ public final class StmtApplier {
         if (stmt instanceof AssignStmt) {
             final AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
             return applyAssign(assignStmt, val, approximate);
+        } else if (stmt instanceof MemoryAssignStmt<?, ?> memoryAssignStmt) {
+            return applyMemAssign(memoryAssignStmt, val, approximate);
         } else if (stmt instanceof AssumeStmt) {
             final AssumeStmt assumeStmt = (AssumeStmt) stmt;
             return applyAssume(assumeStmt, val, approximate);
@@ -87,6 +90,9 @@ public final class StmtApplier {
         }
     }
 
+    private static ApplyResult applyMemAssign(MemoryAssignStmt<?, ?> stmt, MutableValuation val, boolean approximate) {
+        return ApplyResult.FAILURE;
+    }
     private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,
                                            final boolean approximate) {
         final VarDecl<?> varDecl = stmt.getVarDecl();

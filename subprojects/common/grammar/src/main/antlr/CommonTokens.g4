@@ -359,6 +359,18 @@ ASSIGN
 	:	'assign'
 	;
 
+MEMASSIGN
+	:	'memassign'
+	;
+
+DEREF
+    :   'deref'
+    ;
+
+REF
+    :   'ref'
+    ;
+
 HAVOC
 	:	'havoc'
 	;

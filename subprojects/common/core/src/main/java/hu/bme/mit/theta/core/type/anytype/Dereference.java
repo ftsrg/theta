@@ -99,7 +99,7 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL + "-" + type).add(getArray()).add(getOffset())
+        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getArray()).add(getOffset()).add(type)
                 .toString();
     }
 }

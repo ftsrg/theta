@@ -23,6 +23,7 @@ import com.microsoft.z3legacy.BoolExpr;
 import com.microsoft.z3legacy.Context;
 import com.microsoft.z3legacy.FPExpr;
 import com.microsoft.z3legacy.FPSort;
+import com.microsoft.z3legacy.Sort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -32,8 +33,10 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
@@ -402,6 +405,11 @@ final class Z3ExprTransformer {
                 .addCase(ArrayLitExpr.class, this::transformArrayLit)
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
+
+                // References
+                .addCase(Dereference.class, this::transformDereference)
+
+                .addCase(Reference.class, this::transformReference)
 
                 .build();
     }
@@ -1246,6 +1254,18 @@ final class Z3ExprTransformer {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
         }
+    }
+
+    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?> expr) {
+        final var sort = transformer.toSort(expr.getArray().getType());
+        final var func = context.mkFuncDecl("deref", new Sort[]{sort, sort}, transformer.toSort(expr.getType()));
+        return context.mkApp(func, toTerm(expr.getArray()), toTerm(expr.getOffset()));
+    }
+
+    private com.microsoft.z3legacy.Expr transformReference(final Reference<?, ?> expr) {
+        final var sort = transformer.toSort(expr.getExpr().getType());
+        final var func = context.mkFuncDecl("ref", new Sort[]{sort}, transformer.toSort(expr.getType()));
+        return context.mkApp(func, toTerm(expr.getExpr()));
     }
 
     public void reset() {

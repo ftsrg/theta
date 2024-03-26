@@ -31,7 +31,9 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Exprs
+import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
@@ -54,6 +56,7 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.grammar.ThrowingErrorListener
 import hu.bme.mit.theta.grammar.dsl.gen.ExprBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.ExprLexer
@@ -745,6 +748,27 @@ class ExpressionWrapper(scope: Scope, content: String) {
                 val bitvec = TypeUtils.castBv(op)
                 return BvExprs.Extract(bitvec, Int(ctx.from.getText()),
                     IntExprs.Int(ctx.until.getText()))
+            } else {
+                visitChildren(ctx)
+            }
+        }
+
+        override fun visitDerefExpr(ctx: DerefExprContext): Expr<out Type> {
+            return if (ctx.base != null) {
+                val base = ctx.base.accept(this)
+                val offset = ctx.offset.accept(this)
+                val type = TypeWrapper(ctx.type().textWithWS()).instantiate()
+                return Dereference(cast(base, base.type), cast(offset, base.type), type);
+            } else {
+                visitChildren(ctx)
+            }
+        }
+
+        override fun visitRefExpr(ctx: RefExprContext): Expr<out Type> {
+            return if (ctx.expr() != null) {
+                val expr = ctx.expr().accept(this)
+                val type = TypeWrapper(ctx.type().textWithWS()).instantiate()
+                return Reference.of(expr, type)
             } else {
                 visitChildren(ctx)
             }

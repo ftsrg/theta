@@ -22,8 +22,11 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -78,6 +81,8 @@ import java.util.StringJoiner;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
 /**
@@ -464,9 +469,23 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     }
                 } else {
                     checkState(declaration.getVarDecls().size() == 1, "non-struct declarations shall only have one variable!");
-                    CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=", parseContext);
-                    recordMetadata(ctx, cAssignment);
-                    compound.getcStatementList().add(cAssignment);
+                    if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
+                        final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                        LitExpr<?> currentValue = ptrType.getNullValue();
+                        LitExpr<?> unitValue = ptrType.getUnitValue();
+                        for (Tuple2<Optional<CStatement>, CStatement> statement : initializerList.getStatements()) {
+                            final var expr = statement.get2().getExpression();
+                            final var deref = Dereference.of(cast(declaration.getVarDecls().get(0).getRef(), ptrType.getSmtType()), cast(currentValue, ptrType.getSmtType()), expr.getType());
+                            CAssignment cAssignment = new CAssignment(deref, statement.get2(), "=", parseContext);
+                            recordMetadata(ctx, cAssignment);
+                            compound.getcStatementList().add(cAssignment);
+                            currentValue = Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                        }
+                    } else {
+                        CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=", parseContext);
+                        recordMetadata(ctx, cAssignment);
+                        compound.getcStatementList().add(cAssignment);
+                    }
                 }
             } else {
                 createVars(declaration);

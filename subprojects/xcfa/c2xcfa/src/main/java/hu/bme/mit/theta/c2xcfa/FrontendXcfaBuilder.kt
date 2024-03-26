@@ -27,7 +27,6 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -183,7 +182,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
 
                 val deref = Dereference.of(op, offset, type.smtType)
 
-                val memassign = MemoryAssignStmt.create<Type, Type>(deref, rExpression)
+                val memassign = MemoryAssignStmt.create(deref, rExpression)
 
                 parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
                 StmtLabel(memassign, metadata = getMetadata(statement))

@@ -1,7 +1,7 @@
 void reach_error(){}
 
 int main() {
-    int* arr = malloc(42);
+    int* arr = __VERIFIER_nondet_malloc(42);
 
     for(int i = 0; i < 42; i++) {
         arr[i] = i * 2;
