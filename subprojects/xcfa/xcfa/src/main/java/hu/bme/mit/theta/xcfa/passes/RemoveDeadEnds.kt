@@ -15,12 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.stream.Collectors
 
-class RemoveDeadEnds(val parseContext: ParseContext) : ProcedurePass {
+class RemoveDeadEnds : ProcedurePass {
 
     // TODO: thread start and procedure call should not be dead-end! Use-case: while(1) pthread_create(..);
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -53,7 +52,7 @@ class RemoveDeadEnds(val parseContext: ParseContext) : ProcedurePass {
 
     private fun filterReachableEdges(loc: XcfaLocation, reachableEdges: MutableSet<XcfaEdge>) {
         val outgoingEdges: MutableSet<XcfaEdge> = LinkedHashSet(loc.outgoingEdges)
-        while (!outgoingEdges.isEmpty()) {
+        while (outgoingEdges.isNotEmpty()) {
             val any = outgoingEdges.stream().findAny()
             val outgoingEdge = any.get()
             outgoingEdges.remove(outgoingEdge)
@@ -66,7 +65,7 @@ class RemoveDeadEnds(val parseContext: ParseContext) : ProcedurePass {
 
     private fun collectNonDeadEndEdges(loc: XcfaLocation, nonDeadEndEdges: MutableSet<XcfaEdge>) {
         val incomingEdges: MutableSet<XcfaEdge> = LinkedHashSet(loc.incomingEdges)
-        while (!incomingEdges.isEmpty()) {
+        while (incomingEdges.isNotEmpty()) {
             val any = incomingEdges.stream().findAny()
             val incomingEdge = any.get()
             incomingEdges.remove(incomingEdge)

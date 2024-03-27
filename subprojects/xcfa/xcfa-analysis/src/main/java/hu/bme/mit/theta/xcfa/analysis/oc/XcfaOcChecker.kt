@@ -93,6 +93,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             status?.isUnsat == true -> SafetyResult.safe()
             status?.isSat == true -> SafetyResult.unsafe(getTrace(solver.model))
             else -> SafetyResult.unknown()
+        }.also {
+            logger.write(Logger.Level.MAINSTEP, "OC checker result: $it\n")
         }
     }
 

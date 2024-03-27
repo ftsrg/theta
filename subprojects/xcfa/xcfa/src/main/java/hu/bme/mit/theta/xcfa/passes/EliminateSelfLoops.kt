@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 import java.util.stream.Collectors
 
-class EliminateSelfLoops(val parseContext: ParseContext) : ProcedurePass {
+class EliminateSelfLoops : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         val selfLoops: Set<XcfaEdge> = builder.getEdges().stream()
@@ -30,8 +29,7 @@ class EliminateSelfLoops(val parseContext: ParseContext) : ProcedurePass {
         for (selfLoop in selfLoops) {
             builder.removeEdge(selfLoop)
             val source = selfLoop.source
-            val target: XcfaLocation = XcfaLocation(
-                source.name + "_" + XcfaLocation.uniqueCounter())
+            val target = XcfaLocation(source.name + "_" + XcfaLocation.uniqueCounter())
             builder.addLoc(target)
             for (outgoingEdge in LinkedHashSet(source.outgoingEdges)) {
                 builder.removeEdge(outgoingEdge)

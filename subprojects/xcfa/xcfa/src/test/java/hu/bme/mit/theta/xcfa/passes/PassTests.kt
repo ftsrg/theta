@@ -66,8 +66,8 @@ class PassTests {
             PassTestData(
                 global = { "x" type Int() init "0"; "y" type Int() init "0" },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext)
+                    NormalizePass(),
+                    DeterministicPass()
                 ),
                 input = {
                     (init to final) {
@@ -89,9 +89,9 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    EliminateSelfLoops(parseContext),
+                    NormalizePass(),
+                    DeterministicPass(),
+                    EliminateSelfLoops(),
                     LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_SEQ },
                 ),
                 input = {
@@ -112,9 +112,9 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    EliminateSelfLoops(parseContext),
+                    NormalizePass(),
+                    DeterministicPass(),
+                    EliminateSelfLoops(),
                     LbePass(parseContext).also { LbePass.level = LbePass.LbeLevel.LBE_FULL },
                 ),
                 input = {
@@ -145,8 +145,8 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    EmptyEdgeRemovalPass(parseContext),
-                    UnusedLocRemovalPass(parseContext)
+                    EmptyEdgeRemovalPass(),
+                    UnusedLocRemovalPass()
                 ),
                 input = {
                     (init to "L1") {
@@ -171,9 +171,9 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    ErrorLocationPass(false, parseContext)
+                    NormalizePass(),
+                    DeterministicPass(),
+                    ErrorLocationPass(false)
                 ),
                 input = {
                     (init to final) {
@@ -187,10 +187,10 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    FinalLocationPass(false, parseContext),
-                    UnusedLocRemovalPass(parseContext)
+                    NormalizePass(),
+                    DeterministicPass(),
+                    FinalLocationPass(false),
+                    UnusedLocRemovalPass()
                 ),
                 input = {
                     (init to "L1") {
@@ -269,8 +269,8 @@ class PassTests {
                     };
                 },
                 passes = listOf(
-                    NormalizePass(fpParseContext),
-                    DeterministicPass(fpParseContext),
+                    NormalizePass(),
+                    DeterministicPass(),
                     FpFunctionsToExprsPass(fpParseContext),
                 ),
                 input = {
@@ -343,8 +343,8 @@ class PassTests {
             PassTestData(
                 global = { "x" type Int() init "0"; "y" type Int() init "0"; },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
+                    NormalizePass(),
+                    DeterministicPass(),
                     HavocPromotionAndRange(parseContext),
                 ),
                 input = {
@@ -362,8 +362,8 @@ class PassTests {
             PassTestData(
                 global = { "x" type Int() init "0"; "y" type Int() init "0"; },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
+                    NormalizePass(),
+                    DeterministicPass(),
                     HavocPromotionAndRange(parseContext),
                 ),
                 input = {
@@ -386,10 +386,10 @@ class PassTests {
             PassTestData(
                 global = { "x" type Int() init "0" },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    RemoveDeadEnds(parseContext),
-                    UnusedLocRemovalPass(parseContext)
+                    NormalizePass(),
+                    DeterministicPass(),
+                    RemoveDeadEnds(),
+                    UnusedLocRemovalPass()
                 ),
                 input = {
                     (init to "L1") {
@@ -423,9 +423,9 @@ class PassTests {
             PassTestData(
                 global = { "x" type Int() init "0"; "thr1" type Int() init "0" },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    CLibraryFunctionsPass(parseContext),
+                    NormalizePass(),
+                    DeterministicPass(),
+                    CLibraryFunctionsPass(),
                 ),
                 input = {
                     (init to "L1") {
@@ -459,9 +459,9 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    SvCompIntrinsicsPass(parseContext),
+                    NormalizePass(),
+                    DeterministicPass(),
+                    SvCompIntrinsicsPass(),
                 ),
                 input = {
                     (init to "L1") {
@@ -483,9 +483,9 @@ class PassTests {
             PassTestData(
                 global = { "x" type Int() init "0"; "thr1" type Int() init "0" },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    NondetFunctionPass(parseContext)
+                    NormalizePass(),
+                    DeterministicPass(),
+                    NondetFunctionPass()
                 ),
                 input = {
                     (init to "L1") {
@@ -501,9 +501,9 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    UnusedVarPass(parseContext, NullLogger.getInstance())
+                    NormalizePass(),
+                    DeterministicPass(),
+                    UnusedVarPass(NullLogger.getInstance())
                 ),
                 input = {
                     "tmp" type Int()
@@ -514,9 +514,9 @@ class PassTests {
             PassTestData(
                 global = { },
                 passes = listOf(
-                    NormalizePass(parseContext),
-                    DeterministicPass(parseContext),
-                    EliminateSelfLoops(parseContext)
+                    NormalizePass(),
+                    DeterministicPass(),
+                    EliminateSelfLoops()
                 ),
                 input = {
                     ("L1" to "L1") {
@@ -563,8 +563,8 @@ class PassTests {
     fun testInline() {
         val xcfaSource = xcfa("example") {
             procedure("main", ProcedurePassManager(listOf(
-                NormalizePass(parseContext),
-                DeterministicPass(parseContext),
+                NormalizePass(),
+                DeterministicPass(),
                 InlineProceduresPass(parseContext)))) {
                 (init to final) {
                     "proc1"()

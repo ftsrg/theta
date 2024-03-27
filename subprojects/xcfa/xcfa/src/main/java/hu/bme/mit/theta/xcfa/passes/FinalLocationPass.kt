@@ -18,14 +18,13 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
  * Transforms all procedure calls to designated `abort` procedures into edges to final locations.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class FinalLocationPass(val checkOverflow: Boolean, val parseContext: ParseContext) : ProcedurePass {
+class FinalLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])

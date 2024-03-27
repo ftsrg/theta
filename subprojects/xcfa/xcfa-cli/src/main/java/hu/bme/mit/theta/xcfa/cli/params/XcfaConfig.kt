@@ -99,7 +99,11 @@ data class FrontendConfig<T : SpecFrontendConfig>(
 
     @Parameter(names = ["--unroll"],
         description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
-    var loopUnroll: Int = -1,
+    var loopUnroll: Int = 1000,
+
+    @Parameter(names = ["--force-unroll"],
+        description = "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)")
+    var forceUnroll: Int = -1,
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C,
