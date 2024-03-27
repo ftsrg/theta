@@ -58,6 +58,7 @@ internal class XcfaEvent(
 
 internal data class Violation(
     val errorLoc: XcfaLocation,
+    val pid: Int,
     val guard: Expr<BoolType>,
     val lastEvents: List<XcfaEvent>,
 )

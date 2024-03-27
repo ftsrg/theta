@@ -59,6 +59,10 @@ abstract class Event(
         enabled = e
         return e
     }
+
+    override fun toString(): String {
+        return "Event(${const.name}[${type.toString()[0]}], pid=$pid, clkId=$clkId, guard=$guard)"
+    }
 }
 
 enum class RelationType { PO, RFI, RFE }
