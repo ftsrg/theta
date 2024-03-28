@@ -16,7 +16,6 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.NondetLabel
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
@@ -26,7 +25,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
  * Sets the `deterministic` flag on the ProcedureBuilder
  */
 
-class DeterministicPass(val parseContext: ParseContext) : ProcedurePass {
+class DeterministicPass : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["normal"])

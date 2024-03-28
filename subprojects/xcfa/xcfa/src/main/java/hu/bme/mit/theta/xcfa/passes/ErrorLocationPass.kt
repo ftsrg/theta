@@ -16,14 +16,13 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
  * Transforms all procedure calls to designated error procedures into edges to error locations.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class ErrorLocationPass(val checkOverflow: Boolean, val parseContext: ParseContext) : ProcedurePass {
+class ErrorLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -47,6 +46,6 @@ class ErrorLocationPass(val checkOverflow: Boolean, val parseContext: ParseConte
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && it.name.equals(if (checkOverflow) "overflow" else "reach_error")
+        return it is InvokeLabel && it.name == if (checkOverflow) "overflow" else "reach_error"
     }
 }

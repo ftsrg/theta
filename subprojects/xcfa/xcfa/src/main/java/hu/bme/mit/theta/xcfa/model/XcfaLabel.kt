@@ -125,7 +125,7 @@ enum class ChoiceType {
 data class StmtLabel @JvmOverloads constructor(
     val stmt: Stmt,
     val choiceType: ChoiceType = ChoiceType.NONE,
-    override val metadata: MetaData
+    override val metadata: MetaData = EmptyMetaData
 ) : XcfaLabel(metadata = metadata) {
 
     init {
@@ -183,7 +183,7 @@ data class WriteLabel constructor(
 
 data class FenceLabel(
     val labels: Set<String>,
-    override val metadata: MetaData
+    override val metadata: MetaData = EmptyMetaData
 ) : XcfaLabel(metadata = metadata) {
 
     override fun toString(): String {

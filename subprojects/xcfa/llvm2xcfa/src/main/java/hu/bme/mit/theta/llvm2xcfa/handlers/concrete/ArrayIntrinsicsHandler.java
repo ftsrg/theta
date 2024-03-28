@@ -82,7 +82,7 @@ public class ArrayIntrinsicsHandler extends BaseInstructionHandler {
 
         Expr<?> expr = ArrayExprs.Write(cast(var.getRef(), ArrayType.of(Int(), val.getType())), cast(idx.getExpr(functionState.getValues()), Int()), cast(val.getExpr(functionState.getValues()), val.getType()));
         Stmt stmt = Assign(cast(var, var.getType()), cast(expr, var.getType()));
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt, EmptyMetaData.INSTANCE), new LlvmMetadata(instruction.getLineNumber()));
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt), new LlvmMetadata(instruction.getLineNumber()));
         functionState.getProcedureBuilder().addLoc(loc);
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(loc);

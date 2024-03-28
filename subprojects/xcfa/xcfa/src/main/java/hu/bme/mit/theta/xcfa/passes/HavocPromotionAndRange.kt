@@ -67,7 +67,7 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                 if (indices.isNotEmpty()) {
                     builder.removeEdge(edge)
                     val newLabels = ArrayList<XcfaLabel>()
-                    var offset = 0;
+                    var offset = 0
                     for ((index, label) in edge.label.labels.withIndex()) {
                         if (indices.size <= offset || index < indices[offset]) newLabels.add(label)
                         else if (index == indices[offset]) {
@@ -76,7 +76,7 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                             val havoc = Havoc(varDecl)
                             newLabels.add(
                                 StmtLabel(havoc, metadata = edge.label.labels[index].metadata))
-//                            newLabels.add(StmtLabel(type.limit(varDecl.ref), metadata = EmptyMetaData))
+//                            newLabels.add(StmtLabel(type.limit(varDecl.ref)))
                         } else if (index == indices[offset] + 1) {
                             offset++
                         } else {

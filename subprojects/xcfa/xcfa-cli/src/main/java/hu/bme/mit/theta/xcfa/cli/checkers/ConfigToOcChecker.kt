@@ -19,28 +19,21 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.cli.params.Backend
+import hu.bme.mit.theta.xcfa.analysis.oc.XcfaOcChecker
+import hu.bme.mit.theta.xcfa.cli.params.OcConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: ParseContext,
-    logger: Logger,
-    uniqueLogger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> =
-    if (config.backendConfig.inProcess) {
-        InProcessChecker(xcfa, config, parseContext, logger)
-    } else {
-        when (config.backendConfig.backend) {
-            Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
-            Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, config, logger)
-            Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
-            Backend.LAZY -> TODO()
-            Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-            Backend.NONE -> SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> { _ -> SafetyResult.unknown() }
-        }
+fun getOcChecker(xcfa: XCFA, mcm: MCM,
+    config: XcfaConfig<*, *>,
+    logger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+    val ocChecker = XcfaOcChecker(xcfa, (config.backendConfig.specConfig as OcConfig).decisionProcedure, logger)
+    return object : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+        override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<*>, XcfaAction> = check()
+        override fun check(): SafetyResult<XcfaState<*>, XcfaAction> = ocChecker.check()
     }
-
+}

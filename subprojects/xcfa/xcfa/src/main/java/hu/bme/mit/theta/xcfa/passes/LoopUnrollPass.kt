@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.getFlatLabels
@@ -35,23 +35,27 @@ import java.util.*
 /**
  * Unrolls loops where the number of loop executions can be determined statically.
  * The UNROLL_LIMIT refers to the number of loop executions: loops that are executed more times than this limit
- * are not unrolled.
+ * are not unrolled. Loops with unknown number of iterations are unrolled to FORCE_UNROLL_LIMIT iterations (this
+ * way a safe result might not be valid).
  */
 class LoopUnrollPass : ProcedurePass {
 
     companion object {
 
-        var UNROLL_LIMIT = 50
+        var UNROLL_LIMIT = 1000
+        var FORCE_UNROLL_LIMIT = -1
+        var FORCE_UNROLL_USED = false
 
-        private val solver: Solver = Z3LegacySolverFactory.getInstance().createSolver()
+        private val solver: Solver = Z3SolverFactory.getInstance().createSolver()
     }
 
     private val testedLoops = mutableSetOf<Loop>()
 
     private data class Loop(
-        val loopVar: VarDecl<*>, val loopVarModifiers: List<XcfaEdge>, val loopVarInit: XcfaEdge,
-        val loopCondEdge: XcfaEdge, val exitCondEdge: XcfaEdge, val loopStart: XcfaLocation,
-        val loopLocs: List<XcfaLocation>, val loopEdges: List<XcfaEdge>
+        val loopStart: XcfaLocation, val loopLocs: Set<XcfaLocation>, val loopEdges: Set<XcfaEdge>,
+        val loopVar: VarDecl<*>?, val loopVarInit: XcfaEdge?, val loopVarModifiers: List<XcfaEdge>?,
+        val loopStartEdges: List<XcfaEdge>, val exitEdges: Map<XcfaLocation, List<XcfaEdge>>,
+        val properlyUnrollable: Boolean
     ) {
 
         private class BasicStmtAction(private val stmt: Stmt) : StmtAction() {
@@ -61,15 +65,20 @@ class LoopUnrollPass : ProcedurePass {
             override fun getStmts() = listOf(stmt)
         }
 
-        private fun count(transFunc: ExplStmtTransFunc): Int {
+        private fun count(transFunc: ExplStmtTransFunc): Int? {
+            if (!properlyUnrollable) return null
+            check(loopVar != null && loopVarModifiers != null && loopVarInit != null)
+            check(loopStartEdges.size == 1 && exitEdges.size == 1)
+
             val prec = ExplPrec.of(listOf(loopVar))
             var state = ExplState.of(ImmutableValuation.empty())
             state = transFunc.getSuccStates(state, BasicStmtAction(loopVarInit), prec).first()
 
             var cnt = 0
-            while (!transFunc.getSuccStates(state, BasicStmtAction(loopCondEdge), prec).first().isBottom) {
+            val loopCondAction = BasicStmtAction(loopStartEdges.first())
+            while (!transFunc.getSuccStates(state, loopCondAction, prec).first().isBottom) {
                 cnt++
-                if (cnt > UNROLL_LIMIT) return -1
+                if (UNROLL_LIMIT in 0 until cnt) return null
                 state = transFunc.getSuccStates(state, BasicStmtAction(loopVarModifiers), prec).first()
             }
             return cnt
@@ -81,35 +90,33 @@ class LoopUnrollPass : ProcedurePass {
             }
             return when {
                 this == stmtToRemove -> NopLabel
-
-                this is SequenceLabel -> SequenceLabel(
-                    labels.map { it.removeCondition() }, metadata
-                )
-
+                this is SequenceLabel -> SequenceLabel(labels.map { it.removeCondition() }, metadata)
                 else -> this
             }
         }
 
-        private fun copyBody(builder: XcfaProcedureBuilder, startLocation: XcfaLocation, index: Int): XcfaLocation {
+        private fun copyBody(builder: XcfaProcedureBuilder, startLoc: XcfaLocation, index: Int, removeCond: Boolean)
+            : Map<XcfaLocation, XcfaLocation> {
             val locs = loopLocs.associateWith {
-                val loc = XcfaLocation("loop${index}_${it.name}")
+                val loc = XcfaLocation("${it.name}_loop${index}")
                 builder.addLoc(loc)
                 loc
             }
 
             loopEdges.forEach {
-                val newSource = if (it.source == loopStart) startLocation else checkNotNull(locs[it.source])
-                val newLabel = if (it.source == loopStart) it.label.removeCondition() else it.label
-                val edge = XcfaEdge(newSource, checkNotNull(locs[it.target]!!), newLabel, it.metadata)
+                val newSource = if (it.source == loopStart) startLoc else locs[it.source]!!
+                val newLabel = if (it.source == loopStart && removeCond) it.label.removeCondition() else it.label
+                val edge = XcfaEdge(newSource, locs[it.target]!!, newLabel, it.metadata)
                 builder.addEdge(edge)
             }
 
-            return checkNotNull(locs[loopStart])
+            return locs
         }
 
         fun unroll(builder: XcfaProcedureBuilder, transFunc: ExplStmtTransFunc) {
-            val count = count(transFunc)
-            if (count == -1) return
+            val count = count(transFunc) ?: return forceUnroll(builder)
+            check(loopStartEdges.size == 1 && exitEdges.size == 1 && exitEdges.flatMap { it.value }.size == 1)
+            val exitCondEdge = exitEdges[loopStart]!!.first()
 
             (loopLocs - loopStart).forEach(builder::removeLoc)
             loopEdges.forEach(builder::removeEdge)
@@ -117,7 +124,7 @@ class LoopUnrollPass : ProcedurePass {
 
             var startLocation = loopStart
             for (i in 0 until count) {
-                startLocation = copyBody(builder, startLocation, i)
+                startLocation = copyBody(builder, startLocation, i, true)[loopStart]!!
             }
 
             builder.addEdge(
@@ -128,6 +135,30 @@ class LoopUnrollPass : ProcedurePass {
                     metadata = exitCondEdge.metadata
                 )
             )
+        }
+
+        fun forceUnroll(builder: XcfaProcedureBuilder) {
+            if (FORCE_UNROLL_LIMIT == -1) return
+            FORCE_UNROLL_USED = true
+
+            (loopLocs - loopStart).forEach(builder::removeLoc)
+            loopLocs.flatMap { it.outgoingEdges }.forEach(builder::removeEdge)
+
+            var startLocation = loopStart
+            for (i in 0 until FORCE_UNROLL_LIMIT) {
+                val newLocs = copyBody(builder, startLocation, i, false)
+                exitEdges.forEach { (loc, edges) ->
+                    edges.forEach { edge ->
+                        val source = if (loc == loopStart) startLocation else newLocs[loc]!!
+                        builder.addEdge(XcfaEdge(source, edge.target, edge.label, edge.metadata))
+                    }
+                }
+                startLocation = newLocs[loopStart]!!
+            }
+
+            exitEdges[loopStart]!!.forEach { edge ->
+                builder.addEdge(XcfaEdge(startLocation, edge.target, edge.label, edge.metadata))
+            }
         }
     }
 
@@ -153,7 +184,7 @@ class LoopUnrollPass : ProcedurePass {
             } else {
                 val edge = edgesToExplore.random()
                 if (edge.target in stack) { // loop found
-                    isUnrollable(edge.target, stack)?.let { return it }
+                    getLoop(edge.target)?.let { return it }
                 } else {
                     stack.push(edge.target)
                 }
@@ -163,78 +194,135 @@ class LoopUnrollPass : ProcedurePass {
         return null
     }
 
-    private fun isUnrollable(loopStart: XcfaLocation, stack: Stack<XcfaLocation>): Loop? {
-        if (loopStart.outgoingEdges.size != 2) return null
-        val loopLocations = stack.slice(stack.lastIndexOf(loopStart) until stack.size)
-        val loopEdges = loopLocations.flatMap { loc ->
-            if (loc == loopStart) {
-                val loopEdge = loc.outgoingEdges.filter { it.target in loopLocations }
-                if (loopEdge.size != 1) return null
-                loopEdge
-            } else {
-                if (!loopLocations.containsAll(loc.outgoingEdges.map { it.target })) {
-                    return null
-                }
-                loc.outgoingEdges
-            }
+    /**
+     * Find a loop from the given start location that can be unrolled.
+     */
+    private fun getLoop(loopStart: XcfaLocation): Loop? {
+        var properlyUnrollable = true
+        if (loopStart.outgoingEdges.size != 2) {
+            properlyUnrollable = false  // more than two outgoing edges from the loop start not supported
         }
 
+        val (loopLocations, loopEdges) = getLoopElements(loopStart)
+        if (loopEdges.isEmpty()) {
+            return null // unsupported loop structure
+        }
+        if ((loopLocations - loopStart).any { l -> l.outgoingEdges.any { it.target !in loopLocations } }) {
+            properlyUnrollable = false // break not supported
+        }
+
+        val loopCondEdges = loopStart.outgoingEdges.filter { it.target in loopLocations }
+        if (loopCondEdges.size != 1) properlyUnrollable = false // more than one loop condition not supported
+
+        // find the loop variable based on the outgoing edges from the loop start location
         val loopVar = loopStart.outgoingEdges.map {
             val vars = it.label.collectVarsWithAccessType()
-            if (vars.size != 1) return null
-            vars.keys.first()
-        }.reduce { v1, v2 -> if (v1 != v2) return null else v1 }
+            if (vars.size != 1) {
+                null // multiple variables in the loop condition not supported
+            } else {
+                vars.keys.first()
+            }
+        }.reduce { v1, v2 -> if (v1 != v2) null else v1 }
+        if (loopVar == null) properlyUnrollable = false
 
-        var edge = loopStart.outgoingEdges.find { it.target in loopLocations }!!
-        val necessaryLoopEdges = mutableSetOf(edge)
-        while (edge.target.outgoingEdges.size == 1) {
-            edge = edge.target.outgoingEdges.first()
-            necessaryLoopEdges.add(edge)
-        }
-        val finalEdges = loopStart.incomingEdges.filter { it.source in loopLocations }
-        if (finalEdges.size == 1) {
-            edge = finalEdges.first()
-            necessaryLoopEdges.add(edge)
-            while (edge.source.incomingEdges.size == 1) {
-                edge = edge.source.incomingEdges.first()
+        val (loopVarInit, loopVarModifiers) = run {
+            if (!properlyUnrollable) return@run null
+
+            // find (a subset of) edges that are executed in every loop iteration
+            var edge = loopStart.outgoingEdges.find { it.target in loopLocations }!!
+            val necessaryLoopEdges = mutableSetOf(edge)
+            while (edge.target.outgoingEdges.size == 1) {
+                edge = edge.target.outgoingEdges.first()
                 necessaryLoopEdges.add(edge)
             }
-        }
-
-        val loopVarModifiers = loopEdges.filter {
-            val vars = it.label.collectVarsWithAccessType()
-            if (vars[loopVar].isWritten) {
-                if (it !in necessaryLoopEdges || vars.size > 1) return null
-                true
-            } else {
-                false
+            val finalEdges = loopStart.incomingEdges.filter { it.source in loopLocations }
+            if (finalEdges.size == 1) {
+                edge = finalEdges.first()
+                necessaryLoopEdges.add(edge)
+                while (edge.source.incomingEdges.size == 1) {
+                    edge = edge.source.incomingEdges.first()
+                    necessaryLoopEdges.add(edge)
+                }
             }
-        }
 
-        lateinit var loopVarInit: XcfaEdge
-        var loc = loopStart
-        while (true) {
-            val inEdges = loc.incomingEdges.filter { it.source !in loopLocations }
-            if (inEdges.size != 1) return null
-            val inEdge = inEdges.first()
-            val vars = inEdge.label.collectVarsWithAccessType()
-            if (vars[loopVar].isWritten) {
-                if (vars.size > 1) return null
-                loopVarInit = inEdge
-                break
+            // find edges that modify the loop variable
+            val loopVarModifiers = loopEdges.filter {
+                val vars = it.label.collectVarsWithAccessType()
+                if (vars[loopVar].isWritten) {
+                    if (it !in necessaryLoopEdges || vars.size > 1) return@run null // loop variable modification cannot be determined statically
+                    true
+                } else {
+                    false
+                }
             }
-            loc = inEdge.source
+
+            // find loop variable initialization before the loop
+            lateinit var loopVarInit: XcfaEdge
+            var loc = loopStart
+            while (true) {
+                val inEdges = loc.incomingEdges.filter { it.source !in loopLocations }
+                if (inEdges.size != 1) return@run null
+                val inEdge = inEdges.first()
+                val vars = inEdge.label.collectVarsWithAccessType()
+                if (vars[loopVar].isWritten) {
+                    if (vars.size > 1) return@run null
+                    loopVarInit = inEdge
+                    break
+                }
+                loc = inEdge.source
+            }
+
+            loopVarInit to loopVarModifiers
+        } ?: run {
+            properlyUnrollable = false
+            null to null
         }
 
+        val exits = loopLocations.mapNotNull { loc ->
+            val exitEdges = loc.outgoingEdges.filter { it.target !in loopLocations }
+            if (exitEdges.isEmpty()) null else (loc to exitEdges)
+        }.toMap()
         return Loop(
-            loopVar = loopVar,
-            loopVarModifiers = loopVarModifiers,
-            loopVarInit = loopVarInit,
-            loopCondEdge = loopStart.outgoingEdges.find { it.target in loopLocations }!!,
-            exitCondEdge = loopStart.outgoingEdges.find { it.target !in loopLocations }!!,
             loopStart = loopStart,
             loopLocs = loopLocations,
-            loopEdges = loopEdges
+            loopEdges = loopEdges,
+            loopVar = loopVar,
+            loopVarInit = loopVarInit,
+            loopVarModifiers = loopVarModifiers,
+            loopStartEdges = loopCondEdges,
+            exitEdges = exits,
+            properlyUnrollable = properlyUnrollable,
         ).also { if (it in testedLoops) return null }
+    }
+
+    /**
+     * Find loop locations and edges.
+     */
+    private fun getLoopElements(loopStart: XcfaLocation): Pair<Set<XcfaLocation>, Set<XcfaEdge>> {
+        val backSearch: (XcfaLocation) -> Pair<Set<XcfaLocation>, List<XcfaEdge>>? = backSearch@{ startLoc ->
+            val locs = mutableSetOf<XcfaLocation>()
+            val edges = mutableListOf<XcfaEdge>()
+            val toVisit = mutableListOf(startLoc)
+            while (toVisit.isNotEmpty()) {
+                val current = toVisit.removeFirst()
+                if (current == loopStart) continue
+                if (current.incomingEdges.size == 0) return@backSearch null // not part of the loop
+                if (locs.add(current)) {
+                    edges.addAll(current.incomingEdges)
+                    toVisit.addAll(current.incomingEdges.map { it.source })
+                }
+            }
+            locs to edges
+        }
+
+        val locs = mutableSetOf(loopStart)
+        val edges = mutableSetOf<XcfaEdge>()
+        loopStart.incomingEdges.forEach { incoming ->
+            val (l, e) = backSearch(incoming.source) ?: return@forEach
+            locs.addAll(l)
+            edges.addAll(e)
+            edges.add(incoming)
+        }
+        return locs to edges
     }
 }

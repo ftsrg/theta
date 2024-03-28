@@ -114,6 +114,9 @@ private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf
 private operator fun VarAccessMap?.plus(other: VarAccessMap?): VarAccessMap =
     listOfNotNull(this, other).mergeAndCollect()
 
+inline val XcfaLabel.isAtomicBegin: Boolean get() = this is FenceLabel && "ATOMIC_BEGIN" in labels
+inline val XcfaLabel.isAtomicEnd: Boolean get() = this is FenceLabel && "ATOMIC_END" in labels
+
 /**
  * The list of mutexes acquired by the label.
  */
@@ -160,7 +163,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ }
+    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
     is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
@@ -309,10 +312,10 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
         visitedLocations.add(visiting)
         for (outEdge in visiting.outgoingEdges) {
             var isNextAtomic = checkNotNull(isAtomic[visiting])
-            if (outEdge.getFlatLabels().any { it is FenceLabel && it.labels.contains("ATOMIC_BEGIN") }) {
+            if (outEdge.getFlatLabels().any { it.isAtomicBegin }) {
                 isNextAtomic = true
             }
-            if (outEdge.getFlatLabels().any { it is FenceLabel && it.labels.contains("ATOMIC_END") }) {
+            if (outEdge.getFlatLabels().any { it.isAtomicEnd }) {
                 isNextAtomic = false
             }
             val target = outEdge.target

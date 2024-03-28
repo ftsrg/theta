@@ -95,14 +95,12 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
                         cast(type.castTo(globalDeclaration.get1().initExpr.expression),
-                            globalDeclaration.get2().type)),
-                    metadata = EmptyMetaData
+                            globalDeclaration.get2().type))
                 ))
             } else {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.nullValue, globalDeclaration.get2().type)),
-                    metadata = EmptyMetaData
+                        cast(type.nullValue, globalDeclaration.get2().type))
                 ))
             }
         }

@@ -115,7 +115,7 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
             }
             procedure = procedures.get(procName);
             Stmt returnTrue = AssignStmt.create(getOutParam(procedure), BoolLitExpr.of(true));
-            XcfaEdge edge = new XcfaEdge(procedure.getInitLoc(), procedure.getFinalLoc().get(), new StmtLabel(returnTrue, EmptyMetaData.INSTANCE));
+            XcfaEdge edge = new XcfaEdge(procedure.getInitLoc(), procedure.getFinalLoc().get(), new StmtLabel(returnTrue));
             procedure.addEdge(edge);
         }
         return super.visitChc_assert(ctx);
@@ -178,13 +178,13 @@ public class ChcBackwardXcfaBuilder extends CHCBaseVisitor<Object> implements Ch
             XcfaEdge callEdge = new XcfaEdge(from, middle, new InvokeLabel(calledProcedure.getName(), params, EmptyMetaData.INSTANCE));
             builder.addEdge(callEdge);
 
-            XcfaEdge assertEdge = new XcfaEdge(middle, to, new StmtLabel(AssumeStmt.of(ret.getRef()), EmptyMetaData.INSTANCE));
+            XcfaEdge assertEdge = new XcfaEdge(middle, to, new StmtLabel(AssumeStmt.of(ret.getRef())));
             builder.addEdge(assertEdge);
 
             from = to;
         }
         Stmt returnTrue = AssignStmt.create(getOutParam(builder), BoolLitExpr.of(true));
-        XcfaEdge edge = new XcfaEdge(from, end, new StmtLabel(returnTrue, EmptyMetaData.INSTANCE));
+        XcfaEdge edge = new XcfaEdge(from, end, new StmtLabel(returnTrue));
         builder.addEdge(edge);
     }
 }

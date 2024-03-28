@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -28,7 +27,7 @@ import hu.bme.mit.theta.xcfa.model.*
  * Transforms the library procedure calls with names in supportedFunctions into model elements.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class CLibraryFunctionsPass(val parseContext: ParseContext) : ProcedurePass {
+class CLibraryFunctionsPass : ProcedurePass {
 
     private val supportedFunctions = setOf(
         "printf",

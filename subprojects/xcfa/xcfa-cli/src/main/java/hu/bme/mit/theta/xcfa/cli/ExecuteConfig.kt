@@ -90,6 +90,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
     }
 
     LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
+    LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
     ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
@@ -106,6 +107,9 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     rule("DPORWithoutDFS") {
         (config.backendConfig.specConfig as? CegarConfig)?.porLevel?.isDynamic == true &&
             (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.search != Search.DFS
+    }
+    rule("SensibleLoopUnrollLimits") {
+        config.frontendConfig.loopUnroll != -1 && config.frontendConfig.loopUnroll < config.frontendConfig.forceUnroll
     }
     // TODO add more validation options
 }
@@ -135,6 +139,7 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
     }
 
     val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
+
     val mcm = if (config.inputConfig.catFile != null) {
         CatDslManager.createMCM(config.inputConfig.catFile!!)
     } else {
@@ -169,6 +174,15 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
             val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
             val result = exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug) {
                 checker.check()
+            }.let { result ->
+                when {
+                    !LoopUnrollPass.FORCE_UNROLL_USED -> result
+                    result.isSafe -> { // cannot report safe if force unroll was used
+                        logger.write(Logger.Level.RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
+                        SafetyResult.unknown<State, Action>()
+                    }
+                    else -> result
+                }
             }
 
             logger.write(Logger.Level.INFO, "Backend finished (in ${

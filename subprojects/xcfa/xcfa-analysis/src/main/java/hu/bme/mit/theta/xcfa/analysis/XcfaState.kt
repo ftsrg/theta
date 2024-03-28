@@ -167,12 +167,12 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                 /* init */
                 SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
                     StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
-                        cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata = EmptyMetaData)
+                        cast(it.key.changeVars(tempLookup).ref, it.key.type)))
                 }),
                 /* deinit */
                 SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
                     StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
-                        cast(it.key.changeVars(lookup).ref, it.key.type)), metadata = EmptyMetaData)
+                        cast(it.key.changeVars(lookup).ref, it.key.type)))
                 }),
             ))))
         val newMutexes = LinkedHashMap(mutexes)
@@ -264,12 +264,12 @@ data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: L
             /* init */
             SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
                 StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
-                    cast(it.key.changeVars(tempLookup).ref, it.key.type)), metadata = EmptyMetaData)
+                    cast(it.key.changeVars(tempLookup).ref, it.key.type)))
             }),
             /* deinit */
             SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
                 StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
-                    cast(it.key.changeVars(lookup).ref, it.key.type)), metadata = EmptyMetaData)
+                    cast(it.key.changeVars(lookup).ref, it.key.type)))
             }),
         ))
         return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts,

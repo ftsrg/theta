@@ -193,6 +193,13 @@ class XcfaProcedureBuilder @JvmOverloads constructor(
         }
     }
 
+    fun copyMetaLocs(from: XcfaProcedureBuilder) {
+        check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
+        initLoc = from.initLoc
+        finalLoc = from.finalLoc
+        errorLoc = from.errorLoc
+    }
+
     fun addEdge(toAdd: XcfaEdge) {
         check(!this::optimized.isInitialized) { "Cannot add/remove new elements after optimization passes!" }
         addLoc(toAdd.source)

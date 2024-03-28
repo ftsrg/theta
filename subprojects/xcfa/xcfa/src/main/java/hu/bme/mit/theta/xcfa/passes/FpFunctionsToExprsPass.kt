@@ -127,8 +127,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             FpRoundToIntegralExpr.of(FpRoundingMode.RTZ,
                 TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
                     CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
@@ -141,8 +141,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             FpRoundToIntegralExpr.of(FpRoundingMode.RTP,
                 TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
                     CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
@@ -192,7 +192,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         Preconditions.checkState(callStmt.params.size == 2, "Function is presumed to be unary!")
         val expr = callStmt.params[0]
         Preconditions.checkState(expr is RefExpr<*>)
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
             val type = CComplexType.getType(expr, parseContext)
             val assign: AssignStmt<*> = Stmts.Assign(
                 TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
@@ -200,7 +200,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
                     AbstractExprs.Ite<Type>(
                         FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>),
                         type.unitValue, type.nullValue), type.smtType))
-            parseContext.getMetadata().create(assign.expr, "cType", type)
+            parseContext.metadata.create(assign.expr, "cType", type)
             return StmtLabel(assign, metadata = callStmt.metadata)
         } else {
             throw UnsupportedOperationException("Not yet supported without cType")
@@ -215,8 +215,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             FpRoundToIntegralExpr.of(FpRoundingMode.RNA,
                 TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
                     CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
@@ -229,8 +229,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             FpSqrtExpr.of(FpRoundingMode.RNE,
                 TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
                     CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
@@ -249,8 +249,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
                 CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>,
                 TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[2]),
                     CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
@@ -265,8 +265,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
                 CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>,
                 TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[2]),
                     CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
@@ -279,8 +279,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             FpRoundToIntegralExpr.of(FpRoundingMode.RTN,
                 TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
                     CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }
@@ -292,8 +292,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val assign = Stmts.Assign((expr as RefExpr<*>).decl as VarDecl<FpType>,
             FpAbsExpr.of(TypeUtils.cast(CComplexType.getType(expr, parseContext).castTo(callStmt.params[1]),
                 CComplexType.getType(expr, parseContext).smtType) as Expr<FpType?>))
-        if (parseContext.getMetadata().getMetadataValue(expr, "cType").isPresent) {
-            parseContext.getMetadata().create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
+        if (parseContext.metadata.getMetadataValue(expr, "cType").isPresent) {
+            parseContext.metadata.create(assign.expr, "cType", CComplexType.getType(expr, parseContext))
         }
         return StmtLabel(assign, metadata = callStmt.metadata)
     }

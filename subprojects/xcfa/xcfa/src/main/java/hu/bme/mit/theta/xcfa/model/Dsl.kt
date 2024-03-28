@@ -114,14 +114,14 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
             val lhs: VarDecl<Type> = this@XcfaProcedureBuilderContext.builder.lookup(
                 this) as VarDecl<Type>
             val rhs: Expr<Type> = this@XcfaProcedureBuilderContext.builder.parse(to) as Expr<Type>
-            val label = StmtLabel(Assign(lhs, rhs), metadata = EmptyMetaData)
+            val label = StmtLabel(Assign(lhs, rhs))
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
         infix fun VarDecl<*>.assign(to: String): SequenceLabel {
             val rhs: Expr<Type> = this@XcfaProcedureBuilderContext.builder.parse(to) as Expr<Type>
-            val label = StmtLabel(Assign(this as VarDecl<Type>, rhs), metadata = EmptyMetaData)
+            val label = StmtLabel(Assign(this as VarDecl<Type>, rhs))
             labelList.add(label)
             return SequenceLabel(labelList)
         }
@@ -130,40 +130,40 @@ class XcfaProcedureBuilderContext(val builder: XcfaProcedureBuilder) {
             val lhs: VarDecl<Type> = this@XcfaProcedureBuilderContext.builder.lookup(
                 this) as VarDecl<Type>
             val rhs: Expr<Type> = to as Expr<Type>
-            val label = StmtLabel(Assign(lhs, rhs), metadata = EmptyMetaData)
+            val label = StmtLabel(Assign(lhs, rhs))
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
         infix fun VarDecl<*>.assign(to: Expr<*>): SequenceLabel {
             val rhs: Expr<Type> = to as Expr<Type>
-            val label = StmtLabel(Assign(this as VarDecl<Type>, rhs), metadata = EmptyMetaData)
+            val label = StmtLabel(Assign(this as VarDecl<Type>, rhs))
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
         fun assume(value: String): SequenceLabel {
             val expr = this@XcfaProcedureBuilderContext.builder.parse(value) as Expr<BoolType>
-            val label = StmtLabel(Assume(expr), metadata = EmptyMetaData)
+            val label = StmtLabel(Assume(expr))
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
         fun assume(expr: Expr<BoolType>): SequenceLabel {
-            val label = StmtLabel(Assume(expr), metadata = EmptyMetaData)
+            val label = StmtLabel(Assume(expr))
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
         fun havoc(value: String): SequenceLabel {
             val varDecl = this@XcfaProcedureBuilderContext.builder.lookup(value)
-            val label = StmtLabel(Havoc(varDecl), metadata = EmptyMetaData)
+            val label = StmtLabel(Havoc(varDecl))
             labelList.add(label)
             return SequenceLabel(labelList)
         }
 
         fun havoc(varDecl: VarDecl<*>): SequenceLabel {
-            val label = StmtLabel(Havoc(varDecl), metadata = EmptyMetaData)
+            val label = StmtLabel(Havoc(varDecl))
             labelList.add(label)
             return SequenceLabel(labelList)
         }

@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,7 +57,9 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
         List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
+                globalUsages.remove(declaration.getName());
                 globalUsages.put(declaration.getName(), new LinkedHashSet<>());
+                usedContexts.removeIf(c -> Objects.equals(c.get1(), declaration.getName()));
                 usedContexts.add(Tuple2.of(declaration.getName(), ctx));
                 current = declaration.getName();
                 super.visitGlobalDeclaration(ctx);

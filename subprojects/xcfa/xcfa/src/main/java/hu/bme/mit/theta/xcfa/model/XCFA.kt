@@ -24,8 +24,8 @@ import java.util.*
 class XCFA(
     val name: String,
     val vars: Set<XcfaGlobalVar>,                                   // global variables
-    procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
-    initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList()
+    val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
+    val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList()
 ) {
 
     var cachedHash: Int? = null
@@ -117,10 +117,8 @@ data class XcfaLocation @JvmOverloads constructor(
 
     companion object {
 
-        private var cnt: Int = 0;
-        fun uniqueCounter(): Int {
-            return cnt++;
-        }
+        private var cnt: Int = 0
+        fun uniqueCounter(): Int = cnt++
     }
 
     override fun toString(): String {

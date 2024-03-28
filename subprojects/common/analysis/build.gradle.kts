@@ -22,6 +22,8 @@ dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
+    implementation(Deps.javasmt)
+    implementation(project(":theta-solver-javasmt"))
     implementation(project(":theta-graph-solver"))
     testImplementation(project(":theta-solver-z3-legacy"))
     implementation("com.corundumstudio.socketio:netty-socketio:2.0.6")
