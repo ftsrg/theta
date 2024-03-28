@@ -24,6 +24,9 @@ import hu.bme.mit.theta.core.type.booltype.TrueExpr
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 
+internal inline fun <reified T> Array<Array<T?>>.copy(): Array<Array<T?>> =
+    Array(size) { i -> Array(size) { j -> this[i][j] } }
+
 interface OcChecker<E : Event> {
 
     val solver: Solver
@@ -33,6 +36,8 @@ interface OcChecker<E : Event> {
         pos: List<Relation<E>>,
         rfs: Map<VarDecl<*>, List<Relation<E>>>
     ): SolverStatus?
+
+    fun getRelations(): Array<Array<Reason?>>?
 }
 
 internal interface OcCheckerBase<E : Event> : OcChecker<E> {
@@ -90,7 +95,7 @@ internal interface OcCheckerBase<E : Event> : OcChecker<E> {
 }
 
 
-internal sealed class Reason {
+sealed class Reason {
 
     open val reasons: List<Reason> get() = listOf(this)
     val exprs: List<Expr<BoolType>> get() = toExprs()
@@ -99,27 +104,27 @@ internal sealed class Reason {
     open fun toExprs(): List<Expr<BoolType>> = reasons.map { it.toExprs() }.flatten().filter { it !is TrueExpr }
 }
 
-internal class CombinedReason(override val reasons: List<Reason>) : Reason()
-internal object PoReason : Reason() {
+class CombinedReason(override val reasons: List<Reason>) : Reason()
+object PoReason : Reason() {
 
     override val reasons get() = emptyList<Reason>()
     override fun toExprs(): List<Expr<BoolType>> = listOf()
 }
 
-internal class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
+class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
 
     override fun toExprs(): List<Expr<BoolType>> = listOf(relation.declRef)
 }
 
-internal sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: Event, val wRfRelation: Reason) : Reason() {
+sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: Event, val wRfRelation: Reason) : Reason() {
 
     override fun toExprs(): List<Expr<BoolType>> = listOf(rf.declRef, w.guardExpr) + wRfRelation.toExprs()
 }
 
-internal class WriteSerializationReason<E : Event>(rf: Relation<E>, w: Event, wBeforeRf: Reason) :
+class WriteSerializationReason<E : Event>(rf: Relation<E>, w: Event, wBeforeRf: Reason) :
     DerivedReason<E>(rf, w, wBeforeRf)
 
-internal class FromReadReason<E : Event>(rf: Relation<E>, w: Event, wAfterRf: Reason) :
+class FromReadReason<E : Event>(rf: Relation<E>, w: Event, wAfterRf: Reason) :
     DerivedReason<E>(rf, w, wAfterRf)
 
 internal class OcAssignment<E : Event>(
@@ -129,15 +134,13 @@ internal class OcAssignment<E : Event>(
     val solverLevel: Int = 0,
 ) {
 
-    companion object {
-
-        private fun initRels(rels: Array<Array<Reason?>>) =
-            Array(rels.size) { i -> Array(rels.size) { j -> rels[i][j] } }
-    }
-
     constructor(rels: Array<Array<Reason?>>, e: E, solverLevel: Int = 0)
-        : this(event = e, rels = initRels(rels), solverLevel = solverLevel)
+        : this(event = e, rels = rels.copy(), solverLevel = solverLevel)
 
     constructor(rels: Array<Array<Reason?>>, r: Relation<E>, solverLevel: Int = 0)
-        : this(relation = r, rels = initRels(rels), solverLevel = solverLevel)
+        : this(relation = r, rels = rels.copy(), solverLevel = solverLevel)
+
+    override fun toString(): String {
+        return "OcAssignment(relation=$relation, event=$event, solverLevel=$solverLevel)"
+    }
 }

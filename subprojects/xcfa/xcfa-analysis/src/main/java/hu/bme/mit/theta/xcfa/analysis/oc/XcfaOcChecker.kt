@@ -341,7 +341,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     }
 
     private fun getTrace(model: Valuation): Trace<XcfaState<*>, XcfaAction> {
-        val stateList = mutableListOf<XcfaState<*>>()
+        val stateList = mutableListOf<XcfaState<ExplState>>()
         val actionList = mutableListOf<XcfaAction>()
         val valuation = model.toMap()
         val (eventTrace, violation) = getEventTrace(model)
@@ -350,9 +350,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             t.pid to XcfaProcessState(locs = LinkedList(listOf(t.procedure.initLoc)), varLookup = LinkedList(listOf()))
         }
         var explState = ExplState.of(ImmutableValuation.from(mapOf()))
-        var state = XcfaState<ExplState>(xcfa, processes, explState)
-        stateList.add(state)
-        var lastEdge: XcfaEdge? = eventTrace[0].edge
+        stateList.add(XcfaState(xcfa, processes, explState))
+        var lastEdge: XcfaEdge = eventTrace[0].edge
 
         for ((index, event) in eventTrace.withIndex()) {
             valuation[event.const]?.let {
@@ -362,25 +361,25 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
 
             val nextEdge = eventTrace.getOrNull(index + 1)?.edge
             if (nextEdge != lastEdge) {
-                extendBetween(state, event.pid, lastEdge!!.source)?.let { (midActions, midStates) ->
+                extend(stateList.last(), event.pid, lastEdge.source, explState)?.let { (midActions, midStates) ->
                     actionList.addAll(midActions)
                     stateList.addAll(midStates)
                 }
 
+                val state = stateList.last()
                 actionList.add(XcfaAction(event.pid, lastEdge))
-                state = state.copy(processes = state.processes.toMutableMap().apply {
+                stateList.add(state.copy(processes = state.processes.toMutableMap().apply {
                     put(event.pid, XcfaProcessState(
-                        locs = LinkedList(listOf(lastEdge!!.target)),
+                        locs = LinkedList(listOf(lastEdge.target)),
                         varLookup = LinkedList(emptyList())
                     ))
-                }, sGlobal = explState)
-                stateList.add(state)
-                lastEdge = nextEdge
+                }, sGlobal = explState, mutexes = state.mutexes.update(lastEdge, event.pid)))
+                lastEdge = nextEdge ?: break
             }
         }
 
-        if (!state.processes[violation.pid]!!.locs.peek().error) {
-            extendBetween(state, violation.pid, violation.errorLoc)?.let { (midActions, midStates) ->
+        if (!stateList.last().processes[violation.pid]!!.locs.peek().error) {
+            extend(stateList.last(), violation.pid, violation.errorLoc, explState)?.let { (midActions, midStates) ->
                 actionList.addAll(midActions)
                 stateList.addAll(midStates)
             }
@@ -391,10 +390,11 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
 
     private fun getEventTrace(model: Valuation): Pair<List<E>, Violation> {
         val valuation = model.toMap()
-        val previousEvents: Collection<R>.(E) -> Collection<E> = { event ->
-            filter { it.to == event && it.enabled(valuation) == true && it.from.enabled(model) == true }.map { it.from }
-        }
         val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
+
+        val relations = ocChecker.getRelations()!!
+        val reverseRelations = Array(relations.size) { i -> Array(relations.size) { j -> relations[j][i] } }
+        val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
 
         val startEvents = violation.lastEvents.toMutableList() // startEvents are the last events actually
         val finished = mutableListOf<E>() // topological order
@@ -404,11 +404,12 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             while (stack.isNotEmpty()) {
                 val top = stack.peek()
                 if (top.eventsToVisit == null) {
-                    val previous = mutableSetOf<E>()
-                    previous.addAll(pos.previousEvents(top.event))
-                    if (top.event.type == EventType.READ) {
-                        rfs[top.event.const.varDecl]?.previousEvents(top.event)?.let { previous.addAll(it) }
-                    }
+                    val previous = reverseRelations[top.event.clkId].flatMapIndexed { i, r ->
+                        if (r == null) listOf()
+                        else eventsByClk[i] ?: listOf()
+                    } union pos.filter {
+                        it.to == top.event && it.enabled(valuation) == true && it.from.enabled(model) == true
+                    }.map { it.from }
                     top.eventsToVisit = previous.toMutableList()
                 }
 
@@ -418,7 +419,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                     continue
                 }
 
-                val visiting = top.eventsToVisit!!.removeFirst()
+                val visiting = top.eventsToVisit!!.find { it.clkId == top.event.clkId } ?: top.eventsToVisit!!.first()
+                top.eventsToVisit!!.remove(visiting)
                 if (visiting !in finished) {
                     stack.push(StackItem(visiting))
                 }
@@ -427,23 +429,23 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         return finished to violation
     }
 
-    private fun extendBetween(state: XcfaState<ExplState>, pid: Int,
-        to: XcfaLocation): Pair<List<XcfaAction>, List<XcfaState<ExplState>>>? {
+    private fun extend(state: XcfaState<ExplState>, pid: Int,
+        to: XcfaLocation, explState: ExplState): Pair<List<XcfaAction>, List<XcfaState<ExplState>>>? {
         val actions = mutableListOf<XcfaAction>()
         val states = mutableListOf<XcfaState<ExplState>>()
         var currentState = state
-        while (currentState.processes[pid]!!.locs.peek() != to) {
-            val edge = currentState.processes[pid]!!.locs.peek().outgoingEdges.find { e ->
-                e.target == to ||
-                    e.getFlatLabels().none { it is StmtLabel && (it.stmt as? AssumeStmt)?.cond == False() }
-            } ?: return null
-            actions.add(XcfaAction(pid, edge))
+
+        // extend the trace until the target location is reached
+        while (currentState.mutexes[""]?.equals(pid) == false || currentState.processes[pid]!!.locs.peek() != to) {
+            val stepPid = currentState.mutexes[""] ?: pid // finish atomic block first
+            val edge = currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
+            actions.add(XcfaAction(stepPid, edge))
             currentState = currentState.copy(processes = currentState.processes.toMutableMap().apply {
-                put(pid, XcfaProcessState(
+                put(stepPid, XcfaProcessState(
                     locs = LinkedList(listOf(edge.target)),
                     varLookup = LinkedList(emptyList())
                 ))
-            })
+            }, sGlobal = explState, mutexes = currentState.mutexes.update(edge, stepPid))
             states.add(currentState)
         }
         return actions to states
@@ -489,5 +491,14 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
         return constDecl
+    }
+
+    private fun Map<String, Int>.update(edge: XcfaEdge, pid: Int): Map<String, Int> {
+        val map = this.toMutableMap()
+        edge.getFlatLabels().forEach {
+            if (it.isAtomicBegin) map[""] = pid
+            if (it.isAtomicEnd) map.remove("")
+        }
+        return map
     }
 }

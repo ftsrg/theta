@@ -58,6 +58,8 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>, JavaSMTUserPropagat
         return solver.check()
     }
 
+    override fun getRelations(): Array<Array<Reason?>>? = partialAssignment.lastOrNull()?.rels?.copy()
+
     override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
         if (value) {
             flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }

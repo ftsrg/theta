@@ -61,7 +61,7 @@ abstract class Event(
     }
 
     override fun toString(): String {
-        return "Event(${const.name}[${type.toString()[0]}], pid=$pid, clkId=$clkId, guard=$guard)"
+        return "Event(pid=$pid, clkId=$clkId, ${const.name}[${type.toString()[0]}], guard=$guard)"
     }
 }
 

@@ -26,6 +26,7 @@ import java.util.*
 class BasicOcChecker<E : Event> : OcCheckerBase<E> {
 
     override val solver: Solver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
+    private var relations: Array<Array<Reason?>>? = null
 
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
@@ -85,10 +86,15 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E> {
                 }
             }
 
+            relations = decisionStack.peek().rels
             return solver.status // no conflict found, counterexample is valid
         }
+
+        relations = decisionStack.peek().rels
         return solver.status
     }
+
+    override fun getRelations(): Array<Array<Reason?>>? = relations?.copy()
 
     /**
      *  Returns true if obj is not on the stack (in other words, if the value of obj is changed in the new model)
