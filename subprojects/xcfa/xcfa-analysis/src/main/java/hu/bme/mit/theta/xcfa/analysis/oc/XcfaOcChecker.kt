@@ -159,7 +159,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
 
             if (current.loc.error) {
-                violations.add(Violation(current.loc, pid, Or(current.guards.map { it.toAnd() }), current.lastEvents))
+                val errorGuard = Or(current.lastEvents.map { it.guard.toAnd() })
+                violations.add(Violation(current.loc, pid, errorGuard, current.lastEvents))
                 continue
             }
 
@@ -396,18 +397,18 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         val reverseRelations = Array(relations.size) { i -> Array(relations.size) { j -> relations[j][i] } }
         val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
 
-        val startEvents = violation.lastEvents.toMutableList() // startEvents are the last events actually
+        val lastEvents = violation.lastEvents.filter { it.enabled(model) == true }.toMutableList()
         val finished = mutableListOf<E>() // topological order
-        while (startEvents.isNotEmpty()) { // DFS from startEvents as root nodes
+        while (lastEvents.isNotEmpty()) { // DFS from startEvents as root nodes
             val stack = Stack<StackItem>()
-            stack.push(StackItem(startEvents.removeFirst()))
+            stack.push(StackItem(lastEvents.removeFirst()))
             while (stack.isNotEmpty()) {
                 val top = stack.peek()
                 if (top.eventsToVisit == null) {
                     val previous = reverseRelations[top.event.clkId].flatMapIndexed { i, r ->
                         if (r == null) listOf()
                         else eventsByClk[i] ?: listOf()
-                    } union pos.filter {
+                    }.filter { it.enabled(model) == true } union pos.filter {
                         it.to == top.event && it.enabled(valuation) == true && it.from.enabled(model) == true
                     }.map { it.from }
                     top.eventsToVisit = previous.toMutableList()
