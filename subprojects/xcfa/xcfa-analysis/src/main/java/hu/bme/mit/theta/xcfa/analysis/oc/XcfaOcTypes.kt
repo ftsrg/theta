@@ -22,6 +22,8 @@ import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
@@ -37,7 +39,16 @@ enum class OcDecisionProcedureType {
 internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when (size) {
     0 -> BoolExprs.True()
     1 -> first()
-    else -> BoolExprs.And(this)
+    else -> And(this)
+}
+
+/**
+ * Takes the OR of the contained lists mapped to an AND expression. Simplifications are made based on the list sizes.
+ */
+internal fun Collection<List<Expr<BoolType>>>.toOrInList(): List<Expr<BoolType>> = when (size) {
+    0 -> listOf()
+    1 -> first()
+    else -> listOf(Or(map { it.toAnd() }))
 }
 
 internal class XcfaEvent(

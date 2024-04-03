@@ -33,7 +33,6 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -171,14 +170,15 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                 }
             }
 
+            val mergedGuard = current.guards.toOrInList()
             val assumeConsts = mutableMapOf<VarDecl<*>, MutableList<ConstDecl<*>>>()
+
             for (e in current.loc.outgoingEdges) {
                 edge = e
                 inEdge = false
                 last = current.lastEvents
                 // intersection of guards of incoming edges:
-                guard = listOf(
-                    Or(current.guards.map(BoolExprs::And)))//.reduce(listOf()) { g1, g2 -> g1.filter { it in g2 } }
+                guard = mergedGuard
                 lastWrites = current.lastWrites.merge().toMutableMap()
                 val pidLookup = current.pidLookups.merge { s1, s2 ->
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
