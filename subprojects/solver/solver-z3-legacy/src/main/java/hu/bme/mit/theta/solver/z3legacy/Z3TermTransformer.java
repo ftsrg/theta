@@ -481,8 +481,8 @@ final class Z3TermTransformer {
         final FuncDecl funcDecl = term.getFuncDecl();
         final String symbol = funcDecl.getName().toString();
 
-        final var key1 = Tuple2.of(funcDecl.getName(), term.getArgs().length);
-        final var key2 = Tuple2.of(funcDecl.getName(), -1);
+        final var key1 = Tuple2.of(symbol, term.getArgs().length);
+        final var key2 = Tuple2.of(symbol, -1);
         if (environment.containsKey(key1)) {
             return environment.get(key1).apply(term, model, vars);
         } else if (environment.containsKey(key2)) {
