@@ -66,38 +66,37 @@ public class CAssignment extends CStatement {
 
     public Expr<?> getrExpression() {
         Expr<?> ret = null;
+        final var rExpression = rValue.getExpression();
+        final var type = CComplexType.getType(lValue, parseContext);
         switch (operator) {
             case "=":
-                return rValue.getExpression();
+                return rExpression;
             case "*=":
-                ret = AbstractExprs.Mul(lValue, rValue.getExpression());
+                ret = AbstractExprs.Mul(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "/=":
-                ret = AbstractExprs.Div(lValue, rValue.getExpression());
+                ret = AbstractExprs.Div(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "%=":
-                ret = AbstractExprs.Mod(lValue, rValue.getExpression());
+                ret = AbstractExprs.Mod(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "+=":
-                ret = AbstractExprs.Add(lValue, rValue.getExpression());
+                ret = AbstractExprs.Add(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "-=":
-                ret = AbstractExprs.Sub(lValue, rValue.getExpression());
+                ret = AbstractExprs.Sub(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "^=":
-                Expr<?> rExpressionXor = rValue.getExpression();
-                checkState(lValue.getType() instanceof BvType && rExpressionXor.getType() instanceof BvType);
-                ret = BvExprs.Xor(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionXor));
+                checkState(lValue.getType() instanceof BvType && rExpression.getType() instanceof BvType);
+                ret = BvExprs.Xor(List.of((Expr<BvType>) type.castTo(lValue), (Expr<BvType>) type.castTo(rExpression)));
                 break;
             case "&=":
-                Expr<?> rExpressionAnd = rValue.getExpression();
-                checkState(lValue.getType() instanceof BvType && rExpressionAnd.getType() instanceof BvType);
-                ret = BvExprs.And(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionAnd));
+                checkState(lValue.getType() instanceof BvType && rExpression.getType() instanceof BvType);
+                ret = BvExprs.And(List.of((Expr<BvType>) type.castTo(lValue), (Expr<BvType>) type.castTo(rExpression)));
                 break;
             case "|=":
-                Expr<?> rExpressionOr = rValue.getExpression();
-                checkState(lValue.getType() instanceof BvType && rExpressionOr.getType() instanceof BvType);
-                ret = BvExprs.Or(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionOr));
+                checkState(lValue.getType() instanceof BvType && rExpression.getType() instanceof BvType);
+                ret = BvExprs.Or(List.of((Expr<BvType>) type.castTo(lValue), (Expr<BvType>) type.castTo(rExpression)));
                 break;
             default:
                 throw new RuntimeException("Bad operator: " + operator);
