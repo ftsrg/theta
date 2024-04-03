@@ -29,14 +29,22 @@ class EmptyEdgeRemovalPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         while (true) {
-            val edge = builder.getEdges()
-                .find { it.label.isNop() && !it.target.error && !it.target.final && !it.source.initial }
-                ?: return builder
+            val edge = builder.getEdges().find {
+                it.label.isNop() && !it.target.error && !it.target.final && !it.source.initial &&
+                    (it.source.outgoingEdges.size == 1 || it.target.incomingEdges.size == 1)
+            } ?: return builder
+            val collapseBefore = edge.source.outgoingEdges.size == 1
             builder.removeEdge(edge)
-            if (edge.source != edge.target) {
-                val incomingEdges = ArrayList(edge.source.incomingEdges)
+            if (collapseBefore) {
+                val incomingEdges = edge.source.incomingEdges.toList()
                 incomingEdges.forEach { builder.removeEdge(it) }
                 incomingEdges.forEach { builder.addEdge(it.withTarget(edge.target)) }
+                builder.removeLoc(edge.source)
+            } else {
+                val outgoingEdges = edge.target.outgoingEdges.toList()
+                outgoingEdges.forEach { builder.removeEdge(it) }
+                outgoingEdges.forEach { builder.addEdge(it.withSource(edge.source)) }
+                builder.removeLoc(edge.target)
             }
         }
     }
