@@ -53,8 +53,8 @@ public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitEx
                 new BigFloat(
                         param,
                         new BinaryMathContext(
-                                parseContext.getArchitecture().getBitWidth("double_e"),
-                                parseContext.getArchitecture().getBitWidth("double_s"))),
+                                parseContext.getArchitecture().getBitWidth("double_s"),
+                                parseContext.getArchitecture().getBitWidth("double_e"))),
                 FpType.of(
                         parseContext.getArchitecture().getBitWidth("double_e"),
                         parseContext.getArchitecture().getBitWidth("double_s")));
@@ -66,8 +66,8 @@ public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitEx
                 new BigFloat(
                         param,
                         new BinaryMathContext(
-                                parseContext.getArchitecture().getBitWidth("float_e"),
-                                parseContext.getArchitecture().getBitWidth("float_s"))),
+                                parseContext.getArchitecture().getBitWidth("float_s"),
+                                parseContext.getArchitecture().getBitWidth("float_e"))),
                 FpType.of(
                         parseContext.getArchitecture().getBitWidth("float_e"),
                         parseContext.getArchitecture().getBitWidth("float_s")));
@@ -79,8 +79,8 @@ public class ValueVisitor extends CComplexType.CComplexTypeVisitor<String, LitEx
                 new BigFloat(
                         param,
                         new BinaryMathContext(
-                                parseContext.getArchitecture().getBitWidth("longdouble_e"),
-                                parseContext.getArchitecture().getBitWidth("longdouble_s"))),
+                                parseContext.getArchitecture().getBitWidth("longdouble_s"),
+                                parseContext.getArchitecture().getBitWidth("longdouble_e"))),
                 FpType.of(
                         parseContext.getArchitecture().getBitWidth("longdouble_e"),
                         parseContext.getArchitecture().getBitWidth("longdouble_s")));
