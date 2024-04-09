@@ -27,19 +27,43 @@ import hu.bme.mit.theta.solver.SolverStatus
 internal inline fun <reified T> Array<Array<T?>>.copy(): Array<Array<T?>> =
     Array(size) { i -> Array(size) { j -> this[i][j] } }
 
+/**
+ * This is an interface of an ordering consistency checker for concurrent systems (e.g., concurrent programs).
+ *
+ * An ordering consistency checker takes a set an events and a set of relation between events. It checks whether
+ * there is an inconsistency (a cycle in the event graph based on the relations) subject to the constraints added
+ * to the SMT-solver.
+ */
 interface OcChecker<E : Event> {
 
     val solver: Solver
 
+    /**
+     * Checks the consistency of the event graph (i.e., if there is a partial order of events satisfying the given
+     * constraints).
+     *
+     * @param events the set of events grouped by variables
+     * @param pos the elements of the relation "program-order" (the relations always present based on the input model)
+     * @param rfs the (possible) elements of the "read-from" relation (not all of these are necessarily enabled)
+     * @return returns the status of the solver after running the consistency checking
+     */
     fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
         rfs: Map<VarDecl<*>, List<Relation<E>>>
     ): SolverStatus?
 
+    /**
+     * Get the discovered relations represented by their reasons between the events (or more exactly between atomic
+     * blocks, see Event::clkId)
+     */
     fun getRelations(): Array<Array<Reason?>>?
 }
 
+/**
+ * This interface implements basic utilities for an ordering consistency checker such as derivation rules and
+ * transitive closure operations.
+ */
 internal interface OcCheckerBase<E : Event> : OcChecker<E> {
 
     fun derive(rels: Array<Array<Reason?>>, rf: Relation<E>, w: E): Reason? = when {
@@ -95,6 +119,9 @@ internal interface OcCheckerBase<E : Event> : OcChecker<E> {
 }
 
 
+/**
+ * Reason(s) of an enabled relation.
+ */
 sealed class Reason {
 
     open val reasons: List<Reason> get() = listOf(this)
@@ -127,6 +154,11 @@ class WriteSerializationReason<E : Event>(rf: Relation<E>, w: Event, wBeforeRf: 
 class FromReadReason<E : Event>(rf: Relation<E>, w: Event, wAfterRf: Reason) :
     DerivedReason<E>(rf, w, wAfterRf)
 
+/**
+ * Represents the known value of an important element for ordering consistency checking. Such an important element is
+ * either a relation (being enabled) or an event (being enabled - having a guard that evaluates to true).
+ * The fix (closed by theory axioms) relations and the solver decision stack level are also stored.
+ */
 internal class OcAssignment<E : Event>(
     val relation: Relation<E>? = null,
     val event: E? = null,

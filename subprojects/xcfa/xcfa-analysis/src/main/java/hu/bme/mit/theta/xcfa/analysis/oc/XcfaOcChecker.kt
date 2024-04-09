@@ -80,22 +80,20 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
-    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> {
+    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
-        if (!addConstraints()) return SafetyResult.safe() // no violations
+        if (!addConstraints()) return@let SafetyResult.safe() // no violations
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status = ocChecker.check(events, pos, rfs)
-        return when {
+        when {
             status?.isUnsat == true -> SafetyResult.safe()
             status?.isSat == true -> SafetyResult.unsafe(getTrace(solver.model))
             else -> SafetyResult.unknown()
-        }.also {
-            logger.write(Logger.Level.MAINSTEP, "OC checker result: $it\n")
         }
-    }
+    }.also { logger.write(Logger.Level.MAINSTEP, "OC checker result: $it\n") }
 
     private fun addConstraints(): Boolean {
         val threads = xcfa.initProcedures.map { Thread(it.first) }.toMutableSet()
