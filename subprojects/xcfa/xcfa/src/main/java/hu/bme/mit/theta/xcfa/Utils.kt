@@ -168,6 +168,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
                 expr as RefExpr<*>
                 ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(expr.decl as VarDecl<*> to WRITE)
             }
+
             else -> StmtUtils.getVars(stmt).associateWith { READ }
         }
     }

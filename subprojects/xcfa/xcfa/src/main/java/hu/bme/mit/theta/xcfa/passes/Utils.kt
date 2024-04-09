@@ -112,6 +112,7 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
 
         is MemoryAssignStmt<*, *> -> MemoryAssignStmt.create(deref.changeVars(varLut) as Dereference<out Type, *>,
             expr.changeVars(varLut))
+
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
         is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut, parseContext))
         is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut, parseContext) })

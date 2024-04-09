@@ -224,7 +224,7 @@ class ExprTest {
 
                 arrayOf(Dereference(Int(0), Int(1), Int()), "(deref 0 1 Int)", emptyMap<Symbol, Decl<*>>()),
                 arrayOf(Reference(Int(0), Int()), "(ref 0 Int)", emptyMap<Symbol, Decl<*>>()),
-                )
+            )
         }
     }
 
