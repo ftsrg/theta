@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Assignment statement of the form *(DEREF_EXPRESSION) := EXPRESSION. The statement updates the 
+ * Assignment statement of the form *(DEREF_EXPRESSION) := EXPRESSION. The statement updates the
  * value pointed to by DEREF_EXPRESSION with the result of EXPRESSION.
  *
  * @param <DeclType>
@@ -79,7 +79,7 @@ public final class MemoryAssignStmt<PtrType extends Type, DeclType extends Type>
         if (this == obj) {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
-            return  Objects.equal(deref, ((MemoryAssignStmt<?, ?>) obj).deref) &&
+            return Objects.equal(deref, ((MemoryAssignStmt<?, ?>) obj).deref) &&
                     Objects.equal(expr, ((MemoryAssignStmt<?, ?>) obj).expr);
         } else {
             return false;

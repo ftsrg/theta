@@ -108,6 +108,7 @@ public final class StmtApplier {
         }
         return ApplyResult.FAILURE;
     }
+
     private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,
                                            final boolean approximate) {
         final VarDecl<?> varDecl = stmt.getVarDecl();
