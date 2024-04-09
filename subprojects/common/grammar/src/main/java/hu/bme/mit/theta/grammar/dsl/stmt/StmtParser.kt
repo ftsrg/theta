@@ -19,11 +19,13 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Scope
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.SkipStmt
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils
@@ -101,6 +103,18 @@ class StatementWrapper(val content: String, scope: Scope) {
                 Stmts.Assign(tVar, tExpr)
             } else {
                 throw IllegalArgumentException("Type of $`var` is incompatible with $expr")
+            }
+        }
+
+        override fun visitMemAssignStmt(ctx: MemAssignStmtContext): Stmt {
+            val derefExpr: Dereference<*, *> = ExpressionWrapper(scope, ctx.derefExpr().textWithWS()).instantiate(
+                env) as Dereference<*, *>
+            val value = ExpressionWrapper(scope, ctx.value.textWithWS())
+            val valueE: Expr<*> = value.instantiate(env)
+            return if (derefExpr.type == valueE.type) {
+                MemoryAssignStmt.create(derefExpr, valueE)
+            } else {
+                throw IllegalArgumentException("Type of $derefExpr is incompatible with $valueE")
             }
         }
     }

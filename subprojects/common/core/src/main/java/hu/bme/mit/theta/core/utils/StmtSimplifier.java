@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -35,6 +36,8 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -60,7 +63,7 @@ public class StmtSimplifier {
         SUCCESS, BOTTOM
     }
 
-    private static class SimplifyResult {
+    public static class SimplifyResult {
 
         private final Stmt stmt;
         private final SimplifyStatus status;
@@ -73,9 +76,17 @@ public class StmtSimplifier {
             this.stmt = stmt;
             this.status = status;
         }
+
+        public Stmt getStmt() {
+            return stmt;
+        }
+
+        public SimplifyStatus getStatus() {
+            return status;
+        }
     }
 
-    private static class StmtSimplifierVisitor implements
+    public static class StmtSimplifierVisitor implements
             StmtVisitor<MutableValuation, SimplifyResult> {
 
         @Override
@@ -108,6 +119,20 @@ public class StmtSimplifier {
                 valuation.remove(varDecl);
             }
             return SimplifyResult.of(AssignStmt.of(varDecl, expr), SimplifyStatus.SUCCESS);
+        }
+
+        @Override
+        public <PtrType extends Type, DeclType extends Type> SimplifyResult visit(MemoryAssignStmt<PtrType, DeclType> stmt, MutableValuation valuation) {
+            final Expr<DeclType> expr = ExprUtils.simplify(stmt.getExpr(), valuation);
+            final Dereference<PtrType, DeclType> deref = Dereference.of(ExprUtils.simplify(stmt.getDeref().getArray(), valuation), ExprUtils.simplify(stmt.getDeref().getOffset(), valuation), stmt.getDeref().getType());
+
+            if (expr instanceof LitExpr<?> litExpr && deref.getOffset() instanceof LitExpr<PtrType> litOffset && deref.getArray() instanceof RefExpr<PtrType> ref) {
+                IntLitExpr intLitOffset = (IntLitExpr) litOffset;
+                VarDecl<PtrType> varDecl = (VarDecl<PtrType>) ref.getDecl();
+                valuation.put(varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
+            }
+
+            return SimplifyResult.of(MemoryAssignStmt.of(deref, expr), SimplifyStatus.SUCCESS);
         }
 
         @Override

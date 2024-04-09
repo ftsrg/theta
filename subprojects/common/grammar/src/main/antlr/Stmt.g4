@@ -3,6 +3,7 @@ grammar Stmt;
 import Expr;
 
 stmt:	assignStmt
+    |   memAssignStmt
 	|	havocStmt
 	|	assumeStmt
 	|   skipStmt
@@ -18,6 +19,10 @@ skipStmt
 
 assignStmt
 	:	LPAREN ASSIGN lhs=ID value=expr RPAREN
+	;
+
+memAssignStmt
+	:	LPAREN MEMASSIGN derefExpr value=expr RPAREN
 	;
 
 havocStmt

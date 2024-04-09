@@ -23,34 +23,28 @@ import hu.bme.mit.theta.common.logging.Logger.Level
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
-import java.util.*
-import java.util.Set
 import java.util.stream.Collectors
-import kotlin.collections.set
 
 class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false,
     val uniqueWarningLogger: Logger) :
@@ -170,7 +164,6 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val returnLoc = param.returnLoc
         val lValue = statement.getlValue()
         val rValue = statement.getrValue()
-        val memoryMaps = CAssignment.getMemoryMaps()
         var initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
         builder.addLoc(initLoc)
         var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
@@ -178,81 +171,45 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
         builder.addLoc(location)
         initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
-        Preconditions.checkState(
-            lValue is Dereference<*, *> || lValue is ArrayReadExpr<*, *> || lValue is RefExpr<*> && lValue.decl is VarDecl<*>,
-            "lValue must be a variable, pointer dereference or an array element!")
         val rExpression = statement.getrExpression()
-        val label: StmtLabel = if (lValue is ArrayReadExpr<*, *>) {
-            val exprs = Stack<Expr<*>>()
-            val toAdd = createArrayWriteExpr(lValue as ArrayReadExpr<*, out Type>, rExpression,
-                exprs)
-            StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)),
-                metadata = getMetadata(statement))
-        } else if (lValue is Dereference<*, *>) {
-            val op = lValue.op
-            val type = op.type
-            val ptrType = CComplexType.getUnsignedLong(parseContext).smtType
-            if (!memoryMaps.containsKey(type)) {
-                val toAdd = Decls.Var<ArrayType<*, *>>("memory_$type", ArrayType.of(ptrType, type))
-                builder.parent.addVar(XcfaGlobalVar(toAdd,
-                    ArrayLitExpr.of(emptyList(), cast(CComplexType.getType(op, parseContext).nullValue, type),
-                        ArrayType.of(ptrType, type))))
-                memoryMaps[type] = toAdd
-                parseContext.metadata.create(toAdd, "defaultElement", CComplexType.getType(op, parseContext).nullValue)
+        val label: StmtLabel = when (lValue) {
+            is Dereference<*, *> -> {
+                val op = cast(lValue.array, lValue.array.type)
+                val offset = cast(lValue.offset, op.type)
+                val type = CComplexType.getType(rExpression, parseContext)
+
+                val deref = Dereference.of(op, offset, type.smtType)
+
+                val memassign = MemoryAssignStmt.create(deref, rExpression)
+
+                parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
+                StmtLabel(memassign, metadata = getMetadata(statement))
             }
-            val memoryMap = checkNotNull(memoryMaps[type])
-            parseContext.metadata.create(op, "dereferenced", true)
-            parseContext.metadata.create(op, "refSubstitute", memoryMap)
-            val write = ArrayExprs.Write(cast(memoryMap.ref, ArrayType.of(ptrType, type)),
-                cast(lValue.op, ptrType),
-                cast(rExpression, type))
-            parseContext.metadata.create(write, "cType",
-                CArray(null, CComplexType.getType(lValue.op, parseContext), parseContext))
-            StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write),
-                metadata = getMetadata(statement))
-        } else {
-            val label = StmtLabel(Stmts.Assign(
-                cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
-                cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type)),
-                metadata = getMetadata(statement))
-            if (CComplexType.getType(lValue, parseContext) is CPointer && CComplexType.getType(
-                    rExpression, parseContext) is CPointer) {
-                Preconditions.checkState(
-                    rExpression is RefExpr<*> || rExpression is Reference<*, *>)
-                if (rExpression is RefExpr<*>) {
-                    var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
-                    if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
-                        (pointsTo.get() as MutableCollection<Expr<*>?>).add(rExpression)
-                    } else {
-                        pointsTo = Optional.of(LinkedHashSet<Expr<*>>(Set.of(rExpression)))
-                    }
-                    parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
-                } else {
-                    var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
-                    if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
-                        (pointsTo.get() as MutableCollection<Expr<*>?>).add(
-                            (rExpression as Reference<*, *>).op)
-                    } else {
-                        pointsTo = Optional.of(
-                            LinkedHashSet(Set.of((rExpression as Reference<*, *>).op)))
-                    }
-                    parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
-                }
+
+            is RefExpr<*> -> {
+                StmtLabel(Stmts.Assign(
+                    cast(lValue.decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
+                    cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type)),
+                    metadata = getMetadata(statement))
             }
-            label
+
+            else -> {
+                error("Could not handle left-hand side of assignment $statement")
+            }
         }
 
-        val lhs = (label.stmt as AssignStmt<*>).varDecl
-        val type: CComplexType? = try {
-            CComplexType.getType(lhs.ref, parseContext)
+        val (lhs, type) = try {
+            val lhs = (label.stmt as AssignStmt<*>).varDecl
+            Pair(lhs, CComplexType.getType(lhs.ref, parseContext))
         } catch (_: Exception) {
-            null
+            Pair(null, null)
         }
 
         if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
             xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
             builder.addEdge(xcfaEdge)
         } else {
+            lhs!!
             val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
             val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))
             xcfaEdge = XcfaEdge(initLoc, middleLoc1, label, metadata = getMetadata(statement))
@@ -272,23 +229,6 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             builder.addEdge(xcfaEdge)
         }
         return location
-    }
-
-    private fun <P : Type?, T : Type?> createArrayWriteExpr(lValue: ArrayReadExpr<P, T>,
-        rExpression: Expr<*>, exprs: Stack<Expr<*>>): VarDecl<*> {
-        val array = lValue.array
-        val index = lValue.index
-        val arrType = CComplexType.getType(array, parseContext)
-        check(arrType is CArray)
-        val castExpr = arrType.embeddedType.castTo(rExpression)
-        val arrayWriteExpr = ArrayWriteExpr.of(array, index, cast(castExpr, array.type.elemType))
-        parseContext.metadata.create(arrayWriteExpr, "cType", arrType)
-        return if (array is RefExpr<*> && (array as RefExpr<ArrayType<P, T>>).decl is VarDecl<*>) {
-            exprs.push(arrayWriteExpr)
-            array.decl as VarDecl<*>
-        } else if (array is ArrayReadExpr<*, *>) {
-            createArrayWriteExpr(array as ArrayReadExpr<P, *>, arrayWriteExpr, exprs)
-        } else throw UnsupportedOperationException("Possible malformed array write?")
     }
 
     override fun visit(statement: CAssume, param: ParamPack): XcfaLocation {

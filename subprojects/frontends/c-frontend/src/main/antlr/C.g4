@@ -31,7 +31,7 @@ grammar C;
 
 
 primaryExpression
-    :   '__PRETTY_FUNC__'                                                   # gccPrettyFunc
+    :   PRETTY_FUNC                                                         # gccPrettyFunc
     |   Identifier                                                          # primaryExpressionId
     |   Constant                                                            # primaryExpressionConstant
     |   StringLiteral+                                                      # primaryExpressionStrings
@@ -554,7 +554,7 @@ functionDefinition
 //declarationList
 //    :   declaration+
 //    ;
-
+PRETTY_FUNC: '__PRETTY_FUNCTION__';
 Extension: '__extension__' -> skip; // Hack to make .i files work (SV-COMP)
 VoidSizeof: '(void) sizeof' -> skip; // Hack to make .i files work (SV-COMP)
 Auto : 'auto';
@@ -933,6 +933,7 @@ LineDirective
 
 PragmaDirective
     :   '#' Whitespace? 'pragma' Whitespace ~[\r\n]*
+        -> skip
     ;
 
 Whitespace

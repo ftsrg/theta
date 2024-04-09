@@ -54,6 +54,7 @@ class XcfaCliParseTest {
                 Arguments.of("/c/litmustest/singlethread/21namecollision.c"),
                 Arguments.of("/c/litmustest/singlethread/22nondet.c"),
                 Arguments.of("/c/litmustest/singlethread/23overflow.c"),
+                Arguments.of("/c/litmustest/singlethread/25malloc.c"),
             )
         }
 
@@ -229,6 +230,7 @@ class XcfaCliParseTest {
     fun testJSONParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
         main(arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",
@@ -252,6 +254,7 @@ class XcfaCliParseTest {
     fun testCParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
         main(arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",

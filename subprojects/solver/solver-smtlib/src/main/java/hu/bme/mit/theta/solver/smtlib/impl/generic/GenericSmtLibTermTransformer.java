@@ -254,6 +254,10 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             // Array
             put("select", exprArrayReadOperator());
             put("store", exprArrayWriteOperator());
+
+
+//            put("deref", dereference());
+//            put("ref", reference());
         }};
     }
 
@@ -496,6 +500,9 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             funcExpr = checkNotNull(symbolTable.getConst(funName).getRef());
         } else {
             final var funDefImpl = model.getTerm(funName);
+            if (funDefImpl == null) {
+                throw new SmtLibSolverException("Model (%s) does not have function \"%s\".".formatted(model, funName));
+            }
             funcExpr = toFuncLitExpr(funDefImpl, model);
         }
 
@@ -889,6 +896,25 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             );
         };
     }
+//
+//    private OperatorCreatorFunction reference() {
+//        return (params, ops, model, vars) -> {
+//            checkArgument(ops.size() == 1, "Number of arguments must be one");
+//            final Expr<?> op = transformTerm(ops.get(0), model, vars);
+//            return Reference.of(op, transformSort(term.getSort()));
+//        });
+//    }
+//
+//    private <T extends Type> OperatorCreatorFunction dereference() {
+//        return (term, model, vars) -> {
+//            final com.microsoft.z3legacy.Expr[] args = term.getArgs();
+//            checkArgument(args.length == 2, "Number of arguments must be two");
+//            final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
+//            final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
+//            return Dereference.of(op1, op2, transformSort(term.getSort()));
+//        });
+//    }
+
 
     private FpRoundingMode fpOperatorRoundingMode(final TermContext term) {
         switch (term.getText()) {

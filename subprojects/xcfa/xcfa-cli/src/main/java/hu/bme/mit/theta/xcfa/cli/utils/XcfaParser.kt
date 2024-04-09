@@ -89,7 +89,7 @@ private fun parseC(input: File, explicitProperty: ErrorDetection, parseContext: 
             val stream = FileInputStream(input)
             val xcfa = getXcfaFromC(stream, parseContext, false,
                 explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
-            parseContext.arithmeticTraits.add(ArithmeticTrait.BITWISE)
+            parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
             xcfa
         } else {
             throw e

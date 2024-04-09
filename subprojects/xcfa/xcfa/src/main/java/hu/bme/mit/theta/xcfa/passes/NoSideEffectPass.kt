@@ -16,16 +16,14 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
- * Transforms all procedure calls into havocs.
+ * Transforms all ignored calls into nop/skip labels.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class NondetFunctionPass : ProcedurePass {
+class NoSideEffectPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -36,11 +34,7 @@ class NondetFunctionPass : ProcedurePass {
                 builder.removeEdge(edge)
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
-                        val invokeLabel = it.label.labels[0] as InvokeLabel
-                        val havoc = HavocStmt.of(
-                            (invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>)
-                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(
-                            listOf(StmtLabel(havoc, metadata = invokeLabel.metadata)))))
+                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(listOf(NopLabel))))
                     } else {
                         builder.addEdge(it)
                     }
@@ -50,7 +44,11 @@ class NondetFunctionPass : ProcedurePass {
         return builder
     }
 
-    private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && (it.name.startsWith("__VERIFIER_nondet") || it.name == "malloc")
+    private fun predicate(label: XcfaLabel): Boolean {
+        return label is InvokeLabel && listOf(
+            Regex("sleep"),
+            Regex("free"),
+            Regex("pthread_mutex_destroy"), // TODO: is this safe?
+        ).any { label.name.matches(it) }
     }
 }

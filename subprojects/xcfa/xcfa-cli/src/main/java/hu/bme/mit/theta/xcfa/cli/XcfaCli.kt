@@ -101,7 +101,7 @@ class XcfaCli(private val args: Array<String>) {
         val logger = ConsoleLogger(config.debugConfig.logLevel)
         val uniqueLogger = UniqueWarningLogger(logger)
 
-        runConfig(config, logger, uniqueLogger)
+        runConfig(config, logger, uniqueLogger, false)
     }
 
 

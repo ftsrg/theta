@@ -16,19 +16,14 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.statements;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -38,7 +33,6 @@ public class CAssignment extends CStatement {
     private final Expr<?> lValue;
     private final CStatement rValue;
     private final String operator;
-    private static final Map<Type, VarDecl<ArrayType<?, ?>>> memoryMaps = new LinkedHashMap<>();
 
     public CAssignment(Expr<?> lValue, CStatement rValue, String operator, ParseContext parseContext) {
         super(parseContext);
@@ -60,10 +54,6 @@ public class CAssignment extends CStatement {
         return operator;
     }
 
-    public static Map<Type, VarDecl<ArrayType<?, ?>>> getMemoryMaps() {
-        return memoryMaps;
-    }
-
     @Override
     public Expr<?> getExpression() {
         return lValue;
@@ -76,38 +66,37 @@ public class CAssignment extends CStatement {
 
     public Expr<?> getrExpression() {
         Expr<?> ret = null;
+        final var rExpression = rValue.getExpression();
+        final var type = CComplexType.getType(lValue, parseContext);
         switch (operator) {
             case "=":
-                return rValue.getExpression();
+                return rExpression;
             case "*=":
-                ret = AbstractExprs.Mul(lValue, rValue.getExpression());
+                ret = AbstractExprs.Mul(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "/=":
-                ret = AbstractExprs.Div(lValue, rValue.getExpression());
+                ret = AbstractExprs.Div(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "%=":
-                ret = AbstractExprs.Mod(lValue, rValue.getExpression());
+                ret = AbstractExprs.Mod(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "+=":
-                ret = AbstractExprs.Add(lValue, rValue.getExpression());
+                ret = AbstractExprs.Add(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "-=":
-                ret = AbstractExprs.Sub(lValue, rValue.getExpression());
+                ret = AbstractExprs.Sub(type.castTo(lValue), type.castTo(rExpression));
                 break;
             case "^=":
-                Expr<?> rExpressionXor = rValue.getExpression();
-                checkState(lValue.getType() instanceof BvType && rExpressionXor.getType() instanceof BvType);
-                ret = BvExprs.Xor(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionXor));
+                checkState(lValue.getType() instanceof BvType && rExpression.getType() instanceof BvType);
+                ret = BvExprs.Xor(List.of((Expr<BvType>) type.castTo(lValue), (Expr<BvType>) type.castTo(rExpression)));
                 break;
             case "&=":
-                Expr<?> rExpressionAnd = rValue.getExpression();
-                checkState(lValue.getType() instanceof BvType && rExpressionAnd.getType() instanceof BvType);
-                ret = BvExprs.And(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionAnd));
+                checkState(lValue.getType() instanceof BvType && rExpression.getType() instanceof BvType);
+                ret = BvExprs.And(List.of((Expr<BvType>) type.castTo(lValue), (Expr<BvType>) type.castTo(rExpression)));
                 break;
             case "|=":
-                Expr<?> rExpressionOr = rValue.getExpression();
-                checkState(lValue.getType() instanceof BvType && rExpressionOr.getType() instanceof BvType);
-                ret = BvExprs.Or(List.of((Expr<BvType>) lValue, (Expr<BvType>) rExpressionOr));
+                checkState(lValue.getType() instanceof BvType && rExpression.getType() instanceof BvType);
+                ret = BvExprs.Or(List.of((Expr<BvType>) type.castTo(lValue), (Expr<BvType>) type.castTo(rExpression)));
                 break;
             default:
                 throw new RuntimeException("Bad operator: " + operator);

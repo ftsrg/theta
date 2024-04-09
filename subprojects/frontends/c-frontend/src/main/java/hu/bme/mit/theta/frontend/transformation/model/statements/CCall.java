@@ -19,7 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +37,7 @@ public class CCall extends CStatement {
         this.functionId = functionId;
         this.params = params;
         Optional<Object> cTypeOpt = parseContext.getMetadata().getMetadataValue(functionId, "cType");
-        CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CVoid(null, parseContext));
+        CComplexType type = (CComplexType) cTypeOpt.orElseGet(() -> new CSignedInt(null, parseContext));
         ret = Var("call_" + functionId + "_ret" + counter++, type.getSmtType());
         parseContext.getMetadata().create(ret.getRef(), "cType", type);
     }

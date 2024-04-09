@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -30,6 +31,8 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -41,6 +44,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
@@ -119,6 +123,22 @@ final class StmtToExprTransformer {
                 expr = Eq(lhs, rhs);
             }
             return StmtUnfoldResult.of(ImmutableList.of(expr), newIndexing);
+        }
+
+        @Override
+        public <PtrType extends Type, DeclType extends Type> StmtUnfoldResult visit(MemoryAssignStmt<PtrType, DeclType> stmt, VarIndexing indexing) {
+            final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
+            Expr<?> expr = stmt.getDeref().getArray();
+            while (!(expr instanceof RefExpr<?>)) {
+                checkState(expr instanceof Dereference<?, ?>);
+                expr = ((Dereference<?, ?>) expr).getArray();
+            }
+            final var decl = ((RefExpr<?>) expr).getDecl();
+            final VarIndexing newIndexing = indexing.inc((VarDecl<?>) decl);
+            final Dereference<PtrType, DeclType> lhs = (Dereference<PtrType, DeclType>) ExprUtils.applyPrimes(stmt.getDeref(), newIndexing);
+
+            final var retExpr = Eq(lhs, rhs);
+            return StmtUnfoldResult.of(ImmutableList.of(retExpr), newIndexing);
         }
 
         @Override

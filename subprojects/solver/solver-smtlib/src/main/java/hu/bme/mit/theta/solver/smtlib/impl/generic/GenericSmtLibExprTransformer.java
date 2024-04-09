@@ -28,8 +28,10 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
@@ -399,9 +401,14 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
                 .addCase(ArrayLitExpr.class, this::transformArrayLit)
 
-                .addCase(ArrayInitExpr.class, this::transformArrayInit);
+                .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
-        return builder;
+                // References
+                .addCase(Dereference.class, this::transformDereference)
+
+                .addCase(Reference.class, this::transformReference)
+            ;
+            return builder;
     }
 
     @Override
@@ -1202,5 +1209,13 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                     toTerm(elem.get2()));
         }
         return running;
+    }
+
+    protected String transformDereference(final Dereference<?, ?> expr) {
+        return "(deref %s %s %s)".formatted(transformer.toTerm(expr.getArray()), transformer.toTerm(expr.getOffset()), transformer.toSort(expr.getType()));
+    }
+
+    protected String transformReference(final Reference<?, ?> expr) {
+        return "(ref %s)".formatted(transformer.toTerm(expr.getExpr()));
     }
 }

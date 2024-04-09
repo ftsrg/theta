@@ -92,7 +92,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             "roundl")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
             handleRound(builder, callStmt)
         }
-        addHandler(arrayOf("isnan")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
+        addHandler(arrayOf("isnan", "__isnan", "isnanf", "__isnanf", "isnanl",
+            "__isnanl")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
             handleIsnan(builder, callStmt)
         }
         addHandler(arrayOf("trunc")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
@@ -105,12 +106,14 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             "isnormal")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
             handleIsnormal(builder, callStmt)
         }
-        addHandler(arrayOf("isinf", "__isinf", "__isinff",
-            "__isinfl")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
+        addHandler(arrayOf("isinf", "__isinf", "__isinff", "isinff",
+            "__isinfl", "isinfl")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
             handleIsinf(builder, callStmt)
         }
         addHandler(arrayOf(
-            "isfinite")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
+            "isfinite", "finite", "isfinitef", "finitef", "isfinite", "finitel", "__finite", "__finitef", "__finitel",
+            "__isfinite",
+            "__isfinitef", "__isfinitel")) { builder: XcfaProcedureBuilder, callStmt: InvokeLabel ->
             handleIsfinite(builder, callStmt)
         }
         addHandler(arrayOf("__fpclassify", "__fpclassifyf",
