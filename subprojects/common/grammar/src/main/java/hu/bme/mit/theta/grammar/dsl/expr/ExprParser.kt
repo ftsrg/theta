@@ -32,8 +32,8 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.*
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Reference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayType
@@ -768,7 +768,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
             return if (ctx.expr() != null) {
                 val expr = ctx.expr().accept(this)
                 val type = TypeWrapper(ctx.type().textWithWS()).instantiate()
-                return Reference.of(expr, type)
+                return Reference(expr, type)
             } else {
                 visitChildren(ctx)
             }

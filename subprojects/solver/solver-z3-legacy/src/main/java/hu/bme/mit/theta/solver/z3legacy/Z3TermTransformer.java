@@ -33,9 +33,9 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
-import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
@@ -755,7 +755,7 @@ final class Z3TermTransformer {
             final com.microsoft.z3legacy.Expr[] args = term.getArgs();
             checkArgument(args.length == 1, "Number of arguments must be one");
             final Expr<?> op = transform(args[0], model, vars);
-            return Reference.of(op, transformSort(term.getSort()));
+            return Exprs.Reference(op, transformSort(term.getSort()));
         });
     }
 
