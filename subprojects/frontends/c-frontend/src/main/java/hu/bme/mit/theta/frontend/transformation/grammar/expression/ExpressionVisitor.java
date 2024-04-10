@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.anytype.Reference;
@@ -574,7 +575,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @SuppressWarnings("unchecked")
     private <T extends Type> Expr<?> dereference(Expr<?> accept, CPointer type) {
-        Dereference<T, Type> of = Dereference.of((Expr<T>) accept, (Expr<T>) CComplexType.getUnsignedLong(parseContext).getNullValue(), type.getEmbeddedType().getSmtType());
+        Dereference<T, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<T>) CComplexType.getUnsignedLong(parseContext).getNullValue(), type.getEmbeddedType().getSmtType());
         parseContext.getMetadata().create(of, "cType", type.getEmbeddedType());
         return of;
     }
@@ -612,14 +613,14 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Type type = elemType.getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = Dereference.of(cast(primary, ptrType), cast(index, ptrType), type);
+                        primary = Exprs.Dereference(cast(primary, ptrType), cast(index, ptrType), type);
                         parseContext.getMetadata().create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
                     } else if (arrayType instanceof CPointer) {
                         CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
                         Type type = elemType.getSmtType();
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = Dereference.of(cast(primary, ptrType), cast(index, ptrType), type);
+                        primary = Exprs.Dereference(cast(primary, ptrType), cast(index, ptrType), type);
                         parseContext.getMetadata().create(primary, "cType", ((CPointer) arrayType).getEmbeddedType());
                     } else {
                         throw new RuntimeException("Non-array expression used as array!");

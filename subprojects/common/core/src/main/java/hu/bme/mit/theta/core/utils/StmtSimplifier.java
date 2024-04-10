@@ -37,6 +37,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -124,7 +125,7 @@ public class StmtSimplifier {
         @Override
         public <PtrType extends Type, DeclType extends Type> SimplifyResult visit(MemoryAssignStmt<PtrType, DeclType> stmt, MutableValuation valuation) {
             final Expr<DeclType> expr = ExprUtils.simplify(stmt.getExpr(), valuation);
-            final Dereference<PtrType, DeclType> deref = Dereference.of(ExprUtils.simplify(stmt.getDeref().getArray(), valuation), ExprUtils.simplify(stmt.getDeref().getOffset(), valuation), stmt.getDeref().getType());
+            final Dereference<PtrType, DeclType> deref = Exprs.Dereference(ExprUtils.simplify(stmt.getDeref().getArray(), valuation), ExprUtils.simplify(stmt.getDeref().getOffset(), valuation), stmt.getDeref().getType());
 
             if (expr instanceof LitExpr<?> litExpr && deref.getOffset() instanceof LitExpr<PtrType> litOffset && deref.getArray() instanceof RefExpr<PtrType> ref) {
                 IntLitExpr intLitOffset = (IntLitExpr) litOffset;

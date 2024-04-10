@@ -32,7 +32,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
@@ -765,7 +764,7 @@ final class Z3TermTransformer {
             checkArgument(args.length == 2, "Number of arguments must be two");
             final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
             final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
-            return Dereference.of(op1, op2, transformSort(term.getSort()));
+            return Exprs.Dereference(op1, op2, transformSort(term.getSort()));
         });
     }
 

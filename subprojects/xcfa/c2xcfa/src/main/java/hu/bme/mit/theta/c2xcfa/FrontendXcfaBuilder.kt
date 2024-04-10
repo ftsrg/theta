@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
@@ -180,7 +181,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 val offset = cast(lValue.offset, op.type)
                 val type = CComplexType.getType(rExpression, parseContext)
 
-                val deref = Dereference.of(op, offset, type.smtType)
+                val deref = Dereference(op, offset, type.smtType)
 
                 val memassign = MemoryAssignStmt.create(deref, rExpression)
 
