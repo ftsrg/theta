@@ -84,7 +84,7 @@ class LoopUnrollPass : ProcedurePass {
                 startLocation = copyBody(builder, startLocation, i, removeCond)
             }
 
-            exitEdges[loopStart]!!.forEach { edge ->
+            exitEdges[loopStart]?.forEach { edge ->
                 val label = if (removeCond) edge.label.removeCondition() else edge.label
                 builder.addEdge(XcfaEdge(startLocation, edge.target, label, edge.metadata))
             }

@@ -295,8 +295,8 @@ data class InterpolationConfig(
     ) : Config
 
 data class OcConfig(
-    @Parameter(names = ["--decision-procedure"], description = "Decision procedure for ordering-consistency check")
-    var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.BASIC,
+    @Parameter(names = ["--oc-decision-procedure"], description = "Decision procedure for ordering-consistency check")
+    var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
