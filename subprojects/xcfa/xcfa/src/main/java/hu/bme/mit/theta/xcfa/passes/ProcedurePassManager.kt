@@ -57,7 +57,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         // handling remaining function calls
         NoSideEffectPass(parseContext),
         NondetFunctionPass(),
-//        LbePass(parseContext),
+        LbePass(parseContext),
         NormalizePass(), // needed after lbe, TODO
         DeterministicPass(), // needed after lbe, TODO
         HavocPromotionAndRange(parseContext),
