@@ -580,7 +580,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> reference(RefExpr<?> accept) {
-        Reference<Type, ?> of = Reference(accept, CComplexType.getUnsignedLong(parseContext).getSmtType());
+        Reference<Type, ?> of = Reference(CComplexType.getUnsignedLong(parseContext).getValue(Integer.toString(accept.getDecl().hashCode())), CComplexType.getUnsignedLong(parseContext).getSmtType());
         parseContext.getMetadata().create(of, "cType", new CPointer(null, CComplexType.getType(accept, parseContext), parseContext));
         return of;
     }
