@@ -568,14 +568,17 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             case "*":
                 type = CComplexType.getType(accept, parseContext);
                 checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
-                return dereference(accept, (CPointer) type);
+                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), (CPointer) type);
         }
         return accept;
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Type> Expr<?> dereference(Expr<?> accept, CPointer type) {
-        Dereference<T, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<T>) CComplexType.getUnsignedLong(parseContext).getNullValue(), type.getEmbeddedType().getSmtType());
+    private <T extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CPointer type) {
+        if (accept instanceof RefExpr<?> refExpr) {
+            accept = CComplexType.getUnsignedLong(parseContext).getValue(Integer.toString(refExpr.getDecl().hashCode()));
+        }
+        Dereference<T, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<T>) offset, type.getEmbeddedType().getSmtType());
         parseContext.getMetadata().create(of, "cType", type.getEmbeddedType());
         return of;
     }
@@ -611,16 +614,15 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     if (arrayType instanceof CArray) {
                         CComplexType elemType = ((CArray) arrayType).getEmbeddedType();
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
-                        Type type = elemType.getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = Exprs.Dereference(cast(primary, ptrType), cast(index, ptrType), type);
+                        checkState(elemType instanceof CPointer, "Cannot use non-pointer type here");
+                        primary = dereference(primary, cast(index, ptrType), (CPointer) elemType);
                         parseContext.getMetadata().create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
                     } else if (arrayType instanceof CPointer) {
                         CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
-                        Type type = elemType.getSmtType();
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = Exprs.Dereference(cast(primary, ptrType), cast(index, ptrType), type);
+                        primary = dereference(primary, cast(index, ptrType), (CPointer) elemType);
                         parseContext.getMetadata().create(primary, "cType", ((CPointer) arrayType).getEmbeddedType());
                     } else {
                         throw new RuntimeException("Non-array expression used as array!");

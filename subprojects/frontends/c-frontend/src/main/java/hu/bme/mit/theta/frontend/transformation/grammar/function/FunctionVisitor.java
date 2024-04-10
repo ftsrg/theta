@@ -474,6 +474,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                         LitExpr<?> currentValue = ptrType.getNullValue();
                         LitExpr<?> unitValue = ptrType.getUnitValue();
                         for (Tuple2<Optional<CStatement>, CStatement> statement : initializerList.getStatements()) {
+                            checkState(false, "Code here seems to be buggy");
                             final var expr = statement.get2().getExpression();
                             final var deref = Exprs.Dereference(cast(declaration.getVarDecls().get(0).getRef(), ptrType.getSmtType()), cast(currentValue, ptrType.getSmtType()), expr.getType());
                             CAssignment cAssignment = new CAssignment(deref, statement.get2(), "=", parseContext);
