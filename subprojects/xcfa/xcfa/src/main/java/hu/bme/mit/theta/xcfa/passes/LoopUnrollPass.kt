@@ -65,10 +65,35 @@ class LoopUnrollPass : ProcedurePass {
             override fun getStmts() = listOf(stmt)
         }
 
+        fun unroll(builder: XcfaProcedureBuilder, transFunc: ExplStmtTransFunc) {
+            val count = count(transFunc)
+            if (count != null) {
+                unroll(builder, count, true)
+            } else if (FORCE_UNROLL_LIMIT != -1) {
+                FORCE_UNROLL_USED = true
+                unroll(builder, FORCE_UNROLL_LIMIT, false)
+            }
+        }
+
+        fun unroll(builder: XcfaProcedureBuilder, count: Int, removeCond: Boolean) {
+            (loopLocs - loopStart).forEach(builder::removeLoc)
+            loopLocs.flatMap { it.outgoingEdges }.forEach(builder::removeEdge)
+
+            var startLocation = loopStart
+            for (i in 0 until count) {
+                startLocation = copyBody(builder, startLocation, i, removeCond)
+            }
+
+            exitEdges[loopStart]!!.forEach { edge ->
+                val label = if (removeCond) edge.label.removeCondition() else edge.label
+                builder.addEdge(XcfaEdge(startLocation, edge.target, label, edge.metadata))
+            }
+        }
+
         private fun count(transFunc: ExplStmtTransFunc): Int? {
             if (!properlyUnrollable) return null
             check(loopVar != null && loopVarModifiers != null && loopVarInit != null)
-            check(loopStartEdges.size == 1 && exitEdges.size == 1)
+            check(loopStartEdges.size == 1)
 
             val prec = ExplPrec.of(listOf(loopVar))
             var state = ExplState.of(ImmutableValuation.empty())
@@ -84,19 +109,8 @@ class LoopUnrollPass : ProcedurePass {
             return cnt
         }
 
-        private fun XcfaLabel.removeCondition(): XcfaLabel {
-            val stmtToRemove = getFlatLabels().find {
-                it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty()
-            }
-            return when {
-                this == stmtToRemove -> NopLabel
-                this is SequenceLabel -> SequenceLabel(labels.map { it.removeCondition() }, metadata)
-                else -> this
-            }
-        }
-
         private fun copyBody(builder: XcfaProcedureBuilder, startLoc: XcfaLocation, index: Int, removeCond: Boolean)
-            : Map<XcfaLocation, XcfaLocation> {
+            : XcfaLocation {
             val locs = loopLocs.associateWith {
                 val loc = XcfaLocation("${it.name}_loop${index}")
                 builder.addLoc(loc)
@@ -110,54 +124,25 @@ class LoopUnrollPass : ProcedurePass {
                 builder.addEdge(edge)
             }
 
-            return locs
-        }
-
-        fun unroll(builder: XcfaProcedureBuilder, transFunc: ExplStmtTransFunc) {
-            val count = count(transFunc) ?: return forceUnroll(builder)
-            check(loopStartEdges.size == 1 && exitEdges.size == 1 && exitEdges.flatMap { it.value }.size == 1)
-            val exitCondEdge = exitEdges[loopStart]!!.first()
-
-            (loopLocs - loopStart).forEach(builder::removeLoc)
-            loopEdges.forEach(builder::removeEdge)
-            builder.removeEdge(exitCondEdge)
-
-            var startLocation = loopStart
-            for (i in 0 until count) {
-                startLocation = copyBody(builder, startLocation, i, true)[loopStart]!!
-            }
-
-            builder.addEdge(
-                XcfaEdge(
-                    source = startLocation,
-                    target = exitCondEdge.target,
-                    label = exitCondEdge.label.removeCondition(),
-                    metadata = exitCondEdge.metadata
-                )
-            )
-        }
-
-        fun forceUnroll(builder: XcfaProcedureBuilder) {
-            if (FORCE_UNROLL_LIMIT == -1) return
-            FORCE_UNROLL_USED = true
-
-            (loopLocs - loopStart).forEach(builder::removeLoc)
-            loopLocs.flatMap { it.outgoingEdges }.forEach(builder::removeEdge)
-
-            var startLocation = loopStart
-            for (i in 0 until FORCE_UNROLL_LIMIT) {
-                val newLocs = copyBody(builder, startLocation, i, false)
-                exitEdges.forEach { (loc, edges) ->
-                    edges.forEach { edge ->
-                        val source = if (loc == loopStart) startLocation else newLocs[loc]!!
-                        builder.addEdge(XcfaEdge(source, edge.target, edge.label, edge.metadata))
-                    }
+            exitEdges.forEach { (loc, edges) ->
+                for (edge in edges) {
+                    if (removeCond && loc == loopStart) continue
+                    val source = if (loc == loopStart) startLoc else locs[loc]!!
+                    builder.addEdge(XcfaEdge(source, edge.target, edge.label, edge.metadata))
                 }
-                startLocation = newLocs[loopStart]!!
             }
 
-            exitEdges[loopStart]!!.forEach { edge ->
-                builder.addEdge(XcfaEdge(startLocation, edge.target, edge.label, edge.metadata))
+            return locs[loopStart]!!
+        }
+
+        private fun XcfaLabel.removeCondition(): XcfaLabel {
+            val stmtToRemove = getFlatLabels().find {
+                it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty()
+            }
+            return when {
+                this == stmtToRemove -> NopLabel
+                this is SequenceLabel -> SequenceLabel(labels.map { it.removeCondition() }, metadata)
+                else -> this
             }
         }
     }
@@ -204,12 +189,7 @@ class LoopUnrollPass : ProcedurePass {
         }
 
         val (loopLocations, loopEdges) = getLoopElements(loopStart)
-        if (loopEdges.isEmpty()) {
-            return null // unsupported loop structure
-        }
-        if ((loopLocations - loopStart).any { l -> l.outgoingEdges.any { it.target !in loopLocations } }) {
-            properlyUnrollable = false // break not supported
-        }
+        if (loopEdges.isEmpty()) return null // unsupported loop structure
 
         val loopCondEdges = loopStart.outgoingEdges.filter { it.target in loopLocations }
         if (loopCondEdges.size != 1) properlyUnrollable = false // more than one loop condition not supported

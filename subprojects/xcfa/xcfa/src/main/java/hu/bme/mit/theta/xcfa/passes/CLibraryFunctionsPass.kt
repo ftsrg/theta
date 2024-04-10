@@ -21,7 +21,6 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
