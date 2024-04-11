@@ -118,7 +118,7 @@ open class XcfaAasporLts(
         val influencedSharedObjects = getInfluencedSharedObjects(getEdgeOf(action))
         for (varDecl in influencedSharedObjects) {
             if (usedBySourceSetAction.contains(varDecl)) {
-                if (varDecl !in prec.usedVars) {
+                if (varDecl !in prec.usedVars && varDecl !in fenceVars.values) {
                     // the actions would be dependent, but we may have a chance to ignore it in the current abstraction
                     ignoredVariables.add(varDecl)
                     continue
