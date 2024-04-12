@@ -23,7 +23,7 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import java.util.*
 
-class BasicOcChecker<E : Event> : OcCheckerBase<E> {
+class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
 
     override val solver: Solver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
     private var relations: Array<Array<Reason?>>? = null
@@ -58,19 +58,13 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E> {
                 val decision = OcAssignment(decisionStack.peek().rels, rf)
                 decisionStack.push(decision)
                 val reason0 = setAndClose(decision.rels, rf)
-                if (reason0 != null) {
-                    solver.add(BoolExprs.Not(reason0.expr))
-                    continue@dpllLoop
-                }
+                if (propagate(reason0)) continue@dpllLoop
 
                 val writes = events[rf.from.const.varDecl]!!.values.flatten()
                     .filter { it.type == EventType.WRITE && it.enabled == true }
                 for (w in writes) {
                     val reason = derive(decision.rels, rf, w)
-                    if (reason != null) {
-                        solver.add(BoolExprs.Not(reason.expr))
-                        continue@dpllLoop
-                    }
+                    if (propagate(reason)) continue@dpllLoop
                 }
             }
 
@@ -79,10 +73,7 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E> {
                 decisionStack.push(decision)
                 for (rf in rfs[w.const.varDecl]!!.filter { it.enabled == true }) {
                     val reason = derive(decision.rels, rf, w)
-                    if (reason != null) {
-                        solver.add(BoolExprs.Not(reason.expr))
-                        continue@dpllLoop
-                    }
+                    if (propagate(reason)) continue@dpllLoop
                 }
             }
 
@@ -95,6 +86,13 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E> {
     }
 
     override fun getRelations(): Array<Array<Reason?>>? = relations?.copy()
+
+    override fun propagate(reason: Reason?): Boolean {
+        reason ?: return false
+        propagated.add(reason)
+        solver.add(BoolExprs.Not(reason.expr))
+        return true
+    }
 
     /**
      *  Returns true if obj is not on the stack (in other words, if the value of obj is changed in the new model)

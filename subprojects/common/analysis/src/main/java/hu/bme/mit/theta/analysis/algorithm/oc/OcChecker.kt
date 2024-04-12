@@ -58,15 +58,26 @@ interface OcChecker<E : Event> {
      * blocks, see Event::clkId)
      */
     fun getRelations(): Array<Array<Reason?>>?
+
+    /**
+     * Get the list of propagated clauses in the form of reasons.
+     */
+    fun getPropagatedClauses(): List<Reason>
 }
 
 /**
  * This interface implements basic utilities for an ordering consistency checker such as derivation rules and
  * transitive closure operations.
  */
-internal interface OcCheckerBase<E : Event> : OcChecker<E> {
+abstract class OcCheckerBase<E : Event> : OcChecker<E> {
 
-    fun derive(rels: Array<Array<Reason?>>, rf: Relation<E>, w: E): Reason? = when {
+    protected val propagated: MutableList<Reason> = mutableListOf()
+
+    override fun getPropagatedClauses() = propagated.toList()
+
+    protected abstract fun propagate(reason: Reason?): Boolean
+
+    protected fun derive(rels: Array<Array<Reason?>>, rf: Relation<E>, w: E): Reason? = when {
         rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
         w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null // w within an atomic block with one of the rf ends
 
@@ -83,7 +94,7 @@ internal interface OcCheckerBase<E : Event> : OcChecker<E> {
         else -> null
     }
 
-    fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation<E>): Reason? {
+    protected fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation<E>): Reason? {
         if (rel.from.clkId == rel.to.clkId) return null // within an atomic block
         return setAndClose(rels, rel.from.clkId, rel.to.clkId,
             if (rel.type == RelationType.PO) PoReason else RelationReason(rel))
@@ -117,7 +128,6 @@ internal interface OcCheckerBase<E : Event> : OcChecker<E> {
         return null
     }
 }
-
 
 /**
  * Reason(s) of an enabled relation.

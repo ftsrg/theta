@@ -26,16 +26,41 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.util.*
 
-class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>, JavaSMTUserPropagator() {
+class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
     private val partialAssignment = Stack<OcAssignment<E>>()
-    override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(this)
-    private var solverLevel: Int = 0
-
     private lateinit var writes: Map<VarDecl<*>, Map<Int, List<E>>>
     private lateinit var flatWrites: List<E>
     private lateinit var rfs: Map<VarDecl<*>, List<Relation<E>>>
     private lateinit var flatRfs: List<Relation<E>>
+
+    private val userPropagator: JavaSMTUserPropagator = object : JavaSMTUserPropagator() {
+        override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
+            if (value) {
+                flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }
+                    ?: flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
+            }
+        }
+
+        override fun onFinalCheck() =
+            flatWrites.filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }.forEach { w ->
+                propagate(w)
+            }
+
+        override fun onPush() {
+            solverLevel++
+        }
+
+        override fun onPop(levels: Int) {
+            solverLevel -= levels
+            while (partialAssignment.isNotEmpty() && partialAssignment.peek().solverLevel > solverLevel) {
+                partialAssignment.pop()
+            }
+        }
+    }
+
+    override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(userPropagator)
+    private var solverLevel: Int = 0
 
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
@@ -52,53 +77,26 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>, JavaSMTUserPropagat
         pos.forEach { setAndClose(initialRels, it) }
         partialAssignment.push(OcAssignment(rels = initialRels))
 
-        flatRfs.forEach { rf -> registerExpression(rf.declRef) }
-        flatWrites.forEach { w -> if (w.guard.isNotEmpty()) registerExpression(w.guardExpr) }
+        flatRfs.forEach { rf -> userPropagator.registerExpression(rf.declRef) }
+        flatWrites.forEach { w -> if (w.guard.isNotEmpty()) userPropagator.registerExpression(w.guardExpr) }
 
         return solver.check()
     }
 
     override fun getRelations(): Array<Array<Reason?>>? = partialAssignment.lastOrNull()?.rels?.copy()
 
-    override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
-        if (value) {
-            flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }
-                ?: flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
-        }
-    }
-
-    override fun onFinalCheck() =
-        flatWrites.filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }.forEach { w ->
-            propagate(w)
-        }
-
-    override fun onPush() {
-        solverLevel++
-    }
-
-    override fun onPop(levels: Int) {
-        solverLevel -= levels
-        while (partialAssignment.isNotEmpty() && partialAssignment.peek().solverLevel > solverLevel) {
-            partialAssignment.pop()
-        }
-    }
-
     private fun propagate(rf: Relation<E>) {
         check(rf.type == RelationType.RFI || rf.type == RelationType.RFE)
         val assignement = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
         partialAssignment.push(assignement)
         val reason0 = setAndClose(assignement.rels, rf)
-        if (reason0 != null) {
-            propagateConflict(reason0.exprs)
-        }
+        propagate(reason0)
 
         val writes = writes[rf.from.const.varDecl]!!.values.flatten()
             .filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }
         for (w in writes) {
             val reason = derive(assignement.rels, rf, w)
-            if (reason != null) {
-                propagateConflict(reason.exprs)
-            }
+            propagate(reason)
         }
     }
 
@@ -109,10 +107,15 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>, JavaSMTUserPropagat
             partialAssignment.push(assignment)
             for (rf in rfs) {
                 val reason = derive(assignment.rels, rf, w)
-                if (reason != null) {
-                    propagateConflict(reason.exprs)
-                }
+                propagate(reason)
             }
         }
+    }
+
+    override fun propagate(reason: Reason?): Boolean {
+        reason ?: return false
+        propagated.add(reason)
+        userPropagator.propagateConflict(reason.exprs)
+        return true
     }
 }

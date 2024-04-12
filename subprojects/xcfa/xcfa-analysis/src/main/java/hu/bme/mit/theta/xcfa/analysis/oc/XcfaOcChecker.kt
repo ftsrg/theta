@@ -341,6 +341,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         return true
     }
 
+    // Extract counterexample trace from model
+
     private fun getTrace(model: Valuation): Trace<XcfaState<*>, XcfaAction> {
         val stateList = mutableListOf<XcfaState<ExplState>>()
         val actionList = mutableListOf<XcfaAction>()
