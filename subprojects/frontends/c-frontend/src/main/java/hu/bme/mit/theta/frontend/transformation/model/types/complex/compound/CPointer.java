@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CPointer extends CInteger {
@@ -53,5 +54,10 @@ public class CPointer extends CInteger {
     @Override
     public Type getSmtType() {
         return ArrayType.of(getUnsignedLong(parseContext).getSmtType(), embeddedType.getSmtType());
+    }
+
+    @Override
+    public String getTypeName() {
+        return new CUnsignedInt(null, parseContext).getTypeName();
     }
 }
