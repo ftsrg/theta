@@ -33,6 +33,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         EmptyEdgeRemovalPass(parseContext),
         UnusedLocRemovalPass(parseContext),
         // handling intrinsics
+        ReferenceElimination(parseContext),
         ErrorLocationPass(checkOverflow, parseContext),
         FinalLocationPass(checkOverflow, parseContext),
         SvCompIntrinsicsPass(parseContext),
@@ -60,7 +61,6 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         LbePass(parseContext),
         NormalizePass(parseContext), // needed after lbe, TODO
         DeterministicPass(parseContext), // needed after lbe, TODO
-        ReferenceElimination(parseContext),
         HavocPromotionAndRange(parseContext),
         // Final cleanup
         UnusedVarPass(parseContext, uniqueWarningLogger),
