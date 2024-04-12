@@ -21,7 +21,6 @@ import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
@@ -90,17 +89,6 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
     private fun XcfaLabel.simplify(valuation: MutableValuation): XcfaLabel = if (this is StmtLabel) {
         val simplified = stmt.accept(StmtSimplifierVisitor(), valuation).stmt
         when (stmt) {
-            is MemoryAssignStmt<*, *> -> {
-                simplified as MemoryAssignStmt<*, *>
-                if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-                    parseContext.metadata.create(simplified.expr, "cType",
-                        CComplexType.getType(stmt.expr, parseContext))
-                if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
-                    parseContext.metadata.create(simplified.deref, "cType",
-                        CComplexType.getType(stmt.deref, parseContext))
-                StmtLabel(simplified, metadata = metadata)
-            }
-
             is AssignStmt<*> -> {
                 simplified as AssignStmt<*>
                 if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
