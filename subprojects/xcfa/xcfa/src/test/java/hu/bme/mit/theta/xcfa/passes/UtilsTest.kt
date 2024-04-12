@@ -52,13 +52,13 @@ class UtilsTest {
                 StartLabel("", listOf(xPrime.ref), y, EmptyMetaData)),
             Arguments.of(ReturnLabel(JoinLabel(x, EmptyMetaData)), ReturnLabel(JoinLabel(xPrime, EmptyMetaData))),
 
-            Arguments.of(StmtLabel(Assign(x, y.ref), metadata = EmptyMetaData),
-                StmtLabel(Assign(xPrime, y.ref), metadata = EmptyMetaData)),
-            Arguments.of(StmtLabel(Havoc(x), metadata = EmptyMetaData),
-                StmtLabel(Havoc(xPrime), metadata = EmptyMetaData)),
-            Arguments.of(StmtLabel(Assume(Eq(x.ref, y.ref)), metadata = EmptyMetaData),
-                StmtLabel(Assume(Eq(xPrime.ref, y.ref)), metadata = EmptyMetaData)),
-            Arguments.of(StmtLabel(Skip(), metadata = EmptyMetaData), StmtLabel(Skip(), metadata = EmptyMetaData)),
+            Arguments.of(StmtLabel(Assign(x, y.ref)),
+                StmtLabel(Assign(xPrime, y.ref))),
+            Arguments.of(StmtLabel(Havoc(x)),
+                StmtLabel(Havoc(xPrime))),
+            Arguments.of(StmtLabel(Assume(Eq(x.ref, y.ref))),
+                StmtLabel(Assume(Eq(xPrime.ref, y.ref)))),
+            Arguments.of(StmtLabel(Skip()), StmtLabel(Skip())),
         )
     }
 

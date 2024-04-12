@@ -27,74 +27,68 @@ open class ProcedurePassManager(vararg passes: List<ProcedurePass>) {
 class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(
     listOf(
         // formatting
-        NormalizePass(parseContext),
-        DeterministicPass(parseContext),
+        NormalizePass(),
+        DeterministicPass(),
         // removing redundant elements
-        EmptyEdgeRemovalPass(parseContext),
-        UnusedLocRemovalPass(parseContext),
+        EmptyEdgeRemovalPass(),
+        UnusedLocRemovalPass(),
         // handling intrinsics
         ReferenceElimination(parseContext),
-        ErrorLocationPass(checkOverflow, parseContext),
-        FinalLocationPass(checkOverflow, parseContext),
-        SvCompIntrinsicsPass(parseContext),
+        ErrorLocationPass(checkOverflow),
+        FinalLocationPass(checkOverflow),
+        SvCompIntrinsicsPass(),
         FpFunctionsToExprsPass(parseContext),
-        CLibraryFunctionsPass(parseContext),
+        CLibraryFunctionsPass(),
     ),
     listOf(
         // optimizing
         SimplifyExprsPass(parseContext),
         LoopUnrollPass(),
         SimplifyExprsPass(parseContext),
-        EmptyEdgeRemovalPass(parseContext),
-        UnusedLocRemovalPass(parseContext),
+        EmptyEdgeRemovalPass(),
+        UnusedLocRemovalPass(),
     ),
     listOf(
         // trying to inline procedures
         InlineProceduresPass(parseContext),
-        RemoveDeadEnds(parseContext),
-        EliminateSelfLoops(parseContext),
+        RemoveDeadEnds(),
+        EliminateSelfLoops(),
     ),
     listOf(
         // handling remaining function calls
         NoSideEffectPass(parseContext),
-        NondetFunctionPass(parseContext),
+        NondetFunctionPass(),
         LbePass(parseContext),
-        NormalizePass(parseContext), // needed after lbe, TODO
-        DeterministicPass(parseContext), // needed after lbe, TODO
+        NormalizePass(), // needed after lbe, TODO
+        DeterministicPass(), // needed after lbe, TODO
         HavocPromotionAndRange(parseContext),
         // Final cleanup
-        UnusedVarPass(parseContext, uniqueWarningLogger),
+        UnusedVarPass(uniqueWarningLogger),
+        EmptyEdgeRemovalPass(),
+        UnusedLocRemovalPass(),
     )
 )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(listOf(
     // formatting
-    NormalizePass(parseContext),
-    DeterministicPass(parseContext),
+    NormalizePass(),
+    DeterministicPass(),
     // removing redundant elements
-    EmptyEdgeRemovalPass(parseContext),
-    UnusedLocRemovalPass(parseContext),
+    EmptyEdgeRemovalPass(),
+    UnusedLocRemovalPass(),
     // optimizing
     SimplifyExprsPass(parseContext),
-    // handling intrinsics
-//        ErrorLocationPass(false),
-//        FinalLocationPass(false),
-//        SvCompIntrinsicsPass(),
-//        FpFunctionsToExprsPass(),
-//        PthreadFunctionsPass(),
-    // trying to inline procedures
 ), listOf(
+    // trying to inline procedures
     InlineProceduresPass(parseContext),
-    RemoveDeadEnds(parseContext),
-    EliminateSelfLoops(parseContext),
+    RemoveDeadEnds(),
+    EliminateSelfLoops(),
     // handling remaining function calls
-//        NondetFunctionPass(),
     LbePass(parseContext),
-    NormalizePass(parseContext), // needed after lbe, TODO
-    DeterministicPass(parseContext), // needed after lbe, TODO
-//        HavocPromotionAndRange(),
+    NormalizePass(), // needed after lbe, TODO
+    DeterministicPass(), // needed after lbe, TODO
     // Final cleanup
-    UnusedVarPass(parseContext, uniqueWarningLogger),
+    UnusedVarPass(uniqueWarningLogger),
 ))
 
 class LitmusPasses : ProcedurePassManager()

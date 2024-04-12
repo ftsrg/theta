@@ -142,7 +142,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             List<? extends VarDecl<?>> params = u_pred.symbol().stream().map(symbol -> localVars.get(symbol.getText())).toList();
             localVars.values().forEach(var -> {
                 if (!params.contains(var))
-                    labels.add(new StmtLabel(HavocStmt.of(var), EmptyMetaData.INSTANCE));
+                    labels.add(new StmtLabel(HavocStmt.of(var)));
             });
             labels.addAll(getParamAssignments(params, from.vars));
         });
@@ -174,7 +174,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
     private List<XcfaLabel> getParamAssignments(List<? extends VarDecl<?>> lhs, List<? extends VarDecl<?>> rhs) {
         List<XcfaLabel> labels = new ArrayList<>();
         for (int i = 0; i < lhs.size(); ++i) {
-            labels.add(new StmtLabel(AssignStmt.create(lhs.get(i), rhs.get(i).getRef()), EmptyMetaData.INSTANCE));
+            labels.add(new StmtLabel(AssignStmt.create(lhs.get(i), rhs.get(i).getRef())));
         }
         return labels;
     }

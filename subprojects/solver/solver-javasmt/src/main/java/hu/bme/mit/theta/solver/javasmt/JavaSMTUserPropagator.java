@@ -72,7 +72,8 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     @Override
     public final void onKnownValue(final BooleanFormula expr, final boolean value) {
         super.onKnownValue(expr, value);
-        final var tExpr = cast(toExpr.apply(expr), Bool());
+        final var entry = registeredTerms.entrySet().stream().filter(e -> e.getValue().equals(expr)).findAny();
+        final var tExpr = entry.isPresent() ? entry.get().getKey() : cast(toExpr.apply(expr), Bool());
         onKnownValue(tExpr, value);
     }
 

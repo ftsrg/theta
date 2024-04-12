@@ -108,7 +108,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 if (objects != null && objects.get2() > 0)
                     stmts.add(havocVar(argument, functionState, blockState));
             }
-            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt, EmptyMetaData.INSTANCE)).toList()), new LlvmMetadata(instruction.getLineNumber()));
+            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()), new LlvmMetadata(instruction.getLineNumber()));
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
         }

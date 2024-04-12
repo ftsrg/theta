@@ -114,8 +114,11 @@ private fun List<VarAccessMap>.mergeAndCollect(): VarAccessMap = this.fold(mapOf
 private operator fun VarAccessMap?.plus(other: VarAccessMap?): VarAccessMap =
     listOfNotNull(this, other).mergeAndCollect()
 
+inline val XcfaLabel.isAtomicBegin: Boolean get() = this is FenceLabel && "ATOMIC_BEGIN" in labels
+inline val XcfaLabel.isAtomicEnd: Boolean get() = this is FenceLabel && "ATOMIC_END" in labels
+
 /**
- * The list of mutexes acquired by the label.
+ * The set of mutexes acquired by the label.
  */
 inline val FenceLabel.acquiredMutexes: Set<String>
     get() = labels.mapNotNull {
@@ -128,7 +131,7 @@ inline val FenceLabel.acquiredMutexes: Set<String>
     }.toSet()
 
 /**
- * The list of mutexes released by the label.
+ * The set of mutexes released by the label.
  */
 inline val FenceLabel.releasedMutexes: Set<String>
     get() = labels.mapNotNull {
@@ -139,6 +142,28 @@ inline val FenceLabel.releasedMutexes: Set<String>
             else -> null
         }
     }.toSet()
+
+/**
+ * The set of mutexes acquired embedded into each other.
+ */
+inline val XcfaEdge.acquiredEmbeddedFenceVars: Set<String>
+    get() {
+        val acquired = mutableSetOf<String>()
+        val toVisit = mutableListOf<Pair<XcfaEdge, Set<String>>>(this to setOf())
+        while (toVisit.isNotEmpty()) {
+            val (visiting, mutexes) = toVisit.removeFirst()
+            val newMutexes = mutexes.toMutableSet()
+            acquired.addAll(visiting.getFlatLabels().flatMap { fence ->
+                if (fence !is FenceLabel) return@flatMap emptyList()
+                fence.acquiredMutexes + fence.labels.filter { it.startsWith("start_cond_wait") }
+                    .map { it.substring("start_cond_wait".length + 1, it.length - 1).split(",")[0] }
+            })
+            if (visiting.mutexOperations(newMutexes)) {
+                visiting.target.outgoingEdges.forEach { toVisit.add(it to newMutexes) }
+            }
+        }
+        return acquired
+    }
 
 /**
  * Returns the list of accessed variables by the edge associated with an AccessType object.
@@ -160,7 +185,7 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
 
     is NondetLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
     is SequenceLabel -> labels.map { it.collectVarsWithAccessType() }.mergeAndCollect()
-    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ }
+    is InvokeLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } // TODO is it read?
     is StartLabel -> params.map { ExprUtils.getVars(it) }.flatten().associateWith { READ } + mapOf(pidVar to READ)
     is JoinLabel -> mapOf(pidVar to READ)
     is ReadLabel -> mapOf(global to READ, local to READ)
@@ -309,10 +334,10 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
         visitedLocations.add(visiting)
         for (outEdge in visiting.outgoingEdges) {
             var isNextAtomic = checkNotNull(isAtomic[visiting])
-            if (outEdge.getFlatLabels().any { it is FenceLabel && it.labels.contains("ATOMIC_BEGIN") }) {
+            if (outEdge.getFlatLabels().any { it.isAtomicBegin }) {
                 isNextAtomic = true
             }
-            if (outEdge.getFlatLabels().any { it is FenceLabel && it.labels.contains("ATOMIC_END") }) {
+            if (outEdge.getFlatLabels().any { it.isAtomicEnd }) {
                 isNextAtomic = false
             }
             val target = outEdge.target

@@ -61,6 +61,7 @@ enum class InputType {
 enum class Backend {
     CEGAR,
     BOUNDED,
+    OC,
     LAZY,
     PORTFOLIO,
     NONE,

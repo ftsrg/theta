@@ -164,9 +164,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         this.env = new Env();
 
         this.exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
+        this.table = buildDispatchTable(DispatchTable.builder()).build();
+    }
 
-        this.table = DispatchTable.<String>builder()
-
+    protected DispatchTable.Builder<String> buildDispatchTable(DispatchTable.Builder<String> builder) {
+        builder
                 // General
 
                 .addCase(RefExpr.class, this::transformRef)
@@ -405,8 +407,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(Dereference.class, this::transformDereference)
 
                 .addCase(Reference.class, this::transformReference)
-
-                .build();
+            ;
+            return builder;
     }
 
     @Override

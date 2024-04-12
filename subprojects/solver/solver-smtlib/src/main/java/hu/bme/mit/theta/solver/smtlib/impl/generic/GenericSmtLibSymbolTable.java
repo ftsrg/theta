@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
-    private static final String problematicCharactersRegex = ":";
+    private static final String problematicCharactersRegex = "[:#]";
     private static final String problematicCharactersReplacement = "\\$";
 
     private final BiMap<ConstDecl<?>, String> constToSymbol;

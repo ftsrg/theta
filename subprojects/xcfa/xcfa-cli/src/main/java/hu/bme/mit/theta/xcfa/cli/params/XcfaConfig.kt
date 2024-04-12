@@ -25,6 +25,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import java.io.File
@@ -96,8 +97,13 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
 
-    @Parameter(names = ["--unroll"], description = "Max number of loop iterations to unroll")
-    var loopUnroll: Int = 50,
+    @Parameter(names = ["--unroll"],
+        description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
+    var loopUnroll: Int = 1000,
+
+    @Parameter(names = ["--force-unroll"],
+        description = "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)")
+    var forceUnroll: Int = -1,
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C,
@@ -149,6 +155,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         specConfig = when (backend) {
             Backend.CEGAR -> CegarConfig() as T
             Backend.BOUNDED -> BoundedConfig() as T
+            Backend.OC -> OcConfig() as T
             Backend.LAZY -> null
             Backend.PORTFOLIO -> PortfolioConfig() as T
             Backend.NONE -> null
@@ -286,6 +293,11 @@ data class InterpolationConfig(
     var validateItpSolver: Boolean = false,
 
     ) : Config
+
+data class OcConfig(
+    @Parameter(names = ["--oc-decision-procedure"], description = "Decision procedure for ordering-consistency check")
+    var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
+) : SpecBackendConfig
 
 data class PortfolioConfig(
     @Parameter(names = ["--portfolio"], description = "Portfolio to run")

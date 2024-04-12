@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -27,7 +26,7 @@ import hu.bme.mit.theta.xcfa.model.*
  * Sets the `normal` flag on the ProcedureBuilder
  */
 
-class NormalizePass(val parseContext: ParseContext) : ProcedurePass {
+class NormalizePass : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         val edges = LinkedHashSet(builder.getEdges())
