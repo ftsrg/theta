@@ -612,16 +612,14 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                         CComplexType elemType = ((CArray) arrayType).getEmbeddedType();
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        checkState(elemType instanceof CPointer, "Cannot use non-pointer type here");
-                        primary = dereference(primary, cast(index, ptrType), ((CPointer) elemType).getEmbeddedType());
-                        parseContext.getMetadata().create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
+                        primary = dereference(primary, cast(index, ptrType), elemType);
+                        parseContext.getMetadata().create(primary, "cType", elemType);
                     } else if (arrayType instanceof CPointer) {
                         CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        checkState(elemType instanceof CPointer, "Cannot use non-pointer type here");
-                        primary = dereference(primary, cast(index, ptrType), ((CPointer) elemType).getEmbeddedType());
-                        parseContext.getMetadata().create(primary, "cType", ((CPointer) arrayType).getEmbeddedType());
+                        primary = dereference(primary, cast(index, ptrType), elemType);
+                        parseContext.getMetadata().create(primary, "cType", elemType);
                     } else {
                         throw new RuntimeException("Non-array expression used as array!");
                     }

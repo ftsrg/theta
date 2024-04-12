@@ -23,19 +23,14 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public final class Reference<A extends Type, T extends Type> implements Expr<A> {
+public final class Reference<A extends Type, T extends Type> implements Expr<ArrayType<A, T>> {
 
     private static final String OPERATOR_LABEL = "ref";
     private final Expr<T> expr;
@@ -64,28 +59,29 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
     }
 
     @Override
-    public A getType() {
-        return type;
+    public ArrayType<A, T> getType() {
+        return ArrayType.of(type, expr.getType());
     }
 
     @Override
-    public LitExpr<A> eval(Valuation val) {
-        Function<Integer, LitExpr<A>> fromInt = null;
-        if (type instanceof IntType) {
-            //noinspection unchecked
-            fromInt = integer -> (LitExpr<A>) IntLitExpr.of(BigInteger.valueOf(integer));
-        } else if (type instanceof BvType) {
-            fromInt = integer -> (LitExpr<A>) BvUtils.fitBigIntegerIntoNeutralDomain(BigInteger.valueOf(integer), ((BvType) type).getSize());
-        } else {
-            throw new RuntimeException("Pointers should either be Int or BvType");
-        }
-
-        if (expr instanceof RefExpr<T> refExpr) {
-            return fromInt.apply(refExpr.getDecl().hashCode());
-        } else {
-            checkState(expr instanceof Reference<?, ?>);
-            return (LitExpr<A>) expr.eval(val);
-        }
+    public LitExpr<ArrayType<A, T>> eval(Valuation val) {
+//        Function<Integer, LitExpr<A>> fromInt = null;
+//        if (type instanceof IntType) {
+//            //noinspection unchecked
+//            fromInt = integer -> (LitExpr<A>) IntLitExpr.of(BigInteger.valueOf(integer));
+//        } else if (type instanceof BvType) {
+//            fromInt = integer -> (LitExpr<A>) BvUtils.fitBigIntegerIntoNeutralDomain(BigInteger.valueOf(integer), ((BvType) type).getSize());
+//        } else {
+//            throw new RuntimeException("Pointers should either be Int or BvType");
+//        }
+//
+//        if (expr instanceof RefExpr<T> refExpr) {
+//            return fromInt.apply(refExpr.getDecl().hashCode());
+//        } else {
+//            checkState(expr instanceof Reference<?, ?>);
+//            return (LitExpr<A>) expr.eval(val);
+//        }
+        throw new UnsupportedOperationException("Not meant to be evaluated.");
     }
 
     @Override
@@ -94,10 +90,10 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
     }
 
     @Override
-    public Expr<A> withOps(List<? extends Expr<?>> ops) {
+    public Expr<ArrayType<A, T>> withOps(List<? extends Expr<?>> ops) {
         checkState(ops.size() == 1);
         checkState(ops.get(0) instanceof RefExpr<?> && ((RefExpr) ops.get(0)).getDecl() instanceof VarDecl<?>, "Don't transform references to constants.");
-        return Reference.of(ops.get(0), type);
+        return Reference.of((Expr<T>) ops.get(0), type);
     }
 
     @Override

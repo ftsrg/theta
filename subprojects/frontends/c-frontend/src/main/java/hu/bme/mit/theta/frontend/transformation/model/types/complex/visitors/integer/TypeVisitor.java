@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
@@ -47,6 +48,10 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
     }
 
     public Type visit(CPointer type, Void param) {
+        return ArrayType.of(Int(), type.getEmbeddedType().getSmtType());
+    }
+
+    public Type visit(CArray type, Void param) {
         return ArrayType.of(Int(), type.getEmbeddedType().getSmtType());
     }
 }

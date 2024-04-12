@@ -82,7 +82,6 @@ import java.util.StringJoiner;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
 /**
@@ -474,9 +473,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                         LitExpr<?> currentValue = ptrType.getNullValue();
                         LitExpr<?> unitValue = ptrType.getUnitValue();
                         for (Tuple2<Optional<CStatement>, CStatement> statement : initializerList.getStatements()) {
-                            checkState(false, "Code here seems to be buggy");
+//                            checkState(false, "Code here seems to be buggy");
                             final var expr = statement.get2().getExpression();
-                            final var deref = Exprs.Dereference(cast(declaration.getVarDecls().get(0).getRef(), ptrType.getSmtType()), cast(currentValue, ptrType.getSmtType()), expr.getType());
+                            final var deref = Exprs.Dereference(declaration.getVarDecls().get(0).getRef(), currentValue, expr.getType());
                             CAssignment cAssignment = new CAssignment(deref, statement.get2(), "=", parseContext);
                             recordMetadata(ctx, cAssignment);
                             compound.getcStatementList().add(cAssignment);

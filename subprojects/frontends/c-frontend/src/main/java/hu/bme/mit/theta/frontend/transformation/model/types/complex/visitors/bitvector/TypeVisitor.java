@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
@@ -32,7 +33,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
     private final ParseContext parseContext;
@@ -79,6 +79,10 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 
 
     public Type visit(CPointer type, Void param) {
-        return ArrayType.of(Int(), type.getEmbeddedType().getSmtType());
+        return ArrayType.of(CComplexType.getUnsignedInt(parseContext).getSmtType(), type.getEmbeddedType().getSmtType());
+    }
+
+    public Type visit(CArray type, Void param) {
+        return ArrayType.of(CComplexType.getUnsignedInt(parseContext).getSmtType(), type.getEmbeddedType().getSmtType());
     }
 }

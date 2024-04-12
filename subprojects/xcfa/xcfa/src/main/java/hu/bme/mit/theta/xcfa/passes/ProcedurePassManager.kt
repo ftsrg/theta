@@ -33,12 +33,12 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
         // handling intrinsics
-        ReferenceElimination(parseContext),
         ErrorLocationPass(checkOverflow),
         FinalLocationPass(checkOverflow),
         SvCompIntrinsicsPass(),
         FpFunctionsToExprsPass(parseContext),
         CLibraryFunctionsPass(),
+        ReferenceElimination(parseContext),
     ),
     listOf(
         // optimizing
