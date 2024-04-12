@@ -17,7 +17,10 @@
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.integer;
 
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -40,6 +43,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.csho
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cshort.CUnsignedShort;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
@@ -152,7 +156,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return sameSizeExpr;
         }
         if (true) {
-            return Pos(param);
+            return param.withOps(param.getOps());
         }
         int width = parseContext.getArchitecture().getBitWidth("int");
         BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
@@ -214,9 +218,16 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CPointer type, Expr<?> param) {
-        if (CComplexType.getType(param, parseContext) instanceof CPointer) {
-            return param.withOps(param.getOps());
+        final var thatType = CComplexType.getType(param, parseContext);
+        if (param instanceof IntLitExpr intParam && intParam.getValue().equals(BigInteger.ZERO)) {
+            return nullPointer(type);
         }
-        return visit((CUnsignedLong) CComplexType.getUnsignedLong(parseContext), param);
+        checkState(thatType instanceof CPointer, "Cannot cast between pointer and non-pointer (" + thatType + ") expression");
+        return param;
     }
+
+    private static <T1 extends Type, T2 extends Type> Expr<?> nullPointer(CPointer type) {
+        return ArrayLitExpr.of(List.of(), (Expr<T2>) type.getEmbeddedType().getNullValue(), (ArrayType<T1, T2>) type.getSmtType());
+    }
+
 }

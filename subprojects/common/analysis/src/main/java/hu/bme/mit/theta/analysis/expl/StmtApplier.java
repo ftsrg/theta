@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -38,7 +37,6 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.util.ArrayList;
@@ -61,8 +59,6 @@ public final class StmtApplier {
         if (stmt instanceof AssignStmt) {
             final AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
             return applyAssign(assignStmt, val, approximate);
-        } else if (stmt instanceof MemoryAssignStmt<?, ?> memoryAssignStmt) {
-            return applyMemAssign(memoryAssignStmt, val, approximate);
         } else if (stmt instanceof AssumeStmt) {
             final AssumeStmt assumeStmt = (AssumeStmt) stmt;
             return applyAssume(assumeStmt, val, approximate);
@@ -89,24 +85,6 @@ public final class StmtApplier {
         } else {
             throw new UnsupportedOperationException("Unhandled statement: " + stmt);
         }
-    }
-
-    private static ApplyResult applyMemAssign(MemoryAssignStmt<?, ?> stmt, MutableValuation val, boolean approximate) {
-        final var expr = ExprUtils.simplify(stmt.getDeref(), val);
-        final var deref = stmt.getDeref();
-        final var newOffset = ExprUtils.simplify(deref.getOffset(), val);
-        if (expr instanceof LitExpr<?> litExpr && deref.getArray() instanceof RefExpr<?> refExpr && newOffset instanceof LitExpr<?> litOffset) {
-            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
-            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
-            val.put(varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);
-            return ApplyResult.SUCCESS;
-        } else if (approximate && deref.getArray() instanceof RefExpr<?> refExpr && newOffset instanceof LitExpr<?> litOffset) {
-            final VarDecl<?> varDecl = (VarDecl<?>) refExpr.getDecl();
-            final IntLitExpr intLitOffset = (IntLitExpr) litOffset;
-            val.remove(varDecl.getConstDecl(intLitOffset.getValue().intValue()));
-            return ApplyResult.SUCCESS;
-        }
-        return ApplyResult.FAILURE;
     }
 
     private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,

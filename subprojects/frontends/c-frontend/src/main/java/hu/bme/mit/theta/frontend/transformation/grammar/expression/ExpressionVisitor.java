@@ -465,7 +465,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitCastExpressionCast(CParser.CastExpressionCastContext ctx) {
-        CComplexType actualType = ctx.typeName().specifierQualifierList().accept(typeVisitor).getActualType();
+        CComplexType actualType = ctx.declarationSpecifiers().accept(typeVisitor).getActualType();
         Expr<?> expr = actualType.castTo(ctx.castExpression().accept(this));
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
@@ -568,23 +568,20 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             case "*":
                 type = CComplexType.getType(accept, parseContext);
                 checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
-                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), (CPointer) type);
+                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), ((CPointer) type).getEmbeddedType());
         }
         return accept;
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CPointer type) {
-        if (accept instanceof RefExpr<?> refExpr) {
-            accept = CComplexType.getUnsignedLong(parseContext).getValue(Integer.toString(refExpr.getDecl().hashCode()));
-        }
-        Dereference<T, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<T>) offset, type.getEmbeddedType().getSmtType());
-        parseContext.getMetadata().create(of, "cType", type.getEmbeddedType());
+    private <T extends Type, O extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CComplexType type) {
+        Dereference<T, O, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<O>) offset, type.getSmtType());
+        parseContext.getMetadata().create(of, "cType", type);
         return of;
     }
 
     private Expr<?> reference(RefExpr<?> accept) {
-        Reference<Type, ?> of = Reference(CComplexType.getUnsignedLong(parseContext).getValue(Integer.toString(accept.getDecl().hashCode())), CComplexType.getUnsignedLong(parseContext).getSmtType());
+        Reference<Type, ?> of = Reference(accept, CComplexType.getUnsignedLong(parseContext).getSmtType());
         parseContext.getMetadata().create(of, "cType", new CPointer(null, CComplexType.getType(accept, parseContext), parseContext));
         return of;
     }
@@ -616,13 +613,14 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
                         checkState(elemType instanceof CPointer, "Cannot use non-pointer type here");
-                        primary = dereference(primary, cast(index, ptrType), (CPointer) elemType);
+                        primary = dereference(primary, cast(index, ptrType), ((CPointer) elemType).getEmbeddedType());
                         parseContext.getMetadata().create(primary, "cType", ((CArray) arrayType).getEmbeddedType());
                     } else if (arrayType instanceof CPointer) {
                         CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
                         Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
                         Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = dereference(primary, cast(index, ptrType), (CPointer) elemType);
+                        checkState(elemType instanceof CPointer, "Cannot use non-pointer type here");
+                        primary = dereference(primary, cast(index, ptrType), ((CPointer) elemType).getEmbeddedType());
                         parseContext.getMetadata().create(primary, "cType", ((CPointer) arrayType).getEmbeddedType());
                     } else {
                         throw new RuntimeException("Non-array expression used as array!");

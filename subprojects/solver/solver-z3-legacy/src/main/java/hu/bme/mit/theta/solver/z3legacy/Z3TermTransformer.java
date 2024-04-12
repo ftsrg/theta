@@ -764,7 +764,8 @@ final class Z3TermTransformer {
             checkArgument(args.length == 2, "Number of arguments must be two");
             final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
             final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
-            return Exprs.Dereference(op1, op2, transformSort(term.getSort()));
+//            return Exprs.Dereference(op1, op2, transformSort(term.getSort()));
+            return null;
         });
     }
 

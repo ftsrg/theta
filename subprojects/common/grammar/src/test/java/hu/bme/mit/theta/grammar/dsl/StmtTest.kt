@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
 import org.junit.Assert
@@ -54,9 +53,6 @@ class StmtTest {
 
             return listOf(
                 arrayOf(Assign(x, Int(1)), "(assign x 1)",
-                    mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
-                arrayOf(MemoryAssign(Dereference(Int(addr), Int(0), Int()), Int(1)),
-                    "(memassign (deref $addr 0 Int) 1)",
                     mapOf(Pair(ExprTest.NamedSymbol("x"), x))),
                 arrayOf(Assume(Eq(x.ref, Int(1))), "(assume (= x 1))",
                     mapOf(Pair(ExprTest.NamedSymbol("x"), x))),

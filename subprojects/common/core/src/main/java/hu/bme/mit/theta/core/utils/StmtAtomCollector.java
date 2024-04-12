@@ -22,7 +22,6 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -62,13 +61,6 @@ public class StmtAtomCollector {
         public <DeclType extends Type> Void visit(AssignStmt<DeclType> stmt,
                                                   Set<Expr<BoolType>> atoms) {
             final Expr<BoolType> eq = EqExpr.create2(stmt.getVarDecl().getRef(), stmt.getExpr());
-            atoms.addAll(ExprUtils.getAtoms(eq));
-            return null;
-        }
-
-        @Override
-        public <PtrType extends Type, DeclType extends Type> Void visit(MemoryAssignStmt<PtrType, DeclType> stmt, Set<Expr<BoolType>> atoms) {
-            final Expr<BoolType> eq = EqExpr.create2(stmt.getDeref(), stmt.getExpr());
             atoms.addAll(ExprUtils.getAtoms(eq));
             return null;
         }

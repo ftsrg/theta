@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
@@ -265,7 +264,6 @@ private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
         }(); ${setOf(stmt.varDecl).unsafeBounds(parseContext, intRangeConstraint)}"
 
         is AssignStmt<*> -> "${stmt.varDecl.name.toC()} = ${stmt.expr.toC(parseContext)};"
-        is MemoryAssignStmt<*, *> -> "${stmt.deref.toC(parseContext)} = ${stmt.expr.toC(parseContext)};"
         is AssumeStmt -> "if(!${stmt.cond.toC(parseContext)}) abort();"
         else -> TODO("Not yet supported: $stmt")
     }
@@ -297,12 +295,12 @@ fun Expr<*>.toC(parseContext: ParseContext) =
         is MultiaryExpr<*, *> -> this.toC(parseContext)
         is ArrayWriteExpr<*, *> -> this.toC(parseContext)
         is ArrayReadExpr<*, *> -> this.toC(parseContext)
-        is Dereference<*, *> -> this.toC(parseContext)
+        is Dereference<*, *, *> -> this.toC(parseContext)
         is IteExpr<*> -> this.toC(parseContext)
         else -> TODO("Not yet supported: $this")
     }
 
-fun Dereference<*, *>.toC(parseContext: ParseContext): String = "$array[$offset]"
+fun Dereference<*, *, *>.toC(parseContext: ParseContext): String = "$array[$offset]"
 
 fun ArrayWriteExpr<*, *>.toC(parseContext: ParseContext): String =
     "array_write(${this.array.toC(parseContext)}, ${this.index.toC(parseContext)}, ${this.elem.toC(parseContext)})"

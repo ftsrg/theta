@@ -22,18 +22,16 @@ import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
-import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier.StmtSimplifierVisitor
-import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.isRead
-import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
 
 /**
  * This pass simplifies the expressions inside statements and substitutes the values of constant variables
@@ -60,16 +58,6 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
                     if (it is StmtLabel) {
                         val simplified = it.stmt.accept(StmtSimplifierVisitor(), localValuation).stmt
                         when (it.stmt) {
-                            is MemoryAssignStmt<*, *> -> {
-                                simplified as MemoryAssignStmt<*, *>
-                                if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
-                                    parseContext.metadata.create(simplified.expr, "cType",
-                                        CComplexType.getType(it.stmt.expr, parseContext))
-                                if (parseContext.metadata.getMetadataValue(it.stmt.deref, "cType").isPresent)
-                                    parseContext.metadata.create(simplified.deref, "cType",
-                                        CComplexType.getType(it.stmt.deref, parseContext))
-                                StmtLabel(simplified, metadata = it.metadata)
-                            }
 
                             is AssignStmt<*> -> {
                                 simplified as AssignStmt<*>

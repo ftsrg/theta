@@ -277,7 +277,7 @@ public abstract class CComplexType {
         }
 
         public R visit(CVoid type, T param) {
-            return visit(((CComplexType) type), param);
+            return CComplexType.getUnsignedLong(type.getParseContext()).accept(this, param);
         }
 
         public R visit(CReal type, T param) {

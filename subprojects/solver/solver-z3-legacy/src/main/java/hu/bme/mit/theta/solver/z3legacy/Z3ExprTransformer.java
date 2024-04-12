@@ -23,7 +23,6 @@ import com.microsoft.z3legacy.BoolExpr;
 import com.microsoft.z3legacy.Context;
 import com.microsoft.z3legacy.FPExpr;
 import com.microsoft.z3legacy.FPSort;
-import com.microsoft.z3legacy.Sort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -1256,16 +1255,12 @@ final class Z3ExprTransformer {
         }
     }
 
-    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?> expr) {
-        final var sort = transformer.toSort(expr.getArray().getType());
-        final var func = context.mkFuncDecl("deref", new Sort[]{sort, sort}, transformer.toSort(expr.getType()));
-        return context.mkApp(func, toTerm(expr.getArray()), toTerm(expr.getOffset()));
+    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?, ?> expr) {
+        return transformArrayRead(ArrayReadExpr.create(expr.getArray(), expr.getOffset()));
     }
 
     private com.microsoft.z3legacy.Expr transformReference(final Reference<?, ?> expr) {
-        final var sort = transformer.toSort(expr.getExpr().getType());
-        final var func = context.mkFuncDecl("ref", new Sort[]{sort}, transformer.toSort(expr.getType()));
-        return context.mkApp(func, toTerm(expr.getExpr()));
+        throw new RuntimeException("References cannot be transformed.");
     }
 
     public void reset() {

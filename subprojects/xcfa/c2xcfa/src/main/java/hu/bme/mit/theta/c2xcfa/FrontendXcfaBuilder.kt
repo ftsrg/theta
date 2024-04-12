@@ -23,13 +23,12 @@ import hu.bme.mit.theta.common.logging.Logger.Level
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
@@ -39,7 +38,6 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
@@ -176,17 +174,17 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
         val rExpression = statement.getrExpression()
         val label: StmtLabel = when (lValue) {
-            is Dereference<*, *> -> {
-                val op = cast(lValue.array, lValue.array.type)
-                val offset = cast(lValue.offset, op.type)
-                val type = CComplexType.getType(rExpression, parseContext)
+            is Dereference<*, *, *> -> {
+                var decl: Expr<*> = lValue
+                while (decl is Dereference<*, *, *>) {
+                    decl = decl.array
+                }
+                val ref = decl
+                ref as RefExpr<*>
 
-                val deref = Dereference(op, offset, type.smtType)
+                val assign = AssignStmt.create<Type>(ref.decl as VarDecl<*>, lValue.toStore(rExpression))
 
-                val memassign = MemoryAssignStmt.create(deref, rExpression)
-
-                parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
-                StmtLabel(memassign, metadata = getMetadata(statement))
+                StmtLabel(assign, metadata = getMetadata(statement))
             }
 
             is RefExpr<*> -> {

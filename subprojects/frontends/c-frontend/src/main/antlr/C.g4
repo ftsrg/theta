@@ -120,7 +120,7 @@ unaryOperator
     ;
 
 castExpression
-    :   '__extension__'? '(' typeName ')' castExpression    #castExpressionCast
+    :   '__extension__'? '(' declarationSpecifiers ')' castExpression    #castExpressionCast
     |   unaryExpression                                     #castExpressionUnaryExpression
 //    |   DigitSequence                                       #castExpressionDigitSequence
     ;
