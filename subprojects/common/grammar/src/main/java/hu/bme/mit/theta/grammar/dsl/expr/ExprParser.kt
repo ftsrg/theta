@@ -56,7 +56,6 @@ import hu.bme.mit.theta.core.type.rattype.RatExprs
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.grammar.ThrowingErrorListener
 import hu.bme.mit.theta.grammar.dsl.gen.ExprBaseVisitor
 import hu.bme.mit.theta.grammar.dsl.gen.ExprLexer
@@ -758,7 +757,7 @@ class ExpressionWrapper(scope: Scope, content: String) {
                 val base = ctx.base.accept(this)
                 val offset = ctx.offset.accept(this)
                 val type = TypeWrapper(ctx.type().textWithWS()).instantiate()
-                return Dereference(cast(base, base.type), cast(offset, base.type), type);
+                return Dereference(base, offset, type);
             } else {
                 visitChildren(ctx)
             }

@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
+import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -36,9 +37,10 @@ import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.getGlobalVarsWithNeededMutexes
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
@@ -101,16 +103,23 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                                 ?: error("No such method ${label.name}.")
                             val lookup: MutableMap<VarDecl<*>, VarDecl<*>> = LinkedHashMap()
                             SequenceLabel(listOf(procedure.params.withIndex()
-                                .filter { it.value.second != ParamDirection.OUT }.map { iVal ->
+                                .filter { it.value.second != ParamDirection.OUT }.mapNotNull { iVal ->
                                     val originalVar = iVal.value.first
                                     val tempVar = Var("tmp${tempCnt++}_" + originalVar.name,
                                         originalVar.type)
                                     lookup[originalVar] = tempVar
-                                    StmtLabel(
+                                    val trial = Try.attempt {
+                                        StmtLabel(
                                         Stmts.Assign(
                                             TypeUtils.cast(tempVar, tempVar.type),
                                             TypeUtils.cast(label.params[iVal.index], tempVar.type)),
-                                        metadata = label.metadata)
+                                            metadata = label.metadata)
+                                    }
+                                    if (trial.isSuccess) {
+                                        trial.asSuccess().value
+                                    } else {
+                                        null
+                                    }
                                 }, listOf(label.copy(tempLookup = lookup))).flatten())
                         } else label
                     })

@@ -1,5 +1,7 @@
 void reach_error(){}
 
+int* __VERIFIER_nondet_malloc(int);
+
 int main() {
     int* arr = __VERIFIER_nondet_malloc(42);
 
