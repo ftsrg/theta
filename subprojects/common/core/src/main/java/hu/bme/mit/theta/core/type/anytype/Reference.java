@@ -18,7 +18,6 @@ package hu.bme.mit.theta.core.type.anytype;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -44,10 +43,6 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
         return expr;
     }
 
-    public Expr<T> getLiteral() {
-        return (Expr<T>) eval(ImmutableValuation.empty());
-    }
-
     public static <A extends Type, T extends Type> Reference<A, T> of(Expr<T> expr, A type) {
         return new Reference<>(expr, type);
     }
@@ -64,23 +59,8 @@ public final class Reference<A extends Type, T extends Type> implements Expr<A> 
 
     @Override
     public LitExpr<A> eval(Valuation val) {
-//        Function<Integer, LitExpr<A>> fromInt = null;
-//        if (type instanceof IntType) {
-//            //noinspection unchecked
-//            fromInt = integer -> (LitExpr<A>) IntLitExpr.of(BigInteger.valueOf(integer));
-//        } else if (type instanceof BvType) {
-//            fromInt = integer -> (LitExpr<A>) BvUtils.fitBigIntegerIntoNeutralDomain(BigInteger.valueOf(integer), ((BvType) type).getSize());
-//        } else {
-//            throw new RuntimeException("Pointers should either be Int or BvType");
-//        }
-//
-//        if (expr instanceof RefExpr<T> refExpr) {
-//            return fromInt.apply(refExpr.getDecl().hashCode());
-//        } else {
-//            checkState(expr instanceof Reference<?, ?>);
-//            return (LitExpr<A>) expr.eval(val);
-//        }
-        throw new UnsupportedOperationException("Not meant to be evaluated.");
+        throw new IllegalStateException(
+                "Reference/Dereference expressions are not meant to be evaluated!");
     }
 
     @Override

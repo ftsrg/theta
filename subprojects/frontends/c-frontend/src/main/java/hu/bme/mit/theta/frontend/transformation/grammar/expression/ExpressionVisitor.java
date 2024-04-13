@@ -568,14 +568,14 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             case "*":
                 type = CComplexType.getType(accept, parseContext);
                 checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
-                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), ((CPointer) type).getEmbeddedType());
+                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), (CPointer) type);
         }
         return accept;
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Type, O extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CComplexType type) {
-        Dereference<T, O, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<O>) offset, type.getSmtType());
+    private <T extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CComplexType type) {
+        Dereference<T, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<T>) offset, type.getSmtType());
         parseContext.getMetadata().create(of, "cType", type);
         return of;
     }

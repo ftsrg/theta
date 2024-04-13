@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 
@@ -216,10 +215,6 @@ public class PathUtils {
                 final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
                 final Expr<T> op = prime.getOp();
                 return unfold(op, offset + 1);
-            }
-
-            if (expr instanceof Reference<?, ?>) {
-                return expr;
             }
 
             return expr.map(op -> unfold(op, offset));

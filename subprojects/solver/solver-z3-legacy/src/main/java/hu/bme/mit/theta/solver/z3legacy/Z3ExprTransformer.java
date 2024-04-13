@@ -32,10 +32,8 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
@@ -404,11 +402,6 @@ final class Z3ExprTransformer {
                 .addCase(ArrayLitExpr.class, this::transformArrayLit)
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
-
-                // References
-                .addCase(Dereference.class, this::transformDereference)
-
-                .addCase(Reference.class, this::transformReference)
 
                 .build();
     }
@@ -1253,14 +1246,6 @@ final class Z3ExprTransformer {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
         }
-    }
-
-    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?, ?> expr) {
-        return transformArrayRead(ArrayReadExpr.create(expr.getArray(), expr.getOffset()));
-    }
-
-    private com.microsoft.z3legacy.Expr transformReference(final Reference<?, ?> expr) {
-        throw new RuntimeException("References cannot be transformed.");
     }
 
     public void reset() {
