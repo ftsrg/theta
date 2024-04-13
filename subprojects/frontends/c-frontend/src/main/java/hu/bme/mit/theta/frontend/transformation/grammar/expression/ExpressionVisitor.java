@@ -581,8 +581,9 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     }
 
     private Expr<?> reference(RefExpr<?> accept) {
-        Reference<Type, ?> of = Reference(accept, CComplexType.getUnsignedLong(parseContext).getSmtType());
-        parseContext.getMetadata().create(of, "cType", new CPointer(null, CComplexType.getType(accept, parseContext), parseContext));
+        final var newType = new CPointer(null, CComplexType.getType(accept, parseContext), parseContext);
+        Reference<Type, ?> of = Reference(accept, newType.getSmtType());
+        parseContext.getMetadata().create(of, "cType", newType);
         return of;
     }
 

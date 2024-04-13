@@ -23,14 +23,13 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 
 import java.util.List;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public final class Reference<A extends Type, T extends Type> implements Expr<ArrayType<A, T>> {
+public final class Reference<A extends Type, T extends Type> implements Expr<A> {
 
     private static final String OPERATOR_LABEL = "ref";
     private final Expr<T> expr;
@@ -59,12 +58,12 @@ public final class Reference<A extends Type, T extends Type> implements Expr<Arr
     }
 
     @Override
-    public ArrayType<A, T> getType() {
-        return ArrayType.of(type, expr.getType());
+    public A getType() {
+        return type;
     }
 
     @Override
-    public LitExpr<ArrayType<A, T>> eval(Valuation val) {
+    public LitExpr<A> eval(Valuation val) {
 //        Function<Integer, LitExpr<A>> fromInt = null;
 //        if (type instanceof IntType) {
 //            //noinspection unchecked
@@ -90,7 +89,7 @@ public final class Reference<A extends Type, T extends Type> implements Expr<Arr
     }
 
     @Override
-    public Expr<ArrayType<A, T>> withOps(List<? extends Expr<?>> ops) {
+    public Expr<A> withOps(List<? extends Expr<?>> ops) {
         checkState(ops.size() == 1);
         checkState(ops.get(0) instanceof RefExpr<?> && ((RefExpr) ops.get(0)).getDecl() instanceof VarDecl<?>, "Don't transform references to constants.");
         return Reference.of((Expr<T>) ops.get(0), type);
