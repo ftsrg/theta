@@ -38,6 +38,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         SvCompIntrinsicsPass(),
         FpFunctionsToExprsPass(parseContext),
         CLibraryFunctionsPass(),
+        ReferenceElimination(parseContext),
     ),
     listOf(
         // optimizing
