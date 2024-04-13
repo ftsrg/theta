@@ -2,7 +2,7 @@ grammar promela;
 /**
   source: https://spinroot.com/spin/Man/grammar.html
 
-  WARNING only works on PREPROCESSSED promela files (no #define)
+  WARNING only works on PREPROCESSSED promela files (no #define),
   use cpp -p to preprocess promela file with macros
 
   the implementation is only partial,
@@ -156,7 +156,7 @@ String  : '"' ~["]* '"';
 
 Name    : Alpha (Alpha|Number)*;
 
-Const   : 'true' | 'false' | 'skip' | (Number)+;
+Const   : 'true' | 'false' | 'skip' | (Number)+; // seems like it's always signed based on the grammar..?
 
 Alpha   : [a-zA-Z_]; // grammar is case insensitive, A-Z is superfluous
 
