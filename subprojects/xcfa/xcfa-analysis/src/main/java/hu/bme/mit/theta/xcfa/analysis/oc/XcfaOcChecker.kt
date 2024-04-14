@@ -36,6 +36,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -46,6 +47,8 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
@@ -66,6 +69,7 @@ class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedu
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
+    @OptIn(ExperimentalTime::class)
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
 
@@ -73,18 +77,27 @@ class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedu
         if (!addConstraints()) return@let SafetyResult.safe() // no violations
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
-        val status = ocChecker.check(events, pos, rfs)
+        val status: SolverStatus?
+        val checkerTime = measureTime{
+            status = ocChecker.check(events, pos, rfs)
+        }
+        System.err.println("Checker time (ms): ${checkerTime.inWholeMilliseconds}")
         when {
             status?.isUnsat == true -> {
                 val validator = XcfaOcCorrectnessValidator(
                     decisionProcedure, xcfa, ocChecker, threads, events, violations, pos, rfs
                 )
+                logger.write(Logger.Level.MAINSTEP, "Validating safe result...\n")
                 addToSolver(validator.ocCorrectnessValidator.solver)
-                validator.validate()
+                val validatorTime = measureTime {
+                    if(!validator.validate()) error("Validator cannot confirm safe result.")
+                }
+                System.err.println("Validator time (ms): ${validatorTime.inWholeMilliseconds}")
                 SafetyResult.safe()
             }
 
             status?.isSat == true -> {
+                logger.write(Logger.Level.MAINSTEP, "Extracting counterexample...\n")
                 val trace = XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
                 SafetyResult.unsafe(trace)
             }

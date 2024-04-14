@@ -1,8 +1,11 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
-import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
+import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 internal class XcfaOcCorrectnessValidator(
     decisionProcedure: OcDecisionProcedureType,
@@ -20,12 +23,48 @@ internal class XcfaOcCorrectnessValidator(
     fun validate(): Boolean {
         check(ocChecker.solver.status.isUnsat)
 
-        val propagated = ocChecker.getPropagatedClauses()
-        val reasons = ocChecker.getRelations()
-        propagated.filter { clause ->
+        val validConflicts = ocChecker.getPropagatedClauses().filter { checkCycle(it) }
+        ocCorrectnessValidator.solver.add(validConflicts.map { Not(it.expr) })
+        return ocCorrectnessValidator.check(events, pos, rfs)?.isUnsat == true
+    }
 
-            TODO()
+    private fun checkCycle(combinedReason: Reason): Boolean {
+        if (combinedReason.reasons.isEmpty()) return false
+        var firstEdge: XcfaEdge? = null
+        var previousEdge: XcfaEdge? = null
+        combinedReason.reasons.forEach { r ->
+            when (r) {
+                is PoReason -> {}
+                is RelationReason<*> -> {
+                    r as RelationReason<E>
+                    val from = r.relation.from.edge
+                    val to = r.relation.to.edge
+
+                    if(!isPo(previousEdge, from)) return false
+
+                    if (firstEdge == null) firstEdge = from
+                    previousEdge = to
+                }
+
+                is FromReadReason<*> -> TODO()
+                is WriteSerializationReason<*> -> TODO()
+                else -> error("Nested combined reasons or other reasons not supported.")
+            }
         }
-        TODO()
+        return true
+    }
+
+    private fun isPo(from: XcfaEdge?, to: XcfaEdge): Boolean {
+        from ?: return true
+
+    }
+
+    private object ReachableEdges {
+        private typealias Edge = Pair<XcfaLocation, XcfaLocation>
+        private val map: MutableMap<Edge, List<Edge>> = mutableMapOf()
+
+        operator fun get(edge: XcfaEdge): List<Edge> = map.getOrPut(edge.source to edge.target) {
+
+        }
     }
 }
