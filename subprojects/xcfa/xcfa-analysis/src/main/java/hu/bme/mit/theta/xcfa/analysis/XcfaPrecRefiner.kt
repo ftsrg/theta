@@ -26,6 +26,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.Refutation
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec
 import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
@@ -56,6 +58,10 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
             val precFromRef = refToPrec.toPrec(refutation, i).changeVars(varLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
         }
+        if (runningPrec is PredPrec) {
+            // todo: instead of outright disabling the dereferences in the prec, maybe just force a literal in the address?
+            runningPrec = PredPrec.of(runningPrec.preds.filter { !it.hasDeref() }) as P
+        }
         return prec.refine(runningPrec)
     }
 
@@ -63,6 +69,9 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
         return javaClass.simpleName
     }
 }
+
+private fun Expr<*>.hasDeref(): Boolean =
+    this is Dereference<*, *> || this.ops.any(Expr<*>::hasDeref)
 
 fun <P : Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
     if (lookup.isEmpty()) this

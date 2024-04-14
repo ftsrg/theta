@@ -151,6 +151,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 final class Z3ExprTransformer {
 
     private static final int CACHE_SIZE = 1000;
@@ -1256,8 +1258,9 @@ final class Z3ExprTransformer {
 
     private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?> expr) {
         final var sort = transformer.toSort(expr.getArray().getType());
-        final var func = context.mkFuncDecl("deref", new Sort[]{sort, sort}, transformer.toSort(expr.getType()));
-        return context.mkApp(func, toTerm(expr.getArray()), toTerm(expr.getOffset()));
+        final var constSort = transformer.toSort(Int());
+        final var func = context.mkFuncDecl("deref", new Sort[]{sort, sort, constSort}, transformer.toSort(expr.getType()));
+        return context.mkApp(func, toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getConstant().getRef()));
     }
 
 

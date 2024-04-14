@@ -32,7 +32,6 @@ import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -44,7 +43,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
@@ -95,7 +94,7 @@ final class StmtToExprTransformer {
         @Override
         public StmtUnfoldResult visit(final AssumeStmt stmt, final VarIndexing indexing) {
             final Expr<BoolType> cond = stmt.getCond();
-            final Expr<BoolType> expr = ExprUtils.applyPrimes(cond, indexing);
+            final Expr<BoolType> expr = ExprUtils.applyPrimes(changeDerefConstants(cond), indexing);
             return StmtUnfoldResult.of(ImmutableList.of(expr), indexing);
         }
 
@@ -112,7 +111,7 @@ final class StmtToExprTransformer {
                                                               final VarIndexing indexing) {
             final VarDecl<DeclType> varDecl = stmt.getVarDecl();
             final VarIndexing newIndexing = indexing.inc(varDecl);
-            final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
+            final Expr<DeclType> rhs = ExprUtils.applyPrimes(changeDerefConstants(stmt.getExpr()), indexing);
             final Expr<DeclType> lhs = ExprUtils.applyPrimes(varDecl.getRef(), newIndexing);
 
             final Expr<BoolType> expr;
@@ -127,18 +126,22 @@ final class StmtToExprTransformer {
 
         @Override
         public <PtrType extends Type, DeclType extends Type> StmtUnfoldResult visit(MemoryAssignStmt<PtrType, DeclType> stmt, VarIndexing indexing) {
-            final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
-            Expr<?> expr = stmt.getDeref().getArray();
-            while (!(expr instanceof RefExpr<?>)) {
-                checkState(expr instanceof Dereference<?, ?>);
-                expr = ((Dereference<?, ?>) expr).getArray();
-            }
-            final var decl = ((RefExpr<?>) expr).getDecl();
-            final VarIndexing newIndexing = indexing.inc((VarDecl<?>) decl);
-            final Dereference<PtrType, DeclType> lhs = (Dereference<PtrType, DeclType>) ExprUtils.applyPrimes(stmt.getDeref(), newIndexing);
+            final Expr<DeclType> rhs = ExprUtils.applyPrimes(changeDerefConstants(stmt.getExpr()), indexing);
+            final Dereference<PtrType, DeclType> lhs = (Dereference<PtrType, DeclType>) ExprUtils.applyPrimes(changeDerefConstants(stmt.getDeref()), indexing);
 
             final var retExpr = Eq(lhs, rhs);
-            return StmtUnfoldResult.of(ImmutableList.of(retExpr), newIndexing);
+            return StmtUnfoldResult.of(ImmutableList.of(retExpr), indexing);
+        }
+
+        private static int counter = 0;
+
+        private <T extends Type> Expr<T> changeDerefConstants(Expr<T> expr) {
+            if (expr instanceof Dereference<?, ?>) {
+                final var ops = expr.getOps();
+                return expr.withOps(List.of(ops.get(0), ops.get(1), Var("__deref__%d".formatted(counter++), Int()).getRef()));
+            } else {
+                return expr.withOps(expr.getOps().stream().map(this::changeDerefConstants).toList());
+            }
         }
 
         @Override
