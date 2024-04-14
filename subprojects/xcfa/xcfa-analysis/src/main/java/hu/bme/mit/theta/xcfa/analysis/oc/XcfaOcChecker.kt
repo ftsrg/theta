@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -48,12 +49,10 @@ import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
-class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
+class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
     SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val ocChecker: OcChecker<E> = decisionProcedure.checker()
-    private val solver = ocChecker.solver
-
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
     )
@@ -76,10 +75,19 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status = ocChecker.check(events, pos, rfs)
         when {
-            status?.isUnsat == true -> SafetyResult.safe()
-            status?.isSat == true -> SafetyResult.unsafe(
-                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-            )
+            status?.isUnsat == true -> {
+                val validator = XcfaOcCorrectnessValidator(
+                    decisionProcedure, xcfa, ocChecker, threads, events, violations, pos, rfs
+                )
+                addToSolver(validator.ocCorrectnessValidator.solver)
+                validator.validate()
+                SafetyResult.safe()
+            }
+
+            status?.isSat == true -> {
+                val trace = XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
+                SafetyResult.unsafe(trace)
+            }
 
             else -> SafetyResult.unknown()
         }
@@ -97,7 +105,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         }
 
         addCrossThreadRelations()
-        return addToSolver()
+        return addToSolver(ocChecker.solver)
     }
 
     private fun processThread(thread: Thread): List<Thread> {
@@ -301,7 +309,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                                 rfs.add(RelationType.RFE, e1, e2)
     }
 
-    private fun addToSolver(): Boolean {
+    private fun addToSolver(solver: Solver): Boolean {
         if (violations.isEmpty()) return false
 
         // Value assignment
