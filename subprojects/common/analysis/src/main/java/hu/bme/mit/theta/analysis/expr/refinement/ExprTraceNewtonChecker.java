@@ -34,6 +34,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -283,6 +284,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
+            public <PtrType extends Type, DeclType extends Type> Stmt visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
+            }
+
+            @Override
             public <DeclType extends Type> Stmt visit(HavocStmt<DeclType> stmt, Void param) {
                 return HavocStmt.of(stmt.getVarDecl());
             }
@@ -408,6 +414,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
+            public <PtrType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
+            }
+
+            @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
             }
@@ -456,6 +467,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
+            public <PtrType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
+            }
+
+            @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(HavocStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
             }
@@ -501,6 +517,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             @Override
             public <DeclType extends Type> Collection<VarDecl<?>> visit(AssignStmt<DeclType> stmt, Void param) {
                 return Collections.emptySet();
+            }
+
+            @Override
+            public <PtrType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+                throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
             }
 
             @Override

@@ -18,10 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bi
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
@@ -254,15 +251,6 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
 
     @Override
     public Expr<?> visit(CPointer type, Expr<?> param) {
-        final var thatType = CComplexType.getType(param, parseContext);
-        if (param instanceof BvLitExpr intParam && BvUtils.neutralBvLitExprToBigInteger(intParam).equals(BigInteger.ZERO)) {
-            return nullPointer(type);
-        }
-        checkState(thatType instanceof CPointer, "Cannot cast between pointer and non-pointer (" + thatType + ") expression");
-        return param;
-    }
-
-    private <T1 extends Type, T2 extends Type> Expr<?> nullPointer(CPointer type) {
-        return ArrayLitExpr.of(List.of(), (Expr<T2>) type.getEmbeddedType().getNullValue(), (ArrayType<T1, T2>) type.getSmtType());
+        return handleUnsignedConversion((CInteger) CComplexType.getUnsignedLong(parseContext), param);
     }
 }

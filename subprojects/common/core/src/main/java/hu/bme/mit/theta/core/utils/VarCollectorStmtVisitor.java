@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -60,6 +61,13 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
     public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
                                               final Collection<VarDecl<?>> vars) {
         vars.add(stmt.getVarDecl());
+        ExprUtils.collectVars(stmt.getExpr(), vars);
+        return null;
+    }
+
+    @Override
+    public <PtrType extends Type, DeclType extends Type> Void visit(MemoryAssignStmt<PtrType, DeclType> stmt, Collection<VarDecl<?>> vars) {
+        ExprUtils.collectVars(stmt.getDeref(), vars);
         ExprUtils.collectVars(stmt.getExpr(), vars);
         return null;
     }

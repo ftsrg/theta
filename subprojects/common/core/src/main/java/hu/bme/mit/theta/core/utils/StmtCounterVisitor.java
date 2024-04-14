@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -54,6 +55,11 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
 
     @Override
     public <DeclType extends Type> Integer visit(AssignStmt<DeclType> stmt, Void param) {
+        return 1;
+    }
+
+    @Override
+    public <PtrType extends Type, DeclType extends Type> Integer visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
         return 1;
     }
 

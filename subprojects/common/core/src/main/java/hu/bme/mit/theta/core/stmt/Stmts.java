@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.stmt;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.List;
@@ -42,6 +43,10 @@ public final class Stmts {
 
     public static <T extends Type> AssignStmt<T> Assign(final VarDecl<T> lhs, final Expr<T> rhs) {
         return AssignStmt.of(lhs, rhs);
+    }
+
+    public static <P extends Type, T extends Type> MemoryAssignStmt<P, T> MemoryAssign(final Dereference<P, T> deref, final Expr<T> expr) {
+        return MemoryAssignStmt.of(deref, expr);
     }
 
     public static <T extends Type> HavocStmt<T> Havoc(final VarDecl<T> varDecl) {

@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -47,6 +48,11 @@ public class StmtWriter implements StmtVisitor<Void, String> {
     @Override
     public <DeclType extends Type> String visit(final AssignStmt<DeclType> stmt, final Void param) {
         return stmt.getVarDecl().getName() + " := " + writeExpr(stmt.getExpr());
+    }
+
+    @Override
+    public <PtrType extends Type, DeclType extends Type> String visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+        return stmt.getDeref() + " := " + writeExpr(stmt.getExpr());
     }
 
     @Override

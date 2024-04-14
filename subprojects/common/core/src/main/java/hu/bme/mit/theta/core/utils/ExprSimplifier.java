@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -380,7 +379,7 @@ public final class ExprSimplifier {
 
             .addCase(Dereference.class, this::simplifyDereference)
 
-            .addCase(Reference.class, this::simplifyReference)
+//            .addCase(Reference.class, this::simplifyReference)
 
             // Default
 
@@ -441,7 +440,7 @@ public final class ExprSimplifier {
         return expr.with(cond, then, elze);
     }
 
-    private Expr<?> simplifyDereference(final Dereference<?, ?, ?> expr, final Valuation val) {
+    private Expr<?> simplifyDereference(final Dereference<?, ?> expr, final Valuation val) {
         final var simpleOffset = simplify(expr.getOffset(), val);
         final var array = expr.getArray();
         if (simpleOffset instanceof LitExpr<?> litOffset && array instanceof RefExpr<?>) {
@@ -454,10 +453,6 @@ public final class ExprSimplifier {
             }
         }
         return expr.map(it -> simplify(it, val));
-    }
-
-    private Expr<?> simplifyReference(final Reference<?, ?> expr, final Valuation val) {
-        return expr; // we don't want to simplify references
     }
 
     private Expr<?> simplifyArrayRead(final ArrayReadExpr<?, ?> expr, final Valuation val) {

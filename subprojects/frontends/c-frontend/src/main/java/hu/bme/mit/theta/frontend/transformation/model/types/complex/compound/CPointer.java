@@ -16,15 +16,13 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
-public class CPointer extends CInteger {
+public class CPointer extends CCompound {
 
     private final CComplexType embeddedType;
 
@@ -37,23 +35,8 @@ public class CPointer extends CInteger {
         return visitor.visit(this, param);
     }
 
-    @Override
-    public CInteger getSignedVersion() {
-        return new CPointer(null, embeddedType, parseContext);
-    }
-
-    @Override
-    public CInteger getUnsignedVersion() {
-        return new CPointer(null, embeddedType, parseContext);
-    }
-
     public CComplexType getEmbeddedType() {
         return embeddedType;
-    }
-
-    @Override
-    public Type getSmtType() {
-        return ArrayType.of(getUnsignedLong(parseContext).getSmtType(), embeddedType.getSmtType());
     }
 
     @Override

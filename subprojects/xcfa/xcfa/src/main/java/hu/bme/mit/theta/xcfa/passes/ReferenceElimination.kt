@@ -22,11 +22,10 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
-import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
-import hu.bme.mit.theta.core.type.arraytype.ArrayType
-import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
@@ -41,8 +40,6 @@ import hu.bme.mit.theta.xcfa.model.*
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        checkNotNull(builder.metaData["deterministic"])
-
         val referredVars = builder.getEdges()
             .flatMap { it.label.getFlatLabels().flatMap { getReferences(it) } }
             .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
@@ -117,15 +114,20 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         val stmt = when (this) {
             is AssignStmt<*> -> if(this.varDecl in varLut.keys) {
                 val newVar = varLut[this.varDecl]!!
-                AssignStmt.of(cast(newVar, newVar.type), cast(ArrayWriteExpr.of(newVar.ref as Expr<ArrayType<Type, Type>>, CComplexType.getSignedInt(parseContext).nullValue as Expr<Type>, this.expr.changeReferredVars(varLut, parseContext) as Expr<Type>), newVar.type))
+                MemoryAssignStmt.create(
+                    Dereference(
+                        cast(newVar.ref, newVar.type),
+                        cast(CComplexType.getSignedInt(parseContext).nullValue, newVar.type),
+                        CPointer(null, CComplexType.getType(expr, parseContext), parseContext).smtType),
+                    this.expr.changeReferredVars(varLut, parseContext))
             } else {
                 AssignStmt.of(cast(this.varDecl, this.varDecl.type), cast(this.expr.changeReferredVars(varLut, parseContext), this.varDecl.type))
             }
-
+            is MemoryAssignStmt<*, *> -> MemoryAssignStmt.create(deref.changeReferredVars(varLut, parseContext) as Dereference<*, *>, expr.changeReferredVars(varLut, parseContext))
             is AssumeStmt -> AssumeStmt.of(cond.changeReferredVars(varLut, parseContext))
             is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeReferredVars(varLut, parseContext) })
             is SkipStmt -> this
-            else -> TODO("Not yet implemented")
+            else -> TODO("Not yet implemented ($this)")
         }
         val metadataValue = parseContext?.getMetadata()?.getMetadataValue(this, "sourceStatement")
         if (metadataValue?.isPresent == true)
@@ -150,6 +152,6 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         }
 
     fun <T : Type> Decl<T>.changeReferredVars(varLut: Map<out Decl<*>, VarDecl<*>>): Expr<T> =
-        varLut[this]?.let { ArrayReadExpr.of(it.ref as Expr<ArrayType<Type, T>>, CComplexType.getSignedInt(parseContext).nullValue as Expr<Type>) as Expr<T> } ?: this.ref
+        varLut[this]?.let { Dereference(cast(it.ref, it.type), cast(CComplexType.getSignedInt(parseContext).nullValue, this.ref.type), it.type) as Expr<T> } ?: this.ref
 
 }

@@ -1211,11 +1211,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         return running;
     }
 
-    protected String transformDereference(final Dereference<?, ?, ?> expr) {
+    protected String transformDereference(final Dereference<?, ?> expr) {
         return "(deref %s %s %s)".formatted(transformer.toTerm(expr.getArray()), transformer.toTerm(expr.getOffset()), transformer.toSort(expr.getType()));
     }
 
     protected String transformReference(final Reference<?, ?> expr) {
-        return "(ref %s)".formatted(transformer.toTerm(expr.getLiteral()));
+        return "(ref %s)".formatted(transformer.toTerm(expr.getExpr()));
     }
 }

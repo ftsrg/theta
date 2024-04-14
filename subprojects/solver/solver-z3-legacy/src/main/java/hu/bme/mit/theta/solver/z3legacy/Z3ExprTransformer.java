@@ -23,6 +23,7 @@ import com.microsoft.z3legacy.BoolExpr;
 import com.microsoft.z3legacy.Context;
 import com.microsoft.z3legacy.FPExpr;
 import com.microsoft.z3legacy.FPSort;
+import com.microsoft.z3legacy.Sort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -35,7 +36,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
@@ -150,6 +150,8 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class Z3ExprTransformer {
 
@@ -405,10 +407,9 @@ final class Z3ExprTransformer {
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
-                // References
-                .addCase(Dereference.class, this::transformDereference)
+                // dereference
 
-                .addCase(Reference.class, this::transformReference)
+                .addCase(Dereference.class, this::transformDereference)
 
                 .build();
     }
@@ -1255,13 +1256,13 @@ final class Z3ExprTransformer {
         }
     }
 
-    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?, ?> expr) {
-        return transformArrayRead(ArrayReadExpr.create(expr.getArray(), expr.getOffset()));
+    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?> expr) {
+        final var sort = transformer.toSort(expr.getArray().getType());
+        final var constSort = transformer.toSort(Int());
+        final var func = context.mkFuncDecl("deref", new Sort[]{sort, sort, constSort}, transformer.toSort(expr.getType()));
+        return context.mkApp(func, toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getConstant().getRef()));
     }
 
-    private com.microsoft.z3legacy.Expr transformReference(final Reference<?, ?> expr) {
-        throw new RuntimeException("References cannot be transformed.");
-    }
 
     public void reset() {
         exprToTerm.invalidateAll();
