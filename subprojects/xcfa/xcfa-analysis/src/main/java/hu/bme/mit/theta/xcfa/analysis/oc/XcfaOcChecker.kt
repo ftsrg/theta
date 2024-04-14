@@ -16,16 +16,12 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
-import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.oc.*
-import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.*
-import hu.bme.mit.theta.core.model.ImmutableValuation
-import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -34,7 +30,6 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -42,7 +37,6 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.isAtomicBegin
@@ -51,20 +45,13 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import java.util.*
-
-private typealias E = XcfaEvent
-private typealias R = Relation<XcfaEvent>
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
     SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
-    private val ocChecker: OcChecker<XcfaEvent> = when (decisionProcedure) {
-        OcDecisionProcedureType.BASIC -> BasicOcChecker()
-        OcDecisionProcedureType.PROPAGATOR -> UserPropagatorOcChecker()
-    }
+    private val ocChecker: OcChecker<E> = decisionProcedure.checker()
     private val solver = ocChecker.solver
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
@@ -90,7 +77,10 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         val status = ocChecker.check(events, pos, rfs)
         when {
             status?.isUnsat == true -> SafetyResult.safe()
-            status?.isSat == true -> SafetyResult.unsafe(getTrace(solver.model))
+            status?.isSat == true -> SafetyResult.unsafe(
+                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
+            )
+
             else -> SafetyResult.unknown()
         }
     }.also { logger.write(Logger.Level.MAINSTEP, "OC checker result: $it\n") }
@@ -330,128 +320,18 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         rfs.forEach { (_, list) ->
             list.groupBy { it.to }.forEach { (event, rels) ->
                 rels.forEach { rel ->
-                    solver.add(Imply(rel.declRef,
-                        And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
-                    )) // RF-Val
+                    solver.add(
+                        Imply(
+                            rel.declRef,
+                            And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
+                        )
+                    ) // RF-Val
                 }
                 solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
             }
         }
 
         return true
-    }
-
-    // Extract counterexample trace from model
-
-    private fun getTrace(model: Valuation): Trace<XcfaState<*>, XcfaAction> {
-        val stateList = mutableListOf<XcfaState<ExplState>>()
-        val actionList = mutableListOf<XcfaAction>()
-        val valuation = model.toMap()
-        val (eventTrace, violation) = getEventTrace(model)
-
-        val processes = threads.associate { t ->
-            t.pid to XcfaProcessState(locs = LinkedList(listOf(t.procedure.initLoc)), varLookup = LinkedList(listOf()))
-        }
-        var explState = ExplState.of(ImmutableValuation.from(mapOf()))
-        stateList.add(XcfaState(xcfa, processes, explState))
-        var lastEdge: XcfaEdge = eventTrace[0].edge
-
-        for ((index, event) in eventTrace.withIndex()) {
-            valuation[event.const]?.let {
-                val newVal = explState.`val`.toMap().toMutableMap().apply { put(event.const.varDecl, it) }
-                explState = ExplState.of(ImmutableValuation.from(newVal))
-            }
-
-            val nextEdge = eventTrace.getOrNull(index + 1)?.edge
-            if (nextEdge != lastEdge) {
-                extend(stateList.last(), event.pid, lastEdge.source, explState)?.let { (midActions, midStates) ->
-                    actionList.addAll(midActions)
-                    stateList.addAll(midStates)
-                }
-
-                val state = stateList.last()
-                actionList.add(XcfaAction(event.pid, lastEdge))
-                stateList.add(state.copy(processes = state.processes.toMutableMap().apply {
-                    put(event.pid, XcfaProcessState(
-                        locs = LinkedList(listOf(lastEdge.target)),
-                        varLookup = LinkedList(emptyList())
-                    ))
-                }, sGlobal = explState, mutexes = state.mutexes.update(lastEdge, event.pid)))
-                lastEdge = nextEdge ?: break
-            }
-        }
-
-        if (!stateList.last().processes[violation.pid]!!.locs.peek().error) {
-            extend(stateList.last(), violation.pid, violation.errorLoc, explState)?.let { (midActions, midStates) ->
-                actionList.addAll(midActions)
-                stateList.addAll(midStates)
-            }
-        }
-
-        return Trace.of(stateList, actionList)
-    }
-
-    private fun getEventTrace(model: Valuation): Pair<List<E>, Violation> {
-        val valuation = model.toMap()
-        val violation = violations.first { (it.guard.eval(model) as BoolLitExpr).value }
-
-        val relations = ocChecker.getRelations()!!
-        val reverseRelations = Array(relations.size) { i -> Array(relations.size) { j -> relations[j][i] } }
-        val eventsByClk = events.values.flatMap { it.values.flatten() }.groupBy { it.clkId }
-
-        val lastEvents = violation.lastEvents.filter { it.enabled(model) == true }.toMutableList()
-        val finished = mutableListOf<E>() // topological order
-        while (lastEvents.isNotEmpty()) { // DFS from startEvents as root nodes
-            val stack = Stack<StackItem>()
-            stack.push(StackItem(lastEvents.removeFirst()))
-            while (stack.isNotEmpty()) {
-                val top = stack.peek()
-                if (top.eventsToVisit == null) {
-                    val previous = reverseRelations[top.event.clkId].flatMapIndexed { i, r ->
-                        if (r == null) listOf()
-                        else eventsByClk[i] ?: listOf()
-                    }.filter { it.enabled(model) == true } union pos.filter {
-                        it.to == top.event && it.enabled(valuation) == true && it.from.enabled(model) == true
-                    }.map { it.from }
-                    top.eventsToVisit = previous.toMutableList()
-                }
-
-                if (top.eventsToVisit!!.isEmpty()) {
-                    stack.pop()
-                    finished.add(top.event)
-                    continue
-                }
-
-                val visiting = top.eventsToVisit!!.find { it.clkId == top.event.clkId } ?: top.eventsToVisit!!.first()
-                top.eventsToVisit!!.remove(visiting)
-                if (visiting !in finished) {
-                    stack.push(StackItem(visiting))
-                }
-            }
-        }
-        return finished to violation
-    }
-
-    private fun extend(state: XcfaState<ExplState>, pid: Int,
-        to: XcfaLocation, explState: ExplState): Pair<List<XcfaAction>, List<XcfaState<ExplState>>>? {
-        val actions = mutableListOf<XcfaAction>()
-        val states = mutableListOf<XcfaState<ExplState>>()
-        var currentState = state
-
-        // extend the trace until the target location is reached
-        while (currentState.mutexes[""]?.equals(pid) == false || currentState.processes[pid]!!.locs.peek() != to) {
-            val stepPid = currentState.mutexes[""] ?: pid // finish atomic block first
-            val edge = currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
-            actions.add(XcfaAction(stepPid, edge))
-            currentState = currentState.copy(processes = currentState.processes.toMutableMap().apply {
-                put(stepPid, XcfaProcessState(
-                    locs = LinkedList(listOf(edge.target)),
-                    varLookup = LinkedList(emptyList())
-                ))
-            }, sGlobal = explState, mutexes = currentState.mutexes.update(edge, stepPid))
-            states.add(currentState)
-        }
-        return actions to states
     }
 
     // Utility functions
@@ -494,14 +374,5 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
         return constDecl
-    }
-
-    private fun Map<String, Int>.update(edge: XcfaEdge, pid: Int): Map<String, Int> {
-        val map = this.toMutableMap()
-        edge.getFlatLabels().forEach {
-            if (it.isAtomicBegin) map[""] = pid
-            if (it.isAtomicEnd) map.remove("")
-        }
-        return map
     }
 }

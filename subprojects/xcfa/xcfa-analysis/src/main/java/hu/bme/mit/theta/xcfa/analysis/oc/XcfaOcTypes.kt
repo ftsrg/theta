@@ -16,8 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
-import hu.bme.mit.theta.analysis.algorithm.oc.Event
-import hu.bme.mit.theta.analysis.algorithm.oc.EventType
+import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
@@ -29,8 +28,13 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
-enum class OcDecisionProcedureType {
-    BASIC, PROPAGATOR
+internal typealias E = XcfaEvent
+internal typealias R = Relation<XcfaEvent>
+
+@Suppress("unused")
+enum class OcDecisionProcedureType(internal val checker: () -> OcChecker<E>) {
+    BASIC({ BasicOcChecker() }),
+    PROPAGATOR({ UserPropagatorOcChecker() }),
 }
 
 /**
