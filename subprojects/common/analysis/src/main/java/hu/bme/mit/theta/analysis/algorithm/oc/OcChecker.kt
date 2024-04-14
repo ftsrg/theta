@@ -60,7 +60,7 @@ interface OcChecker<E : Event> {
     fun getRelations(): Array<Array<Reason?>>?
 
     /**
-     * Get the list of propagated clauses in the form of reasons.
+     * Get the list of propagated conflict clauses (their negations were added to the solver) in the form of reasons.
      */
     fun getPropagatedClauses(): List<Reason>
 }
@@ -96,8 +96,10 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
 
     protected fun setAndClose(rels: Array<Array<Reason?>>, rel: Relation<E>): Reason? {
         if (rel.from.clkId == rel.to.clkId) return null // within an atomic block
-        return setAndClose(rels, rel.from.clkId, rel.to.clkId,
-            if (rel.type == RelationType.PO) PoReason else RelationReason(rel))
+        return setAndClose(
+            rels, rel.from.clkId, rel.to.clkId,
+            if (rel.type == RelationType.PO) PoReason else RelationReason(rel)
+        )
     }
 
     private fun setAndClose(rels: Array<Array<Reason?>>, from: Int, to: Int, reason: Reason): Reason? {
@@ -142,6 +144,7 @@ sealed class Reason {
 }
 
 class CombinedReason(override val reasons: List<Reason>) : Reason()
+
 object PoReason : Reason() {
 
     override val reasons get() = emptyList<Reason>()
@@ -153,7 +156,7 @@ class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
     override fun toExprs(): List<Expr<BoolType>> = listOf(relation.declRef)
 }
 
-sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: Event, val wRfRelation: Reason) : Reason() {
+sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: Event, private val wRfRelation: Reason) : Reason() {
 
     override fun toExprs(): List<Expr<BoolType>> = listOf(rf.declRef, w.guardExpr) + wRfRelation.toExprs()
 }
