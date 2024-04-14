@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtUtils
@@ -364,3 +365,25 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
     }
     return atomicLocations
 }
+
+val XcfaLabel.references: List<Reference<*, *>>
+    get() = when (this) {
+        is StmtLabel -> when (stmt) {
+            is AssumeStmt -> stmt.cond.references
+            is AssignStmt<*> -> stmt.expr.references
+            else -> emptyList()
+        }
+
+        is InvokeLabel -> params.flatMap { it.references }
+        is NondetLabel -> labels.flatMap { it.references }
+        is SequenceLabel -> labels.flatMap { it.references }
+        is StartLabel -> params.flatMap { it.references }
+        else -> emptyList()
+    }
+
+val Expr<*>.references: List<Reference<*, *>>
+    get() = if (this is Reference<*, *>) {
+        listOf(this)
+    } else {
+        ops.flatMap { it.references }
+    }

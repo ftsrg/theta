@@ -181,7 +181,7 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
                         it.getFlatLabels().any { it is StmtLabel && it.stmt.toString().contains("deref") }
                     }
                 }) {
-                logger.write(Logger.Level.RESULT, "Program contains dereferences, unsafe results are unreliable.")
+                logger.write(Logger.Level.RESULT, "Program contains dereferences, unsafe results are unreliable.\n")
             }
 
             logger.write(Logger.Level.INFO,

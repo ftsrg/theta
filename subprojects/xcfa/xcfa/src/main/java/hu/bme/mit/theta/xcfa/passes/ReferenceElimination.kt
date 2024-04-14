@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.references
 
 /**
  * Removes all references in favor of creating arrays instead.
@@ -41,7 +42,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         val referredVars = builder.getEdges()
-            .flatMap { it.label.getFlatLabels().flatMap { getReferences(it) } }
+            .flatMap { it.label.getFlatLabels().flatMap { it.references } }
             .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
             .associateWith {
                 val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
@@ -62,29 +63,6 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
         return builder
     }
-
-    private fun getReferences(label: XcfaLabel): List<Reference<*, *>> =
-        when(label) {
-            is StmtLabel -> when(label.stmt) {
-                is AssumeStmt -> getReferences(label.stmt.cond)
-                is AssignStmt<*> -> getReferences(label.stmt.expr)
-                else -> emptyList()
-            }
-            is InvokeLabel -> label.params.flatMap { getReferences(it) }
-            is NondetLabel -> label.labels.flatMap { getReferences(it)  }
-            is SequenceLabel -> label.labels.flatMap { getReferences(it) }
-            is StartLabel -> label.params.flatMap { getReferences(it) }
-            else -> emptyList()
-        }
-
-    private fun getReferences(expr: Expr<*>): List<Reference<*, *>> =
-        if(expr is Reference<*, *>) {
-            listOf(expr)
-        } else {
-            expr.ops.flatMap { getReferences(it) }
-        }
-
-
 
     @JvmOverloads
     fun XcfaLabel.changeReferredVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): XcfaLabel =
@@ -129,9 +107,9 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             is SkipStmt -> this
             else -> TODO("Not yet implemented ($this)")
         }
-        val metadataValue = parseContext?.getMetadata()?.getMetadataValue(this, "sourceStatement")
+        val metadataValue = parseContext?.metadata?.getMetadataValue(this, "sourceStatement")
         if (metadataValue?.isPresent == true)
-            parseContext.getMetadata().create(stmt, "sourceStatement", metadataValue.get())
+            parseContext.metadata.create(stmt, "sourceStatement", metadataValue.get())
         return stmt
     }
 
