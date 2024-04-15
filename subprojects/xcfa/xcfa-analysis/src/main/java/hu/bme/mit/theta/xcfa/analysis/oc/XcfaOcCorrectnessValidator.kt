@@ -5,8 +5,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import java.util.*
-import kotlin.math.min
+import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -14,7 +13,7 @@ import kotlin.time.measureTime
 internal class XcfaOcCorrectnessValidator(
     decisionProcedure: OcDecisionProcedureType,
     private val ocChecker: OcChecker<E>,
-    threads: Set<Thread>,
+    private val threads: Set<Thread>,
     private val events: Map<VarDecl<*>, Map<Int, List<E>>>,
     private val pos: List<R>,
     private val rfs: Map<VarDecl<*>, List<R>>
@@ -26,7 +25,7 @@ internal class XcfaOcCorrectnessValidator(
 
     init {
         clauseValidationTime += measureTime {
-            reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure.initLoc) }
+            reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure) }
         }.inWholeMilliseconds
     }
 
@@ -43,51 +42,36 @@ internal class XcfaOcCorrectnessValidator(
 
         events.values.flatMap { it.values.flatten() }.forEach { it.enabled = null }
         rfs.values.flatten().forEach { it.enabled = null }
-        //ocCorrectnessValidator.solver.add(validConflicts.map { Not(it.expr) })
+        ocCorrectnessValidator.solver.add(validConflicts.map { Not(it.expr) })
 
         val result = ocCorrectnessValidator.check(events, pos, rfs)?.isUnsat == true
         return result
     }
 
     private fun checkCycle(combinedReason: Reason): Boolean {
-        if (combinedReason.reasons.isEmpty()) return false
-        var firstEvent: E? = null
-        var previousEvent: E? = null
-        combinedReason.reasons.forEach { r ->
+        val reasons = combinedReason.reasons.filter { r ->
             when (r) {
-                is RelationReason<*> -> {
-                    if (!isRf(r.relation)) return false
-                    r as RelationReason<E>
-                    r.relation.from to r.relation.to
-                }
-
-                is WriteSerializationReason<*> -> {
-                    if (!derivable(r.rf, r.w)) return false
-                    r as WriteSerializationReason<E>
-                    r.w to r.rf.from
-                }
-
-                is FromReadReason<*> -> {
-                    if (!derivable(r.rf, r.w)) return false
-                    r as FromReadReason<E>
-                    r.rf.to to r.w
-                }
-
-                is PoReason -> null
-                else -> error("Nested combined reasons or other unknown reasons not supported.")
-            }?.let { order ->
-                if (!isPo(previousEvent, order.first)) return false
-                if (firstEvent == null) firstEvent = order.first
-                previousEvent = order.second
+                is RelationReason<*> -> if (isRf(r.relation)) true else return false
+                is WriteSerializationReason<*> -> if (derivable(r.rf, r.w)) true else return false
+                is FromReadReason<*> -> if (derivable(r.rf, r.w)) true else return false
+                is PoReason -> false
+                else -> return false
             }
         }
-        return isPo(previousEvent, firstEvent!!)
-    }
+        if (reasons.isEmpty()) return false
 
-    private fun isPo(from: E?, to: E): Boolean {
-        from ?: return true
-        if (from.pid != to.pid) return false
-        return reachableEdges[from.pid]!!.reachable(from.edge, to.edge)
+        var possibleOrders = listOf(listOf(reasons.first()) to reasons.slice(1 until reasons.size))
+        for (i in 1 until reasons.size) {
+            val newPossibleOrders = mutableListOf<Pair<List<Reason>, List<Reason>>>()
+            possibleOrders.forEach { po ->
+                val previous = po.first.last()
+                po.second.filter { isPo(previous.to, it.from) }.forEach{ next ->
+                    newPossibleOrders.add(po.first + next to po.second - next)
+                }
+            }
+            possibleOrders = newPossibleOrders
+        }
+        return possibleOrders.any { isPo(it.first.last().to, it.first.first().from) }
     }
 
     private fun isRf(rf: Relation<*>): Boolean =
@@ -97,7 +81,51 @@ internal class XcfaOcCorrectnessValidator(
         return isRf(rf) && rf.from.const.varDecl == w.const.varDecl && w.type == EventType.WRITE
     }
 
-    private class ReachableEdges(initLoc: XcfaLocation) {
+    private val Reason.from: E get() = when (this) {
+        is RelationReason<*> -> (this as RelationReason<E>).relation.from
+        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).w
+        is FromReadReason<*> -> (this as FromReadReason<E>).rf.to
+        else -> error("Unsupported reason type.")
+    }
+
+    private val Reason.to: E get() = when (this) {
+        is RelationReason<*> -> (this as RelationReason<E>).relation.to
+        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).rf.from
+        is FromReadReason<*> -> (this as FromReadReason<E>).w
+        else -> error("Unsupported reason type.")
+    }
+
+    private fun isPo(from: E?, to: E): Boolean {
+        data class Edge(val source: XcfaLocation?, val target: XcfaLocation, val pid: Int) {
+
+            val edge: Pair<XcfaLocation?, XcfaLocation> get() = source to target
+
+            constructor(event: E) : this(event.edge.source, event.edge.target, event.pid)
+        }
+
+        val possiblePathPoints = mutableListOf(Edge(from ?: return true))
+        val visited = mutableSetOf<Edge>()
+        while (possiblePathPoints.isNotEmpty()) {
+            val current = possiblePathPoints.removeFirst()
+            if (!visited.add(current)) continue
+            if (current.pid == to.pid && reachableEdges[current.pid]!!.reachable(current.edge, to.edge)) return true
+
+            threads.filter {
+                it.startEvent?.pid == current.pid &&
+                    reachableEdges[current.pid]!!.reachable(current.edge, it.startEvent.edge)
+            }.forEach { thread ->
+                possiblePathPoints.add(Edge(null, thread.procedure.initLoc, thread.pid))
+            }
+
+            threads.find { it.pid == current.pid }?.let { thread ->
+                thread.joinEvents.forEach { possiblePathPoints.add(Edge(it.edge.source, it.edge.target, it.pid)) }
+            }
+        }
+
+        return false
+    }
+
+    private class ReachableEdges(procedure: XcfaProcedure) {
 
         private data class Edge(val source: XcfaLocation?, val target: XcfaLocation) {
             constructor(edge: XcfaEdge) : this(edge.source, edge.target)
@@ -105,69 +133,29 @@ internal class XcfaOcCorrectnessValidator(
 
         private infix fun XcfaLocation?.to(other: XcfaLocation) = Edge(this, other)
 
-        private val heads: MutableList<Edge> = mutableListOf()
-        private var sccCnt = 0
-        private val sccs = mutableMapOf<Edge, Int>()
+        private val ids = mutableMapOf<Edge, Int>()
         private var reachable: Array<Array<Boolean>>
 
         init {
-            tarjan(initLoc)
-            reachable = Array(sccCnt) { Array(sccCnt) { false } }
+            val toVisit = mutableListOf(null to procedure.initLoc)
             val initials = mutableListOf<Pair<Int, Int>>()
-            heads.forEach { head ->
-                head.source?.incomingEdges?.forEach {
-                    val incoming = Edge(it)
-                    initials.add(sccs[incoming]!! to sccs[head]!!)
-                    reachable[sccs[incoming]!!][sccs[head]!!] = true
+            while (toVisit.isNotEmpty()) { // assumes xcfa contains no cycles (an OC checker requirement)
+                val (source, target) = toVisit.removeFirst()
+                val id = ids.size
+                ids[source to target] = id
+                if (source == procedure.initLoc) {
+                    initials.add(ids[null to procedure.initLoc]!! to id)
+                } else {
+                    source?.incomingEdges?.forEach { initials.add(ids[it.source to it.target]!! to id) }
                 }
+                toVisit.addAll(target.outgoingEdges.map { it.source to it.target })
             }
+            reachable = Array(ids.size) { Array(ids.size) { false } }
             close(initials) // close reachable transitively
         }
 
-        fun reachable(from: XcfaEdge, to: XcfaEdge): Boolean = reachable[sccs[Edge(from)]!!][sccs[Edge(to)]!!]
-
-        private fun tarjan(initLoc: XcfaLocation) {
-            var discCnt = 0
-            val disc = mutableMapOf<Edge, Int>()
-            val lowest = mutableMapOf<Edge, Int>()
-            val visited = mutableSetOf<Edge>()
-            val stack = Stack<Edge>()
-            val toVisit = Stack<Edge>()
-            toVisit.push(null to initLoc)
-
-            while (toVisit.isNotEmpty()) {
-                val visiting = toVisit.peek()
-                if (visiting !in visited) {
-                    disc[visiting] = discCnt++
-                    lowest[visiting] = disc[visiting]!!
-                    stack.push(visiting)
-                    visited.add(visiting)
-                }
-
-                for (e in visiting.target.outgoingEdges) {
-                    val edge = Edge(e)
-                    if (edge in stack) {
-                        lowest[visiting] = min(lowest[visiting]!!, lowest[edge]!!)
-                    } else if (edge !in visited) {
-                        toVisit.push(edge)
-                        break
-                    }
-                }
-
-                if (toVisit.peek() != visiting) continue
-
-                if (lowest[visiting] == disc[visiting]) { // new head found
-                    val scc = sccCnt++
-                    while (stack.peek() != visiting) {
-                        sccs[stack.pop()] = scc
-                    }
-                    sccs[stack.pop()] = scc // visiting
-                    heads.add(visiting)
-                }
-
-                toVisit.pop()
-            }
-        }
+        fun reachable(from: Pair<XcfaLocation?, XcfaLocation>, to: XcfaEdge): Boolean =
+            reachable[ids[from.first to from.second]!!][ids[Edge(to)]!!]
 
         private fun close(initials: List<Pair<Int, Int>>) {
             val toClose = initials.toMutableList()
@@ -183,6 +171,7 @@ internal class XcfaOcCorrectnessValidator(
                     if (b[from] && !reachable[i][to]) toClose.add(i to to)
                 }
             }
+            for (i in reachable.indices) reachable[i][i] = true
         }
     }
 }
