@@ -156,15 +156,15 @@ class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
     override fun toExprs(): List<Expr<BoolType>> = listOf(relation.declRef)
 }
 
-sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: Event, private val wRfRelation: Reason) : Reason() {
+sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: E, private val wRfRelation: Reason) : Reason() {
 
     override fun toExprs(): List<Expr<BoolType>> = listOf(rf.declRef, w.guardExpr) + wRfRelation.toExprs()
 }
 
-class WriteSerializationReason<E : Event>(rf: Relation<E>, w: Event, wBeforeRf: Reason) :
+class WriteSerializationReason<E : Event>(rf: Relation<E>, w: E, wBeforeRf: Reason) :
     DerivedReason<E>(rf, w, wBeforeRf)
 
-class FromReadReason<E : Event>(rf: Relation<E>, w: Event, wAfterRf: Reason) :
+class FromReadReason<E : Event>(rf: Relation<E>, w: E, wAfterRf: Reason) :
     DerivedReason<E>(rf, w, wAfterRf)
 
 /**

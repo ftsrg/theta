@@ -69,6 +69,13 @@ class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedu
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
+    fun printXcfa() = xcfa.toDot { edge ->
+        "(${
+            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
+                .joinToString(",") { it.const.name }
+        })"
+    }
+
     @OptIn(ExperimentalTime::class)
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
@@ -84,9 +91,7 @@ class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedu
         System.err.println("Checker time (ms): ${checkerTime.inWholeMilliseconds}")
         when {
             status?.isUnsat == true -> {
-                val validator = XcfaOcCorrectnessValidator(
-                    decisionProcedure, xcfa, ocChecker, threads, events, violations, pos, rfs
-                )
+                val validator = XcfaOcCorrectnessValidator(decisionProcedure, ocChecker, threads, events, pos, rfs)
                 logger.write(Logger.Level.MAINSTEP, "Validating safe result...\n")
                 addToSolver(validator.ocCorrectnessValidator.solver)
                 val validatorTime = measureTime {
