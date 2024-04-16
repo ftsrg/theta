@@ -481,7 +481,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             LitExpr<?> zero = signedInt.getNullValue();
             parseContext.getMetadata().create(zero, "cType", signedInt);
             return zero;
-        } else {
+        } else if (ctx.typeName() != null) {
             final Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText())
                     .or(() -> Optional.ofNullable(CComplexType.getType(ctx.typeName().getText(), parseContext)))
                     .or(() -> Optional.ofNullable(CComplexType.getType(getVar(ctx.typeName().getText()).getRef(), parseContext)));
@@ -496,6 +496,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(zero, "cType", signedInt);
                 return zero;
             }
+        } else { // expr != null
+            final var expr = ctx.expression().accept(this);
+            final var type = CComplexType.getType(expr, parseContext);
+            LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + type.width() / 8);
+            return value;
         }
 
     }

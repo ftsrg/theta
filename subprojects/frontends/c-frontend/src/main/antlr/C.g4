@@ -109,7 +109,7 @@ unaryExpressionCast
     :   unaryOperator castExpression
     ;
 unaryExpressionSizeOrAlignOf
-    :   ('sizeof' | '_Alignof') '(' typeName ')'
+    :   ('sizeof' | '_Alignof') '(' (typeName | expression) ')'
     ;
 //unaryExpressionAddressof
 //    :   '&&' Identifier
@@ -556,7 +556,7 @@ functionDefinition
 //    ;
 PRETTY_FUNC: '__PRETTY_FUNCTION__';
 Extension: '__extension__' -> skip; // Hack to make .i files work (SV-COMP)
-VoidSizeof: '(void) sizeof' -> skip; // Hack to make .i files work (SV-COMP)
+//VoidSizeof: '(void)' [ \t]* 'sizeof' -> skip; // Hack to make .i files work (SV-COMP)
 Auto : 'auto';
 Break : 'break';
 Case : 'case';
