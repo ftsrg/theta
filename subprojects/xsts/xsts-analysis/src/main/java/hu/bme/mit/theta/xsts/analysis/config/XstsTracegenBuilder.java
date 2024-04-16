@@ -5,7 +5,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
-import hu.bme.mit.theta.analysis.algorithm.tracegen.TraceGenChecker;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -21,8 +20,6 @@ import hu.bme.mit.theta.xsts.analysis.initprec.XstsAllVarsInitPrec;
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsVarListInitPrec;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
@@ -75,7 +72,7 @@ final public class XstsTracegenBuilder {
                 .stopCriterion(StopCriterions.fullExploration())
                 .logger(logger).build();
 
-        TraceGenChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenChecker.create(logger, abstractor, getFullTraces);
+        TraceGenerationChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenerationChecker.create(logger, abstractor, getFullTraces);
 
         if(varFile==null) {
             return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));

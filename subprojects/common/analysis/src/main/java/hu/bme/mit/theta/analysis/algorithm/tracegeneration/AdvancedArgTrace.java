@@ -1,17 +1,15 @@
-package hu.bme.mit.theta.analysis.algorithm.tracegen;
+package hu.bme.mit.theta.analysis.algorithm.tracegeneration;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 class AdvancedArgTrace<S extends State, A extends Action> implements Iterable<ArgNode<S, A>> {

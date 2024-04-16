@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.analysis.algorithm.tracegen;
+package hu.bme.mit.theta.analysis.algorithm.tracegeneration;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 
@@ -12,8 +13,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class XstsDoubleEndNodeRemover<S extends ExprState, A extends StmtAction> {
-    static <S extends ExprState, A extends StmtAction> List<ArgNode<S,A>> collectBadLeaves(ARG<S,A> arg) {
+public class XstsDoubleEndNodeRemover<S extends ExprState, A extends ExprAction> {
+    static <S extends ExprState, A extends ExprAction> List<ArgNode<S,A>> collectBadLeaves(ARG<S,A> arg) {
         // TODO XSTS SPECIFIC for now! collecting nodes that look like there should be traces to it, but shouldn't ("not firing anything" nodes)
         XstsDoubleEndNodeRemover<S, A> instance = new XstsDoubleEndNodeRemover<S, A>();
         List<ArgNode<S, A>> badNodes = new ArrayList<>();
