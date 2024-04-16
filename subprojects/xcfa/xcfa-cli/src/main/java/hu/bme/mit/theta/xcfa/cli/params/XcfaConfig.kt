@@ -297,6 +297,12 @@ data class InterpolationConfig(
 data class OcConfig(
     @Parameter(names = ["--oc-decision-procedure"], description = "Decision procedure for ordering-consistency check")
     var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
+
+    @Parameter(names = ["--input-conflicts"], description = "Input file containing conflict clauses")
+    var inputConflictClauseFile: String? = null,
+
+    @Parameter(names = ["--output-conflicts"], description = "Output file to write conflict clauses")
+    var outputConflictClauseFile: String? = null,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

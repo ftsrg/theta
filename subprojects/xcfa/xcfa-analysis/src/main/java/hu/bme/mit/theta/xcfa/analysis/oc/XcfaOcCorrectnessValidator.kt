@@ -3,97 +3,133 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import java.io.File
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @OptIn(ExperimentalTime::class)
 internal class XcfaOcCorrectnessValidator(
     decisionProcedure: OcDecisionProcedureType,
-    private val ocChecker: OcChecker<E>,
+    private val inputConflictClauseFile: String,
     private val threads: Set<Thread>,
-    private val events: Map<VarDecl<*>, Map<Int, List<E>>>,
-    private val pos: List<R>,
-    private val rfs: Map<VarDecl<*>, List<R>>
-) {
+    private val ocChecker: OcChecker<E> = decisionProcedure.checker(),
+) : OcChecker<E> by ocChecker {
 
     private var clauseValidationTime = 0L
-    internal val ocCorrectnessValidator: OcChecker<E> = decisionProcedure.checker()
-    private val reachableEdges: Map<Int, ReachableEdges>
+    private lateinit var reachableEdges: Map<Int, ReachableEdges>
 
-    init {
+    override fun check(
+        events: Map<VarDecl<*>, Map<Int, List<E>>>, pos: List<Relation<E>>, rfs: Map<VarDecl<*>, List<Relation<E>>>
+    ): SolverStatus? {
+        val flatRfs = rfs.values.flatten()
+        val flatEvents = events.values.flatMap { it.values.flatten() }
+        val parser = XcfaOcReasonParser(flatRfs.toSet(), flatEvents.toSet())
+        var parseFailure = 0
+        val propagatedClauses = File(inputConflictClauseFile).readLines().mapNotNull { line ->
+            try {
+                parser.parse(line)
+            } catch (_: Exception) {
+                parseFailure++
+                null
+            }
+        }
+
         clauseValidationTime += measureTime {
             reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure) }
         }.inWholeMilliseconds
-    }
 
-    fun validate(): Boolean {
-        check(ocChecker.solver.status.isUnsat)
-        val propagated = ocChecker.getPropagatedClauses()
         val validConflicts: List<Reason>
         clauseValidationTime += measureTime {
-            validConflicts = propagated.filter { clause -> checkCycle(clause) }
+            validConflicts = propagatedClauses.filter { clause -> checkPath(clause) }
         }.inWholeMilliseconds
-        System.err.println("All conflict clauses: ${propagated.size}")
+        System.err.println("Conflict clause parse failures: $parseFailure")
+        System.err.println("Parsed conflict clauses: ${propagatedClauses.size}")
         System.err.println("Validated conflict clauses: ${validConflicts.size}")
         System.err.println("Clause validation time (ms): $clauseValidationTime")
 
-        events.values.flatMap { it.values.flatten() }.forEach { it.enabled = null }
-        rfs.values.flatten().forEach { it.enabled = null }
-        ocCorrectnessValidator.solver.add(validConflicts.map { Not(it.expr) })
-
-        val result = ocCorrectnessValidator.check(events, pos, rfs)?.isUnsat == true
+        ocChecker.solver.add(validConflicts.map { Not(it.expr) })
+        val result: SolverStatus?
+        System.err.println("Solver time (ms): " + measureTime {
+            result = ocChecker.check(events, pos, rfs)
+        }.inWholeMilliseconds)
         return result
     }
 
-    private fun checkCycle(combinedReason: Reason): Boolean {
+    private fun checkPath(combinedReason: Reason, from: E? = null, to: E? = null): Boolean {
         val reasons = combinedReason.reasons.filter { r ->
             when (r) {
-                is RelationReason<*> -> if (isRf(r.relation)) true else return false
-                is WriteSerializationReason<*> -> if (derivable(r.rf, r.w)) true else return false
-                is FromReadReason<*> -> if (derivable(r.rf, r.w)) true else return false
+                is RelationReason<*>, is WriteSerializationReason<*>, is FromReadReason<*> ->
+                    if (r.derivable()) true else return false
+
                 is PoReason -> false
                 else -> return false
             }
         }
-        if (reasons.isEmpty()) return false
+        if (reasons.isEmpty()) return if (from != null) isPo(from, to!!) else false
 
-        var possibleOrders = listOf(listOf(reasons.first()) to reasons.slice(1 until reasons.size))
+        var possibleOrders = if (from == null) {
+            listOf(listOf(reasons.first()) to reasons.slice(1 until reasons.size))
+        } else {
+            reasons.filter { isPo(from, it.from) }.map { listOf(it) to reasons - it }
+        }
+
         for (i in 1 until reasons.size) {
             val newPossibleOrders = mutableListOf<Pair<List<Reason>, List<Reason>>>()
             possibleOrders.forEach { po ->
                 val previous = po.first.last()
-                po.second.filter { isPo(previous.to, it.from) }.forEach{ next ->
+                po.second.filter { isPo(previous.to, it.from) }.forEach { next ->
                     newPossibleOrders.add(po.first + next to po.second - next)
                 }
             }
             possibleOrders = newPossibleOrders
         }
-        return possibleOrders.any { isPo(it.first.last().to, it.first.first().from) }
+
+        if (from != null) return possibleOrders.any { isPo(it.first.last().to, to!!) }
+        return possibleOrders.any { isPo(it.first.last().to, it.first.first().from) } // check cylce
     }
 
     private fun isRf(rf: Relation<*>): Boolean =
         rf.from.const.varDecl == rf.to.const.varDecl && rf.from.type == EventType.WRITE && rf.to.type == EventType.READ
 
-    private fun derivable(rf: Relation<*>, w: Event): Boolean {
-        return isRf(rf) && rf.from.const.varDecl == w.const.varDecl && w.type == EventType.WRITE
+    private fun derivable(rf: Relation<*>, w: Event): Boolean =
+        isRf(rf) && rf.from.const.varDecl == w.const.varDecl && w.type == EventType.WRITE
+
+    private fun Reason.derivable(): Boolean = when (this) {
+        is PoReason -> false
+        is CombinedReason -> reasons.all { it.derivable() }
+        is RelationReason<*> -> isRf(this.relation)
+        is WriteSerializationReason<*> -> {
+            this as WriteSerializationReason<E>
+            if (!derivable(rf, w)) false
+            else checkPath(wBeforeRf, w, rf.to)
+        }
+
+        is FromReadReason<*> -> {
+            this as FromReadReason<E>
+            if (!derivable(rf, w)) false
+            else checkPath(wAfterRf, rf.from, w)
+        }
     }
 
-    private val Reason.from: E get() = when (this) {
-        is RelationReason<*> -> (this as RelationReason<E>).relation.from
-        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).w
-        is FromReadReason<*> -> (this as FromReadReason<E>).rf.to
-        else -> error("Unsupported reason type.")
-    }
+    private val Reason.from: E
+        get() = when (this) {
+            is RelationReason<*> -> (this as RelationReason<E>).relation.from
+            is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).w
+            is FromReadReason<*> -> (this as FromReadReason<E>).rf.to
+            else -> error("Unsupported reason type.")
+        }
 
-    private val Reason.to: E get() = when (this) {
-        is RelationReason<*> -> (this as RelationReason<E>).relation.to
-        is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).rf.from
-        is FromReadReason<*> -> (this as FromReadReason<E>).w
-        else -> error("Unsupported reason type.")
-    }
+    private val Reason.to: E
+        get() = when (this) {
+            is RelationReason<*> -> (this as RelationReason<E>).relation.to
+            is WriteSerializationReason<*> -> (this as WriteSerializationReason<E>).rf.from
+            is FromReadReason<*> -> (this as FromReadReason<E>).w
+            else -> error("Unsupported reason type.")
+        }
 
     private fun isPo(from: E?, to: E): Boolean {
         data class Edge(val source: XcfaLocation?, val target: XcfaLocation, val pid: Int) {

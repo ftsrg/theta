@@ -31,7 +31,8 @@ import hu.bme.mit.theta.xcfa.model.XCFA
 fun getOcChecker(xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
     logger: Logger): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
-    val ocChecker = XcfaOcChecker(xcfa, (config.backendConfig.specConfig as OcConfig).decisionProcedure, logger)
+    val ocConfig = config.backendConfig.specConfig as OcConfig
+    val ocChecker = XcfaOcChecker(xcfa, ocConfig.decisionProcedure, logger, ocConfig.inputConflictClauseFile, ocConfig.outputConflictClauseFile)
     return object : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
         override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<*>, XcfaAction> = check()
         override fun check(): SafetyResult<XcfaState<*>, XcfaAction> = ocChecker.check()

@@ -25,6 +25,8 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
 import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.util.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
@@ -62,6 +64,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(userPropagator)
     private var solverLevel: Int = 0
 
+    @OptIn(ExperimentalTime::class)
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
@@ -79,7 +82,6 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
         flatRfs.forEach { rf -> userPropagator.registerExpression(rf.declRef) }
         flatWrites.forEach { w -> if (w.guard.isNotEmpty()) userPropagator.registerExpression(w.guardExpr) }
-
         return solver.check()
     }
 

@@ -18,7 +18,10 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.oc.*
+import hu.bme.mit.theta.analysis.algorithm.oc.EventType
+import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
+import hu.bme.mit.theta.analysis.algorithm.oc.Relation
+import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.*
@@ -47,15 +50,18 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
+import java.io.File
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
-class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
-    SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
+@OptIn(ExperimentalTime::class)
+class XcfaOcChecker(
+    xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
+    inputConflictClauseFile: String?, private val outputConfigClauseFile: String?
+) : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
-    private val ocChecker: OcChecker<E> = decisionProcedure.checker()
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
     )
@@ -69,14 +75,10 @@ class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedu
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
-    fun printXcfa() = xcfa.toDot { edge ->
-        "(${
-            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
-                .joinToString(",") { it.const.name }
-        })"
-    }
+    private val ocChecker: OcChecker<E> =
+        if (inputConflictClauseFile == null) decisionProcedure.checker()
+        else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads)
 
-    @OptIn(ExperimentalTime::class)
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
 
@@ -85,24 +87,22 @@ class XcfaOcChecker(xcfa: XCFA, private val decisionProcedure: OcDecisionProcedu
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status: SolverStatus?
-        val checkerTime = measureTime{
+        val checkerTime = measureTime {
             status = ocChecker.check(events, pos, rfs)
         }
-        System.err.println("Checker time (ms): ${checkerTime.inWholeMilliseconds}")
+        if (ocChecker !is XcfaOcCorrectnessValidator) {
+            System.err.println("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+        }
+
         when {
             status?.isUnsat == true -> {
-                val validator = XcfaOcCorrectnessValidator(decisionProcedure, ocChecker, threads, events, pos, rfs)
-                logger.write(Logger.Level.MAINSTEP, "Validating safe result...\n")
-                addToSolver(validator.ocCorrectnessValidator.solver)
-                val validatorTime = measureTime {
-                    if(!validator.validate()) error("Validator cannot confirm safe result.")
+                if (outputConfigClauseFile != null) {
+                    File(outputConfigClauseFile).writeText(ocChecker.getPropagatedClauses().joinToString("\n"))
                 }
-                System.err.println("Validator time (ms): ${validatorTime.inWholeMilliseconds}")
                 SafetyResult.safe()
             }
 
             status?.isSat == true -> {
-                logger.write(Logger.Level.MAINSTEP, "Extracting counterexample...\n")
                 val trace = XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
                 SafetyResult.unsafe(trace)
             }
