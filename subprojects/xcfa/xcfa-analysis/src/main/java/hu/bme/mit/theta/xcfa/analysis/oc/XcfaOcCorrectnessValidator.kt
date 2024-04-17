@@ -16,7 +16,7 @@ internal class XcfaOcCorrectnessValidator(
     decisionProcedure: OcDecisionProcedureType,
     private val inputConflictClauseFile: String,
     private val threads: Set<Thread>,
-    private val ocChecker: OcChecker<E> = decisionProcedure.checker(),
+    private val ocChecker: OcChecker<E> = decisionProcedure.checker(false),
 ) : OcChecker<E> by ocChecker {
 
     private var clauseValidationTime = 0L
