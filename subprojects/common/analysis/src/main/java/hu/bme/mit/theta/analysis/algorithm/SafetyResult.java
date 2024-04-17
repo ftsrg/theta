@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.Utils;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -90,6 +91,10 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Unknown<>();
     }
 
+    public static <S extends State, A extends Action> Traces<S, A> traces(final Collection<Trace<S, A>> traces) {
+        return new Traces<>(traces);
+    }
+
     public abstract boolean isSafe();
 
     public abstract boolean isUnsafe();
@@ -97,6 +102,8 @@ public abstract class SafetyResult<S extends State, A extends Action> {
     public abstract Safe<S, A> asSafe();
 
     public abstract Unsafe<S, A> asUnsafe();
+
+    public Traces<S, A> asTraces() { return null; };
 
     ////
 
@@ -222,6 +229,49 @@ public abstract class SafetyResult<S extends State, A extends Action> {
                     .add(Unknown.class.getSimpleName())
                     .toString();
         }
+    }
+
+    public static final class Traces<S extends State, A extends Action> extends SafetyResult<S, A> {
+
+        private final Collection<Trace<S, A>> traces;
+
+        public Traces(Collection<Trace<S, A>> traces) {
+            this.traces = traces;
+        }
+
+        @Override
+        public boolean isSafe() {
+            return false;
+        }
+
+        @Override
+        public boolean isUnsafe() {
+            return false;
+        }
+
+        @Override
+        public Safe<S, A> asSafe() {
+            return null;
+        }
+
+        @Override
+        public Unsafe<S, A> asUnsafe() {
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
+                .add(Unknown.class.getSimpleName())
+                .toString();
+        }
+
+        public Collection<Trace<S, A>> getTraces() {
+            return traces;
+        }
+
+        public Traces<S, A> asTraces() { return this; };
+
     }
 
 }

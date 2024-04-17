@@ -5,6 +5,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker;
 import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -72,7 +73,7 @@ final public class XstsTracegenBuilder {
                 .stopCriterion(StopCriterions.fullExploration())
                 .logger(logger).build();
 
-        TraceGenerationChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenerationChecker.create(logger, abstractor, getFullTraces);
+        TraceGenerationChecker<XstsState<ExplState>, XstsAction, ExplPrec> tracegenChecker = TraceGenerationChecker.Companion.create(logger, abstractor);
 
         if(varFile==null) {
             return XstsTracegenConfig.create(tracegenChecker, new XstsAllVarsInitPrec().createExpl(xsts));

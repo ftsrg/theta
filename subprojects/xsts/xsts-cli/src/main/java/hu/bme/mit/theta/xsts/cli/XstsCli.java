@@ -78,6 +78,7 @@ import java.io.PrintWriter;
 import java.io.SequenceInputStream;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -220,8 +221,10 @@ public class XstsCli {
             final SafetyResult<?, ?> status;
             if(tracegen) {
                 XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance(), !noTransitionCoverage).logger(logger).setGetFullTraces(getFullTraces).setVarFile(varFile).build(xsts);
-                tracegenConfig.check();
-                List<? extends Trace<? extends State, ? extends Action>> traces = tracegenConfig.getTraces();
+
+                SafetyResult<? extends State, ? extends Action> result = tracegenConfig.check();
+                Collection<? extends Trace<? extends State, ? extends Action>> traces = result.asTraces()
+                    .getTraces();
                 final File modelFile = new File(model);
                 final String tracePath = modelFile.getParent() + File.separator + "traces";
                 final File traceDir = new File(tracePath);

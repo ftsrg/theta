@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.xsts.analysis.config;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 
@@ -25,9 +25,5 @@ public class XstsTracegenConfig<S extends ExprState, A extends StmtAction, P ext
 
     public SafetyResult<S, A> check() {
         return checker.check(initPrec);
-    }
-
-    public List<Trace<S, A>> getTraces() {
-        return checker.getTraces();
     }
 }
