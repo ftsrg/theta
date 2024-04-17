@@ -61,7 +61,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             builder.addEdge(edge.withLabel(edge.label.changeReferredVars(referredVars, parseContext)))
         }
 
-        return builder
+        return NormalizePass().run(builder)
     }
 
     @JvmOverloads
@@ -80,37 +80,53 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                 is StartLabel -> StartLabel(name, params.map { it.changeReferredVars(varLut, parseContext) },
                     pidVar, metadata = metadata)
 
-                is StmtLabel -> StmtLabel(stmt.changeReferredVars(varLut, parseContext), metadata = metadata,
-                    choiceType = this.choiceType)
+                is StmtLabel -> SequenceLabel(stmt.changeReferredVars(varLut, parseContext).map {
+                    StmtLabel(it, metadata = metadata,
+                        choiceType = this.choiceType)
+                }).let { if (it.labels.size == 1) it.labels[0] else it }
 
                 else -> this
             }
         else this
 
     @JvmOverloads
-    fun Stmt.changeReferredVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): Stmt {
-        val stmt = when (this) {
+    fun Stmt.changeReferredVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseContext? = null): List<Stmt> {
+        val stmts = when (this) {
             is AssignStmt<*> -> if(this.varDecl in varLut.keys) {
                 val newVar = varLut[this.varDecl]!!
-                MemoryAssignStmt.create(
-                    Dereference(
-                        cast(newVar.ref, newVar.type),
-                        cast(CComplexType.getSignedInt(parseContext).nullValue, newVar.type),
-                        CPointer(null, CComplexType.getType(expr, parseContext), parseContext).smtType),
-                    this.expr.changeReferredVars(varLut, parseContext))
+                listOf(
+                    AssignStmt.of(cast(newVar, newVar.type),
+                        cast(CComplexType.getType(newVar.ref, parseContext).getValue("${varDecl.hashCode()}"),
+                            newVar.type)),
+                    MemoryAssignStmt.create(
+                        Dereference(
+                            cast(newVar.ref, newVar.type),
+                            cast(CComplexType.getSignedInt(parseContext).nullValue, newVar.type),
+                            CPointer(null, CComplexType.getType(expr, parseContext), parseContext).smtType),
+                        this.expr.changeReferredVars(varLut, parseContext)))
             } else {
-                AssignStmt.of(cast(this.varDecl, this.varDecl.type), cast(this.expr.changeReferredVars(varLut, parseContext), this.varDecl.type))
+                listOf(AssignStmt.of(cast(this.varDecl, this.varDecl.type),
+                    cast(this.expr.changeReferredVars(varLut, parseContext), this.varDecl.type)))
             }
-            is MemoryAssignStmt<*, *> -> MemoryAssignStmt.create(deref.changeReferredVars(varLut, parseContext) as Dereference<*, *>, expr.changeReferredVars(varLut, parseContext))
-            is AssumeStmt -> AssumeStmt.of(cond.changeReferredVars(varLut, parseContext))
-            is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeReferredVars(varLut, parseContext) })
-            is SkipStmt -> this
+
+            is MemoryAssignStmt<*, *> -> listOf(
+                MemoryAssignStmt.create(deref.changeReferredVars(varLut, parseContext) as Dereference<*, *>,
+                    expr.changeReferredVars(varLut, parseContext)))
+
+            is AssumeStmt -> listOf(AssumeStmt.of(cond.changeReferredVars(varLut, parseContext)))
+            is SequenceStmt -> listOf(
+                SequenceStmt.of(this.stmts.flatMap { it.changeReferredVars(varLut, parseContext) }))
+
+            is SkipStmt -> listOf(this)
             else -> TODO("Not yet implemented ($this)")
         }
         val metadataValue = parseContext?.metadata?.getMetadataValue(this, "sourceStatement")
-        if (metadataValue?.isPresent == true)
-            parseContext.metadata.create(stmt, "sourceStatement", metadataValue.get())
-        return stmt
+        if (metadataValue?.isPresent == true) {
+            for (stmt in stmts) {
+                parseContext.metadata.create(stmt, "sourceStatement", metadataValue.get())
+            }
+        }
+        return stmts
     }
 
     @JvmOverloads

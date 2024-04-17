@@ -17,15 +17,21 @@
 package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
- * Transforms all procedure calls into havocs.
+ * Transforms mallocs into address assignments.
  * Requires the ProcedureBuilder be `deterministic`.
  */
-class NondetFunctionPass : ProcedurePass {
+class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
+
+    private var cnt = 0
+        get() = field++
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -37,10 +43,11 @@ class NondetFunctionPass : ProcedurePass {
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
-                        val havoc = HavocStmt.of(
-                            (invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>)
+                        val ret = invokeLabel.params[0] as RefExpr<*>
+                        val assign = AssignStmt.of(
+                            cast(ret.decl as VarDecl<*>, ret.type), cast(CComplexType.getType(ret, parseContext).getValue("$cnt"), ret.type))
                         builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(
-                            listOf(StmtLabel(havoc, metadata = invokeLabel.metadata)))))
+                            listOf(StmtLabel(assign, metadata = invokeLabel.metadata)))))
                     } else {
                         builder.addEdge(it)
                     }
@@ -51,6 +58,6 @@ class NondetFunctionPass : ProcedurePass {
     }
 
     private fun predicate(it: XcfaLabel): Boolean {
-        return it is InvokeLabel && it.name.startsWith("__VERIFIER_nondet")
+        return it is InvokeLabel && it.name == "malloc"
     }
 }

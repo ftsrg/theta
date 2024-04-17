@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
@@ -188,8 +189,13 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
                 while (expr is Dereference<*, *>) {
                     expr = expr.array
                 }
-                expr as RefExpr<*>
-                ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(expr.decl as VarDecl<*> to WRITE)
+                if (expr is RefExpr<*>) {
+                    ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(expr.decl as VarDecl<*> to WRITE)
+                } else if (expr is LitExpr<*>) {
+                    ExprUtils.getVars(stmt.expr).associateWith { READ }
+                } else {
+                    error("MemoryAssignStmts's dereferences should only contain refs or lits")
+                }
             }
 
             else -> StmtUtils.getVars(stmt).associateWith { READ }
@@ -386,4 +392,27 @@ val Expr<*>.references: List<Reference<*, *>>
         listOf(this)
     } else {
         ops.flatMap { it.references }
+    }
+
+val XcfaLabel.dereferences: List<Dereference<*, *>>
+    get() = when (this) {
+        is StmtLabel -> when (stmt) {
+            is AssumeStmt -> stmt.cond.dereferences
+            is AssignStmt<*> -> stmt.expr.dereferences
+            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences + listOf(stmt.deref)
+            else -> emptyList()
+        }
+
+        is InvokeLabel -> params.flatMap { it.dereferences }
+        is NondetLabel -> labels.flatMap { it.dereferences }
+        is SequenceLabel -> labels.flatMap { it.dereferences }
+        is StartLabel -> params.flatMap { it.dereferences }
+        else -> emptyList()
+    }
+
+val Expr<*>.dereferences: List<Dereference<*, *>>
+    get() = if (this is Dereference<*, *>) {
+        listOf(this)
+    } else {
+        ops.flatMap { it.dereferences }
     }

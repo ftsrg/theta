@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.model
 
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
 
@@ -28,6 +29,7 @@ annotation class XcfaDsl
 class XcfaBuilder @JvmOverloads constructor(
     var name: String,
     private val vars: MutableSet<XcfaGlobalVar> = LinkedHashSet(),
+    val heapMap: MutableMap<Triple<Int, Int, Type>, VarDecl<*>> = LinkedHashMap(),
     private val procedures: MutableSet<XcfaProcedureBuilder> = LinkedHashSet(),
     private val initProcedures: MutableList<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = ArrayList(),
     val metaData: MutableMap<String, Any> = LinkedHashMap()
