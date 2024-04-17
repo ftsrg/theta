@@ -7,7 +7,14 @@ internal class XcfaOcReasonParser(
     private val events: Set<E>,
 ) {
 
-    fun parse(input: String): Reason {
+    fun parse(input: String): Reason? {
+        if (input.startsWith("CC: ")) {
+            return parseReason(input.substring(4))
+        }
+        return null
+    }
+
+    private fun parseReason(input: String): Reason {
         val i = input.trim()
 
         if (i == "[]") {
@@ -31,7 +38,7 @@ internal class XcfaOcReasonParser(
                 }
             }
             parts.add(str)
-            return CombinedReason(parts.map { parse(it) })
+            return CombinedReason(parts.map { parseReason(it) })
         }
 
         if (i.startsWith("REL(") && i.endsWith(")")) {
@@ -48,7 +55,7 @@ internal class XcfaOcReasonParser(
 
             val rf = rels.find { it.decl.name == rfStr } ?: error("Unknown relation: $rfStr")
             val w = events.find { it.const.name == wStr } ?: error("Unknown event: $wStr")
-            val wBeforeRf = parse(wBeforeRfStr)
+            val wBeforeRf = parseReason(wBeforeRfStr)
             return WriteSerializationReason(rf, w, wBeforeRf)
         }
 
@@ -60,7 +67,7 @@ internal class XcfaOcReasonParser(
 
             val rf = rels.find { it.decl.name == rfStr } ?: error("Unknown relation: $rfStr")
             val w = events.find { it.const.name == wStr } ?: error("Unknown event: $wStr")
-            val wAfterRf = parse(wAfterRfStr)
+            val wAfterRf = parseReason(wAfterRfStr)
             return FromReadReason(rf, w, wAfterRf)
         }
 

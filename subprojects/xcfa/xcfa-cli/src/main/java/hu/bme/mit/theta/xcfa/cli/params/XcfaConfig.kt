@@ -302,7 +302,10 @@ data class OcConfig(
     var inputConflictClauseFile: String? = null,
 
     @Parameter(names = ["--output-conflicts"], description = "Output file to write conflict clauses")
-    var outputConflictClauseFile: String? = null,
+    var outputConflictClauseFile: Boolean = false,
+
+    @Parameter(names = ["--input-conflict-decision-procedure"], description = "Output file to write conflict clauses")
+    var inputConflictDecisionProcedure: String = "",
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

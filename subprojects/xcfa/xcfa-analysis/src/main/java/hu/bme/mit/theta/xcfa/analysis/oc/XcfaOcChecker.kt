@@ -59,7 +59,7 @@ private val Expr<*>.vars get() = ExprUtils.getVars(this)
 @OptIn(ExperimentalTime::class)
 class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
-    inputConflictClauseFile: String?, private val outputConfigClauseFile: String?
+    inputConflictClauseFile: String?, private val outputConfigClauseFile: Boolean
 ) : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
@@ -96,8 +96,10 @@ class XcfaOcChecker(
 
         when {
             status?.isUnsat == true -> {
-                if (outputConfigClauseFile != null) {
-                    File(outputConfigClauseFile).writeText(ocChecker.getPropagatedClauses().joinToString("\n"))
+                if (outputConfigClauseFile) {
+                    ocChecker.getPropagatedClauses().forEach {
+                        System.err.println("CC: $it")
+                    }
                 }
                 SafetyResult.safe()
             }
