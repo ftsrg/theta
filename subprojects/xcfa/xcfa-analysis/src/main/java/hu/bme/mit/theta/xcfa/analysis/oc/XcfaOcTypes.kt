@@ -49,16 +49,16 @@ internal fun Collection<Expr<BoolType>>.toAnd(): Expr<BoolType> = when (size) {
 /**
  * Takes the OR of the contained lists mapped to an AND expression. Simplifications are made based on the list sizes.
  */
-internal fun Collection<List<Expr<BoolType>>>.toOrInList(): List<Expr<BoolType>> = when (size) {
-    0 -> listOf()
+internal fun Collection<Set<Expr<BoolType>>>.toOrInSet(): Set<Expr<BoolType>> = when (size) {
+    0 -> setOf()
     1 -> first()
-    else -> listOf(Or(map { it.toAnd() }))
+    else -> setOf(Or(map { it.toAnd() }))
 }
 
 internal class XcfaEvent(
     const: IndexedConstDecl<*>,
     type: EventType,
-    guard: List<Expr<BoolType>>,
+    guard: Set<Expr<BoolType>>,
     pid: Int,
     val edge: XcfaEdge,
     clkId: Int = uniqueId()
@@ -80,10 +80,11 @@ internal data class Violation(
 
 internal data class Thread(
     val procedure: XcfaProcedure,
-    val guard: List<Expr<BoolType>> = listOf(),
+    val guard: Set<Expr<BoolType>> = setOf(),
     val pidVar: VarDecl<*>? = null,
     val startEvent: XcfaEvent? = null,
-    val joinEvents: MutableSet<XcfaEvent> = mutableSetOf(),
+    val startHistory: List<String> = listOf(),
+    val finalEvents: MutableSet<XcfaEvent> = mutableSetOf(),
     val pid: Int = uniqueId(),
 ) {
 
@@ -96,10 +97,10 @@ internal data class Thread(
 
 internal data class SearchItem(val loc: XcfaLocation) {
 
-    val guards: MutableList<List<Expr<BoolType>>> = mutableListOf()
+    val guards: MutableList<Set<Expr<BoolType>>> = mutableListOf()
     val lastEvents: MutableList<XcfaEvent> = mutableListOf()
     val lastWrites: MutableList<Map<VarDecl<*>, Set<XcfaEvent>>> = mutableListOf()
-    val pidLookups: MutableList<Map<VarDecl<*>, Set<Pair<List<Expr<BoolType>>, Int>>>> = mutableListOf()
+    val threadLookups: MutableList<Map<VarDecl<*>, Set<Pair<Set<Expr<BoolType>>, Thread>>>> = mutableListOf()
     val atomics: MutableList<Boolean?> = mutableListOf()
     var incoming: Int = 0
 }

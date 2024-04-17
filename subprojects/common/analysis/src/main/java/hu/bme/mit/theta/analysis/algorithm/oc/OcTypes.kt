@@ -41,12 +41,12 @@ enum class EventType { WRITE, READ }
 abstract class Event(
     val const: IndexedConstDecl<*>,
     val type: EventType,
-    val guard: List<Expr<BoolType>>,
+    var guard: Set<Expr<BoolType>>,
     val pid: Int,
     val clkId: Int
 ) {
 
-    val guardExpr: Expr<BoolType> = guard.toAnd()
+    val guardExpr: Expr<BoolType> get() = guard.toAnd()
     var assignment: Expr<BoolType>? = null
     var enabled: Boolean? = null
 
@@ -77,7 +77,9 @@ data class Relation<E : Event>(
     val declRef: RefExpr<BoolType> = RefExpr.of(decl)
     var enabled: Boolean? = null
 
-    override fun toString() = "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
+    override fun toString() =
+        "Relation($type, ${from.const.name}[${from.type.toString()[0]}], ${to.const.name}[${to.type.toString()[0]}])"
+
     fun enabled(valuation: Map<Decl<*>, LitExpr<*>>): Boolean? {
         enabled = if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
         return enabled
