@@ -48,6 +48,7 @@ class LiteralDerefPass(val parseContext: ParseContext) : ProcedurePass {
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
         val localDerefs = builder.getEdges().flatMap { it.getFlatLabels().flatMap { it.dereferences } }
+            .filter { it.array is LitExpr<*> && it.offset is LitExpr }
 
         if (localDerefs.isNotEmpty()) {
             val varValLut = builder.parent.heapMap.ifEmpty {
