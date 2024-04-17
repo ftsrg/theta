@@ -259,6 +259,7 @@ class XcfaOcChecker(
                                 thread.finalEvents.forEach { final -> po(final, joinEvent) }
                                 lastEvents.add(joinEvent)
                                 joinGuards.add(guard)
+                                thread.joinEvents.add(joinEvent)
                             } ?: error("Thread started in a different thread: not supported by OC checker.")
                             guard = joinGuards.toOrInSet()
                             last = lastEvents
