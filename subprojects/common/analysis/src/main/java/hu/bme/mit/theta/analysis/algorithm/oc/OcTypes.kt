@@ -42,12 +42,12 @@ enum class EventType { WRITE, READ }
 abstract class Event(
     val const: IndexedConstDecl<*>,
     val type: EventType,
-    val guard: List<Expr<BoolType>>,
+    var guard: Set<Expr<BoolType>>,
     val pid: Int,
     val clkId: Int
 ) {
 
-    val guardExpr: Expr<BoolType> = guard.toAnd()
+    val guardExpr: Expr<BoolType> get() = guard.toAnd()
     var assignment: Expr<BoolType>? = null
     var enabled: Boolean? = null
 

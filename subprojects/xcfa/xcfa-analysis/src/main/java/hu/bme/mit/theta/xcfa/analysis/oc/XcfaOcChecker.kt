@@ -38,14 +38,12 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.isAtomicBegin
-import hu.bme.mit.theta.xcfa.isAtomicEnd
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
@@ -80,10 +78,12 @@ class XcfaOcChecker(
         else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads)
 
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
-        if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by this checker.")
+        if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
-        if (!addConstraints()) return@let SafetyResult.safe() // no violations
+        xcfa.initProcedures.forEach { processThread(Thread(it.first)) }
+        addCrossThreadRelations()
+        if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe() // no violations in the model
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status: SolverStatus?
@@ -113,25 +113,11 @@ class XcfaOcChecker(
         }
     }.also { logger.write(Logger.Level.MAINSTEP, "OC checker result: $it\n") }
 
-    private fun addConstraints(): Boolean {
-        val threads = xcfa.initProcedures.map { Thread(it.first) }.toMutableSet()
-        this.threads.addAll(threads)
-        while (threads.isNotEmpty()) {
-            val thread = threads.first()
-            threads.remove(thread)
-            val newThreads = processThread(thread)
-            threads.addAll(newThreads)
-            this.threads.addAll(newThreads)
-        }
-
-        addCrossThreadRelations()
-        return addToSolver(ocChecker.solver)
-    }
-
     private fun processThread(thread: Thread): List<Thread> {
+        threads.add(thread)
         val pid = thread.pid
         var last = listOf<E>()
-        var guard = listOf<Expr<BoolType>>()
+        var guard = setOf<Expr<BoolType>>()
         lateinit var lastWrites: MutableMap<VarDecl<*>, Set<E>>
         lateinit var edge: XcfaEdge
         var inEdge = false
@@ -170,7 +156,7 @@ class XcfaOcChecker(
             check(current.incoming == current.loc.incomingEdges.size)
             check(current.incoming == current.guards.size || current.loc.initial)
             check(current.incoming == current.lastWrites.size) // lastEvents intentionally skipped
-            check(current.incoming == current.pidLookups.size)
+            check(current.incoming == current.threadLookups.size)
             check(current.incoming == current.atomics.size)
             check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
 
@@ -181,12 +167,10 @@ class XcfaOcChecker(
             }
 
             if (current.loc.final) {
-                current.lastEvents.forEach { final ->
-                    thread.joinEvents.forEach { join -> po(final, join) }
-                }
+                thread.finalEvents.addAll(current.lastEvents)
             }
 
-            val mergedGuard = current.guards.toOrInList()
+            val mergedGuard = current.guards.toOrInSet()
             val assumeConsts = mutableMapOf<VarDecl<*>, MutableList<ConstDecl<*>>>()
 
             for (e in current.loc.outgoingEdges) {
@@ -196,14 +180,16 @@ class XcfaOcChecker(
                 // intersection of guards of incoming edges:
                 guard = mergedGuard
                 lastWrites = current.lastWrites.merge().toMutableMap()
-                val pidLookup = current.pidLookups.merge { s1, s2 ->
+                val threadLookup = current.threadLookups.merge { s1, s2 ->
                     s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
                 }.toMutableMap()
                 var firstLabel = true
                 atomicEntered = current.atomics.firstOrNull()
 
                 edge.getFlatLabels().forEach { label ->
-                    if (label.references.isNotEmpty()) error("References not supported by this checker.")
+                    if (label.references.isNotEmpty() || label.dereferences.isNotEmpty()) {
+                        error("References not supported by OC checker.")
+                    }
                     when (label) {
                         is StmtLabel -> {
                             when (val stmt = label.stmt) {
@@ -246,28 +232,35 @@ class XcfaOcChecker(
 
                         is StartLabel -> {
                             // TODO StartLabel params
+                            if (label.name in thread.startHistory) {
+                                error("Recursive thread start not supported by OC checker.")
+                            }
                             val procedure = xcfa.procedures.find { it.name == label.name }
                                 ?: error("Procedure not found: ${label.name}")
                             last = newEvent(label.pidVar, EventType.WRITE)
                             val pidVar = label.pidVar.threadVar(pid)
                             if (this.threads.any { it.pidVar == pidVar }) {
-                                error("Multi-thread use of pthread_t variables are not supported by this checker.")
+                                error("Using a pthread_t variable in multiple threads is not supported by OC checker.")
                             }
-                            val newThread = Thread(procedure, guard, pidVar, last.first())
+                            val newHistory = thread.startHistory + thread.procedure.name
+                            val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory)
                             last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
-                            pidLookup[pidVar] = setOf(Pair(guard, newThread.pid))
-                            threads.add(newThread)
+                            threadLookup[pidVar] = setOf(Pair(guard, newThread))
+                            processThread(newThread)
                         }
 
                         is JoinLabel -> {
-                            val guardTemp = guard
+                            val incomingGuard = guard
                             val lastEvents = mutableListOf<E>()
-                            pidLookup[label.pidVar.threadVar(pid)]?.forEach { (g, pid) ->
-                                guard = g
-                                lastEvents.addAll(newEvent(label.pidVar, EventType.READ))
-                                threads.find { it.pid == pid }?.joinEvents?.add(lastEvents.last())
-                            } ?: error("Thread started in a different thread: not supported by this checker.")
-                            guard = guardTemp
+                            val joinGuards = mutableListOf<Set<Expr<BoolType>>>()
+                            threadLookup[label.pidVar.threadVar(pid)]?.forEach { (g, thread) ->
+                                guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
+                                val joinEvent = newEvent(label.pidVar, EventType.READ).first()
+                                thread.finalEvents.forEach { final -> po(final, joinEvent) }
+                                lastEvents.add(joinEvent)
+                                joinGuards.add(guard)
+                            } ?: error("Thread started in a different thread: not supported by OC checker.")
+                            guard = joinGuards.toOrInSet()
                             last = lastEvents
                         }
 
@@ -280,7 +273,7 @@ class XcfaOcChecker(
                         }
 
                         is NopLabel -> {}
-                        else -> error("Unsupported label type by this checker: $label")
+                        else -> error("Unsupported label type by OC checker: $label")
                     }
                     firstLabel = false
                 }
@@ -290,7 +283,7 @@ class XcfaOcChecker(
                 searchItem.guards.add(guard)
                 searchItem.lastEvents.addAll(last)
                 searchItem.lastWrites.add(lastWrites)
-                searchItem.pidLookups.add(pidLookup)
+                searchItem.threadLookups.add(threadLookup)
                 searchItem.atomics.add(atomicEntered)
                 searchItem.incoming++
                 if (searchItem.incoming == searchItem.loc.incomingEdges.size) {
@@ -303,7 +296,7 @@ class XcfaOcChecker(
                 for (e in current.loc.outgoingEdges) {
                     val first = e.getFlatLabels().first()
                     if (first !is StmtLabel || first.stmt !is AssumeStmt) {
-                        error("Branching with non-assume labels not supported by this checker.")
+                        error("Branching with non-assume labels not supported by OC checker.")
                     }
                 }
                 assumeConsts.forEach { (_, set) ->
@@ -316,7 +309,7 @@ class XcfaOcChecker(
             }
         }
 
-        if (waitList.isNotEmpty()) error("Loops and dangling edges not supported by this checker.")
+        if (waitList.isNotEmpty()) error("Loops and dangling edges not supported by OC checker.")
         return threads
     }
 
