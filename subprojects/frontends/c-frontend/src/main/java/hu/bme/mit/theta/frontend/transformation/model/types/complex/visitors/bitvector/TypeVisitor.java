@@ -17,7 +17,6 @@
 package hu.bme.mit.theta.frontend.transformation.model.types.complex.visitors.bitvector;
 
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -79,10 +78,10 @@ public class TypeVisitor extends CComplexType.CComplexTypeVisitor<Void, Type> {
 
 
     public Type visit(CPointer type, Void param) {
-        return ArrayType.of(CComplexType.getUnsignedInt(parseContext).getSmtType(), type.getEmbeddedType().getSmtType());
+        return CComplexType.getUnsignedInt(parseContext).getSmtType();
     }
 
     public Type visit(CArray type, Void param) {
-        return ArrayType.of(CComplexType.getUnsignedInt(parseContext).getSmtType(), type.getEmbeddedType().getSmtType());
+        return CComplexType.getUnsignedInt(parseContext).getSmtType();
     }
 }

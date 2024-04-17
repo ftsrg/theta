@@ -23,7 +23,11 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -180,6 +184,20 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
             is AssignStmt<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
+            is MemoryAssignStmt<*, *> -> {
+                var expr: Expr<*> = stmt.deref
+                while (expr is Dereference<*, *>) {
+                    expr = expr.array
+                }
+                if (expr is RefExpr<*>) {
+                    ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(expr.decl as VarDecl<*> to WRITE)
+                } else if (expr is LitExpr<*>) {
+                    ExprUtils.getVars(stmt.expr).associateWith { READ }
+                } else {
+                    error("MemoryAssignStmts's dereferences should only contain refs or lits")
+                }
+            }
+
             else -> StmtUtils.getVars(stmt).associateWith { READ }
         }
     }
@@ -354,23 +372,47 @@ private fun getAtomicBlockInnerLocations(initialLocation: XcfaLocation): List<Xc
     return atomicLocations
 }
 
-fun getReferences(label: XcfaLabel): List<Reference<*, *>> =
-    when(label) {
-        is StmtLabel -> when(label.stmt) {
-            is AssumeStmt -> getReferences(label.stmt.cond)
-            is AssignStmt<*> -> getReferences(label.stmt.expr)
+val XcfaLabel.references: List<Reference<*, *>>
+    get() = when (this) {
+        is StmtLabel -> when (stmt) {
+            is AssumeStmt -> stmt.cond.references
+            is AssignStmt<*> -> stmt.expr.references
             else -> emptyList()
         }
-        is InvokeLabel -> label.params.flatMap { getReferences(it) }
-        is NondetLabel -> label.labels.flatMap { getReferences(it)  }
-        is SequenceLabel -> label.labels.flatMap { getReferences(it) }
-        is StartLabel -> label.params.flatMap { getReferences(it) }
+
+        is InvokeLabel -> params.flatMap { it.references }
+        is NondetLabel -> labels.flatMap { it.references }
+        is SequenceLabel -> labels.flatMap { it.references }
+        is StartLabel -> params.flatMap { it.references }
         else -> emptyList()
     }
 
-fun getReferences(expr: Expr<*>): List<Reference<*, *>> =
-    if(expr is Reference<*, *>) {
-        listOf(expr)
+val Expr<*>.references: List<Reference<*, *>>
+    get() = if (this is Reference<*, *>) {
+        listOf(this)
     } else {
-        expr.ops.flatMap { getReferences(it) }
+        ops.flatMap { it.references }
+    }
+
+val XcfaLabel.dereferences: List<Dereference<*, *>>
+    get() = when (this) {
+        is StmtLabel -> when (stmt) {
+            is AssumeStmt -> stmt.cond.dereferences
+            is AssignStmt<*> -> stmt.expr.dereferences
+            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences + listOf(stmt.deref)
+            else -> emptyList()
+        }
+
+        is InvokeLabel -> params.flatMap { it.dereferences }
+        is NondetLabel -> labels.flatMap { it.dereferences }
+        is SequenceLabel -> labels.flatMap { it.dereferences }
+        is StartLabel -> params.flatMap { it.dereferences }
+        else -> emptyList()
+    }
+
+val Expr<*>.dereferences: List<Dereference<*, *>>
+    get() = if (this is Dereference<*, *>) {
+        listOf(this)
+    } else {
+        ops.flatMap { it.dereferences }
     }

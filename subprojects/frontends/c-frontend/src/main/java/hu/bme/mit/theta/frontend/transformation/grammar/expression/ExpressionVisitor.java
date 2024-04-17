@@ -481,7 +481,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             LitExpr<?> zero = signedInt.getNullValue();
             parseContext.getMetadata().create(zero, "cType", signedInt);
             return zero;
-        } else {
+        } else if (ctx.typeName() != null) {
             final Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText())
                     .or(() -> Optional.ofNullable(CComplexType.getType(ctx.typeName().getText(), parseContext)))
                     .or(() -> Optional.ofNullable(CComplexType.getType(getVar(ctx.typeName().getText()).getRef(), parseContext)));
@@ -496,6 +496,11 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 parseContext.getMetadata().create(zero, "cType", signedInt);
                 return zero;
             }
+        } else { // expr != null
+            final var expr = ctx.expression().accept(this);
+            final var type = CComplexType.getType(expr, parseContext);
+            LitExpr<?> value = CComplexType.getSignedInt(parseContext).getValue("" + type.width() / 8);
+            return value;
         }
 
     }
@@ -568,21 +573,22 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             case "*":
                 type = CComplexType.getType(accept, parseContext);
                 checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
-                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), ((CPointer) type).getEmbeddedType());
+                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), (CPointer) type);
         }
         return accept;
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Type, O extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CComplexType type) {
-        Dereference<T, O, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<O>) offset, type.getSmtType());
+    private <T extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CComplexType type) {
+        Dereference<T, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<T>) offset, type.getSmtType());
         parseContext.getMetadata().create(of, "cType", type);
         return of;
     }
 
     private Expr<?> reference(RefExpr<?> accept) {
-        Reference<Type, ?> of = Reference(accept, CComplexType.getUnsignedLong(parseContext).getSmtType());
-        parseContext.getMetadata().create(of, "cType", new CPointer(null, CComplexType.getType(accept, parseContext), parseContext));
+        final var newType = new CPointer(null, CComplexType.getType(accept, parseContext), parseContext);
+        Reference<Type, ?> of = Reference(accept, newType.getSmtType());
+        parseContext.getMetadata().create(of, "cType", newType);
         return of;
     }
 

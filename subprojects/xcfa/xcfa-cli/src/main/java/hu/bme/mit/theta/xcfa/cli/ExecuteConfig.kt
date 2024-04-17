@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
@@ -46,8 +47,7 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -57,8 +57,10 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-fun runConfig(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger,
-    throwDontExit: Boolean): SafetyResult<*, *> {
+fun runConfig(
+    config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger,
+    throwDontExit: Boolean
+): SafetyResult<*, *> {
     propagateInputOptions(config, logger, uniqueLogger)
 
     registerAllSolverManagers(config.backendConfig.solverHome, logger)
@@ -151,19 +153,23 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
 
     ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
 
-    logger.write(Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
-        stopwatch.elapsed(TimeUnit.MILLISECONDS)
-    } ms)\n")
+    logger.write(
+        Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
+            stopwatch.elapsed(TimeUnit.MILLISECONDS)
+        } ms)\n"
+    )
 
-    logger.write(Logger.Level.RESULT, "ParsingResult Success\n")
+    logger.write(RESULT, "ParsingResult Success\n")
 
     return Triple(xcfa, mcm, parseContext)
 }
 
-private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
+private fun backend(
+    xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
     logger: Logger,
     uniqueLogger: Logger,
-    throwDontExit: Boolean): SafetyResult<*, *> =
+    throwDontExit: Boolean
+): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
         SafetyResult.unknown<State, Action>()
     } else {
@@ -171,54 +177,59 @@ private fun backend(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: Xc
             val result = SafetyResult.safe<State, Action>()
             logger.write(Logger.Level.INFO, "Input is trivially safe\n")
 
-            logger.write(Logger.Level.RESULT, result.toString() + "\n")
+            logger.write(RESULT, result.toString() + "\n")
             result
         } else {
             val stopwatch = Stopwatch.createStarted()
 
-            if (xcfa.procedures.any {
-                    it.edges.any {
-                        it.getFlatLabels().any { it is StmtLabel && it.stmt.toString().contains("deref") }
-                    }
-                }) {
-                logger.write(Logger.Level.RESULT, "Program contains dereferences, unsafe results are unreliable.")
-            }
-
-            logger.write(Logger.Level.INFO,
-                "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n")
+            logger.write(
+                Logger.Level.INFO,
+                "Starting verification of ${if (xcfa.name == "") "UnnamedXcfa" else xcfa.name} using ${config.backendConfig.backend}\n"
+            )
 
             val checker = getChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
             val result = exitOnError(config.debugConfig.stacktrace, config.debugConfig.debug || throwDontExit) {
                 checker.check()
             }.let { result ->
                 when {
-                    !LoopUnrollPass.FORCE_UNROLL_USED -> result
-                    result.isSafe -> { // cannot report safe if force unroll was used
-                        logger.write(Logger.Level.RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
+                    result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
+                        logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
                         SafetyResult.unknown<State, Action>()
                     }
+
+                    result.isUnsafe && result.asUnsafe().trace.actions.any { it.label.dereferences.isNotEmpty() } -> {
+                        logger.write(RESULT, "Program contains dereferences, unsafe result is unreliable.\n")
+                        SafetyResult.unknown()
+                    }
+
                     else -> result
                 }
             }
 
-            logger.write(Logger.Level.INFO, "Backend finished (in ${
-                stopwatch.elapsed(TimeUnit.MILLISECONDS)
-            } ms)\n")
+            logger.write(
+                Logger.Level.INFO, "Backend finished (in ${
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS)
+                } ms)\n"
+            )
 
-            logger.write(Logger.Level.RESULT, result.toString() + "\n")
+            logger.write(RESULT, result.toString() + "\n")
             result
         }
     }
 
-private fun preVerificationLogging(xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
-    logger: Logger, uniqueLogger: Logger) {
+private fun preVerificationLogging(
+    xcfa: XCFA, mcm: MCM, parseContext: ParseContext, config: XcfaConfig<*, *>,
+    logger: Logger, uniqueLogger: Logger
+) {
     if (config.outputConfig.enableOutput) {
         try {
             val resultFolder = config.outputConfig.resultFolder
             resultFolder.mkdirs()
 
-            logger.write(Logger.Level.INFO,
-                "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n")
+            logger.write(
+                Logger.Level.INFO,
+                "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n"
+            )
 
             if (!config.outputConfig.xcfaOutputConfig.disable) {
                 val xcfaDotFile = File(resultFolder, "xcfa.dot")
@@ -233,8 +244,12 @@ private fun preVerificationLogging(xcfa: XCFA, mcm: MCM, parseContext: ParseCont
             if (!config.outputConfig.cOutputConfig.disable) {
                 try {
                     val xcfaCFile = File(resultFolder, "xcfa.c")
-                    xcfaCFile.writeText(xcfa.toC(parseContext, config.outputConfig.cOutputConfig.useArr,
-                        config.outputConfig.cOutputConfig.useExArr, config.outputConfig.cOutputConfig.useRange))
+                    xcfaCFile.writeText(
+                        xcfa.toC(
+                            parseContext, config.outputConfig.cOutputConfig.useArr,
+                            config.outputConfig.cOutputConfig.useExArr, config.outputConfig.cOutputConfig.useRange
+                        )
+                    )
                 } catch (e: Throwable) {
                     logger.write(Logger.Level.VERBOSE, "Could not emit C file\n")
                 }
@@ -245,8 +260,10 @@ private fun preVerificationLogging(xcfa: XCFA, mcm: MCM, parseContext: ParseCont
     }
 }
 
-private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
-    parseContext: ParseContext, config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
+private fun postVerificationLogging(
+    safetyResult: SafetyResult<*, *>, mcm: MCM,
+    parseContext: ParseContext, config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger
+) {
     if (config.outputConfig.enableOutput) {
         try {
             // we only want to log the files if the current configuration is not --in-process or portfolio
@@ -257,8 +274,10 @@ private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
             val resultFolder = config.outputConfig.resultFolder
             resultFolder.mkdirs()
 
-            logger.write(Logger.Level.INFO,
-                "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n")
+            logger.write(
+                Logger.Level.INFO,
+                "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n"
+            )
 
             if (!config.outputConfig.argConfig.disable && safetyResult.hasArg()) {
                 val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
@@ -270,17 +289,24 @@ private fun postVerificationLogging(safetyResult: SafetyResult<*, *>, mcm: MCM,
                 if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
                     val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
                         safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?,
-                        getSolver(config.outputConfig.witnessConfig.concretizerSolver,
-                            config.outputConfig.witnessConfig.validateConcretizerSolver))
+                        getSolver(
+                            config.outputConfig.witnessConfig.concretizerSolver,
+                            config.outputConfig.witnessConfig.validateConcretizerSolver
+                        )
+                    )
 
                     val traceFile = File(resultFolder, "trace.dot")
                     val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
                     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
                 }
                 val witnessFile = File(resultFolder, "witness.graphml")
-                XcfaWitnessWriter().writeWitness(safetyResult, config.inputConfig.input!!,
-                    getSolver(config.outputConfig.witnessConfig.concretizerSolver,
-                        config.outputConfig.witnessConfig.validateConcretizerSolver), parseContext, witnessFile)
+                XcfaWitnessWriter().writeWitness(
+                    safetyResult, config.inputConfig.input!!,
+                    getSolver(
+                        config.outputConfig.witnessConfig.concretizerSolver,
+                        config.outputConfig.witnessConfig.validateConcretizerSolver
+                    ), parseContext, witnessFile
+                )
             }
         } catch (e: Throwable) {
             logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")

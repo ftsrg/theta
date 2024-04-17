@@ -39,6 +39,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         FpFunctionsToExprsPass(parseContext),
         CLibraryFunctionsPass(),
         ReferenceElimination(parseContext),
+        MallocFunctionPass(parseContext),
     ),
     listOf(
         // optimizing
@@ -66,6 +67,9 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         UnusedVarPass(uniqueWarningLogger),
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
+    ),
+    listOf(
+        LiteralDerefPass(parseContext)
     )
 )
 

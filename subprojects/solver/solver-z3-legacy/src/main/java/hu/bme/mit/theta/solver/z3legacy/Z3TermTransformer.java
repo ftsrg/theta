@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
@@ -764,11 +763,10 @@ final class Z3TermTransformer {
     private <T extends Type> Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> dereference() {
         return Tuple2.of(3, (term, model, vars) -> {
             final com.microsoft.z3legacy.Expr[] args = term.getArgs();
-            checkArgument(args.length == 2, "Number of arguments must be two");
+            checkArgument(args.length == 3, "Number of arguments must be three");
             final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
             final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
-//            return Exprs.Dereference(op1, op2, transformSort(term.getSort()));
-            return null;
+            return Exprs.Dereference(op1, op2, transformSort(term.getSort()));
         });
     }
 
