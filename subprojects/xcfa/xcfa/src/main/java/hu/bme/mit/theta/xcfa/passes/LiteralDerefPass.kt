@@ -51,7 +51,9 @@ class LiteralDerefPass(val parseContext: ParseContext) : ProcedurePass {
 
         if (localDerefs.isNotEmpty()) {
             val varValLut = builder.parent.heapMap.ifEmpty {
-                val derefs = builder.parent.getProcedures().flatMap { it.getEdges().flatMap { it.getFlatLabels().flatMap { it.dereferences } } }
+                val derefs = builder.parent.getProcedures()
+                    .flatMap { it.getEdges().flatMap { it.getFlatLabels().flatMap { it.dereferences } } }
+                    .filter { it.array is LitExpr<*> && it.offset is LitExpr }
                 val derefValLut = derefs.associateWith { it.triple }
 
                 val ret = derefValLut.values.associateWith { Var("__heap__$cnt", it.third) }

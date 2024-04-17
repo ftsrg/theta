@@ -61,7 +61,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             builder.addEdge(edge.withLabel(edge.label.changeReferredVars(referredVars, parseContext)))
         }
 
-        return NormalizePass().run(builder)
+        return DeterministicPass().run(NormalizePass().run(builder))
     }
 
     @JvmOverloads
