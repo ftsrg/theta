@@ -59,44 +59,13 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
                     .filter { it.getFlatLabels().none { l -> l is StmtLabel && l.stmt == Assume(False()) } }
                     .map(valuations::get).reduceOrNull(this::intersect)
                 val localValuation = MutableValuation.copyOf(incomingValuations ?: ImmutableValuation.empty())
-                val newLabels = (edge.label as SequenceLabel).labels.map {
-                    if (it is StmtLabel) {
-                        val simplified = it.stmt.accept(StmtSimplifierVisitor(), localValuation).stmt
-                        when (it.stmt) {
-                            is MemoryAssignStmt<*, *> -> {
-                                simplified as MemoryAssignStmt<*, *>
-                                if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
-                                    parseContext.metadata.create(simplified.expr, "cType",
-                                        CComplexType.getType(it.stmt.expr, parseContext))
-                                if (parseContext.metadata.getMetadataValue(it.stmt.deref, "cType").isPresent)
-                                    parseContext.metadata.create(simplified.deref, "cType",
-                                        CComplexType.getType(it.stmt.deref, parseContext))
-                                StmtLabel(simplified, metadata = it.metadata)
-                            }
+                val oldLabels = edge.getFlatLabels()
+                val newLabels = oldLabels.map { it.simplify(localValuation) }
 
-                            is AssignStmt<*> -> {
-                                simplified as AssignStmt<*>
-                                if (parseContext.metadata.getMetadataValue(it.stmt.expr, "cType").isPresent)
-                                    parseContext.metadata.create(simplified.expr, "cType",
-                                        CComplexType.getType(it.stmt.expr, parseContext))
-                                StmtLabel(simplified, metadata = it.metadata)
-                            }
+                // note that global variable values are still propagated within an edge (XcfaEdge is considered atomic)
+                builder.parent.getVars().forEach { localValuation.remove(it.wrappedVar) }
 
-                            is AssumeStmt -> {
-                                simplified as AssumeStmt
-                                if (parseContext.metadata.getMetadataValue(it.stmt.cond, "cType").isPresent) {
-                                    parseContext.metadata.create(simplified.cond, "cType",
-                                        CComplexType.getType(it.stmt.cond, parseContext))
-                                }
-                                parseContext.metadata.create(simplified, "cTruth", it.stmt.cond is NeqExpr<*>)
-                                StmtLabel(simplified, metadata = it.metadata, choiceType = it.choiceType)
-                            }
-
-                            else -> it
-                        }
-                    } else it
-                }
-                if (newLabels != edge.label.labels) {
+                if (newLabels != oldLabels) {
                     builder.removeEdge(edge)
                     valuations.remove(edge)
                     if (newLabels.firstOrNull().let { (it as? StmtLabel)?.stmt != Assume(False()) }) {
@@ -121,6 +90,17 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
     private fun XcfaLabel.simplify(valuation: MutableValuation): XcfaLabel = if (this is StmtLabel) {
         val simplified = stmt.accept(StmtSimplifierVisitor(), valuation).stmt
         when (stmt) {
+            is MemoryAssignStmt<*, *> -> {
+                simplified as MemoryAssignStmt<*, *>
+                if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
+                    parseContext.metadata.create(simplified.expr, "cType",
+                        CComplexType.getType(stmt.expr, parseContext))
+                if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
+                    parseContext.metadata.create(simplified.deref, "cType",
+                        CComplexType.getType(stmt.deref, parseContext))
+                StmtLabel(simplified, metadata = metadata)
+            }
+
             is AssignStmt<*> -> {
                 simplified as AssignStmt<*>
                 if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
