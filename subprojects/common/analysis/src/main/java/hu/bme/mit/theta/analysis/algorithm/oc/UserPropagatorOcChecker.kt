@@ -28,7 +28,7 @@ import java.util.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
+class UserPropagatorOcChecker<E : Event>(private val outputConflictClauses: Boolean) : OcCheckerBase<E>() {
 
     private val partialAssignment = Stack<OcAssignment<E>>()
     private lateinit var writes: Map<VarDecl<*>, Map<Int, List<E>>>
@@ -117,6 +117,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     override fun propagate(reason: Reason?): Boolean {
         reason ?: return false
         propagated.add(reason)
+        if(outputConflictClauses) System.err.println(reason)
         userPropagator.propagateConflict(reason.exprs)
         return true
     }

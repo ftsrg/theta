@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.getReferences
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -65,27 +66,6 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
         return builder
     }
-
-    private fun getReferences(label: XcfaLabel): List<Reference<*, *>> =
-        when(label) {
-            is StmtLabel -> when(label.stmt) {
-                is AssumeStmt -> getReferences(label.stmt.cond)
-                is AssignStmt<*> -> getReferences(label.stmt.expr)
-                else -> emptyList()
-            }
-            is InvokeLabel -> label.params.flatMap { getReferences(it) }
-            is NondetLabel -> label.labels.flatMap { getReferences(it)  }
-            is SequenceLabel -> label.labels.flatMap { getReferences(it) }
-            is StartLabel -> label.params.flatMap { getReferences(it) }
-            else -> emptyList()
-        }
-
-    private fun getReferences(expr: Expr<*>): List<Reference<*, *>> =
-        if(expr is Reference<*, *>) {
-            listOf(expr)
-        } else {
-            expr.ops.flatMap { getReferences(it) }
-        }
 
 
 

@@ -44,13 +44,13 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.getReferences
 import hu.bme.mit.theta.xcfa.isAtomicBegin
 import hu.bme.mit.theta.xcfa.isAtomicEnd
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import java.io.File
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -59,7 +59,7 @@ private val Expr<*>.vars get() = ExprUtils.getVars(this)
 @OptIn(ExperimentalTime::class)
 class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
-    inputConflictClauseFile: String?, private val outputConfigClauseFile: Boolean
+    inputConflictClauseFile: String?, private val outputConflictClauses: Boolean
 ) : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
@@ -76,7 +76,7 @@ class XcfaOcChecker(
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
     private val ocChecker: OcChecker<E> =
-        if (inputConflictClauseFile == null) decisionProcedure.checker()
+        if (inputConflictClauseFile == null) decisionProcedure.checker(false)
         else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads)
 
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
@@ -96,7 +96,7 @@ class XcfaOcChecker(
 
         when {
             status?.isUnsat == true -> {
-                if (outputConfigClauseFile) {
+                if (outputConflictClauses) {
                     ocChecker.getPropagatedClauses().forEach {
                         System.err.println("CC: $it")
                     }
@@ -203,6 +203,7 @@ class XcfaOcChecker(
                 atomicEntered = current.atomics.firstOrNull()
 
                 edge.getFlatLabels().forEach { label ->
+                    if (getReferences(label).isNotEmpty()) error("References not supported by this checker.")
                     when (label) {
                         is StmtLabel -> {
                             when (val stmt = label.stmt) {
