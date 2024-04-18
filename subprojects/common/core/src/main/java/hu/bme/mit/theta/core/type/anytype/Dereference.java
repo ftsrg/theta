@@ -17,7 +17,6 @@
 package hu.bme.mit.theta.core.type.anytype;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -26,6 +25,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -40,21 +40,21 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
     private final Expr<A> offset;
     private final T type;
 
-    private final Decl<IntType> constant;
+    private final Optional<Expr<IntType>> uniquenessIdx;
 
     private Dereference(Expr<A> array, Expr<A> offset, T type) {
         this.array = array;
         this.offset = offset;
         this.type = type;
-        constant = Var("__Deref__%d".formatted(counter++), Int());
+        uniquenessIdx = Optional.empty();
     }
 
 
-    private Dereference(Expr<A> array, Expr<A> offset, Decl<IntType> constant, T type) {
+    private Dereference(Expr<A> array, Expr<A> offset, Expr<IntType> uniqueness, T type) {
         this.array = array;
         this.offset = offset;
         this.type = type;
-        this.constant = constant;
+        this.uniquenessIdx = Optional.of(uniqueness);
     }
 
     public Expr<A> getArray() {
@@ -70,8 +70,12 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
         return new Dereference<>(array, offset, type);
     }
 
-    private static <A extends Type, T extends Type> Dereference<A, T> of(Expr<A> array, Expr<A> offset, Decl<IntType> constant, T type) {
-        return new Dereference<>(array, offset, constant, type);
+    private static <A extends Type, T extends Type> Dereference<A, T> of(Expr<A> array, Expr<A> offset, Expr<IntType> uniqueness, T type) {
+        return new Dereference<>(array, offset, uniqueness, type);
+    }
+
+    public Dereference<A, T> withFreshVar() {
+        return Dereference.of(array, offset, Var("__Deref__%d".formatted(counter++), Int()).getRef(), type); // TODO: this kills the stuck check
     }
 
     @Override
@@ -92,19 +96,23 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
 
     @Override
     public List<? extends Expr<?>> getOps() {
-        return List.of(array, offset, constant.getRef());
+        return uniquenessIdx.isPresent() ? List.of(array, offset, uniquenessIdx.get()) : List.of(array, offset);
     }
 
     @Override
     public Expr<T> withOps(List<? extends Expr<?>> ops) {
-        checkState(ops.size() == 3 && ops.get(2) instanceof RefExpr);
+        checkState(ops.size() == 3 || ops.size() == 2);
         @SuppressWarnings("unchecked") final T ptrType = (T) ops.get(0).getType();
-        return Dereference.of(cast(ops.get(0), ptrType), cast(ops.get(1), ptrType), ((RefExpr) ops.get(2)).getDecl(), type);
+        if (ops.size() == 3) {
+            return Dereference.of(cast(ops.get(0), ptrType), cast(ops.get(1), ptrType), (Expr<IntType>) ops.get(2), type);
+        } else {
+            return Dereference.of(cast(ops.get(0), ptrType), cast(ops.get(1), ptrType), type);
+        }
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(array, offset, constant, type);
+        return Objects.hash(array, offset, uniquenessIdx, type);
     }
 
     @Override
@@ -112,7 +120,7 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
         if (obj instanceof Dereference<?, ?> that) {
             return Objects.equals(this.array, that.array) &&
                     Objects.equals(this.offset, that.offset) &&
-                    Objects.equals(this.constant, that.constant) &&
+                    Objects.equals(this.uniquenessIdx, that.uniquenessIdx) &&
                     Objects.equals(this.type, that.type);
         }
         return false;
@@ -120,11 +128,12 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getArray()).add(getOffset()).add(getConstant()).add(type)
-                .toString();
+        var base = Utils.lispStringBuilder(OPERATOR_LABEL).add(getArray()).add(getOffset());
+        uniquenessIdx.ifPresent(base::add);
+        return base.add(type).toString();
     }
 
-    public Decl<IntType> getConstant() {
-        return constant;
+    public Optional<Expr<IntType>> getUniquenessIdx() {
+        return uniquenessIdx;
     }
 }

@@ -18,9 +18,10 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
-public class CArray extends CCompound {
+public class CArray extends CInteger {
 
     private final CComplexType embeddedType;
 
@@ -35,6 +36,17 @@ public class CArray extends CCompound {
 
     public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
         return visitor.visit(this, param);
+    }
+
+
+    @Override
+    public CInteger getSignedVersion() {
+        return this;
+    }
+
+    @Override
+    public CInteger getUnsignedVersion() {
+        return this;
     }
 
 }

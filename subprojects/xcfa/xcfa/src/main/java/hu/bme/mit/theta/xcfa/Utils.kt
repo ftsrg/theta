@@ -416,3 +416,19 @@ val Expr<*>.dereferences: List<Dereference<*, *>>
     } else {
         ops.flatMap { it.dereferences }
     }
+
+val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+    get() = when (this) {
+        is NondetLabel -> error("NondetLabel is not well-defined for dereferences due to ordering")
+        is SequenceLabel -> labels.flatMap(XcfaLabel::dereferencesWithAccessTypes)
+        is InvokeLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
+        is StartLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
+        is StmtLabel -> when (stmt) {
+            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences.map { Pair(it, READ) } + listOf(Pair(stmt.deref, WRITE))
+            is AssignStmt<*> -> stmt.expr.dereferences.map { Pair(it, READ) }
+            is AssumeStmt -> stmt.cond.dereferences.map { Pair(it, READ) }
+            else -> listOf()
+        }
+
+        else -> listOf()
+    }

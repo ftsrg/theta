@@ -197,7 +197,7 @@ private fun backend(
                         SafetyResult.unknown<State, Action>()
                     }
 
-                    result.isUnsafe && result.asUnsafe().trace.actions.any { it.label.dereferences.isNotEmpty() } -> {
+                    false && result.isUnsafe && result.asUnsafe().trace.actions.any { it.label.dereferences.isNotEmpty() } -> {
                         logger.write(RESULT, "Trace contains dereferences, unsafe result is unreliable.\n")
                         SafetyResult.unknown()
                     }
