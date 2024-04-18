@@ -125,28 +125,28 @@ inline val XcfaLabel.isAtomicEnd: Boolean get() = this is FenceLabel && "ATOMIC_
 /**
  * The set of mutexes acquired by the label.
  */
-inline val FenceLabel.acquiredMutexes: Set<String>
-    get() = labels.mapNotNull {
-        when {
-            it == "ATOMIC_BEGIN" -> ""
-            it.startsWith("mutex_lock") -> it.substringAfter('(').substringBefore(')')
-            it.startsWith("cond_wait") -> it.substring("cond_wait".length + 1, it.length - 1).split(",")[1]
-            else -> null
-        }
-    }.toSet()
+inline val FenceLabel.acquiredMutexes: Set<String> get() = labels.mapNotNull { it.acquiredMutex }.toSet()
+
+inline val String.acquiredMutex: String?
+    get() = when {
+        this == "ATOMIC_BEGIN" -> ""
+        startsWith("mutex_lock") -> substringAfter('(').substringBefore(')')
+        startsWith("cond_wait") -> substring("cond_wait".length + 1, length - 1).split(",")[1]
+        else -> null
+    }
 
 /**
  * The set of mutexes released by the label.
  */
-inline val FenceLabel.releasedMutexes: Set<String>
-    get() = labels.mapNotNull {
-        when {
-            it == "ATOMIC_END" -> ""
-            it.startsWith("mutex_unlock") -> it.substringAfter('(').substringBefore(')')
-            it.startsWith("start_cond_wait") -> it.substring("start_cond_wait".length + 1, it.length - 1).split(",")[1]
-            else -> null
-        }
-    }.toSet()
+inline val FenceLabel.releasedMutexes: Set<String> get() = labels.mapNotNull { it.releasedMutex }.toSet()
+
+inline val String.releasedMutex: String?
+    get() = when {
+        this == "ATOMIC_END" -> ""
+        startsWith("mutex_unlock") -> substringAfter('(').substringBefore(')')
+        startsWith("start_cond_wait") -> substring("start_cond_wait".length + 1, length - 1).split(",")[1]
+        else -> null
+    }
 
 /**
  * The set of mutexes acquired embedded into each other.
