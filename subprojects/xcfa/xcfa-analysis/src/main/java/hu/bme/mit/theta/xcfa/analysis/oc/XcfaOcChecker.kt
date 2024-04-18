@@ -181,7 +181,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                                 is AssumeStmt -> {
                                     val consts = stmt.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) }
                                     val condWithConsts = stmt.cond.withConsts(consts)
-                                    if (edge.source.outgoingEdges.size > 1) {
+                                    val asAssign = consts.size == 1 && consts.keys.first().threadVar(pid) !in lastWrites
+                                    if (edge.source.outgoingEdges.size > 1 || !asAssign) {
                                         guard = guard + condWithConsts
                                         if (firstLabel) {
                                             consts.forEach { (v, c) ->
@@ -192,7 +193,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                                     stmt.cond.vars.forEach {
                                         last = newEvent(it, EventType.READ)
                                     }
-                                    if (edge.source.outgoingEdges.size == 1) {
+                                    if (edge.source.outgoingEdges.size == 1 && asAssign) {
                                         last.first().assignment = condWithConsts
                                     }
                                 }
