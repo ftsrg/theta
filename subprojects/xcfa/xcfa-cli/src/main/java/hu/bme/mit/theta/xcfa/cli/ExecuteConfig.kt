@@ -47,7 +47,6 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
-import hu.bme.mit.theta.xcfa.dereferences
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -195,11 +194,6 @@ private fun backend(
                     result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
                         logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
                         SafetyResult.unknown<State, Action>()
-                    }
-
-                    false && result.isUnsafe && result.asUnsafe().trace.actions.any { it.label.dereferences.isNotEmpty() } -> {
-                        logger.write(RESULT, "Trace contains dereferences, unsafe result is unreliable.\n")
-                        SafetyResult.unknown()
                     }
 
                     else -> result
