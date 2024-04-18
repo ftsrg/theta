@@ -20,18 +20,23 @@ import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.function.Predicate
 
@@ -432,3 +437,39 @@ val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessTy
 
         else -> listOf()
     }
+
+fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel = if (this is StmtLabel) {
+    val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
+    when (stmt) {
+        is MemoryAssignStmt<*, *> -> {
+            simplified as MemoryAssignStmt<*, *>
+            if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
+                parseContext.metadata.create(simplified.expr, "cType",
+                    CComplexType.getType(stmt.expr, parseContext))
+            if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
+                parseContext.metadata.create(simplified.deref, "cType",
+                    CComplexType.getType(stmt.deref, parseContext))
+            StmtLabel(simplified, metadata = metadata)
+        }
+
+        is AssignStmt<*> -> {
+            simplified as AssignStmt<*>
+            if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
+                parseContext.metadata.create(simplified.expr, "cType",
+                    CComplexType.getType(stmt.expr, parseContext))
+            StmtLabel(simplified, metadata = metadata)
+        }
+
+        is AssumeStmt -> {
+            simplified as AssumeStmt
+            if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
+                parseContext.metadata.create(simplified.cond, "cType",
+                    CComplexType.getType(stmt.cond, parseContext))
+            }
+            parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
+            StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
+        }
+
+        else -> this
+    }
+} else this

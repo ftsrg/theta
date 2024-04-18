@@ -23,17 +23,22 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.xcfa.UtilsKt;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
+import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.xcfa.UtilsKt.getFlatLabels;
 
 /**
  * Similar to CfaTraceConcretizer
@@ -41,7 +46,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class XcfaTraceConcretizer {
     public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
-            final Trace<XcfaState<?>, XcfaAction> trace, SolverFactory solverFactory) {
+            final Trace<XcfaState<?>, XcfaAction> trace, SolverFactory solverFactory, ParseContext parseContext) {
         List<XcfaState<?>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
 
@@ -61,11 +66,17 @@ public class XcfaTraceConcretizer {
         assert valuations.getStates().size() == sbeTrace.getStates().size();
 
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
+        final List<XcfaAction> cfaActions = new ArrayList<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
             cfaStates.add(new XcfaState<>(null, sbeTrace.getState(i).getProcesses(), ExplState.of(valuations.getState(i))));
+            if (i < sbeTrace.getActions().size()) {
+                final var action = sbeTrace.getAction(i);
+                int finalI = i;
+                cfaActions.add(action.withLabel(new SequenceLabel(getFlatLabels(action.getLabel()).stream().map(it -> UtilsKt.simplify(it, MutableValuation.copyOf(valuations.getState(finalI)), parseContext)).toList())));
+            }
         }
 
-        return Trace.of(cfaStates, sbeTrace.getActions());
+        return Trace.of(cfaStates, cfaActions);
     }
 
 }

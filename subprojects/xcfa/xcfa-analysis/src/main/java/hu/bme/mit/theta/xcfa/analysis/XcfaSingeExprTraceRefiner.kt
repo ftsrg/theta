@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.WRITE
 import hu.bme.mit.theta.xcfa.dereferencesWithAccessTypes
 import java.util.*
@@ -182,11 +183,11 @@ private fun <S, A> Trace<S, A>.addDereferenceConstraints(): Trace<XcfaState<*>, 
             IteExpr.of(And(listOf(Eq(arr, deref.array), Eq(off, deref.offset))), value, elze)
         }
         if (type == WRITE) {
-            val writeExpr = IntExprs.Add(expr, Int(1))
+            val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, Int(1)))
             writeTriples.getOrPut(deref.type) { ArrayList() }.add(Triple(deref.array, deref.offset, writeExpr))
-            exprs.add(Eq(writeExpr, deref.uniquenessIdx.get()))
+            exprs.add(ExprUtils.simplify(Eq(writeExpr, deref.uniquenessIdx.get())))
         } else {
-            exprs.add(Eq(expr, deref.uniquenessIdx.get()))
+            exprs.add(ExprUtils.simplify(Eq(expr, deref.uniquenessIdx.get())))
         }
     }
 

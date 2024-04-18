@@ -47,7 +47,9 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
@@ -286,12 +288,31 @@ private fun postVerificationLogging(
                         getSolver(
                             config.outputConfig.witnessConfig.concretizerSolver,
                             config.outputConfig.witnessConfig.validateConcretizerSolver
-                        )
+                        ),
+                        parseContext
                     )
 
                     val traceFile = File(resultFolder, "trace.dot")
                     val traceG: Graph = TraceVisualizer.getDefault().visualize(concrTrace)
                     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
+
+                    val sequenceFile = File(resultFolder, "trace.plantuml")
+                    sequenceFile.writeText("@startuml\n")
+                    var maxWidth = 0
+                    concrTrace.actions.forEach {
+                        sequenceFile.appendText("hnote over ${it.pid}\n")
+                        val labelStrings = it.label.getFlatLabels().map(XcfaLabel::toString)
+                        if (maxWidth < labelStrings.maxOfOrNull { it.length }!!) {
+                            maxWidth = labelStrings.maxOfOrNull { it.length }!!
+                        }
+                        sequenceFile.appendText("${labelStrings.joinToString("\n")}\n")
+                        sequenceFile.appendText("endhnote\n")
+                    }
+                    concrTrace.actions.map { it.pid }.distinct().reduce { acc, current ->
+                        sequenceFile.appendText("$acc --> $current: \"${" ".repeat(maxWidth)}\"\n")
+                        current
+                    }
+                    sequenceFile.appendText("@enduml\n")
                 }
                 val witnessFile = File(resultFolder, "witness.graphml")
                 XcfaWitnessWriter().writeWitness(

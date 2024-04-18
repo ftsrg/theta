@@ -19,17 +19,15 @@ package hu.bme.mit.theta.xcfa.passes
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.model.Valuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
-import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
-import hu.bme.mit.theta.core.utils.StmtSimplifier.StmtSimplifierVisitor
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.getFlatLabels
-import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
+import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.simplify
 
 /**
  * This pass simplifies the expressions inside statements and substitutes the values of constant variables
@@ -60,7 +58,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
                     .map(valuations::get).reduceOrNull(this::intersect)
                 val localValuation = MutableValuation.copyOf(incomingValuations ?: ImmutableValuation.empty())
                 val oldLabels = edge.getFlatLabels()
-                val newLabels = oldLabels.map { it.simplify(localValuation) }
+                val newLabels = oldLabels.map { it.simplify(localValuation, parseContext) }
 
                 // note that global variable values are still propagated within an edge (XcfaEdge is considered atomic)
                 builder.parent.getVars().forEach { localValuation.remove(it.wrappedVar) }
@@ -86,42 +84,6 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         builder.metaData["simplifiedExprs"] = Unit
         return builder
     }
-
-    private fun XcfaLabel.simplify(valuation: MutableValuation): XcfaLabel = if (this is StmtLabel) {
-        val simplified = stmt.accept(StmtSimplifierVisitor(), valuation).stmt
-        when (stmt) {
-            is MemoryAssignStmt<*, *> -> {
-                simplified as MemoryAssignStmt<*, *>
-                if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-                    parseContext.metadata.create(simplified.expr, "cType",
-                        CComplexType.getType(stmt.expr, parseContext))
-                if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
-                    parseContext.metadata.create(simplified.deref, "cType",
-                        CComplexType.getType(stmt.deref, parseContext))
-                StmtLabel(simplified, metadata = metadata)
-            }
-
-            is AssignStmt<*> -> {
-                simplified as AssignStmt<*>
-                if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-                    parseContext.metadata.create(simplified.expr, "cType",
-                        CComplexType.getType(stmt.expr, parseContext))
-                StmtLabel(simplified, metadata = metadata)
-            }
-
-            is AssumeStmt -> {
-                simplified as AssumeStmt
-                if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
-                    parseContext.metadata.create(simplified.cond, "cType",
-                        CComplexType.getType(stmt.cond, parseContext))
-                }
-                parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
-                StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
-            }
-
-            else -> this
-        }
-    } else this
 
     private fun intersect(v1: Valuation?, v2: Valuation?): Valuation {
         if (v1 == null || v2 == null) return ImmutableValuation.empty()
