@@ -68,9 +68,9 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
     ),
-    listOf(
-        LiteralDerefPass(parseContext)
-    )
+//    listOf(
+//        LiteralDerefPass(parseContext)
+//    )
 )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(listOf(

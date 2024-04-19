@@ -34,17 +34,24 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
+import org.abego.treelayout.internal.util.Contract.checkState
+import java.math.BigInteger
 import java.util.stream.Collectors
 
 class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false,
@@ -97,6 +104,33 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
                         cast(type.nullValue, globalDeclaration.get2().type))
                 ))
+            }
+
+            if (globalDeclaration.get1().arrayDimensions.size == 1) {
+                val bounds = ExprUtils.simplify(globalDeclaration.get1().arrayDimensions[0].expression)
+                checkState(bounds is IntLitExpr || bounds is BvLitExpr,
+                    "Only IntLit and BvLit expression expected here.")
+                val literalValue = if (bounds is IntLitExpr) bounds.value.toLong() else BvUtils.neutralBvLitExprToBigInteger(
+                    bounds as BvLitExpr).toLong()
+                val literalToExpr = { x: Long ->
+                    if (bounds is IntLitExpr) IntLitExpr.of(
+                        BigInteger.valueOf(x)) else BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(x),
+                        (bounds as BvLitExpr).type.size)
+                }
+                for (i in 0 until literalValue) {
+                    val arrType = globalDeclaration.get2().type
+                    checkState(globalDeclaration.get1().actualType is CArray, "Only arrays are expected here")
+                    val embeddedType = (globalDeclaration.get1().actualType as CArray).embeddedType
+                    initStmtList.add(StmtLabel(
+                        Stmts.MemoryAssign(
+                            Dereference(cast(globalDeclaration.get2().ref, arrType), cast(literalToExpr(i), arrType),
+                                embeddedType.smtType),
+                            cast(embeddedType.nullValue, globalDeclaration.get2().type))
+                    ))
+                }
+            } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
+                uniqueWarningLogger.write(Level.INFO,
+                    "WARNING: Not handling init expression of high dimsension array ${globalDeclaration.get1()}\n")
             }
         }
         for (function in cProgram.functions) {
