@@ -24,20 +24,23 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
-import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xcfa.WRITE
 import hu.bme.mit.theta.xcfa.dereferencesWithAccessTypes
+import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.model.SequenceLabel
+import hu.bme.mit.theta.xcfa.model.StmtLabel
+import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import java.util.*
 
 
@@ -173,27 +176,35 @@ private fun <S, A> Trace<S, A>.addDereferenceConstraints(): Trace<XcfaState<*>, 
 
     val writeTriples = LinkedHashMap<Type, MutableList<Triple<Expr<*>, Expr<*>, Expr<IntType>>>>()
 
-    val exprs = ArrayList<Expr<BoolType>>()
+    val newActions = actions.map {
+        val newLabelList = ArrayList<XcfaLabel>()
+        for (flatLabel in it.label.getFlatLabels()) {
+            val preList = ArrayList<XcfaLabel>()
+            val postList = ArrayList<XcfaLabel>()
 
-    actions.flatMap { it.label.dereferencesWithAccessTypes }.forEach { (deref, type) ->
-        checkState(deref.uniquenessIdx.isPresent,
-            "Incomplete dereferences (missing uniquenessIdx) are not handled properly.")
-        val list = writeTriples[deref.type] ?: emptyList()
-        val expr = list.fold(Int(0) as Expr<IntType>) { elze, (arr, off, value) ->
-            IteExpr.of(And(listOf(Eq(arr, deref.array), Eq(off, deref.offset))), value, elze)
+            for ((deref, type) in flatLabel.dereferencesWithAccessTypes) {
+                checkState(deref.uniquenessIdx.isPresent,
+                    "Incomplete dereferences (missing uniquenessIdx) are not handled properly.")
+                val list = writeTriples[deref.type] ?: emptyList()
+                val expr = list.fold(Int(0) as Expr<IntType>) { elze, (arr, off, value) ->
+                    IteExpr.of(And(listOf(Eq(arr, deref.array), Eq(off, deref.offset))), value, elze)
+                }
+                if (type == WRITE) {
+                    val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, Int(1)))
+                    writeTriples.getOrPut(deref.type) { ArrayList() }
+                        .add(Triple(deref.array, deref.offset, deref.uniquenessIdx.get()))
+                    postList.add(StmtLabel(Assume(ExprUtils.simplify(Eq(writeExpr, deref.uniquenessIdx.get())))))
+                } else {
+                    preList.add(StmtLabel(Assume(ExprUtils.simplify(Eq(expr, deref.uniquenessIdx.get())))))
+                }
+            }
+
+            newLabelList.addAll(preList)
+            newLabelList.add(flatLabel)
+            newLabelList.addAll(postList)
         }
-        if (type == WRITE) {
-            val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, Int(1)))
-            writeTriples.getOrPut(deref.type) { ArrayList() }.add(Triple(deref.array, deref.offset, writeExpr))
-            exprs.add(ExprUtils.simplify(Eq(writeExpr, deref.uniquenessIdx.get())))
-        } else {
-            exprs.add(ExprUtils.simplify(Eq(expr, deref.uniquenessIdx.get())))
-        }
+
+        it.withLabel(SequenceLabel(newLabelList, it.label.metadata))
     }
-
-    val oldInitState = states[0]
-    val oldInitAction = actions[0]
-    val newInitState: XcfaState<*> = XcfaState(oldInitState.xcfa, emptyMap(), PredState.of(And(exprs)))
-    val newInitAction = XcfaAction(0, oldInitAction.source, oldInitAction.target)
-    return Trace.of(listOf(newInitState) + states, listOf(newInitAction) + actions)
+    return Trace.of(states, newActions)
 }

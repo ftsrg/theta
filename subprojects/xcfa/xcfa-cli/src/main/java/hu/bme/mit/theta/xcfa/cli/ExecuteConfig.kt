@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
+import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
@@ -297,22 +298,22 @@ private fun postVerificationLogging(
                     traceFile.writeText(GraphvizWriter.getInstance().writeString(traceG))
 
                     val sequenceFile = File(resultFolder, "trace.plantuml")
-                    sequenceFile.writeText("@startuml\n")
-                    var maxWidth = 0
-                    concrTrace.actions.forEach {
-                        sequenceFile.appendText("hnote over ${it.pid}\n")
-                        val labelStrings = it.label.getFlatLabels().map(XcfaLabel::toString)
-                        if (maxWidth < labelStrings.maxOfOrNull { it.length }!!) {
-                            maxWidth = labelStrings.maxOfOrNull { it.length }!!
-                        }
-                        sequenceFile.appendText("${labelStrings.joinToString("\n")}\n")
-                        sequenceFile.appendText("endhnote\n")
+                    writeSequenceTrace(sequenceFile,
+                        safetyResult.asUnsafe().trace as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
+                        act.label.getFlatLabels().map(XcfaLabel::toString)
                     }
-                    concrTrace.actions.map { it.pid }.distinct().reduce { acc, current ->
-                        sequenceFile.appendText("$acc --> $current: \"${" ".repeat(maxWidth)}\"\n")
-                        current
+
+                    val optSequenceFile = File(resultFolder, "trace-optimized.plantuml")
+                    writeSequenceTrace(optSequenceFile, concrTrace) { (_, act) ->
+                        act.label.getFlatLabels().map(XcfaLabel::toString)
                     }
-                    sequenceFile.appendText("@enduml\n")
+
+                    val cSequenceFile = File(resultFolder, "trace-c.plantuml")
+                    writeSequenceTrace(cSequenceFile, concrTrace) { (state, act) ->
+                        val proc = state.processes[act.pid]
+                        val loc = proc?.locs?.peek()
+                        (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
+                    }
                 }
                 val witnessFile = File(resultFolder, "witness.graphml")
                 XcfaWitnessWriter().writeWitness(
@@ -327,4 +328,25 @@ private fun postVerificationLogging(
             logger.write(Logger.Level.INFO, "Could not output files: ${e.stackTraceToString()}\n")
         }
     }
+}
+
+private fun writeSequenceTrace(sequenceFile: File, trace: Trace<XcfaState<ExplState>, XcfaAction>,
+    printer: (Pair<XcfaState<ExplState>, XcfaAction>) -> List<String>) {
+    sequenceFile.writeText("@startuml\n")
+    var maxWidth = 0
+    trace.actions.forEachIndexed { i, it ->
+        val stateBefore = trace.states[i]
+        sequenceFile.appendText("hnote over ${it.pid}\n")
+        val labelStrings = printer(Pair(stateBefore, it))
+        if (maxWidth < (labelStrings.maxOfOrNull { it.length } ?: 0)) {
+            maxWidth = labelStrings.maxOfOrNull { it.length } ?: 0
+        }
+        sequenceFile.appendText("${labelStrings.joinToString("\n")}\n")
+        sequenceFile.appendText("endhnote\n")
+    }
+    trace.actions.map { it.pid }.distinct().reduce { acc, current ->
+        sequenceFile.appendText("$acc --> $current: \"${" ".repeat(maxWidth)}\"\n")
+        current
+    }
+    sequenceFile.appendText("@enduml\n")
 }
