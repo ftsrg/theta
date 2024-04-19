@@ -280,8 +280,8 @@ private fun getPredXcfaTransFunc(
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
-            listOf(s.processes.map { it.value.varLookup }.flatten(),
-                listOf(getTempLookup(a.label))).flatten())).map { newSt.withState(it) }
+            s.processes.map { it.value.foldVarLookup() + getTempLookup(a.label) }
+        )).map { newSt.withState(it) }
     }
 }
 
