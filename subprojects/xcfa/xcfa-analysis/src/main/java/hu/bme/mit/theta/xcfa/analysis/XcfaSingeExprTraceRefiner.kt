@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
@@ -175,6 +176,7 @@ private fun <S, A> Trace<S, A>.addDereferenceConstraints(): Trace<XcfaState<*>, 
     this as Trace<XcfaState<*>, XcfaAction>
 
     val writeTriples = LinkedHashMap<Type, MutableList<Triple<Expr<*>, Expr<*>, Expr<IntType>>>>()
+    var cnt = 0
 
     val newActions = actions.map {
         val newLabelList = ArrayList<XcfaLabel>()
@@ -191,9 +193,15 @@ private fun <S, A> Trace<S, A>.addDereferenceConstraints(): Trace<XcfaState<*>, 
                 }
                 if (type == WRITE) {
                     val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, Int(1)))
+                    val freshArrayCopy = Var("__deref__helper_${cnt++}", deref.array.type)
+                    val freshOffsetCopy = Var("__deref__helper_${cnt++}", deref.offset.type)
                     writeTriples.getOrPut(deref.type) { ArrayList() }
-                        .add(Triple(deref.array, deref.offset, deref.uniquenessIdx.get()))
-                    postList.add(StmtLabel(Assume(ExprUtils.simplify(Eq(writeExpr, deref.uniquenessIdx.get())))))
+                        .add(Triple(freshArrayCopy.ref, freshOffsetCopy.ref, deref.uniquenessIdx.get()))
+                    postList.add(StmtLabel(Assume(ExprUtils.simplify(And(listOf(
+                        Eq(writeExpr, deref.uniquenessIdx.get()),
+                        Eq(freshArrayCopy.ref, deref.array),
+                        Eq(freshOffsetCopy.ref, deref.offset),
+                    ))))))
                 } else {
                     preList.add(StmtLabel(Assume(ExprUtils.simplify(Eq(expr, deref.uniquenessIdx.get())))))
                 }
