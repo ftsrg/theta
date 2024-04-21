@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 import java.util.ArrayList;
@@ -85,6 +86,10 @@ public class CDeclaration {
         for (CStatement arrayDimension : arrayDimensions) {
             actualType = new CArray(type, actualType, actualType.getParseContext());
         }
+        for (int i = 0; i < derefCounter; i++) {
+            actualType = new CPointer(type, actualType, actualType.getParseContext());
+        }
+
         return actualType;
     }
 

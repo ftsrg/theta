@@ -55,9 +55,16 @@ primaryExpression
 //    ;
 
 postfixExpression
-    :   (primaryExpression /*| postfixExpressionExtension*/)
-        (postfixExpressionBrackets | postfixExpressionBraces | postfixExpressionMemberAccess
-            | postfixExpressionPtrMemberAccess | postfixExpressionIncrement | postfixExpressionDecrement)*
+    :   primaryExpression (pfExprs+=postfixExpressionAccess)*
+    ;
+
+postfixExpressionAccess
+    :   postfixExpressionBrackets
+    |   postfixExpressionBraces
+    |   postfixExpressionMemberAccess
+    |   postfixExpressionPtrMemberAccess
+    |   postfixExpressionIncrement
+    |   postfixExpressionDecrement
     ;
 
 //postfixExpressionExtension
