@@ -66,8 +66,11 @@ class TraceGenerationChecker<S : ExprState, A : ExprAction, P : Prec>(
         ArrayList(argTraces.stream().map { obj: ArgTrace<S, A> -> obj.toTrace() }
                 .toList())
 
+        traces = ArrayList(argTraces.stream().map { obj: ArgTrace<S, A> -> obj.toTrace() }
+                .toList())
+
         Preconditions.checkState(
-            traces.size > 0,
+            traces.isNotEmpty(),
             "Generated 0 traces, configuration should probably be adjusted"
         )
         return SafetyResult.traces(traces)
