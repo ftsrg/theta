@@ -21,10 +21,7 @@ import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
@@ -428,13 +425,16 @@ val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessTy
         is SequenceLabel -> labels.flatMap(XcfaLabel::dereferencesWithAccessTypes)
         is InvokeLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
         is StartLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
-        is StmtLabel -> when (stmt) {
-            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences.map { Pair(it, READ) } + listOf(Pair(stmt.deref, WRITE))
-            is AssignStmt<*> -> stmt.expr.dereferences.map { Pair(it, READ) }
-            is AssumeStmt -> stmt.cond.dereferences.map { Pair(it, READ) }
-            else -> listOf()
-        }
+        is StmtLabel -> stmt.dereferencesWithAccessTypes
 
+        else -> listOf()
+    }
+
+val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+    get() = when (this) {
+        is MemoryAssignStmt<*, *> -> expr.dereferences.map { Pair(it, READ) } + listOf(Pair(deref, WRITE))
+        is AssignStmt<*> -> expr.dereferences.map { Pair(it, READ) }
+        is AssumeStmt -> cond.dereferences.map { Pair(it, READ) }
         else -> listOf()
     }
 
