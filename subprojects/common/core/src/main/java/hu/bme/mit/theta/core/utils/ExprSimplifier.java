@@ -18,7 +18,6 @@ package hu.bme.mit.theta.core.utils;
 import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -140,7 +139,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -150,7 +148,6 @@ import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.SimplifierLevel.LITERAL_ONLY;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class ExprSimplifier {
 
@@ -441,17 +438,6 @@ public final class ExprSimplifier {
     }
 
     private Expr<?> simplifyDereference(final Dereference<?, ?> expr, final Valuation val) {
-        final var simpleOffset = simplify(expr.getOffset(), val);
-        final var array = expr.getArray();
-        if (simpleOffset instanceof LitExpr<?> litOffset && array instanceof RefExpr<?>) {
-            final var keys = val.toMap().keySet().stream().filter(it -> it instanceof IndexedConstDecl<?> && ((IndexedConstDecl<?>) it).getVarDecl().equals(((RefExpr<?>) array).getDecl()) && ((IndexedConstDecl<?>) it).getIndex() == ((IntLitExpr) cast(litOffset, Int())).getValue().intValue()).collect(Collectors.toList());
-            if (keys.size() == 1) {
-                final var value = val.eval(keys.get(0));
-                if (value.isPresent()) {
-                    return value.get();
-                }
-            }
-        }
         return expr.map(it -> simplify(it, val));
     }
 

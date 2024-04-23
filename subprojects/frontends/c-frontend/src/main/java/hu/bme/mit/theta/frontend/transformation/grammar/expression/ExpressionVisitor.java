@@ -572,8 +572,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 return reference((RefExpr<?>) localAccept);
             case "*":
                 type = CComplexType.getType(accept, parseContext);
-                checkState(type instanceof CPointer, "Dereferencing non-pointer expression is not allowed!");
-                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), (CPointer) type);
+                return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), type);
         }
         return accept;
     }

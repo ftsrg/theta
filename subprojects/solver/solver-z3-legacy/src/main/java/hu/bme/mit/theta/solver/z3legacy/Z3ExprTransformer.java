@@ -151,6 +151,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class Z3ExprTransformer {
@@ -1257,10 +1258,11 @@ final class Z3ExprTransformer {
     }
 
     private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?> expr) {
+        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
         final var sort = transformer.toSort(expr.getArray().getType());
         final var constSort = transformer.toSort(Int());
         final var func = context.mkFuncDecl("deref", new Sort[]{sort, sort, constSort}, transformer.toSort(expr.getType()));
-        return context.mkApp(func, toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getConstant().getRef()));
+        return context.mkApp(func, toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
     }
 
 

@@ -20,18 +20,23 @@ import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.MutableValuation
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.function.Predicate
 
@@ -125,28 +130,28 @@ inline val XcfaLabel.isAtomicEnd: Boolean get() = this is FenceLabel && "ATOMIC_
 /**
  * The set of mutexes acquired by the label.
  */
-inline val FenceLabel.acquiredMutexes: Set<String>
-    get() = labels.mapNotNull {
-        when {
-            it == "ATOMIC_BEGIN" -> ""
-            it.startsWith("mutex_lock") -> it.substringAfter('(').substringBefore(')')
-            it.startsWith("cond_wait") -> it.substring("cond_wait".length + 1, it.length - 1).split(",")[1]
-            else -> null
-        }
-    }.toSet()
+inline val FenceLabel.acquiredMutexes: Set<String> get() = labels.mapNotNull { it.acquiredMutex }.toSet()
+
+inline val String.acquiredMutex: String?
+    get() = when {
+        this == "ATOMIC_BEGIN" -> ""
+        startsWith("mutex_lock") -> substringAfter('(').substringBefore(')')
+        startsWith("cond_wait") -> substring("cond_wait".length + 1, length - 1).split(",")[1]
+        else -> null
+    }
 
 /**
  * The set of mutexes released by the label.
  */
-inline val FenceLabel.releasedMutexes: Set<String>
-    get() = labels.mapNotNull {
-        when {
-            it == "ATOMIC_END" -> ""
-            it.startsWith("mutex_unlock") -> it.substringAfter('(').substringBefore(')')
-            it.startsWith("start_cond_wait") -> it.substring("start_cond_wait".length + 1, it.length - 1).split(",")[1]
-            else -> null
-        }
-    }.toSet()
+inline val FenceLabel.releasedMutexes: Set<String> get() = labels.mapNotNull { it.releasedMutex }.toSet()
+
+inline val String.releasedMutex: String?
+    get() = when {
+        this == "ATOMIC_END" -> ""
+        startsWith("mutex_unlock") -> substringAfter('(').substringBefore(')')
+        startsWith("start_cond_wait") -> substring("start_cond_wait".length + 1, length - 1).split(",")[1]
+        else -> null
+    }
 
 /**
  * The set of mutexes acquired embedded into each other.
@@ -416,3 +421,55 @@ val Expr<*>.dereferences: List<Dereference<*, *>>
     } else {
         ops.flatMap { it.dereferences }
     }
+
+val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+    get() = when (this) {
+        is NondetLabel -> error("NondetLabel is not well-defined for dereferences due to ordering")
+        is SequenceLabel -> labels.flatMap(XcfaLabel::dereferencesWithAccessTypes)
+        is InvokeLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
+        is StartLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
+        is StmtLabel -> when (stmt) {
+            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences.map { Pair(it, READ) } + listOf(Pair(stmt.deref, WRITE))
+            is AssignStmt<*> -> stmt.expr.dereferences.map { Pair(it, READ) }
+            is AssumeStmt -> stmt.cond.dereferences.map { Pair(it, READ) }
+            else -> listOf()
+        }
+
+        else -> listOf()
+    }
+
+fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel = if (this is StmtLabel) {
+    val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
+    when (stmt) {
+        is MemoryAssignStmt<*, *> -> {
+            simplified as MemoryAssignStmt<*, *>
+            if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
+                parseContext.metadata.create(simplified.expr, "cType",
+                    CComplexType.getType(stmt.expr, parseContext))
+            if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
+                parseContext.metadata.create(simplified.deref, "cType",
+                    CComplexType.getType(stmt.deref, parseContext))
+            StmtLabel(simplified, metadata = metadata)
+        }
+
+        is AssignStmt<*> -> {
+            simplified as AssignStmt<*>
+            if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
+                parseContext.metadata.create(simplified.expr, "cType",
+                    CComplexType.getType(stmt.expr, parseContext))
+            StmtLabel(simplified, metadata = metadata)
+        }
+
+        is AssumeStmt -> {
+            simplified as AssumeStmt
+            if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
+                parseContext.metadata.create(simplified.cond, "cType",
+                    CComplexType.getType(stmt.cond, parseContext))
+            }
+            parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
+            StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
+        }
+
+        else -> this
+    }
+} else this

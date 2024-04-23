@@ -122,7 +122,7 @@ class LiteralDerefPass(val parseContext: ParseContext) : ProcedurePass {
             else -> listOf(this)
         }
 
-
+    // TODO: this should also be aware of non-literal dereferences
     private fun Expr<*>.replaceDeref(lut: Map<Dereference<*, *>, VarDecl<*>>): Expr<*> =
         if(this in lut) {
             lut[this]!!.ref

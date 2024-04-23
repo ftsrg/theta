@@ -64,13 +64,13 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         DeterministicPass(), // needed after lbe, TODO
         HavocPromotionAndRange(parseContext),
         // Final cleanup
-        UnusedVarPass(uniqueWarningLogger),
+//        UnusedVarPass(uniqueWarningLogger),
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
     ),
-    listOf(
-        LiteralDerefPass(parseContext)
-    )
+//    listOf(
+//        LiteralDerefPass(parseContext)
+//    )
 )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(listOf(

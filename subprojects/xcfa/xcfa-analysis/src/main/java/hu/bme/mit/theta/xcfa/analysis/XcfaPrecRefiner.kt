@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.pred.PredPrec
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.model.getTempLookup
 import hu.bme.mit.theta.xcfa.passes.changeVars
 
 class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: RefutationToPrec<P, R>) :
@@ -41,21 +41,15 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
         Preconditions.checkNotNull(trace)
         Preconditions.checkNotNull<Any>(prec)
         Preconditions.checkNotNull<R>(refutation)
-        val checkForPop = !(trace.states.first() as XcfaState<*>).xcfa!!.isInlined
         var runningPrec: P = prec.p
         for (i in trace.states.indices) {
-            val reverseLookup = trace.states[i].processes.values.map {
-                it.varLookup.map {
-                    it.map {
-                        Pair(it.value, it.key)
-                    }
-                }.flatten()
+            val reverseVarLookup = trace.states[i].processes.values.map {
+                it.foldVarLookup().map { Pair(it.value, it.key) }
             }.flatten().toMap()
-            val additionalLookup = if (i > 0) getTempLookup(
+            val reverseTempLookup = if (i > 0) getTempLookup(
                 trace.actions[i - 1].edge.label).entries.associateBy(
                 { it.value }) { it.key } else emptyMap()
-            val varLookup = if (checkForPop) additionalLookup else (reverseLookup + additionalLookup)
-            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(varLookup)
+            val precFromRef = refToPrec.toPrec(refutation, i).changeVars(reverseVarLookup + reverseTempLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
         }
         if (runningPrec is PredPrec) {

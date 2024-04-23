@@ -15,10 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.passes
 
-import hu.bme.mit.theta.xcfa.model.NopLabel
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.model.*
 import java.util.stream.Collectors
 
 class EliminateSelfLoops : ProcedurePass {
@@ -36,7 +33,7 @@ class EliminateSelfLoops : ProcedurePass {
                 builder.addEdge(XcfaEdge(target, outgoingEdge.target, outgoingEdge.label))
             }
             builder.addEdge(XcfaEdge(source, target, selfLoop.label))
-            builder.addEdge(XcfaEdge(target, source, NopLabel))
+            builder.addEdge(XcfaEdge(target, source, SequenceLabel(listOf(NopLabel))))
         }
         builder.metaData["noSelfLoops"] = Unit
         return builder
