@@ -17,10 +17,13 @@ package hu.bme.mit.theta.analysis.ptr
 
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.BoolType
 
-data class PtrState<S : ExprState>(val innerState: S, val lastWrites: Map<Type, List<Triple<Expr<*>, Expr<*>, Expr<*>>>> = emptyMap()) : ExprState {
+data class PtrState<S : ExprState>(
+    val innerState: S,
+    val lastWrites: WriteTriples = emptyMap(),
+    val nextCnt: Int = 0
+) : ExprState {
 
     override fun isBottom(): Boolean {
         return innerState.isBottom()
@@ -29,4 +32,7 @@ data class PtrState<S : ExprState>(val innerState: S, val lastWrites: Map<Type, 
     override fun toExpr(): Expr<BoolType> {
         return innerState.toExpr()
     }
+
+    fun withLastWrites(writeTriples: WriteTriples): PtrState<S> =
+        PtrState(innerState, writeTriples, nextCnt)
 }

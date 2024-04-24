@@ -17,39 +17,44 @@
 package hu.bme.mit.theta.analysis.ptr
 
 import com.google.common.base.Preconditions
-import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.expr.StmtAction
-import hu.bme.mit.theta.core.decl.Decls
-import hu.bme.mit.theta.core.stmt.*
-import hu.bme.mit.theta.core.stmt.Stmts.Assign
-import hu.bme.mit.theta.core.stmt.Stmts.SequenceStmt
+import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 
-typealias WriteTriples = Map<Type, List<Triple<Expr<*>, Expr<*>, Expr<IntType>>>>
-typealias MutableWriteTriples = MutableMap<Type, MutableList<Triple<Expr<*>, Expr<*>, Expr<IntType>>>>
+private val varList = LinkedHashMap<String, LinkedHashMap<Int, VarDecl<IntType>>>()
 
-private var cnt = 0
+abstract class PtrAction(writeTriples: WriteTriples, val inCnt: Int) : StmtAction() {
 
-data class PtrAction(private val stmtList: List<Stmt>, private val writeTriples: WriteTriples): StmtAction() {
+    abstract val stmtList: List<Stmt>
 
-    private val nextWriteTriples: MutableWriteTriples = writeTriples.toMutable()
-    private val expandedStmtList: List<Stmt> = createStmtList()
+    private val expanded by lazy { createStmtList(writeTriples) }
 
-    fun getNextWriteTriples(): WriteTriples = nextWriteTriples
+    internal var cnts = LinkedHashMap<String, Int>()
+    fun nextWriteTriples(tracked: Collection<Expr<*>> = TopCollection): WriteTriples =
+        expanded.first.map { Pair(it.key, it.value.filter { it.toList().any(tracked::contains) }) }.toMap()
 
-    private fun createStmtList(): List<Stmt> {
+    final override fun getStmts(): List<Stmt> = expanded.second
+
+    private fun createStmtList(writeTriples: WriteTriples): Pair<WriteTriples, List<Stmt>> {
+        val nextWriteTriples = writeTriples.toMutable()
         val stmtList = ArrayList<Stmt>()
-        for (stmt in this.stmtList.map(Stmt::uniqueDereferences)) {
+        val vargen = { it: String ->
+            val current = cnts.getOrDefault(it, inCnt)
+            cnts[it] = current + 1
+            val iMap = varList.getOrPut(it) { LinkedHashMap() }
+            iMap.getOrPut(current) { Var("__${it}_$current", Int()) }
+        }
+        for (stmt in this.stmtList.map { it.uniqueDereferences(vargen) }) {
             val preList = ArrayList<Stmt>()
             val postList = ArrayList<Stmt>()
 
@@ -63,14 +68,10 @@ data class PtrAction(private val stmtList: List<Stmt>, private val writeTriples:
                 }
                 if (type == AccessType.WRITE) {
                     val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, IntExprs.Int(1)))
-                    val freshArrayCopy = Decls.Var("__deref__helper_${cnt++}", deref.array.type)
-                    val freshOffsetCopy = Decls.Var("__deref__helper_${cnt++}", deref.offset.type)
                     nextWriteTriples.getOrPut(deref.type) { ArrayList() }
-                        .add(Triple(freshArrayCopy.ref, freshOffsetCopy.ref, deref.uniquenessIdx.get()))
+                        .add(Triple(deref.array, deref.offset, deref.uniquenessIdx.get()))
                     postList.add(Stmts.Assume(ExprUtils.simplify(BoolExprs.And(listOf(
                         AbstractExprs.Eq(writeExpr, deref.uniquenessIdx.get()),
-                        AbstractExprs.Eq(freshArrayCopy.ref, deref.array),
-                        AbstractExprs.Eq(freshOffsetCopy.ref, deref.offset),
                     )))))
                 } else {
                     preList.add(
@@ -82,81 +83,6 @@ data class PtrAction(private val stmtList: List<Stmt>, private val writeTriples:
             stmtList.add(stmt)
             stmtList.addAll(postList)
         }
-        return stmtList
+        return Pair(nextWriteTriples, stmtList)
     }
-
-    override fun getStmts(): List<Stmt> = expandedStmtList
 }
-
-private fun WriteTriples.toMutable(): MutableWriteTriples =
-    LinkedHashMap(this.map { Pair(it.key, ArrayList(it.value)) }.toMap())
-
-private enum class AccessType {
-    READ, WRITE
-}
-
-private val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
-    get() = when (this) {
-        is MemoryAssignStmt<*, *> -> expr.dereferences.map { Pair(it, AccessType.READ) } + listOf(Pair(deref, AccessType.WRITE))
-        is AssignStmt<*> -> expr.dereferences.map { Pair(it, AccessType.READ) }
-        is AssumeStmt -> cond.dereferences.map { Pair(it, AccessType.READ) }
-        is SequenceStmt -> stmts.flatMap(Stmt::dereferencesWithAccessTypes)
-        is HavocStmt<*> -> listOf()
-        is NonDetStmt -> error("NonDetStmts do not have a clearly defined sequence")
-        is LoopStmt -> error("LoopStmt do not have a clearly defined sequence")
-        is IfStmt -> error("IfStmt do not have a clearly defined sequence")
-        else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")
-    }
-
-private val Expr<*>.dereferences: List<Dereference<*, *>>
-    get() = if (this is Dereference<*, *>) {
-        listOf(this)
-    } else {
-        ops.flatMap { it.dereferences }
-    }
-
-
-private fun SequenceStmt.collapse(): Stmt =
-    if(stmts.size == 1 && stmts[0] is SequenceStmt) {
-        (stmts[0] as SequenceStmt).collapse()
-    } else if (stmts.size == 1) {
-        stmts[0]
-    } else {
-        this
-    }
-
-private fun Stmt.uniqueDereferences(): Stmt {
-    val ret = ArrayList<Stmt>()
-    val newStmt = when (this) {
-        is MemoryAssignStmt<*, *> -> {
-            MemoryAssignStmt.create(deref.uniqueDereferences().also { ret.addAll(it.first) }.second as Dereference<*, *>, expr.uniqueDereferences().also { ret.addAll(it.first) }.second)
-        }
-        is AssignStmt<*> -> AssignStmt.of(
-            cast(varDecl, varDecl.type),
-            cast(expr.uniqueDereferences().also { ret.addAll(it.first) }.second, varDecl.type))
-        is AssumeStmt -> AssumeStmt.of(cond.uniqueDereferences().also { ret.addAll(it.first) }.second)
-        is SequenceStmt -> SequenceStmt(stmts.map(Stmt::uniqueDereferences))
-        is HavocStmt<*> -> this
-        is NonDetStmt -> error("NonDetStmts do not have a clearly defined sequence")
-        is LoopStmt -> error("LoopStmt do not have a clearly defined sequence")
-        is IfStmt -> error("IfStmt do not have a clearly defined sequence")
-        else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")
-    }
-    return SequenceStmt.of(ret + newStmt).collapse()
-}
-
-private fun <T: Type> Expr<T>.uniqueDereferences(): Pair<List<Stmt>, Expr<T>> =
-    if (this is Dereference<*, T>) {
-        checkState(this.uniquenessIdx.isEmpty, "Only non-pretransformed dereferences should be here")
-        val arrayConst = Decls.Var("__deref__helper_${cnt++}", array.type)
-        val offsetConst = Decls.Var("__deref__helper_${cnt++}", offset.type)
-        Pair(
-            listOf(
-                Assign(cast(arrayConst, array.type), cast(array, array.type)),
-                Assign(cast(offsetConst, offset.type), cast(offset, offset.type)),
-            ),
-            Dereference(arrayConst.ref, offsetConst.ref, type).withFreshVar())
-    } else {
-        val ret = ArrayList<Stmt>()
-        Pair(ret, this.withOps(this.ops.map { it.uniqueDereferences().also { ret.addAll(it.first) }.second }))
-    }

@@ -33,18 +33,29 @@ import hu.bme.mit.theta.analysis.expr.ExprState
  *
  */
 
-class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S, ExprAction, P>): Analysis<PtrState<S>, PtrAction, PtrPrec<P>> {
-    override fun getPartialOrd(): PartialOrd<PtrState<S>> = PartialOrd { state1, state2 ->
-        innerAnalysis.partialOrd.isLeq(state1.innerState, state2.innerState) &&
-            state1.lastWrites == state2.lastWrites // TODO
-    }
+class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S, ExprAction, P>) :
+    Analysis<PtrState<S>, PtrAction, PtrPrec<P>> {
 
-    override fun getInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = InitFunc { prec ->
-        innerAnalysis.initFunc.getInitStates(prec.innerPrec).map { PtrState(it) }
-    }
+    override fun getPartialOrd(): PartialOrd<PtrState<S>> = innerAnalysis.partialOrd.getPtrPartialOrd()
 
-    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
-        innerAnalysis.transFunc.getSuccStates(state.innerState, action, prec.innerPrec).map { PtrState(it, action.getNextWriteTriples()) }
-    }
+    override fun getInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = innerAnalysis.initFunc.getPtrInitFunc()
+
+    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = innerAnalysis.transFunc.getPtrTransFunc()
 }
 
+fun <S : ExprState> PartialOrd<S>.getPtrPartialOrd(): PartialOrd<PtrState<S>> = PartialOrd { state1, state2 ->
+    isLeq(state1.innerState, state2.innerState) &&
+        state1.lastWrites.all { (k, v) ->
+            v.containsAll(state2.lastWrites.getOrDefault(k, listOf()))
+        }
+}
+
+fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = InitFunc { prec ->
+    getInitStates(prec.innerPrec).map { PtrState(it) }
+}
+
+fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
+    getSuccStates(state.innerState, action, prec.innerPrec).map {
+        PtrState(it, action.nextWriteTriples(prec.trackedDerefParams), action.cnts.values.maxOrNull() ?: action.inCnt)
+    }
+}

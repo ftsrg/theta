@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -38,7 +40,7 @@ import kotlin.random.Random
  *
  * @param xcfa the XCFA of the verified program
  */
-open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction> {
+open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
 
     companion object {
 
@@ -82,7 +84,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @param state the state whose enabled actions we would like to know
      * @return the enabled actions
      */
-    override fun getEnabledActionsFor(state: XcfaState<*>): Set<XcfaAction> {
+    override fun getEnabledActionsFor(state: XcfaState<out PtrState<out ExprState>>): Set<XcfaAction> {
         // Collecting enabled actions
         val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state)
 
@@ -105,7 +107,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return the possible starting actions of a source set
      */
     protected fun getSourceSetFirstActions(
-        state: XcfaState<*>,
+        state: XcfaState<out PtrState<out ExprState>>,
         allEnabledActions: Collection<XcfaAction>
     ): Collection<Collection<XcfaAction>> {
         val enabledActionsByProcess = allEnabledActions.groupBy(XcfaAction::pid)
@@ -128,7 +130,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<*>, XcfaAction>
      * @return the set of first processes
      */
     private fun checkMutexBlocks(
-        state: XcfaState<*>, pid: Int, firstProcesses: MutableSet<Int>,
+        state: XcfaState<out PtrState<out ExprState>>, pid: Int, firstProcesses: MutableSet<Int>,
         enabledActionsByProcess: Map<Int, List<XcfaAction>>
     ) {
         val processState = checkNotNull(state.processes[pid])

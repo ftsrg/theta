@@ -16,12 +16,16 @@
 
 package hu.bme.mit.theta.xcfa.analysis
 
-import hu.bme.mit.theta.analysis.expr.StmtAction
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrAction
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.flatten
 
-data class XcfaAction(val pid: Int, val edge: XcfaEdge) : StmtAction() {
+data class XcfaAction(val pid: Int, val edge: XcfaEdge, val state: XcfaState<out PtrState<out ExprState>>) :
+    PtrAction(state.sGlobal.lastWrites, state.sGlobal.nextCnt) {
 
     val source: XcfaLocation = edge.source
     val target: XcfaLocation = edge.target
@@ -29,19 +33,24 @@ data class XcfaAction(val pid: Int, val edge: XcfaEdge) : StmtAction() {
     private val stmts: List<Stmt> = label.toStmt().flatten()
 
     constructor(pid: Int, source: XcfaLocation, target: XcfaLocation,
-        label: XcfaLabel = NopLabel) : this(pid, XcfaEdge(source, target, label))
+        label: XcfaLabel = NopLabel, state: XcfaState<out PtrState<out ExprState>>) : this(pid,
+        XcfaEdge(source, target, label),
+        state)
 
-    override fun getStmts(): List<Stmt> {
-        return stmts
-    }
+    override val stmtList: List<Stmt>
+        get() = stmts
 
     override fun toString(): String {
-        return "$pid: $source -> $target [$label]"
+        return "$pid: $source -> $target [${getStmts()}]"
     }
 
     fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
-        return XcfaAction(pid, source, target, sequenceLabel)
+        return XcfaAction(pid, source, target, sequenceLabel, state)
     }
 
+    fun withLastWrites(writeTriples: WriteTriples): XcfaAction {
+        val state = this.state as XcfaState<PtrState<*>>
+        return XcfaAction(pid, source, target, label, state.copy(sGlobal = state.sGlobal.withLastWrites(writeTriples)))
+    }
 
 }

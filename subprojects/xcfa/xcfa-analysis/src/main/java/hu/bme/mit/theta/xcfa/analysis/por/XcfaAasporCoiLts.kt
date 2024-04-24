@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -29,7 +30,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaEdge
 class XcfaAasporCoiLts(
     xcfa: XCFA,
     ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>,
-    coiLTS: LTS<XcfaState<*>, XcfaAction>
+    coiLTS: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>
 ) : XcfaAasporLts(xcfa, ignoredVarRegistry) {
 
     init {

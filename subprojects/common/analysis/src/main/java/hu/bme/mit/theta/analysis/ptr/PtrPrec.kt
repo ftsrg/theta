@@ -17,8 +17,11 @@ package hu.bme.mit.theta.analysis.ptr
 
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
 
-data class PtrPrec<P : Prec>(val innerPrec: P) : Prec {
+data class PtrPrec<P : Prec>(val innerPrec: P, val trackedDerefParams: Collection<Expr<*>>) : Prec {
+
+    fun ptrTop() = PtrPrec(innerPrec, TopCollection)
 
     override fun getUsedVars(): Collection<VarDecl<*>> = innerPrec.usedVars
 }

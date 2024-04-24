@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.expl.ExplAnalysis
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.core.decl.Decls.Var
+import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.stmt.Stmts.MemoryAssign
 import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
@@ -39,11 +40,13 @@ class PtrAnalysisTest {
 
         private val explTop = PtrState(ExplState.top())
 
-        private val emptyAction = PtrAction(listOf(), emptyMap())
-        private val readLiteralOnly = PtrAction(listOf(Assume(Eq(Dereference(Int(0), Int(1), Int()), Int(0)))), emptyMap())
-        private val writeLiteralOnly = PtrAction(listOf(MemoryAssign(Dereference(Int(0), Int(1), Int()), Int(0))), emptyMap())
+        private val emptyAction = PtrActionStub(listOf(), emptyMap())
+        private val readLiteralOnly = PtrActionStub(listOf(Assume(Eq(Dereference(Int(0), Int(1), Int()), Int(0)))),
+            emptyMap())
+        private val writeLiteralOnly = PtrActionStub(listOf(MemoryAssign(Dereference(Int(0), Int(1), Int()), Int(0))),
+            emptyMap())
 
-        private val emptyPrec = PtrPrec(ExplPrec.empty())
+        private val emptyPrec = PtrPrec(ExplPrec.empty(), emptySet())
 
         @JvmStatic
         fun testInputs(): Collection<Arguments> {
@@ -53,7 +56,7 @@ class PtrAnalysisTest {
                 Arguments.of(explTop, readLiteralOnly, emptyPrec,
                     listOf(explTop)),
                 Arguments.of(explTop, writeLiteralOnly, emptyPrec,
-                    listOf(PtrState(ExplState.top(), writeLiteralOnly.getNextWriteTriples()))),
+                    listOf(PtrState(ExplState.top(), writeLiteralOnly.nextWriteTriples(prec.trackedDerefParams)))),
             )
         }
     }
@@ -66,4 +69,9 @@ class PtrAnalysisTest {
         val result = analysis.transFunc.getSuccStates(state, action, prec)
         Assertions.assertEquals(expectedResult.toSet(), result.toSet())
     }
+}
+
+data class PtrActionStub(override val stmtList: List<Stmt>, val writeTriples: WriteTriples) :
+    PtrAction(writeTriples, 0) {
+
 }

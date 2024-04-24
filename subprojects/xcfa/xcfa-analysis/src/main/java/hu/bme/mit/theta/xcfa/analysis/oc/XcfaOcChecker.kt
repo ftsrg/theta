@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
 import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.*
@@ -50,7 +51,7 @@ import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
-    SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
+    SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val ocChecker: OcChecker<E> = decisionProcedure.checker()
     private val solver = ocChecker.solver
@@ -68,7 +69,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
-    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
+    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<out PtrState<*>>, XcfaAction> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
