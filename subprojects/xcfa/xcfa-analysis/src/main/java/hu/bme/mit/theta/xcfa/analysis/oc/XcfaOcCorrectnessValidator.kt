@@ -131,15 +131,17 @@ internal class XcfaOcCorrectnessValidator(
             else -> error("Unsupported reason type.")
         }
 
+    private data class Edge(val source: XcfaLocation?, val target: XcfaLocation, val pid: Int) {
+
+        val edge: Pair<XcfaLocation?, XcfaLocation> get() = source to target
+
+        constructor(event: E) : this(event.edge.source, event.edge.target, event.pid)
+    }
+
     private fun isPo(from: E?, to: E): Boolean {
-        data class Edge(val source: XcfaLocation?, val target: XcfaLocation, val pid: Int) {
-
-            val edge: Pair<XcfaLocation?, XcfaLocation> get() = source to target
-
-            constructor(event: E) : this(event.edge.source, event.edge.target, event.pid)
-        }
-
-        val possiblePathPoints = mutableListOf(Edge(from ?: return true))
+        from ?: return true
+        if (from.clkId == to.clkId) return true
+        val possiblePathPoints = mutableListOf(Edge(from))
         val visited = mutableSetOf<Edge>()
         while (possiblePathPoints.isNotEmpty()) {
             val current = possiblePathPoints.removeFirst()
@@ -179,12 +181,16 @@ internal class XcfaOcCorrectnessValidator(
                 val (source, target) = toVisit.removeFirst()
                 val id = ids.size
                 ids[source to target] = id
+
                 if (source == procedure.initLoc) {
                     initials.add(ids[null to procedure.initLoc]!! to id)
                 } else {
-                    source?.incomingEdges?.forEach { initials.add(ids[it.source to it.target]!! to id) }
+                    source?.incomingEdges?.filter { Edge(it) in ids }?.forEach { initials.add(ids[Edge(it)]!! to id) }
                 }
-                toVisit.addAll(target.outgoingEdges.map { it.source to it.target })
+                target.outgoingEdges.filter { Edge(it) in ids }.forEach { initials.add(id to ids[Edge(it)]!!) }
+
+                val toAdd = target.outgoingEdges.map { it.source to it.target }.filter { it !in ids && it !in toVisit }
+                toVisit.addAll(toAdd)
             }
             reachable = Array(ids.size) { Array(ids.size) { false } }
             close(initials) // close reachable transitively
