@@ -825,7 +825,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 postStatements.add(cAssignment);
                 functionVisitor.recordMetadata(ctx, cAssignment);
                 functionVisitor.recordMetadata(ctx, cexpr);
-                return expr;
+                return primary;
             };
 
         }

@@ -68,6 +68,11 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
     ),
+    listOf(
+        SimplifyExprsPass(parseContext),
+        EmptyEdgeRemovalPass(),
+        UnusedLocRemovalPass(),
+    )
 //    listOf(
 //        LiteralDerefPass(parseContext)
 //    )

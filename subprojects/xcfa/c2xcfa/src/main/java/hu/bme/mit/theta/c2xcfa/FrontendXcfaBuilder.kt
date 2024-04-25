@@ -60,6 +60,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
+    private var ptrCnt = 0 // counts down
+
     private fun getLoc(builder: XcfaProcedureBuilder, name: String?,
         metadata: MetaData): XcfaLocation {
         if (name == null) return getAnonymousLoc(builder, metadata = metadata)
@@ -86,7 +88,6 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
     fun buildXcfa(cProgram: CProgram): XcfaBuilder {
         val builder = XcfaBuilder(cProgram.id ?: "")
         val initStmtList: MutableList<XcfaLabel> = ArrayList()
-        var ptrCnt = 0 // counts down
         for (globalDeclaration in cProgram.globalDeclarations) {
             val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
             if (type is CVoid || type is CStruct) {
@@ -156,8 +157,16 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val compound = function.compound
         val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
         xcfaBuilder.addProcedure(builder)
+        val initStmtList = ArrayList<XcfaLabel>()
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
+            val type = CComplexType.getType(flatVariable.ref, parseContext)
+            if (type is CPointer || type is CArray) {
+                initStmtList.add(StmtLabel(
+                    Stmts.Assign(cast(flatVariable, flatVariable.type),
+                        cast(type.getValue("${--ptrCnt}"), flatVariable.type))
+                ))
+            }
         }
 //        builder.setRetType(if (funcDecl.actualType is CVoid) null else funcDecl.actualType.smtType) TODO: we never need the ret type, do we?
         if (funcDecl.actualType !is CVoid) {
@@ -185,7 +194,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         if (param.size > 0 && builder.name.equals("main")) {
             val endinit = getAnonymousLoc(builder, getMetadata(function))
             builder.addLoc(endinit)
-            val edge = XcfaEdge(init, endinit, SequenceLabel(param),
+            val edge = XcfaEdge(init, endinit, SequenceLabel(param + initStmtList),
                 metadata = getMetadata(function))
             builder.addEdge(edge)
             init = endinit
