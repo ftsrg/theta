@@ -497,10 +497,14 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
             it.edges.flatMap { it.getFlatLabels().filter { it is StartLabel }.map { it as StartLabel } }.flatMap {
                 val calledProc = this.procedures.find { proc -> proc.name == it.name }
                 calledProc?.let { proc ->
-                    proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, dir) ->
+                    proc.params.withIndex().filter { (_, it) -> it.second != ParamDirection.OUT }.map { (i, pair) ->
+                        val (param, _) = pair
                         Assign(cast(param, param.type), cast(it.params[i], param.type))
                     } +
-                        proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, dir) ->
+                        proc.params.withIndex()
+                            .filter { (i, pair) -> pair.second != ParamDirection.IN && it.params[i] is RefExpr<*> }
+                            .map { (i, pair) ->
+                                val (param, _) = pair
                             Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
                                 cast(param.ref, param.type))
                         }
@@ -511,10 +515,10 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
             it.edges.flatMap { it.getFlatLabels().filter { it is InvokeLabel }.map { it as InvokeLabel } }.flatMap {
                 val calledProc = this.procedures.find { proc -> proc.name == it.name }
                 calledProc?.let { proc ->
-                    proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, dir) ->
+                    proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, _) ->
                         Assign(cast(param, param.type), cast(it.params[i], param.type))
                     } +
-                        proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, dir) ->
+                        proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, _) ->
                             Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
                                 cast(param.ref, param.type))
                         }
@@ -545,6 +549,7 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
         val varAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is RefExpr<*> }
             .map { Pair(it.varDecl, (it.expr as RefExpr<*>).decl as VarDecl<*>) }
         varAssignments.forEach { alias.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
+        varAssignments.forEach { lits.putIfAbsent(it.first, LinkedHashSet()) }
 
         var lastLits = emptyMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
         while (lastLits != lits) {
