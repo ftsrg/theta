@@ -163,6 +163,8 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
     )
 
     logger.write(RESULT, "ParsingResult Success\n")
+//    logger.write(RESULT,
+//        "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n")
 
     return Triple(xcfa, mcm, parseContext)
 }
