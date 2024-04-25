@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
@@ -85,6 +86,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
     fun buildXcfa(cProgram: CProgram): XcfaBuilder {
         val builder = XcfaBuilder(cProgram.id ?: "")
         val initStmtList: MutableList<XcfaLabel> = ArrayList()
+        var ptrCnt = 0 // counts down
         for (globalDeclaration in cProgram.globalDeclarations) {
             val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
             if (type is CVoid || type is CStruct) {
@@ -93,17 +95,24 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 continue
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
-            if (globalDeclaration.get1().initExpr != null) {
+            if (type is CPointer || type is CArray) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.castTo(globalDeclaration.get1().initExpr.expression),
-                            globalDeclaration.get2().type))
+                        cast(type.getValue("${--ptrCnt}"), globalDeclaration.get2().type))
                 ))
             } else {
-                initStmtList.add(StmtLabel(
-                    Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.nullValue, globalDeclaration.get2().type))
-                ))
+                if (globalDeclaration.get1().initExpr != null && globalDeclaration.get1().initExpr.expression !is UnsupportedInitializer) {
+                    initStmtList.add(StmtLabel(
+                        Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
+                            cast(type.castTo(globalDeclaration.get1().initExpr.expression),
+                                globalDeclaration.get2().type))
+                    ))
+                } else {
+                    initStmtList.add(StmtLabel(
+                        Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
+                            cast(type.nullValue, globalDeclaration.get2().type))
+                    ))
+                }
             }
 
             if (globalDeclaration.get1().arrayDimensions.size == 1) {
@@ -129,8 +138,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                     ))
                 }
             } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
-                uniqueWarningLogger.write(Level.INFO,
-                    "WARNING: Not handling init expression of high dimsension array ${globalDeclaration.get1()}\n")
+                error("Not handling init expression of high dimsension array ${globalDeclaration.get1()}")
             }
         }
         for (function in cProgram.functions) {

@@ -34,6 +34,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
+import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrPrec
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
@@ -116,7 +117,7 @@ enum class Domain(
                 e, f, g, h)
         },
         itpPrecRefiner = {
-            XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec())
+            XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToExplPrec()))
         },
         initPrec = { x, ip -> ip.explPrec(x) },
         partialOrd = { PartialOrd<ExplState> { s1, s2 -> s1.isLeq(s2) }.getPtrPartialOrd() },
@@ -129,7 +130,7 @@ enum class Domain(
                 i as PartialOrd<XcfaState<PtrState<PredState>>>), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
-            XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
+            XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
         partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
@@ -142,7 +143,7 @@ enum class Domain(
                 i as PartialOrd<XcfaState<PtrState<PredState>>>), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
-            XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
+            XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
         partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
@@ -155,7 +156,7 @@ enum class Domain(
                 i as PartialOrd<XcfaState<PtrState<PredState>>>), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
-            XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
+            XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
         partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
