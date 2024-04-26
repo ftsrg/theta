@@ -64,15 +64,10 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         DeterministicPass(), // needed after lbe, TODO
         HavocPromotionAndRange(parseContext),
         // Final cleanup
-        UnusedVarPass(uniqueWarningLogger),
+//        UnusedVarPass(uniqueWarningLogger),
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
     ),
-    listOf(
-        SimplifyExprsPass(parseContext),
-        EmptyEdgeRemovalPass(),
-        UnusedLocRemovalPass(),
-    )
 //    listOf(
 //        LiteralDerefPass(parseContext)
 //    )
