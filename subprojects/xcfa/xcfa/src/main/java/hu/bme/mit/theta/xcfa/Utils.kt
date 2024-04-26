@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -485,7 +486,7 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
                 it.edges.flatMap {
                     it.getFlatLabels().flatMap { it.dereferences.map { it.array } }
                 }
-            }.filter { it !is LitExpr<*> }
+            }.filter { it !is LitExpr<*> }.toSet()
             checkState(bases.all { it is RefExpr<*> })
 
             // value assignments are either assignments, or thread start statements, or procedure invoke statements
@@ -533,10 +534,12 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
             val ptrVars = LinkedHashSet<VarDecl<*>>(bases.map { (it as RefExpr<*>).decl as VarDecl<*> })
             var lastPtrVars = emptySet<VarDecl<*>>()
 
+            fun unboxMod(e: Expr<*>): Expr<*> = if (e is ModExpr<*>) unboxMod(e.ops[0]) else e
+
             while (ptrVars != lastPtrVars) {
                 lastPtrVars = ptrVars.toSet()
 
-                val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { it.expr }
+                val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { unboxMod(it.expr) }
                 checkState(rhs.all { it is LitExpr<*> || it is RefExpr<*> },
                     "Pointer arithmetic not supported by static points-to calculation")
                 ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
@@ -545,11 +548,15 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
             val lits = LinkedHashMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
             val alias = LinkedHashMap<VarDecl<*>, MutableSet<VarDecl<*>>>()
 
-            val litAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is LitExpr<*> }
-                .map { Pair(it.varDecl, it.expr as LitExpr<*>) }
+            val litAssignments = allAssignments.filter {
+                ptrVars.contains(it.varDecl) && unboxMod(it.expr) is LitExpr<*>
+            }
+                .map { Pair(it.varDecl, unboxMod(it.expr) as LitExpr<*>) }
             litAssignments.forEach { lits.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
-            val varAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is RefExpr<*> }
-                .map { Pair(it.varDecl, (it.expr as RefExpr<*>).decl as VarDecl<*>) }
+            val varAssignments = allAssignments.filter {
+                ptrVars.contains(it.varDecl) && unboxMod(it.expr) is RefExpr<*>
+            }
+                .map { Pair(it.varDecl, (unboxMod(it.expr) as RefExpr<*>).decl as VarDecl<*>) }
             varAssignments.forEach { alias.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
             varAssignments.forEach { lits.putIfAbsent(it.first, LinkedHashSet()) }
 
