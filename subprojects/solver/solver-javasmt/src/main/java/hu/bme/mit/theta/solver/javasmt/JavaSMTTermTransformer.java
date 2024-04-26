@@ -26,7 +26,6 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
@@ -82,11 +81,13 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
@@ -114,7 +115,7 @@ final class JavaSMTTermTransformer {
         addFunc("ite", exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
         addFunc("if", exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
         addFunc("prime", exprUnaryOperator(hu.bme.mit.theta.core.type.anytype.PrimeExpr::of));
-        addFunc("=", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Eq));
+        addFunc("=", exprBinaryOperator((expr, expr2) -> expr.getType() instanceof FpType ? FpAssign((Expr<FpType>) expr, (Expr<FpType>) expr2) : Eq(expr, expr2)));
         addFunc(">=", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Geq));
         addFunc(">", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Gt));
         addFunc("<=", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Leq));
@@ -249,7 +250,7 @@ final class JavaSMTTermTransformer {
         });
         environment.put(Tuple2.of("EqZero", 1), (term, args, model, vars) -> {
             final Expr<?> op = transform(args.get(0), model, vars);
-            return AbstractExprs.Eq(op, TypeUtils.getDefaultValue(op.getType()));
+            return Eq(op, TypeUtils.getDefaultValue(op.getType()));
         });
         environment.put(Tuple2.of("fp", 3), (term, args, model, vars) -> {
             final Expr<BvType> op1 = (Expr<BvType>) transform(args.get(0), model, vars);

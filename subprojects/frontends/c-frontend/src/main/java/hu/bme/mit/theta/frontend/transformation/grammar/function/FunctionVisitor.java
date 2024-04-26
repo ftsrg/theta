@@ -61,6 +61,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CSwitch;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -492,7 +493,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     }
                 } else {
                     VarDecl<?> varDecl = declaration.getVarDecls().get(0);
-                    if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) {
+                    if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType) && !(CComplexType.getType(varDecl.getRef(), parseContext) instanceof CVoid)) {
                         AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef(), parseContext).limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
                         compound.getcStatementList().add(cAssume);

@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa
 
 import com.google.common.base.Preconditions.checkState
+import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
@@ -479,85 +480,93 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
 
 val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
     get() = lazy {
-        val bases = this.procedures.flatMap {
-            it.edges.flatMap {
-                it.getFlatLabels().flatMap { it.dereferences.map { it.array } }
+        val attempt = Try.attempt {
+            val bases = this.procedures.flatMap {
+                it.edges.flatMap {
+                    it.getFlatLabels().flatMap { it.dereferences.map { it.array } }
+                }
+            }.filter { it !is LitExpr<*> }
+            checkState(bases.all { it is RefExpr<*> })
+
+            // value assignments are either assignments, or thread start statements, or procedure invoke statements
+            val assignments = this.procedures.flatMap {
+                it.edges.flatMap {
+                    it.getFlatLabels().filter { it is StmtLabel && it.stmt is AssignStmt<*> }
+                        .map { (it as StmtLabel).stmt as AssignStmt<*> }
+                }
             }
-        }.filter { it !is LitExpr<*> }
-        checkState(bases.all { it is RefExpr<*> })
-
-        // value assignments are either assignments, or thread start statements, or procedure invoke statements
-        val assignments = this.procedures.flatMap {
-            it.edges.flatMap {
-                it.getFlatLabels().filter { it is StmtLabel && it.stmt is AssignStmt<*> }
-                    .map { (it as StmtLabel).stmt as AssignStmt<*> }
+            val threadStart = this.procedures.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filter { it is StartLabel }.map { it as StartLabel } }.flatMap {
+                    val calledProc = this.procedures.find { proc -> proc.name == it.name }
+                    calledProc?.let { proc ->
+                        proc.params.withIndex().filter { (_, it) -> it.second != ParamDirection.OUT }.map { (i, pair) ->
+                            val (param, _) = pair
+                            Assign(cast(param, param.type), cast(it.params[i], param.type))
+                        } +
+                            proc.params.withIndex()
+                                .filter { (i, pair) -> pair.second != ParamDirection.IN && it.params[i] is RefExpr<*> }
+                                .map { (i, pair) ->
+                                    val (param, _) = pair
+                                    Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                        cast(param.ref, param.type))
+                                }
+                    } ?: listOf()
+                }
             }
-        }
-        val threadStart = this.procedures.flatMap {
-            it.edges.flatMap { it.getFlatLabels().filter { it is StartLabel }.map { it as StartLabel } }.flatMap {
-                val calledProc = this.procedures.find { proc -> proc.name == it.name }
-                calledProc?.let { proc ->
-                    proc.params.withIndex().filter { (_, it) -> it.second != ParamDirection.OUT }.map { (i, pair) ->
-                        val (param, _) = pair
-                        Assign(cast(param, param.type), cast(it.params[i], param.type))
-                    } +
-                        proc.params.withIndex()
-                            .filter { (i, pair) -> pair.second != ParamDirection.IN && it.params[i] is RefExpr<*> }
-                            .map { (i, pair) ->
-                                val (param, _) = pair
-                            Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
-                                cast(param.ref, param.type))
-                        }
-                } ?: listOf()
+            val procInvoke = this.procedures.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filter { it is InvokeLabel }.map { it as InvokeLabel } }.flatMap {
+                    val calledProc = this.procedures.find { proc -> proc.name == it.name }
+                    calledProc?.let { proc ->
+                        proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, _) ->
+                            Assign(cast(param, param.type), cast(it.params[i], param.type))
+                        } +
+                            proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, _) ->
+                                Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                    cast(param.ref, param.type))
+                            }
+                    } ?: listOf()
+                }
             }
-        }
-        val procInvoke = this.procedures.flatMap {
-            it.edges.flatMap { it.getFlatLabels().filter { it is InvokeLabel }.map { it as InvokeLabel } }.flatMap {
-                val calledProc = this.procedures.find { proc -> proc.name == it.name }
-                calledProc?.let { proc ->
-                    proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, _) ->
-                        Assign(cast(param, param.type), cast(it.params[i], param.type))
-                    } +
-                        proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, _) ->
-                            Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
-                                cast(param.ref, param.type))
-                        }
-                } ?: listOf()
+
+            val allAssignments = (assignments + threadStart + procInvoke)
+
+            val ptrVars = LinkedHashSet<VarDecl<*>>(bases.map { (it as RefExpr<*>).decl as VarDecl<*> })
+            var lastPtrVars = emptySet<VarDecl<*>>()
+
+            while (ptrVars != lastPtrVars) {
+                lastPtrVars = ptrVars.toSet()
+
+                val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { it.expr }
+                checkState(rhs.all { it is LitExpr<*> || it is RefExpr<*> },
+                    "Pointer arithmetic not supported by static points-to calculation")
+                ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
             }
-        }
 
-        val allAssignments = (assignments + threadStart + procInvoke)
+            val lits = LinkedHashMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
+            val alias = LinkedHashMap<VarDecl<*>, MutableSet<VarDecl<*>>>()
 
-        val ptrVars = LinkedHashSet<VarDecl<*>>(bases.map { (it as RefExpr<*>).decl as VarDecl<*> })
-        var lastPtrVars = emptySet<VarDecl<*>>()
+            val litAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is LitExpr<*> }
+                .map { Pair(it.varDecl, it.expr as LitExpr<*>) }
+            litAssignments.forEach { lits.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
+            val varAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is RefExpr<*> }
+                .map { Pair(it.varDecl, (it.expr as RefExpr<*>).decl as VarDecl<*>) }
+            varAssignments.forEach { alias.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
+            varAssignments.forEach { lits.putIfAbsent(it.first, LinkedHashSet()) }
 
-        while (ptrVars != lastPtrVars) {
-            lastPtrVars = ptrVars.toSet()
-
-            val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { it.expr }
-            checkState(rhs.all { it is LitExpr<*> || it is RefExpr<*> },
-                "Pointer arithmetic not supported by static points-to calculation")
-            ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
-        }
-
-        val lits = LinkedHashMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
-        val alias = LinkedHashMap<VarDecl<*>, MutableSet<VarDecl<*>>>()
-
-        val litAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is LitExpr<*> }
-            .map { Pair(it.varDecl, it.expr as LitExpr<*>) }
-        litAssignments.forEach { lits.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
-        val varAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is RefExpr<*> }
-            .map { Pair(it.varDecl, (it.expr as RefExpr<*>).decl as VarDecl<*>) }
-        varAssignments.forEach { alias.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
-        varAssignments.forEach { lits.putIfAbsent(it.first, LinkedHashSet()) }
-
-        var lastLits = emptyMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
-        while (lastLits != lits) {
-            lastLits = lits.toMap()
-            alias.forEach {
-                lits.getOrPut(it.key) { LinkedHashSet() }.addAll(it.value.flatMap { lits.getOrDefault(it, emptySet()) })
+            var lastLits = emptyMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
+            while (lastLits != lits) {
+                lastLits = lits.toMap()
+                alias.forEach {
+                    lits.getOrPut(it.key) { LinkedHashSet() }
+                        .addAll(it.value.flatMap { lits.getOrDefault(it, emptySet()) })
+                }
             }
-        }
 
-        lits
+            lits
+        }
+        if (attempt.isSuccess) {
+            attempt.asSuccess().value
+        } else {
+            emptyMap()
+        }
     }

@@ -38,7 +38,8 @@ class PtrAnalysisTest {
     companion object {
         private val x = Var("x", Int())
 
-        private val explTop = PtrState(ExplState.top())
+        private val explTop0 = PtrState(ExplState.top(), nextCnt = 0)
+        private val explTop1 = PtrState(ExplState.top(), nextCnt = 1)
 
         private val emptyAction = PtrActionStub(listOf(), emptyMap())
         private val readLiteralOnly = PtrActionStub(listOf(Assume(Eq(Dereference(Int(0), Int(1), Int()), Int(0)))),
@@ -51,12 +52,13 @@ class PtrAnalysisTest {
         @JvmStatic
         fun testInputs(): Collection<Arguments> {
             return listOf(
-                Arguments.of(explTop, emptyAction, emptyPrec,
-                    listOf(explTop)),
-                Arguments.of(explTop, readLiteralOnly, emptyPrec,
-                    listOf(explTop)),
-                Arguments.of(explTop, writeLiteralOnly, emptyPrec,
-                    listOf(PtrState(ExplState.top(), writeLiteralOnly.nextWriteTriples(prec.trackedDerefParams)))),
+                Arguments.of(explTop0, emptyAction, emptyPrec,
+                    listOf(explTop0)),
+                Arguments.of(explTop0, readLiteralOnly, emptyPrec,
+                    listOf(explTop1)),
+                Arguments.of(explTop0, writeLiteralOnly, emptyPrec,
+                    listOf(
+                        PtrState(ExplState.top(), writeLiteralOnly.nextWriteTriples(emptyPrec.trackedDerefParams), 1))),
             )
         }
     }
