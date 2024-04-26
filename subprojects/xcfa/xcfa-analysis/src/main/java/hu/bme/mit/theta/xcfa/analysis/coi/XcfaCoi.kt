@@ -106,9 +106,10 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     protected fun findDirectObservers(edge: XcfaEdge, prec: Prec) {
         val precVars = prec.usedVars
-        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
+        val writtenVars = edge.collectVarsWithAccessType()
+            .filter { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
         if (writtenVars.isEmpty()) return
-        val writtenMemLocs = writtenVars.flatMap { xcfa.pointsToGraph[it.key] ?: emptyList() }.toSet()
+        val writtenMemLocs = writtenVars.pointsTo(xcfa)
 
         val toVisit = edge.target.outgoingEdges.toMutableList()
         val visited = mutableSetOf<XcfaEdge>()
@@ -121,7 +122,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
             if (writtenMemLocs.size <= 1) {
                 val currentWrites = currentVars.filter { it.value.isWritten }.map { it.key }
                 if (writtenVars.all { it.key in currentWrites }) {
-                    val currentMemWrites = currentWrites.flatMap { xcfa.pointsToGraph[it] ?: emptyList() }.toSet()
+                    val currentMemWrites = currentWrites.pointsTo(xcfa)
                     if (currentMemWrites.size <= 1 && writtenMemLocs.all { it in currentMemWrites }) {
                         continue
                     }
@@ -137,15 +138,15 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
         writtenMemLocs: Set<LitExpr<*>>, precVars: Collection<VarDecl<*>>,
         relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>, vars: VarAccessMap = target.collectVarsWithAccessType()
     ) {
-        var relevantAction = vars.any { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
+        var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
         if (!relevantAction) {
             val assumeVars = target.label.collectAssumesVars()
-            relevantAction = assumeVars.any { it in precVars } // TODO deref it.key in prec?
+            relevantAction = assumeVars.any { it in precVars }
         }
 
         val readVars = vars.filter { it.value.isRead }
         if (relevantAction && (readVars.any { it.key in observableVars } ||
-            readVars.flatMap { xcfa.pointsToGraph[it.key] ?: emptyList() }.any { it in writtenMemLocs })) {
+                readVars.pointsTo(xcfa).any { it in writtenMemLocs })) {
             addToRelation(source, target, relation)
         }
     }

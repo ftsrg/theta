@@ -25,6 +25,7 @@ import hu.bme.mit.theta.xcfa.model.StartLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import hu.bme.mit.theta.xcfa.pointsTo
 
 class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
@@ -141,9 +142,9 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
     private fun findInterProcessObservers(edge: XcfaEdge, prec: Prec) {
         val precVars = prec.usedVars
-        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
+        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars }
         if (writtenVars.isEmpty()) return
-        val writtenMemLocs = writtenVars.flatMap { xcfa.pointsToGraph[it.key] ?: emptyList() }.toSet()
+        val writtenMemLocs = writtenVars.pointsTo(xcfa)
 
         xcfa.procedures.forEach { procedure ->
             procedure.edges.forEach {

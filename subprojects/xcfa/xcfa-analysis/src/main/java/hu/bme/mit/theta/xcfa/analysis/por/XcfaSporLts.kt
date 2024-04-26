@@ -222,8 +222,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
         state: XcfaState<out PtrState<out ExprState>>, sourceSetAction: XcfaAction,
         sourceSetActionVars: Set<VarDecl<*>>, influencedVars: Set<VarDecl<*>>
     ): Boolean {
-        val sourceSetActionMemLocs = sourceSetActionVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
-        val influencedMemLocs = influencedVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
+        val sourceSetActionMemLocs = sourceSetActionVars.pointsTo(xcfa)
+        val influencedMemLocs = influencedVars.pointsTo(xcfa)
         val intersection = sourceSetActionMemLocs intersect influencedMemLocs
         if (intersection.isEmpty()) return false // they cannot point to the same memory location even based on static info
 

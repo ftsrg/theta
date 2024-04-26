@@ -577,3 +577,6 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
             emptyMap()
         }
     }
+
+fun Collection<VarDecl<*>>.pointsTo(xcfa: XCFA) = flatMap { xcfa.pointsToGraph[it] ?: emptyList() }.toSet()
+fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)
