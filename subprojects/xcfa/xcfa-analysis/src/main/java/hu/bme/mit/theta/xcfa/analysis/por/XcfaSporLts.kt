@@ -16,11 +16,19 @@
 package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.LTS
+import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
+import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.utils.WithPushPop
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -42,6 +50,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
 
     companion object {
 
+        private val dependencySolver: Solver = Z3SolverFactory.getInstance().createSolver()
         var random: Random = Random.Default
     }
 
@@ -89,7 +98,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
         var minimalSourceSet = setOf<XcfaAction>()
         val sourceSetFirstActions = getSourceSetFirstActions(state, allEnabledActions)
         for (firstActions in sourceSetFirstActions) {
-            val sourceSet = calculateSourceSet(allEnabledActions, firstActions)
+            val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions)
             if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
                 minimalSourceSet = sourceSet
             }
@@ -158,6 +167,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      * @return a source set of enabled actions
      */
     private fun calculateSourceSet(
+        state: XcfaState<out PtrState<out ExprState>>,
         enabledActions: Collection<XcfaAction>,
         firstActions: Collection<XcfaAction>
     ): Set<XcfaAction> {
@@ -174,7 +184,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
             for (action in otherActions) {
                 // for every action that is not in the source set it is checked whether it should be added to the source set
                 // (because it is dependent with an action already in the source set)
-                if (sourceSet.any { areDependents(it, action) }) {
+                if (sourceSet.any { dependent(state, it, action) }) {
                     if (action.isBackward) {
                         return enabledActions.toSet() // see POR algorithm for the reason of handling backward edges this way
                     }
@@ -196,19 +206,38 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      * @param action          the other action (not in the source set)
      * @return true, if the two actions are dependent in the context of source sets
      */
-    private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction): Boolean {
+    private fun dependent(
+        state: XcfaState<out PtrState<out ExprState>>, sourceSetAction: XcfaAction, action: XcfaAction
+    ): Boolean {
         if (sourceSetAction.pid == action.pid) return true
 
         val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
         val influencedVars = getInfluencedVars(getEdge(action))
         if ((influencedVars intersect sourceSetActionVars).isNotEmpty()) return true
 
-        // precise pointer information for current action
-        //val sourceSetActionMemLocs = sourceSetAction.preciseMemoryLocations
+        return indirectlyDependent(state, sourceSetAction, sourceSetActionVars, influencedVars)
+    }
+
+    protected fun indirectlyDependent(
+        state: XcfaState<out PtrState<out ExprState>>, sourceSetAction: XcfaAction,
+        sourceSetActionVars: Set<VarDecl<*>>, influencedVars: Set<VarDecl<*>>
+    ): Boolean {
         val sourceSetActionMemLocs = sourceSetActionVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
-        // imprecise pointer information for future actions
         val influencedMemLocs = influencedVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
-        return (sourceSetActionMemLocs intersect influencedMemLocs).isNotEmpty()
+        val intersection = sourceSetActionMemLocs intersect influencedMemLocs
+        if (intersection.isEmpty()) return false // they cannot point to the same memory location even based on static info
+
+        val derefs = sourceSetAction.label.dereferences.map { it.array }
+        var expr: Expr<BoolType> = Or(intersection.flatMap { memLoc -> derefs.map { Eq(memLoc, it) } })
+        expr = (state.sGlobal.innerState as? ExplState)?.let { s ->
+            ExprUtils.simplify(expr, s.`val`)
+        } ?: ExprUtils.simplify(expr)
+        if (expr == True()) return true
+        return WithPushPop(dependencySolver).use {
+            dependencySolver.add(state.sGlobal.toExpr())
+            dependencySolver.add(expr)
+            dependencySolver.check().isSat // two pointers may point to the same memory location
+        }
     }
 
     /**

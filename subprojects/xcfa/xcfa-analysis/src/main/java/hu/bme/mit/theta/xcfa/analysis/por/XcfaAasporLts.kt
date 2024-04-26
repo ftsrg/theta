@@ -50,7 +50,7 @@ open class XcfaAasporLts(
         for (firstActions in sourceSetFirstActions) {
             // Variables that have been ignored (if they would be in the precision, more actions have had to be added to the source set)
             val ignoredVars = mutableSetOf<VarDecl<*>>()
-            val sourceSet = calculateSourceSet(allEnabledActions, firstActions, prec, ignoredVars)
+            val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
             if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
                 minimalSourceSet = sourceSet.toMutableSet()
                 finalIgnoredVars = ignoredVars
@@ -76,6 +76,7 @@ open class XcfaAasporLts(
      * @return a source set of enabled actions in the current abstraction
      */
     private fun calculateSourceSet(
+        state: XcfaState<out PtrState<out ExprState>>,
         enabledActions: Collection<XcfaAction>, firstActions: Collection<XcfaAction>,
         prec: Prec, ignoredVars: MutableSet<VarDecl<*>>
     ): Set<XcfaAction> {
@@ -96,7 +97,7 @@ open class XcfaAasporLts(
                 // for every action that is not in the source set it is checked whether it should be added to the source set
                 // (because it is dependent with an action already in the source set)
                 val potentialIgnoredVars = mutableSetOf<VarDecl<*>>()
-                if (sourceSet.any { areDependents(it, action, prec, potentialIgnoredVars) }) {
+                if (sourceSet.any { areDependents(state, it, action, prec, potentialIgnoredVars) }) {
                     if (action.isBackward) {
                         return enabledActions.toSet() // see POR algorithm for the reason of handling backward edges this way
                     }
@@ -115,6 +116,7 @@ open class XcfaAasporLts(
     }
 
     private fun areDependents(
+        state: XcfaState<out PtrState<out ExprState>>,
         sourceSetAction: XcfaAction, action: XcfaAction, prec: Prec,
         ignoredVariables: MutableSet<VarDecl<*>>
     ): Boolean {
@@ -122,13 +124,10 @@ open class XcfaAasporLts(
         val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
         val influencedVars = getInfluencedVars(getEdge(action))
 
-        val sourceSetActionMemLocs = sourceSetActionVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
-        val influencedMemLocs = influencedVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
-        if ((sourceSetActionMemLocs intersect influencedMemLocs).isNotEmpty()) return true
-
+        val precVars = prec.usedVars
         for (varDecl in influencedVars) {
             if (varDecl in sourceSetActionVars) {
-                if (varDecl !in prec.usedVars && varDecl !in fenceVars.values) {
+                if (varDecl !in precVars && varDecl !in fenceVars.values) {
                     // the actions would be dependent, but we may have a chance to ignore it in the current abstraction
                     ignoredVariables.add(varDecl)
                     continue
@@ -136,6 +135,6 @@ open class XcfaAasporLts(
                 return true
             }
         }
-        return false
+        return indirectlyDependent(state, sourceSetAction, sourceSetActionVars, influencedVars)
     }
 }
