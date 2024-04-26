@@ -108,7 +108,7 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when (this) {
 // Complex var access requests
 
 typealias AccessType = Pair<Boolean, Boolean>
-private typealias VarAccessMap = Map<VarDecl<*>, AccessType>
+typealias VarAccessMap = Map<VarDecl<*>, AccessType>
 
 val AccessType?.isRead get() = this?.first == true
 val AccessType?.isWritten get() = this?.second == true
@@ -195,12 +195,12 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
                 while (expr is Dereference<*, *>) {
                     expr = expr.array
                 }
-                if (expr is RefExpr<*>) {
-                    ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(expr.decl as VarDecl<*> to WRITE)
-                } else if (expr is LitExpr<*>) {
-                    ExprUtils.getVars(stmt.expr).associateWith { READ }
-                } else {
-                    error("MemoryAssignStmts's dereferences should only contain refs or lits")
+                when (expr) {
+                    is RefExpr<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ } +
+                        mapOf(expr.decl as VarDecl<*> to WRITE)
+
+                    is LitExpr<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ }
+                    else -> error("MemoryAssignStmts's dereferences should only contain refs or lits")
                 }
             }
 
@@ -496,7 +496,7 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
                 }
             }
             val threadStart = this.procedures.flatMap {
-                it.edges.flatMap { it.getFlatLabels().filter { it is StartLabel }.map { it as StartLabel } }.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filterIsInstance<StartLabel>() }.flatMap {
                     val calledProc = this.procedures.find { proc -> proc.name == it.name }
                     calledProc?.let { proc ->
                         proc.params.withIndex().filter { (_, it) -> it.second != ParamDirection.OUT }.map { (i, pair) ->
@@ -514,7 +514,7 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
                 }
             }
             val procInvoke = this.procedures.flatMap {
-                it.edges.flatMap { it.getFlatLabels().filter { it is InvokeLabel }.map { it as InvokeLabel } }.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filterIsInstance<InvokeLabel>() }.flatMap {
                     val calledProc = this.procedures.find { proc -> proc.name == it.name }
                     calledProc?.let { proc ->
                         proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, _) ->

@@ -24,6 +24,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
@@ -105,37 +106,54 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     protected fun findDirectObservers(edge: XcfaEdge, prec: Prec) {
         val precVars = prec.usedVars
-        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars }
+        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
         if (writtenVars.isEmpty()) return
+        val writtenMemLocs = writtenVars.flatMap { xcfa.pointsToGraph[it.key] ?: emptyList() }.toSet()
 
-        val toVisit = mutableListOf(edge)
+        val toVisit = edge.target.outgoingEdges.toMutableList()
         val visited = mutableSetOf<XcfaEdge>()
         while (toVisit.isNotEmpty()) {
             val visiting = toVisit.removeFirst()
             visited.add(visiting)
-            addEdgeIfObserved(edge, visiting, writtenVars, precVars, directObservation)
+            val currentVars = visiting.collectVarsWithAccessType()
+            addEdgeIfObserved(edge, visiting, writtenVars, writtenMemLocs, precVars, directObservation, currentVars)
+
+            if (writtenMemLocs.size <= 1) {
+                val currentWrites = currentVars.filter { it.value.isWritten }.map { it.key }
+                if (writtenVars.all { it.key in currentWrites }) {
+                    val currentMemWrites = currentWrites.flatMap { xcfa.pointsToGraph[it] ?: emptyList() }.toSet()
+                    if (currentMemWrites.size <= 1 && writtenMemLocs.all { it in currentMemWrites }) {
+                        continue
+                    }
+                }
+            }
+
             toVisit.addAll(visiting.target.outgoingEdges.filter { it !in visited })
         }
     }
 
     protected open fun addEdgeIfObserved(
-        source: XcfaEdge, target: XcfaEdge, observableVars: Map<VarDecl<*>, AccessType>,
-        precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>
+        source: XcfaEdge, target: XcfaEdge, observableVars: VarAccessMap,
+        writtenMemLocs: Set<LitExpr<*>>, precVars: Collection<VarDecl<*>>,
+        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>, vars: VarAccessMap = target.collectVarsWithAccessType()
     ) {
-        val vars = target.collectVarsWithAccessType()
-        var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
+        var relevantAction = vars.any { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
         if (!relevantAction) {
             val assumeVars = target.label.collectAssumesVars()
-            relevantAction = assumeVars.any { it in precVars }
+            relevantAction = assumeVars.any { it in precVars } // TODO deref it.key in prec?
         }
 
-        if (relevantAction && vars.any { it.key in observableVars && it.value.isRead }) {
+        val readVars = vars.filter { it.value.isRead }
+        if (relevantAction && (readVars.any { it.key in observableVars } ||
+            readVars.flatMap { xcfa.pointsToGraph[it.key] ?: emptyList() }.any { it in writtenMemLocs })) {
             addToRelation(source, target, relation)
         }
     }
 
-    protected abstract fun addToRelation(source: XcfaEdge, target: XcfaEdge,
-        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>)
+    protected abstract fun addToRelation(
+        source: XcfaEdge, target: XcfaEdge,
+        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>
+    )
 
     protected fun isRealObserver(edge: XcfaEdge) = edge.label.collectAssumesVars().isNotEmpty()
 

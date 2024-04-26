@@ -18,10 +18,9 @@ package hu.bme.mit.theta.xcfa.analysis.por
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -52,30 +51,29 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
     /* CACHE COLLECTIONS */
 
     /**
-     * Shared objects (~global variables) used by a transition.
+     * Global variables used by an edge.
      */
-    private val usedSharedObjects: MutableMap<XcfaEdge, Set<Decl<out Type>>> = mutableMapOf()
+    private val usedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
 
     /**
-     * Shared objects (~global variables) that are used by the key transition or by transitions reachable from the
-     * current state via a given transition.
+     * Global variables that are used by the key edge or by edges reachable from the
+     * current state via a given edge.
      */
-    private val influencedSharedObjects: MutableMap<XcfaEdge, Set<Decl<out Type>>> = mutableMapOf()
+    private val influencedVars: MutableMap<XcfaEdge, Set<VarDecl<*>>> = mutableMapOf()
 
     /**
-     * Backward transitions in the transition system (a transition of a loop).
+     * Backward edges in the CFA (an edge of a loop).
      */
-    protected val backwardTransitions: MutableSet<XcfaEdge> = mutableSetOf()
+    protected val backwardEdges: MutableSet<XcfaEdge> = mutableSetOf()
 
     /**
      * Variables associated to mutex identifiers. TODO: this should really be solved by storing VarDecls in FenceLabel.
      */
-    protected val dereferenceVar = Decls.Var("dereferenceVar", Bool())
-    protected val fenceVars: MutableMap<String, VarDecl<*>> = mutableMapOf("dereferenceVar" to dereferenceVar)
+    protected val fenceVars: MutableMap<String, VarDecl<*>> = mutableMapOf()
     private val String.fenceVar get() = fenceVars.getOrPut(this) { Decls.Var(this, Bool()) }
 
     init {
-        collectBackwardTransitions()
+        collectBackwardEdges()
     }
 
     /**
@@ -164,7 +162,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
         enabledActions: Collection<XcfaAction>,
         firstActions: Collection<XcfaAction>
     ): Set<XcfaAction> {
-        if (firstActions.any(::isBackwardAction)) {
+        if (firstActions.any { it.isBackward }) {
             return enabledActions.toSet()
         }
         val sourceSet = firstActions.toMutableSet()
@@ -178,8 +176,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
                 // for every action that is not in the source set it is checked whether it should be added to the source set
                 // (because it is dependent with an action already in the source set)
                 if (sourceSet.any { areDependents(it, action) }) {
-                    if (isBackwardAction(action)) {
-                        return enabledActions.toSet() // see POR algorithm for the reason of removing backward transitions
+                    if (action.isBackward) {
+                        return enabledActions.toSet() // see POR algorithm for the reason of handling backward edges this way
                     }
                     sourceSet.add(action)
                     actionsToRemove.add(action)
@@ -200,19 +198,19 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      * @return true, if the two actions are dependent in the context of source sets
      */
     private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction): Boolean {
-        val usedBySourceSetAction = getCachedUsedSharedObjects(getEdgeOf(sourceSetAction))
-        return isSameProcess(sourceSetAction, action) ||
-            getInfluencedSharedObjects(getEdgeOf(action)).any { it in usedBySourceSetAction }
-    }
+        if (sourceSetAction.pid == action.pid) return true
 
-    /**
-     * Determines whether two actions are in the same process.
-     *
-     * @param action1 the first action
-     * @param action2 the second action
-     * @return true, if the two actions are in the same process
-     */
-    protected fun isSameProcess(action1: XcfaAction, action2: XcfaAction) = action1.pid == action2.pid
+        val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
+        val influencedVars = getInfluencedVars(getEdge(action))
+        if (influencedVars.any { it in sourceSetActionVars }) return true
+
+        // precise pointer information for current action
+        //val sourceSetActionMemLocs = sourceSetAction.preciseMemoryLocations
+        val sourceSetActionMemLocs = sourceSetActionVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
+        // imprecise pointer information for future actions
+        val influencedMemLocs = influencedVars.flatMap { xcfa.pointsToGraph[it] ?: listOf() }.toSet()
+        return (sourceSetActionMemLocs intersect influencedMemLocs).isNotEmpty()
+    }
 
     /**
      * Returns the global variables that an edge uses (it is present in one of its labels).
@@ -221,15 +219,14 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      * @param edge whose global variables are to be returned
      * @return the set of used global variables
      */
-    private fun getDirectlyUsedSharedObjects(edge: XcfaEdge): Set<VarDecl<out Type>> {
+    private fun getDirectlyUsedVars(edge: XcfaEdge): Set<VarDecl<*>> {
         val globalVars = xcfa.vars.map(XcfaGlobalVar::wrappedVar)
         return edge.getFlatLabels().flatMap { label ->
             label.collectVars().filter { it in globalVars } union
                 ((label as? FenceLabel)?.labels
                     ?.filter { it.startsWith("start_cond_wait") || it.startsWith("cond_signal") }
                     ?.map { it.substringAfter("(").substringBefore(")").split(",")[0] }
-                    ?.map { it.fenceVar } ?: listOf()) union
-                (if (label.references.isNotEmpty()) setOf(dereferenceVar) else setOf())
+                    ?.map { it.fenceVar } ?: listOf())
         }.toSet() union edge.acquiredEmbeddedFenceVars.let { mutexes ->
             if (mutexes.size <= 1) setOf() else mutexes.map { it.fenceVar }
         }
@@ -237,70 +234,55 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
 
     /**
      * Returns the global variables that an edge uses or if it is the start of an atomic block the global variables
-     * that are used in the atomic block.
+     * that are used in the atomic block. The result is cached.
      *
      * @param edge whose global variables are to be returned
      * @return the set of directly or indirectly used global variables
      */
-    private fun getUsedSharedObjects(edge: XcfaEdge): Set<Decl<out Type>> {
+    protected fun getCachedUsedVars(edge: XcfaEdge): Set<VarDecl<*>> {
+        if (edge in usedVars) return usedVars[edge]!!
         val flatLabels = edge.getFlatLabels()
         val mutexes = flatLabels.filterIsInstance<FenceLabel>().flatMap { it.acquiredMutexes }.toMutableSet()
-        return if (mutexes.isEmpty()) {
-            getDirectlyUsedSharedObjects(edge)
+        val vars = if (mutexes.isEmpty()) {
+            getDirectlyUsedVars(edge)
         } else {
-            getSharedObjectsWithBFS(edge) { it.mutexOperations(mutexes) }.toSet()
+            getVarsWithBFS(edge) { it.mutexOperations(mutexes) }.toSet()
         }
+        usedVars[edge] = vars
+        return vars
     }
 
     /**
-     * Same as [getUsedSharedObjects] with an additional cache layer.
+     * Returns the global variables used by the given edge or by edges that are reachable
+     * via the given edge ("influenced vars").
      *
-     * @param edge whose shared objects are to be returned
-     * @return the set of directly or indirectly used shared objects
+     * @param edge whose successor edges' global variables are to be returned.
+     * @return the set of influenced global variables
      */
-    protected fun getCachedUsedSharedObjects(edge: XcfaEdge): Set<Decl<out Type>> {
-        if (!usedSharedObjects.containsKey(edge)) {
-            val vars = getUsedSharedObjects(edge)
-            usedSharedObjects[edge] = vars
-        }
-        return usedSharedObjects[edge]!!
+    protected fun getInfluencedVars(edge: XcfaEdge): Set<VarDecl<*>> {
+        if (edge in influencedVars) return influencedVars[edge]!!
+        val vars = getVarsWithBFS(edge) { true }
+        influencedVars[edge] = vars
+        return vars
     }
 
     /**
-     * Returns the shared objects (~global variables) used by the given transition or by transitions that are reachable
-     * via the given transition ("influenced shared objects").
+     * Returns global variables encountered in a search starting from a given edge.
      *
-     * @param edge whose successor transitions' shared objects are to be returned.
-     * @return the set of influenced shared objects
+     * @param startEdge the start point of the search
+     * @param goFurther the predicate that tells whether more edges have to be explored through this edge
+     * @return the set of encountered global variables
      */
-    protected fun getInfluencedSharedObjects(edge: XcfaEdge): Set<Decl<out Type>> {
-        if (!influencedSharedObjects.containsKey(edge)) {
-            influencedSharedObjects[edge] = getSharedObjectsWithBFS(edge) { true }
-        }
-        return influencedSharedObjects[edge]!!
-    }
-
-    /**
-     * Returns shared objects (~global variables) encountered in a search starting from a given transition.
-     *
-     * @param startTransition the start point (transition) of the search
-     * @param goFurther       the predicate that tells whether more transitions have to be explored through this
-     * transition
-     * @return the set of encountered shared objects
-     */
-    private fun getSharedObjectsWithBFS(
-        startTransition: XcfaEdge,
-        goFurther: Predicate<XcfaEdge>
-    ): Set<Decl<out Type>> {
-        val vars = mutableSetOf<Decl<out Type>>()
+    private fun getVarsWithBFS(startEdge: XcfaEdge, goFurther: Predicate<XcfaEdge>): Set<VarDecl<*>> {
+        val vars = mutableSetOf<VarDecl<*>>()
         val exploredEdges = mutableListOf<XcfaEdge>()
         val edgesToExplore = mutableListOf<XcfaEdge>()
-        edgesToExplore.add(startTransition)
+        edgesToExplore.add(startEdge)
         while (edgesToExplore.isNotEmpty()) {
             val exploring = edgesToExplore.removeFirst()
-            vars.addAll(getDirectlyUsedSharedObjects(exploring))
+            vars.addAll(getDirectlyUsedVars(exploring))
             if (goFurther.test(exploring)) {
-                val successiveEdges = getSuccessiveTransitions(exploring)
+                val successiveEdges = getSuccessiveEdges(exploring)
                 for (newEdge in successiveEdges) {
                     if (newEdge !in exploredEdges) {
                         edgesToExplore.add(newEdge)
@@ -318,15 +300,16 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      * @param action the action whose edge is to be returned
      * @return the edge of the action
      */
-    protected open fun getEdgeOf(action: XcfaAction) = action.edge
+    protected open fun getEdge(action: XcfaAction) = action.edge
 
     /**
-     * Returns the outgoing edges of the target of the given edge.
+     * Returns the outgoing edges of the target of the given edge. For start threads, the first edges of the started
+     * procedures are also included.
      *
      * @param edge the edge whose target's outgoing edges are to be returned
      * @return the outgoing edges of the target of the edge
      */
-    private fun getSuccessiveTransitions(edge: XcfaEdge): Set<XcfaEdge> {
+    private fun getSuccessiveEdges(edge: XcfaEdge): Set<XcfaEdge> {
         val outgoingEdges = edge.target.outgoingEdges.toMutableSet()
         val startThreads = edge.getFlatLabels().filterIsInstance<StartLabel>().toList()
         if (startThreads.isNotEmpty()) { // for start thread labels, the thread procedure must be explored, too!
@@ -338,17 +321,16 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
     }
 
     /**
-     * Determines whether the given action is a backward action.
+     * Determines whether this action is a backward action.
      *
-     * @param action the action to be classified as backward action or non-backward action
      * @return true, if the action is a backward action
      */
-    protected open fun isBackwardAction(action: XcfaAction): Boolean = backwardTransitions.contains(getEdgeOf(action))
+    protected open val XcfaAction.isBackward: Boolean get() = getEdge(this) in backwardEdges
 
     /**
      * Collects backward edges of the given XCFA.
      */
-    private fun collectBackwardTransitions() {
+    private fun collectBackwardEdges() {
         for (procedure in xcfa.procedures) {
             // DFS for every procedure of the XCFA to discover backward edges
             val visitedLocations = mutableSetOf<XcfaLocation>()
@@ -360,8 +342,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
                 visitedLocations.add(visiting)
                 for (outgoingEdge in visiting.outgoingEdges) {
                     val target = outgoingEdge.target
-                    if (visitedLocations.contains(target)) { // backward edge
-                        backwardTransitions.add(outgoingEdge)
+                    if (target in visitedLocations) { // backward edge
+                        backwardEdges.add(outgoingEdge)
                     } else {
                         stack.push(target)
                     }

@@ -141,12 +141,13 @@ class XcfaCoiMultiThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
     private fun findInterProcessObservers(edge: XcfaEdge, prec: Prec) {
         val precVars = prec.usedVars
-        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars }
+        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
         if (writtenVars.isEmpty()) return
+        val writtenMemLocs = writtenVars.flatMap { xcfa.pointsToGraph[it.key] ?: emptyList() }.toSet()
 
         xcfa.procedures.forEach { procedure ->
             procedure.edges.forEach {
-                addEdgeIfObserved(edge, it, writtenVars, precVars, interProcessObservation)
+                addEdgeIfObserved(edge, it, writtenVars, writtenMemLocs, precVars, interProcessObservation)
             }
         }
     }

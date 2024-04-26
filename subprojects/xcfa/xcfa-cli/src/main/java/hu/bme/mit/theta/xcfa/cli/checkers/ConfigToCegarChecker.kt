@@ -32,8 +32,7 @@ import hu.bme.mit.theta.analysis.runtimemonitor.CexMonitor
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -51,7 +50,7 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
     val refinementSolverFactory: SolverFactory = getSolver(cegarConfig.refinerConfig.refinementSolver,
         cegarConfig.refinerConfig.validateRefinementSolver)
 
-    val ignoredVarRegistry = mutableMapOf<Decl<out Type>, MutableSet<ExprState>>()
+    val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
     val lts = cegarConfig.coi.getLts(xcfa, ignoredVarRegistry, cegarConfig.porLevel)
     val waitlist = if (cegarConfig.porLevel.isDynamic) {

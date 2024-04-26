@@ -40,7 +40,7 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
@@ -72,7 +72,7 @@ enum class Backend {
 }
 
 enum class POR(
-    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>) -> LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
+    val getLts: (XCFA, MutableMap<VarDecl<*>, MutableSet<ExprState>>) -> LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
     val isDynamic: Boolean,
     val isAbstractionAware: Boolean
 ) {
@@ -323,7 +323,7 @@ enum class InitPrec(
 }
 
 enum class ConeOfInfluenceMode(
-    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>
+    val getLts: (XCFA, MutableMap<VarDecl<*>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>
 ) {
 
     NO_COI({ xcfa, ivr, por ->
