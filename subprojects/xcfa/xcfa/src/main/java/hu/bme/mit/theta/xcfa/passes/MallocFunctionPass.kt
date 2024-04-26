@@ -32,8 +32,8 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
 
-    private var cnt = 0
-        get() = field++
+    private var cnt = 0 // counts upwards, uses 3k
+        get() = field.also { field += 2 }
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
@@ -46,12 +46,13 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
                         val ret = invokeLabel.params[0] as RefExpr<*>
-                        val mallocCounter = Var("__malloc_$cnt", ret.type)
+                        val mallocCounter = Var("__malloc_$cnt", ret.type) // counts up, uses odd numbers
                         builder.parent.addVar(
-                            XcfaGlobalVar(mallocCounter, CComplexType.getType(ret, parseContext).nullValue))
+                            XcfaGlobalVar(mallocCounter, CComplexType.getType(ret, parseContext).unitValue))
                         val assign1 = AssignStmt.of(
                             cast(mallocCounter, ret.type),
-                            cast(Add(mallocCounter.ref, CComplexType.getType(ret, parseContext).unitValue), ret.type))
+                            cast(Add(mallocCounter.ref, CComplexType.getType(ret, parseContext).getValue("2")),
+                                ret.type))
                         val assign2 = AssignStmt.of(
                             cast(ret.decl as VarDecl<*>, ret.type), cast(mallocCounter.ref, ret.type))
                         builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(

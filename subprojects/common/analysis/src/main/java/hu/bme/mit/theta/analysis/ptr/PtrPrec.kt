@@ -19,7 +19,8 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 
-data class PtrPrec<P : Prec>(val innerPrec: P, val trackedDerefParams: Collection<Expr<*>>) : Prec {
+data class PtrPrec<P : Prec>(val innerPrec: P, val trackedDerefParams: Collection<Expr<*>>,
+    val historyLength: Int = 0) : Prec {
 
     fun ptrTop() = PtrPrec(innerPrec, TopCollection)
 

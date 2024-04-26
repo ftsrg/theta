@@ -43,9 +43,9 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     ),
     listOf(
         // optimizing
-        SimplifyExprsPass(parseContext),
+//        SimplifyExprsPass(parseContext),
         LoopUnrollPass(),
-        SimplifyExprsPass(parseContext),
+//        SimplifyExprsPass(parseContext),
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
     ),

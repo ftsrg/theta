@@ -40,6 +40,9 @@ import hu.bme.mit.theta.xcfa.references
 
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
+    private var cnt = 2 // counts upwards, uses 3k+2
+        get() = field.also { field += 2 }
+
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         val referredVars = builder.getEdges()
             .flatMap { it.label.getFlatLabels().flatMap { it.references } }
@@ -47,6 +50,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             .associateWith {
                 val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
                 val varDecl = Var(it.name + "*", ptrType.smtType)
+                builder.addVar(varDecl)
                 parseContext.metadata.create(varDecl.ref, "cType", ptrType)
                 varDecl
             }
@@ -96,7 +100,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                 val newVar = varLut[this.varDecl]!!
                 listOf(
                     AssignStmt.of(cast(newVar, newVar.type),
-                        cast(CComplexType.getType(newVar.ref, parseContext).getValue("${varDecl.hashCode()}"),
+                        cast(CComplexType.getType(newVar.ref, parseContext).getValue("$cnt"),
                             newVar.type)),
                     MemoryAssignStmt.create(
                         Dereference(

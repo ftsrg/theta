@@ -60,7 +60,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
-    private var ptrCnt = 0 // counts down
+    private var ptrCnt = 1 // counts up, uses 3k+1
+        get() = field.also { field += 3 }
 
     private fun getLoc(builder: XcfaProcedureBuilder, name: String?,
         metadata: MetaData): XcfaLocation {
@@ -99,7 +100,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             if (type is CPointer || type is CArray) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.getValue("${--ptrCnt}"), globalDeclaration.get2().type))
+                        cast(type.getValue("$ptrCnt"), globalDeclaration.get2().type))
                 ))
             } else {
                 if (globalDeclaration.get1().initExpr != null && globalDeclaration.get1().initExpr.expression !is UnsupportedInitializer) {
@@ -164,7 +165,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             if (type is CPointer || type is CArray) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(flatVariable, flatVariable.type),
-                        cast(type.getValue("${--ptrCnt}"), flatVariable.type))
+                        cast(type.getValue("$ptrCnt"), flatVariable.type))
                 ))
             }
         }

@@ -56,6 +56,7 @@ fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState
 
 fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
     getSuccStates(state.innerState, action, prec.innerPrec).map {
-        PtrState(it, action.nextWriteTriples(prec.trackedDerefParams), action.cnts.values.maxOrNull() ?: action.inCnt)
+        PtrState(it, action.nextWriteTriples(/*prec.trackedDerefParams*/),
+            action.cnts.values.maxOrNull() ?: action.inCnt)
     }
 }
