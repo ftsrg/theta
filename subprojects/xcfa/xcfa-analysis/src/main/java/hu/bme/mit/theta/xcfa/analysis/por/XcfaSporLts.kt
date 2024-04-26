@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -64,7 +63,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
     /**
      * Backward edges in the CFA (an edge of a loop).
      */
-    protected val backwardEdges: MutableSet<XcfaEdge> = mutableSetOf()
+    private val backwardEdges: MutableSet<Pair<XcfaLocation, XcfaLocation>> = mutableSetOf()
 
     /**
      * Variables associated to mutex identifiers. TODO: this should really be solved by storing VarDecls in FenceLabel.
@@ -202,7 +201,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
 
         val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
         val influencedVars = getInfluencedVars(getEdge(action))
-        if (influencedVars.any { it in sourceSetActionVars }) return true
+        if ((influencedVars intersect sourceSetActionVars).isNotEmpty()) return true
 
         // precise pointer information for current action
         //val sourceSetActionMemLocs = sourceSetAction.preciseMemoryLocations
@@ -325,7 +324,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      *
      * @return true, if the action is a backward action
      */
-    protected open val XcfaAction.isBackward: Boolean get() = getEdge(this) in backwardEdges
+    protected open val XcfaAction.isBackward: Boolean get() = backwardEdges.any { it.first == source && it.second == target }
 
     /**
      * Collects backward edges of the given XCFA.
@@ -343,7 +342,7 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
                 for (outgoingEdge in visiting.outgoingEdges) {
                     val target = outgoingEdge.target
                     if (target in visitedLocations) { // backward edge
-                        backwardEdges.add(outgoingEdge)
+                        backwardEdges.add(outgoingEdge.source to outgoingEdge.target)
                     } else {
                         stack.push(target)
                     }

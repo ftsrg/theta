@@ -36,9 +36,5 @@ class XcfaAasporCoiLts(
         simpleXcfaLts = coiLTS
     }
 
-    override fun getEdge(action: XcfaAction): XcfaEdge =
-        super.getEdge(action.transFuncVersion ?: action)
-
-    override val XcfaAction.isBackward: Boolean
-        get() = backwardEdges.any { it.source == edge.source && it.target == edge.target }
+    override fun getEdge(action: XcfaAction): XcfaEdge = super.getEdge(action.transFuncVersion ?: action)
 }
