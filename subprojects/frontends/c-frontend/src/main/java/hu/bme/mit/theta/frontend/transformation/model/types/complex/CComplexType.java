@@ -381,7 +381,7 @@ public abstract class CComplexType {
         }
 
         public R visit(CStruct type, T param) {
-            return visit(((CCompound) type), param);
+            return CComplexType.getUnsignedLong(type.getParseContext()).accept(this, param);
         }
 
         public R visit(CPointer type, T param) {

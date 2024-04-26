@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.ArgNode
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -37,7 +38,7 @@ import kotlin.random.Random
 /**
  * Type definitions for states, actions and ARG nodes.
  */
-private typealias S = XcfaState<out ExprState>
+private typealias S = XcfaState<out PtrState<out ExprState>>
 private typealias A = XcfaAction
 private typealias Node = ArgNode<out S, A>
 

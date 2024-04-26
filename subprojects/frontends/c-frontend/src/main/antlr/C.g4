@@ -55,9 +55,16 @@ primaryExpression
 //    ;
 
 postfixExpression
-    :   (primaryExpression /*| postfixExpressionExtension*/)
-        (postfixExpressionBrackets | postfixExpressionBraces | postfixExpressionMemberAccess
-            | postfixExpressionPtrMemberAccess | postfixExpressionIncrement | postfixExpressionDecrement)*
+    :   primaryExpression (pfExprs+=postfixExpressionAccess)*
+    ;
+
+postfixExpressionAccess
+    :   postfixExpressionBrackets
+    |   postfixExpressionBraces
+    |   postfixExpressionMemberAccess
+    |   postfixExpressionPtrMemberAccess
+    |   postfixExpressionIncrement
+    |   postfixExpressionDecrement
     ;
 
 //postfixExpressionExtension
@@ -130,19 +137,23 @@ multiplicativeExpression
     ;
 
 additiveExpression
-    :   multiplicativeExpression (signs+=('+'|'-') multiplicativeExpression)*
+    :   LeftParen multiplicativeExpression RightParen (signs+=('+'|'-') (multiplicativeExpression | LeftParen multiplicativeExpression RightParen))* // TODO: all others as well?
+    |   multiplicativeExpression (signs+=('+'|'-') multiplicativeExpression)*
     ;
 
 shiftExpression
-    :   additiveExpression (signs+=('<<'|'>>') additiveExpression)*
+    :   LeftParen additiveExpression RightParen (signs+=('<<'|'>>') (additiveExpression | LeftParen additiveExpression RightParen))* // TODO: all others as well?
+    |   additiveExpression (signs+=('<<'|'>>') additiveExpression)*
     ;
 
 relationalExpression
-    :   shiftExpression (signs+=('<'|'>'|'<='|'>=') shiftExpression)*
+    :   LeftParen shiftExpression RightParen (signs+=('<'|'>'|'<='|'>=') (shiftExpression | LeftParen shiftExpression RightParen))* // TODO: all others as well?
+    |   shiftExpression (signs+=('<'|'>'|'<='|'>=') shiftExpression)*
     ;
 
 equalityExpression
-    :   relationalExpression (signs+=('=='| '!=') relationalExpression)*
+    :   LeftParen relationalExpression RightParen (signs+=('=='| '!=') (relationalExpression | LeftParen relationalExpression RightParen))* // TODO: all others as well?
+    |   relationalExpression (signs+=('=='| '!=') relationalExpression)*
     ;
 
 andExpression

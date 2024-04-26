@@ -16,15 +16,15 @@
 
 package hu.bme.mit.theta.xcfa
 
+import com.google.common.base.Preconditions.checkState
+import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
@@ -428,13 +429,16 @@ val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessTy
         is SequenceLabel -> labels.flatMap(XcfaLabel::dereferencesWithAccessTypes)
         is InvokeLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
         is StartLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
-        is StmtLabel -> when (stmt) {
-            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences.map { Pair(it, READ) } + listOf(Pair(stmt.deref, WRITE))
-            is AssignStmt<*> -> stmt.expr.dereferences.map { Pair(it, READ) }
-            is AssumeStmt -> stmt.cond.dereferences.map { Pair(it, READ) }
-            else -> listOf()
-        }
+        is StmtLabel -> stmt.dereferencesWithAccessTypes
 
+        else -> listOf()
+    }
+
+val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+    get() = when (this) {
+        is MemoryAssignStmt<*, *> -> expr.dereferences.map { Pair(it, READ) } + listOf(Pair(deref, WRITE))
+        is AssignStmt<*> -> expr.dereferences.map { Pair(it, READ) }
+        is AssumeStmt -> cond.dereferences.map { Pair(it, READ) }
         else -> listOf()
     }
 
@@ -473,3 +477,96 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
         else -> this
     }
 } else this
+
+val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
+    get() = lazy {
+        val attempt = Try.attempt {
+            val bases = this.procedures.flatMap {
+                it.edges.flatMap {
+                    it.getFlatLabels().flatMap { it.dereferences.map { it.array } }
+                }
+            }.filter { it !is LitExpr<*> }
+            checkState(bases.all { it is RefExpr<*> })
+
+            // value assignments are either assignments, or thread start statements, or procedure invoke statements
+            val assignments = this.procedures.flatMap {
+                it.edges.flatMap {
+                    it.getFlatLabels().filter { it is StmtLabel && it.stmt is AssignStmt<*> }
+                        .map { (it as StmtLabel).stmt as AssignStmt<*> }
+                }
+            }
+            val threadStart = this.procedures.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filter { it is StartLabel }.map { it as StartLabel } }.flatMap {
+                    val calledProc = this.procedures.find { proc -> proc.name == it.name }
+                    calledProc?.let { proc ->
+                        proc.params.withIndex().filter { (_, it) -> it.second != ParamDirection.OUT }.map { (i, pair) ->
+                            val (param, _) = pair
+                            Assign(cast(param, param.type), cast(it.params[i], param.type))
+                        } +
+                            proc.params.withIndex()
+                                .filter { (i, pair) -> pair.second != ParamDirection.IN && it.params[i] is RefExpr<*> }
+                                .map { (i, pair) ->
+                                    val (param, _) = pair
+                                    Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                        cast(param.ref, param.type))
+                                }
+                    } ?: listOf()
+                }
+            }
+            val procInvoke = this.procedures.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filter { it is InvokeLabel }.map { it as InvokeLabel } }.flatMap {
+                    val calledProc = this.procedures.find { proc -> proc.name == it.name }
+                    calledProc?.let { proc ->
+                        proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, _) ->
+                            Assign(cast(param, param.type), cast(it.params[i], param.type))
+                        } +
+                            proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, _) ->
+                                Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                    cast(param.ref, param.type))
+                            }
+                    } ?: listOf()
+                }
+            }
+
+            val allAssignments = (assignments + threadStart + procInvoke)
+
+            val ptrVars = LinkedHashSet<VarDecl<*>>(bases.map { (it as RefExpr<*>).decl as VarDecl<*> })
+            var lastPtrVars = emptySet<VarDecl<*>>()
+
+            while (ptrVars != lastPtrVars) {
+                lastPtrVars = ptrVars.toSet()
+
+                val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { it.expr }
+                checkState(rhs.all { it is LitExpr<*> || it is RefExpr<*> },
+                    "Pointer arithmetic not supported by static points-to calculation")
+                ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
+            }
+
+            val lits = LinkedHashMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
+            val alias = LinkedHashMap<VarDecl<*>, MutableSet<VarDecl<*>>>()
+
+            val litAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is LitExpr<*> }
+                .map { Pair(it.varDecl, it.expr as LitExpr<*>) }
+            litAssignments.forEach { lits.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
+            val varAssignments = allAssignments.filter { ptrVars.contains(it.varDecl) && it.expr is RefExpr<*> }
+                .map { Pair(it.varDecl, (it.expr as RefExpr<*>).decl as VarDecl<*>) }
+            varAssignments.forEach { alias.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
+            varAssignments.forEach { lits.putIfAbsent(it.first, LinkedHashSet()) }
+
+            var lastLits = emptyMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
+            while (lastLits != lits) {
+                lastLits = lits.toMap()
+                alias.forEach {
+                    lits.getOrPut(it.key) { LinkedHashSet() }
+                        .addAll(it.value.flatMap { lits.getOrDefault(it, emptySet()) })
+                }
+            }
+
+            lits
+        }
+        if (attempt.isSuccess) {
+            attempt.asSuccess().value
+        } else {
+            emptyMap()
+        }
+    }

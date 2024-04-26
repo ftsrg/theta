@@ -21,9 +21,8 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import java.util.*
-import kotlin.reflect.KClass
 
 class XcfaActionAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaAction>() {
 
@@ -41,15 +40,17 @@ class XcfaActionAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaAction>(
         initGson()
         var pid: Int? = null
         lateinit var edge: XcfaEdge
+        lateinit var state: XcfaState<PtrState<*>>
         reader.beginObject()
         while (reader.peek() != JsonToken.END_OBJECT) {
             when (reader.nextName()) {
                 "pid" -> pid = reader.nextInt()
                 "edge" -> edge = gson.fromJson(reader, XcfaEdge::class.java)
+                "state" -> state = gson.fromJson(reader, XcfaState::class.java)
             }
         }
         reader.endObject()
-        return XcfaAction(pid!!, edge)
+        return XcfaAction(pid!!, edge, state)
     }
 
     private fun initGson() {

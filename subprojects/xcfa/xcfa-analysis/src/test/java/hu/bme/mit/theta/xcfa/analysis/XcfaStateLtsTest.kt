@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaAasporLts
@@ -32,10 +33,10 @@ class XcfaStateLtsTest {
 
     @Test
     fun testApply() {
-        val actionOrder: MutableList<(XcfaState<ExplState>) -> XcfaAction> = ArrayList()
-        val expectations: MutableList<Predicate<XcfaState<ExplState>>> = ArrayList()
+        val actionOrder: MutableList<(XcfaState<PtrState<ExplState>>) -> XcfaAction> = ArrayList()
+        val expectations: MutableList<Predicate<XcfaState<PtrState<ExplState>>>> = ArrayList()
         val lts = getXcfaLts()
-        lateinit var initState: XcfaState<ExplState>
+        lateinit var initState: XcfaState<PtrState<ExplState>>
         lateinit var xcfa: XCFA
 
         val edges: MutableList<XcfaEdge> = ArrayList()
@@ -73,12 +74,12 @@ class XcfaStateLtsTest {
                     )
                 )
             ),
-            ExplState.bottom()
+            PtrState(ExplState.bottom())
         )
         val sporLts = XcfaSporLts(xcfa)
         val aasporLts = XcfaAasporLts(xcfa, LinkedHashMap())
 
-        actionOrder.add { XcfaAction(0, edges[1]) }
+        actionOrder.add { XcfaAction(0, edges[1], it) }
         expectations.add {
             it.processes[0]!!.locs.size == 2 && it.processes[0]!!.locs.peek() == edges[0].source &&
                 lts.getEnabledActionsFor(it).size == 1 &&
@@ -86,7 +87,7 @@ class XcfaStateLtsTest {
                 aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
         }
 
-        actionOrder.add { XcfaAction(0, edges[0]) }
+        actionOrder.add { XcfaAction(0, edges[0], it) }
         expectations.add {
             it.processes[0]!!.locs.size == 2 && it.processes[0]!!.locs.peek() == edges[0].target &&
                 lts.getEnabledActionsFor(it).size == 1 &&
@@ -94,7 +95,7 @@ class XcfaStateLtsTest {
                 aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
         }
 
-        actionOrder.add { XcfaAction(0, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel))) }
+        actionOrder.add { XcfaAction(0, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel)), it) }
         expectations.add {
             it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[1].target &&
                 lts.getEnabledActionsFor(it).size == 1 &&
@@ -102,7 +103,7 @@ class XcfaStateLtsTest {
                 aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
         }
 
-        actionOrder.add { XcfaAction(0, edges[2]) }
+        actionOrder.add { XcfaAction(0, edges[2], it) }
         expectations.add {
             it.processes.size == 2 &&
                 it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[2].target &&
@@ -112,7 +113,7 @@ class XcfaStateLtsTest {
                 aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
         }
 
-        actionOrder.add { s -> XcfaAction(s.foreignKey()!!, edges[0]) }
+        actionOrder.add { s -> XcfaAction(s.foreignKey()!!, edges[0], s) }
         expectations.add {
             it.processes.size == 2 &&
                 it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[2].target &&
@@ -123,7 +124,7 @@ class XcfaStateLtsTest {
         }
 
         actionOrder.add { s ->
-            XcfaAction(s.foreignKey()!!, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel)))
+            XcfaAction(s.foreignKey()!!, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel)), s)
         }
         expectations.add {
             it.processes.size == 1 && it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[2].target &&
@@ -132,7 +133,7 @@ class XcfaStateLtsTest {
                 aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
         }
 
-        actionOrder.add { XcfaAction(0, edges[3]) }
+        actionOrder.add { XcfaAction(0, edges[3], it) }
         expectations.add {
             it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[3].target &&
                 lts.getEnabledActionsFor(it).size == 1 &&

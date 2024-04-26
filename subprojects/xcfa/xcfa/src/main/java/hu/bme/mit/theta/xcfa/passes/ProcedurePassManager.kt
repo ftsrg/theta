@@ -41,33 +41,38 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         ReferenceElimination(parseContext),
         MallocFunctionPass(parseContext),
     ),
-    listOf(
-        // optimizing
-        SimplifyExprsPass(parseContext),
-        LoopUnrollPass(),
-        SimplifyExprsPass(parseContext),
-        EmptyEdgeRemovalPass(),
-        UnusedLocRemovalPass(),
-    ),
+//    listOf(
+//        // optimizing
+//        SimplifyExprsPass(parseContext),
+//        LoopUnrollPass(),
+//        SimplifyExprsPass(parseContext),
+//        EmptyEdgeRemovalPass(),
+//        UnusedLocRemovalPass(),
+//    ),
     listOf(
         // trying to inline procedures
         InlineProceduresPass(parseContext),
-        RemoveDeadEnds(),
-        EliminateSelfLoops(),
+//        RemoveDeadEnds(),
+//        EliminateSelfLoops(),
     ),
     listOf(
         // handling remaining function calls
         NoSideEffectPass(parseContext),
         NondetFunctionPass(),
-        LbePass(parseContext),
-        NormalizePass(), // needed after lbe, TODO
-        DeterministicPass(), // needed after lbe, TODO
+//        LbePass(parseContext),
+//        NormalizePass(), // needed after lbe, TODO
+//        DeterministicPass(), // needed after lbe, TODO
         HavocPromotionAndRange(parseContext),
         // Final cleanup
 //        UnusedVarPass(uniqueWarningLogger),
-        EmptyEdgeRemovalPass(),
-        UnusedLocRemovalPass(),
+//        EmptyEdgeRemovalPass(),
+//        UnusedLocRemovalPass(),
     ),
+//    listOf(
+//        SimplifyExprsPass(parseContext),
+//        EmptyEdgeRemovalPass(),
+//        UnusedLocRemovalPass(),
+//    )
 //    listOf(
 //        LiteralDerefPass(parseContext)
 //    )

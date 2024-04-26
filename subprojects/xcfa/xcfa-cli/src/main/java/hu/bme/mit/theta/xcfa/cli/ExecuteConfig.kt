@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
@@ -162,6 +163,8 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
     )
 
     logger.write(RESULT, "ParsingResult Success\n")
+    logger.write(RESULT,
+        "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n")
 
     return Triple(xcfa, mcm, parseContext)
 }
@@ -285,7 +288,7 @@ private fun postVerificationLogging(
             if (!config.outputConfig.witnessConfig.disable) {
                 if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
                     val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                        safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?,
+                        safetyResult.asUnsafe().trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
                         getSolver(
                             config.outputConfig.witnessConfig.concretizerSolver,
                             config.outputConfig.witnessConfig.validateConcretizerSolver

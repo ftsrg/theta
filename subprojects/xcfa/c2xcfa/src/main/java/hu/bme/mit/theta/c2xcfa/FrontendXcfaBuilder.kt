@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.utils.BvUtils
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
@@ -59,6 +60,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
+    private var ptrCnt = 0 // counts down
+
     private fun getLoc(builder: XcfaProcedureBuilder, name: String?,
         metadata: MetaData): XcfaLocation {
         if (name == null) return getAnonymousLoc(builder, metadata = metadata)
@@ -93,17 +96,24 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 continue
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
-            if (globalDeclaration.get1().initExpr != null) {
+            if (type is CPointer || type is CArray) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.castTo(globalDeclaration.get1().initExpr.expression),
-                            globalDeclaration.get2().type))
+                        cast(type.getValue("${--ptrCnt}"), globalDeclaration.get2().type))
                 ))
             } else {
-                initStmtList.add(StmtLabel(
-                    Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.nullValue, globalDeclaration.get2().type))
-                ))
+                if (globalDeclaration.get1().initExpr != null && globalDeclaration.get1().initExpr.expression !is UnsupportedInitializer) {
+                    initStmtList.add(StmtLabel(
+                        Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
+                            cast(type.castTo(globalDeclaration.get1().initExpr.expression),
+                                globalDeclaration.get2().type))
+                    ))
+                } else {
+                    initStmtList.add(StmtLabel(
+                        Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
+                            cast(type.nullValue, globalDeclaration.get2().type))
+                    ))
+                }
             }
 
             if (globalDeclaration.get1().arrayDimensions.size == 1) {
@@ -129,8 +139,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                     ))
                 }
             } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
-                uniqueWarningLogger.write(Level.INFO,
-                    "WARNING: Not handling init expression of high dimsension array ${globalDeclaration.get1()}\n")
+                error("Not handling init expression of high dimsension array ${globalDeclaration.get1()}")
             }
         }
         for (function in cProgram.functions) {
@@ -148,8 +157,16 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val compound = function.compound
         val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
         xcfaBuilder.addProcedure(builder)
+        val initStmtList = ArrayList<XcfaLabel>()
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
+            val type = CComplexType.getType(flatVariable.ref, parseContext)
+            if (type is CPointer || type is CArray) {
+                initStmtList.add(StmtLabel(
+                    Stmts.Assign(cast(flatVariable, flatVariable.type),
+                        cast(type.getValue("${--ptrCnt}"), flatVariable.type))
+                ))
+            }
         }
 //        builder.setRetType(if (funcDecl.actualType is CVoid) null else funcDecl.actualType.smtType) TODO: we never need the ret type, do we?
         if (funcDecl.actualType !is CVoid) {
@@ -177,7 +194,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         if (param.size > 0 && builder.name.equals("main")) {
             val endinit = getAnonymousLoc(builder, getMetadata(function))
             builder.addLoc(endinit)
-            val edge = XcfaEdge(init, endinit, SequenceLabel(param),
+            val edge = XcfaEdge(init, endinit, SequenceLabel(param + initStmtList),
                 metadata = getMetadata(function))
             builder.addEdge(edge)
             init = endinit

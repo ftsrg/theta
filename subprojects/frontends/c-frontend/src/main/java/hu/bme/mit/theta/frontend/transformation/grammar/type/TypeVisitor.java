@@ -264,7 +264,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             return null;
         }
         for (Token star : ctx.pointer().stars) {
-            subtype.incrementPointer();
+            subtype.incrementPointer(); // this should be immutable
         }
         return subtype;
     }

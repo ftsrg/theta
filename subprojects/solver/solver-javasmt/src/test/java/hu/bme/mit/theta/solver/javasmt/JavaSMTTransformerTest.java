@@ -20,10 +20,13 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.OsHelper.OperatingSystem;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -42,10 +45,10 @@ import org.sosy_lab.java_smt.api.SolverContext;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeFalse;
@@ -115,12 +118,14 @@ public class JavaSMTTransformerTest {
                     throw e; // for functions, we don't want the solver to step in
                 }
                 try (final var solver = JavaSMTSolverFactory.create(this.solver, new String[]{}).createSolver()) {
+                    BiFunction<Expr, Expr, Expr<BoolType>> eq = expr.getType() instanceof FpType ? FpExprs::FpAssign : AbstractExprs::Eq;
+
                     solver.push();
-                    solver.add(Eq(expr, expExpr));
+                    solver.add(eq.apply(expr, expExpr));
                     Assert.assertTrue("(= %s %s) is unsat\n".formatted(expr, expExpr), solver.check().isSat());
                     solver.pop();
                     solver.push();
-                    solver.add(Not(Eq(expr, expExpr)));
+                    solver.add(Not(eq.apply(expr, expExpr)));
                     Assert.assertTrue("(not (= %s %s)) is sat with model %s\n".formatted(expr, expExpr, solver.check().isSat() ? solver.getModel() : ""), solver.check().isUnsat());
                     solver.pop();
                 }

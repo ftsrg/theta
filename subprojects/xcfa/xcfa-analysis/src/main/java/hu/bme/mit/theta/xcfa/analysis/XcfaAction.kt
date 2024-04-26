@@ -16,65 +16,41 @@
 
 package hu.bme.mit.theta.xcfa.analysis
 
-import hu.bme.mit.theta.analysis.expr.StmtAction
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrAction
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.core.stmt.Stmt
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.anytype.Dereference
-import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.flatten
 
-data class XcfaAction(val pid: Int, val edge: XcfaEdge) : StmtAction() {
+data class XcfaAction(val pid: Int, val edge: XcfaEdge, val state: XcfaState<out PtrState<out ExprState>>) :
+    PtrAction(state.sGlobal.lastWrites, state.sGlobal.nextCnt) {
 
     val source: XcfaLocation = edge.source
     val target: XcfaLocation = edge.target
-    val label: XcfaLabel = edge.label.uniqueDereferences()
+    val label: XcfaLabel = edge.label
     private val stmts: List<Stmt> = label.toStmt().flatten()
 
     constructor(pid: Int, source: XcfaLocation, target: XcfaLocation,
-        label: XcfaLabel = NopLabel) : this(pid, XcfaEdge(source, target, label))
+        label: XcfaLabel = NopLabel, state: XcfaState<out PtrState<out ExprState>>) : this(pid,
+        XcfaEdge(source, target, label),
+        state)
 
-    override fun getStmts(): List<Stmt> {
-        return stmts
-    }
+    override val stmtList: List<Stmt>
+        get() = stmts
 
     override fun toString(): String {
-        return "$pid: $source -> $target [$label]"
+        return "$pid: $source -> $target [${getStmts()}]"
     }
 
     fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
-        return XcfaAction(pid, source, target, sequenceLabel)
+        return XcfaAction(pid, source, target, sequenceLabel, state)
     }
 
+    fun withLastWrites(writeTriples: WriteTriples): XcfaAction {
+        val state = this.state as XcfaState<PtrState<*>>
+        return XcfaAction(pid, source, target, label, state.copy(sGlobal = state.sGlobal.withLastWrites(writeTriples)))
+    }
 
-}
-
-private fun XcfaLabel.uniqueDereferences(): XcfaLabel = when (this) {
-    is NondetLabel -> NondetLabel(labels.map(XcfaLabel::uniqueDereferences).toSet(), metadata)
-    is SequenceLabel -> SequenceLabel(labels.map(XcfaLabel::uniqueDereferences), metadata)
-    is InvokeLabel -> InvokeLabel(name, params.map(Expr<*>::uniqueDereferences), metadata, tempLookup)
-    is StartLabel -> StartLabel(name, params.map(Expr<*>::uniqueDereferences), pidVar, metadata, tempLookup)
-    is StmtLabel -> StmtLabel(when (stmt) {
-        is MemoryAssignStmt<*, *> -> MemoryAssignStmt.create(
-            (stmt as MemoryAssignStmt<*, *>).deref.uniqueDereferences() as Dereference<*, *>,
-            (stmt as MemoryAssignStmt<*, *>).expr.uniqueDereferences())
-
-        is AssignStmt<*> -> AssignStmt.of(cast((stmt as AssignStmt<*>).varDecl, (stmt as AssignStmt<*>).varDecl.type),
-            cast((stmt as AssignStmt<*>).expr.uniqueDereferences(), (stmt as AssignStmt<*>).varDecl.type))
-
-        is AssumeStmt -> AssumeStmt.of((stmt as AssumeStmt).cond.uniqueDereferences() as Expr<BoolType>)
-        else -> stmt
-    }, choiceType, metadata)
-
-    else -> this
-}
-
-private fun Expr<*>.uniqueDereferences(): Expr<*> = if (this is Dereference<*, *> && this.uniquenessIdx.isEmpty) {
-    this.withOps(this.withFreshVar().ops.map(Expr<*>::uniqueDereferences))
-} else {
-    this.withOps(this.ops.map(Expr<*>::uniqueDereferences))
 }

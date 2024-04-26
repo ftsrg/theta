@@ -28,8 +28,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 public final class Dereference<A extends Type, T extends Type> implements Expr<T> {
@@ -74,8 +72,8 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
         return new Dereference<>(array, offset, uniqueness, type);
     }
 
-    public Dereference<A, T> withFreshVar() {
-        return Dereference.of(array, offset, Var("__Deref__%d".formatted(counter++), Int()).getRef(), type); // TODO: this kills the stuck check
+    public Dereference<A, T> withUniquenessExpr(Expr<IntType> expr) {
+        return Dereference.of(array, offset, expr, type); // TODO: this kills the stuck check
     }
 
     @Override

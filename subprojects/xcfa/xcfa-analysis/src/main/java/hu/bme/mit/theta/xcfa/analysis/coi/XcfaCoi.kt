@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.TransFunc
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -36,7 +37,7 @@ import kotlin.math.min
 
 lateinit var ConeOfInfluence: XcfaCoi
 
-internal typealias S = XcfaState<out ExprState>
+internal typealias S = XcfaState<out PtrState<out ExprState>>
 internal typealias A = XcfaAction
 
 internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()

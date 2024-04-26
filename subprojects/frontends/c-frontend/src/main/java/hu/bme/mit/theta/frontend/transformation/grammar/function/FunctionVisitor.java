@@ -61,7 +61,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CSwitch;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -69,7 +69,6 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -110,11 +109,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     private final List<VarDecl<?>> flatVariables;
     private final Map<VarDecl<?>, CDeclaration> functions;
 
-    private Collection<VarDecl<?>> createVars(CDeclaration declaration) {
+    private void createVars(CDeclaration declaration) {
         String name = declaration.getName();
-        List<VarDecl<?>> vars = new ArrayList<>();
-        createVars(name, declaration, declaration.getActualType(), vars);
-        return vars;
+        createVars(name, declaration, declaration.getActualType());
     }
 
     private String getName(final String name) {
@@ -128,12 +125,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         return sj.toString();
     }
 
-    private void createVars(String name, CDeclaration declaration, CComplexType type, List<VarDecl<?>> vars) {
-        if (type instanceof CStruct) {
-            ((CStruct) type).getFields().forEach((s, type1) -> {
-                createVars(name + "." + s, declaration, type1, vars);
-            });
-        }
+    private void createVars(String name, CDeclaration declaration, CComplexType type) {
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {
@@ -501,7 +493,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     }
                 } else {
                     VarDecl<?> varDecl = declaration.getVarDecls().get(0);
-                    if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) {
+                    if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType) && !(CComplexType.getType(varDecl.getRef(), parseContext) instanceof CVoid)) {
                         AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef(), parseContext).limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
                         compound.getcStatementList().add(cAssume);

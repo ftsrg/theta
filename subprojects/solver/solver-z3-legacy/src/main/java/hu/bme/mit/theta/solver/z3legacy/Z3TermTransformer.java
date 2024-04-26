@@ -112,6 +112,7 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
@@ -766,7 +767,8 @@ final class Z3TermTransformer {
             checkArgument(args.length == 3, "Number of arguments must be three");
             final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
             final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
-            return Exprs.Dereference(op1, op2, transformSort(term.getSort()));
+            final Expr<IntType> op3 = (Expr<IntType>) transform(args[2], model, vars);
+            return Exprs.Dereference(op1, op2, transformSort(term.getSort())).withUniquenessExpr(op3);
         });
     }
 

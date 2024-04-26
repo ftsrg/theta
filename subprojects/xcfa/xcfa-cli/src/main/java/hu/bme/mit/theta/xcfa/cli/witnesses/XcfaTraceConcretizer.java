@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.ptr.PtrState;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
@@ -46,14 +47,14 @@ import static hu.bme.mit.theta.xcfa.UtilsKt.getFlatLabels;
  */
 public class XcfaTraceConcretizer {
     public static Trace<XcfaState<ExplState>, XcfaAction> concretize(
-            final Trace<XcfaState<?>, XcfaAction> trace, SolverFactory solverFactory, ParseContext parseContext) {
-        List<XcfaState<?>> sbeStates = new ArrayList<>();
+            final Trace<XcfaState<PtrState<?>>, XcfaAction> trace, SolverFactory solverFactory, ParseContext parseContext) {
+        List<XcfaState<PtrState<?>>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
 
         sbeStates.add(trace.getState(0));
         for (int i = 0; i < trace.getActions().size(); ++i) {
             final XcfaEdge edge = new XcfaEdge(trace.getAction(i).getSource(), trace.getAction(i).getTarget(), trace.getAction(i).getLabel());
-            sbeActions.add(new XcfaAction(trace.getAction(i).getPid(), edge));
+            sbeActions.add(new XcfaAction(trace.getAction(i).getPid(), edge, sbeStates.get(i)));
             sbeStates.add(trace.getState(i + 1));
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);

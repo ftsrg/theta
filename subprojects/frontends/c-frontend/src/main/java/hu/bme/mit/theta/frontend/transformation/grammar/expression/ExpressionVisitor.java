@@ -18,6 +18,13 @@ package hu.bme.mit.theta.frontend.transformation.grammar.expression;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionAccessContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionBracesContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionBracketsContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionDecrementContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionIncrementContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionMemberAccessContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.PostfixExpressionPtrMemberAccessContext;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -58,6 +65,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import org.kframework.mpfr.BigFloat;
 import org.kframework.mpfr.BinaryMathContext;
 
@@ -67,6 +75,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -92,6 +101,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
     private final FunctionVisitor functionVisitor;
     private final TypedefVisitor typedefVisitor;
     private final TypeVisitor typeVisitor;
+    private final PostfixVisitor postfixVisitor;
     private final Logger uniqueWarningLogger;
 
     public ExpressionVisitor(ParseContext parseContext, FunctionVisitor functionVisitor, Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables, Map<VarDecl<?>, CDeclaration> functions, TypedefVisitor typedefVisitor, TypeVisitor typeVisitor, Logger uniqueWarningLogger) {
@@ -102,6 +112,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         this.typedefVisitor = typedefVisitor;
         this.typeVisitor = typeVisitor;
         this.uniqueWarningLogger = uniqueWarningLogger;
+        postfixVisitor = new PostfixVisitor();
     }
 
     protected VarDecl<?> getVar(String name) {
@@ -593,79 +604,14 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitPostfixExpression(CParser.PostfixExpressionContext ctx) {
-        checkState(ctx.postfixExpressionMemberAccess().size() == 0 || ctx.postfixExpressionBrackets().size() == 0, "Structs of arrays are not yet supported!");
-        checkState(ctx.postfixExpressionPtrMemberAccess().size() == 0, "Struct pointers are not yet supported!");
-        if (ctx.postfixExpressionBraces().size() == 1) {
-            checkState(ctx.postfixExpressionBrackets().size() == 0, "Arrays and functions are not yet supported together!");
-            CParser.ArgumentExpressionListContext exprList = ctx.postfixExpressionBraces(0).argumentExpressionList();
-            List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(functionVisitor)).collect(Collectors.toList());
-            CCall cCall = new CCall(ctx.primaryExpression().getText(), arguments, parseContext);
-            if (ctx.primaryExpression().getText().contains("pthread"))
-                parseContext.setMultiThreading(true);
-            preStatements.add(cCall);
-            functionVisitor.recordMetadata(ctx, cCall);
-            return cCall.getRet().getRef();
-        } else {
-            Expr<?> primary = ctx.primaryExpression().accept(this);
-            if (primary == null) {
-                return null;
-            } else {
-                int size = ctx.postfixExpressionBrackets().size();
-                for (int i = 0; i < size; i++) {
-                    CComplexType arrayType = CComplexType.getType(primary, parseContext);
-                    if (arrayType instanceof CArray) {
-                        CComplexType elemType = ((CArray) arrayType).getEmbeddedType();
-                        Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
-                        Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = dereference(primary, cast(index, ptrType), elemType);
-                        parseContext.getMetadata().create(primary, "cType", elemType);
-                    } else if (arrayType instanceof CPointer) {
-                        CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
-                        Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
-                        Expr<?> index = ctx.postfixExpressionBrackets().get(i).accept(this);
-                        primary = dereference(primary, cast(index, ptrType), elemType);
-                        parseContext.getMetadata().create(primary, "cType", elemType);
-                    } else {
-                        throw new RuntimeException("Non-array expression used as array!");
-                    }
-                }
-                size = ctx.postfixExpressionMemberAccess().size();
-                if (size > 0) {
-                    StringBuilder varName = new StringBuilder(ctx.primaryExpression().getText());
-                    for (int i = 0; i < size; i++) {
-                        varName.append(ctx.postfixExpressionMemberAccess().get(i).getText());
-                    }
-                    VarDecl<?> var = getVar(varName.toString());
-                    if (var == null) return null;
-                    primary = var.getRef();
-                }
-            }
-            CComplexType type = CComplexType.getType(primary, parseContext);
-
-            // we handle ++ and -- as if they were additions and assignments
-            int increment = ctx.postfixExpressionIncrement().size() - ctx.postfixExpressionDecrement().size();
-            if (increment != 0) {
-                checkState(!(type instanceof CArray), "Raw array access not allowed!");
-                Expr<?> expr = primary;
-                for (int i = 0; i < Math.abs(increment); i++) {
-                    if (increment < 0)
-                        expr = AbstractExprs.Sub(expr, type.getUnitValue());
-                    else
-                        expr = AbstractExprs.Add(expr, type.getUnitValue());
-                }
-                parseContext.getMetadata().create(expr, "cType", type);
-                expr = type.castTo(expr);
-                parseContext.getMetadata().create(expr, "cType", type);
-                CExpr cexpr;
-                cexpr = new CExpr(expr, parseContext);
-                // no need to truncate here, as left and right side types are the same
-                CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
-                postStatements.add(cAssignment);
-                functionVisitor.recordMetadata(ctx, cAssignment);
-                functionVisitor.recordMetadata(ctx, cexpr);
-            }
-            return primary;
+        Expr<?> primary = ctx.primaryExpression().accept(this);
+        if (primary == null) {
+            return null;
         }
+        for (PostfixExpressionAccessContext pfExpr : ctx.pfExprs) {
+            primary = pfExpr.accept(postfixVisitor).apply(primary);
+        }
+        return primary;
     }
 
     @Override
@@ -785,5 +731,123 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         uniqueWarningLogger.write(Level.INFO, "WARNING: using int(1) as a string constant\n");
         parseContext.getMetadata().create(ret, "cType", signedInt);
         return ret;
+    }
+
+    class PostfixVisitor extends CBaseVisitor<Function<Expr<?>, Expr<?>>> {
+        @Override
+        public Function<Expr<?>, Expr<?>> visitPostfixExpressionBrackets(PostfixExpressionBracketsContext ctx) {
+            return (primary) -> {
+                CComplexType arrayType = CComplexType.getType(primary, parseContext);
+                if (arrayType instanceof CArray) {
+                    CComplexType elemType = ((CArray) arrayType).getEmbeddedType();
+                    Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
+                    Expr<?> index = ctx.accept(ExpressionVisitor.this);
+                    primary = dereference(primary, cast(index, ptrType), elemType);
+                    parseContext.getMetadata().create(primary, "cType", elemType);
+                    return primary;
+                } else if (arrayType instanceof CPointer) {
+                    CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
+                    Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
+                    Expr<?> index = ctx.accept(ExpressionVisitor.this);
+                    primary = dereference(primary, cast(index, ptrType), elemType);
+                    parseContext.getMetadata().create(primary, "cType", elemType);
+                    return primary;
+                } else {
+                    throw new RuntimeException("Non-array expression used as array!");
+                }
+            };
+        }
+
+        @Override
+        public Function<Expr<?>, Expr<?>> visitPostfixExpressionBraces(PostfixExpressionBracesContext ctx) {
+            return (expr) -> {
+                checkState(expr instanceof RefExpr<?>, "Only variables are callable now.");
+                CParser.ArgumentExpressionListContext exprList = ctx.argumentExpressionList();
+                List<CStatement> arguments = exprList == null ? List.of() : exprList.assignmentExpression().stream().map(assignmentExpressionContext -> assignmentExpressionContext.accept(functionVisitor)).collect(Collectors.toList());
+                CCall cCall = new CCall(((RefExpr<?>) expr).getDecl().getName(), arguments, parseContext);
+                if (cCall.getFunctionId().contains("pthread"))
+                    parseContext.setMultiThreading(true);
+                preStatements.add(cCall);
+                functionVisitor.recordMetadata(ctx, cCall);
+                return cCall.getRet().getRef();
+            };
+        }
+
+        @Override
+        public Function<Expr<?>, Expr<?>> visitPostfixExpressionMemberAccess(PostfixExpressionMemberAccessContext ctx) {
+            return (primary) -> {
+                final CComplexType type = CComplexType.getType(primary, parseContext);
+                checkState(type instanceof CStruct, "Only structs expected here");
+                final CStruct structType = (CStruct) type;
+                final String accName = ctx.Identifier().getText();
+                final int index = structType.getFields().stream().map(Tuple2::get1).toList().indexOf(accName);
+                final var idxExpr = type.getValue(String.valueOf(index));
+                final var embeddedType = structType.getFieldsAsMap().get(accName);
+                checkState(embeddedType != null, "Field [%s] not found, available fields are: %s".formatted(accName, ((CStruct) type).getFieldsAsMap().keySet()));
+                primary = Exprs.Dereference(cast(primary, primary.getType()), cast(idxExpr, primary.getType()), embeddedType.getSmtType());
+                parseContext.getMetadata().create(primary, "cType", embeddedType);
+                return primary;
+            };
+        }
+
+        @Override
+        public Function<Expr<?>, Expr<?>> visitPostfixExpressionPtrMemberAccess(PostfixExpressionPtrMemberAccessContext ctx) {
+            return (primary) -> {
+                final CComplexType type = CComplexType.getType(primary, parseContext);
+                checkState(type instanceof CPointer || type instanceof CArray, "Only pointers expected here");
+                final CComplexType structTypeErased = type instanceof CPointer ? ((CPointer) type).getEmbeddedType() : ((CArray) type).getEmbeddedType();
+                checkState(structTypeErased instanceof CStruct, "Only structs expected here");
+                final CStruct structType = (CStruct) structTypeErased;
+                final String accName = ctx.Identifier().getText();
+                final int index = structType.getFields().stream().map(Tuple2::get1).toList().indexOf(accName);
+                final var idxExpr = structTypeErased.getValue(String.valueOf(index));
+                final var embeddedType = structType.getFieldsAsMap().get(accName);
+                checkState(embeddedType != null, "Field [%s] not found, available fields are: %s".formatted(accName, ((CStruct) structTypeErased).getFieldsAsMap().keySet()));
+                primary = Exprs.Dereference(cast(primary, primary.getType()), cast(idxExpr, primary.getType()), embeddedType.getSmtType());
+                parseContext.getMetadata().create(primary, "cType", embeddedType);
+                return primary;
+            };
+        }
+
+        @Override
+        public Function<Expr<?>, Expr<?>> visitPostfixExpressionIncrement(PostfixExpressionIncrementContext ctx) {
+            return (primary) -> {
+                CComplexType type = CComplexType.getType(primary, parseContext);
+                Expr<?> expr = primary;
+                expr = AbstractExprs.Add(expr, type.getUnitValue());
+                parseContext.getMetadata().create(expr, "cType", type);
+                expr = type.castTo(expr);
+                parseContext.getMetadata().create(expr, "cType", type);
+                CExpr cexpr;
+                cexpr = new CExpr(expr, parseContext);
+                // no need to truncate here, as left and right side types are the same
+                CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
+                postStatements.add(cAssignment);
+                functionVisitor.recordMetadata(ctx, cAssignment);
+                functionVisitor.recordMetadata(ctx, cexpr);
+                return primary;
+            };
+
+        }
+
+        @Override
+        public Function<Expr<?>, Expr<?>> visitPostfixExpressionDecrement(PostfixExpressionDecrementContext ctx) {
+            return (primary) -> {
+                CComplexType type = CComplexType.getType(primary, parseContext);
+                Expr<?> expr = primary;
+                expr = AbstractExprs.Sub(expr, type.getUnitValue());
+                parseContext.getMetadata().create(expr, "cType", type);
+                expr = type.castTo(expr);
+                parseContext.getMetadata().create(expr, "cType", type);
+                CExpr cexpr;
+                cexpr = new CExpr(expr, parseContext);
+                // no need to truncate here, as left and right side types are the same
+                CAssignment cAssignment = new CAssignment(primary, cexpr, "=", parseContext);
+                postStatements.add(cAssignment);
+                functionVisitor.recordMetadata(ctx, cAssignment);
+                functionVisitor.recordMetadata(ctx, cexpr);
+                return expr;
+            };
+        }
     }
 }

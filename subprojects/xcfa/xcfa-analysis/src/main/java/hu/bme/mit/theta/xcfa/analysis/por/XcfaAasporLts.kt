@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -28,7 +29,8 @@ open class XcfaAasporLts(
     private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>
 ) : XcfaSporLts(xcfa) {
 
-    override fun <P : Prec> getEnabledActionsFor(state: XcfaState<*>, exploredActions: Collection<XcfaAction>,
+    override fun <P : Prec> getEnabledActionsFor(state: XcfaState<out PtrState<*>>,
+        exploredActions: Collection<XcfaAction>,
         prec: P): Set<XcfaAction> {
         // Collecting enabled actions
         val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)

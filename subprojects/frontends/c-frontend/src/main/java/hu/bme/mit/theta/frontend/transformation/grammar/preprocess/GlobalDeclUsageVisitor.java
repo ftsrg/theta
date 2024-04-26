@@ -59,8 +59,11 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
             if (!declaration.getType().isTypedef()) {
                 globalUsages.remove(declaration.getName());
                 globalUsages.put(declaration.getName(), new LinkedHashSet<>());
-                usedContexts.removeIf(c -> Objects.equals(c.get1(), declaration.getName()));
-                usedContexts.add(Tuple2.of(declaration.getName(), ctx));
+                if (usedContexts.stream().anyMatch(c -> Objects.equals(c.get1(), declaration.getName()))) {
+                    usedContexts.replaceAll(c -> Objects.equals(c.get1(), declaration.getName()) ? Tuple2.of(declaration.getName(), ctx) : c); // keep the order, but overwrite the context
+                } else {
+                    usedContexts.add(Tuple2.of(declaration.getName(), ctx));
+                }
                 current = declaration.getName();
                 super.visitGlobalDeclaration(ctx);
                 current = null;
