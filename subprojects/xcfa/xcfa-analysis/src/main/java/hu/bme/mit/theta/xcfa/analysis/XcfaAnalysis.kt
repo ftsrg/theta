@@ -30,10 +30,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
-import hu.bme.mit.theta.analysis.ptr.PtrPrec
-import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
-import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
+import hu.bme.mit.theta.analysis.ptr.*
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
@@ -247,10 +244,10 @@ private fun getExplXcfaInitFunc(xcfa: XCFA,
     }
 }
 
-private fun getExplXcfaTransFunc(solver: Solver,
-    maxEnum: Int): (XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>) -> List<XcfaState<PtrState<ExplState>>> {
+private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int, ptrTracking: PtrTracking):
+    (XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>) -> List<XcfaState<PtrState<ExplState>>> {
     val explTransFunc = (ExplStmtTransFunc.create(solver,
-        maxEnum) as TransFunc<ExplState, ExprAction, ExplPrec>).getPtrTransFunc()
+        maxEnum) as TransFunc<ExplState, ExprAction, ExplPrec>).getPtrTransFunc(ptrTracking)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
@@ -260,10 +257,11 @@ private fun getExplXcfaTransFunc(solver: Solver,
 }
 
 class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int,
-    partialOrd: PartialOrd<XcfaState<PtrState<ExplState>>>) : XcfaAnalysis<ExplState, PtrPrec<ExplPrec>>(
+    partialOrd: PartialOrd<XcfaState<PtrState<ExplState>>>, ptrTracking: PtrTracking) :
+    XcfaAnalysis<ExplState, PtrPrec<ExplPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
-    coreTransFunc = getExplXcfaTransFunc(solver, maxEnum)
+        coreTransFunc = getExplXcfaTransFunc(solver, maxEnum, ptrTracking)
 )
 
 /// PRED
@@ -282,10 +280,10 @@ private fun getPredXcfaInitFunc(xcfa: XCFA,
     }
 }
 
-private fun getPredXcfaTransFunc(
-    predAbstractor: PredAbstractors.PredAbstractor): (XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>) -> List<XcfaState<PtrState<PredState>>> {
+private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor, ptrTracking: PtrTracking):
+    (XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>) -> List<XcfaState<PtrState<PredState>>> {
     val predTransFunc = (PredTransFunc.create<StmtAction>(
-        predAbstractor) as TransFunc<PredState, ExprAction, PredPrec>).getPtrTransFunc()
+        predAbstractor) as TransFunc<PredState, ExprAction, PredPrec>).getPtrTransFunc(ptrTracking)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
@@ -295,8 +293,9 @@ private fun getPredXcfaTransFunc(
 }
 
 class PredXcfaAnalysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor,
-    partialOrd: PartialOrd<XcfaState<PtrState<PredState>>>) : XcfaAnalysis<PredState, PtrPrec<PredPrec>>(
+    partialOrd: PartialOrd<XcfaState<PtrState<PredState>>>, ptrTracking: PtrTracking) :
+    XcfaAnalysis<PredState, PtrPrec<PredPrec>>(
     corePartialOrd = partialOrd,
     coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
-    coreTransFunc = getPredXcfaTransFunc(predAbstractor)
+        coreTransFunc = getPredXcfaTransFunc(predAbstractor, ptrTracking)
 )

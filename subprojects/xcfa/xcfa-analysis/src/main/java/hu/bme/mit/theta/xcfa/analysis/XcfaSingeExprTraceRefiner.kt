@@ -23,7 +23,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
-import hu.bme.mit.theta.analysis.ptr.TopCollection
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.*
@@ -74,7 +73,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
             Pair(emptyMap(),
                 listOf())) { (wTriple: WriteTriples, list: List<A>): Pair<WriteTriples, List<A>>, a: A ->
             val newA = (a as XcfaAction).withLastWrites(wTriple)
-            Pair(newA.nextWriteTriples(TopCollection), list + (newA as A))
+            Pair(newA.nextWriteTriples(), list + (newA as A))
         }.second
         val traceToConcretize = Trace.of(rawTrace.states, actions)
 

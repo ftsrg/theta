@@ -126,3 +126,10 @@ object TopCollection: Collection<Expr<*>> {
 
     override fun iterator(): Iterator<Expr<*>> = error("TopCollection not iterable")
 }
+
+enum class PtrTracking {
+    ALWAYS_TOP, // always keep track of all pointer accesses
+    ANY_MATCH, // if any of the arguments match, keep track
+    ALL_MATCH, // if all of the arguments match, keep track
+    NONE // do not keep track of any pointer acceses
+}

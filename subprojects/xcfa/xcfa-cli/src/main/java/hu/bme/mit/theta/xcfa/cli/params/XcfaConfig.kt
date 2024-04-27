@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.params
 
 import com.beust.jcommander.Parameter
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
+import hu.bme.mit.theta.analysis.ptr.PtrTracking
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
@@ -208,6 +209,9 @@ data class CegarAbstractorConfig(
 
     @Parameter(names = ["--search"], description = "Search strategy")
     var search: Search = Search.ERR,
+
+    @Parameter(names = ["--ptr-tracking"], description = "How to track pointers in the transition function")
+    var ptrTtracking: PtrTracking = PtrTracking.ALWAYS_TOP
 ) : Config
 
 data class CegarRefinerConfig(
