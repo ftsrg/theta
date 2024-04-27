@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
+import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
@@ -234,8 +235,9 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
         } ?: ExprUtils.simplify(expr)
         if (expr == True()) return true
         return WithPushPop(dependencySolver).use {
-            dependencySolver.add(state.sGlobal.toExpr())
-            dependencySolver.add(expr)
+            dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
+            dependencySolver.add(
+                PathUtils.unfold(expr, 0)) // is it always given that the state will produce 0 indexed constants?
             dependencySolver.check().isSat // two pointers may point to the same memory location
         }
     }
