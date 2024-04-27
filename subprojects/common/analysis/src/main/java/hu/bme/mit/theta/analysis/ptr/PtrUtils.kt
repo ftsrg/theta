@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs
+import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.TypeUtils
 
@@ -38,9 +39,9 @@ enum class AccessType {
     READ, WRITE
 }
 
-val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
     get() = when (this) {
-        is MemoryAssignStmt<*, *> -> expr.dereferences.map { Pair(it, AccessType.READ) } + listOf(
+        is MemoryAssignStmt<*, *, *> -> expr.dereferences.map { Pair(it, AccessType.READ) } + listOf(
             Pair(deref, AccessType.WRITE))
 
         is AssignStmt<*> -> expr.dereferences.map { Pair(it, AccessType.READ) }
@@ -54,8 +55,8 @@ val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
         else -> TODO("Not yet implemented for ${this.javaClass.simpleName}")
     }
 
-val Expr<*>.dereferences: List<Dereference<*, *>>
-    get() = if (this is Dereference<*, *>) {
+val Expr<*>.dereferences: List<Dereference<*, *, *>>
+    get() = if (this is Dereference<*, *, *>) {
         listOf(this)
     } else {
         ops.flatMap { it.dereferences }
@@ -71,12 +72,12 @@ fun SequenceStmt.collapse(): Stmt =
         this
     }
 
-fun Stmt.uniqueDereferences(vargen: (String) -> VarDecl<IntType>): Stmt {
+fun Stmt.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>): Stmt {
     val ret = ArrayList<Stmt>()
     val newStmt = when (this) {
-        is MemoryAssignStmt<*, *> -> {
+        is MemoryAssignStmt<*, *, *> -> {
             MemoryAssignStmt.create(
-                deref.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second as Dereference<*, *>,
+                deref.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second as Dereference<*, *, *>,
                 expr.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)
         }
 
@@ -96,19 +97,20 @@ fun Stmt.uniqueDereferences(vargen: (String) -> VarDecl<IntType>): Stmt {
     return SequenceStmt.of(ret + newStmt).collapse()
 }
 
-fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String) -> VarDecl<IntType>): Pair<List<Stmt>, Expr<T>> =
-    if (this is Dereference<*, T>) {
+fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>): Pair<List<Stmt>, Expr<T>> =
+    if (this is Dereference<*, *, T>) {
         val ret = ArrayList<Stmt>()
         Preconditions.checkState(this.uniquenessIdx.isEmpty, "Only non-pretransformed dereferences should be here")
-        val arrayConst = vargen("a")
-        val offsetConst = vargen("o")
+        val arrayConst = vargen("a", array.type)
+        val offsetConst = vargen("o", offset.type)
         val newList = listOf(
             Stmts.Assume(Eq(arrayConst.ref, array.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)),
             Stmts.Assume(Eq(offsetConst.ref, offset.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)),
         )
         Pair(
             ret + newList,
-            Exprs.Dereference(arrayConst.ref, offsetConst.ref, type).withUniquenessExpr(vargen("idx").ref))
+            Exprs.Dereference(arrayConst.ref, offsetConst.ref, type)
+                .withUniquenessExpr(vargen("idx", Int()).ref as Expr<IntType>))
     } else {
         val ret = ArrayList<Stmt>()
         Pair(ret, this.withOps(this.ops.map { it.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second }))

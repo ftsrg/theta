@@ -80,18 +80,18 @@ class LiteralDerefPass(val parseContext: ParseContext) : ProcedurePass {
         if (it is IntLitExpr) it.value else BvUtils.neutralBvLitExprToBigInteger(it as BvLitExpr)
     }
 
-    private val Dereference<*, *>.triple: Triple<Int, Int, Type>
+    private val Dereference<*, *, *>.triple: Triple<Int, Int, Type>
         get() = Triple(toValue(array as LitExpr<*>).toInt(), toValue(offset as LitExpr<*>).toInt(), type)
 
-    private fun Dereference<*, *>.assumption(dereference: Dereference<*, *>) =
+    private fun Dereference<*, *, *>.assumption(dereference: Dereference<*, *, *>) =
         AssumeStmt.of(And(Eq(dereference.array, array), Eq(dereference.offset, offset)))
 
 
-    private fun MemoryAssignStmt<*, *>.assignment(lut: Map<Dereference<*, *>, VarDecl<*>>) =
+    private fun MemoryAssignStmt<*, *, *>.assignment(lut: Map<Dereference<*, *, *>, VarDecl<*>>) =
         AssignStmt.of(cast(lut[deref]!!, deref.type), cast(expr.replaceDeref(lut), deref.type))
 
 
-    private fun XcfaLabel.replaceDeref(lut: Map<Dereference<*, *>, VarDecl<*>>): XcfaLabel =
+    private fun XcfaLabel.replaceDeref(lut: Map<Dereference<*, *, *>, VarDecl<*>>): XcfaLabel =
         when(this) {
             is InvokeLabel -> InvokeLabel(this.name, this.params.map{it.replaceDeref(lut)}, metadata, tempLookup)
             is NondetLabel -> NondetLabel(labels.map { it.replaceDeref(lut) }.toSet(), metadata)
@@ -109,9 +109,9 @@ class LiteralDerefPass(val parseContext: ParseContext) : ProcedurePass {
             else -> error("Not implemented for ${this.javaClass.simpleName}")
         }
 
-    private fun Stmt.replaceDeref(lut: Map<Dereference<*, *>, VarDecl<*>>): List<Stmt> =
+    private fun Stmt.replaceDeref(lut: Map<Dereference<*, *, *>, VarDecl<*>>): List<Stmt> =
         when(this) {
-            is MemoryAssignStmt<*, *> -> if(this.deref in lut)
+            is MemoryAssignStmt<*, *, *> -> if (this.deref in lut)
                 listOf(this.assignment(lut))
             else {
                 lut.map { SequenceStmt.of(listOf(it.key.assumption(deref), this.assignment(lut))) } + SequenceStmt.of(
@@ -123,7 +123,7 @@ class LiteralDerefPass(val parseContext: ParseContext) : ProcedurePass {
         }
 
     // TODO: this should also be aware of non-literal dereferences
-    private fun Expr<*>.replaceDeref(lut: Map<Dereference<*, *>, VarDecl<*>>): Expr<*> =
+    private fun Expr<*>.replaceDeref(lut: Map<Dereference<*, *, *>, VarDecl<*>>): Expr<*> =
         if(this in lut) {
             lut[this]!!.ref
         } else {

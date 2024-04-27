@@ -45,7 +45,7 @@ public final class Stmts {
         return AssignStmt.of(lhs, rhs);
     }
 
-    public static <P extends Type, T extends Type> MemoryAssignStmt<P, T> MemoryAssign(final Dereference<P, T> deref, final Expr<T> expr) {
+    public static <P extends Type, O extends Type, T extends Type> MemoryAssignStmt<P, O, T> MemoryAssign(final Dereference<P, O, T> deref, final Expr<T> expr) {
         return MemoryAssignStmt.of(deref, expr);
     }
 

@@ -122,11 +122,11 @@ public class StmtSimplifier {
         }
 
         @Override
-        public <PtrType extends Type, DeclType extends Type> SimplifyResult visit(MemoryAssignStmt<PtrType, DeclType> stmt, MutableValuation valuation) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> SimplifyResult visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, MutableValuation valuation) {
             final Expr<DeclType> expr = ExprUtils.simplify(stmt.getExpr(), valuation);
-            final Dereference<PtrType, DeclType> deref = (Dereference<PtrType, DeclType>) ExprUtils.simplify(stmt.getDeref(), valuation);
+            final Dereference<PtrType, OffsetType, DeclType> deref = (Dereference<PtrType, OffsetType, DeclType>) ExprUtils.simplify(stmt.getDeref(), valuation);
 
-            if (expr instanceof LitExpr<?> litExpr && deref.getOffset() instanceof LitExpr<PtrType> litOffset && deref.getArray() instanceof RefExpr<PtrType> ref) {
+            if (expr instanceof LitExpr<?> litExpr && deref.getOffset() instanceof LitExpr<OffsetType> litOffset && deref.getArray() instanceof RefExpr<PtrType> ref) {
                 IntLitExpr intLitOffset = (IntLitExpr) litOffset;
                 VarDecl<PtrType> varDecl = (VarDecl<PtrType>) ref.getDecl();
                 valuation.put(varDecl.getConstDecl(intLitOffset.getValue().intValue()), litExpr);

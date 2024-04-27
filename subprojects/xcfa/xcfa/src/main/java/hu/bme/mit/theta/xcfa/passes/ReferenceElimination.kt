@@ -113,8 +113,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                     cast(this.expr.changeReferredVars(varLut, parseContext), this.varDecl.type)))
             }
 
-            is MemoryAssignStmt<*, *> -> listOf(
-                MemoryAssignStmt.create(deref.changeReferredVars(varLut, parseContext) as Dereference<*, *>,
+            is MemoryAssignStmt<*, *, *> -> listOf(
+                MemoryAssignStmt.create(deref.changeReferredVars(varLut, parseContext) as Dereference<*, *, *>,
                     expr.changeReferredVars(varLut, parseContext)))
 
             is AssumeStmt -> listOf(AssumeStmt.of(cond.changeReferredVars(varLut, parseContext)))

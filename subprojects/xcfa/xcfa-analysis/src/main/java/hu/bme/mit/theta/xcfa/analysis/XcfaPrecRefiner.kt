@@ -66,7 +66,7 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
 }
 
 private fun Expr<*>.hasDeref(): Boolean =
-    this is Dereference<*, *> || this.ops.any(Expr<*>::hasDeref)
+    this is Dereference<*, *, *> || this.ops.any(Expr<*>::hasDeref)
 
 fun <P : Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
     if (lookup.isEmpty()) this

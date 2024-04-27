@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.IteExpr
@@ -32,14 +33,13 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 
-private val varList = LinkedHashMap<String, LinkedHashMap<Int, VarDecl<IntType>>>()
+private val varList = LinkedHashMap<Pair<String, Type>, LinkedHashMap<Int, VarDecl<*>>>()
 private val solver = Z3LegacySolverFactory.getInstance().createSolver()
 
 abstract class PtrAction(writeTriples: WriteTriples, val inCnt: Int) : StmtAction() {
@@ -102,11 +102,11 @@ abstract class PtrAction(writeTriples: WriteTriples, val inCnt: Int) : StmtActio
     private fun createStmtList(writeTriples: WriteTriples): Pair<WriteTriples, List<Stmt>> {
         val nextWriteTriples = writeTriples.toMutable()
         val stmtList = ArrayList<Stmt>()
-        val vargen = { it: String ->
+        val vargen = { it: String, type: Type ->
             val current = cnts.getOrDefault(it, inCnt)
             cnts[it] = current + 1
-            val iMap = varList.getOrPut(it) { LinkedHashMap() }
-            iMap.getOrPut(current) { Var("__${it}_$current", Int()) }
+            val iMap = varList.getOrPut(Pair(it, type)) { LinkedHashMap() }
+            iMap.getOrPut(current) { Var("__${it}_$current", type) }
         }
         for (stmt in this.stmtList.map { it.uniqueDereferences(vargen) }) {
             val preList = ArrayList<Stmt>()

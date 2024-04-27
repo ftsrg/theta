@@ -61,7 +61,7 @@ public final class StmtApplier {
         if (stmt instanceof AssignStmt) {
             final AssignStmt<?> assignStmt = (AssignStmt<?>) stmt;
             return applyAssign(assignStmt, val, approximate);
-        } else if (stmt instanceof MemoryAssignStmt<?, ?> memoryAssignStmt) {
+        } else if (stmt instanceof MemoryAssignStmt<?, ?, ?> memoryAssignStmt) {
             return applyMemAssign(memoryAssignStmt, val, approximate);
         } else if (stmt instanceof AssumeStmt) {
             final AssumeStmt assumeStmt = (AssumeStmt) stmt;
@@ -91,7 +91,7 @@ public final class StmtApplier {
         }
     }
 
-    private static ApplyResult applyMemAssign(MemoryAssignStmt<?, ?> stmt, MutableValuation val, boolean approximate) {
+    private static ApplyResult applyMemAssign(MemoryAssignStmt<?, ?, ?> stmt, MutableValuation val, boolean approximate) {
         final var expr = ExprUtils.simplify(stmt.getDeref(), val);
         final var deref = stmt.getDeref();
         final var newOffset = ExprUtils.simplify(deref.getOffset(), val);

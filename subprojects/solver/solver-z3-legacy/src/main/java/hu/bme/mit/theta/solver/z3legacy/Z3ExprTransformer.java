@@ -1257,7 +1257,7 @@ final class Z3ExprTransformer {
         }
     }
 
-    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?> expr) {
+    private com.microsoft.z3legacy.Expr transformDereference(final Dereference<?, ?, ?> expr) {
         checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
         final var sort = transformer.toSort(expr.getArray().getType());
         final var constSort = transformer.toSort(Int());

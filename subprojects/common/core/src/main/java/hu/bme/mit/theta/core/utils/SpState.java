@@ -149,7 +149,7 @@ public class SpState {
         }
 
         @Override
-        public <PtrType extends Type, DeclType extends Type> SpState visit(MemoryAssignStmt<PtrType, DeclType> stmt, SpState param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> SpState visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, SpState param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 

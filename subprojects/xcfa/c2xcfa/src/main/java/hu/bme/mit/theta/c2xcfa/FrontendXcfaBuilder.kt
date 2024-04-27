@@ -226,7 +226,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
         val rExpression = statement.getrExpression()
         val label: StmtLabel = when (lValue) {
-            is Dereference<*, *> -> {
+            is Dereference<*, *, *> -> {
                 val op = cast(lValue.array, lValue.array.type)
                 val offset = cast(lValue.offset, op.type)
                 val type = CComplexType.getType(rExpression, parseContext)

@@ -128,7 +128,7 @@ public abstract class CSimpleType {
         return signed;
     }
 
-    public void setSigned(boolean signed) {
+    public void setSigned(Boolean signed) {
         this.signed = signed;
     }
 

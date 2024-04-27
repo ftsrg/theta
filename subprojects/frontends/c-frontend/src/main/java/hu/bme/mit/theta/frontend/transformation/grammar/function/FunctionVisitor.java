@@ -159,7 +159,6 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         flatVariables.clear();
         functions.clear();
 
-        ctx.accept(typedefVisitor);
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
 
         List<CParser.ExternalDeclarationContext> globalUsages = globalDeclUsageVisitor.getGlobalUsages(ctx);
@@ -170,6 +169,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             parseContext.setArithmetic(
                     arithmeticTraits.contains(ArithmeticTrait.BITWISE) || arithmeticTraits.contains(ArithmeticTrait.FLOAT) ?
                             ArithmeticType.bitvector : ArithmeticType.integer);
+        }
+
+        Set<CDeclaration> typedefs = ctx.accept(typedefVisitor);
+        for (CDeclaration typedef : typedefs) {
+            parseContext.getMetadata().create(typedef.getName(), "cTypedefName", typedef.getActualType());
         }
 
         CProgram program = new CProgram(parseContext);

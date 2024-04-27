@@ -110,7 +110,7 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
         is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type),
             cast(expr.changeVars(varLut, parseContext), varDecl.type))
 
-        is MemoryAssignStmt<*, *> -> MemoryAssignStmt.create(deref.changeVars(varLut) as Dereference<out Type, *>,
+        is MemoryAssignStmt<*, *, *> -> MemoryAssignStmt.create(deref.changeVars(varLut) as Dereference<out Type, *, *>,
             expr.changeVars(varLut))
 
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))

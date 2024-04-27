@@ -191,9 +191,9 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
             is AssignStmt<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
-            is MemoryAssignStmt<*, *> -> {
+            is MemoryAssignStmt<*, *, *> -> {
                 var expr: Expr<*> = stmt.deref
-                while (expr is Dereference<*, *>) {
+                while (expr is Dereference<*, *, *>) {
                     expr = expr.array
                 }
                 when (expr) {
@@ -401,12 +401,12 @@ val Expr<*>.references: List<Reference<*, *>>
         ops.flatMap { it.references }
     }
 
-val XcfaLabel.dereferences: List<Dereference<*, *>>
+val XcfaLabel.dereferences: List<Dereference<*, *, *>>
     get() = when (this) {
         is StmtLabel -> when (stmt) {
             is AssumeStmt -> stmt.cond.dereferences
             is AssignStmt<*> -> stmt.expr.dereferences
-            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences + listOf(stmt.deref)
+            is MemoryAssignStmt<*, *, *> -> stmt.expr.dereferences + listOf(stmt.deref)
             else -> emptyList()
         }
 
@@ -417,14 +417,14 @@ val XcfaLabel.dereferences: List<Dereference<*, *>>
         else -> emptyList()
     }
 
-val Expr<*>.dereferences: List<Dereference<*, *>>
-    get() = if (this is Dereference<*, *>) {
+val Expr<*>.dereferences: List<Dereference<*, *, *>>
+    get() = if (this is Dereference<*, *, *>) {
         listOf(this)
     } else {
         ops.flatMap { it.dereferences }
     }
 
-val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
     get() = when (this) {
         is NondetLabel -> error("NondetLabel is not well-defined for dereferences due to ordering")
         is SequenceLabel -> labels.flatMap(XcfaLabel::dereferencesWithAccessTypes)
@@ -435,9 +435,9 @@ val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessTy
         else -> listOf()
     }
 
-val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
     get() = when (this) {
-        is MemoryAssignStmt<*, *> -> expr.dereferences.map { Pair(it, READ) } + listOf(Pair(deref, WRITE))
+        is MemoryAssignStmt<*, *, *> -> expr.dereferences.map { Pair(it, READ) } + listOf(Pair(deref, WRITE))
         is AssignStmt<*> -> expr.dereferences.map { Pair(it, READ) }
         is AssumeStmt -> cond.dereferences.map { Pair(it, READ) }
         else -> listOf()
@@ -446,8 +446,8 @@ val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
 fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel = if (this is StmtLabel) {
     val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
     when (stmt) {
-        is MemoryAssignStmt<*, *> -> {
-            simplified as MemoryAssignStmt<*, *>
+        is MemoryAssignStmt<*, *, *> -> {
+            simplified as MemoryAssignStmt<*, *, *>
             if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
                 parseContext.metadata.create(simplified.expr, "cType",
                     CComplexType.getType(stmt.expr, parseContext))

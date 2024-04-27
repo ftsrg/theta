@@ -437,7 +437,7 @@ public final class ExprSimplifier {
         return expr.with(cond, then, elze);
     }
 
-    private Expr<?> simplifyDereference(final Dereference<?, ?> expr, final Valuation val) {
+    private Expr<?> simplifyDereference(final Dereference<?, ?, ?> expr, final Valuation val) {
         return expr.map(it -> simplify(it, val));
     }
 

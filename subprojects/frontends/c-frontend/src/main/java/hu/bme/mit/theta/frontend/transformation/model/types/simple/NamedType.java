@@ -156,6 +156,8 @@ public class NamedType extends CSimpleType {
             case "_Bool":
                 cSimpleType.setBool(true);
                 break;
+            case "int":
+                break;
             default:
                 if (!cSimpleType.isTypedef()) {
                     throw new RuntimeException(
