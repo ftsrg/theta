@@ -73,7 +73,8 @@ public class XcfaTraceConcretizer {
             if (i < sbeTrace.getActions().size()) {
                 final var action = sbeTrace.getAction(i);
                 int finalI = i;
-                cfaActions.add(action.withLabel(new SequenceLabel(getFlatLabels(action.getLabel()).stream().map(it -> UtilsKt.simplify(it, MutableValuation.copyOf(valuations.getState(finalI)), parseContext)).toList())));
+                final var val = MutableValuation.copyOf(valuations.getState(finalI));
+                cfaActions.add(action.withLabel(new SequenceLabel(getFlatLabels(action.getLabel()).stream().map(it -> UtilsKt.simplify(it, val, parseContext)).toList())));
             }
         }
 

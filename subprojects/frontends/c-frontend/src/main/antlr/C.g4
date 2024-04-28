@@ -209,12 +209,12 @@ declarationSpecifiers2
 
 // otherwise, (y*y)-2 is considered a cast
 castDeclarationSpecifierList
-    : spec1+=castDeclarationSpecifier* spec2+=typeSpecifier* spec1+=castDeclarationSpecifier*
+    : spec1+=castDeclarationSpecifier* spec2=typeSpecifierPointer?
     ;
 
 castDeclarationSpecifier
     : storageClassSpecifier
-    | typeSpecifierPointer
+    | typeSpecifier
     | typeQualifier
     | functionSpecifier
     | alignmentSpecifier

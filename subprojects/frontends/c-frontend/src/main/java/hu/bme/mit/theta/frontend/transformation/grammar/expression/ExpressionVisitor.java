@@ -666,7 +666,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             } else if (text.startsWith("0b")) {
                 throw new UnsupportedOperationException("Binary FP constants are not yet supported!");
             } else {
-                bigFloat = new BigFloat(text, new BinaryMathContext(significand, exponent));
+                bigFloat = new BigFloat(text, new BinaryMathContext(significand - 1, exponent));
             }
             FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(exponent, significand));
             parseContext.getMetadata().create(fpLitExpr, "cType", type);

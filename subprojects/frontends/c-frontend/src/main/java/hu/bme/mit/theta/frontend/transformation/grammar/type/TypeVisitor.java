@@ -20,7 +20,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierContext;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierListContext;
-import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.TypeSpecifierContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.TypeSpecifierPointerContext;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
@@ -176,8 +176,8 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     }
 
     private CSimpleType createCType(
-            List<CParser.CastDeclarationSpecifierContext> spec1list,
-            List<CParser.TypeSpecifierContext> spec2list
+            List<CastDeclarationSpecifierContext> spec1list,
+            TypeSpecifierPointerContext spec2
     ) {
         List<CSimpleType> cSimpleTypes = new ArrayList<>();
         for (CastDeclarationSpecifierContext declarationSpecifierContext : spec1list) {
@@ -188,12 +188,10 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
                 }
             }
         }
-        for (TypeSpecifierContext declarationSpecifierContext : spec2list) {
-            for (ParseTree child : declarationSpecifierContext.children) {
-                CSimpleType ctype = child.accept(this);
-                if (ctype != null) {
-                    cSimpleTypes.add(ctype);
-                }
+        if (spec2 != null) {
+            CSimpleType ctype = spec2.accept(this);
+            if (ctype != null) {
+                cSimpleTypes.add(ctype);
             }
         }
 
