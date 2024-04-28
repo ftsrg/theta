@@ -161,6 +161,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         functions.clear();
 
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
+        ctx.accept(typedefVisitor);
 
         List<CParser.ExternalDeclarationContext> globalUsages = globalDeclUsageVisitor.getGlobalUsages(ctx);
 
