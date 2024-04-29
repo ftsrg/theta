@@ -9,7 +9,9 @@ import hu.bme.mit.theta.solver.SolverStatus
 class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
 
     private lateinit var reads: Map<VarDecl<*>, List<E>>
-    private val preventedClauses: MutableSet<Triple<Relation<E>, E, Reason>> = mutableSetOf()
+    private val preventedClauses: MutableMap<Int, MutableSet<Expr<BoolType>>> = mutableMapOf()
+
+    private val Expr<BoolType>.prevented: Boolean get() = preventedClauses.any { this in it.value }
 
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
@@ -25,39 +27,41 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
         preventivePropagation()
     }
 
+    override fun pop(levels: Int) {
+        super.pop(levels)
+        preventedClauses.keys.filter { it > solverLevel }.forEach { preventedClauses.remove(it) }
+    }
+
     private fun preventivePropagation() {
         val rels = partialAssignment.peek().rels
-        val preventiveClauses = mutableSetOf<Triple<Relation<E>, E, Reason>>() // rf{w->r}, w'
         writes.forEach { (v, ws) ->
             val rs = reads[v] ?: emptyList()
             for (w in ws) for (r in rs) {
                 rels[r.clkId][w.clkId]?.let { reason -> // r -> w
                     rfs[v]?.find { it.from == w && it.to == r }?.let { rf -> // rf{w->r}
-                        userPropagator.propagateConsequence(reason.exprs, Not(rf.declRef))
+                        if (!rf.declRef.prevented) {
+                            userPropagator.propagateConsequence(reason.exprs, Not(rf.declRef))
+                            preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(rf.declRef)
+                        }
                     }
                 }
                 rels[w.clkId][r.clkId]?.let { wrReason ->
                     for (w0 in ws)
                         rels[w0.clkId][w.clkId]?.let { w0wReason -> // w0 -> w -> r
                             rfs[v]?.find { it.from == w0 && it.to == r }?.let { rf -> // rf{w0->r}
-                                Triple(rf, w, wrReason and w0wReason).let {
-                                    if (it !in preventedClauses) preventiveClauses.add(it)
+                                val reason = wrReason and w0wReason
+                                if (partialAssignment.any { it.relation == rf } && !w.guardExpr.prevented) {
+                                    userPropagator.propagateConsequence(reason.exprs, Not(w.guardExpr))
+                                    preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(w.guardExpr)
+                                }
+                                if (partialAssignment.any { it.event == w } && !rf.declRef.prevented) {
+                                    userPropagator.propagateConsequence(reason.exprs, Not(rf.declRef))
+                                    preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(rf.declRef)
                                 }
                             }
                         }
                 }
             }
         }
-
-        preventedClauses.addAll(preventiveClauses.filter { (rf, w, reason) ->
-            var propagated: Unit? = null
-            if (partialAssignment.any { it.relation == rf }) {
-                propagated = userPropagator.propagateConsequence(reason.exprs + rf.declRef, Not(w.guardExpr))
-            }
-            if (partialAssignment.any { it.event == w }) {
-                propagated = userPropagator.propagateConsequence(reason.exprs + w.guardExpr, Not(rf.declRef))
-            }
-            propagated != null
-        })
     }
 }

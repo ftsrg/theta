@@ -48,16 +48,11 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
             solverLevel++
         }
 
-        override fun onPop(levels: Int) {
-            solverLevel -= levels
-            while (partialAssignment.isNotEmpty() && partialAssignment.peek().solverLevel > solverLevel) {
-                partialAssignment.pop()
-            }
-        }
+        override fun onPop(levels: Int) = pop(levels)
     }
 
     override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(userPropagator)
-    private var solverLevel: Int = 0
+    protected var solverLevel: Int = 0
 
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
@@ -89,15 +84,15 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
     private fun propagate(rf: Relation<E>) {
         check(rf.type == RelationType.RFI || rf.type == RelationType.RFE)
-        val assignement = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
-        partialAssignment.push(assignement)
-        val reason0 = setAndClose(assignement.rels, rf)
+        val assignment = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
+        partialAssignment.push(assignment)
+        val reason0 = setAndClose(assignment.rels, rf)
         propagate(reason0)
 
         val writes = writes[rf.from.const.varDecl]!!
             .filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }
         for (w in writes) {
-            val reason = derive(assignement.rels, rf, w)
+            val reason = derive(assignment.rels, rf, w)
             propagate(reason)
         }
     }
@@ -117,8 +112,14 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     override fun propagate(reason: Reason?): Boolean {
         reason ?: return false
         propagated.add(reason)
-        System.err.println("Conflict: ${reason.exprs}")
         userPropagator.propagateConflict(reason.exprs)
         return true
+    }
+
+    protected open fun pop(levels: Int) {
+        solverLevel -= levels
+        while (partialAssignment.isNotEmpty() && partialAssignment.peek().solverLevel > solverLevel) {
+            partialAssignment.pop()
+        }
     }
 }

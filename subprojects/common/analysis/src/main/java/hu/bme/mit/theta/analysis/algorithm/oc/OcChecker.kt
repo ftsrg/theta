@@ -141,6 +141,13 @@ sealed class Reason {
     val expr: Expr<BoolType> get() = exprs.toAnd()
     infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
     open fun toExprs(): List<Expr<BoolType>> = reasons.map { it.toExprs() }.flatten().filter { it !is TrueExpr }
+    override fun hashCode(): Int = exprs.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Reason) return false
+        if (exprs != other.exprs) return false
+        return true
+    }
 }
 
 class CombinedReason(override val reasons: List<Reason>) : Reason()
