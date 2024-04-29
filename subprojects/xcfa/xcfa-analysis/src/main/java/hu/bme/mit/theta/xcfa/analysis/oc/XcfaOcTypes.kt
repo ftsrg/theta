@@ -35,6 +35,7 @@ internal typealias R = Relation<XcfaEvent>
 enum class OcDecisionProcedureType(internal val checker: () -> OcChecker<E>) {
     BASIC({ BasicOcChecker() }),
     PROPAGATOR({ UserPropagatorOcChecker() }),
+    PREVENTIVE({ PreventivePropagatorOcChecker() }),
 }
 
 /**
