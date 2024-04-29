@@ -172,17 +172,17 @@ class FromReadReason<E : Event>(rf: Relation<E>, w: Event, wAfterRf: Reason) :
  * either a relation (being enabled) or an event (being enabled - having a guard that evaluates to true).
  * The fix (closed by theory axioms) relations and the solver decision stack level are also stored.
  */
-internal class OcAssignment<E : Event>(
+class OcAssignment<E : Event> internal constructor(
     val relation: Relation<E>? = null,
     val event: E? = null,
     val rels: Array<Array<Reason?>>,
     val solverLevel: Int = 0,
 ) {
 
-    constructor(rels: Array<Array<Reason?>>, e: E, solverLevel: Int = 0)
+    internal constructor(rels: Array<Array<Reason?>>, e: E, solverLevel: Int = 0)
         : this(event = e, rels = rels.copy(), solverLevel = solverLevel)
 
-    constructor(rels: Array<Array<Reason?>>, r: Relation<E>, solverLevel: Int = 0)
+    internal constructor(rels: Array<Array<Reason?>>, r: Relation<E>, solverLevel: Int = 0)
         : this(relation = r, rels = rels.copy(), solverLevel = solverLevel)
 
     override fun toString(): String {

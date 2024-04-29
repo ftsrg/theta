@@ -26,20 +26,17 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.util.*
 
-class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
+open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
-    private val partialAssignment = Stack<OcAssignment<E>>()
-    private lateinit var writes: Map<VarDecl<*>, Map<Int, List<E>>>
-    private lateinit var flatWrites: List<E>
-    private lateinit var rfs: Map<VarDecl<*>, List<Relation<E>>>
+    protected val partialAssignment = Stack<OcAssignment<E>>()
+    protected lateinit var writes: Map<VarDecl<*>, List<E>>
+    protected lateinit var flatWrites: List<E>
+    protected lateinit var rfs: Map<VarDecl<*>, List<Relation<E>>>
     private lateinit var flatRfs: List<Relation<E>>
 
-    private val userPropagator: JavaSMTUserPropagator = object : JavaSMTUserPropagator() {
+    protected val userPropagator: JavaSMTUserPropagator = object : JavaSMTUserPropagator() {
         override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
-            if (value) {
-                flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }
-                    ?: flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
-            }
+            if (value) propagate(expr)
         }
 
         override fun onFinalCheck() =
@@ -67,8 +64,8 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         pos: List<Relation<E>>,
         rfs: Map<VarDecl<*>, List<Relation<E>>>,
     ): SolverStatus? {
-        this.writes = events.keys.associateWith { v -> events[v]!!.keys.associateWith { p -> events[v]!![p]!!.filter { it.type == EventType.WRITE } } }
-        flatWrites = this.writes.values.flatMap { it.values.flatten() }
+        writes = events.keys.associateWith { v -> events[v]!!.values.flatten().filter { it.type == EventType.WRITE } }
+        flatWrites = this.writes.values.flatten()
         this.rfs = rfs
         flatRfs = rfs.values.flatten()
 
@@ -85,6 +82,11 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
     override fun getRelations(): Array<Array<Reason?>>? = partialAssignment.lastOrNull()?.rels?.copy()
 
+    protected open fun propagate(expr: Expr<BoolType>) {
+        flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }
+            ?: flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
+    }
+
     private fun propagate(rf: Relation<E>) {
         check(rf.type == RelationType.RFI || rf.type == RelationType.RFE)
         val assignement = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
@@ -92,7 +94,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         val reason0 = setAndClose(assignement.rels, rf)
         propagate(reason0)
 
-        val writes = writes[rf.from.const.varDecl]!!.values.flatten()
+        val writes = writes[rf.from.const.varDecl]!!
             .filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }
         for (w in writes) {
             val reason = derive(assignement.rels, rf, w)
@@ -115,6 +117,7 @@ class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     override fun propagate(reason: Reason?): Boolean {
         reason ?: return false
         propagated.add(reason)
+        System.err.println("Conflict: ${reason.exprs}")
         userPropagator.propagateConflict(reason.exprs)
         return true
     }
