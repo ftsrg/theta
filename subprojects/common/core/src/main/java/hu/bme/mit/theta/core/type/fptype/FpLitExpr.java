@@ -23,6 +23,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 
+import java.util.Arrays;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.FpUtils.bigFloatToFpLitExpr;
@@ -47,6 +49,23 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
 
     public static FpLitExpr of(final boolean hidden, final BvLitExpr exponent, final BvLitExpr significand) {
         return new FpLitExpr(hidden, exponent, significand);
+    }
+
+    public static FpLitExpr of(final BvLitExpr value, final FpType fpType) {
+        boolean[] literal = value.getValue();
+        checkArgument(fpType.getExponent() + fpType.getSignificand() + 1 == literal.length);
+        return new FpLitExpr(
+                literal[0],
+                BvLitExpr.of(Arrays.copyOfRange(literal, 1, fpType.getExponent() + 1)),
+                BvLitExpr.of(Arrays.copyOfRange(literal, fpType.getExponent() + 1, fpType.getExponent() + fpType.getSignificand() + 1)));
+    }
+
+    public static FpLitExpr of(final BvLitExpr hidden, final BvLitExpr exponent, final BvLitExpr significand) {
+        boolean[] hiddenLit = hidden.getValue();
+        return new FpLitExpr(
+                hiddenLit[0],
+                exponent,
+                significand);
     }
 
     public boolean getHidden() {
@@ -160,6 +179,13 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
         return BoolExprs.Bool(this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand));
     }
 
+    public BoolLitExpr assign(final FpLitExpr that) {
+        checkArgument(this.getType().equals(that.getType()));
+        var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
+        var right = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), that);
+        return BoolExprs.Bool(this.hidden == that.hidden && this.exponent.equals(that.exponent) && this.significand.equals(that.significand));
+    }
+
     public BoolLitExpr gt(final FpLitExpr that) {
         checkArgument(this.getType().equals(that.getType()));
         var left = fpLitExprToBigFloat(FpRoundingMode.getDefaultRoundingMode(), this);
@@ -252,7 +278,9 @@ public class FpLitExpr extends NullaryExpr<FpType> implements LitExpr<FpType>, C
     @Override
     public boolean equals(final Object obj) {
         if (obj != null && this.getClass() == obj.getClass() && getType().equals(((FpLitExpr) obj).getType())) {
-            return eq((FpLitExpr) obj).equals(BoolExprs.True());
+            return this.exponent.equals(((FpLitExpr) obj).exponent) &&
+                    this.hidden == ((FpLitExpr) obj).hidden &&
+                    this.significand.equals(((FpLitExpr) obj).significand);
         } else {
             return false;
         }

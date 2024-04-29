@@ -20,29 +20,32 @@ runs:
       run: |
         mkdir -p xml
         cp $GITHUB_ACTION_PATH/theta.xml xml/
-    - name: Get sv-benchmarks
-      shell: bash
-      run: |
-        git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
-        cd sv-benchmarks
-        git sparse-checkout add c
-        git checkout
-    - name: Get archive
-      shell: bash
-      run: |
-        wget https://github.com/ftsrg/theta/releases/download/svcomp24/theta.zip
-        unzip theta.zip
-        mv Theta theta
-    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-      name: Get JAR
+    - name: Get sv-benchmarks (retry max. 3 times)
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
       with:
-        name: ThetaJars
-        path: jar/
-    - name: Add new jar to archive
+        timeout_minutes: 15
+        max_attempts: 3
+        shell: bash
+        command: git clone --filter=blob:none --no-checkout --depth 1 --sparse https://gitlab.com/sosy-lab/benchmarking/sv-benchmarks.git
+    - name: Get C folder (retry max. 3 times)
+      uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3.0.0
+      with:
+        timeout_minutes: 15
+        max_attempts: 3
+        shell: bash
+        command: |
+          cd sv-benchmarks
+          git sparse-checkout add c
+          git checkout
+    - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+      name: Get zip
+      with:
+        name: Theta_SV-COMP
+        path: release/
+    - name: Unzip 
       shell: bash
       run: |
-        mv jar/xcfa/xcfa-cli/build/libs/*-all.jar theta/theta.jar
-        ls -l theta
+        unzip release/Theta.zip
     - name: Cut setfile if too long
       id: setfile 
       shell: bash
@@ -56,7 +59,7 @@ runs:
       shell: bash
       if: steps.setfile.outputs.length != '0'
       run: |
-        benchexec xml/theta.xml --no-container --tool-directory theta -t ${{ inputs.task }}
+        benchexec xml/theta.xml --no-container --tool-directory Theta -t ${{ inputs.task }}
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       if: steps.setfile.outputs.length != '0'

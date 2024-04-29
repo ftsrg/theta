@@ -26,13 +26,13 @@ import org.junit.Test;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 public class PredOrdTest {
 
     private final VarDecl<IntType> VX = Decls.Var("x", Int());
 
-    private final PredOrd ord = PredOrd.create(Z3SolverFactory.getInstance().createSolver());
+    private final PredOrd ord = PredOrd.create(Z3LegacySolverFactory.getInstance().createSolver());
 
     PredState sb = PredState.of(False());
     PredState s1 = PredState.of(Gt(VX.getRef(), Int(1)));

@@ -1160,7 +1160,7 @@ final class Z3ExprTransformer {
         final FPSort fpSort = context.mkFPSort(expr.getFpType().getExponent(),
                 expr.getFpType().getSignificand());
         return context.mkFPToFP(transformFpRoundingMode(expr.getRoundingMode()), val, fpSort,
-                expr.isSigned());
+                expr.isSigned());  // TODO: is this OK? FP2FP when BV2FP is used?
     }
 
     private com.microsoft.z3.Expr transformFpToBv(final FpToBvExpr expr) {

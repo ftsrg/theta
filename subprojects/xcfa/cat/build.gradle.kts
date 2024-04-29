@@ -26,7 +26,7 @@ dependencies {
     implementation(project(":theta-analysis"))
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
-    implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-solver-z3-legacy"))
     implementation(project(":theta-graph-solver"))
 }
 tasks.named("compileKotlin") {

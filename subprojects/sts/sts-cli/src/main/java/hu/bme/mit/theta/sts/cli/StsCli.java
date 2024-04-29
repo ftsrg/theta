@@ -35,7 +35,7 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
@@ -217,7 +217,7 @@ public class StsCli {
 
     private StsConfig<?, ?, ?> buildConfiguration(final STS sts) throws Exception {
         try {
-            return new StsConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+            return new StsConfigBuilder(domain, refinement, Z3LegacySolverFactory.getInstance())
                     .initPrec(initPrec).search(search)
                     .predSplit(predSplit).pruneStrategy(pruneStrategy).logger(logger).build(sts);
         } catch (final Exception ex) {
@@ -271,7 +271,7 @@ public class StsCli {
             throws FileNotFoundException {
         @SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
         final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace,
-                Z3SolverFactory.getInstance());
+                Z3LegacySolverFactory.getInstance());
         final File file = new File(cexfile);
         PrintWriter printWriter = null;
         try {

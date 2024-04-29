@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import com.microsoft.z3.InterpolationContext;
-
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
@@ -83,7 +81,7 @@ public final class Z3SolverFactory implements SolverFactory {
 
     @Override
     public ItpSolver createItpSolver() {
-        final InterpolationContext z3Context = InterpolationContext.mkContext();
+        final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
         final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 
         final Z3SymbolTable symbolTable = new Z3SymbolTable();

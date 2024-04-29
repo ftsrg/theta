@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,8 +56,8 @@ public final class ExprTraceCheckersTest {
 
     @Before
     public void before() {
-        final ItpSolver itpSolver = Z3SolverFactory.getInstance().createItpSolver();
-        final UCSolver ucSolver = Z3SolverFactory.getInstance().createUCSolver();
+        final ItpSolver itpSolver = Z3LegacySolverFactory.getInstance().createItpSolver();
+        final UCSolver ucSolver = Z3LegacySolverFactory.getInstance().createUCSolver();
         traceCheckers = new ArrayList<>();
         traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), itpSolver));
         traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), itpSolver));

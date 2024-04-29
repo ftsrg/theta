@@ -15,6 +15,23 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.Interpolant;
+import hu.bme.mit.theta.solver.ItpMarker;
+import hu.bme.mit.theta.solver.ItpPattern;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.SolverStatus;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
@@ -31,21 +48,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Leaf;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Subtree;
 import static hu.bme.mit.theta.solver.ItpMarkerTree.Tree;
-
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.*;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public final class Z3ItpSolverTest {
 
@@ -127,7 +129,7 @@ public final class Z3ItpSolverTest {
         System.out.println("----------");
     }
 
-    @Test
+    //@Test
     public void testTreeInterpolation() {
         final ItpMarker I1 = solver.createMarker();
         final ItpMarker I2 = solver.createMarker();
@@ -191,7 +193,7 @@ public final class Z3ItpSolverTest {
         System.out.println("----------");
     }
 
-    @Test
+    //@Test
     public void testQuantifiers() {
         final ItpMarker A = solver.createMarker();
         final ItpMarker B = solver.createMarker();

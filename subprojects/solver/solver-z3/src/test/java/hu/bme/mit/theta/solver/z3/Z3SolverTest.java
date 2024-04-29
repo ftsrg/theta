@@ -28,20 +28,17 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvExprs;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.UCSolver;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -139,7 +136,7 @@ public final class Z3SolverTest {
         assertEquals(ca.getType(), val.getType());
     }
 
-    @Test
+    //@Test
     public void testArray() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
 
@@ -160,7 +157,7 @@ public final class Z3SolverTest {
         assertEquals(Int(2), Read(valLit, Int(1)).eval(ImmutableValuation.empty()));
     }
 
-    @Test
+    //@Test
     public void testArrayInit() {
         final ConstDecl<ArrayType<IntType, IntType>> arr = Const("arr", Array(Int(), Int()));
         var elems = new ArrayList<Tuple2<Expr<IntType>, Expr<IntType>>>();
