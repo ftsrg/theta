@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.algorithm.oc
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.solver.SolverStatus
 
@@ -40,7 +41,7 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
                 rels[r.clkId][w.clkId]?.let { reason -> // r -> w
                     rfs[v]?.find { it.from == w && it.to == r }?.let { rf -> // rf{w->r}
                         if (!rf.declRef.prevented) {
-                            userPropagator.propagateConsequence(reason.exprs, Not(rf.declRef))
+                            propagateUnit(reason, Not(rf.declRef))
                             preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(rf.declRef)
                         }
                     }
@@ -51,11 +52,11 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
                             rfs[v]?.find { it.from == w0 && it.to == r }?.let { rf -> // rf{w0->r}
                                 val reason = wrReason and w0wReason
                                 if (partialAssignment.any { it.relation == rf } && !w.guardExpr.prevented) {
-                                    userPropagator.propagateConsequence(reason.exprs, Not(w.guardExpr))
+                                    propagateUnit(reason, Not(w.guardExpr))
                                     preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(w.guardExpr)
                                 }
                                 if (partialAssignment.any { it.event == w } && !rf.declRef.prevented) {
-                                    userPropagator.propagateConsequence(reason.exprs, Not(rf.declRef))
+                                    propagateUnit(reason, Not(rf.declRef))
                                     preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(rf.declRef)
                                 }
                             }
@@ -64,4 +65,7 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
             }
         }
     }
+
+    private fun propagateUnit(reason: Reason, consequence: Expr<BoolType>) =
+        userPropagator.propagateConsequence(reason.exprs.filter { it != True() }, consequence)
 }
