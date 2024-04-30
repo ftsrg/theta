@@ -134,9 +134,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                     val embeddedType = (globalDeclaration.get1().actualType as CArray).embeddedType
                     initStmtList.add(StmtLabel(
                         Stmts.MemoryAssign(
-                            Dereference(cast(globalDeclaration.get2().ref, arrType), cast(literalToExpr(i), arrType),
-                                embeddedType.smtType),
-                            cast(embeddedType.nullValue, globalDeclaration.get2().type))
+                            Dereference(globalDeclaration.get2().ref, literalToExpr(i), embeddedType.smtType),
+                            cast(embeddedType.nullValue, embeddedType.smtType))
                     ))
                 }
             } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
