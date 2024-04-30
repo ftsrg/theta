@@ -42,7 +42,7 @@ fun valToAction(xcfa: XCFA, val1: Valuation, val2: Valuation): XcfaAction {
         edge = xcfa.procedures.first { it.name == "main" }.edges.first { edge ->
             map[edge.source] == (val1Map[val1Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt() &&
                 map[edge.target] == (val2Map[val2Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()
-        }, valToState(xcfa, val1))
+        })
 }
 
 fun valToState(xcfa: XCFA, val1: Valuation): XcfaState<PtrState<ExplState>> {

@@ -50,7 +50,7 @@ public final class Dereference<A extends Type, O extends Type, T extends Type> i
         this.array = array;
         this.offset = offset;
         this.type = type;
-        this.uniquenessIdx = Optional.of(uniqueness);
+        this.uniquenessIdx = Optional.ofNullable(uniqueness);
     }
 
     public Expr<A> getArray() {
@@ -123,7 +123,7 @@ public final class Dereference<A extends Type, O extends Type, T extends Type> i
 
     @Override
     public String toString() {
-        var base = Utils.lispStringBuilder(OPERATOR_LABEL).add(getArray()).add(getOffset());
+        var base = Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getArray()).add(getOffset());
         uniquenessIdx.ifPresent(base::add);
         return base.add(type).toString();
     }

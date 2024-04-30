@@ -114,7 +114,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type> e
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL)
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body()
                 .addAll(elems.stream().map(elem -> String.format("(%s %s)", elem.get1(), elem.get2())))
                 .add((String.format("(default %s)", elseElem)))
                 .toString();

@@ -17,85 +17,29 @@
 package hu.bme.mit.theta.analysis.ptr
 
 import com.google.common.base.Preconditions
-import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts
-import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
-import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
-import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
-import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.inttype.IntExprs
-import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.core.utils.PathUtils
-import hu.bme.mit.theta.solver.utils.WithPushPop
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 
 private val varList = LinkedHashMap<Pair<String, Type>, LinkedHashMap<Int, VarDecl<*>>>()
 private val solver = Z3LegacySolverFactory.getInstance().createSolver()
 
-abstract class PtrAction(writeTriples: WriteTriples, val inCnt: Int) : StmtAction() {
+abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int = 0) : StmtAction() {
 
     abstract val stmtList: List<Stmt>
 
     private val expanded by lazy { createStmtList(writeTriples) }
 
-    internal var cnts = LinkedHashMap<String, Int>()
-    fun nextWriteTriples(tracked: Collection<Expr<*>> = TopCollection,
-        trackingStyle: PtrTracking = PtrTracking.ALWAYS_TOP, s: ExprState = ExplState.top()): WriteTriples =
-        expanded.first.filter(tracked, trackingStyle, s)
-
-    private fun WriteTriples.filter(tracked: Collection<Expr<*>>, trackingStyle: PtrTracking,
-        s: ExprState): WriteTriples =
-        when (trackingStyle) {
-            PtrTracking.ALWAYS_TOP -> this
-            PtrTracking.ANY_MATCH -> expanded.first.map {
-                Pair(it.key, it.value.filterIndexed { i, triple ->
-                    triple.toList().any(tracked::contains) && !triple.isPossiblyOverwrittenBy(
-                        it.value.subList(i + 1, it.value.size).filter { !it.toList().any(tracked::contains) }, s)
-                })
-            }.toMap()
-
-            PtrTracking.ALL_MATCH -> expanded.first.map {
-                Pair(it.key, it.value.filterIndexed { i, triple ->
-                    triple.toList().all(tracked::contains) && !triple.isPossiblyOverwrittenBy(
-                        it.value.subList(i + 1, it.value.size).filter { !it.toList().all(tracked::contains) }, s)
-                })
-            }.toMap()
-
-            PtrTracking.NONE -> emptyMap()
-        }
-
-    private fun Triple<Expr<*>, Expr<*>, Expr<IntType>>.isPossiblyOverwrittenBy(
-        thatList: List<Triple<Expr<*>, Expr<*>, Expr<IntType>>>, s: ExprState): Boolean {
-        if (thatList.isEmpty()) return false
-
-        var expr: Expr<BoolType> = Or(
-            thatList.map { that -> And(Eq(this.first, that.first), Eq(this.second, that.second)) })
-        expr = if (s is ExplState) {
-            ExprUtils.simplify(expr, s.`val`)
-        } else {
-            ExprUtils.simplify(expr)
-        }
-        if (expr == True()) return true
-        else if (expr == False()) return false
-
-        WithPushPop(solver).use {
-            val state = PathUtils.unfold(s.toExpr(), 0)
-            val expr = PathUtils.unfold(expr, 0)
-            solver.add(state)
-            solver.add(expr)
-            return solver.check().isSat
-        }
-    }
+    var cnts = LinkedHashMap<String, Int>()
+    fun nextWriteTriples(): WriteTriples = expanded.first
 
     final override fun getStmts(): List<Stmt> = expanded.second
 
@@ -115,11 +59,7 @@ abstract class PtrAction(writeTriples: WriteTriples, val inCnt: Int) : StmtActio
             for ((deref, type) in stmt.dereferencesWithAccessTypes) {
                 Preconditions.checkState(deref.uniquenessIdx.isPresent,
                     "Incomplete dereferences (missing uniquenessIdx) are not handled properly.")
-                val list = nextWriteTriples[deref.type] ?: emptyList()
-                val expr = list.fold(IntExprs.Int(0) as Expr<IntType>) { elze, (arr, off, value) ->
-                    IteExpr.of(BoolExprs.And(
-                        listOf(AbstractExprs.Eq(arr, deref.array), AbstractExprs.Eq(off, deref.offset))), value, elze)
-                }
+                val expr = deref.getIte(nextWriteTriples)
                 if (type == AccessType.WRITE) {
                     val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, IntExprs.Int(1)))
                     nextWriteTriples.getOrPut(deref.type) { ArrayList() }

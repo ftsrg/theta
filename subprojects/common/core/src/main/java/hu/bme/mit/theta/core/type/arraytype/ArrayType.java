@@ -15,14 +15,14 @@
  */
 package hu.bme.mit.theta.core.type.arraytype;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class ArrayType<IndexType extends Type, ElemType extends Type>
         implements Equational<ArrayType<IndexType, ElemType>> {

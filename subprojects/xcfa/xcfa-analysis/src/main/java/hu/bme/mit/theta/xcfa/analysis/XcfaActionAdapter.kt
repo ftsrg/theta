@@ -46,11 +46,10 @@ class XcfaActionAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XcfaAction>(
             when (reader.nextName()) {
                 "pid" -> pid = reader.nextInt()
                 "edge" -> edge = gson.fromJson(reader, XcfaEdge::class.java)
-                "state" -> state = gson.fromJson(reader, XcfaState::class.java)
             }
         }
         reader.endObject()
-        return XcfaAction(pid!!, edge, state)
+        return XcfaAction(pid!!, edge)
     }
 
     private fun initGson() {
