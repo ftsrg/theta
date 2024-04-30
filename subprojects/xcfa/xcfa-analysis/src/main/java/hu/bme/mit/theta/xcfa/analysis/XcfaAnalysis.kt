@@ -75,10 +75,10 @@ fun getCoreXcfaLts() = LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
                 XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), SequenceLabel(listOf(
                     proc.value.paramStmts.peek().second,
                     ReturnLabel(proc.value.returnStmts.peek()),
-                )))))
+                ))), nextCnt = s.sGlobal.nextCnt))
         } else if (!proc.value.paramsInitialized) {
             listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(),
-                proc.value.paramStmts.peek().first)))
+                proc.value.paramStmts.peek().first), nextCnt = s.sGlobal.nextCnt))
         } else {
             proc.value.locs.peek().outgoingEdges.map { edge ->
                 val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
@@ -126,9 +126,9 @@ fun getCoreXcfaLts() = LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
                                 }, listOf(label.copy(tempLookup = lookup))).flatten())
                         } else label
                     })
-                    XcfaAction(proc.key, edge.withLabel(newNewLabel))
+                    XcfaAction(proc.key, edge.withLabel(newNewLabel), nextCnt = s.sGlobal.nextCnt)
                 } else
-                    XcfaAction(proc.key, edge.withLabel(newLabel))
+                    XcfaAction(proc.key, edge.withLabel(newLabel), nextCnt = s.sGlobal.nextCnt)
             }
         }
     }.flatten().toSet()

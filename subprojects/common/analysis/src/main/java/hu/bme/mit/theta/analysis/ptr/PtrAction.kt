@@ -22,8 +22,10 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.core.stmt.Stmts
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
@@ -52,7 +54,8 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
             val iMap = varList.getOrPut(Pair(it, type)) { LinkedHashMap() }
             iMap.getOrPut(current) { Var("__${it}_$current", type) }
         }
-        for (stmt in this.stmtList.map { it.uniqueDereferences(vargen) }) {
+        val lookup = LinkedHashMap<Dereference<*, *, *>, Pair<Expr<*>, Expr<*>>>()
+        for (stmt in this.stmtList.map { it.uniqueDereferences(vargen, lookup) }) {
             val preList = ArrayList<Stmt>()
             val postList = ArrayList<Stmt>()
 
@@ -63,7 +66,7 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
                 if (type == AccessType.WRITE) {
                     val writeExpr = ExprUtils.simplify(IntExprs.Add(expr, IntExprs.Int(1)))
                     nextWriteTriples.getOrPut(deref.type) { ArrayList() }
-                        .add(Triple(deref.array, deref.offset, deref.uniquenessIdx.get()))
+                        .add(Triple(lookup[deref]!!.first, lookup[deref]!!.second, deref.uniquenessIdx.get()))
                     postList.add(Stmts.Assume(ExprUtils.simplify(BoolExprs.And(listOf(
                         AbstractExprs.Eq(writeExpr, deref.uniquenessIdx.get()),
                     )))))

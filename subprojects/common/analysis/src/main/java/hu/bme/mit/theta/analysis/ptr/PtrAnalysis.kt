@@ -57,5 +57,7 @@ fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState
 fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
     val writeTriples = action.nextWriteTriples()
     val patchedPrec = prec.innerPrec.patch(writeTriples)
-    getSuccStates(state.innerState, action, patchedPrec).map { PtrState(it.repatch()) }
+    getSuccStates(state.innerState, action, patchedPrec).map {
+        PtrState(it.repatch(), emptyMap(), action.cnts.values.maxOrNull() ?: action.inCnt)
+    }
 }

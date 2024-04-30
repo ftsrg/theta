@@ -83,21 +83,22 @@ fun SequenceStmt.collapse(): Stmt =
         this
     }
 
-fun Stmt.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>): Stmt {
+fun Stmt.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
+    lookup: MutableMap<Dereference<*, *, *>, Pair<Expr<*>, Expr<*>>>): Stmt {
     val ret = ArrayList<Stmt>()
     val newStmt = when (this) {
         is MemoryAssignStmt<*, *, *> -> {
             MemoryAssignStmt.create(
-                deref.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second as Dereference<*, *, *>,
-                expr.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)
+                deref.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second as Dereference<*, *, *>,
+                expr.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
         }
 
         is AssignStmt<*> -> AssignStmt.of(
             TypeUtils.cast(varDecl, varDecl.type),
-            TypeUtils.cast(expr.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second, varDecl.type))
+            TypeUtils.cast(expr.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second, varDecl.type))
 
-        is AssumeStmt -> AssumeStmt.of(cond.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)
-        is SequenceStmt -> Stmts.SequenceStmt(stmts.map { it.uniqueDereferences(vargen) })
+        is AssumeStmt -> AssumeStmt.of(cond.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
+        is SequenceStmt -> Stmts.SequenceStmt(stmts.map { it.uniqueDereferences(vargen, lookup) })
         is HavocStmt<*> -> this
         is SkipStmt -> this
         is NonDetStmt -> error("NonDetStmts do not have a clearly defined sequence")
@@ -108,26 +109,36 @@ fun Stmt.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>): Stmt {
     return SequenceStmt.of(ret + newStmt).collapse()
 }
 
-fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>): Pair<List<Stmt>, Expr<T>> =
+fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
+    lookup: MutableMap<Dereference<*, *, *>, Pair<Expr<*>, Expr<*>>>): Pair<List<Stmt>, Expr<T>> =
     if (this is Dereference<*, *, T>) {
         val ret = ArrayList<Stmt>()
         Preconditions.checkState(this.uniquenessIdx.isEmpty, "Only non-pretransformed dereferences should be here")
-        val arrayExpr = ExprUtils.simplify(array.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)
-        if (arrayExpr !is LitExpr<*>) {
+        val arrayExpr = ExprUtils.simplify(
+            array.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
+        val arrayLaterRef = if (arrayExpr !is LitExpr<*>) {
             val arrayConst = vargen("a", array.type).ref
             ret.add(Assume(Eq(arrayConst, arrayExpr)))
+            arrayConst
+        } else {
+            arrayExpr
         }
-        val offsetExpr = ExprUtils.simplify(offset.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)
-        if (offsetExpr !is LitExpr<*>) {
+        val offsetExpr = ExprUtils.simplify(
+            offset.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second)
+        val offsetLaterRef = if (offsetExpr !is LitExpr<*>) {
             val offsetConst = vargen("o", offset.type).ref
             ret.add(Assume(Eq(offsetConst, offsetExpr)))
+            offsetConst
+        } else {
+            offsetExpr
         }
-        Pair(
-            ret,
-            withUniquenessExpr(vargen("idx", Int()).ref as Expr<IntType>))
+        val deref = withUniquenessExpr(vargen("idx", Int()).ref as Expr<IntType>)
+        lookup[deref] = Pair(arrayLaterRef, offsetLaterRef)
+        Pair(ret, deref)
     } else {
         val ret = ArrayList<Stmt>()
-        Pair(ret, this.withOps(this.ops.map { it.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second }))
+        Pair(ret,
+            this.withOps(this.ops.map { it.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second }))
     }
 
 object TopCollection : Set<Expr<*>> {

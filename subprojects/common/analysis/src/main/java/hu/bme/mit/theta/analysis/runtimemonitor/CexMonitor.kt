@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace
 import hu.bme.mit.theta.analysis.runtimemonitor.container.CexHashStorage
 import hu.bme.mit.theta.common.exception.NotSolvableException
 import hu.bme.mit.theta.common.logging.Logger
-import java.lang.RuntimeException
 
 /**
  * This monitor checks whether a new counterexample is found during the current iteration of CEGAR.
@@ -41,10 +40,10 @@ class CexMonitor<S : State?, A : Action?> constructor(
     fun checkIfNewCexFound(): Boolean {
         return if (arg.cexs.anyMatch { cex -> !cexHashStorage.contains(cex) }) {
             logger.write(Logger.Level.VERBOSE,
-                "Counterexample hash check: new cex found successfully")
+                "Counterexample hash check: new cex found successfully\n")
             true
         } else {
-            logger.write(Logger.Level.INFO, "Counterexample hash check: NO new cex found")
+            logger.write(Logger.Level.INFO, "Counterexample hash check: NO new cex found\n")
             false
         }
     }

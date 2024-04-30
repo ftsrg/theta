@@ -49,7 +49,7 @@ constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTripl
     }
 
     fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
-        return XcfaAction(pid, source, target, sequenceLabel)
+        return XcfaAction(pid, source, target, sequenceLabel, nextCnt = nextCnt)
     }
 
     fun withLastWrites(writeTriples: WriteTriples, nextCnt: Int): XcfaAction {
