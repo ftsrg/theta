@@ -54,7 +54,7 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
 
     @Override
     public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
-        List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
+        List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList(), false);
         for (CDeclaration declaration : declarations) {
             if (!declaration.getType().isTypedef()) {
                 globalUsages.remove(declaration.getName());
