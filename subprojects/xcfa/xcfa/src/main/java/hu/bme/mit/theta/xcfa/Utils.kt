@@ -23,10 +23,13 @@ import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.NullaryExpr
+import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
@@ -479,6 +482,12 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
     }
 } else this
 
+data class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> {
+
+    override fun getType(): T = kType
+    override fun eval(valuation: Valuation): LitExpr<T> = this
+}
+
 val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
     get() = lazy {
         val attempt = Try.attempt {
@@ -540,8 +549,9 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
                 lastPtrVars = ptrVars.toSet()
 
                 val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { unboxMod(it.expr) }
-                checkState(rhs.all { it is LitExpr<*> || it is RefExpr<*> },
-                    "Pointer arithmetic not supported by static points-to calculation")
+                allAssignments.filter {
+                    ptrVars.contains(it.varDecl) && (it.expr !is LitExpr<*>) && (it.expr !is RefExpr<*>)
+                }
                 ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
             }
 
@@ -550,8 +560,9 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
 
             val litAssignments = allAssignments.filter {
                 ptrVars.contains(it.varDecl) && unboxMod(it.expr) is LitExpr<*>
-            }
-                .map { Pair(it.varDecl, unboxMod(it.expr) as LitExpr<*>) }
+            }.map { Pair(it.varDecl, unboxMod(it.expr) as LitExpr<*>) } + allAssignments.filter {
+                ptrVars.contains(it.varDecl) && (unboxMod(it.expr) !is LitExpr<*> && unboxMod(it.expr) !is RefExpr<*>)
+            }.map { Pair(it.varDecl, MallocLitExpr(it.varDecl.type)) }
             litAssignments.forEach { lits.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
             val varAssignments = allAssignments.filter {
                 ptrVars.contains(it.varDecl) && unboxMod(it.expr) is RefExpr<*>
@@ -569,7 +580,7 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
                 }
             }
 
-            lits
+            lits.filter { bases.contains(it.key.ref) }
         }
         if (attempt.isSuccess) {
             attempt.asSuccess().value

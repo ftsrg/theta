@@ -93,7 +93,11 @@ public class GlobalDeclUsageVisitor extends CBaseVisitor<List<CDeclaration>> {
         globalUsages.clear();
         usedContexts.clear();
         for (CParser.ExternalDeclarationContext externalDeclarationContext : ctx.translationUnit().externalDeclaration()) {
-            externalDeclarationContext.accept(this);
+            try {
+                externalDeclarationContext.accept(this);
+            } catch (Throwable e) {
+                // we don't do anything, we'll throw an error later if something's missing
+            }
         }
         checkState(globalUsages.containsKey("main"), "Main function not found!");
         Set<String> ret = new LinkedHashSet<>();

@@ -105,9 +105,13 @@ public class TypedefVisitor extends CBaseVisitor<Set<CDeclaration>> {
         CParser.TranslationUnitContext translationUnitContext = ctx.translationUnit();
         if (translationUnitContext != null) {
             for (CParser.ExternalDeclarationContext externalDeclarationContext : translationUnitContext.externalDeclaration()) {
-                Set<CDeclaration> declList = externalDeclarationContext.accept(this);
-                if (declList != null) {
-                    declarations.addAll(declList);
+                try {
+                    Set<CDeclaration> declList = externalDeclarationContext.accept(this);
+                    if (declList != null) {
+                        declarations.addAll(declList);
+                    }
+                } catch (Throwable e) {
+                    // we don't do anything, we'll throw an error later if something crucial is missing
                 }
             }
         }
