@@ -126,7 +126,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     }
 
     private void createVars(String name, CDeclaration declaration, CComplexType type) {
-        checkState(declaration.getArrayDimensions().size() <= 1, "Currently, higher dimension arrays not supported");
+//        checkState(declaration.getArrayDimensions().size() <= 1, "Currently, higher dimension arrays not supported");
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {

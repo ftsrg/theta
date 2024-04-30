@@ -227,6 +227,11 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     }
 
     @Override
+    public CSimpleType visitTypeSpecifierFunctionPointer(CParser.TypeSpecifierFunctionPointerContext ctx) {
+        throw new UnsupportedOperationException("Function pointers not yet implemented");
+    }
+
+    @Override
     public CSimpleType visitCompoundDefinition(CParser.CompoundDefinitionContext ctx) {
         if (ctx.structOrUnion().Struct() != null) {
             String name = null;

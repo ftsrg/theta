@@ -133,8 +133,11 @@ fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
             offsetExpr
         }
         val deref = withUniquenessExpr(vargen("idx", Int()).ref as Expr<IntType>)
-        lookup[deref] = Pair(arrayLaterRef, offsetLaterRef)
-        Pair(ret, deref)
+        val retDeref = deref.map {
+            it.uniqueDereferences(vargen, lookup).also { ret.addAll(it.first) }.second
+        } as Dereference<*, *, T>
+        lookup[retDeref] = Pair(arrayLaterRef, offsetLaterRef)
+        Pair(ret, retDeref)
     } else {
         val ret = ArrayList<Stmt>()
         Pair(ret,
@@ -183,7 +186,7 @@ fun <P : Prec> P.patch(writeTriples: WriteTriples): P = when (this) {
 }
 
 private fun <T : Type> Expr<T>.patch(writeTriples: WriteTriples): Expr<T> = when (this) {
-    is Dereference<*, *, T> -> withUniquenessExpr(getIte(writeTriples))
+    is Dereference<*, *, T> -> withUniquenessExpr(getIte(writeTriples)).map { it.patch(writeTriples) }
     else -> map { it.patch(writeTriples) }
 }
 
@@ -202,6 +205,6 @@ fun <S : ExprState> S.repatch(): S = when (this) {
 }
 
 private fun <T : Type> Expr<T>.repatch(): Expr<T> = when (this) {
-    is Dereference<*, *, T> -> withUniquenessExpr(Int(0))
+    is Dereference<*, *, T> -> withUniquenessExpr(Int(0)).map(Expr<*>::repatch)
     else -> map(Expr<*>::repatch)
 }

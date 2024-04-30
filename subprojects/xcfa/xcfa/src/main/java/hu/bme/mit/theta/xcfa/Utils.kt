@@ -422,7 +422,7 @@ val XcfaLabel.dereferences: List<Dereference<*, *, *>>
 
 val Expr<*>.dereferences: List<Dereference<*, *, *>>
     get() = if (this is Dereference<*, *, *>) {
-        listOf(this)
+        listOf(this) + ops.flatMap { it.dereferences }
     } else {
         ops.flatMap { it.dereferences }
     }
@@ -491,11 +491,13 @@ data class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> 
 val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
     get() = lazy {
         val attempt = Try.attempt {
+            fun unboxMod(e: Expr<*>): Expr<*> = if (e is ModExpr<*>) unboxMod(e.ops[0]) else e
+
             val bases = this.procedures.flatMap {
                 it.edges.flatMap {
-                    it.getFlatLabels().flatMap { it.dereferences.map { it.array } }
+                    it.getFlatLabels().flatMap { it.dereferences.map { unboxMod(it.array) } }
                 }
-            }.filter { it !is LitExpr<*> }.toSet()
+            }.filter { it !is LitExpr<*> && it !is Dereference<*, *, *> }.toSet()
             checkState(bases.all { it is RefExpr<*> })
 
             // value assignments are either assignments, or thread start statements, or procedure invoke statements
@@ -542,8 +544,6 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
 
             val ptrVars = LinkedHashSet<VarDecl<*>>(bases.map { (it as RefExpr<*>).decl as VarDecl<*> })
             var lastPtrVars = emptySet<VarDecl<*>>()
-
-            fun unboxMod(e: Expr<*>): Expr<*> = if (e is ModExpr<*>) unboxMod(e.ops[0]) else e
 
             while (ptrVars != lastPtrVars) {
                 lastPtrVars = ptrVars.toSet()

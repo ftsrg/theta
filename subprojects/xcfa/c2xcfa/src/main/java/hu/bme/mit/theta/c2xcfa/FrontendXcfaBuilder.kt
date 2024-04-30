@@ -192,6 +192,17 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         }
         builder.createInitLoc(getMetadata(function))
         var init = builder.initLoc
+
+        for (flatVariable in flatVariables) {
+            val type = CComplexType.getType(flatVariable.ref, parseContext)
+            if (type is CPointer || type is CArray) {
+                if (type is CArray && type.embeddedType is CArray) {
+                    // some day this is where initialization will occur. But this is not today.
+                    error("Not handling init expression of high dimsension array $flatVariable")
+                }
+            }
+        }
+
         if (param.size > 0 && builder.name.equals("main")) {
             val endinit = getAnonymousLoc(builder, getMetadata(function))
             builder.addLoc(endinit)
@@ -251,12 +262,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             }
         }
 
-        val (lhs, type) = try {
-            val lhs = (label.stmt as AssignStmt<*>).varDecl
-            Pair(lhs, CComplexType.getType(lhs.ref, parseContext))
-        } catch (_: Exception) {
-            Pair(null, null)
-        }
+        val lhs = (label.stmt as? AssignStmt<*>)?.varDecl
+        val type = lhs?.let { CComplexType.getType(it.ref, parseContext) }
 
         if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
             xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
