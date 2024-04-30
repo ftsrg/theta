@@ -85,9 +85,10 @@ internal data class Thread(
     val pidVar: VarDecl<*>? = null,
     val startEvent: XcfaEvent? = null,
     val startHistory: List<String> = listOf(),
-    val finalEvents: MutableSet<XcfaEvent> = mutableSetOf(),
+    val lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
     val pid: Int = uniqueId(),
 ) {
+    val finalEvents: MutableSet<XcfaEvent> = mutableSetOf()
 
     companion object {
 

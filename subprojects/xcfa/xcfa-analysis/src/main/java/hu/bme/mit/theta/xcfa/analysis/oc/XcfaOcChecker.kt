@@ -67,7 +67,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private val violations = mutableListOf<Violation>() // OR!
     private val branchingConditions = mutableListOf<Expr<BoolType>>()
     private val pos = mutableListOf<R>()
-    private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
+    private val rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<out PtrState<*>>, XcfaAction> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
@@ -110,7 +110,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             inEdge = true
             if (atomicEntered == false) atomicEntered = true
             when (type) {
-                EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RFI, it, e) }
+                EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
                 EventType.WRITE -> lastWrites[decl] = setOf(e)
             }
             events[decl] = (events[decl] ?: mutableMapOf()).apply {
@@ -123,6 +123,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         val toVisit = mutableSetOf(SearchItem(thread.procedure.initLoc).apply {
             guards.add(thread.guard)
             thread.startEvent?.let { lastEvents.add(it) }
+            this.lastWrites.add(thread.lastWrites)
         })
         val threads = mutableListOf<Thread>()
 
@@ -131,7 +132,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             toVisit.remove(current)
             check(current.incoming == current.loc.incomingEdges.size)
             check(current.incoming == current.guards.size || current.loc.initial)
-            check(current.incoming == current.lastWrites.size) // lastEvents intentionally skipped
+            // lastEvents intentionally skipped
+            check(current.incoming == current.lastWrites.size || current.loc.initial)
             check(current.incoming == current.threadLookups.size)
             check(current.incoming == current.atomics.size)
             check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
@@ -220,7 +222,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                                 error("Using a pthread_t variable in multiple threads is not supported by OC checker.")
                             }
                             val newHistory = thread.startHistory + thread.procedure.name
-                            val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory)
+                            val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory, lastWrites)
                             last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
                             threadLookup[pidVar] = setOf(Pair(guard, newThread))
                             processThread(newThread)
@@ -297,7 +299,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                     if (pid1 != pid2)
                         for (e1 in list1.filter { it.type == EventType.WRITE })
                             for (e2 in list2.filter { it.type == EventType.READ })
-                                rfs.add(RelationType.RFE, e1, e2)
+                                rfs.add(RelationType.RF, e1, e2)
     }
 
     private fun addToSolver(): Boolean {
@@ -352,8 +354,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private inline fun <T> Collection<T>.reduce(default: T, operation: (T, T) -> T): T =
         if (isEmpty()) default else reduce(operation)
 
-    private fun MutableMap<VarDecl<*>, MutableList<R>>.add(type: RelationType, from: E, to: E) =
-        getOrPut(from.const.varDecl) { mutableListOf() }.add(Relation(type, from, to))
+    private fun MutableMap<VarDecl<*>, MutableSet<R>>.add(type: RelationType, from: E, to: E) =
+        getOrPut(from.const.varDecl) { mutableSetOf() }.add(Relation(type, from, to))
 
     private fun <T : Type> Expr<T>.withConsts(varToConst: Map<out Decl<*>, ConstDecl<*>>): Expr<T> {
         if (this is RefExpr<T>) {

@@ -17,7 +17,7 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
-        rfs: Map<VarDecl<*>, List<Relation<E>>>,
+        rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     ): SolverStatus? {
         reads = events.keys.associateWith { v -> events[v]!!.values.flatten().filter { it.type == EventType.READ } }
         return super.check(events, pos, rfs)

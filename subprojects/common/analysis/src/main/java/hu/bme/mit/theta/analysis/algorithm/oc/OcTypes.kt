@@ -65,7 +65,7 @@ abstract class Event(
     }
 }
 
-enum class RelationType { PO, RFI, RFE }
+enum class RelationType { PO, RF }
 data class Relation<E : Event>(
     val type: RelationType,
     val from: E,

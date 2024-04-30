@@ -50,7 +50,7 @@ interface OcChecker<E : Event> {
     fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
-        rfs: Map<VarDecl<*>, List<Relation<E>>>
+        rfs: Map<VarDecl<*>, Set<Relation<E>>>
     ): SolverStatus?
 
     /**

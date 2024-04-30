@@ -31,7 +31,7 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     protected val partialAssignment = Stack<OcAssignment<E>>()
     protected lateinit var writes: Map<VarDecl<*>, List<E>>
     protected lateinit var flatWrites: List<E>
-    protected lateinit var rfs: Map<VarDecl<*>, List<Relation<E>>>
+    protected lateinit var rfs: Map<VarDecl<*>, Set<Relation<E>>>
     private lateinit var flatRfs: List<Relation<E>>
 
     protected val userPropagator: JavaSMTUserPropagator = object : JavaSMTUserPropagator() {
@@ -57,7 +57,7 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
-        rfs: Map<VarDecl<*>, List<Relation<E>>>,
+        rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     ): SolverStatus? {
         writes = events.keys.associateWith { v -> events[v]!!.values.flatten().filter { it.type == EventType.WRITE } }
         flatWrites = this.writes.values.flatten()
@@ -83,7 +83,7 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     }
 
     private fun propagate(rf: Relation<E>) {
-        check(rf.type == RelationType.RFI || rf.type == RelationType.RFE)
+        check(rf.type == RelationType.RF)
         val assignment = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
         partialAssignment.push(assignment)
         val reason0 = setAndClose(assignment.rels, rf)
