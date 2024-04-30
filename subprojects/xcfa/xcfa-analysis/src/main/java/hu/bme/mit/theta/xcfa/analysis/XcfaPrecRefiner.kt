@@ -75,7 +75,7 @@ fun <P : Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
             is ExplPrec -> ExplPrec.of(vars.map { it.changeVars(lookup) }) as P
             is PredPrec -> PredPrec.of(preds.map { it.changeVars(lookup) }) as P
             is PtrPrec<*> -> PtrPrec(innerPrec.changeVars(lookup),
-                trackedDerefParams.map { it.changeVars(lookup) }) as P
+                trackedDerefParams.map { it.changeVars(lookup) }.toSet()) as P
             else -> error("Precision type ${this.javaClass} not supported.")
         }
 
@@ -90,7 +90,7 @@ fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
                 preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
 
             is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups),
-                lookups.flatMap { lookup -> trackedDerefParams.map { it.changeVars(lookup) } }) as P
+                lookups.flatMap { lookup -> trackedDerefParams.map { it.changeVars(lookup) } }.toSet()) as P
 
             else -> error("Precision type ${this.javaClass} not supported.")
         }

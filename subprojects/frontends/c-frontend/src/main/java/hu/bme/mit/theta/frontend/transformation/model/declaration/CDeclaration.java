@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.model.declaration;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
@@ -85,7 +86,7 @@ public class CDeclaration {
         for (CStatement arrayDimension : arrayDimensions) {
             CSimpleType simpleType = type.copyOf();
             simpleType.incrementPointer();
-            actualType = new CPointer(simpleType, actualType, actualType.getParseContext()); // some day change this back to arrays, when simple & complex types are better synchronized...
+            actualType = new CArray(simpleType, actualType, actualType.getParseContext()); // some day change this back to arrays, when simple & complex types are better synchronized...
         }
         for (int i = 0; i < derefCounter; i++) {
             CSimpleType simpleType = type.copyOf();

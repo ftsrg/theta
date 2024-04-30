@@ -19,13 +19,16 @@ package hu.bme.mit.theta.analysis.ptr
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils
 
 
@@ -101,22 +104,32 @@ fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>):
     if (this is Dereference<*, *, T>) {
         val ret = ArrayList<Stmt>()
         Preconditions.checkState(this.uniquenessIdx.isEmpty, "Only non-pretransformed dereferences should be here")
-        val arrayConst = vargen("a", array.type)
-        val offsetConst = vargen("o", offset.type)
-        val newList = listOf(
-            Stmts.Assume(Eq(arrayConst.ref, array.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)),
-            Stmts.Assume(Eq(offsetConst.ref, offset.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)),
-        )
+        val arrayExpr = ExprUtils.simplify(array.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)
+        val arrayParam = if (arrayExpr is LitExpr<*>) {
+            vargen("a", array.type).ref
+        } else {
+            val arrayConst = vargen("a", array.type).ref
+            ret.add(Assume(Eq(arrayConst, arrayExpr)))
+            arrayConst
+        }
+        val offsetExpr = ExprUtils.simplify(offset.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second)
+        val offsetParam = if (offsetExpr is LitExpr<*>) {
+            offsetExpr
+        } else {
+            val offsetConst = vargen("o", offset.type).ref
+            ret.add(Assume(Eq(offsetConst, offsetExpr)))
+            offsetConst
+        }
         Pair(
-            ret + newList,
-            Exprs.Dereference(arrayConst.ref, offsetConst.ref, type)
+            ret,
+            Exprs.Dereference(arrayParam, offsetParam, type)
                 .withUniquenessExpr(vargen("idx", Int()).ref as Expr<IntType>))
     } else {
         val ret = ArrayList<Stmt>()
         Pair(ret, this.withOps(this.ops.map { it.uniqueDereferences(vargen).also { ret.addAll(it.first) }.second }))
     }
 
-object TopCollection: Collection<Expr<*>> {
+object TopCollection : Set<Expr<*>> {
     override val size: Int
         get() = error("No size information known for TopCollection")
 

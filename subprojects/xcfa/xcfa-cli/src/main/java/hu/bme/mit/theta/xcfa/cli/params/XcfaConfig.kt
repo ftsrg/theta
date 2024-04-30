@@ -177,8 +177,8 @@ data class CegarConfig(
     @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
     var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
 
-    @Parameter(names = ["--cex-monitor"], description = "Option to enable CexMonitor")
-    var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
+    @Parameter(names = ["--cex-monitor"], description = "Option to enable(CHECK)/disable(DISABLE) the CexMonitor")
+    var cexMonitor: CexMonitorOptions = CexMonitorOptions.CHECK,
 
     val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
     val refinerConfig: CegarRefinerConfig = CegarRefinerConfig()

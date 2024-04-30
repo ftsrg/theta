@@ -58,6 +58,10 @@ fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState
 
 fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(
     trackingStyle: PtrTracking = PtrTracking.ALWAYS_TOP): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
+
+    // instead of any idx, we always want the last read. Therefore, we replace any __idx_i with the last ITE expression.
+    // the state must never have an index in any of the dereference expressions.
+    // in the refiner, we must ignore every index.
     getSuccStates(state.innerState, action, prec.innerPrec).map {
         PtrState(it, action.nextWriteTriples(prec.trackedDerefParams, trackingStyle, it),
             action.cnts.values.maxOrNull() ?: action.inCnt)

@@ -31,7 +31,7 @@ class ItpRefToPtrPrec<P : Prec>(private val innerRefToPrec: RefutationToPrec<P, 
     override fun toPrec(refutation: ItpRefutation, index: Int): PtrPrec<P> {
         val newDerefs = refutation[index].dereferences
         val innerPrec = innerRefToPrec.toPrec(refutation, index)
-        return PtrPrec(innerPrec, newDerefs.flatMap { it.ops },
+        return PtrPrec(innerPrec, newDerefs.flatMap { it.ops }.toSet(),
             if (newDerefs.isEmpty()) 0 else refutation.size() - index)
     }
 
@@ -39,7 +39,7 @@ class ItpRefToPtrPrec<P : Prec>(private val innerRefToPrec: RefutationToPrec<P, 
         Preconditions.checkNotNull(prec1)
         Preconditions.checkNotNull(prec2)
         return PtrPrec(innerRefToPrec.join(prec1.innerPrec, prec2.innerPrec),
-            prec1.trackedDerefParams + prec2.trackedDerefParams, max(prec1.historyLength, prec2.historyLength))
+            prec1.trackedDerefParams union prec2.trackedDerefParams, max(prec1.historyLength, prec2.historyLength))
     }
 
     override fun toString(): String {
