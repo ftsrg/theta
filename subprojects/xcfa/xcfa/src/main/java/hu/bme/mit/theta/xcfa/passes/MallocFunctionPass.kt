@@ -64,8 +64,8 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                                     it.withLabel(
                                         SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata))
                                 }
-                                it.initLoc.outgoingEdges.forEach(builder::removeEdge)
-                                newEdges.forEach(builder::addEdge)
+                                it.initLoc.outgoingEdges.forEach(it::removeEdge)
+                                newEdges.forEach(it::addEdge)
                             }
                         }
                         val assign1 = AssignStmt.of(
