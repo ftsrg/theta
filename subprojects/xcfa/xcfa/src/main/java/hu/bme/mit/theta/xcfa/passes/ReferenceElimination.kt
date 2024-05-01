@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
@@ -40,21 +41,27 @@ import hu.bme.mit.theta.xcfa.references
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
     private var cnt = 2 // counts upwards, uses 3k+2
-        get() = field.also { field += 2 }
+        get() = field.also { field += 3 }
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val referredVars = builder.getEdges()
-            .flatMap { it.label.getFlatLabels().flatMap { it.references } }
-            .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
-            .associateWith {
-                val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
-                val varDecl = Var(it.name + "*", ptrType.smtType)
-                builder.addVar(varDecl)
-                parseContext.metadata.create(varDecl.ref, "cType", ptrType)
-                val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
-                    cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)))
-                Pair(varDecl, assign)
+        val referredVars = builder.parent.metaData.computeIfAbsent("references") {
+            builder.parent.getProcedures().flatMap {
+                it.getEdges()
+                    .flatMap { it.label.getFlatLabels().flatMap { it.references } }
             }
+                .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+                .associateWith {
+                    val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
+                    val varDecl = Var(it.name + "*", ptrType.smtType)
+                    builder.addVar(varDecl)
+                    parseContext.metadata.create(varDecl.ref, "cType", ptrType)
+                    val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
+                        cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)))
+                    Pair(varDecl, assign)
+                }
+        }
+        checkState(referredVars is Map<*, *>, "ReferenceElimination needs info on references")
+        referredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>
         
         if (referredVars.isEmpty()) {
             return builder
