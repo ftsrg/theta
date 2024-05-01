@@ -32,6 +32,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.C128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
@@ -201,6 +204,8 @@ public abstract class CComplexType {
                             return ((BvType) type).getSigned() ? new CSignedLong(null, parseContext) : new CUnsignedLong(null, parseContext);
                         case "longlong":
                             return ((BvType) type).getSigned() ? new CSignedLongLong(null, parseContext) : new CUnsignedLongLong(null, parseContext);
+                        case "__int128":
+                            return ((BvType) type).getSigned() ? new CSigned128(null, parseContext) : new CUnsigned128(null, parseContext);
                     }
                 }
             }
@@ -231,6 +236,10 @@ public abstract class CComplexType {
         return new CSignedInt(null, parseContext);
     }
 
+    public static CComplexType getUnsigned128(ParseContext parseContext) {
+        return new CUnsigned128(null, parseContext);
+    }
+
     public static CComplexType getUnsignedLongLong(ParseContext parseContext) {
         return new CUnsignedLongLong(null, parseContext);
     }
@@ -241,6 +250,10 @@ public abstract class CComplexType {
 
     public static CComplexType getUnsignedInt(ParseContext parseContext) {
         return new CUnsignedInt(null, parseContext);
+    }
+
+    public static CComplexType getSigned128(ParseContext parseContext) {
+        return new CSigned128(null, parseContext);
     }
 
     public static CComplexType getSignedLongLong(ParseContext parseContext) {
@@ -312,6 +325,10 @@ public abstract class CComplexType {
             return visit(((CShort) type), param);
         }
 
+        public R visit(C128 type, T param) {
+            return visit(((CInteger) type), param);
+        }
+
         public R visit(CLongLong type, T param) {
             return visit(((CInteger) type), param);
         }
@@ -320,8 +337,16 @@ public abstract class CComplexType {
             return visit(((CLongLong) type), param);
         }
 
+        public R visit(CSigned128 type, T param) {
+            return visit(((C128) type), param);
+        }
+
         public R visit(Fitsall type, T param) {
             return visit(((CInteger) type), param);
+        }
+
+        public R visit(CUnsigned128 type, T param) {
+            return visit(((C128) type), param);
         }
 
         public R visit(CUnsignedLongLong type, T param) {

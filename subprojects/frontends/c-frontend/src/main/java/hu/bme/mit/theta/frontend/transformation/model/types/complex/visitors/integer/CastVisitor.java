@@ -27,6 +27,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -97,6 +99,29 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     @Override
     public Expr<?> visit(CUnsignedShort type, Expr<?> param) {
         int width = parseContext.getArchitecture().getBitWidth("short");
+        BigInteger upperLimit = BigInteger.TWO.pow(width);
+        return Mod(param, Int(upperLimit));
+    }
+
+
+    @Override
+    public Expr<?> visit(CSigned128 type, Expr<?> param) {
+        IteExpr<?> sameSizeExpr = handleUnsignedSameSize(type, param);
+        if (sameSizeExpr != null) {
+            return sameSizeExpr;
+        }
+        if (true) {
+            return Pos(param);
+        }
+        int width = parseContext.getArchitecture().getBitWidth("__int128");
+        BigInteger minValue = BigInteger.TWO.pow(width - 1).negate();
+        BigInteger upperLimit = BigInteger.TWO.pow(width);
+        return Sub(Mod(Add(param, Int(minValue)), Int(upperLimit)), Int(minValue));
+    }
+
+    @Override
+    public Expr<?> visit(CUnsigned128 type, Expr<?> param) {
+        int width = parseContext.getArchitecture().getBitWidth("__int128");
         BigInteger upperLimit = BigInteger.TWO.pow(width);
         return Mod(param, Int(upperLimit));
     }

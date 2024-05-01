@@ -592,7 +592,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @SuppressWarnings("unchecked")
     private <T extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CComplexType type) {
-        Dereference<T, ?, Type> of = Exprs.Dereference((Expr<T>) accept, offset, type.getSmtType());
+        CComplexType ptrType = CComplexType.getType(accept, parseContext);
+        Dereference<T, ?, Type> of = Exprs.Dereference((Expr<T>) accept, ptrType.castTo(offset), type.getSmtType());
         parseContext.getMetadata().create(of, "cType", type);
         return of;
     }

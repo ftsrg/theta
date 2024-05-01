@@ -41,6 +41,7 @@ public class DeclaredName extends CSimpleType {
         declaredNameRet.setLong(this.isLong());
         declaredNameRet.setBool(this.isBool());
         declaredNameRet.setLongLong(this.isLongLong());
+        declaredNameRet.set128(this.is128());
         for (int i = 0; i < this.getPointerLevel(); i++) {
             declaredNameRet.incrementPointer();
         }

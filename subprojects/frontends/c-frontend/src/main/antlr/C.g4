@@ -256,6 +256,7 @@ typeSpecifier
     |   'unsigned'
     |   '_Bool'
     |   '_Complex'
+    |   '__int128'
     |   '__m128'
     |   '__m128d'
     |   '__m128i')                                                  # typeSpecifierSimple

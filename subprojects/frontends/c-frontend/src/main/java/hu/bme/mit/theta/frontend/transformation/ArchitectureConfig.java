@@ -42,12 +42,12 @@ public class ArchitectureConfig {
      * complex, if an int isn't at least twice as big as a short)
      */
     public enum ArchitectureType {
-        ILP32(1, 8, 16, 32, 32, 64, 24, 8, 53, 11, 113, 15, 65),
-        LP64(1, 8, 16, 32, 64, 64, 24, 8, 53, 11, 113, 15, 65);
+        ILP32(1, 8, 16, 32, 32, 64, 128, 24, 8, 53, 11, 113, 15, 129),
+        LP64(1, 8, 16, 32, 64, 64, 128, 24, 8, 53, 11, 113, 15, 129);
 
         public final Map<String, Integer> standardTypeSizes = new LinkedHashMap<>();
 
-        ArchitectureType(int _bool, int _char, int _short, int _int, int _long, int _longlong,
+        ArchitectureType(int _bool, int _char, int _short, int _int, int _long, int _longlong, int __int128,
                          int _float_significand, int _float_exponent, int _double_significand,
                          int _double_exponent,
                          int _longdouble_significand, int _longdouble_exponend, int _fitsall) {
@@ -58,6 +58,7 @@ public class ArchitectureConfig {
             standardTypeSizes.put("int", _int);
             standardTypeSizes.put("long", _long);
             standardTypeSizes.put("longlong", _longlong);
+            standardTypeSizes.put("__int128", __int128);
             standardTypeSizes.put("float_s", _float_significand);
             standardTypeSizes.put("float_e", _float_exponent);
             standardTypeSizes.put("double_s", _double_significand);

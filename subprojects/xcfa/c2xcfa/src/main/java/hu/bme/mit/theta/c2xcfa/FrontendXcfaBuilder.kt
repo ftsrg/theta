@@ -19,7 +19,6 @@ package hu.bme.mit.theta.c2xcfa
 
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -91,10 +90,11 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val initStmtList: MutableList<XcfaLabel> = ArrayList()
         for (globalDeclaration in cProgram.globalDeclarations) {
             val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
-            if (type is CVoid || type is CStruct) {
-                uniqueWarningLogger.write(Level.INFO,
-                    "WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable\n")
+            if (type is CVoid) {
                 continue
+            }
+            if (type is CStruct) {
+                error("Not handling init expression of struct array ${globalDeclaration.get1()}")
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
             if (type is CPointer || type is CArray) {
@@ -202,14 +202,14 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             }
         }
 
-        if (param.size > 0 && builder.name.equals("main")) {
-            val endinit = getAnonymousLoc(builder, getMetadata(function))
-            builder.addLoc(endinit)
-            val edge = XcfaEdge(init, endinit, SequenceLabel(param + initStmtList),
-                metadata = getMetadata(function))
-            builder.addEdge(edge)
-            init = endinit
-        }
+//        if (param.size > 0 && builder.name.equals("main")) {
+        val endinit = getAnonymousLoc(builder, getMetadata(function))
+        builder.addLoc(endinit)
+        val initEdge = XcfaEdge(init, endinit, SequenceLabel(param + initStmtList),
+            metadata = getMetadata(function))
+        builder.addEdge(initEdge)
+        init = endinit
+//        }
         builder.createFinalLoc(getMetadata(function))
         val ret = builder.finalLoc.get()
         builder.addLoc(ret)

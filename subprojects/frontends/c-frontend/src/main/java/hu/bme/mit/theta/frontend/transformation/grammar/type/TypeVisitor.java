@@ -65,7 +65,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     private static final List<String> standardTypes =
             List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
     private static final List<String> shorthandTypes =
-            List.of("long", "short", "unsigned", "_Bool");
+            List.of("long", "__int128", "short", "unsigned", "_Bool");
 
     public TypeVisitor(DeclarationVisitor declarationVisitor, TypedefVisitor typedefVisitor, ParseContext parseContext, Logger uniqueWarningLogger) {
         this.declarationVisitor = declarationVisitor;
