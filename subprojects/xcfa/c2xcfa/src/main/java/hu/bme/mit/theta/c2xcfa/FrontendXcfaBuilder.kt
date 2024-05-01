@@ -158,6 +158,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
         xcfaBuilder.addProcedure(builder)
         val initStmtList = ArrayList<XcfaLabel>()
+        if (param.size > 0 && builder.name.equals("main")) {
+            initStmtList.addAll(param)
+        }
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
             val type = CComplexType.getType(flatVariable.ref, parseContext)
@@ -202,14 +205,12 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             }
         }
 
-//        if (param.size > 0 && builder.name.equals("main")) {
         val endinit = getAnonymousLoc(builder, getMetadata(function))
         builder.addLoc(endinit)
-        val initEdge = XcfaEdge(init, endinit, SequenceLabel(param + initStmtList),
+        val initEdge = XcfaEdge(init, endinit, SequenceLabel(initStmtList),
             metadata = getMetadata(function))
         builder.addEdge(initEdge)
         init = endinit
-//        }
         builder.createFinalLoc(getMetadata(function))
         val ret = builder.finalLoc.get()
         builder.addLoc(ret)

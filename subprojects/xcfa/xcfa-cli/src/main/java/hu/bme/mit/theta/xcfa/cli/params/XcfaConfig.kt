@@ -127,6 +127,9 @@ data class FrontendConfig<T : SpecFrontendConfig>(
 data class CFrontendConfig(
     @Parameter(names = ["--arithmetic"], description = "Arithmetic type (efficient, bitvector, integer)")
     var arithmetic: ArchitectureConfig.ArithmeticType = ArchitectureConfig.ArithmeticType.efficient,
+
+    @Parameter(names = ["--architecture"], description = "Architecture (see https://unix.org/whitepapers/64bit.html)")
+    var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
 ) : SpecFrontendConfig
 
 data class CHCFrontendConfig(
