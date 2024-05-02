@@ -53,7 +53,7 @@ enum class AccessType {
 val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
     get() = when (this) {
         is MemoryAssignStmt<*, *, *> -> expr.dereferences.map { Pair(it, AccessType.READ) } + listOf(
-            Pair(deref, AccessType.WRITE))
+            Pair(deref, AccessType.WRITE)) + deref.ops.flatMap { it.dereferences }.map { Pair(it, AccessType.READ) }
 
         is AssignStmt<*> -> expr.dereferences.map { Pair(it, AccessType.READ) }
         is AssumeStmt -> cond.dereferences.map { Pair(it, AccessType.READ) }
@@ -68,7 +68,7 @@ val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType
 
 val Expr<*>.dereferences: List<Dereference<*, *, *>>
     get() = if (this is Dereference<*, *, *>) {
-        listOf(this)
+        listOf(this) + ops.flatMap { it.dereferences }
     } else {
         ops.flatMap { it.dereferences }
     }

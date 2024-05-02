@@ -74,6 +74,7 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
                     preList.add(
                         Stmts.Assume(ExprUtils.simplify(AbstractExprs.Eq(expr, deref.uniquenessIdx.get()))))
                 }
+//                postList.add(Stmts.Assume(Eq(vargen("value", deref.type).ref, deref))) // debug mode
             }
 
             stmtList.addAll(preList)

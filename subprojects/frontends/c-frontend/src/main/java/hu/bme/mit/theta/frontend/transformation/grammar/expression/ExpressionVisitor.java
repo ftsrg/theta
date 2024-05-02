@@ -746,7 +746,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     CComplexType ptrCtype = CComplexType.getUnsignedLong(parseContext);
                     Type ptrType = ptrCtype.getSmtType();
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
-                    primary = dereference(primary, cast(ptrCtype.castTo(index), ptrType), elemType);
+                    primary = dereference(primary, index, elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else if (arrayType instanceof CPointer) {
@@ -754,7 +754,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                     CComplexType ptrCtype = CComplexType.getUnsignedLong(parseContext);
                     Type ptrType = ptrCtype.getSmtType();
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
-                    primary = dereference(primary, cast(ptrCtype.castTo(index), ptrType), elemType);
+                    primary = dereference(primary, index, elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else {

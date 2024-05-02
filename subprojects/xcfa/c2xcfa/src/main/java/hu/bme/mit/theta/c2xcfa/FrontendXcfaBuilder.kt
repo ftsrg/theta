@@ -161,16 +161,6 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         if (param.size > 0 && builder.name.equals("main")) {
             initStmtList.addAll(param)
         }
-        for (flatVariable in flatVariables) {
-            builder.addVar(flatVariable)
-            val type = CComplexType.getType(flatVariable.ref, parseContext)
-            if (type is CPointer || type is CArray) {
-                initStmtList.add(StmtLabel(
-                    Stmts.Assign(cast(flatVariable, flatVariable.type),
-                        cast(type.getValue("$ptrCnt"), flatVariable.type))
-                ))
-            }
-        }
 //        builder.setRetType(if (funcDecl.actualType is CVoid) null else funcDecl.actualType.smtType) TODO: we never need the ret type, do we?
         if (funcDecl.actualType !is CVoid) {
             val toAdd: VarDecl<*> = Decls.Var(funcDecl.name + "_ret", funcDecl.actualType.smtType)
@@ -190,6 +180,17 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 "Function param should have an associated variable!")
             for (varDecl in functionParam.varDecls) {
                 if (varDecl != null) builder.addParam(varDecl, ParamDirection.IN)
+            }
+        }
+
+        for (flatVariable in flatVariables) {
+            builder.addVar(flatVariable)
+            val type = CComplexType.getType(flatVariable.ref, parseContext)
+            if ((type is CPointer || type is CArray) && builder.getParams().none { it.first == flatVariable }) {
+                initStmtList.add(StmtLabel(
+                    Stmts.Assign(cast(flatVariable, flatVariable.type),
+                        cast(type.getValue("$ptrCnt"), flatVariable.type))
+                ))
             }
         }
         builder.createInitLoc(getMetadata(function))

@@ -387,6 +387,7 @@ val XcfaLabel.references: List<Reference<*, *>>
         is StmtLabel -> when (stmt) {
             is AssumeStmt -> stmt.cond.references
             is AssignStmt<*> -> stmt.expr.references
+            is MemoryAssignStmt<*, *, *> -> stmt.deref.references + stmt.expr.references
             else -> emptyList()
         }
 
@@ -399,7 +400,7 @@ val XcfaLabel.references: List<Reference<*, *>>
 
 val Expr<*>.references: List<Reference<*, *>>
     get() = if (this is Reference<*, *>) {
-        listOf(this)
+        listOf(this) + this.ops.flatMap { it.references }
     } else {
         ops.flatMap { it.references }
     }

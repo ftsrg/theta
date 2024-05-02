@@ -22,8 +22,6 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
@@ -43,7 +41,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.csho
 
 import java.math.BigInteger;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
@@ -228,20 +225,5 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     @Override
     public Expr<?> visit(CVoid type, Expr<?> param) {
         return param.withOps(param.getOps());
-    }
-
-    @Override
-    public Expr<?> visit(CArray type, Expr<?> param) {
-        checkState(CComplexType.getType(param, parseContext) instanceof CArray,
-                "Only arrays can be used in place of arrays!");
-        return param.withOps(param.getOps());
-    }
-
-    @Override
-    public Expr<?> visit(CPointer type, Expr<?> param) {
-        if (CComplexType.getType(param, parseContext) instanceof CPointer) {
-            return param.withOps(param.getOps());
-        }
-        return visit((CUnsignedLong) CComplexType.getUnsignedLong(parseContext), param);
     }
 }

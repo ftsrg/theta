@@ -67,13 +67,15 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
             return builder
         }
 
-        val initLabels = referredVars.values.map { it.second }
-        val initEdges = builder.initLoc.outgoingEdges
-        val newInitEdges = initEdges.map {
-            it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
+        if (builder.parent.getInitProcedures().any { it.first == builder }) { // we only need this for main
+            val initLabels = referredVars.values.map { it.second }
+            val initEdges = builder.initLoc.outgoingEdges
+            val newInitEdges = initEdges.map {
+                it.withLabel(SequenceLabel(initLabels + it.label.getFlatLabels(), it.label.metadata))
+            }
+            initEdges.forEach(builder::removeEdge)
+            newInitEdges.forEach(builder::addEdge)
         }
-        initEdges.forEach(builder::removeEdge)
-        newInitEdges.forEach(builder::addEdge)
 
         val edges = LinkedHashSet(builder.getEdges())
         for (edge in edges) {
