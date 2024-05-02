@@ -20,6 +20,7 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer;
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor;
@@ -97,8 +98,9 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
                         try {
                             for (CParser.InitializerContext initializer : context.initializer()
                                     .initializerList().initializers) {
-                                CStatement expr = initializer.assignmentExpression().accept(functionVisitor);
-                                cInitializerList.addStatement(null /* TODO: add designator */, expr);
+                                Expr<?> expr = cSimpleType.getActualType().castTo(initializer.assignmentExpression().accept(functionVisitor).getExpression());
+                                parseContext.getMetadata().create(expr, "cType", cSimpleType);
+                                cInitializerList.addStatement(null /* TODO: add designator */, new CExpr(expr, parseContext));
                             }
                             initializerExpression = cInitializerList;
                         } catch (NullPointerException e) {
