@@ -98,6 +98,9 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
 
+    @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
+    var staticCoi: Boolean = false,
+
     @Parameter(names = ["--unroll"],
         description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
     var loopUnroll: Int = 1000,

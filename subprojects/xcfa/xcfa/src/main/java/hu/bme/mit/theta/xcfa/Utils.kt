@@ -196,11 +196,9 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
                 while (expr is Dereference<*, *>) {
                     expr = expr.array
                 }
-                when (expr) {
-                    is RefExpr<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ } +
-                        mapOf(expr.decl as VarDecl<*> to WRITE)
-
-                    is LitExpr<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ }
+                ExprUtils.getVars(stmt.expr).associateWith { READ } + when (expr) {
+                    is RefExpr<*> -> mapOf(expr.decl as VarDecl<*> to READ) // the memory address is read, not written
+                    is LitExpr<*> -> mapOf()
                     else -> error("MemoryAssignStmts's dereferences should only contain refs or lits")
                 }
             }
