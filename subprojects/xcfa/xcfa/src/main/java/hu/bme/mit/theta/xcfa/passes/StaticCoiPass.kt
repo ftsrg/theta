@@ -100,6 +100,7 @@ class StaticCoiPass : ProcedurePass {
         while (toVisit.isNotEmpty()) {
             val visiting = toVisit.removeFirst()
             if (visiting.collectAssumesVars().isNotEmpty()) return true
+            if (visiting.dereferencesWithAccessTypes.any { it.second.isWritten }) return true
 
             visited.add(visiting)
             val toAdd = (directObservers[visiting] ?: emptySet()) union (interProcessObservers[visiting] ?: emptySet())
