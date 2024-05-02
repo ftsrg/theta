@@ -82,7 +82,7 @@ internal class XcfaOcTraceExtractor(
                     }
 
                     val state = stateList.last()
-                    actionList.add(XcfaAction(event.pid, lastEdge, state))
+                    actionList.add(XcfaAction(event.pid, lastEdge))
                     stateList.add(state.copy(processes = state.processes.toMutableMap().apply {
                         put(
                             event.pid, XcfaProcessState(
@@ -159,7 +159,7 @@ internal class XcfaOcTraceExtractor(
         while (currentState.mutexes[""]?.equals(pid) == false || currentState.processes[pid]!!.locs.peek() != to) {
             val stepPid = currentState.mutexes[""] ?: pid // finish atomic block first
             val edge = currentState.processes[stepPid]!!.locs.peek().outgoingEdges.firstOrNull() ?: return null
-            actions.add(XcfaAction(stepPid, edge, currentState))
+            actions.add(XcfaAction(stepPid, edge))
             currentState = currentState.copy(processes = currentState.processes.toMutableMap().apply {
                 put(
                     stepPid, XcfaProcessState(

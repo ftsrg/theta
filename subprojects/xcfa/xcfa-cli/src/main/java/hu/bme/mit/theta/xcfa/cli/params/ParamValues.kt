@@ -39,6 +39,7 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -314,8 +315,11 @@ enum class InitPrec(
         predPrec = { error("ALLGLOBALS is not interpreted for the predicate domain.") }
     ),
     ALLASSUMES(
-        explPrec = { error("ALLVARS is not interpreted for the predicate domain.") },
-        predPrec = { xcfa -> XcfaPrec(PtrPrec(PredPrec.of(xcfa.collectAssumes()), kotlin.collections.emptySet())) },
+        explPrec = { xcfa ->
+            XcfaPrec(
+                PtrPrec(ExplPrec.of(xcfa.collectAssumes().flatMap(ExprUtils::getVars)), emptySet()))
+        },
+        predPrec = { xcfa -> XcfaPrec(PtrPrec(PredPrec.of(xcfa.collectAssumes()), emptySet())) },
     ),
 
 }

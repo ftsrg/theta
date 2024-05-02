@@ -33,16 +33,14 @@ import hu.bme.mit.theta.analysis.expr.ExprState
  *
  */
 
-class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S, ExprAction, P>,
-    private val trackingStyle: PtrTracking = PtrTracking.ALWAYS_TOP) :
+class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S, ExprAction, P>) :
     Analysis<PtrState<S>, PtrAction, PtrPrec<P>> {
 
     override fun getPartialOrd(): PartialOrd<PtrState<S>> = innerAnalysis.partialOrd.getPtrPartialOrd()
 
     override fun getInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = innerAnalysis.initFunc.getPtrInitFunc()
 
-    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = innerAnalysis.transFunc.getPtrTransFunc(
-        trackingStyle)
+    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = innerAnalysis.transFunc.getPtrTransFunc()
 }
 
 fun <S : ExprState> PartialOrd<S>.getPtrPartialOrd(): PartialOrd<PtrState<S>> = PartialOrd { state1, state2 ->
@@ -53,13 +51,13 @@ fun <S : ExprState> PartialOrd<S>.getPtrPartialOrd(): PartialOrd<PtrState<S>> = 
 }
 
 fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = InitFunc { prec ->
-    getInitStates(prec.innerPrec).map { PtrState(it) }
+    getInitStates(prec.innerPrec.patch(emptyMap())).map { PtrState(it) }
 }
 
-fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(
-    trackingStyle: PtrTracking = PtrTracking.ALWAYS_TOP): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
-    getSuccStates(state.innerState, action, prec.innerPrec).map {
-        PtrState(it, action.nextWriteTriples(prec.trackedDerefParams, trackingStyle, it),
-            action.cnts.values.maxOrNull() ?: action.inCnt)
+fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
+    val writeTriples = action.nextWriteTriples()
+    val patchedPrec = prec.innerPrec.patch(writeTriples)
+    getSuccStates(state.innerState, action, patchedPrec).map {
+        PtrState(it.repatch(), emptyMap(), action.cnts.values.maxOrNull() ?: action.inCnt)
     }
 }

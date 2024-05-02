@@ -36,6 +36,7 @@ public abstract class CSimpleType {
     private boolean isShort = false;
     private boolean isLong = false;
     private boolean isLongLong = false;
+    private boolean is128 = false;
     private boolean isThreadLocal = false;
 
     /**
@@ -128,12 +129,20 @@ public abstract class CSimpleType {
         return signed;
     }
 
-    public void setSigned(boolean signed) {
+    public void setSigned(Boolean signed) {
         this.signed = signed;
     }
 
     public boolean isVoid() {
         return false;
+    }
+
+    public boolean is128() {
+        return is128;
+    }
+
+    public void set128(boolean l128) {
+        is128 = l128;
     }
 
     public boolean isLongLong() {

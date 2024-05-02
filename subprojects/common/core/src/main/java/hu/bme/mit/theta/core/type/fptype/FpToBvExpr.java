@@ -115,12 +115,12 @@ public class FpToBvExpr extends UnaryExpr<FpType, BvType> {
         return HASH_SEED;
     }
 
-    public String getOperatorLabel() {
-        return OPERATOR_LABEL;
-    }
-
     public FpRoundingMode getRoundingMode() {
         return roundingMode;
+    }
+
+    public String getOperatorLabel() {
+        return OPERATOR_LABEL + "[" + size + "'" + (sgn ? "s" : "u") + "][" + roundingMode.name() + "]";
     }
 }
  

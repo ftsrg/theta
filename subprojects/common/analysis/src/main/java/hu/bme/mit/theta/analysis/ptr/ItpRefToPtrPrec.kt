@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec
 import hu.bme.mit.theta.common.Utils
-import kotlin.math.max
 
 /**
  * Transformer from interpolant refutation to pointer precision.
@@ -30,16 +29,15 @@ class ItpRefToPtrPrec<P : Prec>(private val innerRefToPrec: RefutationToPrec<P, 
 
     override fun toPrec(refutation: ItpRefutation, index: Int): PtrPrec<P> {
         val newDerefs = refutation[index].dereferences
-        val innerPrec = innerRefToPrec.toPrec(refutation, index)
-        return PtrPrec(innerPrec, newDerefs.flatMap { it.ops },
+        val innerPrec = innerRefToPrec.toPrec(refutation, index).repatch()
+        return PtrPrec(innerPrec, newDerefs.flatMap { it.ops }.toSet(),
             if (newDerefs.isEmpty()) 0 else refutation.size() - index)
     }
 
     override fun join(prec1: PtrPrec<P>, prec2: PtrPrec<P>): PtrPrec<P> {
         Preconditions.checkNotNull(prec1)
         Preconditions.checkNotNull(prec2)
-        return PtrPrec(innerRefToPrec.join(prec1.innerPrec, prec2.innerPrec),
-            prec1.trackedDerefParams + prec2.trackedDerefParams, max(prec1.historyLength, prec2.historyLength))
+        return PtrPrec(innerRefToPrec.join(prec1.innerPrec, prec2.innerPrec))
     }
 
     override fun toString(): String {

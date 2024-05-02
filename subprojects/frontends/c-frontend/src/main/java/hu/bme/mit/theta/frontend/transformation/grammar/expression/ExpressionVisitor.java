@@ -476,7 +476,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @Override
     public Expr<?> visitCastExpressionCast(CParser.CastExpressionCastContext ctx) {
-        CComplexType actualType = ctx.declarationSpecifiers().accept(typeVisitor).getActualType();
+        CComplexType actualType = ctx.castDeclarationSpecifierList().accept(typeVisitor).getActualType();
         Expr<?> expr = actualType.castTo(ctx.castExpression().accept(this));
         parseContext.getMetadata().create(expr, "cType", actualType);
         expr = actualType.castTo(expr);
@@ -495,6 +495,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         } else if (ctx.typeName() != null) {
             final Optional<CComplexType> type = typedefVisitor.getType(ctx.typeName().getText())
                     .or(() -> Optional.ofNullable(CComplexType.getType(ctx.typeName().getText(), parseContext)))
+                    .or(() -> parseContext.getMetadata().getMetadataValue(ctx.typeName().getText(), "cTypedefName").map(it -> (CComplexType) it))
                     .or(() -> Optional.ofNullable(CComplexType.getType(getVar(ctx.typeName().getText()).getRef(), parseContext)));
 
             if (type.isPresent()) {
@@ -534,6 +535,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 else
                     expr = AbstractExprs.Add(expr, type.getUnitValue());
             }
+            parseContext.getMetadata().create(expr, "cType", type);
             expr = type.castTo(expr);
             parseContext.getMetadata().create(expr, "cType", type);
             Expr<?> wrappedExpr = type.castTo(expr);
@@ -590,7 +592,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
 
     @SuppressWarnings("unchecked")
     private <T extends Type> Expr<?> dereference(Expr<?> accept, Expr<?> offset, CComplexType type) {
-        Dereference<T, Type> of = Exprs.Dereference((Expr<T>) accept, (Expr<T>) offset, type.getSmtType());
+        CComplexType ptrType = CComplexType.getType(accept, parseContext);
+        Dereference<T, ?, Type> of = Exprs.Dereference((Expr<T>) accept, ptrType.castTo(offset), type.getSmtType());
         parseContext.getMetadata().create(of, "cType", type);
         return of;
     }
@@ -664,7 +667,7 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
             } else if (text.startsWith("0b")) {
                 throw new UnsupportedOperationException("Binary FP constants are not yet supported!");
             } else {
-                bigFloat = new BigFloat(text, new BinaryMathContext(significand, exponent));
+                bigFloat = new BigFloat(text, new BinaryMathContext(significand - 1, exponent));
             }
             FpLitExpr fpLitExpr = FpUtils.bigFloatToFpLitExpr(bigFloat, FpType(exponent, significand));
             parseContext.getMetadata().create(fpLitExpr, "cType", type);
@@ -740,16 +743,18 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 CComplexType arrayType = CComplexType.getType(primary, parseContext);
                 if (arrayType instanceof CArray) {
                     CComplexType elemType = ((CArray) arrayType).getEmbeddedType();
-                    Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
+                    CComplexType ptrCtype = CComplexType.getUnsignedLong(parseContext);
+                    Type ptrType = ptrCtype.getSmtType();
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
-                    primary = dereference(primary, cast(index, ptrType), elemType);
+                    primary = dereference(primary, index, elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else if (arrayType instanceof CPointer) {
                     CComplexType elemType = ((CPointer) arrayType).getEmbeddedType();
-                    Type ptrType = CComplexType.getUnsignedLong(parseContext).getSmtType();
+                    CComplexType ptrCtype = CComplexType.getUnsignedLong(parseContext);
+                    Type ptrType = ptrCtype.getSmtType();
                     Expr<?> index = ctx.accept(ExpressionVisitor.this);
-                    primary = dereference(primary, cast(index, ptrType), elemType);
+                    primary = dereference(primary, index, elemType);
                     parseContext.getMetadata().create(primary, "cType", elemType);
                     return primary;
                 } else {

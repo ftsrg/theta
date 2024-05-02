@@ -146,6 +146,7 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
         val cConfig = config.frontendConfig.specConfig
         cConfig as CFrontendConfig
         parseContext.arithmetic = cConfig.arithmetic
+        parseContext.architecture = cConfig.architecture
     }
 
     val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)

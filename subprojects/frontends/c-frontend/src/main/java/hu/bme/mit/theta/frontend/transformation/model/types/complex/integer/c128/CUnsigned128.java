@@ -13,12 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.ptr
 
-import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.core.decl.VarDecl
+package hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128;
 
-data class PtrPrec<P : Prec>(val innerPrec: P, val set: Set<Any> = emptySet(), val smth: Int = 0) : Prec {
+import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
-    override fun getUsedVars(): Collection<VarDecl<*>> = innerPrec.usedVars
+public class CUnsigned128 extends C128 implements Unsigned {
+
+    public CUnsigned128(CSimpleType origin, ParseContext parseContext) {
+        super(origin, parseContext);
+        unsigned = true;
+    }
+
+    public <T, R> R accept(CComplexTypeVisitor<T, R> visitor, T param) {
+        return visitor.visit(this, param);
+    }
 }

@@ -28,4 +28,28 @@ public class DeclaredName extends CSimpleType {
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setAssociatedName(declaredName);
     }
+
+    @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new DeclaredName(declaredName);
+        declaredNameRet.setAtomic(this.isAtomic());
+        declaredNameRet.setExtern(this.isExtern());
+        declaredNameRet.setTypedef(this.isTypedef());
+        declaredNameRet.setVolatile(this.isVolatile());
+        declaredNameRet.setSigned(this.isSigned());
+        declaredNameRet.setShort(this.isShort());
+        declaredNameRet.setLong(this.isLong());
+        declaredNameRet.setBool(this.isBool());
+        declaredNameRet.setLongLong(this.isLongLong());
+        declaredNameRet.set128(this.is128());
+        for (int i = 0; i < this.getPointerLevel(); i++) {
+            declaredNameRet.incrementPointer();
+        }
+
+        return declaredNameRet;
+    }
+
+    public String getDeclaredName() {
+        return declaredName;
+    }
 }

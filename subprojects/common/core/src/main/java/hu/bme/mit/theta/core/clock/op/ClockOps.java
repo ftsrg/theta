@@ -176,7 +176,7 @@ public final class ClockOps {
         }
 
         @Override
-        public <PtrType extends Type, DeclType extends Type> ClockOp visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> ClockOp visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 

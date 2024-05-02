@@ -23,7 +23,9 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
+import hu.bme.mit.theta.analysis.ptr.patch
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.*
 
@@ -69,13 +71,18 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         val optionalNewCex = arg.cexs.findFirst()
         val cexToConcretize = optionalNewCex.get()
         val rawTrace = cexToConcretize.toTrace()
-        val actions = rawTrace.actions.fold(
-            Pair(emptyMap(),
-                listOf())) { (wTriple: WriteTriples, list: List<A>): Pair<WriteTriples, List<A>>, a: A ->
-            val newA = (a as XcfaAction).withLastWrites(wTriple)
-            Pair(newA.nextWriteTriples(), list + (newA as A))
-        }.second
-        val traceToConcretize = Trace.of(rawTrace.states, actions)
+        val (_, states, actions) = rawTrace.actions.foldIndexed(
+            Triple(Pair(emptyMap(), 0), listOf(rawTrace.getState(0)),
+                listOf())) { i: Int, (wTripleCnt: Pair<WriteTriples, Int>, states: List<S>, actions: List<A>): Triple<Pair<WriteTriples, Int>, List<S>, List<A>>, a: A ->
+            val (wTriple, cnt) = wTripleCnt
+            val newA = (a as XcfaAction).withLastWrites(wTriple, cnt)
+            val newState = (rawTrace.getState(i + 1) as XcfaState<PtrState<*>>).let {
+                it.withState(PtrState(it.sGlobal.innerState.patch(newA.nextWriteTriples())))
+            }
+            Triple(Pair(newA.nextWriteTriples(), newA.cnts.values.maxOrNull() ?: newA.inCnt), states + (newState as S),
+                actions + (newA as A))
+        }
+        val traceToConcretize = Trace.of(states, actions)
 
         logger.write(Logger.Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length())
         logger.write(Logger.Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize)

@@ -124,9 +124,9 @@ final class StmtToExprTransformer {
         }
 
         @Override
-        public <PtrType extends Type, DeclType extends Type> StmtUnfoldResult visit(MemoryAssignStmt<PtrType, DeclType> stmt, VarIndexing indexing) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> StmtUnfoldResult visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, VarIndexing indexing) {
             final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
-            final Dereference<PtrType, DeclType> lhs = (Dereference<PtrType, DeclType>) ExprUtils.applyPrimes(stmt.getDeref(), indexing);
+            final Dereference<PtrType, OffsetType, DeclType> lhs = (Dereference<PtrType, OffsetType, DeclType>) ExprUtils.applyPrimes(stmt.getDeref(), indexing);
 
             final var retExpr = Eq(lhs, rhs);
             return StmtUnfoldResult.of(ImmutableList.of(retExpr), indexing);

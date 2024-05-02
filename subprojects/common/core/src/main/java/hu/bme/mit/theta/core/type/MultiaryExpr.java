@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.core.type;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> implements
         Expr<ExprType> {
@@ -73,7 +72,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 
     @Override
     public final String toString() {
-        return Utils.lispStringBuilder(getOperatorLabel()).addAll(ops).toString();
+        return Utils.lispStringBuilder(getOperatorLabel()).body().addAll(ops).toString();
     }
 
     public abstract MultiaryExpr<OpType, ExprType> with(final Iterable<? extends Expr<OpType>> ops);

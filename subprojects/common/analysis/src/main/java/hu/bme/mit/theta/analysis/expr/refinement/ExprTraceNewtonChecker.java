@@ -284,7 +284,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public <PtrType extends Type, DeclType extends Type> Stmt visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Stmt visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
                 throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
             }
 
@@ -414,7 +414,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public <PtrType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
                 throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
             }
 
@@ -467,7 +467,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public <PtrType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
                 throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
             }
 
@@ -520,7 +520,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
             }
 
             @Override
-            public <PtrType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+            public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Collection<VarDecl<?>> visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
                 throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
             }
 

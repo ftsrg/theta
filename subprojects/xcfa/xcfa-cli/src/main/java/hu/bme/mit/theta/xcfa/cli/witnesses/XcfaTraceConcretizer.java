@@ -26,7 +26,10 @@ import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.ptr.PtrState;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.UtilsKt;
@@ -34,9 +37,12 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
+import kotlin.Triple;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.xcfa.UtilsKt.getFlatLabels;
@@ -51,11 +57,15 @@ public class XcfaTraceConcretizer {
         List<XcfaState<PtrState<?>>> sbeStates = new ArrayList<>();
         List<XcfaAction> sbeActions = new ArrayList<>();
 
-        sbeStates.add(trace.getState(0));
+        sbeStates.add(trace.getState(0).withState(new PtrState<>(ExplState.top())));
+
+        Map<Type, List<Triple<Expr<?>, Expr<?>, Expr<IntType>>>> nextW = Collections.emptyMap();
         for (int i = 0; i < trace.getActions().size(); ++i) {
             final XcfaEdge edge = new XcfaEdge(trace.getAction(i).getSource(), trace.getAction(i).getTarget(), trace.getAction(i).getLabel());
-            sbeActions.add(new XcfaAction(trace.getAction(i).getPid(), edge, sbeStates.get(i)));
-            sbeStates.add(trace.getState(i + 1));
+            final XcfaAction action = new XcfaAction(trace.getAction(i).getPid(), edge, nextW, trace.getAction(i).getInCnt());
+            sbeActions.add(action);
+            nextW = action.nextWriteTriples();
+            sbeStates.add(trace.getState(i + 1).withState(new PtrState<>(ExplState.top())));
         }
         Trace<XcfaState<?>, XcfaAction> sbeTrace = Trace.of(sbeStates, sbeActions);
         final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(BoolExprs.True(),
@@ -73,7 +83,8 @@ public class XcfaTraceConcretizer {
             if (i < sbeTrace.getActions().size()) {
                 final var action = sbeTrace.getAction(i);
                 int finalI = i;
-                cfaActions.add(action.withLabel(new SequenceLabel(getFlatLabels(action.getLabel()).stream().map(it -> UtilsKt.simplify(it, MutableValuation.copyOf(valuations.getState(finalI)), parseContext)).toList())));
+                final var val = MutableValuation.copyOf(valuations.getState(finalI));
+                cfaActions.add(action.withLabel(new SequenceLabel(getFlatLabels(action.getLabel()).stream().map(it -> UtilsKt.simplify(it, val, parseContext)).toList())));
             }
         }
 

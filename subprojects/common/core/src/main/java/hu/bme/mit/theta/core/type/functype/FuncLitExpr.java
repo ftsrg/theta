@@ -123,7 +123,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
     @Override
     public String toString() {
         final String paramString = String.format("(%s %s)", param.getName(), param.getType());
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(paramString).add(result).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(paramString).add(result).toString();
     }
 
 }

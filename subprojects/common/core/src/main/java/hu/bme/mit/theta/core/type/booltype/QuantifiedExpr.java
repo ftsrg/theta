@@ -15,20 +15,19 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static java.util.stream.Collectors.joining;
-
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static java.util.stream.Collectors.joining;
 
 public abstract class QuantifiedExpr implements Expr<BoolType> {
 
@@ -92,7 +91,7 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
         final String paramString = paramDecls.stream()
                 .map(p -> "(" + p.getName() + " " + p.getType() + ")")
                 .collect(joining(" ", "(", ")"));
-        return Utils.lispStringBuilder(getOperatorLabel()).add(paramString).add(op).toString();
+        return Utils.lispStringBuilder(getOperatorLabel()).body().add(paramString).add(op).toString();
     }
 
     public abstract QuantifiedExpr with(final Expr<BoolType> op);

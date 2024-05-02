@@ -15,15 +15,15 @@
  */
 package hu.bme.mit.theta.common;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import com.google.common.base.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Stream;
 
-import com.google.common.base.Strings;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Utility class for printing Lisp style strings, e.g., (A (B 1 2) (C 3)).
@@ -40,6 +40,8 @@ public final class LispStringBuilder {
     private final List<Object> bodyObjs;
 
     private State state;
+
+    private int minLengthForMultiline = 75;
 
     private static enum State {
         HEAD, ALIGNED, BODY, BUILT;
@@ -108,7 +110,13 @@ public final class LispStringBuilder {
         sb.append(body);
 
         sb.append(RPAREN);
-        return sb.toString();
+        final String ret = sb.toString();
+        final String singleLine = ret.replaceAll("\\s+", " ");
+        if (singleLine.length() < minLengthForMultiline) {
+            return singleLine;
+        } else {
+            return ret;
+        }
     }
 
     ////

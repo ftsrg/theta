@@ -58,6 +58,12 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
         return typeVisitor;
     }
 
+
+    public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext,
+                                              CParser.InitDeclaratorListContext initDeclContext) {
+        return getDeclarations(declSpecContext, initDeclContext, true);
+    }
+
     /**
      * From a single declaration context and initialization list this function produces the
      * corresponding CDeclarations
@@ -67,7 +73,8 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
      * @return the corresponding CDeclarations
      */
     public List<CDeclaration> getDeclarations(CParser.DeclarationSpecifiersContext declSpecContext,
-                                              CParser.InitDeclaratorListContext initDeclContext) {
+                                              CParser.InitDeclaratorListContext initDeclContext,
+                                              boolean getInitExpr) {
         List<CDeclaration> ret = new ArrayList<>();
         CSimpleType cSimpleType = declSpecContext.accept(typeVisitor);
         if (cSimpleType.getAssociatedName() != null) {
@@ -80,7 +87,7 @@ public class DeclarationVisitor extends CBaseVisitor<CDeclaration> {
             for (CParser.InitDeclaratorContext context : initDeclContext.initDeclarator()) {
                 CDeclaration declaration = context.declarator().accept(this);
                 CStatement initializerExpression;
-                if (context.initializer() != null) {
+                if (context.initializer() != null && getInitExpr) {
                     if (context.initializer().initializerList() != null) {
                         checkState(
                                 context.initializer().initializerList().designation().size() == 0,

@@ -16,26 +16,30 @@
 
 package hu.bme.mit.theta.xcfa.analysis
 
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.ptr.PtrAction
-import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.core.stmt.Stmt
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.flatten
 
-data class XcfaAction(val pid: Int, val edge: XcfaEdge, val state: XcfaState<out PtrState<out ExprState>>) :
-    PtrAction(state.sGlobal.lastWrites, state.sGlobal.nextCnt) {
+data class XcfaAction
+@JvmOverloads
+constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTriples = emptyMap(),
+    private val nextCnt: Int = 0) :
+    PtrAction(lastWrites, nextCnt) {
 
     val source: XcfaLocation = edge.source
     val target: XcfaLocation = edge.target
     val label: XcfaLabel = edge.label
     private val stmts: List<Stmt> = label.toStmt().flatten()
 
-    constructor(pid: Int, source: XcfaLocation, target: XcfaLocation,
-        label: XcfaLabel = NopLabel, state: XcfaState<out PtrState<out ExprState>>) : this(pid,
-        XcfaEdge(source, target, label),
-        state)
+    constructor(pid: Int,
+        source: XcfaLocation,
+        target: XcfaLocation,
+        label: XcfaLabel = NopLabel,
+        lastWrites: WriteTriples = emptyMap(),
+        nextCnt: Int = 0) :
+        this(pid, XcfaEdge(source, target, label), lastWrites, nextCnt)
 
     override val stmtList: List<Stmt>
         get() = stmts
@@ -45,12 +49,11 @@ data class XcfaAction(val pid: Int, val edge: XcfaEdge, val state: XcfaState<out
     }
 
     fun withLabel(sequenceLabel: SequenceLabel): XcfaAction {
-        return XcfaAction(pid, source, target, sequenceLabel, state)
+        return XcfaAction(pid, source, target, sequenceLabel, nextCnt = nextCnt)
     }
 
-    fun withLastWrites(writeTriples: WriteTriples): XcfaAction {
-        val state = this.state as XcfaState<PtrState<*>>
-        return XcfaAction(pid, source, target, label, state.copy(sGlobal = state.sGlobal.withLastWrites(writeTriples)))
+    fun withLastWrites(writeTriples: WriteTriples, nextCnt: Int): XcfaAction {
+        return XcfaAction(pid, source, target, label, writeTriples, nextCnt)
     }
 
 }

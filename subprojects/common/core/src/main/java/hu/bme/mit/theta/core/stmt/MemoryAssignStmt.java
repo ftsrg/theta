@@ -29,34 +29,34 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @param <DeclType>
  */
-public final class MemoryAssignStmt<PtrType extends Type, DeclType extends Type> implements Stmt {
+public final class MemoryAssignStmt<PtrType extends Type, OffsetType extends Type, DeclType extends Type> implements Stmt {
 
     private static final String STMT_LABEL = "memassign";
 
-    private final Dereference<PtrType, DeclType> deref;
+    private final Dereference<PtrType, OffsetType, DeclType> deref;
     private final Expr<DeclType> expr;
 
-    private MemoryAssignStmt(final Dereference<PtrType, DeclType> deref, final Expr<DeclType> expr) {
+    private MemoryAssignStmt(final Dereference<PtrType, OffsetType, DeclType> deref, final Expr<DeclType> expr) {
         this.deref = checkNotNull(deref);
         this.expr = checkNotNull(expr);
     }
 
-    public static <PtrType extends Type, DeclType extends Type> MemoryAssignStmt<PtrType, DeclType> of(
-            final Dereference<PtrType, DeclType> deref,
+    public static <PtrType extends Type, OffsetType extends Type, DeclType extends Type> MemoryAssignStmt<PtrType, OffsetType, DeclType> of(
+            final Dereference<PtrType, OffsetType, DeclType> deref,
             final Expr<DeclType> expr) {
         return new MemoryAssignStmt<>(deref, expr);
     }
 
     @SuppressWarnings("unchecked")
-    public static <PtrType extends Type, DeclType extends Type> MemoryAssignStmt<PtrType, DeclType> create(
-            final Dereference<PtrType, ?> deref,
+    public static <PtrType extends Type, OffsetType extends Type, DeclType extends Type> MemoryAssignStmt<PtrType, OffsetType, DeclType> create(
+            final Dereference<PtrType, OffsetType, ?> deref,
             final Expr<DeclType> expr) {
-        final Dereference<PtrType, DeclType> typedDeref = (Dereference<PtrType, DeclType>) deref;
-        final Expr<DeclType> typedExpr = (Expr<DeclType>) expr;
+        final Dereference<PtrType, OffsetType, DeclType> typedDeref = (Dereference<PtrType, OffsetType, DeclType>) deref;
+        final Expr<DeclType> typedExpr = expr;
         return MemoryAssignStmt.of(typedDeref, typedExpr);
     }
 
-    public Dereference<PtrType, DeclType> getDeref() {
+    public Dereference<PtrType, OffsetType, DeclType> getDeref() {
         return deref;
     }
 
@@ -79,8 +79,8 @@ public final class MemoryAssignStmt<PtrType extends Type, DeclType extends Type>
         if (this == obj) {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
-            return Objects.equal(deref, ((MemoryAssignStmt<?, ?>) obj).deref) &&
-                    Objects.equal(expr, ((MemoryAssignStmt<?, ?>) obj).expr);
+            return Objects.equal(deref, ((MemoryAssignStmt<?, ?, ?>) obj).deref) &&
+                    Objects.equal(expr, ((MemoryAssignStmt<?, ?, ?>) obj).expr);
         } else {
             return false;
         }

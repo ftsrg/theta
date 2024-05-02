@@ -75,10 +75,10 @@ fun getCoreXcfaLts() = LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
                 XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), SequenceLabel(listOf(
                     proc.value.paramStmts.peek().second,
                     ReturnLabel(proc.value.returnStmts.peek()),
-                ))), s))
+                ))), nextCnt = s.sGlobal.nextCnt))
         } else if (!proc.value.paramsInitialized) {
             listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(),
-                proc.value.paramStmts.peek().first), s))
+                proc.value.paramStmts.peek().first), nextCnt = s.sGlobal.nextCnt))
         } else {
             proc.value.locs.peek().outgoingEdges.map { edge ->
                 val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
@@ -126,9 +126,9 @@ fun getCoreXcfaLts() = LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
                                 }, listOf(label.copy(tempLookup = lookup))).flatten())
                         } else label
                     })
-                    XcfaAction(proc.key, edge.withLabel(newNewLabel), s)
+                    XcfaAction(proc.key, edge.withLabel(newNewLabel), nextCnt = s.sGlobal.nextCnt)
                 } else
-                    XcfaAction(proc.key, edge.withLabel(newLabel), s)
+                    XcfaAction(proc.key, edge.withLabel(newLabel), nextCnt = s.sGlobal.nextCnt)
             }
         }
     }.flatten().toSet()
@@ -247,7 +247,7 @@ private fun getExplXcfaInitFunc(xcfa: XCFA,
 private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int, ptrTracking: PtrTracking):
     (XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>) -> List<XcfaState<PtrState<ExplState>>> {
     val explTransFunc = (ExplStmtTransFunc.create(solver,
-        maxEnum) as TransFunc<ExplState, ExprAction, ExplPrec>).getPtrTransFunc(ptrTracking)
+        maxEnum) as TransFunc<ExplState, ExprAction, ExplPrec>).getPtrTransFunc()
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
@@ -283,7 +283,7 @@ private fun getPredXcfaInitFunc(xcfa: XCFA,
 private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor, ptrTracking: PtrTracking):
     (XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>) -> List<XcfaState<PtrState<PredState>>> {
     val predTransFunc = (PredTransFunc.create<StmtAction>(
-        predAbstractor) as TransFunc<PredState, ExprAction, PredPrec>).getPtrTransFunc(ptrTracking)
+        predAbstractor) as TransFunc<PredState, ExprAction, PredPrec>).getPtrTransFunc()
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(

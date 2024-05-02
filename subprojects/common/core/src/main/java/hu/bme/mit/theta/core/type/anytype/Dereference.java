@@ -28,19 +28,17 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public final class Dereference<A extends Type, T extends Type> implements Expr<T> {
+public final class Dereference<A extends Type, O extends Type, T extends Type> implements Expr<T> {
 
     private static final String OPERATOR_LABEL = "deref";
-    private static int counter = 0;
     private final Expr<A> array;
-    private final Expr<A> offset;
+    private final Expr<O> offset;
     private final T type;
 
     private final Optional<Expr<IntType>> uniquenessIdx;
 
-    private Dereference(Expr<A> array, Expr<A> offset, T type) {
+    private Dereference(Expr<A> array, Expr<O> offset, T type) {
         this.array = array;
         this.offset = offset;
         this.type = type;
@@ -48,31 +46,31 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
     }
 
 
-    private Dereference(Expr<A> array, Expr<A> offset, Expr<IntType> uniqueness, T type) {
+    private Dereference(Expr<A> array, Expr<O> offset, Expr<IntType> uniqueness, T type) {
         this.array = array;
         this.offset = offset;
         this.type = type;
-        this.uniquenessIdx = Optional.of(uniqueness);
+        this.uniquenessIdx = Optional.ofNullable(uniqueness);
     }
 
     public Expr<A> getArray() {
         return array;
     }
 
-    public Expr<A> getOffset() {
+    public Expr<O> getOffset() {
         return offset;
     }
 
 
-    public static <A extends Type, T extends Type> Dereference<A, T> of(Expr<A> array, Expr<A> offset, T type) {
+    public static <A extends Type, O extends Type, T extends Type> Dereference<A, O, T> of(Expr<A> array, Expr<O> offset, T type) {
         return new Dereference<>(array, offset, type);
     }
 
-    private static <A extends Type, T extends Type> Dereference<A, T> of(Expr<A> array, Expr<A> offset, Expr<IntType> uniqueness, T type) {
+    private static <A extends Type, O extends Type, T extends Type> Dereference<A, O, T> of(Expr<A> array, Expr<O> offset, Expr<IntType> uniqueness, T type) {
         return new Dereference<>(array, offset, uniqueness, type);
     }
 
-    public Dereference<A, T> withUniquenessExpr(Expr<IntType> expr) {
+    public Dereference<A, O, T> withUniquenessExpr(Expr<IntType> expr) {
         return Dereference.of(array, offset, expr, type); // TODO: this kills the stuck check
     }
 
@@ -100,11 +98,10 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
     @Override
     public Expr<T> withOps(List<? extends Expr<?>> ops) {
         checkState(ops.size() == 3 || ops.size() == 2);
-        @SuppressWarnings("unchecked") final T ptrType = (T) ops.get(0).getType();
         if (ops.size() == 3) {
-            return Dereference.of(cast(ops.get(0), ptrType), cast(ops.get(1), ptrType), (Expr<IntType>) ops.get(2), type);
+            return Dereference.of(ops.get(0), ops.get(1), (Expr<IntType>) ops.get(2), type);
         } else {
-            return Dereference.of(cast(ops.get(0), ptrType), cast(ops.get(1), ptrType), type);
+            return Dereference.of(ops.get(0), ops.get(1), type);
         }
     }
 
@@ -115,7 +112,7 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Dereference<?, ?> that) {
+        if (obj instanceof Dereference<?, ?, ?> that) {
             return Objects.equals(this.array, that.array) &&
                     Objects.equals(this.offset, that.offset) &&
                     Objects.equals(this.uniquenessIdx, that.uniquenessIdx) &&
@@ -126,7 +123,7 @@ public final class Dereference<A extends Type, T extends Type> implements Expr<T
 
     @Override
     public String toString() {
-        var base = Utils.lispStringBuilder(OPERATOR_LABEL).add(getArray()).add(getOffset());
+        var base = Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getArray()).add(getOffset());
         uniquenessIdx.ifPresent(base::add);
         return base.add(type).toString();
     }

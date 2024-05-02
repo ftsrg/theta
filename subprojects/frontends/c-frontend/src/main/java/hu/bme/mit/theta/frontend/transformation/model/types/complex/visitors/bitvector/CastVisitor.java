@@ -28,12 +28,13 @@ import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Signed;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Unsigned;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -53,7 +54,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
 import java.math.BigInteger;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -162,6 +162,16 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
     }
 
     @Override
+    public Expr<?> visit(CSigned128 type, Expr<?> param) {
+        return handleSignedConversion(type, param);
+    }
+
+    @Override
+    public Expr<?> visit(CUnsigned128 type, Expr<?> param) {
+        return handleUnsignedConversion(type, param);
+    }
+
+    @Override
     public Expr<?> visit(CSignedLongLong type, Expr<?> param) {
         return handleSignedConversion(type, param);
     }
@@ -239,18 +249,5 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
         }
         return handleFp(type, param);
 
-    }
-
-    @Override
-    public Expr<?> visit(CArray type, Expr<?> param) {
-        checkState(CComplexType.getType(param, parseContext) instanceof CArray,
-                "Only arrays can be used in place of arrays!");
-        return param.withOps(param.getOps());
-    }
-
-
-    @Override
-    public Expr<?> visit(CPointer type, Expr<?> param) {
-        return handleUnsignedConversion((CInteger) CComplexType.getUnsignedLong(parseContext), param);
     }
 }

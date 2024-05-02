@@ -66,7 +66,7 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
 }
 
 private fun Expr<*>.hasDeref(): Boolean =
-    this is Dereference<*, *> || this.ops.any(Expr<*>::hasDeref)
+    this is Dereference<*, *, *> || this.ops.any(Expr<*>::hasDeref)
 
 fun <P : Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
     if (lookup.isEmpty()) this
@@ -74,8 +74,7 @@ fun <P : Prec> P.changeVars(lookup: Map<VarDecl<*>, VarDecl<*>>): P =
         when (this) {
             is ExplPrec -> ExplPrec.of(vars.map { it.changeVars(lookup) }) as P
             is PredPrec -> PredPrec.of(preds.map { it.changeVars(lookup) }) as P
-            is PtrPrec<*> -> PtrPrec(innerPrec.changeVars(lookup),
-                trackedDerefParams.map { it.changeVars(lookup) }) as P
+            is PtrPrec<*> -> PtrPrec(innerPrec.changeVars(lookup)) as P
             else -> error("Precision type ${this.javaClass} not supported.")
         }
 
@@ -89,8 +88,7 @@ fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
             is PredPrec -> PredPrec.of(
                 preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
 
-            is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups),
-                lookups.flatMap { lookup -> trackedDerefParams.map { it.changeVars(lookup) } }) as P
+            is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups)) as P
 
             else -> error("Precision type ${this.javaClass} not supported.")
         }

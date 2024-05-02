@@ -127,7 +127,7 @@ unaryOperator
     ;
 
 castExpression
-    :   '__extension__'? '(' declarationSpecifiers ')' castExpression    #castExpressionCast
+    :   '__extension__'? '(' castDeclarationSpecifierList ')' castExpression    #castExpressionCast
     |   unaryExpression                                     #castExpressionUnaryExpression
 //    |   DigitSequence                                       #castExpressionDigitSequence
     ;
@@ -137,23 +137,19 @@ multiplicativeExpression
     ;
 
 additiveExpression
-    :   LeftParen multiplicativeExpression RightParen (signs+=('+'|'-') (multiplicativeExpression | LeftParen multiplicativeExpression RightParen))* // TODO: all others as well?
-    |   multiplicativeExpression (signs+=('+'|'-') multiplicativeExpression)*
+    :   multiplicativeExpression (signs+=('+'|'-') multiplicativeExpression)*
     ;
 
 shiftExpression
-    :   LeftParen additiveExpression RightParen (signs+=('<<'|'>>') (additiveExpression | LeftParen additiveExpression RightParen))* // TODO: all others as well?
-    |   additiveExpression (signs+=('<<'|'>>') additiveExpression)*
+    :   additiveExpression (signs+=('<<'|'>>') additiveExpression)*
     ;
 
 relationalExpression
-    :   LeftParen shiftExpression RightParen (signs+=('<'|'>'|'<='|'>=') (shiftExpression | LeftParen shiftExpression RightParen))* // TODO: all others as well?
-    |   shiftExpression (signs+=('<'|'>'|'<='|'>=') shiftExpression)*
+    :   shiftExpression (signs+=('<'|'>'|'<='|'>=') shiftExpression)*
     ;
 
 equalityExpression
-    :   LeftParen relationalExpression RightParen (signs+=('=='| '!=') (relationalExpression | LeftParen relationalExpression RightParen))* // TODO: all others as well?
-    |   relationalExpression (signs+=('=='| '!=') relationalExpression)*
+    :   relationalExpression (signs+=('=='| '!=') relationalExpression)*
     ;
 
 andExpression
@@ -211,6 +207,19 @@ declarationSpecifiers2
     :   declarationSpecifier+
     ;
 
+// otherwise, (y*y)-2 is considered a cast
+castDeclarationSpecifierList
+    : spec1+=castDeclarationSpecifier* spec2=typeSpecifierPointer?
+    ;
+
+castDeclarationSpecifier
+    : storageClassSpecifier
+    | typeSpecifier
+    | typeQualifier
+    | functionSpecifier
+    | alignmentSpecifier
+    ;
+
 declarationSpecifier
     :   storageClassSpecifier
     |   typeSpecifierPointer
@@ -247,6 +256,7 @@ typeSpecifier
     |   'unsigned'
     |   '_Bool'
     |   '_Complex'
+    |   '__int128'
     |   '__m128'
     |   '__m128d'
     |   '__m128i')                                                  # typeSpecifierSimple
@@ -259,6 +269,7 @@ typeSpecifier
     |   enumSpecifier                                               # typeSpecifierEnum
     |   typedefName                                                 # typeSpecifierTypedefName
     |   '__typeof__' '(' constantExpression ')'                     # typeSpecifierTypeof
+    |   typeSpecifier '(' '*' ')' '(' parameterTypeList?  ')'       # typeSpecifierFunctionPointer
 //    |   typeSpecifier pointer                                       # typeSpecifierPointer
     ;
 
