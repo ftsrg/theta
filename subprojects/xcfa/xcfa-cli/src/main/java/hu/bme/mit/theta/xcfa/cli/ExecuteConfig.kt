@@ -31,6 +31,7 @@ import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
@@ -160,6 +161,12 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
     }
 
     ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
+
+    if (parseContext.multiThreading && (config.backendConfig.specConfig as? CegarConfig)?.let { it.abstractorConfig.search == Search.ERR } == true) {
+        val cConfig = config.backendConfig.specConfig as CegarConfig
+        cConfig.abstractorConfig.search = Search.DFS
+        uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
+    }
 
     logger.write(
         Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
