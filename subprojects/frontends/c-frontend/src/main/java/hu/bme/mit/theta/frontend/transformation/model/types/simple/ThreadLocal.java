@@ -24,6 +24,13 @@ public class ThreadLocal extends CSimpleType {
     }
 
     @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new ThreadLocal();
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+    @Override
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setThreadLocal(true);
     }
