@@ -41,11 +41,14 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
 
     companion object {
 
+        var enabled = false
+
         private var cnt = 0
             get() = field++
     }
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+        if (!enabled) return builder
         checkNotNull(builder.metaData["deterministic"])
         val localDerefs = builder.getEdges().flatMap { it.getFlatLabels().flatMap { it.dereferences } }
 

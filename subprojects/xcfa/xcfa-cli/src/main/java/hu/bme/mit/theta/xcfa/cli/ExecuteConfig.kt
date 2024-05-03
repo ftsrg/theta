@@ -53,6 +53,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
+import hu.bme.mit.theta.xcfa.passes.FetchExecuteWriteback
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa.toC
@@ -99,6 +100,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
 
     LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
     LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
+    FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
     ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
