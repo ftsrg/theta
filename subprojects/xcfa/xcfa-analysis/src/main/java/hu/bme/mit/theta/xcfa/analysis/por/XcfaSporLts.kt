@@ -79,7 +79,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      * Variables associated to mutex identifiers. TODO: this should really be solved by storing VarDecls in FenceLabel.
      */
     protected val fenceVars: MutableMap<String, VarDecl<*>> = mutableMapOf()
-    private val String.fenceVar get() = fenceVars.getOrPut(this) { Decls.Var(this, Bool()) }
+    private val String.fenceVar
+        get() = fenceVars.getOrPut("") { Decls.Var(if (this == "") "__THETA_atomic_mutex_" else this, Bool()) }
 
     init {
         collectBackwardEdges()
@@ -237,7 +238,8 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
         return WithPushPop(dependencySolver).use {
             dependencySolver.add(PathUtils.unfold(state.sGlobal.toExpr(), 0))
             dependencySolver.add(
-                PathUtils.unfold(expr, 0)) // is it always given that the state will produce 0 indexed constants?
+                PathUtils.unfold(expr, 0)
+            ) // is it always given that the state will produce 0 indexed constants?
             dependencySolver.check().isSat // two pointers may point to the same memory location
         }
     }
