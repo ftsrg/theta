@@ -54,8 +54,8 @@ import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.XstsTracegenBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.XstsTracegenConfig;
+import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenBuilder;
+import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Algorithm;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.AutoExpl;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
@@ -165,9 +165,6 @@ public class XstsCli {
 	@Parameter(names = "--tracegen", description = "Generate all possible traces of the model (instead of verification)")
 	boolean tracegen = false;
 
-	@Parameter(names = "--get-full-traces", description = "Generates more, but longer and maximal traces")
-	boolean getFullTraces = false;
-
 	@Parameter(names = "--variable-list", description = "A list of variable names (one in each line) to be included when generating traces")
 	String varFile = null;
 
@@ -220,7 +217,8 @@ public class XstsCli {
 
             final SafetyResult<?, ?> status;
             if(tracegen) {
-                XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(Z3SolverFactory.getInstance(), !noTransitionCoverage).logger(logger).setGetFullTraces(getFullTraces).setVarFile(varFile).build(xsts);
+                XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(
+                    Z3LegacySolverFactory.getInstance(), !noTransitionCoverage).logger(logger).setVarFile(varFile).build(xsts);
 
                 SafetyResult<? extends State, ? extends Action> result = tracegenConfig.check();
                 Collection<? extends Trace<? extends State, ? extends Action>> traces = result.asTraces()
@@ -235,7 +233,7 @@ public class XstsCli {
 
                 int i = 0;
 
-                Set<XstsStateSequence> concretizedTraces = TraceGenerationXstsTraceConcretizerUtil.concretizeTraceSet((List<Trace<XstsState<ExplState>, XstsAction>>) traces, Z3SolverFactory.getInstance(), xsts);
+                Set<XstsStateSequence> concretizedTraces = TraceGenerationXstsTraceConcretizerUtil.concretizeTraceSet((List<Trace<XstsState<ExplState>, XstsAction>>) traces, Z3LegacySolverFactory.getInstance(), xsts);
 
                 for (XstsStateSequence trace : concretizedTraces) {
                     final File traceFile = new File(File.separator + tracePath + File.separator + Files.getNameWithoutExtension(modelFile.getName()) + "-" + i + ".trace");

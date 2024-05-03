@@ -12,14 +12,14 @@ import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import java.util.function.Consumer
 
-class TraceGenerationChecker<S : ExprState, A : ExprAction, P : Prec>(
+class TraceGenerationChecker<S : ExprState?, A : ExprAction?, P : Prec?>(
     private val logger: Logger,
     private val abstractor: Abstractor<S, A, P>,
 ) : SafetyChecker<S, A, P> {
     private var traces: List<Trace<S, A>> = ArrayList()
 
     companion object {
-        fun <S : ExprState, A : ExprAction, P : Prec> create(
+        fun <S : ExprState?, A : ExprAction?, P : Prec?> create(
             logger: Logger,
             abstractor: Abstractor<S, A, P>,
         ): TraceGenerationChecker<S, A, P> {
