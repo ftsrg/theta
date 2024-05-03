@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
@@ -188,6 +189,26 @@ public abstract class CComplexType {
             return new CArray(null, getType(aType.getElemType(), parseContext), parseContext);
         } else if (type instanceof BoolType) {
             return new CBool(null, parseContext);
+        } else if (type instanceof FpType) {
+            final var doubleType = FpType.of(
+                    parseContext.getArchitecture().getBitWidth("double_e"),
+                    parseContext.getArchitecture().getBitWidth("double_s"));
+            if (doubleType.equals(type)) {
+                return new CDouble(null, parseContext);
+            }
+            final var floatType = FpType.of(
+                    parseContext.getArchitecture().getBitWidth("float_e"),
+                    parseContext.getArchitecture().getBitWidth("float_s"));
+            if (floatType.equals(type)) {
+                return new CFloat(null, parseContext);
+            }
+            final var longDoubleType = FpType.of(
+                    parseContext.getArchitecture().getBitWidth("longdouble_e"),
+                    parseContext.getArchitecture().getBitWidth("longdouble_s"));
+            if (longDoubleType.equals(type)) {
+                return new CFloat(null, parseContext);
+            }
+            throw new RuntimeException("No suitable size found for type: " + type);
         } else if (type instanceof BvType) {
             for (Entry<String, Integer> entry : parseContext.getArchitecture().standardTypeSizes.entrySet()) {
                 String s = entry.getKey();

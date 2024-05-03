@@ -242,20 +242,7 @@ public class NamedType extends CSimpleType {
     @Override
     public CSimpleType copyOf() {
         CSimpleType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
-        namedType.setAtomic(this.isAtomic());
-        namedType.setExtern(this.isExtern());
-        namedType.setTypedef(this.isTypedef());
-        namedType.setVolatile(this.isVolatile());
-        namedType.setSigned(this.isSigned());
-        namedType.setShort(this.isShort());
-        namedType.setLong(this.isLong());
-        namedType.setBool(this.isBool());
-        namedType.setLongLong(this.isLongLong());
-        namedType.set128(this.is128());
-        for (int i = 0; i < this.getPointerLevel(); i++) {
-            namedType.incrementPointer();
-        }
-
+        setUpCopy(namedType);
         return namedType;
     }
 }

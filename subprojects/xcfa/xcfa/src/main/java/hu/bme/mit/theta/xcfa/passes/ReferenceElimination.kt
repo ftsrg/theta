@@ -44,24 +44,40 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
         get() = field.also { field += 3 }
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        val referredVars = builder.parent.metaData.computeIfAbsent("references") {
+        val globalReferredVars = builder.parent.metaData.computeIfAbsent("references") {
             builder.parent.getProcedures().flatMap {
                 it.getEdges()
                     .flatMap { it.label.getFlatLabels().flatMap { it.references } }
             }
-                .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+                .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }.toSet()
+                .filter { builder.parent.getVars().any { global -> global.wrappedVar == it } }
                 .associateWith {
                     val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
                     val varDecl = Var(it.name + "*", ptrType.smtType)
-                    builder.addVar(varDecl)
+                    val lit = CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt")
+                    builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
                     parseContext.metadata.create(varDecl.ref, "cType", ptrType)
                     val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
-                        cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)))
+                        cast(lit, varDecl.type)))
                     Pair(varDecl, assign)
                 }
         }
-        checkState(referredVars is Map<*, *>, "ReferenceElimination needs info on references")
-        referredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>
+        checkState(globalReferredVars is Map<*, *>, "ReferenceElimination needs info on references")
+        globalReferredVars as Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>
+
+        val referredVars = builder.getEdges()
+            .flatMap { it.label.getFlatLabels().flatMap { it.references } }
+            .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }.toSet()
+            .filter { !globalReferredVars.containsKey(it) }
+            .associateWith {
+                val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
+                val varDecl = Var(it.name + "*", ptrType.smtType)
+                builder.addVar(varDecl)
+                parseContext.metadata.create(varDecl.ref, "cType", ptrType)
+                val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
+                    cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)))
+                Pair(varDecl, assign)
+            } + globalReferredVars
         
         if (referredVars.isEmpty()) {
             return builder

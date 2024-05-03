@@ -38,8 +38,6 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         SvCompIntrinsicsPass(),
         FpFunctionsToExprsPass(parseContext),
         CLibraryFunctionsPass(),
-        ReferenceElimination(parseContext),
-        MallocFunctionPass(parseContext),
     ),
     listOf(
         // optimizing
@@ -54,6 +52,10 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         InlineProceduresPass(parseContext),
         RemoveDeadEnds(),
         EliminateSelfLoops(),
+    ),
+    listOf(
+        ReferenceElimination(parseContext),
+        MallocFunctionPass(parseContext),
     ),
     listOf(
         StaticCoiPass(),

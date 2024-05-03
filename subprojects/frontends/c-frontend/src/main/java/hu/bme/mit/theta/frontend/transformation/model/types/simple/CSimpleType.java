@@ -186,4 +186,20 @@ public abstract class CSimpleType {
     public boolean isThreadLocal() {
         return isThreadLocal;
     }
+
+    protected void setUpCopy(CSimpleType copy) {
+        copy.setAtomic(this.isAtomic());
+        copy.setExtern(this.isExtern());
+        copy.setTypedef(this.isTypedef());
+        copy.setVolatile(this.isVolatile());
+        copy.setSigned(this.isSigned());
+        copy.setShort(this.isShort());
+        copy.setLong(this.isLong());
+        copy.setBool(this.isBool());
+        copy.setLongLong(this.isLongLong());
+        copy.set128(this.is128());
+        for (int i = 0; i < this.getPointerLevel(); i++) {
+            copy.incrementPointer();
+        }
+    }
 }

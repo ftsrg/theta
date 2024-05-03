@@ -97,7 +97,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 error("Not handling init expression of struct array ${globalDeclaration.get1()}")
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
-            if (type is CPointer || type is CArray) {
+            if (type is CArray) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
                         cast(type.getValue("$ptrCnt"), globalDeclaration.get2().type))
@@ -186,7 +186,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         for (flatVariable in flatVariables) {
             builder.addVar(flatVariable)
             val type = CComplexType.getType(flatVariable.ref, parseContext)
-            if ((type is CPointer || type is CArray) && builder.getParams().none { it.first == flatVariable }) {
+            if (type is CArray && builder.getParams().none { it.first == flatVariable }) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(flatVariable, flatVariable.type),
                         cast(type.getValue("$ptrCnt"), flatVariable.type))
@@ -198,11 +198,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
 
         for (flatVariable in flatVariables) {
             val type = CComplexType.getType(flatVariable.ref, parseContext)
-            if (type is CPointer || type is CArray) {
-                if (type is CArray && type.embeddedType is CArray) {
-                    // some day this is where initialization will occur. But this is not today.
-                    error("Not handling init expression of high dimsension array $flatVariable")
-                }
+            if (type is CArray && type.embeddedType is CArray) {
+                // some day this is where initialization will occur. But this is not today.
+                error("Not handling init expression of high dimsension array $flatVariable")
             }
         }
 

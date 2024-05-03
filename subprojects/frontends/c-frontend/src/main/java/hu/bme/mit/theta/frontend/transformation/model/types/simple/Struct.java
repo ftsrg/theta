@@ -83,7 +83,9 @@ public class Struct extends NamedType {
     public CSimpleType copyOf() {
         Struct struct = new Struct(name, parseContext, uniqueWarningLogger);
         struct.fields.putAll(fields);
+        setUpCopy(struct);
         return struct;
     }
+
 }
 
