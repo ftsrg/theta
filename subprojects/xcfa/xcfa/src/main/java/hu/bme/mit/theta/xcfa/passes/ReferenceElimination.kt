@@ -67,7 +67,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
         val referredVars = builder.getEdges()
             .flatMap { it.label.getFlatLabels().flatMap { it.references } }
-            .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }
+            .map { (it.expr as RefExpr<*>).decl as VarDecl<*> }.toSet()
             .filter { !globalReferredVars.containsKey(it) }
             .associateWith {
                 val ptrType = CPointer(null, CComplexType.getType(it.ref, parseContext), parseContext)
