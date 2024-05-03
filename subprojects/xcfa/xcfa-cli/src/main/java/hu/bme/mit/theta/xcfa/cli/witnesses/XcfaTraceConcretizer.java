@@ -24,7 +24,6 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.ptr.PtrState;
-import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -32,10 +31,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.xcfa.UtilsKt;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
 import hu.bme.mit.theta.xcfa.analysis.XcfaState;
-import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import kotlin.Triple;
 
@@ -45,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.xcfa.UtilsKt.getFlatLabels;
 
 /**
  * Similar to CfaTraceConcretizer
@@ -77,18 +73,11 @@ public class XcfaTraceConcretizer {
         assert valuations.getStates().size() == sbeTrace.getStates().size();
 
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
-        final List<XcfaAction> cfaActions = new ArrayList<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
             cfaStates.add(new XcfaState<>(null, sbeTrace.getState(i).getProcesses(), ExplState.of(valuations.getState(i))));
-            if (i < sbeTrace.getActions().size()) {
-                final var action = sbeTrace.getAction(i);
-                int finalI = i;
-                final var val = MutableValuation.copyOf(valuations.getState(finalI));
-                cfaActions.add(action.withLabel(new SequenceLabel(getFlatLabels(action.getLabel()).stream().map(it -> UtilsKt.simplify(it, val, parseContext)).toList())));
-            }
         }
 
-        return Trace.of(cfaStates, cfaActions);
+        return Trace.of(cfaStates, sbeActions);
     }
 
 }
