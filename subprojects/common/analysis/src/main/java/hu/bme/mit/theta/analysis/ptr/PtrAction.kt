@@ -29,10 +29,8 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.utils.ExprUtils
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
 
 private val varList = LinkedHashMap<Pair<String, Type>, LinkedHashMap<Int, VarDecl<*>>>()
-private val solver = Z3LegacySolverFactory.getInstance().createSolver()
 
 abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int = 0) : StmtAction() {
 
