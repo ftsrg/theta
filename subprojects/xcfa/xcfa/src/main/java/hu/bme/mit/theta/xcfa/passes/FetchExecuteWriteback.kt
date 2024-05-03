@@ -39,8 +39,11 @@ import hu.bme.mit.theta.xcfa.model.*
  */
 class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
 
-    private var cnt = 0
-        get() = field++
+    companion object {
+
+        private var cnt = 0
+            get() = field++
+    }
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
