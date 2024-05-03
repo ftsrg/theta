@@ -405,13 +405,7 @@ val Expr<*>.references: List<Reference<*, *>>
 
 val XcfaLabel.dereferences: List<Dereference<*, *, *>>
     get() = when (this) {
-        is StmtLabel -> when (stmt) {
-            is AssumeStmt -> stmt.cond.dereferences
-            is AssignStmt<*> -> stmt.expr.dereferences
-            is MemoryAssignStmt<*, *, *> -> stmt.expr.dereferences + listOf(stmt.deref)
-            else -> emptyList()
-        }
-
+        is StmtLabel -> stmt.dereferences
         is InvokeLabel -> params.flatMap { it.dereferences }
         is NondetLabel -> labels.flatMap { it.dereferences }
         is SequenceLabel -> labels.flatMap { it.dereferences }
@@ -419,9 +413,17 @@ val XcfaLabel.dereferences: List<Dereference<*, *, *>>
         else -> emptyList()
     }
 
+val Stmt.dereferences: List<Dereference<*, *, *>>
+    get() = when (this) {
+        is AssumeStmt -> cond.dereferences
+        is AssignStmt<*> -> expr.dereferences
+        is MemoryAssignStmt<*, *, *> -> expr.dereferences + listOf(deref)
+        else -> emptyList()
+    }
+
 val Expr<*>.dereferences: List<Dereference<*, *, *>>
     get() = if (this is Dereference<*, *, *>) {
-        listOf(this) + ops.flatMap { it.dereferences }
+        ops.flatMap { it.dereferences } + listOf(this)
     } else {
         ops.flatMap { it.dereferences }
     }

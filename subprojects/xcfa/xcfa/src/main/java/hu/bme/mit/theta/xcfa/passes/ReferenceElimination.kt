@@ -40,8 +40,11 @@ import hu.bme.mit.theta.xcfa.references
 
 class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
 
+    companion object {
+
     private var cnt = 2 // counts upwards, uses 3k+2
         get() = field.also { field += 3 }
+    }
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         val globalReferredVars = builder.parent.metaData.computeIfAbsent("references") {

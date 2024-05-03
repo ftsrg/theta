@@ -109,6 +109,10 @@ data class FrontendConfig<T : SpecFrontendConfig>(
         description = "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)")
     var forceUnroll: Int = -1,
 
+    @Parameter(names = ["--enable-few"],
+        description = "Enable the FetchExecuteWriteback pass, which introduces a local temp var for all memory accesses")
+    var enableFew: Boolean = false,
+
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C,
 
