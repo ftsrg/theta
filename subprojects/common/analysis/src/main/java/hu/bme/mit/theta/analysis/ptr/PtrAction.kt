@@ -43,8 +43,11 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
 
     final override fun getStmts(): List<Stmt> = expanded.second
 
-    private fun createStmtList(writeTriples: WriteTriples): Pair<WriteTriples, List<Stmt>> {
+    fun havocStmts(): List<Stmt> = expanded.third
+
+    private fun createStmtList(writeTriples: WriteTriples): Triple<WriteTriples, List<Stmt>, List<Stmt>> {
         val nextWriteTriples = writeTriples.toMutable()
+        val havocStmtList = ArrayList<Stmt>()
         val stmtList = ArrayList<Stmt>()
         val vargen = { it: String, type: Type ->
             val current = cnts.getOrDefault(it, inCnt)
@@ -77,8 +80,9 @@ abstract class PtrAction(writeTriples: WriteTriples = emptyMap(), val inCnt: Int
 
             stmtList.addAll(preList)
             stmtList.add(stmt)
+            havocStmtList.add(stmt)
             stmtList.addAll(postList)
         }
-        return Pair(nextWriteTriples, stmtList)
+        return Triple(nextWriteTriples, stmtList, havocStmtList)
     }
 }

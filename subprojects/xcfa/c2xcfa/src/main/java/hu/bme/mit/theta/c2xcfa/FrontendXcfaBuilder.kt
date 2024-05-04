@@ -129,14 +129,17 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                         BigInteger.valueOf(x)) else BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(x),
                         (bounds as BvLitExpr).type.size)
                 }
+                val initExprs: Map<Int, Expr<*>> = (globalDeclaration.get1()?.initExpr as? CInitializerList)?.statements?.mapIndexed { i, it ->
+                    Pair(i, it.get2().expression)
+                }?.toMap() ?: emptyMap()
                 for (i in 0 until literalValue) {
-                    val arrType = globalDeclaration.get2().type
                     checkState(globalDeclaration.get1().actualType is CArray, "Only arrays are expected here")
                     val embeddedType = (globalDeclaration.get1().actualType as CArray).embeddedType
                     initStmtList.add(StmtLabel(
                         Stmts.MemoryAssign(
                             Dereference(globalDeclaration.get2().ref, literalToExpr(i), embeddedType.smtType),
-                            cast(embeddedType.nullValue, embeddedType.smtType))
+                            cast(initExprs[i.toInt()]?.let { embeddedType.castTo(it) } ?: embeddedType.nullValue,
+                                embeddedType.smtType))
                     ))
                 }
             } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
@@ -240,11 +243,12 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             is Dereference<*, *, *> -> {
                 val op = cast(lValue.array, lValue.array.type)
                 val offset = cast(lValue.offset, op.type)
-                val type = CComplexType.getType(rExpression, parseContext)
+                val castRExpression = CComplexType.getType(lValue, parseContext).castTo(rExpression)
+                val type = CComplexType.getType(castRExpression, parseContext)
 
                 val deref = Dereference(op, offset, type.smtType)
 
-                val memassign = MemoryAssignStmt.create(deref, rExpression)
+                val memassign = MemoryAssignStmt.create(deref, castRExpression)
 
                 parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
                 StmtLabel(memassign, metadata = getMetadata(statement))

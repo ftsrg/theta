@@ -24,11 +24,16 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.ptr.PtrState;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction;
@@ -38,8 +43,11 @@ import kotlin.Triple;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -73,8 +81,12 @@ public class XcfaTraceConcretizer {
         assert valuations.getStates().size() == sbeTrace.getStates().size();
 
         final List<XcfaState<ExplState>> cfaStates = new ArrayList<>();
+        final Set<VarDecl<?>> varSoFar = new LinkedHashSet<>();
         for (int i = 0; i < sbeTrace.getStates().size(); ++i) {
-            cfaStates.add(new XcfaState<>(null, sbeTrace.getState(i).getProcesses(), ExplState.of(valuations.getState(i))));
+            cfaStates.add(new XcfaState<>(null, sbeTrace.getState(i).getProcesses(), ExplState.of(ImmutableValuation.from(valuations.getState(i).toMap().entrySet().stream().filter(it -> varSoFar.contains(it.getKey())).collect(Collectors.toMap(Map.Entry<Decl<?>, LitExpr<?>>::getKey, Map.Entry::getValue))))));
+            if (i < sbeTrace.getActions().size()) {
+                varSoFar.addAll(ExprUtils.getVars(sbeTrace.getAction(i).toExpr()));
+            }
         }
 
         return Trace.of(cfaStates, sbeActions);

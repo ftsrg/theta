@@ -585,6 +585,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 return reference((RefExpr<?>) localAccept);
             case "*":
                 type = CComplexType.getType(accept, parseContext);
+                if (type instanceof CPointer) type = ((CPointer) type).getEmbeddedType();
+                else if (type instanceof CArray) type = ((CArray) type).getEmbeddedType();
                 return dereference(accept, CComplexType.getUnsignedLong(parseContext).getNullValue(), type);
         }
         return accept;

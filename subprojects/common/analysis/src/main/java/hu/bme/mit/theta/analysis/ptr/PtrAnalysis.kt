@@ -18,6 +18,8 @@ package hu.bme.mit.theta.analysis.ptr
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.expr.StmtAction
+import hu.bme.mit.theta.core.stmt.Stmt
 
 /**
  * Pointer analysis in CEGAR
@@ -33,14 +35,16 @@ import hu.bme.mit.theta.analysis.expr.ExprState
  *
  */
 
-class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S, ExprAction, P>) :
+class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S, ExprAction, P>,
+    private val isHavoc: Boolean = false) :
     Analysis<PtrState<S>, PtrAction, PtrPrec<P>> {
 
     override fun getPartialOrd(): PartialOrd<PtrState<S>> = innerAnalysis.partialOrd.getPtrPartialOrd()
 
     override fun getInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = innerAnalysis.initFunc.getPtrInitFunc()
 
-    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = innerAnalysis.transFunc.getPtrTransFunc()
+    override fun getTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = innerAnalysis.transFunc.getPtrTransFunc(
+        isHavoc)
 }
 
 fun <S : ExprState> PartialOrd<S>.getPtrPartialOrd(): PartialOrd<PtrState<S>> = PartialOrd { state1, state2 ->
@@ -54,10 +58,18 @@ fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState
     getInitStates(prec.innerPrec.patch(emptyMap())).map { PtrState(it) }
 }
 
-fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
+fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(
+    isHavoc: Boolean = false): TransFunc<PtrState<S>, PtrAction, PtrPrec<P>> = TransFunc { state, action, prec ->
     val writeTriples = action.nextWriteTriples()
     val patchedPrec = prec.innerPrec.patch(writeTriples)
-    getSuccStates(state.innerState, action, patchedPrec).map {
+    val exprAction: ExprAction = if (isHavoc) {
+        object : StmtAction() {
+            override fun getStmts(): List<Stmt> = action.havocStmts() // stmts without pre- and postconditions
+        }
+    } else {
+        action
+    }
+    getSuccStates(state.innerState, exprAction, patchedPrec).map {
         PtrState(it.repatch(), emptyMap(), action.cnts.values.maxOrNull() ?: action.inCnt)
     }
 }

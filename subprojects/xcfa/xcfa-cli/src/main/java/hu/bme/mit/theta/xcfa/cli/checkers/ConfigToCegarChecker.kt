@@ -80,7 +80,7 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
         } else {
             corePartialOrd
         },
-        cegarConfig.abstractorConfig.ptrTtracking
+        cegarConfig.abstractorConfig.havocMemory
     ) as Abstractor<ExprState, ExprAction, Prec>
 
     val ref: ExprTraceChecker<Refutation> =

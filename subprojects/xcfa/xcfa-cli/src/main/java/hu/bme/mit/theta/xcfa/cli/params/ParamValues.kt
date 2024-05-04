@@ -34,7 +34,10 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
-import hu.bme.mit.theta.analysis.ptr.*
+import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
@@ -101,7 +104,7 @@ enum class Domain(
         lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
         errorDetectionType: ErrorDetection,
         partialOrd: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
-        ptrTrackingStyle: PtrTracking
+        isHavoc: Boolean
     ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
     val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
     val initPrec: (XCFA, InitPrec) -> XcfaPrec<out PtrPrec<*>>,
