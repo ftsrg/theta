@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
@@ -50,9 +49,6 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CDouble
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CLongDouble;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CReal;
-
-import java.math.BigInteger;
-import java.util.List;
 
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.ToFp;
@@ -107,11 +103,11 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), false);
         } else if (that instanceof CInteger) {
             if (that.width() < type.width()) {
-                if (that instanceof Signed) {
-                    param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))),
-                            BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
-                }
-                return BvExprs.ZExt(cast(param, BvType.of(that.width())),
+//                if (that instanceof Signed) {
+//                    param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))),
+//                            BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
+//                }
+                return BvExprs.SExt(cast(param, BvType.of(that.width())),
                         BvType.of(type.width(), false));
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),

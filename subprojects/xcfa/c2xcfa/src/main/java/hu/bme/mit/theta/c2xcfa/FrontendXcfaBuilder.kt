@@ -118,7 +118,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             }
 
             if (globalDeclaration.get1().arrayDimensions.size == 1) {
-                val bounds = ExprUtils.simplify(globalDeclaration.get1().arrayDimensions[0].expression)
+                val bounds = ExprUtils.simplify(CComplexType.getUnsignedLong(parseContext)
+                    .castTo(globalDeclaration.get1().arrayDimensions[0].expression))
                 checkState(bounds is IntLitExpr || bounds is BvLitExpr,
                     "Only IntLit and BvLit expression expected here.")
                 val literalValue = if (bounds is IntLitExpr) bounds.value.toLong() else BvUtils.neutralBvLitExprToBigInteger(

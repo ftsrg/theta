@@ -40,14 +40,6 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         CLibraryFunctionsPass(),
     ),
     listOf(
-        // optimizing
-        SimplifyExprsPass(parseContext),
-        LoopUnrollPass(),
-        SimplifyExprsPass(parseContext),
-        EmptyEdgeRemovalPass(),
-        UnusedLocRemovalPass(),
-    ),
-    listOf(
         // trying to inline procedures
         InlineProceduresPass(parseContext),
         RemoveDeadEnds(),
@@ -56,6 +48,14 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
     listOf(
         ReferenceElimination(parseContext),
         MallocFunctionPass(parseContext),
+    ),
+    listOf(
+        // optimizing
+        SimplifyExprsPass(parseContext),
+        LoopUnrollPass(),
+        SimplifyExprsPass(parseContext),
+        EmptyEdgeRemovalPass(),
+        UnusedLocRemovalPass(),
     ),
     listOf(
         StaticCoiPass(),

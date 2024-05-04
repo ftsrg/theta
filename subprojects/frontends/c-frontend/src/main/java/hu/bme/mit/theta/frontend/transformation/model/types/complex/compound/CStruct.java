@@ -20,6 +20,7 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 import java.util.List;
@@ -55,5 +56,10 @@ public class CStruct extends CInteger {
 
     public List<Tuple2<String, CComplexType>> getFields() {
         return fields;
+    }
+
+    @Override
+    public String getTypeName() {
+        return new CUnsignedLong(null, parseContext).getTypeName();
     }
 }

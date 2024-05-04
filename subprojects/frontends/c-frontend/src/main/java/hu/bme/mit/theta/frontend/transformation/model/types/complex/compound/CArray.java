@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CArray extends CInteger {
@@ -47,6 +48,12 @@ public class CArray extends CInteger {
     @Override
     public CInteger getUnsignedVersion() {
         return this;
+    }
+
+
+    @Override
+    public String getTypeName() {
+        return new CUnsignedLong(null, parseContext).getTypeName();
     }
 
 }
