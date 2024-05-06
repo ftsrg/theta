@@ -217,7 +217,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         if (this == that) return true;
         if (that instanceof MddExpressionRepresentation) {
             return Objects.equals(expr, ((MddExpressionRepresentation) that).expr) &&
-                    Objects.equals(decl, ((MddExpressionRepresentation) that).decl);
+                    Objects.equals(decl, ((MddExpressionRepresentation) that).decl) &&
+                    Objects.equals(mddVariable, ((MddExpressionRepresentation) that).mddVariable);
         }
         if (that instanceof MddNode) {
             return Objects.equals(this, ((MddNode) that).getRepresentation());
@@ -227,7 +228,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
     @Override
     public int hashCode() {
-        return Objects.hash(expr, decl);
+        return Objects.hash(expr, decl, mddVariable);
 
     }
 
