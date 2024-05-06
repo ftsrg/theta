@@ -306,10 +306,7 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
                 { intVars[random.nextInt((intVars.size))].ref },
                 { IntExprs.Neg(randomIntExpr(currDepth + 1)) },
                 { IntExprs.Add(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
-                {
-                    IntExprs.Mul(randomIntExpr(currDepth + 1),
-                        randomIntExpr(currDepth + 1))
-                },
+                { IntExprs.Mul(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
                 { IntExprs.Sub(randomIntExpr(currDepth + 1), randomIntExpr(currDepth + 1)) },
             ).random(random))()
     }
