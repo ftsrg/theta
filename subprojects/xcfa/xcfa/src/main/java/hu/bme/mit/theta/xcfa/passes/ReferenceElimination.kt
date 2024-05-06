@@ -141,7 +141,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                     MemoryAssignStmt.create(
                         Dereference(
                             cast(newVar.ref, newVar.type),
-                            cast(CComplexType.getSignedInt(parseContext).nullValue, newVar.type),
+                            cast(CComplexType.getSignedLong(parseContext).nullValue, newVar.type),
                             this.expr.type),
                         this.expr.changeReferredVars(varLut, parseContext)))
             } else {
