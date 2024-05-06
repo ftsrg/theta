@@ -19,11 +19,13 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
 import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
 import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
@@ -54,10 +56,12 @@ import static hu.bme.mit.theta.core.type.fptype.FpExprs.Abs;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Add;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Div;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Eq;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpAssign;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FpType;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.FromBv;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Geq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Gt;
+import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsInfinite;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.IsNan;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Leq;
 import static hu.bme.mit.theta.core.type.fptype.FpExprs.Lt;
@@ -112,6 +116,8 @@ public class FpTestUtils {
                 {FpDivExpr.class, Fp16("2.1"), Div(RNE, Fp16("7.14"), Fp16("3.4"))},
                 {FpEqExpr.class, Bool(true), Eq(Fp16("7.14"), Fp16("7.14"))},
                 {FpEqExpr.class, Bool(false), Eq(Fp16("7.14"), Fp16("7.15"))},
+                {FpEqExpr.class, Bool(false), Eq(Fp16NaN(), Fp16NaN())},
+                {FpAssignExpr.class, Bool(true), FpAssign(Fp16NaN(), Fp16NaN())},
                 {FpNeqExpr.class, Bool(true), Neq(Fp16("-7.14"), Fp16("7.14"))},
                 {FpNeqExpr.class, Bool(false), Neq(Fp16("-7.14"), Fp16("-7.14"))},
                 {FpAbsExpr.class, Fp16("2.1"), Abs(Fp16("2.1"))},
@@ -126,6 +132,9 @@ public class FpTestUtils {
                 {FpIsNanExpr.class, Bool(false), IsNan(Fp16PInf())},
                 {FpIsNanExpr.class, Bool(false), IsNan(Fp16NInf())},
                 {FpIsNanExpr.class, Bool(false), IsNan(Fp16("0.0"))},
+                {FpIsInfiniteExpr.class, Bool(false), IsInfinite(Fp16("0.0"))},
+                {FpIsInfiniteExpr.class, Bool(true), IsInfinite(FpTestUtils.Fp16PInf())},
+                {FpIsInfiniteExpr.class, Bool(true), IsInfinite(FpTestUtils.Fp16NInf())},
                 {FpLeqExpr.class, Bool(true), Leq(Fp16("7.14"), Fp16("7.15"))},
                 {FpLeqExpr.class, Bool(true), Leq(Fp16("7.14"), Fp16("7.14"))},
                 {FpLeqExpr.class, Bool(false), Leq(Fp16("-7.14"), Fp16("-7.15"))},
