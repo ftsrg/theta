@@ -220,6 +220,14 @@ final class JavaSMTSolver implements UCSolver, Solver {
         unsatCore = null;
     }
 
+    public SolverContext getContext() {
+        return context;
+    }
+
+    public BasicProverEnvironment getSolver() {
+        return solver;
+    }
+
     @Override
     public void close() {
         context.close();

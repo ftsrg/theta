@@ -142,7 +142,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                         Dereference(
                             cast(newVar.ref, newVar.type),
                             cast(CComplexType.getSignedInt(parseContext).nullValue, newVar.type),
-                            CPointer(null, CComplexType.getType(expr, parseContext), parseContext).smtType),
+                            this.expr.type),
                         this.expr.changeReferredVars(varLut, parseContext)))
             } else {
                 listOf(AssignStmt.of(cast(this.varDecl, this.varDecl.type),
@@ -189,8 +189,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
     fun <T : Type> VarDecl<T>.changeReferredVars(
         varLut: Map<VarDecl<*>, Pair<VarDecl<Type>, StmtLabel>>): Expr<T> =
         varLut[this]?.first?.let {
-            Dereference(cast(it.ref, it.type), cast(CComplexType.getSignedInt(parseContext).nullValue, this.ref.type),
-                it.type) as Expr<T>
+            Dereference(cast(it.ref, it.type), cast(CComplexType.getSignedInt(parseContext).nullValue, it.type),
+                this.type) as Expr<T>
         } ?: this.ref
 
 }
