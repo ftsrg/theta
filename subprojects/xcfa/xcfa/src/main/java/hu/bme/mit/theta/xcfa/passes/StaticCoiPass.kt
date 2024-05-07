@@ -38,8 +38,6 @@ class StaticCoiPass : ProcedurePass {
             labels.forEach { label ->
                 if (!label.canBeSimplified || isObserved(label)) {
                     kept.add(label)
-                } else {
-                    System.err.println(label)
                 }
             }
             if (kept.size != labels.size) {

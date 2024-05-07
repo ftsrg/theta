@@ -92,11 +92,15 @@ open class XcfaSporLts(protected val xcfa: XCFA) : LTS<XcfaState<out PtrState<ou
      * @param state the state whose enabled actions we would like to know
      * @return the enabled actions
      */
-    override fun getEnabledActionsFor(state: XcfaState<out PtrState<out ExprState>>): Set<XcfaAction> {
-        // Collecting enabled actions
-        val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state)
+    override fun getEnabledActionsFor(state: XcfaState<out PtrState<out ExprState>>): Set<XcfaAction> =
+        getEnabledActionsFor(state, simpleXcfaLts.getEnabledActionsFor(state))
 
-        // Calculating the source set starting from every (or some of the) enabled transition; the minimal source set is stored
+    /**
+     * Calculates the source set starting from every (or some of the) enabled transition; the minimal source set is returned.
+     */
+    protected open fun getEnabledActionsFor(
+        state: XcfaState<out PtrState<out ExprState>>, allEnabledActions: Collection<XcfaAction>
+    ): Set<XcfaAction> {
         var minimalSourceSet = setOf<XcfaAction>()
         val sourceSetFirstActions = getSourceSetFirstActions(state, allEnabledActions)
         for (firstActions in sourceSetFirstActions) {
