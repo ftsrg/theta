@@ -82,7 +82,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
         return new Unsafe<>(cex);
     }
 
-    public static Unsafe<State, Action> unsafe() {
+    public static <S extends State, A extends Action> Unsafe<S, A> unsafe() {
         return new Unsafe<>();
     }
 

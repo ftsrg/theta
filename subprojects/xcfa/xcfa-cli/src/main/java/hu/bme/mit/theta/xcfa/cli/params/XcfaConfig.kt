@@ -306,6 +306,9 @@ data class OcConfig(
 
     @Parameter(names = ["--input-conflict-decision-procedure"], description = "Output file to write conflict clauses")
     var inputConflictDecisionProcedure: String = "",
+
+    @Parameter(names = ["--non-permissive-validation"], description = "Output file to write conflict clauses")
+    var nonPermissiveValidation: Boolean = false,
 ) : SpecBackendConfig
 
 data class PortfolioConfig(

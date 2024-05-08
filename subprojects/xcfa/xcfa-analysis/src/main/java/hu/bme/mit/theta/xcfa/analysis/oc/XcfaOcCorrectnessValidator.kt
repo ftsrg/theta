@@ -3,10 +3,13 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
+import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
+import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.io.File
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -16,11 +19,25 @@ internal class XcfaOcCorrectnessValidator(
     decisionProcedure: OcDecisionProcedureType,
     private val inputConflictClauseFile: String,
     private val threads: Set<Thread>,
-    private val ocChecker: OcChecker<E> = decisionProcedure.checker(false),
-) : OcChecker<E> by ocChecker {
+    private val permissive: Boolean = true
+) : OcChecker<E> {
 
     private var clauseValidationTime = 0L
     private lateinit var reachableEdges: Map<Int, ReachableEdges>
+    private lateinit var ocChecker: OcChecker<E>
+    private lateinit var nonOcSolver: Solver
+
+    init {
+        if (permissive) {
+            ocChecker = decisionProcedure.checker(true)
+        } else {
+            nonOcSolver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolver()
+        }
+    }
+
+    override val solver get() = if (permissive) ocChecker.solver else nonOcSolver
+    override fun getRelations() = if (permissive) ocChecker.getRelations() else null
+    override fun getPropagatedClauses(): List<Reason> = if (permissive) ocChecker.getPropagatedClauses() else listOf()
 
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>, pos: List<Relation<E>>, rfs: Map<VarDecl<*>, List<Relation<E>>>
@@ -51,10 +68,18 @@ internal class XcfaOcCorrectnessValidator(
         System.err.println("Validated conflict clauses: ${validConflicts.size}")
         System.err.println("Clause validation time (ms): $clauseValidationTime")
 
-        ocChecker.solver.add(validConflicts.map { Not(it.expr) })
+        if (permissive) {
+            ocChecker.solver.add(validConflicts.map { Not(it.expr) })
+        } else {
+            nonOcSolver.add(validConflicts.map { Not(it.expr) })
+        }
         val result: SolverStatus?
         System.err.println("Solver time (ms): " + measureTime {
-            result = ocChecker.check(events, pos, rfs)
+            result = if (permissive) {
+                ocChecker.check(events, pos, rfs)
+            } else {
+                nonOcSolver.check()
+            }
         }.inWholeMilliseconds)
         return result
     }

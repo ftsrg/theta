@@ -145,7 +145,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
                     safetyResult = SafetyResult.safe<State, Action>()
                 }
                 if (stdoutRemainder.contains("SafetyResult Unsafe")) {
-                    safetyResult = SafetyResult.unsafe()
+                    safetyResult = SafetyResult.unsafe<State, Action>()
                 }
 
                 val newLines = stdoutRemainder.split("\n") // if ends with \n, last element will be ""

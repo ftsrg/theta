@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
@@ -57,7 +58,7 @@ private val Expr<*>.vars get() = ExprUtils.getVars(this)
 @OptIn(ExperimentalTime::class)
 class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
-    inputConflictClauseFile: String?, private val outputConflictClauses: Boolean
+    inputConflictClauseFile: String?, private val outputConflictClauses: Boolean, nonPermissiveValidation: Boolean
 ) : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
@@ -75,7 +76,7 @@ class XcfaOcChecker(
 
     private val ocChecker: OcChecker<E> =
         if (inputConflictClauseFile == null) decisionProcedure.checker(false)
-        else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads)
+        else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads, !nonPermissiveValidation)
 
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
@@ -105,6 +106,7 @@ class XcfaOcChecker(
             }
 
             status?.isSat == true -> {
+                if (ocChecker is XcfaOcCorrectnessValidator) return SafetyResult.unsafe()
                 val trace = XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
                 SafetyResult.unsafe(trace)
             }
