@@ -97,7 +97,7 @@ public class XstsMddCheckerTest {
                 {"src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true},
 
                 // TODO: too costly for testing
-                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
+//                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
 
                 {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true},
 //
