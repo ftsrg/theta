@@ -97,7 +97,7 @@ public class XstsMddCheckerTest {
                 {"src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true},
 
                 // TODO: too costly for testing
-//                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
+                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
 
                 {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true},
 //
@@ -130,9 +130,11 @@ public class XstsMddCheckerTest {
         }
 
         System.out.println("Heap size before: "+Runtime.getRuntime().totalMemory());
+        System.out.println("Free size before: "+Runtime.getRuntime().freeMemory());
         final XstsMddChecker checker = XstsMddChecker.create(xsts, Z3LegacySolverFactory.getInstance());
         final SafetyResult<MddWitness, MddCex> status = checker.check(null);
         System.out.println("Heap size after: "+Runtime.getRuntime().totalMemory());
+        System.out.println("Free size after: "+Runtime.getRuntime().freeMemory());
         if (safe) {
             assertTrue(status.isSafe());
         } else {
