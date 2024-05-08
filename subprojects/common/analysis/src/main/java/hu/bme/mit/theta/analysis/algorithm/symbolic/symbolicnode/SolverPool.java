@@ -30,13 +30,16 @@ public class SolverPool implements AutoCloseable{
     private int created = 0;
 
     private final LinkedList<Solver> available;
+    private final LinkedList<Solver> all;
 
     private final SolverFactory solverFactory;
 
     public SolverPool(SolverFactory solverFactory) {
         this.solverFactory = solverFactory;
         this.available = new LinkedList<>();
+        this.all = new LinkedList<>();
         for (int i = 0; i < STARTING_SIZE; i++) this.available.add(solverFactory.createSolver());
+        this.all.addAll(this.available);
     }
 
     public Solver requestSolver() {
@@ -46,11 +49,14 @@ public class SolverPool implements AutoCloseable{
 
     public void returnSolver(Solver solver) {
         Preconditions.checkState(solver.getAssertions().isEmpty(), "Only empty solvers can be returned");
+        System.out.println("Returned solver");
         this.available.add(solver);
     }
 
     private void createNewSolvers() {
         for (int i = 0; i < GROWING; i++) this.available.add(solverFactory.createSolver());
+        this.all.clear();
+        this.all.addAll(this.available);
         System.out.println(created + " solvers created");
         System.out.println("Free size: "+Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
@@ -62,9 +68,10 @@ public class SolverPool implements AutoCloseable{
 
     @Override
     public void close() throws Exception {
-        for (Solver solver : available) solver.close();
+        for (Solver solver : all) solver.close();
         System.out.println(created - available.size() + " solvers not returned");
         this.available.clear();
+        this.all.clear();
         this.created = 0;
     }
 }
