@@ -63,6 +63,7 @@ public class SolverPool implements AutoCloseable{
     @Override
     public void close() throws Exception {
         for (Solver solver : available) solver.close();
+        System.out.println(created - available.size() + " solvers not returned");
         this.available.clear();
         this.created = 0;
     }
