@@ -51,6 +51,7 @@ public class SolverPool {
 
     private void createNewSolvers() {
         for (int i = 0; i < GROWING; i++) this.available.add(solverFactory.createSolver());
+        System.out.println(created + " solvers created");
         this.created = created + GROWING;
     }
 
