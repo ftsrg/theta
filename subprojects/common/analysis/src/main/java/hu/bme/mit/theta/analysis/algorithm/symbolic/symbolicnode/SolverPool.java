@@ -52,6 +52,7 @@ public class SolverPool implements AutoCloseable{
     private void createNewSolvers() {
         for (int i = 0; i < GROWING; i++) this.available.add(solverFactory.createSolver());
         System.out.println(created + " solvers created");
+        System.out.println("Free size: "+Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
     }
 

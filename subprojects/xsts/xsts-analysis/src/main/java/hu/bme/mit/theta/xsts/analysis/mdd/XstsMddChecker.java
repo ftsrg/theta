@@ -168,7 +168,14 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
                 return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(satResult));
             else return SafetyResult.safe(MddWitness.of(satResult));
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
+        } catch (OutOfMemoryError err) {
+            err.printStackTrace();
+            throw new RuntimeException(err);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
         }
 
 
