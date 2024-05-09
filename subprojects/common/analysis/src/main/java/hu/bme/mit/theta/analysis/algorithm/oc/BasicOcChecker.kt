@@ -23,7 +23,7 @@ import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import java.util.*
 
-class BasicOcChecker<E : Event>(private val outputConflictClauses: Boolean) : OcCheckerBase<E>() {
+class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
 
     override val solver: Solver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
     private var relations: Array<Array<Reason?>>? = null
@@ -90,7 +90,6 @@ class BasicOcChecker<E : Event>(private val outputConflictClauses: Boolean) : Oc
     override fun propagate(reason: Reason?): Boolean {
         reason ?: return false
         propagated.add(reason)
-        if(outputConflictClauses) System.err.println(reason)
         solver.add(BoolExprs.Not(reason.expr))
         return true
     }

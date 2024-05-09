@@ -75,7 +75,7 @@ class XcfaOcChecker(
     private val rfs = mutableMapOf<VarDecl<*>, MutableList<R>>()
 
     private val ocChecker: OcChecker<E> =
-        if (inputConflictClauseFile == null) decisionProcedure.checker(false)
+        if (inputConflictClauseFile == null) decisionProcedure.checker()
         else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads, !nonPermissiveValidation)
 
     override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<*>, XcfaAction> = let {

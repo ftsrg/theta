@@ -26,9 +26,8 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.util.*
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
-class UserPropagatorOcChecker<E : Event>(private val outputConflictClauses: Boolean) : OcCheckerBase<E>() {
+class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
     private val partialAssignment = Stack<OcAssignment<E>>()
     private lateinit var writes: Map<VarDecl<*>, Map<Int, List<E>>>
@@ -64,7 +63,6 @@ class UserPropagatorOcChecker<E : Event>(private val outputConflictClauses: Bool
     override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(userPropagator)
     private var solverLevel: Int = 0
 
-    @OptIn(ExperimentalTime::class)
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
@@ -117,7 +115,6 @@ class UserPropagatorOcChecker<E : Event>(private val outputConflictClauses: Bool
     override fun propagate(reason: Reason?): Boolean {
         reason ?: return false
         propagated.add(reason)
-        if(outputConflictClauses) System.err.println(reason)
         userPropagator.propagateConflict(reason.exprs)
         return true
     }
