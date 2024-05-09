@@ -22,7 +22,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import java.util.LinkedList;
 import java.util.function.Supplier;
 
-public class SolverPool implements AutoCloseable{
+public class SolverPool implements AutoCloseable {
 
     private final static int STARTING_SIZE = 10;
     private final static int GROWING = 5;
@@ -58,7 +58,7 @@ public class SolverPool implements AutoCloseable{
         this.all.clear();
         this.all.addAll(this.available);
         System.out.println(created + " solvers created");
-        System.out.println("Free size: "+Runtime.getRuntime().freeMemory());
+        System.out.println("Free size: " + Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
     }
 

@@ -129,12 +129,12 @@ public class XstsMddCheckerTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        System.out.println("Heap size before: "+Runtime.getRuntime().totalMemory());
-        System.out.println("Free size before: "+Runtime.getRuntime().freeMemory());
+        System.out.println("Heap size before: " + Runtime.getRuntime().totalMemory());
+        System.out.println("Free size before: " + Runtime.getRuntime().freeMemory());
         final XstsMddChecker checker = XstsMddChecker.create(xsts, Z3LegacySolverFactory.getInstance());
         final SafetyResult<MddWitness, MddCex> status = checker.check(null);
-        System.out.println("Heap size after: "+Runtime.getRuntime().totalMemory());
-        System.out.println("Free size after: "+Runtime.getRuntime().freeMemory());
+        System.out.println("Heap size after: " + Runtime.getRuntime().totalMemory());
+        System.out.println("Free size after: " + Runtime.getRuntime().freeMemory());
         if (safe) {
             assertTrue(status.isSafe());
         } else {
