@@ -4,6 +4,7 @@ import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.solver.Solver
+import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
@@ -31,7 +32,7 @@ internal class XcfaOcCorrectnessValidator(
         if (permissive) {
             ocChecker = decisionProcedure.checker()
         } else {
-            nonOcSolver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolver()
+            nonOcSolver = SolverManager.resolveSolverFactory("Z3:4.13").createSolver()
         }
     }
 
