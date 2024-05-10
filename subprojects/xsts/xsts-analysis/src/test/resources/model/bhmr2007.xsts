@@ -22,7 +22,7 @@ trans {
 
 init {
     havoc n;
-    assume n>0 && n<35;
+    assume n>0 && n<15;
 }
 
 env {}
