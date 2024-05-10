@@ -19,7 +19,9 @@ import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class SolverPool implements AutoCloseable{
@@ -30,20 +32,35 @@ public class SolverPool implements AutoCloseable{
     private int created = 0;
 
     private final LinkedList<Solver> available;
-    private final LinkedList<Solver> all;
+    private final List<Solver> all;
 
     private final SolverFactory solverFactory;
 
+    public enum ClosingMode {
+        ALL,
+        RETURNED
+    }
+
+    private final ClosingMode closingMode;
+
     public SolverPool(SolverFactory solverFactory) {
+        this(solverFactory, ClosingMode.ALL);
+    }
+
+    public SolverPool(SolverFactory solverFactory, ClosingMode closingMode) {
         this.solverFactory = solverFactory;
         this.available = new LinkedList<>();
-        this.all = new LinkedList<>();
-        for (int i = 0; i < STARTING_SIZE; i++) this.available.add(solverFactory.createSolver());
-        this.all.addAll(this.available);
+        this.all = new ArrayList<>();
+        for (int i = 0; i < STARTING_SIZE; i++) {
+            final var solver = solverFactory.createSolver();
+            this.available.add(solver);
+            this.all.add(solver);
+        }
+        this.closingMode = closingMode;
     }
 
     public Solver requestSolver() {
-        if (this.available.size() == 0) createNewSolvers();
+        if (this.available.isEmpty()) createNewSolvers();
         return this.available.removeFirst();
     }
 
@@ -54,9 +71,11 @@ public class SolverPool implements AutoCloseable{
     }
 
     private void createNewSolvers() {
-        for (int i = 0; i < GROWING; i++) this.available.add(solverFactory.createSolver());
-        this.all.clear();
-        this.all.addAll(this.available);
+        for (int i = 0; i < GROWING; i++) {
+            final var solver = solverFactory.createSolver();
+            this.available.add(solver);
+            this.all.add(solver);
+        }
         System.out.println(created + " solvers created");
         System.out.println("Free size: "+Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
@@ -68,8 +87,14 @@ public class SolverPool implements AutoCloseable{
 
     @Override
     public void close() throws Exception {
-        for (Solver solver : all) solver.close();
-        System.out.println(created - available.size() + " solvers not returned");
+        System.out.println(all.size() - available.size() + " solvers not returned");
+        if (closingMode == ClosingMode.ALL) {
+            for (Solver solver : all) solver.close();
+            System.out.println("Closed "+ all.size() + " solvers");
+        } else {
+            for (Solver solver : available) solver.close();
+            System.out.println("Closed "+ available.size() + " solvers");
+        }
         this.available.clear();
         this.all.clear();
         this.created = 0;
