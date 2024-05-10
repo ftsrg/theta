@@ -29,7 +29,7 @@ internal class XcfaOcCorrectnessValidator(
 
     init {
         if (permissive) {
-            ocChecker = decisionProcedure.checker(true)
+            ocChecker = decisionProcedure.checker()
         } else {
             nonOcSolver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolver()
         }
