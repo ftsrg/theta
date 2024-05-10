@@ -94,13 +94,18 @@ class XcfaOcChecker(
         if (ocChecker !is XcfaOcCorrectnessValidator) {
             System.err.println("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
         }
+        System.err.println("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
 
         when {
             status?.isUnsat == true -> {
                 if (outputConflictClauses) {
-                    ocChecker.getPropagatedClauses().forEach {
-                        System.err.println("CC: $it")
-                    }
+                    System.err.println(
+                        "Conflict clause output time (ms): ${
+                            measureTime {
+                                ocChecker.getPropagatedClauses().forEach { System.err.println("CC: $it") }
+                            }.inWholeMilliseconds
+                        }"
+                    )
                 }
                 SafetyResult.safe()
             }
