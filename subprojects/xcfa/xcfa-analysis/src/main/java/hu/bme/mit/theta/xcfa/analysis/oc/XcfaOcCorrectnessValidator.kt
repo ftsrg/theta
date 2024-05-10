@@ -47,14 +47,17 @@ internal class XcfaOcCorrectnessValidator(
         val flatEvents = events.values.flatMap { it.values.flatten() }
         val parser = XcfaOcReasonParser(flatRfs.toSet(), flatEvents.toSet())
         var parseFailure = 0
-        val propagatedClauses = File(inputConflictClauseFile).readLines().mapNotNull { line ->
-            try {
-                parser.parse(line)
-            } catch (_: Exception) {
-                parseFailure++
-                null
+        val propagatedClauses: List<Reason>
+        System.err.println("Parse time (ms): " + measureTime {
+            propagatedClauses = File(inputConflictClauseFile).readLines().mapNotNull { line ->
+                try {
+                    parser.parse(line)
+                } catch (_: Exception) {
+                    parseFailure++
+                    null
+                }
             }
-        }
+        }.inWholeMilliseconds)
 
         clauseValidationTime += measureTime {
             reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure) }
