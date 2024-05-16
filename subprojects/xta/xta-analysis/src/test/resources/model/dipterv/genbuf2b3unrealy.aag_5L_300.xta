@@ -1,0 +1,171 @@
+ clock x_28;
+clock x_30;
+clock x_32;
+clock x_34;
+clock x_36;
+clock T;
+bool Ii_RtoB_ACK1;
+bool Ii_RtoB_ACK0;
+bool Ii_FULL;
+bool Ii_nEMPTY;
+bool Ii_StoB_REQ0;
+bool Ii_StoB_REQ1;
+bool Icontrollable_BtoR_REQ0;
+bool Icontrollable_BtoR_REQ1;
+bool Icontrollable_BtoS_ACK0;
+bool Icontrollable_BtoS_ACK1;
+bool Icontrollable_SLC0;
+bool Icontrollable_ENQ;
+bool Icontrollable_DEQ;
+bool Ln29;
+bool Lreg_stateG7_0_out;
+bool Lreg_controllable_BtoR_REQ1_out;
+bool Lreg_i_RtoB_ACK1_out;
+bool Lsys_fair0done_out;
+bool Lreg_controllable_BtoS_ACK0_out;
+bool Lenv_fair1done_out;
+bool Lreg_i_nEMPTY_out;
+bool Lreg_nstateG7_1_out;
+bool Lreg_controllable_BtoS_ACK1_out;
+bool Lreg_controllable_SLC0_out;
+bool Lsys_fair1done_out;
+bool Lenv_fair0done_out;
+bool Lreg_controllable_ENQ_out;
+bool Lreg_i_FULL_out;
+bool Lreg_stateG12_out;
+bool Lfair_cnt0_out;
+bool Lfair_cnt1_out;
+bool Lreg_controllable_DEQ_out;
+bool Lenv_safe_err_happened_out;
+bool Lreg_i_StoB_REQ1_out;
+bool Lreg_i_RtoB_ACK0_out;
+bool Lsys_fair2done_out;
+bool Lreg_controllable_BtoR_REQ0_out;
+bool Lreg_i_StoB_REQ0_out;
+
+
+process Circuit() {
+
+state
+    Init,
+    JustSetIi_RtoB_ACK1,
+    JustSetIi_RtoB_ACK0,
+    JustSetIi_FULL,
+    JustSetIi_nEMPTY,
+    JustSetIi_StoB_REQ0,
+    JustSetIi_StoB_REQ1,
+    JustSetIcontrollable_BtoR_REQ0,
+    JustSetIcontrollable_BtoR_REQ1,
+    JustSetIcontrollable_BtoS_ACK0,
+    JustSetIcontrollable_BtoS_ACK1,
+    JustSetIcontrollable_SLC0,
+    JustSetIcontrollable_ENQ,
+    JustSetIcontrollable_DEQ,
+    UpdatedLn29,
+    UpdatedLn29_becomes0 { x_28 <= 1000 },
+    UpdatedLn29_becomes1 { x_28 <= 1500 },
+    UpdatedLreg_stateG7_0_out,
+    UpdatedLreg_stateG7_0_out_becomes0 { x_30 <= 500 },
+    UpdatedLreg_stateG7_0_out_becomes1 { x_30 <= 2000 },
+    UpdatedLreg_controllable_BtoR_REQ1_out,
+    UpdatedLreg_controllable_BtoR_REQ1_out_becomes0 { x_32 <= 2000 },
+    UpdatedLreg_controllable_BtoR_REQ1_out_becomes1 { x_32 <= 3000 },
+    UpdatedLreg_i_RtoB_ACK1_out,
+    UpdatedLreg_i_RtoB_ACK1_out_becomes0 { x_34 <= 3000 },
+    UpdatedLreg_i_RtoB_ACK1_out_becomes1 { x_34 <= 0 },
+    UpdatedLsys_fair0done_out,
+    UpdatedLsys_fair0done_out_becomes0 { x_36 <= 2500 },
+    UpdatedLsys_fair0done_out_becomes1 { x_36 <= 0 },
+    dead;
+urgent
+    Init,
+    JustSetIi_RtoB_ACK1,
+    JustSetIi_RtoB_ACK0,
+    JustSetIi_FULL,
+    JustSetIi_nEMPTY,
+    JustSetIi_StoB_REQ0,
+    JustSetIi_StoB_REQ1,
+    JustSetIcontrollable_BtoR_REQ0,
+    JustSetIcontrollable_BtoR_REQ1,
+    JustSetIcontrollable_BtoS_ACK0,
+    JustSetIcontrollable_BtoS_ACK1,
+    JustSetIcontrollable_SLC0,
+    JustSetIcontrollable_ENQ,
+    JustSetIcontrollable_DEQ,
+    UpdatedLn29,
+    UpdatedLreg_stateG7_0_out,
+    UpdatedLreg_controllable_BtoR_REQ1_out,
+    UpdatedLreg_i_RtoB_ACK1_out,
+    UpdatedLsys_fair0done_out;
+init
+    Init;
+trans
+    Init -> JustSetIi_RtoB_ACK1 { assign Ii_RtoB_ACK1 := 0; },
+    Init -> JustSetIi_RtoB_ACK1 { assign Ii_RtoB_ACK1 := 1; },
+    JustSetIi_RtoB_ACK1 -> JustSetIi_RtoB_ACK0 { assign Ii_RtoB_ACK0 := 0; },
+    JustSetIi_RtoB_ACK1 -> JustSetIi_RtoB_ACK0 { assign Ii_RtoB_ACK0 := 1; },
+    JustSetIi_RtoB_ACK0 -> JustSetIi_FULL { assign Ii_FULL := 0; },
+    JustSetIi_RtoB_ACK0 -> JustSetIi_FULL { assign Ii_FULL := 1; },
+    JustSetIi_FULL -> JustSetIi_nEMPTY { assign Ii_nEMPTY := 0; },
+    JustSetIi_FULL -> JustSetIi_nEMPTY { assign Ii_nEMPTY := 1; },
+    JustSetIi_nEMPTY -> JustSetIi_StoB_REQ0 { assign Ii_StoB_REQ0 := 0; },
+    JustSetIi_nEMPTY -> JustSetIi_StoB_REQ0 { assign Ii_StoB_REQ0 := 1; },
+    JustSetIi_StoB_REQ0 -> JustSetIi_StoB_REQ1 { assign Ii_StoB_REQ1 := 0; },
+    JustSetIi_StoB_REQ0 -> JustSetIi_StoB_REQ1 { assign Ii_StoB_REQ1 := 1; },
+    JustSetIi_StoB_REQ1 -> JustSetIcontrollable_BtoR_REQ0 { assign Icontrollable_BtoR_REQ0 := 0; },
+    JustSetIi_StoB_REQ1 -> JustSetIcontrollable_BtoR_REQ0 { assign Icontrollable_BtoR_REQ0 := 1; },
+    JustSetIcontrollable_BtoR_REQ0 -> JustSetIcontrollable_BtoR_REQ1 { assign Icontrollable_BtoR_REQ1 := 0; },
+    JustSetIcontrollable_BtoR_REQ0 -> JustSetIcontrollable_BtoR_REQ1 { assign Icontrollable_BtoR_REQ1 := 1; },
+    JustSetIcontrollable_BtoR_REQ1 -> JustSetIcontrollable_BtoS_ACK0 { assign Icontrollable_BtoS_ACK0 := 0; },
+    JustSetIcontrollable_BtoR_REQ1 -> JustSetIcontrollable_BtoS_ACK0 { assign Icontrollable_BtoS_ACK0 := 1; },
+    JustSetIcontrollable_BtoS_ACK0 -> JustSetIcontrollable_BtoS_ACK1 { assign Icontrollable_BtoS_ACK1 := 0; },
+    JustSetIcontrollable_BtoS_ACK0 -> JustSetIcontrollable_BtoS_ACK1 { assign Icontrollable_BtoS_ACK1 := 1; },
+    JustSetIcontrollable_BtoS_ACK1 -> JustSetIcontrollable_SLC0 { assign Icontrollable_SLC0 := 0; },
+    JustSetIcontrollable_BtoS_ACK1 -> JustSetIcontrollable_SLC0 { assign Icontrollable_SLC0 := 1; },
+    JustSetIcontrollable_SLC0 -> JustSetIcontrollable_ENQ { assign Icontrollable_ENQ := 0; },
+    JustSetIcontrollable_SLC0 -> JustSetIcontrollable_ENQ { assign Icontrollable_ENQ := 1; },
+    JustSetIcontrollable_ENQ -> JustSetIcontrollable_DEQ { assign Icontrollable_DEQ := 0; },
+    JustSetIcontrollable_ENQ -> JustSetIcontrollable_DEQ { assign Icontrollable_DEQ := 1; },
+    JustSetIcontrollable_DEQ -> UpdatedLn29 { guard Ln29 == 1; },
+    JustSetIcontrollable_DEQ -> UpdatedLn29 { guard Ln29 == 1 && Ln29 != 1 && x_28 >= 1000; },
+    JustSetIcontrollable_DEQ -> UpdatedLn29 { guard Ln29 == 0 && Ln29 != 1 && x_28 >= 1500; },
+    JustSetIcontrollable_DEQ -> UpdatedLn29_becomes0 { guard Ln29 == 1 && Ln29 != 1 && x_28 < 1000; },
+    UpdatedLn29_becomes0 -> UpdatedLn29 { guard x_28 >= 1000; assign x_28:=0, Ln29 := 1; },
+    JustSetIcontrollable_DEQ -> UpdatedLn29_becomes1 { guard Ln29 == 0 && Ln29 != 1 && x_28 < 1500; },
+    UpdatedLn29_becomes1 -> UpdatedLn29 { guard x_28 >= 1500; assign x_28:=0, Ln29 := 1; },
+    UpdatedLn29 -> UpdatedLreg_stateG7_0_out { guard Lreg_stateG7_0_out == (!(!(!((Lreg_controllable_BtoR_REQ1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_stateG7_0_out) && (Ln29))) && (!((!((Lreg_nstateG7_1_out) && (Ln29)) && ((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_controllable_BtoR_REQ1_out) && (Ln29))) && !((((Lreg_nstateG7_1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && ((Lreg_controllable_BtoR_REQ1_out) && (Ln29))))); },
+    UpdatedLn29 -> UpdatedLreg_stateG7_0_out { guard Lreg_stateG7_0_out == 1 && Lreg_stateG7_0_out != (!(!(!((Lreg_controllable_BtoR_REQ1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_stateG7_0_out) && (Ln29))) && (!((!((Lreg_nstateG7_1_out) && (Ln29)) && ((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_controllable_BtoR_REQ1_out) && (Ln29))) && !((((Lreg_nstateG7_1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && ((Lreg_controllable_BtoR_REQ1_out) && (Ln29))))) && x_30 >= 500; },
+    UpdatedLn29 -> UpdatedLreg_stateG7_0_out { guard Lreg_stateG7_0_out == 0 && Lreg_stateG7_0_out != (!(!(!((Lreg_controllable_BtoR_REQ1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_stateG7_0_out) && (Ln29))) && (!((!((Lreg_nstateG7_1_out) && (Ln29)) && ((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_controllable_BtoR_REQ1_out) && (Ln29))) && !((((Lreg_nstateG7_1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && ((Lreg_controllable_BtoR_REQ1_out) && (Ln29))))) && x_30 >= 2000; },
+    UpdatedLn29 -> UpdatedLreg_stateG7_0_out_becomes0 { guard Lreg_stateG7_0_out == 1 && Lreg_stateG7_0_out != (!(!(!((Lreg_controllable_BtoR_REQ1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_stateG7_0_out) && (Ln29))) && (!((!((Lreg_nstateG7_1_out) && (Ln29)) && ((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_controllable_BtoR_REQ1_out) && (Ln29))) && !((((Lreg_nstateG7_1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && ((Lreg_controllable_BtoR_REQ1_out) && (Ln29))))) && x_30 < 500; },
+    UpdatedLreg_stateG7_0_out_becomes0 -> UpdatedLreg_stateG7_0_out { guard x_30 >= 500; assign x_30:=0, Lreg_stateG7_0_out := (!(!(!((Lreg_controllable_BtoR_REQ1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_stateG7_0_out) && (Ln29))) && (!((!((Lreg_nstateG7_1_out) && (Ln29)) && ((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_controllable_BtoR_REQ1_out) && (Ln29))) && !((((Lreg_nstateG7_1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && ((Lreg_controllable_BtoR_REQ1_out) && (Ln29))))); },
+    UpdatedLn29 -> UpdatedLreg_stateG7_0_out_becomes1 { guard Lreg_stateG7_0_out == 0 && Lreg_stateG7_0_out != (!(!(!((Lreg_controllable_BtoR_REQ1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_stateG7_0_out) && (Ln29))) && (!((!((Lreg_nstateG7_1_out) && (Ln29)) && ((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_controllable_BtoR_REQ1_out) && (Ln29))) && !((((Lreg_nstateG7_1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && ((Lreg_controllable_BtoR_REQ1_out) && (Ln29))))) && x_30 < 2000; },
+    UpdatedLreg_stateG7_0_out_becomes1 -> UpdatedLreg_stateG7_0_out { guard x_30 >= 2000; assign x_30:=0, Lreg_stateG7_0_out := (!(!(!((Lreg_controllable_BtoR_REQ1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_stateG7_0_out) && (Ln29))) && (!((!((Lreg_nstateG7_1_out) && (Ln29)) && ((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && !((Lreg_controllable_BtoR_REQ1_out) && (Ln29))) && !((((Lreg_nstateG7_1_out) && (Ln29)) && !((Lreg_controllable_BtoR_REQ0_out) && (Ln29))) && ((Lreg_controllable_BtoR_REQ1_out) && (Ln29))))); },
+    UpdatedLreg_stateG7_0_out -> UpdatedLreg_controllable_BtoR_REQ1_out { guard Lreg_controllable_BtoR_REQ1_out == (Icontrollable_BtoR_REQ1); },
+    UpdatedLreg_stateG7_0_out -> UpdatedLreg_controllable_BtoR_REQ1_out { guard Lreg_controllable_BtoR_REQ1_out == 1 && Lreg_controllable_BtoR_REQ1_out != (Icontrollable_BtoR_REQ1) && x_32 >= 2000; },
+    UpdatedLreg_stateG7_0_out -> UpdatedLreg_controllable_BtoR_REQ1_out { guard Lreg_controllable_BtoR_REQ1_out == 0 && Lreg_controllable_BtoR_REQ1_out != (Icontrollable_BtoR_REQ1) && x_32 >= 3000; },
+    UpdatedLreg_stateG7_0_out -> UpdatedLreg_controllable_BtoR_REQ1_out_becomes0 { guard Lreg_controllable_BtoR_REQ1_out == 1 && Lreg_controllable_BtoR_REQ1_out != (Icontrollable_BtoR_REQ1) && x_32 < 2000; },
+    UpdatedLreg_controllable_BtoR_REQ1_out_becomes0 -> UpdatedLreg_controllable_BtoR_REQ1_out { guard x_32 >= 2000; assign x_32:=0, Lreg_controllable_BtoR_REQ1_out := (Icontrollable_BtoR_REQ1); },
+    UpdatedLreg_stateG7_0_out -> UpdatedLreg_controllable_BtoR_REQ1_out_becomes1 { guard Lreg_controllable_BtoR_REQ1_out == 0 && Lreg_controllable_BtoR_REQ1_out != (Icontrollable_BtoR_REQ1) && x_32 < 3000; },
+    UpdatedLreg_controllable_BtoR_REQ1_out_becomes1 -> UpdatedLreg_controllable_BtoR_REQ1_out { guard x_32 >= 3000; assign x_32:=0, Lreg_controllable_BtoR_REQ1_out := (Icontrollable_BtoR_REQ1); },
+    UpdatedLreg_controllable_BtoR_REQ1_out -> UpdatedLreg_i_RtoB_ACK1_out { guard Lreg_i_RtoB_ACK1_out == (Ii_RtoB_ACK1); },
+    UpdatedLreg_controllable_BtoR_REQ1_out -> UpdatedLreg_i_RtoB_ACK1_out { guard Lreg_i_RtoB_ACK1_out == 1 && Lreg_i_RtoB_ACK1_out != (Ii_RtoB_ACK1) && x_34 >= 3000; },
+    UpdatedLreg_controllable_BtoR_REQ1_out -> UpdatedLreg_i_RtoB_ACK1_out { guard Lreg_i_RtoB_ACK1_out == 0 && Lreg_i_RtoB_ACK1_out != (Ii_RtoB_ACK1) && x_34 >= 0; },
+    UpdatedLreg_controllable_BtoR_REQ1_out -> UpdatedLreg_i_RtoB_ACK1_out_becomes0 { guard Lreg_i_RtoB_ACK1_out == 1 && Lreg_i_RtoB_ACK1_out != (Ii_RtoB_ACK1) && x_34 < 3000; },
+    UpdatedLreg_i_RtoB_ACK1_out_becomes0 -> UpdatedLreg_i_RtoB_ACK1_out { guard x_34 >= 3000; assign x_34:=0, Lreg_i_RtoB_ACK1_out := (Ii_RtoB_ACK1); },
+    UpdatedLreg_controllable_BtoR_REQ1_out -> UpdatedLreg_i_RtoB_ACK1_out_becomes1 { guard Lreg_i_RtoB_ACK1_out == 0 && Lreg_i_RtoB_ACK1_out != (Ii_RtoB_ACK1) && x_34 < 0; },
+    UpdatedLreg_i_RtoB_ACK1_out_becomes1 -> UpdatedLreg_i_RtoB_ACK1_out { guard x_34 >= 0; assign x_34:=0, Lreg_i_RtoB_ACK1_out := (Ii_RtoB_ACK1); },
+    UpdatedLreg_i_RtoB_ACK1_out -> UpdatedLsys_fair0done_out { guard Lsys_fair0done_out == (!(!(!((Lsys_fair2done_out) && (Ln29)) && ((Lreg_stateG12_out) && (Ln29))) && (!(!((Lsys_fair1done_out) && (Ln29)) && !(!((Ii_StoB_REQ1) && !(Icontrollable_BtoS_ACK1)) && !(!(Ii_StoB_REQ1) && (Icontrollable_BtoS_ACK1)))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29))))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29)))); },
+    UpdatedLreg_i_RtoB_ACK1_out -> UpdatedLsys_fair0done_out { guard Lsys_fair0done_out == 1 && Lsys_fair0done_out != (!(!(!((Lsys_fair2done_out) && (Ln29)) && ((Lreg_stateG12_out) && (Ln29))) && (!(!((Lsys_fair1done_out) && (Ln29)) && !(!((Ii_StoB_REQ1) && !(Icontrollable_BtoS_ACK1)) && !(!(Ii_StoB_REQ1) && (Icontrollable_BtoS_ACK1)))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29))))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29)))) && x_36 >= 2500; },
+    UpdatedLreg_i_RtoB_ACK1_out -> UpdatedLsys_fair0done_out { guard Lsys_fair0done_out == 0 && Lsys_fair0done_out != (!(!(!((Lsys_fair2done_out) && (Ln29)) && ((Lreg_stateG12_out) && (Ln29))) && (!(!((Lsys_fair1done_out) && (Ln29)) && !(!((Ii_StoB_REQ1) && !(Icontrollable_BtoS_ACK1)) && !(!(Ii_StoB_REQ1) && (Icontrollable_BtoS_ACK1)))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29))))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29)))) && x_36 >= 0; },
+    UpdatedLreg_i_RtoB_ACK1_out -> UpdatedLsys_fair0done_out_becomes0 { guard Lsys_fair0done_out == 1 && Lsys_fair0done_out != (!(!(!((Lsys_fair2done_out) && (Ln29)) && ((Lreg_stateG12_out) && (Ln29))) && (!(!((Lsys_fair1done_out) && (Ln29)) && !(!((Ii_StoB_REQ1) && !(Icontrollable_BtoS_ACK1)) && !(!(Ii_StoB_REQ1) && (Icontrollable_BtoS_ACK1)))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29))))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29)))) && x_36 < 2500; },
+    UpdatedLsys_fair0done_out_becomes0 -> UpdatedLsys_fair0done_out { guard x_36 >= 2500; assign x_36:=0, Lsys_fair0done_out := (!(!(!((Lsys_fair2done_out) && (Ln29)) && ((Lreg_stateG12_out) && (Ln29))) && (!(!((Lsys_fair1done_out) && (Ln29)) && !(!((Ii_StoB_REQ1) && !(Icontrollable_BtoS_ACK1)) && !(!(Ii_StoB_REQ1) && (Icontrollable_BtoS_ACK1)))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29))))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29)))); },
+    UpdatedLreg_i_RtoB_ACK1_out -> UpdatedLsys_fair0done_out_becomes1 { guard Lsys_fair0done_out == 0 && Lsys_fair0done_out != (!(!(!((Lsys_fair2done_out) && (Ln29)) && ((Lreg_stateG12_out) && (Ln29))) && (!(!((Lsys_fair1done_out) && (Ln29)) && !(!((Ii_StoB_REQ1) && !(Icontrollable_BtoS_ACK1)) && !(!(Ii_StoB_REQ1) && (Icontrollable_BtoS_ACK1)))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29))))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29)))) && x_36 < 0; },
+    UpdatedLsys_fair0done_out_becomes1 -> UpdatedLsys_fair0done_out { guard x_36 >= 0; assign x_36:=0, Lsys_fair0done_out := (!(!(!((Lsys_fair2done_out) && (Ln29)) && ((Lreg_stateG12_out) && (Ln29))) && (!(!((Lsys_fair1done_out) && (Ln29)) && !(!((Ii_StoB_REQ1) && !(Icontrollable_BtoS_ACK1)) && !(!(Ii_StoB_REQ1) && (Icontrollable_BtoS_ACK1)))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29))))) && !(!(!((Ii_StoB_REQ0) && !(Icontrollable_BtoS_ACK0)) && !(!(Ii_StoB_REQ0) && (Icontrollable_BtoS_ACK0))) && !((Lsys_fair0done_out) && (Ln29)))); },
+    UpdatedLsys_fair0done_out -> Init { guard T <= 3000; assign T:=0; },
+    UpdatedLsys_fair0done_out -> dead { guard T >3000; };
+}
+
+system Circuit;
+prop{
+    E<> Circuit_dead
+}

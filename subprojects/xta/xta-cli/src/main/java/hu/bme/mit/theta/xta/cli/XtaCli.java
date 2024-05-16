@@ -44,6 +44,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverManager;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaVisualizer;
 import hu.bme.mit.theta.xta.analysis.config.XtaConfig;
+import hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder_ClockPred;
 import hu.bme.mit.theta.xta.analysis.config.XtaConfigBuilder_Zone;
 import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
@@ -69,6 +70,8 @@ public final class XtaCli {
 	@Parameter(names = {"--model", "-m"}, description = "Path of the input model", required = true)
 	String model;
 
+	@Parameter (names = {"--clockpred"}, description = "Use clock predicate domain")
+	boolean clockpred = false;
 	/*@Parameter(names = {"--discreteconcr", "-dc"}, description = "Concrete domain for discrete variables", required = false)
 	DataStrategy2.ConcrDom concrDataDom = DataStrategy2.ConcrDom.EXPL;
 
@@ -104,16 +107,16 @@ public final class XtaCli {
 
 	//Eager CEGAR
 	@Parameter(names = "--domain", description = "Abstract domain")
-	Domain domain = Domain.PRED_CART;
+	String domain = "PRED_CART";
 
 	@Parameter(names = "--refinement", description = "Refinement strategy")
-	Refinement refinement = Refinement.SEQ_ITP;
+	String refinement = "SEQ_ITP";
 
 	@Parameter(names = "--search", description = "Search strategy")
-	Search search = Search.BFS;
+	String search = "BFS";
 
 	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
-	PredSplit predSplit = PredSplit.WHOLE;
+	String predSplit = "WHOLE";
 
 	@Parameter(names = "--solver", description = "Sets the underlying SMT solver to use for both the abstraction and the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
 	String solver = "Z3";
@@ -126,13 +129,13 @@ public final class XtaCli {
 
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
-	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
+	String precGranularity = "GLOBAL";
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 10;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
-	InitPrec initPrec = InitPrec.EMPTY;
+	String initPrec = "EMPTY";
 
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
 	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
@@ -337,6 +340,7 @@ public final class XtaCli {
 			final XtaConfig<?, ?, ?> configuration = buildConfiguration(xta, abstractionSolverFactory, refinementSolverFactory);
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
+			System.out.println(status.isSafe());
 			resultPrinter(status.isSafe(), status.isUnsafe(), xta);
 			if (status.isUnsafe() && cexfile != null) {
 				writeCex(status.asUnsafe());
@@ -349,7 +353,17 @@ public final class XtaCli {
 	}
 	private XtaConfig<?, ?, ?> buildConfiguration(final XtaSystem xta, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) throws Exception {
 		try {
-			return new XtaConfigBuilder_Zone(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
+			if (clockpred) {
+				XtaConfigBuilder_ClockPred.Domain domainEnum = XtaConfigBuilder_ClockPred.Domain.valueOf(domain);
+				XtaConfigBuilder_ClockPred.Refinement refinementEnum = XtaConfigBuilder_ClockPred.Refinement.valueOf(refinement);
+				return new XtaConfigBuilder_ClockPred(domainEnum, refinementEnum, abstractionSolverFactory, refinementSolverFactory)
+						.precGranularity(precGranularity).search(search)
+						.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
+						.pruneStrategy(pruneStrategy).logger(logger).build(xta);
+			}
+			XtaConfigBuilder_Zone.Domain domainEnum = XtaConfigBuilder_Zone.Domain.valueOf(domain);
+			XtaConfigBuilder_Zone.Refinement refinementEnum = XtaConfigBuilder_Zone.Refinement.valueOf(refinement);
+			return new XtaConfigBuilder_Zone(domainEnum, refinementEnum, abstractionSolverFactory, refinementSolverFactory)
 					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(xta);

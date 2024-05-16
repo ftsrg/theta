@@ -1,0 +1,179 @@
+ clock x_38;
+clock x_40;
+clock x_42;
+clock x_44;
+clock T;
+bool Ip0_0;
+bool Ip0_1;
+bool Ip0_2;
+bool Ip1_0;
+bool Ip1_1;
+bool Ip1_2;
+bool Ip2_0;
+bool Ip2_1;
+bool Ip2_2;
+bool IerrorCount_0_0_1;
+bool Icontrollable_arm1_0_0_2;
+bool Icontrollable_arm1_1;
+bool Icontrollable_arm2_0_0_2;
+bool Icontrollable_arm2_1;
+bool Icontrollable_arm1op_0_0_2;
+bool Icontrollable_arm1op_1;
+bool Icontrollable_arm2op_0_0_2;
+bool Icontrollable_arm2op_1;
+bool LIsNotFirstRound;
+bool Lprev_p0_0;
+bool Lprev_p0_1;
+bool Lprev_p0_2;
+bool Lprev_p1_0;
+bool Lprev_p1_1;
+bool Lprev_p1_2;
+bool Lprev_p2_0;
+bool Lprev_p2_1;
+bool Lprev_p2_2;
+bool Lprev_errorCount_0_0_1;
+bool Lprev_arm1_0_0_2;
+bool Lprev_arm1_1;
+bool Lprev_arm2_0_0_2;
+bool Lprev_arm2_1;
+bool Lprev_arm1op_0_0_2;
+bool Lprev_arm1op_1;
+bool Lprev_arm2op_0_0_2;
+bool Lprev_arm2op_1;
+bool LAssumptionsAlreadyViolated;
+
+
+process Circuit() {
+
+state
+    Init,
+    JustSetIp0_0,
+    JustSetIp0_1,
+    JustSetIp0_2,
+    JustSetIp1_0,
+    JustSetIp1_1,
+    JustSetIp1_2,
+    JustSetIp2_0,
+    JustSetIp2_1,
+    JustSetIp2_2,
+    JustSetIerrorCount_0_0_1,
+    JustSetIcontrollable_arm1_0_0_2,
+    JustSetIcontrollable_arm1_1,
+    JustSetIcontrollable_arm2_0_0_2,
+    JustSetIcontrollable_arm2_1,
+    JustSetIcontrollable_arm1op_0_0_2,
+    JustSetIcontrollable_arm1op_1,
+    JustSetIcontrollable_arm2op_0_0_2,
+    JustSetIcontrollable_arm2op_1,
+    UpdatedLIsNotFirstRound,
+    UpdatedLIsNotFirstRound_becomes0 { x_38 <= 1000 },
+    UpdatedLIsNotFirstRound_becomes1 { x_38 <= 1500 },
+    UpdatedLprev_p0_0,
+    UpdatedLprev_p0_0_becomes0 { x_40 <= 500 },
+    UpdatedLprev_p0_0_becomes1 { x_40 <= 2000 },
+    UpdatedLprev_p0_1,
+    UpdatedLprev_p0_1_becomes0 { x_42 <= 2000 },
+    UpdatedLprev_p0_1_becomes1 { x_42 <= 3000 },
+    UpdatedLprev_p0_2,
+    UpdatedLprev_p0_2_becomes0 { x_44 <= 3000 },
+    UpdatedLprev_p0_2_becomes1 { x_44 <= 0 },
+    dead;
+urgent
+    Init,
+    JustSetIp0_0,
+    JustSetIp0_1,
+    JustSetIp0_2,
+    JustSetIp1_0,
+    JustSetIp1_1,
+    JustSetIp1_2,
+    JustSetIp2_0,
+    JustSetIp2_1,
+    JustSetIp2_2,
+    JustSetIerrorCount_0_0_1,
+    JustSetIcontrollable_arm1_0_0_2,
+    JustSetIcontrollable_arm1_1,
+    JustSetIcontrollable_arm2_0_0_2,
+    JustSetIcontrollable_arm2_1,
+    JustSetIcontrollable_arm1op_0_0_2,
+    JustSetIcontrollable_arm1op_1,
+    JustSetIcontrollable_arm2op_0_0_2,
+    JustSetIcontrollable_arm2op_1,
+    UpdatedLIsNotFirstRound,
+    UpdatedLprev_p0_0,
+    UpdatedLprev_p0_1,
+    UpdatedLprev_p0_2;
+init
+    Init;
+trans
+    Init -> JustSetIp0_0 { assign Ip0_0 := 0; },
+    Init -> JustSetIp0_0 { assign Ip0_0 := 1; },
+    JustSetIp0_0 -> JustSetIp0_1 { assign Ip0_1 := 0; },
+    JustSetIp0_0 -> JustSetIp0_1 { assign Ip0_1 := 1; },
+    JustSetIp0_1 -> JustSetIp0_2 { assign Ip0_2 := 0; },
+    JustSetIp0_1 -> JustSetIp0_2 { assign Ip0_2 := 1; },
+    JustSetIp0_2 -> JustSetIp1_0 { assign Ip1_0 := 0; },
+    JustSetIp0_2 -> JustSetIp1_0 { assign Ip1_0 := 1; },
+    JustSetIp1_0 -> JustSetIp1_1 { assign Ip1_1 := 0; },
+    JustSetIp1_0 -> JustSetIp1_1 { assign Ip1_1 := 1; },
+    JustSetIp1_1 -> JustSetIp1_2 { assign Ip1_2 := 0; },
+    JustSetIp1_1 -> JustSetIp1_2 { assign Ip1_2 := 1; },
+    JustSetIp1_2 -> JustSetIp2_0 { assign Ip2_0 := 0; },
+    JustSetIp1_2 -> JustSetIp2_0 { assign Ip2_0 := 1; },
+    JustSetIp2_0 -> JustSetIp2_1 { assign Ip2_1 := 0; },
+    JustSetIp2_0 -> JustSetIp2_1 { assign Ip2_1 := 1; },
+    JustSetIp2_1 -> JustSetIp2_2 { assign Ip2_2 := 0; },
+    JustSetIp2_1 -> JustSetIp2_2 { assign Ip2_2 := 1; },
+    JustSetIp2_2 -> JustSetIerrorCount_0_0_1 { assign IerrorCount_0_0_1 := 0; },
+    JustSetIp2_2 -> JustSetIerrorCount_0_0_1 { assign IerrorCount_0_0_1 := 1; },
+    JustSetIerrorCount_0_0_1 -> JustSetIcontrollable_arm1_0_0_2 { assign Icontrollable_arm1_0_0_2 := 0; },
+    JustSetIerrorCount_0_0_1 -> JustSetIcontrollable_arm1_0_0_2 { assign Icontrollable_arm1_0_0_2 := 1; },
+    JustSetIcontrollable_arm1_0_0_2 -> JustSetIcontrollable_arm1_1 { assign Icontrollable_arm1_1 := 0; },
+    JustSetIcontrollable_arm1_0_0_2 -> JustSetIcontrollable_arm1_1 { assign Icontrollable_arm1_1 := 1; },
+    JustSetIcontrollable_arm1_1 -> JustSetIcontrollable_arm2_0_0_2 { assign Icontrollable_arm2_0_0_2 := 0; },
+    JustSetIcontrollable_arm1_1 -> JustSetIcontrollable_arm2_0_0_2 { assign Icontrollable_arm2_0_0_2 := 1; },
+    JustSetIcontrollable_arm2_0_0_2 -> JustSetIcontrollable_arm2_1 { assign Icontrollable_arm2_1 := 0; },
+    JustSetIcontrollable_arm2_0_0_2 -> JustSetIcontrollable_arm2_1 { assign Icontrollable_arm2_1 := 1; },
+    JustSetIcontrollable_arm2_1 -> JustSetIcontrollable_arm1op_0_0_2 { assign Icontrollable_arm1op_0_0_2 := 0; },
+    JustSetIcontrollable_arm2_1 -> JustSetIcontrollable_arm1op_0_0_2 { assign Icontrollable_arm1op_0_0_2 := 1; },
+    JustSetIcontrollable_arm1op_0_0_2 -> JustSetIcontrollable_arm1op_1 { assign Icontrollable_arm1op_1 := 0; },
+    JustSetIcontrollable_arm1op_0_0_2 -> JustSetIcontrollable_arm1op_1 { assign Icontrollable_arm1op_1 := 1; },
+    JustSetIcontrollable_arm1op_1 -> JustSetIcontrollable_arm2op_0_0_2 { assign Icontrollable_arm2op_0_0_2 := 0; },
+    JustSetIcontrollable_arm1op_1 -> JustSetIcontrollable_arm2op_0_0_2 { assign Icontrollable_arm2op_0_0_2 := 1; },
+    JustSetIcontrollable_arm2op_0_0_2 -> JustSetIcontrollable_arm2op_1 { assign Icontrollable_arm2op_1 := 0; },
+    JustSetIcontrollable_arm2op_0_0_2 -> JustSetIcontrollable_arm2op_1 { assign Icontrollable_arm2op_1 := 1; },
+    JustSetIcontrollable_arm2op_1 -> UpdatedLIsNotFirstRound { guard LIsNotFirstRound == 1; },
+    JustSetIcontrollable_arm2op_1 -> UpdatedLIsNotFirstRound { guard LIsNotFirstRound == 1 && LIsNotFirstRound != 1 && x_38 >= 1000; },
+    JustSetIcontrollable_arm2op_1 -> UpdatedLIsNotFirstRound { guard LIsNotFirstRound == 0 && LIsNotFirstRound != 1 && x_38 >= 1500; },
+    JustSetIcontrollable_arm2op_1 -> UpdatedLIsNotFirstRound_becomes0 { guard LIsNotFirstRound == 1 && LIsNotFirstRound != 1 && x_38 < 1000; },
+    UpdatedLIsNotFirstRound_becomes0 -> UpdatedLIsNotFirstRound { guard x_38 >= 1000; assign x_38:=0, LIsNotFirstRound := 1; },
+    JustSetIcontrollable_arm2op_1 -> UpdatedLIsNotFirstRound_becomes1 { guard LIsNotFirstRound == 0 && LIsNotFirstRound != 1 && x_38 < 1500; },
+    UpdatedLIsNotFirstRound_becomes1 -> UpdatedLIsNotFirstRound { guard x_38 >= 1500; assign x_38:=0, LIsNotFirstRound := 1; },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_p0_0 { guard Lprev_p0_0 == (Ip0_0); },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_p0_0 { guard Lprev_p0_0 == 1 && Lprev_p0_0 != (Ip0_0) && x_40 >= 500; },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_p0_0 { guard Lprev_p0_0 == 0 && Lprev_p0_0 != (Ip0_0) && x_40 >= 2000; },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_p0_0_becomes0 { guard Lprev_p0_0 == 1 && Lprev_p0_0 != (Ip0_0) && x_40 < 500; },
+    UpdatedLprev_p0_0_becomes0 -> UpdatedLprev_p0_0 { guard x_40 >= 500; assign x_40:=0, Lprev_p0_0 := (Ip0_0); },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_p0_0_becomes1 { guard Lprev_p0_0 == 0 && Lprev_p0_0 != (Ip0_0) && x_40 < 2000; },
+    UpdatedLprev_p0_0_becomes1 -> UpdatedLprev_p0_0 { guard x_40 >= 2000; assign x_40:=0, Lprev_p0_0 := (Ip0_0); },
+    UpdatedLprev_p0_0 -> UpdatedLprev_p0_1 { guard Lprev_p0_1 == (Ip0_1); },
+    UpdatedLprev_p0_0 -> UpdatedLprev_p0_1 { guard Lprev_p0_1 == 1 && Lprev_p0_1 != (Ip0_1) && x_42 >= 2000; },
+    UpdatedLprev_p0_0 -> UpdatedLprev_p0_1 { guard Lprev_p0_1 == 0 && Lprev_p0_1 != (Ip0_1) && x_42 >= 3000; },
+    UpdatedLprev_p0_0 -> UpdatedLprev_p0_1_becomes0 { guard Lprev_p0_1 == 1 && Lprev_p0_1 != (Ip0_1) && x_42 < 2000; },
+    UpdatedLprev_p0_1_becomes0 -> UpdatedLprev_p0_1 { guard x_42 >= 2000; assign x_42:=0, Lprev_p0_1 := (Ip0_1); },
+    UpdatedLprev_p0_0 -> UpdatedLprev_p0_1_becomes1 { guard Lprev_p0_1 == 0 && Lprev_p0_1 != (Ip0_1) && x_42 < 3000; },
+    UpdatedLprev_p0_1_becomes1 -> UpdatedLprev_p0_1 { guard x_42 >= 3000; assign x_42:=0, Lprev_p0_1 := (Ip0_1); },
+    UpdatedLprev_p0_1 -> UpdatedLprev_p0_2 { guard Lprev_p0_2 == (Ip0_2); },
+    UpdatedLprev_p0_1 -> UpdatedLprev_p0_2 { guard Lprev_p0_2 == 1 && Lprev_p0_2 != (Ip0_2) && x_44 >= 3000; },
+    UpdatedLprev_p0_1 -> UpdatedLprev_p0_2 { guard Lprev_p0_2 == 0 && Lprev_p0_2 != (Ip0_2) && x_44 >= 0; },
+    UpdatedLprev_p0_1 -> UpdatedLprev_p0_2_becomes0 { guard Lprev_p0_2 == 1 && Lprev_p0_2 != (Ip0_2) && x_44 < 3000; },
+    UpdatedLprev_p0_2_becomes0 -> UpdatedLprev_p0_2 { guard x_44 >= 3000; assign x_44:=0, Lprev_p0_2 := (Ip0_2); },
+    UpdatedLprev_p0_1 -> UpdatedLprev_p0_2_becomes1 { guard Lprev_p0_2 == 0 && Lprev_p0_2 != (Ip0_2) && x_44 < 0; },
+    UpdatedLprev_p0_2_becomes1 -> UpdatedLprev_p0_2 { guard x_44 >= 0; assign x_44:=0, Lprev_p0_2 := (Ip0_2); },
+    UpdatedLprev_p0_2 -> Init { guard T <= 2000; assign T:=0; },
+    UpdatedLprev_p0_2 -> dead { guard T >2000; };
+}
+
+system Circuit;
+prop{
+    E<> Circuit_dead
+}

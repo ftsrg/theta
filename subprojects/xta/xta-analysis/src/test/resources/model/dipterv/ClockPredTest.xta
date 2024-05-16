@@ -17,7 +17,7 @@ process P1(){
 
     trans
         idle -> A {guard x <= 5; assign y = 0;},
-        A -> B {guard x >= 7   ;assign a = 3;};
+        A -> B {guard x >= 6   ;assign a = 3;};
 
 }
 system P1;

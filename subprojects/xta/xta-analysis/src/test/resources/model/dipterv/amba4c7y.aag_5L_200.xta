@@ -1,0 +1,229 @@
+ clock x_46;
+clock x_48;
+clock x_50;
+clock x_52;
+clock x_54;
+clock T;
+bool Ii_hbusreq0;
+bool Ii_hbusreq1;
+bool Ii_hbusreq2;
+bool Ii_hbusreq3;
+bool Ii_hburst1;
+bool Ii_hburst0;
+bool Ii_hlock0;
+bool Ii_hlock1;
+bool Ii_hlock2;
+bool Ii_hlock3;
+bool Ii_hready;
+bool Icontrollable_hmastlock;
+bool Icontrollable_nstart;
+bool Icontrollable_hmaster1;
+bool Icontrollable_locked;
+bool Icontrollable_hmaster0;
+bool Icontrollable_hgrant1;
+bool Icontrollable_busreq;
+bool Icontrollable_hgrant2;
+bool Icontrollable_hgrant3;
+bool Icontrollable_ndecide;
+bool Icontrollable_nhgrant0;
+bool Ln47;
+bool Lreg_controllable_hgrant2_out;
+bool Lreg_controllable_hmaster1_out;
+bool Lreg_controllable_hgrant3_out;
+bool Lnext_env_fair_out;
+bool Lreg_stateG3_0_out;
+bool Lreg_controllable_locked_out;
+bool Lreg_stateG3_1_out;
+bool Lreg_controllable_ndecide_out;
+bool Lreg_stateG3_2_out;
+bool Lreg_i_hbusreq0_out;
+bool Lreg_controllable_busreq_out;
+bool Lreg_controllable_nstart_out;
+bool Lreg_i_hbusreq1_out;
+bool Lreg_i_hlock3_out;
+bool Lreg_stateG2_out;
+bool Lreg_stateG10_1_out;
+bool Lreg_controllable_nhgrant0_out;
+bool Lreg_i_hlock2_out;
+bool Lreg_stateG10_2_out;
+bool Lreg_stateA1_out;
+bool Lreg_controllable_hmastlock_out;
+bool Lreg_i_hbusreq2_out;
+bool Lnext_sys_fair0_out;
+bool Lnext_sys_fair1_out;
+bool Lnext_sys_fair2_out;
+bool Lnext_sys_fair3_out;
+bool Lreg_i_hlock1_out;
+bool Lreg_stateG10_3_out;
+bool Lfair_cnt0_out;
+bool Lfair_cnt1_out;
+bool Lfair_cnt2_out;
+bool Lreg_i_hbusreq3_out;
+bool Lenv_safe_err_happened_out;
+bool Lreg_i_hlock0_out;
+bool Lreg_i_hready_out;
+bool Lreg_controllable_hgrant1_out;
+bool Lreg_controllable_hmaster0_out;
+
+
+process Circuit() {
+
+state
+    Init,
+    JustSetIi_hbusreq0,
+    JustSetIi_hbusreq1,
+    JustSetIi_hbusreq2,
+    JustSetIi_hbusreq3,
+    JustSetIi_hburst1,
+    JustSetIi_hburst0,
+    JustSetIi_hlock0,
+    JustSetIi_hlock1,
+    JustSetIi_hlock2,
+    JustSetIi_hlock3,
+    JustSetIi_hready,
+    JustSetIcontrollable_hmastlock,
+    JustSetIcontrollable_nstart,
+    JustSetIcontrollable_hmaster1,
+    JustSetIcontrollable_locked,
+    JustSetIcontrollable_hmaster0,
+    JustSetIcontrollable_hgrant1,
+    JustSetIcontrollable_busreq,
+    JustSetIcontrollable_hgrant2,
+    JustSetIcontrollable_hgrant3,
+    JustSetIcontrollable_ndecide,
+    JustSetIcontrollable_nhgrant0,
+    UpdatedLn47,
+    UpdatedLn47_becomes0 { x_46 <= 1000 },
+    UpdatedLn47_becomes1 { x_46 <= 1500 },
+    UpdatedLreg_controllable_hgrant2_out,
+    UpdatedLreg_controllable_hgrant2_out_becomes0 { x_48 <= 500 },
+    UpdatedLreg_controllable_hgrant2_out_becomes1 { x_48 <= 2000 },
+    UpdatedLreg_controllable_hmaster1_out,
+    UpdatedLreg_controllable_hmaster1_out_becomes0 { x_50 <= 2000 },
+    UpdatedLreg_controllable_hmaster1_out_becomes1 { x_50 <= 3000 },
+    UpdatedLreg_controllable_hgrant3_out,
+    UpdatedLreg_controllable_hgrant3_out_becomes0 { x_52 <= 3000 },
+    UpdatedLreg_controllable_hgrant3_out_becomes1 { x_52 <= 0 },
+    UpdatedLnext_env_fair_out,
+    UpdatedLnext_env_fair_out_becomes0 { x_54 <= 2500 },
+    UpdatedLnext_env_fair_out_becomes1 { x_54 <= 0 },
+    dead;
+urgent
+    Init,
+    JustSetIi_hbusreq0,
+    JustSetIi_hbusreq1,
+    JustSetIi_hbusreq2,
+    JustSetIi_hbusreq3,
+    JustSetIi_hburst1,
+    JustSetIi_hburst0,
+    JustSetIi_hlock0,
+    JustSetIi_hlock1,
+    JustSetIi_hlock2,
+    JustSetIi_hlock3,
+    JustSetIi_hready,
+    JustSetIcontrollable_hmastlock,
+    JustSetIcontrollable_nstart,
+    JustSetIcontrollable_hmaster1,
+    JustSetIcontrollable_locked,
+    JustSetIcontrollable_hmaster0,
+    JustSetIcontrollable_hgrant1,
+    JustSetIcontrollable_busreq,
+    JustSetIcontrollable_hgrant2,
+    JustSetIcontrollable_hgrant3,
+    JustSetIcontrollable_ndecide,
+    JustSetIcontrollable_nhgrant0,
+    UpdatedLn47,
+    UpdatedLreg_controllable_hgrant2_out,
+    UpdatedLreg_controllable_hmaster1_out,
+    UpdatedLreg_controllable_hgrant3_out,
+    UpdatedLnext_env_fair_out;
+init
+    Init;
+trans
+    Init -> JustSetIi_hbusreq0 { assign Ii_hbusreq0 := 0; },
+    Init -> JustSetIi_hbusreq0 { assign Ii_hbusreq0 := 1; },
+    JustSetIi_hbusreq0 -> JustSetIi_hbusreq1 { assign Ii_hbusreq1 := 0; },
+    JustSetIi_hbusreq0 -> JustSetIi_hbusreq1 { assign Ii_hbusreq1 := 1; },
+    JustSetIi_hbusreq1 -> JustSetIi_hbusreq2 { assign Ii_hbusreq2 := 0; },
+    JustSetIi_hbusreq1 -> JustSetIi_hbusreq2 { assign Ii_hbusreq2 := 1; },
+    JustSetIi_hbusreq2 -> JustSetIi_hbusreq3 { assign Ii_hbusreq3 := 0; },
+    JustSetIi_hbusreq2 -> JustSetIi_hbusreq3 { assign Ii_hbusreq3 := 1; },
+    JustSetIi_hbusreq3 -> JustSetIi_hburst1 { assign Ii_hburst1 := 0; },
+    JustSetIi_hbusreq3 -> JustSetIi_hburst1 { assign Ii_hburst1 := 1; },
+    JustSetIi_hburst1 -> JustSetIi_hburst0 { assign Ii_hburst0 := 0; },
+    JustSetIi_hburst1 -> JustSetIi_hburst0 { assign Ii_hburst0 := 1; },
+    JustSetIi_hburst0 -> JustSetIi_hlock0 { assign Ii_hlock0 := 0; },
+    JustSetIi_hburst0 -> JustSetIi_hlock0 { assign Ii_hlock0 := 1; },
+    JustSetIi_hlock0 -> JustSetIi_hlock1 { assign Ii_hlock1 := 0; },
+    JustSetIi_hlock0 -> JustSetIi_hlock1 { assign Ii_hlock1 := 1; },
+    JustSetIi_hlock1 -> JustSetIi_hlock2 { assign Ii_hlock2 := 0; },
+    JustSetIi_hlock1 -> JustSetIi_hlock2 { assign Ii_hlock2 := 1; },
+    JustSetIi_hlock2 -> JustSetIi_hlock3 { assign Ii_hlock3 := 0; },
+    JustSetIi_hlock2 -> JustSetIi_hlock3 { assign Ii_hlock3 := 1; },
+    JustSetIi_hlock3 -> JustSetIi_hready { assign Ii_hready := 0; },
+    JustSetIi_hlock3 -> JustSetIi_hready { assign Ii_hready := 1; },
+    JustSetIi_hready -> JustSetIcontrollable_hmastlock { assign Icontrollable_hmastlock := 0; },
+    JustSetIi_hready -> JustSetIcontrollable_hmastlock { assign Icontrollable_hmastlock := 1; },
+    JustSetIcontrollable_hmastlock -> JustSetIcontrollable_nstart { assign Icontrollable_nstart := 0; },
+    JustSetIcontrollable_hmastlock -> JustSetIcontrollable_nstart { assign Icontrollable_nstart := 1; },
+    JustSetIcontrollable_nstart -> JustSetIcontrollable_hmaster1 { assign Icontrollable_hmaster1 := 0; },
+    JustSetIcontrollable_nstart -> JustSetIcontrollable_hmaster1 { assign Icontrollable_hmaster1 := 1; },
+    JustSetIcontrollable_hmaster1 -> JustSetIcontrollable_locked { assign Icontrollable_locked := 0; },
+    JustSetIcontrollable_hmaster1 -> JustSetIcontrollable_locked { assign Icontrollable_locked := 1; },
+    JustSetIcontrollable_locked -> JustSetIcontrollable_hmaster0 { assign Icontrollable_hmaster0 := 0; },
+    JustSetIcontrollable_locked -> JustSetIcontrollable_hmaster0 { assign Icontrollable_hmaster0 := 1; },
+    JustSetIcontrollable_hmaster0 -> JustSetIcontrollable_hgrant1 { assign Icontrollable_hgrant1 := 0; },
+    JustSetIcontrollable_hmaster0 -> JustSetIcontrollable_hgrant1 { assign Icontrollable_hgrant1 := 1; },
+    JustSetIcontrollable_hgrant1 -> JustSetIcontrollable_busreq { assign Icontrollable_busreq := 0; },
+    JustSetIcontrollable_hgrant1 -> JustSetIcontrollable_busreq { assign Icontrollable_busreq := 1; },
+    JustSetIcontrollable_busreq -> JustSetIcontrollable_hgrant2 { assign Icontrollable_hgrant2 := 0; },
+    JustSetIcontrollable_busreq -> JustSetIcontrollable_hgrant2 { assign Icontrollable_hgrant2 := 1; },
+    JustSetIcontrollable_hgrant2 -> JustSetIcontrollable_hgrant3 { assign Icontrollable_hgrant3 := 0; },
+    JustSetIcontrollable_hgrant2 -> JustSetIcontrollable_hgrant3 { assign Icontrollable_hgrant3 := 1; },
+    JustSetIcontrollable_hgrant3 -> JustSetIcontrollable_ndecide { assign Icontrollable_ndecide := 0; },
+    JustSetIcontrollable_hgrant3 -> JustSetIcontrollable_ndecide { assign Icontrollable_ndecide := 1; },
+    JustSetIcontrollable_ndecide -> JustSetIcontrollable_nhgrant0 { assign Icontrollable_nhgrant0 := 0; },
+    JustSetIcontrollable_ndecide -> JustSetIcontrollable_nhgrant0 { assign Icontrollable_nhgrant0 := 1; },
+    JustSetIcontrollable_nhgrant0 -> UpdatedLn47 { guard Ln47 == 1; },
+    JustSetIcontrollable_nhgrant0 -> UpdatedLn47 { guard Ln47 == 1 && Ln47 != 1 && x_46 >= 1000; },
+    JustSetIcontrollable_nhgrant0 -> UpdatedLn47 { guard Ln47 == 0 && Ln47 != 1 && x_46 >= 1500; },
+    JustSetIcontrollable_nhgrant0 -> UpdatedLn47_becomes0 { guard Ln47 == 1 && Ln47 != 1 && x_46 < 1000; },
+    UpdatedLn47_becomes0 -> UpdatedLn47 { guard x_46 >= 1000; assign x_46:=0, Ln47 := 1; },
+    JustSetIcontrollable_nhgrant0 -> UpdatedLn47_becomes1 { guard Ln47 == 0 && Ln47 != 1 && x_46 < 1500; },
+    UpdatedLn47_becomes1 -> UpdatedLn47 { guard x_46 >= 1500; assign x_46:=0, Ln47 := 1; },
+    UpdatedLn47 -> UpdatedLreg_controllable_hgrant2_out { guard Lreg_controllable_hgrant2_out == (Icontrollable_hgrant2); },
+    UpdatedLn47 -> UpdatedLreg_controllable_hgrant2_out { guard Lreg_controllable_hgrant2_out == 1 && Lreg_controllable_hgrant2_out != (Icontrollable_hgrant2) && x_48 >= 500; },
+    UpdatedLn47 -> UpdatedLreg_controllable_hgrant2_out { guard Lreg_controllable_hgrant2_out == 0 && Lreg_controllable_hgrant2_out != (Icontrollable_hgrant2) && x_48 >= 2000; },
+    UpdatedLn47 -> UpdatedLreg_controllable_hgrant2_out_becomes0 { guard Lreg_controllable_hgrant2_out == 1 && Lreg_controllable_hgrant2_out != (Icontrollable_hgrant2) && x_48 < 500; },
+    UpdatedLreg_controllable_hgrant2_out_becomes0 -> UpdatedLreg_controllable_hgrant2_out { guard x_48 >= 500; assign x_48:=0, Lreg_controllable_hgrant2_out := (Icontrollable_hgrant2); },
+    UpdatedLn47 -> UpdatedLreg_controllable_hgrant2_out_becomes1 { guard Lreg_controllable_hgrant2_out == 0 && Lreg_controllable_hgrant2_out != (Icontrollable_hgrant2) && x_48 < 2000; },
+    UpdatedLreg_controllable_hgrant2_out_becomes1 -> UpdatedLreg_controllable_hgrant2_out { guard x_48 >= 2000; assign x_48:=0, Lreg_controllable_hgrant2_out := (Icontrollable_hgrant2); },
+    UpdatedLreg_controllable_hgrant2_out -> UpdatedLreg_controllable_hmaster1_out { guard Lreg_controllable_hmaster1_out == (Icontrollable_hmaster1); },
+    UpdatedLreg_controllable_hgrant2_out -> UpdatedLreg_controllable_hmaster1_out { guard Lreg_controllable_hmaster1_out == 1 && Lreg_controllable_hmaster1_out != (Icontrollable_hmaster1) && x_50 >= 2000; },
+    UpdatedLreg_controllable_hgrant2_out -> UpdatedLreg_controllable_hmaster1_out { guard Lreg_controllable_hmaster1_out == 0 && Lreg_controllable_hmaster1_out != (Icontrollable_hmaster1) && x_50 >= 3000; },
+    UpdatedLreg_controllable_hgrant2_out -> UpdatedLreg_controllable_hmaster1_out_becomes0 { guard Lreg_controllable_hmaster1_out == 1 && Lreg_controllable_hmaster1_out != (Icontrollable_hmaster1) && x_50 < 2000; },
+    UpdatedLreg_controllable_hmaster1_out_becomes0 -> UpdatedLreg_controllable_hmaster1_out { guard x_50 >= 2000; assign x_50:=0, Lreg_controllable_hmaster1_out := (Icontrollable_hmaster1); },
+    UpdatedLreg_controllable_hgrant2_out -> UpdatedLreg_controllable_hmaster1_out_becomes1 { guard Lreg_controllable_hmaster1_out == 0 && Lreg_controllable_hmaster1_out != (Icontrollable_hmaster1) && x_50 < 3000; },
+    UpdatedLreg_controllable_hmaster1_out_becomes1 -> UpdatedLreg_controllable_hmaster1_out { guard x_50 >= 3000; assign x_50:=0, Lreg_controllable_hmaster1_out := (Icontrollable_hmaster1); },
+    UpdatedLreg_controllable_hmaster1_out -> UpdatedLreg_controllable_hgrant3_out { guard Lreg_controllable_hgrant3_out == (Icontrollable_hgrant3); },
+    UpdatedLreg_controllable_hmaster1_out -> UpdatedLreg_controllable_hgrant3_out { guard Lreg_controllable_hgrant3_out == 1 && Lreg_controllable_hgrant3_out != (Icontrollable_hgrant3) && x_52 >= 3000; },
+    UpdatedLreg_controllable_hmaster1_out -> UpdatedLreg_controllable_hgrant3_out { guard Lreg_controllable_hgrant3_out == 0 && Lreg_controllable_hgrant3_out != (Icontrollable_hgrant3) && x_52 >= 0; },
+    UpdatedLreg_controllable_hmaster1_out -> UpdatedLreg_controllable_hgrant3_out_becomes0 { guard Lreg_controllable_hgrant3_out == 1 && Lreg_controllable_hgrant3_out != (Icontrollable_hgrant3) && x_52 < 3000; },
+    UpdatedLreg_controllable_hgrant3_out_becomes0 -> UpdatedLreg_controllable_hgrant3_out { guard x_52 >= 3000; assign x_52:=0, Lreg_controllable_hgrant3_out := (Icontrollable_hgrant3); },
+    UpdatedLreg_controllable_hmaster1_out -> UpdatedLreg_controllable_hgrant3_out_becomes1 { guard Lreg_controllable_hgrant3_out == 0 && Lreg_controllable_hgrant3_out != (Icontrollable_hgrant3) && x_52 < 0; },
+    UpdatedLreg_controllable_hgrant3_out_becomes1 -> UpdatedLreg_controllable_hgrant3_out { guard x_52 >= 0; assign x_52:=0, Lreg_controllable_hgrant3_out := (Icontrollable_hgrant3); },
+    UpdatedLreg_controllable_hgrant3_out -> UpdatedLnext_env_fair_out { guard Lnext_env_fair_out == (!(((Lreg_stateA1_out) && (Ln47)) && !((Lnext_env_fair_out) && (Ln47))) && ((((!((((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && !((Lreg_stateG2_out) && (Ln47))) && !(!(!((Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq1)) && (((((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))))) && (!((((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && (!((Lreg_stateG3_2_out) && (Ln47)) && (!((Lreg_stateG3_1_out) && (Ln47)) && !((Lreg_stateG3_0_out) && (Ln47))))) && !(!(!(!(Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq0)) && (((((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && (!(!(!(!(Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq2)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))) && !(!(!((Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq3)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && !(((Lnext_env_fair_out) && (Ln47)) && (Ii_hready)))); },
+    UpdatedLreg_controllable_hgrant3_out -> UpdatedLnext_env_fair_out { guard Lnext_env_fair_out == 1 && Lnext_env_fair_out != (!(((Lreg_stateA1_out) && (Ln47)) && !((Lnext_env_fair_out) && (Ln47))) && ((((!((((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && !((Lreg_stateG2_out) && (Ln47))) && !(!(!((Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq1)) && (((((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))))) && (!((((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && (!((Lreg_stateG3_2_out) && (Ln47)) && (!((Lreg_stateG3_1_out) && (Ln47)) && !((Lreg_stateG3_0_out) && (Ln47))))) && !(!(!(!(Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq0)) && (((((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && (!(!(!(!(Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq2)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))) && !(!(!((Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq3)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && !(((Lnext_env_fair_out) && (Ln47)) && (Ii_hready)))) && x_54 >= 2500; },
+    UpdatedLreg_controllable_hgrant3_out -> UpdatedLnext_env_fair_out { guard Lnext_env_fair_out == 0 && Lnext_env_fair_out != (!(((Lreg_stateA1_out) && (Ln47)) && !((Lnext_env_fair_out) && (Ln47))) && ((((!((((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && !((Lreg_stateG2_out) && (Ln47))) && !(!(!((Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq1)) && (((((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))))) && (!((((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && (!((Lreg_stateG3_2_out) && (Ln47)) && (!((Lreg_stateG3_1_out) && (Ln47)) && !((Lreg_stateG3_0_out) && (Ln47))))) && !(!(!(!(Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq0)) && (((((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && (!(!(!(!(Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq2)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))) && !(!(!((Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq3)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && !(((Lnext_env_fair_out) && (Ln47)) && (Ii_hready)))) && x_54 >= 0; },
+    UpdatedLreg_controllable_hgrant3_out -> UpdatedLnext_env_fair_out_becomes0 { guard Lnext_env_fair_out == 1 && Lnext_env_fair_out != (!(((Lreg_stateA1_out) && (Ln47)) && !((Lnext_env_fair_out) && (Ln47))) && ((((!((((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && !((Lreg_stateG2_out) && (Ln47))) && !(!(!((Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq1)) && (((((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))))) && (!((((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && (!((Lreg_stateG3_2_out) && (Ln47)) && (!((Lreg_stateG3_1_out) && (Ln47)) && !((Lreg_stateG3_0_out) && (Ln47))))) && !(!(!(!(Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq0)) && (((((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && (!(!(!(!(Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq2)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))) && !(!(!((Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq3)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && !(((Lnext_env_fair_out) && (Ln47)) && (Ii_hready)))) && x_54 < 2500; },
+    UpdatedLnext_env_fair_out_becomes0 -> UpdatedLnext_env_fair_out { guard x_54 >= 2500; assign x_54:=0, Lnext_env_fair_out := (!(((Lreg_stateA1_out) && (Ln47)) && !((Lnext_env_fair_out) && (Ln47))) && ((((!((((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && !((Lreg_stateG2_out) && (Ln47))) && !(!(!((Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq1)) && (((((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))))) && (!((((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && (!((Lreg_stateG3_2_out) && (Ln47)) && (!((Lreg_stateG3_1_out) && (Ln47)) && !((Lreg_stateG3_0_out) && (Ln47))))) && !(!(!(!(Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq0)) && (((((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && (!(!(!(!(Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq2)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))) && !(!(!((Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq3)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && !(((Lnext_env_fair_out) && (Ln47)) && (Ii_hready)))); },
+    UpdatedLreg_controllable_hgrant3_out -> UpdatedLnext_env_fair_out_becomes1 { guard Lnext_env_fair_out == 0 && Lnext_env_fair_out != (!(((Lreg_stateA1_out) && (Ln47)) && !((Lnext_env_fair_out) && (Ln47))) && ((((!((((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && !((Lreg_stateG2_out) && (Ln47))) && !(!(!((Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq1)) && (((((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))))) && (!((((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && (!((Lreg_stateG3_2_out) && (Ln47)) && (!((Lreg_stateG3_1_out) && (Ln47)) && !((Lreg_stateG3_0_out) && (Ln47))))) && !(!(!(!(Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq0)) && (((((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && (!(!(!(!(Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq2)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))) && !(!(!((Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq3)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && !(((Lnext_env_fair_out) && (Ln47)) && (Ii_hready)))) && x_54 < 0; },
+    UpdatedLnext_env_fair_out_becomes1 -> UpdatedLnext_env_fair_out { guard x_54 >= 0; assign x_54:=0, Lnext_env_fair_out := (!(((Lreg_stateA1_out) && (Ln47)) && !((Lnext_env_fair_out) && (Ln47))) && ((((!((((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && !((Lreg_stateG2_out) && (Ln47))) && !(!(!((Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq1)) && (((((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))))) && (!((((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47))) && (!((Lreg_stateG3_2_out) && (Ln47)) && (!((Lreg_stateG3_1_out) && (Ln47)) && !((Lreg_stateG3_0_out) && (Ln47))))) && !(!(!(!(Icontrollable_hmaster0) && !(Icontrollable_hmaster1)) && (Ii_hbusreq0)) && (((((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && !((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && (!(!(!(!(Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq2)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && !((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))) && !(!(!((Icontrollable_hmaster0) && (Icontrollable_hmaster1)) && (Ii_hbusreq3)) && (((!((Lnext_sys_fair1_out) && (Ln47)) && ((Lnext_sys_fair0_out) && (Ln47))) && ((Lnext_sys_fair2_out) && (Ln47))) && !((Lnext_sys_fair3_out) && (Ln47)))))) && !(((Lnext_env_fair_out) && (Ln47)) && (Ii_hready)))); },
+    UpdatedLnext_env_fair_out -> Init { guard T <= 2000; assign T:=0; },
+    UpdatedLnext_env_fair_out -> dead { guard T >2000; };
+}
+
+system Circuit;
+prop{
+    E<> Circuit_dead
+}

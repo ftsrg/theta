@@ -140,12 +140,26 @@ public class XtaConfigBuilder_Zone {
         this.search = search;
         return this;
     }
+    public XtaConfigBuilder_Zone search(final String search) {
+        this.search = Search.valueOf(search);
+        return this;
+    }
     public XtaConfigBuilder_Zone predSplit(final PredSplit predSplit) {
         this.predSplit = predSplit;
         return this;
     }
+    public XtaConfigBuilder_Zone predSplit(final String predSplit) {
+        this.predSplit = PredSplit.valueOf(predSplit);
+        return this;
+    }
     public XtaConfigBuilder_Zone precGranularity(final PrecGranularity precGranularity) {
         this.precGranularity = precGranularity;
+
+        return this;
+    }
+
+    public XtaConfigBuilder_Zone precGranularity(final String precGranularity) {
+        this.precGranularity = PrecGranularity.valueOf(precGranularity);
 
         return this;
     }
@@ -155,6 +169,10 @@ public class XtaConfigBuilder_Zone {
     }
     public XtaConfigBuilder_Zone initPrec(final InitPrec initPrec) {
         this.initPrec = initPrec;
+        return this;
+    }
+    public XtaConfigBuilder_Zone initPrec(final String initPrec) {
+        this.initPrec = InitPrec.valueOf(initPrec);
         return this;
     }
     public XtaConfigBuilder_Zone pruneStrategy(final PruneStrategy pruneStrategy) {

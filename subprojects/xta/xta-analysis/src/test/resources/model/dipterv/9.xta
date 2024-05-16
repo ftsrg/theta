@@ -1,0 +1,226 @@
+ 
+chan go0,go1,go2; // Process i can start
+chan release0;
+chan release1; // Machine j can be freed
+int[0,2] running0 = 0; // Machine 1 is running process running1. 3 means none
+int[0,2] running1 = 0;
+
+int[0,2] round = 0;
+// Is process(i) waiting?
+// This is redundant information but don't know how to
+// simply access processes' locations
+bool w0 = 1;
+bool w1 = 1;
+bool w2 = 1;
+
+clock x0;
+// int[0,1] mode0;
+
+clock x1;
+// int[0,1] mode1;
+
+clock x2;
+// int[0,1] mode2;
+
+
+process Process0() {
+bool Istay;
+bool Icontrollable_reset;
+bool Ln7;
+bool Lcounter0_out;
+bool Lcounter1_out;
+bool Lcounter2_out;
+bool Lcounter3_out;
+
+state
+    on0 { x0 <= 1000 },
+    on1 { x0 <= 800 },
+    w,
+    dead,
+    up,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLcounter0_out,
+    UpdatedLcounter1_out,
+    UpdatedLcounter2_out,
+    UpdatedLcounter3_out;
+commit
+    up,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLcounter0_out,
+    UpdatedLcounter1_out,
+    UpdatedLcounter2_out,
+    UpdatedLcounter3_out;
+init
+    w;
+trans
+    w -> on0 { guard Lcounter0_out == 0; sync go0?; assign x0:=0, w0:=0; },
+    w -> dead { guard Lcounter0_out == 0 && x0 > 2000; },
+    on0 -> up { guard Lcounter0_out == 0 && x0 >= 500 && x0 <= 1000; assign x0:=0; },
+    w -> on1 { guard Lcounter0_out == 1; sync go0?; assign x0:=0, w0:=0; },
+    w -> dead { guard Lcounter0_out == 1 && x0 > 2200; },
+    on1 -> up { guard Lcounter0_out == 1 && x0 >= 400 && x0 <= 800; assign x0:=0; },
+    up -> JustSetIstay { assign Istay := 0; },
+    up -> JustSetIstay { assign Istay := 1; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 0; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 1; },
+    JustSetIcontrollable_reset -> UpdatedLn7 { assign Ln7 := 1; },
+    UpdatedLn7 -> UpdatedLcounter0_out { assign Lcounter0_out := !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))); },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out { assign Lcounter1_out := !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))); },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out { assign Lcounter2_out := !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))); },
+    UpdatedLcounter2_out -> UpdatedLcounter3_out { assign Lcounter3_out := (!(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && ((Lcounter2_out) && (Ln7))) && !(Istay)) && !((Lcounter3_out) && (Ln7))) && !((((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && ((Lcounter2_out) && (Ln7))) && !(Istay)) && !(!((Lcounter3_out) && (Ln7)) && !(Icontrollable_reset)))); },
+    UpdatedLcounter3_out -> w { guard running0 == 0; sync release0!; assign w0:=1; },
+    UpdatedLcounter3_out -> w { guard running1 == 0; sync release1!; assign w0:=1; };
+}
+
+process Process1() {
+bool Istay;
+bool Icontrollable_reset;
+bool Ln7;
+bool Lcounter0_out;
+bool Lcounter1_out;
+bool Lcounter2_out;
+bool Lcounter3_out;
+
+state
+    on0 { x1 <= 1000 },
+    on1 { x1 <= 800 },
+    w,
+    dead,
+    up,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLcounter0_out,
+    UpdatedLcounter1_out,
+    UpdatedLcounter2_out,
+    UpdatedLcounter3_out;
+commit
+    up,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLcounter0_out,
+    UpdatedLcounter1_out,
+    UpdatedLcounter2_out,
+    UpdatedLcounter3_out;
+init
+    w;
+trans
+    w -> on0 { guard Lcounter0_out == 0; sync go1?; assign x1:=0, w1:=0; },
+    w -> dead { guard Lcounter0_out == 0 && x1 > 2000; },
+    on0 -> up { guard Lcounter0_out == 0 && x1 >= 500 && x1 <= 1000; assign x1:=0; },
+    w -> on1 { guard Lcounter0_out == 1; sync go1?; assign x1:=0, w1:=0; },
+    w -> dead { guard Lcounter0_out == 1 && x1 > 2200; },
+    on1 -> up { guard Lcounter0_out == 1 && x1 >= 400 && x1 <= 800; assign x1:=0; },
+    up -> JustSetIstay { assign Istay := 0; },
+    up -> JustSetIstay { assign Istay := 1; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 0; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 1; },
+    JustSetIcontrollable_reset -> UpdatedLn7 { assign Ln7 := 1; },
+    UpdatedLn7 -> UpdatedLcounter0_out { assign Lcounter0_out := !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))); },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out { assign Lcounter1_out := !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))); },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out { assign Lcounter2_out := !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))); },
+    UpdatedLcounter2_out -> UpdatedLcounter3_out { assign Lcounter3_out := (!(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && ((Lcounter2_out) && (Ln7))) && !(Istay)) && !((Lcounter3_out) && (Ln7))) && !((((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && ((Lcounter2_out) && (Ln7))) && !(Istay)) && !(!((Lcounter3_out) && (Ln7)) && !(Icontrollable_reset)))); },
+    UpdatedLcounter3_out -> w { guard running0 == 1; sync release0!; assign w1:=1; },
+    UpdatedLcounter3_out -> w { guard running1 == 1; sync release1!; assign w1:=1; };
+}
+
+process Process2() {
+bool Istay;
+bool Icontrollable_reset;
+bool Ln7;
+bool Lcounter0_out;
+bool Lcounter1_out;
+bool Lcounter2_out;
+bool Lcounter3_out;
+
+state
+    on0 { x2 <= 1000 },
+    on1 { x2 <= 800 },
+    w,
+    dead,
+    up,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLcounter0_out,
+    UpdatedLcounter1_out,
+    UpdatedLcounter2_out,
+    UpdatedLcounter3_out;
+commit
+    up,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLcounter0_out,
+    UpdatedLcounter1_out,
+    UpdatedLcounter2_out,
+    UpdatedLcounter3_out;
+init
+    w;
+trans
+    w -> on0 { guard Lcounter0_out == 0; sync go2?; assign x2:=0, w2:=0; },
+    w -> dead { guard Lcounter0_out == 0 && x2 > 2000; },
+    on0 -> up { guard Lcounter0_out == 0 && x2 >= 500 && x2 <= 1000; assign x2:=0; },
+    w -> on1 { guard Lcounter0_out == 1; sync go2?; assign x2:=0, w2:=0; },
+    w -> dead { guard Lcounter0_out == 1 && x2 > 2200; },
+    on1 -> up { guard Lcounter0_out == 1 && x2 >= 400 && x2 <= 800; assign x2:=0; },
+    up -> JustSetIstay { assign Istay := 0; },
+    up -> JustSetIstay { assign Istay := 1; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 0; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 1; },
+    JustSetIcontrollable_reset -> UpdatedLn7 { assign Ln7 := 1; },
+    UpdatedLn7 -> UpdatedLcounter0_out { assign Lcounter0_out := !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))); },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out { assign Lcounter1_out := !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))); },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out { assign Lcounter2_out := !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))); },
+    UpdatedLcounter2_out -> UpdatedLcounter3_out { assign Lcounter3_out := (!(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && ((Lcounter2_out) && (Ln7))) && !(Istay)) && !((Lcounter3_out) && (Ln7))) && !((((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && ((Lcounter2_out) && (Ln7))) && !(Istay)) && !(!((Lcounter3_out) && (Ln7)) && !(Icontrollable_reset)))); },
+    UpdatedLcounter3_out -> w { guard running0 == 2; sync release0!; assign w2:=1; },
+    UpdatedLcounter3_out -> w { guard running1 == 2; sync release1!; assign w2:=1; };
+}
+
+process Machine0() {
+
+state
+    busy,
+    idle;
+commit
+    idle;
+init
+    idle;
+trans
+    busy -> idle { sync release0?; assign running0 := 2; },
+    idle -> busy { guard round == 0 && w0 == 1; sync go0!; assign round = 1,  running0 := 0; },
+    idle -> idle { guard round == 0 && w0 == 0; assign round = 1; },
+    idle -> busy { guard round == 1 && w1 == 1; sync go1!; assign round = 2,  running0 := 1; },
+    idle -> idle { guard round == 1 && w1 == 0; assign round = 2; },
+    idle -> busy { guard round == 2 && w2 == 1; sync go2!; assign round = 0,  running0 := 2; },
+    idle -> idle { guard round == 2 && w2 == 0; assign round = 0; };
+}
+
+process Machine1() {
+
+state
+    busy,
+    idle;
+commit
+    idle;
+init
+    idle;
+trans
+    busy -> idle { sync release1?; assign running1 := 2; },
+    idle -> busy { guard round == 0 && w0 == 1; sync go0!; assign round = 1,  running1 := 0; },
+    idle -> idle { guard round == 0 && w0 == 0; assign round = 1; },
+    idle -> busy { guard round == 1 && w1 == 1; sync go1!; assign round = 2,  running1 := 1; },
+    idle -> idle { guard round == 1 && w1 == 0; assign round = 2; },
+    idle -> busy { guard round == 2 && w2 == 1; sync go2!; assign round = 0,  running1 := 2; },
+    idle -> idle { guard round == 2 && w2 == 0; assign round = 0; };
+}
+
+system Process0, Process1, Process2, Machine0, Machine1;
+prop{
+    E<> Process0_dead || Process1_dead ||Process2_dead 
+}

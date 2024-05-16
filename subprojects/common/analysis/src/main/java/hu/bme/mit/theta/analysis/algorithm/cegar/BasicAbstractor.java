@@ -86,7 +86,6 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
 		long startNodes = arg.getNodes().count();
 		long startIncompleteNodes = arg.getIncompleteNodes().count();
-
 		ArgCexCheckHandler.instance.setCurrentArg(new AbstractArg<S, A, P>(arg, prec));
 		logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());

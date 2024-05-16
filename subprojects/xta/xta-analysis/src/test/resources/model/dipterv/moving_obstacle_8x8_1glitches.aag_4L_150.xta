@@ -1,0 +1,179 @@
+ clock x_38;
+clock x_40;
+clock x_42;
+clock x_44;
+clock T;
+bool Iobsx_0_0_6;
+bool Iobsx_1;
+bool Iobsx_2;
+bool Iobsy_0_0_6;
+bool Iobsy_1;
+bool Iobsy_2;
+bool Irobx_0_0_7;
+bool Irobx_1;
+bool Irobx_2;
+bool Iroby_0_0_7;
+bool Iroby_1;
+bool Iroby_2;
+bool Iglitches_0_0_1;
+bool Icontrollable_movx_0_0_2;
+bool Icontrollable_movx_1;
+bool Icontrollable_movy_0_0_2;
+bool Icontrollable_movy_1;
+bool Icontrollable_obsmove;
+bool LIsNotFirstRound;
+bool Lprev_obsx_0_0_6;
+bool Lprev_obsx_1;
+bool Lprev_obsx_2;
+bool Lprev_obsy_0_0_6;
+bool Lprev_obsy_1;
+bool Lprev_obsy_2;
+bool Lprev_robx_0_0_7;
+bool Lprev_robx_1;
+bool Lprev_robx_2;
+bool Lprev_roby_0_0_7;
+bool Lprev_roby_1;
+bool Lprev_roby_2;
+bool Lprev_glitches_0_0_1;
+bool Lprev_movx_0_0_2;
+bool Lprev_movx_1;
+bool Lprev_movy_0_0_2;
+bool Lprev_movy_1;
+bool Lprev_obsmove;
+bool LAssumptionsAlreadyViolated;
+
+
+process Circuit() {
+
+state
+    Init,
+    JustSetIobsx_0_0_6,
+    JustSetIobsx_1,
+    JustSetIobsx_2,
+    JustSetIobsy_0_0_6,
+    JustSetIobsy_1,
+    JustSetIobsy_2,
+    JustSetIrobx_0_0_7,
+    JustSetIrobx_1,
+    JustSetIrobx_2,
+    JustSetIroby_0_0_7,
+    JustSetIroby_1,
+    JustSetIroby_2,
+    JustSetIglitches_0_0_1,
+    JustSetIcontrollable_movx_0_0_2,
+    JustSetIcontrollable_movx_1,
+    JustSetIcontrollable_movy_0_0_2,
+    JustSetIcontrollable_movy_1,
+    JustSetIcontrollable_obsmove,
+    UpdatedLIsNotFirstRound,
+    UpdatedLIsNotFirstRound_becomes0 { x_38 <= 1000 },
+    UpdatedLIsNotFirstRound_becomes1 { x_38 <= 1500 },
+    UpdatedLprev_obsx_0_0_6,
+    UpdatedLprev_obsx_0_0_6_becomes0 { x_40 <= 500 },
+    UpdatedLprev_obsx_0_0_6_becomes1 { x_40 <= 2000 },
+    UpdatedLprev_obsx_1,
+    UpdatedLprev_obsx_1_becomes0 { x_42 <= 2000 },
+    UpdatedLprev_obsx_1_becomes1 { x_42 <= 3000 },
+    UpdatedLprev_obsx_2,
+    UpdatedLprev_obsx_2_becomes0 { x_44 <= 3000 },
+    UpdatedLprev_obsx_2_becomes1 { x_44 <= 0 },
+    dead;
+urgent
+    Init,
+    JustSetIobsx_0_0_6,
+    JustSetIobsx_1,
+    JustSetIobsx_2,
+    JustSetIobsy_0_0_6,
+    JustSetIobsy_1,
+    JustSetIobsy_2,
+    JustSetIrobx_0_0_7,
+    JustSetIrobx_1,
+    JustSetIrobx_2,
+    JustSetIroby_0_0_7,
+    JustSetIroby_1,
+    JustSetIroby_2,
+    JustSetIglitches_0_0_1,
+    JustSetIcontrollable_movx_0_0_2,
+    JustSetIcontrollable_movx_1,
+    JustSetIcontrollable_movy_0_0_2,
+    JustSetIcontrollable_movy_1,
+    JustSetIcontrollable_obsmove,
+    UpdatedLIsNotFirstRound,
+    UpdatedLprev_obsx_0_0_6,
+    UpdatedLprev_obsx_1,
+    UpdatedLprev_obsx_2;
+init
+    Init;
+trans
+    Init -> JustSetIobsx_0_0_6 { assign Iobsx_0_0_6 := 0; },
+    Init -> JustSetIobsx_0_0_6 { assign Iobsx_0_0_6 := 1; },
+    JustSetIobsx_0_0_6 -> JustSetIobsx_1 { assign Iobsx_1 := 0; },
+    JustSetIobsx_0_0_6 -> JustSetIobsx_1 { assign Iobsx_1 := 1; },
+    JustSetIobsx_1 -> JustSetIobsx_2 { assign Iobsx_2 := 0; },
+    JustSetIobsx_1 -> JustSetIobsx_2 { assign Iobsx_2 := 1; },
+    JustSetIobsx_2 -> JustSetIobsy_0_0_6 { assign Iobsy_0_0_6 := 0; },
+    JustSetIobsx_2 -> JustSetIobsy_0_0_6 { assign Iobsy_0_0_6 := 1; },
+    JustSetIobsy_0_0_6 -> JustSetIobsy_1 { assign Iobsy_1 := 0; },
+    JustSetIobsy_0_0_6 -> JustSetIobsy_1 { assign Iobsy_1 := 1; },
+    JustSetIobsy_1 -> JustSetIobsy_2 { assign Iobsy_2 := 0; },
+    JustSetIobsy_1 -> JustSetIobsy_2 { assign Iobsy_2 := 1; },
+    JustSetIobsy_2 -> JustSetIrobx_0_0_7 { assign Irobx_0_0_7 := 0; },
+    JustSetIobsy_2 -> JustSetIrobx_0_0_7 { assign Irobx_0_0_7 := 1; },
+    JustSetIrobx_0_0_7 -> JustSetIrobx_1 { assign Irobx_1 := 0; },
+    JustSetIrobx_0_0_7 -> JustSetIrobx_1 { assign Irobx_1 := 1; },
+    JustSetIrobx_1 -> JustSetIrobx_2 { assign Irobx_2 := 0; },
+    JustSetIrobx_1 -> JustSetIrobx_2 { assign Irobx_2 := 1; },
+    JustSetIrobx_2 -> JustSetIroby_0_0_7 { assign Iroby_0_0_7 := 0; },
+    JustSetIrobx_2 -> JustSetIroby_0_0_7 { assign Iroby_0_0_7 := 1; },
+    JustSetIroby_0_0_7 -> JustSetIroby_1 { assign Iroby_1 := 0; },
+    JustSetIroby_0_0_7 -> JustSetIroby_1 { assign Iroby_1 := 1; },
+    JustSetIroby_1 -> JustSetIroby_2 { assign Iroby_2 := 0; },
+    JustSetIroby_1 -> JustSetIroby_2 { assign Iroby_2 := 1; },
+    JustSetIroby_2 -> JustSetIglitches_0_0_1 { assign Iglitches_0_0_1 := 0; },
+    JustSetIroby_2 -> JustSetIglitches_0_0_1 { assign Iglitches_0_0_1 := 1; },
+    JustSetIglitches_0_0_1 -> JustSetIcontrollable_movx_0_0_2 { assign Icontrollable_movx_0_0_2 := 0; },
+    JustSetIglitches_0_0_1 -> JustSetIcontrollable_movx_0_0_2 { assign Icontrollable_movx_0_0_2 := 1; },
+    JustSetIcontrollable_movx_0_0_2 -> JustSetIcontrollable_movx_1 { assign Icontrollable_movx_1 := 0; },
+    JustSetIcontrollable_movx_0_0_2 -> JustSetIcontrollable_movx_1 { assign Icontrollable_movx_1 := 1; },
+    JustSetIcontrollable_movx_1 -> JustSetIcontrollable_movy_0_0_2 { assign Icontrollable_movy_0_0_2 := 0; },
+    JustSetIcontrollable_movx_1 -> JustSetIcontrollable_movy_0_0_2 { assign Icontrollable_movy_0_0_2 := 1; },
+    JustSetIcontrollable_movy_0_0_2 -> JustSetIcontrollable_movy_1 { assign Icontrollable_movy_1 := 0; },
+    JustSetIcontrollable_movy_0_0_2 -> JustSetIcontrollable_movy_1 { assign Icontrollable_movy_1 := 1; },
+    JustSetIcontrollable_movy_1 -> JustSetIcontrollable_obsmove { assign Icontrollable_obsmove := 0; },
+    JustSetIcontrollable_movy_1 -> JustSetIcontrollable_obsmove { assign Icontrollable_obsmove := 1; },
+    JustSetIcontrollable_obsmove -> UpdatedLIsNotFirstRound { guard LIsNotFirstRound == 1; },
+    JustSetIcontrollable_obsmove -> UpdatedLIsNotFirstRound { guard LIsNotFirstRound == 1 && LIsNotFirstRound != 1 && x_38 >= 1000; },
+    JustSetIcontrollable_obsmove -> UpdatedLIsNotFirstRound { guard LIsNotFirstRound == 0 && LIsNotFirstRound != 1 && x_38 >= 1500; },
+    JustSetIcontrollable_obsmove -> UpdatedLIsNotFirstRound_becomes0 { guard LIsNotFirstRound == 1 && LIsNotFirstRound != 1 && x_38 < 1000; },
+    UpdatedLIsNotFirstRound_becomes0 -> UpdatedLIsNotFirstRound { guard x_38 >= 1000; assign x_38:=0, LIsNotFirstRound := 1; },
+    JustSetIcontrollable_obsmove -> UpdatedLIsNotFirstRound_becomes1 { guard LIsNotFirstRound == 0 && LIsNotFirstRound != 1 && x_38 < 1500; },
+    UpdatedLIsNotFirstRound_becomes1 -> UpdatedLIsNotFirstRound { guard x_38 >= 1500; assign x_38:=0, LIsNotFirstRound := 1; },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_obsx_0_0_6 { guard Lprev_obsx_0_0_6 == (Iobsx_0_0_6); },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_obsx_0_0_6 { guard Lprev_obsx_0_0_6 == 1 && Lprev_obsx_0_0_6 != (Iobsx_0_0_6) && x_40 >= 500; },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_obsx_0_0_6 { guard Lprev_obsx_0_0_6 == 0 && Lprev_obsx_0_0_6 != (Iobsx_0_0_6) && x_40 >= 2000; },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_obsx_0_0_6_becomes0 { guard Lprev_obsx_0_0_6 == 1 && Lprev_obsx_0_0_6 != (Iobsx_0_0_6) && x_40 < 500; },
+    UpdatedLprev_obsx_0_0_6_becomes0 -> UpdatedLprev_obsx_0_0_6 { guard x_40 >= 500; assign x_40:=0, Lprev_obsx_0_0_6 := (Iobsx_0_0_6); },
+    UpdatedLIsNotFirstRound -> UpdatedLprev_obsx_0_0_6_becomes1 { guard Lprev_obsx_0_0_6 == 0 && Lprev_obsx_0_0_6 != (Iobsx_0_0_6) && x_40 < 2000; },
+    UpdatedLprev_obsx_0_0_6_becomes1 -> UpdatedLprev_obsx_0_0_6 { guard x_40 >= 2000; assign x_40:=0, Lprev_obsx_0_0_6 := (Iobsx_0_0_6); },
+    UpdatedLprev_obsx_0_0_6 -> UpdatedLprev_obsx_1 { guard Lprev_obsx_1 == (Iobsx_1); },
+    UpdatedLprev_obsx_0_0_6 -> UpdatedLprev_obsx_1 { guard Lprev_obsx_1 == 1 && Lprev_obsx_1 != (Iobsx_1) && x_42 >= 2000; },
+    UpdatedLprev_obsx_0_0_6 -> UpdatedLprev_obsx_1 { guard Lprev_obsx_1 == 0 && Lprev_obsx_1 != (Iobsx_1) && x_42 >= 3000; },
+    UpdatedLprev_obsx_0_0_6 -> UpdatedLprev_obsx_1_becomes0 { guard Lprev_obsx_1 == 1 && Lprev_obsx_1 != (Iobsx_1) && x_42 < 2000; },
+    UpdatedLprev_obsx_1_becomes0 -> UpdatedLprev_obsx_1 { guard x_42 >= 2000; assign x_42:=0, Lprev_obsx_1 := (Iobsx_1); },
+    UpdatedLprev_obsx_0_0_6 -> UpdatedLprev_obsx_1_becomes1 { guard Lprev_obsx_1 == 0 && Lprev_obsx_1 != (Iobsx_1) && x_42 < 3000; },
+    UpdatedLprev_obsx_1_becomes1 -> UpdatedLprev_obsx_1 { guard x_42 >= 3000; assign x_42:=0, Lprev_obsx_1 := (Iobsx_1); },
+    UpdatedLprev_obsx_1 -> UpdatedLprev_obsx_2 { guard Lprev_obsx_2 == (Iobsx_2); },
+    UpdatedLprev_obsx_1 -> UpdatedLprev_obsx_2 { guard Lprev_obsx_2 == 1 && Lprev_obsx_2 != (Iobsx_2) && x_44 >= 3000; },
+    UpdatedLprev_obsx_1 -> UpdatedLprev_obsx_2 { guard Lprev_obsx_2 == 0 && Lprev_obsx_2 != (Iobsx_2) && x_44 >= 0; },
+    UpdatedLprev_obsx_1 -> UpdatedLprev_obsx_2_becomes0 { guard Lprev_obsx_2 == 1 && Lprev_obsx_2 != (Iobsx_2) && x_44 < 3000; },
+    UpdatedLprev_obsx_2_becomes0 -> UpdatedLprev_obsx_2 { guard x_44 >= 3000; assign x_44:=0, Lprev_obsx_2 := (Iobsx_2); },
+    UpdatedLprev_obsx_1 -> UpdatedLprev_obsx_2_becomes1 { guard Lprev_obsx_2 == 0 && Lprev_obsx_2 != (Iobsx_2) && x_44 < 0; },
+    UpdatedLprev_obsx_2_becomes1 -> UpdatedLprev_obsx_2 { guard x_44 >= 0; assign x_44:=0, Lprev_obsx_2 := (Iobsx_2); },
+    UpdatedLprev_obsx_2 -> Init { guard T <= 1500; assign T:=0; },
+    UpdatedLprev_obsx_2 -> dead { guard T >1500; };
+}
+
+system Circuit;
+prop{
+    E<> Circuit_dead
+}

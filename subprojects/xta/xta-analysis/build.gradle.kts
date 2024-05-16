@@ -1,6 +1,5 @@
 plugins {
     id("java-common")
-    id("cli-tool")
 }
 
 dependencies {

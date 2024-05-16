@@ -104,7 +104,6 @@ public final class SingleXtaTraceRefiner <S extends ExprState, P extends Prec, R
 
         assert cexZoneStatus.isFeasible() || cexZoneStatus.isInfeasible() : "Unknown CEX status";
         assert cexExprStatus.isFeasible() || cexExprStatus.isInfeasible() : "Unknown CEX status";
-
         if (cexZoneStatus.isFeasible() && cexExprStatus.isFeasible()) { // if any of traces are feasible than it is unsafe
             return RefinerResult.unsafe(traceToConcretize);
         } else {

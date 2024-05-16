@@ -1,0 +1,85 @@
+ clock x_6;
+clock x_8;
+clock x_10;
+clock x_12;
+clock T;
+bool Istay;
+bool Icontrollable_reset;
+bool Ln7;
+bool Lcounter0_out;
+bool Lcounter1_out;
+bool Lcounter2_out;
+bool Lcounter3_out;
+bool Lcounter4_out;
+
+
+process Circuit() {
+
+state
+    Init,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLn7_becomes0 { x_6 <= 1000 },
+    UpdatedLn7_becomes1 { x_6 <= 1500 },
+    UpdatedLcounter0_out,
+    UpdatedLcounter0_out_becomes0 { x_8 <= 500 },
+    UpdatedLcounter0_out_becomes1 { x_8 <= 2000 },
+    UpdatedLcounter1_out,
+    UpdatedLcounter1_out_becomes0 { x_10 <= 2000 },
+    UpdatedLcounter1_out_becomes1 { x_10 <= 3000 },
+    UpdatedLcounter2_out,
+    UpdatedLcounter2_out_becomes0 { x_12 <= 3000 },
+    UpdatedLcounter2_out_becomes1 { x_12 <= 0 },
+    dead;
+urgent
+    Init,
+    JustSetIstay,
+    JustSetIcontrollable_reset,
+    UpdatedLn7,
+    UpdatedLcounter0_out,
+    UpdatedLcounter1_out,
+    UpdatedLcounter2_out;
+init
+    Init;
+trans
+    Init -> JustSetIstay { assign Istay := 0; },
+    Init -> JustSetIstay { assign Istay := 1; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 0; },
+    JustSetIstay -> JustSetIcontrollable_reset { assign Icontrollable_reset := 1; },
+    JustSetIcontrollable_reset -> UpdatedLn7 { guard Ln7 == 1; },
+    JustSetIcontrollable_reset -> UpdatedLn7 { guard Ln7 == 1 && Ln7 != 1 && x_6 >= 1000; },
+    JustSetIcontrollable_reset -> UpdatedLn7 { guard Ln7 == 0 && Ln7 != 1 && x_6 >= 1500; },
+    JustSetIcontrollable_reset -> UpdatedLn7_becomes0 { guard Ln7 == 1 && Ln7 != 1 && x_6 < 1000; },
+    UpdatedLn7_becomes0 -> UpdatedLn7 { guard x_6 >= 1000; assign x_6:=0, Ln7 := 1; },
+    JustSetIcontrollable_reset -> UpdatedLn7_becomes1 { guard Ln7 == 0 && Ln7 != 1 && x_6 < 1500; },
+    UpdatedLn7_becomes1 -> UpdatedLn7 { guard x_6 >= 1500; assign x_6:=0, Ln7 := 1; },
+    UpdatedLn7 -> UpdatedLcounter0_out { guard Lcounter0_out == !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))); },
+    UpdatedLn7 -> UpdatedLcounter0_out { guard Lcounter0_out == 1 && Lcounter0_out != !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))) && x_8 >= 500; },
+    UpdatedLn7 -> UpdatedLcounter0_out { guard Lcounter0_out == 0 && Lcounter0_out != !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))) && x_8 >= 2000; },
+    UpdatedLn7 -> UpdatedLcounter0_out_becomes0 { guard Lcounter0_out == 1 && Lcounter0_out != !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))) && x_8 < 500; },
+    UpdatedLcounter0_out_becomes0 -> UpdatedLcounter0_out { guard x_8 >= 500; assign x_8:=0, Lcounter0_out := !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))); },
+    UpdatedLn7 -> UpdatedLcounter0_out_becomes1 { guard Lcounter0_out == 0 && Lcounter0_out != !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))) && x_8 < 2000; },
+    UpdatedLcounter0_out_becomes1 -> UpdatedLcounter0_out { guard x_8 >= 2000; assign x_8:=0, Lcounter0_out := !(!(!((Lcounter0_out) && (Ln7)) && !(Istay)) && !(((Lcounter0_out) && (Ln7)) && (Istay))); },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out { guard Lcounter1_out == !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))); },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out { guard Lcounter1_out == 1 && Lcounter1_out != !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))) && x_10 >= 2000; },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out { guard Lcounter1_out == 0 && Lcounter1_out != !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))) && x_10 >= 3000; },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out_becomes0 { guard Lcounter1_out == 1 && Lcounter1_out != !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))) && x_10 < 2000; },
+    UpdatedLcounter1_out_becomes0 -> UpdatedLcounter1_out { guard x_10 >= 2000; assign x_10:=0, Lcounter1_out := !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))); },
+    UpdatedLcounter0_out -> UpdatedLcounter1_out_becomes1 { guard Lcounter1_out == 0 && Lcounter1_out != !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))) && x_10 < 3000; },
+    UpdatedLcounter1_out_becomes1 -> UpdatedLcounter1_out { guard x_10 >= 3000; assign x_10:=0, Lcounter1_out := !(!((((Lcounter0_out) && (Ln7)) && !(Istay)) && !((Lcounter1_out) && (Ln7))) && !(!(((Lcounter0_out) && (Ln7)) && !(Istay)) && ((Lcounter1_out) && (Ln7)))); },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out { guard Lcounter2_out == !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))); },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out { guard Lcounter2_out == 1 && Lcounter2_out != !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))) && x_12 >= 3000; },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out { guard Lcounter2_out == 0 && Lcounter2_out != !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))) && x_12 >= 0; },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out_becomes0 { guard Lcounter2_out == 1 && Lcounter2_out != !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))) && x_12 < 3000; },
+    UpdatedLcounter2_out_becomes0 -> UpdatedLcounter2_out { guard x_12 >= 3000; assign x_12:=0, Lcounter2_out := !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))); },
+    UpdatedLcounter1_out -> UpdatedLcounter2_out_becomes1 { guard Lcounter2_out == 0 && Lcounter2_out != !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))) && x_12 < 0; },
+    UpdatedLcounter2_out_becomes1 -> UpdatedLcounter2_out { guard x_12 >= 0; assign x_12:=0, Lcounter2_out := !(!(((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && !((Lcounter2_out) && (Ln7))) && !(!((((Lcounter1_out) && (Ln7)) && ((Lcounter0_out) && (Ln7))) && !(Istay)) && ((Lcounter2_out) && (Ln7)))); },
+    UpdatedLcounter2_out -> Init { guard T <= 2000; assign T:=0; },
+    UpdatedLcounter2_out -> dead { guard T >2000; };
+}
+
+system Circuit;
+prop{
+    E<> Circuit_dead
+}

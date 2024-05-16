@@ -146,12 +146,26 @@ public class XtaConfigBuilder_ClockPred {
         this.search = search;
         return this;
     }
+    public XtaConfigBuilder_ClockPred search(final String search) {
+        this.search = Search.valueOf(search);
+        return this;
+    }
     public XtaConfigBuilder_ClockPred predSplit(final PredSplit predSplit) {
         this.predSplit = predSplit;
         return this;
     }
+
+    public XtaConfigBuilder_ClockPred predSplit(final String predSplit) {
+        this.predSplit = PredSplit.valueOf(predSplit);
+        return this;
+    }
     public XtaConfigBuilder_ClockPred precGranularity(final PrecGranularity precGranularity) {
         this.precGranularity = precGranularity;
+
+        return this;
+    }
+    public XtaConfigBuilder_ClockPred precGranularity(final String precGranularity) {
+        this.precGranularity = PrecGranularity.valueOf(precGranularity);
 
         return this;
     }
@@ -161,6 +175,10 @@ public class XtaConfigBuilder_ClockPred {
     }
     public XtaConfigBuilder_ClockPred initPrec(final InitPrec initPrec) {
         this.initPrec = initPrec;
+        return this;
+    }
+    public XtaConfigBuilder_ClockPred initPrec(final String initPrec) {
+        this.initPrec = InitPrec.valueOf(initPrec);
         return this;
     }
     public XtaConfigBuilder_ClockPred pruneStrategy(final PruneStrategy pruneStrategy) {

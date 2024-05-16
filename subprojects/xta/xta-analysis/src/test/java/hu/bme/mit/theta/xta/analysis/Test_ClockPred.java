@@ -3,6 +3,7 @@ package hu.bme.mit.theta.xta.analysis;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.FileLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
@@ -42,7 +43,7 @@ public class Test_ClockPred {
         refinement = XtaConfigBuilder_ClockPred.Refinement.SEQ_ITP;
         SolverManager.registerSolverManager(Z3SolverManager.create());
         if(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX)) {
-            SolverManager.registerSolverManager(SmtLibSolverManager.create(SmtLibSolverManager.HOME, new ConsoleLogger(Logger.Level.DETAIL)));
+            SolverManager.registerSolverManager(SmtLibSolverManager.create(SmtLibSolverManager.HOME, new FileLogger(Logger.Level.DETAIL, "clockpred.log", false, false)));
         }
 
         final SolverFactory solverFactory;
@@ -51,15 +52,18 @@ public class Test_ClockPred {
 
         XtaSystem system;
         try(InputStream inputStream =  new SequenceInputStream(new FileInputStream("src/test/resources/model/ClockPredTest.xta"), new FileInputStream("src/test/resources/property/ClockPredTest.prop"))){
-            system = XtaDslManager.createSystem(inputStream);
+            system = XtaDslManager.createSystem(new FileInputStream("src/test/resources/model/ClockPredTest.xta"));
         }
         XtaConfigBuilder_ClockPred builder =  new XtaConfigBuilder_ClockPred(domain, refinement, /*solverFactory*/ Z3SolverFactory.getInstance());
         builder.precGranularity(XtaConfigBuilder_ClockPred.PrecGranularity.GLOBAL);
         builder.initPrec(XtaConfigBuilder_ClockPred.InitPrec.EMPTY);
         builder.maxEnum(1);
-
+        builder.logger(new FileLogger(Logger.Level.DETAIL, "clockpred.txt", true, true));
         XtaConfig config = builder.build(system);
         SafetyResult result = config.check();
         System.out.println("Safe?: " + result.isSafe());
+        if(result.isUnsafe()){
+            System.out.println(result.asUnsafe().getTrace());
+        }
     }
 }
