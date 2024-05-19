@@ -7,16 +7,16 @@ import hu.bme.mit.theta.analysis.expr.refinement.ZoneRefutation;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
-import hu.bme.mit.theta.analysis.zone.ClockPredPrec;
-import hu.bme.mit.theta.analysis.zone.DiffBounds;
-import hu.bme.mit.theta.analysis.zone.ZonePrec;
-import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.analysis.zone.*;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.DiffLeqConstr;
 import hu.bme.mit.theta.core.clock.constr.DiffLtConstr;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.stream.Collectors;
@@ -37,15 +37,12 @@ public class Prod2RefToProd2PredClockPredPrec implements RefutationToPrec<Prod2P
         if(refutation.getRefutation2().getPruneIndex() >= 0) {
             final ZoneState zone = refutation.getRefutation2().get(index);
             if (!(zone.isBottom() || zone.isTop())) {
-                Iterator<ClockConstr> iterator = zone.getDbm().getConstrs().iterator();
-                while (iterator.hasNext()) {
-                    ClockConstr constr = iterator.next();
-
-                    if (constr instanceof DiffLtConstr ltconstr) {
-                        clockPredPrec.add(ltconstr.getLeftVar(), ltconstr.getRightVar(), DiffBounds.Lt(ltconstr.getBound()));
-                    } else if (constr instanceof DiffLeqConstr leqconstr) {
-                        clockPredPrec.add(leqconstr.getLeftVar(), leqconstr.getRightVar(), DiffBounds.Leq(leqconstr.getBound()));
+                Collection<Pair<Pair<VarDecl<RatType>, VarDecl<RatType>>, Integer>> diffBounds = zone.getDbm().getDiffBounds();
+                for (Pair<Pair<VarDecl<RatType>, VarDecl<RatType>>, Integer> diffBound: diffBounds) {
+                    if (diffBound.getKey().NoValue()){
+                        clockPredPrec.add(diffBound.getKey().getKey(), diffBound.getValue());
                     }
+                    else clockPredPrec.add(diffBound.getKey().getKey(), diffBound.getKey().getValue(), diffBound.getValue());
                 }
             }
         }

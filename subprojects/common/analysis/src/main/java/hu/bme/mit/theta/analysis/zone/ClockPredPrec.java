@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.zone;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
@@ -48,7 +49,7 @@ public class ClockPredPrec  implements Prec{
             return true;
         } else if (obj instanceof ClockPredPrec) {
             final ClockPredPrec that = (ClockPredPrec) obj;
-            return this.getVars().equals(that.getVars());
+            return this.getVars().equals(that.getVars()) && this.map.equals(that.map);
         } else {
             return false;
         }
@@ -70,20 +71,31 @@ public class ClockPredPrec  implements Prec{
     }
 
 
-
+    private  HashMap<Pair<VarDecl<RatType>, VarDecl<RatType>>,  Set<Integer>> copyMap(Map<Pair<VarDecl<RatType>, VarDecl<RatType>>,  Set<Integer>> mapToCopy) {
+        final HashMap<Pair<VarDecl<RatType>, VarDecl<RatType>>,  Set<Integer>> newmap =  new HashMap<>();
+        for(Map.Entry<Pair<VarDecl<RatType>, VarDecl<RatType>>,  Set<Integer>> entry: mapToCopy.entrySet()){
+            final Set<Integer> copySet = new HashSet<>(entry.getValue());
+            newmap.put(entry.getKey(), copySet);
+        }
+        return newmap;
+    }
     public ClockPredPrec join(final ClockPredPrec other){
         //addClocks(other.getVars());
+        final HashMap<Pair<VarDecl<RatType>, VarDecl<RatType>>,  Set<Integer>> newmap =  this.copyMap(map);
         for(Map.Entry<Pair<VarDecl<RatType>, VarDecl<RatType>>,  Set<Integer>> entry: other.map.entrySet()){
             if(map.containsKey(entry.getKey())){
-                map.get(entry.getKey()).addAll(entry.getValue());
+                newmap.get(entry.getKey()).addAll(entry.getValue());
             }
             else{
-                map.put(entry.getKey(), entry.getValue());
+                newmap.put(entry.getKey(), entry.getValue());
             }
         }
 
         sort();
-        return this;
+        if(newmap.equals(map)){
+            return this;
+        }
+        return of(newmap, clocks);
     }
 
     @Override

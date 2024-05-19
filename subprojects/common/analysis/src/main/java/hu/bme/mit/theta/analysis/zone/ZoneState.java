@@ -19,6 +19,7 @@ import com.google.common.collect.Iterables;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
+import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
 import hu.bme.mit.theta.core.clock.op.ClockOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -159,7 +160,7 @@ public final class ZoneState implements ExprState {
 
 	@Override
 	public boolean isBottom() {
-		return !dbm.isConsistent();
+		return !dbm.isConsistent() || dbm.getConstrs().stream().anyMatch(c -> c.equals(ClockConstrs.False()));
 	}
 
 	public boolean isLeq(final ZoneState that) {

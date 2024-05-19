@@ -861,26 +861,39 @@ public class DBM {
 					newdbm.set(i, j, b);
 					break;
 				}
-
-//				if (DiffBounds.isStrict(b)) {
-//					if (DiffBounds.getBound(b) > DiffBounds.getBound(currval)) {
-//
-//					}
-//				} else {
-//					if (DiffBounds.getBound(b) >= DiffBounds.getBound(currval)) {
-//						newdbm.set(i, j, b);
-//						break;
-//					}
-//				}
 			}
-			//if(newdbm.get(i,j) == dbm.get(i,j)) newdbm.set(i,j, DiffBounds.Inf());
-			dbm.set(i,j,newdbm.get(i,j));
+			// dbm.set(i,j,newdbm.get(i,j));
 		}
 		for(int i = 0; i < dbm.size(); i++){
-			for(int j = 1; j < dbm.size(); j++){
-				dbm.set(i,j,newdbm.get(i,j));
+			for(int j = 0; j < dbm.size(); j++){
+				if(i != j)
+					dbm.set(i,j,newdbm.get(i,j));
 			}
 		}
+	}
+	public Collection<Pair<Pair<VarDecl<RatType>, VarDecl<RatType>>, Integer>> getDiffBounds() {
+		final Collection<Pair<Pair<VarDecl<RatType>, VarDecl<RatType>>, Integer>> result = Containers.createSet();
+
+		for (final VarDecl<RatType> leftVar : signature) {
+			for (final VarDecl<RatType> rightVar : signature) {
+				final int b = get(leftVar, rightVar);
+				final ClockConstr constr = DiffBounds.toConstr(leftVar, rightVar, b);
+				Pair<VarDecl<RatType>, VarDecl<RatType>> pair;
+				if(rightVar.equals(ZeroVar.getInstance())) {
+					pair = new Pair<VarDecl<RatType>, VarDecl<RatType>>(leftVar);
+				}
+				else pair = new Pair<VarDecl<RatType>, VarDecl<RatType>>(leftVar,rightVar);
+				if (constr instanceof TrueConstr) {
+					continue;
+				} else if (constr instanceof FalseConstr) {
+					return Collections.singleton(new Pair<Pair<VarDecl<RatType>, VarDecl<RatType>>, Integer>(pair, b));
+				} else {
+					result.add(new Pair<Pair<VarDecl<RatType>, VarDecl<RatType>>, Integer>(pair, b));
+				}
+			}
+		}
+
+		return result;
 	}
 
 

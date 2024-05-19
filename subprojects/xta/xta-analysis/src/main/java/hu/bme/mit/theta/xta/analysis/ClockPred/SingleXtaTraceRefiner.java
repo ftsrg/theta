@@ -20,6 +20,7 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,8 +42,6 @@ public final class SingleXtaTraceRefiner <S extends ExprState, P extends Prec, R
     private final Logger logger;
 
     private final R emptyRefutation;
-
-
 
     private SingleXtaTraceRefiner(XtaTraceChecker zoneTraceChecker,
                                   ExprTraceChecker<R> exprTraceChecker,

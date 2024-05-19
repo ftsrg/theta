@@ -132,7 +132,7 @@ public final class XtaCli {
 	String precGranularity = "GLOBAL";
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
-	Integer maxEnum = 10;
+	Integer maxEnum = 0;
 
 	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	String initPrec = "EMPTY";

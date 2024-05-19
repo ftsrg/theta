@@ -7,7 +7,9 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.ZoneRefutation;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.zone.ClockPredPrec;
 import hu.bme.mit.theta.analysis.zone.DBM;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -21,9 +23,11 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
+import hu.bme.mit.theta.xta.analysis.prec.GlobalXtaPrec;
 import hu.bme.mit.theta.xta.analysis.prec.XtaPrec;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneUtils;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +67,6 @@ public class XtaTraceChecker {
 
         abstractPreZoneStates.add( trace.getState(stateCount-1));
         concreteZoneStates.add(ZoneState.of(initDBM));
-
         for(int i = 1; i < stateCount; i++){
             concreteZoneStates.add(XtaZoneUtils.post(trace.getState(i-1), trace.getAction(i-1), clocks));
             abstractPreZoneStates.add(ZoneState.intersection(XtaZoneUtils.pre( abstractPreZoneStates.get(i-1), trace.getAction(actionCount-i), clocks),
