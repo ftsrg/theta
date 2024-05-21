@@ -21,8 +21,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 
 data class PtrState<S : ExprState> @JvmOverloads constructor(
     val innerState: S,
-    val lastWrites: WriteTriples = emptyMap(),
-    val nextCnt: Int = 0
+    val nextCnt: Int = 0,
 ) : ExprState {
 
     override fun isBottom(): Boolean {
@@ -32,7 +31,4 @@ data class PtrState<S : ExprState> @JvmOverloads constructor(
     override fun toExpr(): Expr<BoolType> {
         return innerState.toExpr()
     }
-
-    fun withLastWrites(writeTriples: WriteTriples): PtrState<S> =
-        PtrState(innerState, writeTriples, nextCnt)
 }

@@ -48,10 +48,7 @@ class PtrAnalysis<S : ExprState, P : Prec>(private val innerAnalysis: Analysis<S
 }
 
 fun <S : ExprState> PartialOrd<S>.getPtrPartialOrd(): PartialOrd<PtrState<S>> = PartialOrd { state1, state2 ->
-    isLeq(state1.innerState, state2.innerState) &&
-        state1.lastWrites.all { (k, v) ->
-            v.containsAll(state2.lastWrites.getOrDefault(k, listOf()))
-        }
+    isLeq(state1.innerState, state2.innerState)
 }
 
 fun <S : ExprState, P : Prec> InitFunc<S, P>.getPtrInitFunc(): InitFunc<PtrState<S>, PtrPrec<P>> = InitFunc { prec ->
@@ -70,6 +67,6 @@ fun <S : ExprState, P : Prec> TransFunc<S, in ExprAction, P>.getPtrTransFunc(
         action
     }
     getSuccStates(state.innerState, exprAction, patchedPrec).map {
-        PtrState(it.repatch(), emptyMap(), action.cnts.values.maxOrNull() ?: action.inCnt)
+        PtrState(it.repatch(), action.cnts.values.maxOrNull() ?: action.inCnt)
     }
 }

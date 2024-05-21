@@ -58,7 +58,7 @@ class PtrAnalysisTest {
                     listOf(explTop1)),
                 Arguments.of(explTop0, writeLiteralOnly, emptyPrec,
                     listOf(
-                        PtrState(ExplState.top(), emptyMap(), 1))),
+                        PtrState(ExplState.top(), 1))),
             )
         }
     }

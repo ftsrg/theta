@@ -50,11 +50,7 @@ private fun <S : ExprState> S.getState(varLookup: Map<VarDecl<*>, VarDecl<*>>): 
     when (this) {
         is ExplState -> ExplState.of(getVal().changeVars(varLookup))
         is PredState -> PredState.of(preds.map { p -> p.changeVars(varLookup) })
-        is PtrState<*> -> PtrState(innerState.getState(varLookup), lastWrites.map {
-            Pair(it.key, it.value.map {
-                Triple(it.first.changeVars(varLookup), it.second.changeVars(varLookup), it.third.changeVars(varLookup))
-            })
-        }.toMap(), nextCnt)
+        is PtrState<*> -> PtrState(innerState.getState(varLookup))
         else -> throw NotImplementedError(
             "Generalizing variable instances is not implemented for data states that are not explicit or predicate.")
     } as S
