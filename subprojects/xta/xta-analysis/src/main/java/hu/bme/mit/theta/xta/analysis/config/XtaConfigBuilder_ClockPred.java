@@ -124,8 +124,12 @@ public class XtaConfigBuilder_ClockPred {
     private int maxEnum = 0;
     private InitPrec initPrec = InitPrec.EMPTY;
     private PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+    private boolean clockPredAbstraction = false;
 
-
+    public XtaConfigBuilder_ClockPred setClockPred(boolean clockPredAbstraction) {
+        this.clockPredAbstraction = clockPredAbstraction;
+        return this;
+    }
     public XtaConfigBuilder_ClockPred(final Domain domain, final Refinement refinement, final SolverFactory solverFactory) {
         this.domain = domain;
         this.refinement = refinement;
@@ -185,6 +189,10 @@ public class XtaConfigBuilder_ClockPred {
         this.pruneStrategy = pruneStrategy;
         return this;
     }
+    public XtaConfigBuilder_ClockPred pruneStrategy(final String pruneStrategy) {
+        this.pruneStrategy = PruneStrategy.valueOf(pruneStrategy);
+        return this;
+    }
     public XtaConfig<? extends State, ? extends Action, ? extends Prec> build(final XtaSystem xta) {
         final XtaLts lts = XtaLts.create(xta);
         //final Expr<BoolType> negProp = xta
@@ -235,7 +243,7 @@ public class XtaConfigBuilder_ClockPred {
                 case BW_BIN_ITP:
                     refiner = SingleXtaTraceRefiner.create(
                             XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
-                            ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
+                            ExprTraceBwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
                     );
@@ -243,29 +251,15 @@ public class XtaConfigBuilder_ClockPred {
                 case SEQ_ITP:
                     refiner =SingleXtaTraceRefiner.create(
                             XtaTraceChecker.create(initval,initDBM,  True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
-                            ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
+                            ExprTraceSeqItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
                     );
                     break;
-                case MULTI_SEQ:
-                    refiner =SingleXtaTraceRefiner.create(
-                            XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
-                            ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
-                            precGranularity.createRefiner(reftoprec),
-                            pruneStrategy, logger, emptyRefutation
-                    );
-                    break;
-                //TODO
-                    /*
-                case UNSAT_CORE:
-                    refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), refinementSolverFactory.createUCSolver()),
-                            precGranularity.createRefiner(new VarsRefToExplPrec()), pruneStrategy, logger);
-                    break;*/
                 case UCB:
                     refiner =SingleXtaTraceRefiner.create(
                             XtaTraceChecker.create(initval, initDBM, True(), refinementSolverFactory.createItpSolver(), ZonePrec.of(xta.getClockVars())),
-                            ExprTraceFwBinItpChecker.create(initval, True(), refinementSolverFactory.createItpSolver()),
+                            ExprTraceUCBChecker.create(initval, True(), refinementSolverFactory.createUCSolver()),
                             precGranularity.createRefiner(reftoprec),
                             pruneStrategy, logger, emptyRefutation
                     );
@@ -379,6 +373,7 @@ public class XtaConfigBuilder_ClockPred {
                     throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
                             domain + " domain");
             }
+            prec.getPrec(xta.getInitLocs()).getPrec2().setShouldApplyPredicates(clockPredAbstraction);
             return XtaConfig.create(checker, prec);
 
         }
@@ -509,6 +504,7 @@ public class XtaConfigBuilder_ClockPred {
                     throw new UnsupportedOperationException(initPrec + " initial precision is not supported with " +
                             domain + " domain");
             }
+            prec.getPrec(xta.getInitLocs()).getPrec2().setShouldApplyPredicates(clockPredAbstraction);
             return XtaConfig.create(checker, prec);
         }
         //TODO :

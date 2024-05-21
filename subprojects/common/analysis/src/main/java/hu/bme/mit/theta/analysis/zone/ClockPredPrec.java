@@ -7,6 +7,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
+import java.time.Clock;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,7 @@ public class ClockPredPrec  implements Prec{
 
     private final Map<Pair<VarDecl<RatType>, VarDecl<RatType>>, Set<Integer>> map;
     private final Set<VarDecl<RatType>> clocks;
+    private boolean shouldApplyPredicates;
 
     private ClockPredPrec(final Map<Pair<VarDecl<RatType>, VarDecl<RatType>>,  Set<Integer>> map, final Collection<? extends VarDecl<RatType>> clocks){
         checkNotNull(clocks);
@@ -23,7 +25,9 @@ public class ClockPredPrec  implements Prec{
         this.map = map;
         sort();
     }
-
+    public void setShouldApplyPredicates(final boolean shouldApplyPredicates) {
+        this.shouldApplyPredicates = shouldApplyPredicates;
+    }
 
     public static ClockPredPrec of(final Collection<? extends VarDecl<RatType>> clocks) {
         return ClockPredPrec.emptyPrec(clocks);
@@ -134,6 +138,9 @@ public class ClockPredPrec  implements Prec{
         }
         map.get(key).add(b);
 
+    }
+    public boolean getShouldApplyPredicates(){
+        return this.shouldApplyPredicates;
     }
 
 

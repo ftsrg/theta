@@ -18,7 +18,7 @@ public class ClockPredTransFunc implements TransFunc<ZoneState, XtaAction, Clock
     public Collection<? extends ZoneState> getSuccStates(ZoneState state, XtaAction action, ClockPredPrec prec) {
 
         ZoneState succState = XtaClockPredUtils.post(state, action, prec);
-        if(!succState.isBottom()){
+        if(!succState.isBottom() && prec.getShouldApplyPredicates()){
             succState.clockPredicate(prec);
         }
         return ImmutableList.of(succState);

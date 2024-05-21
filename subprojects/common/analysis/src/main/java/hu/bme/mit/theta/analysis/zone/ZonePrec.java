@@ -74,14 +74,19 @@ public class ZonePrec implements Prec {
 
 	@Override
 	public Prec join(Prec other) {
+		if(this == other)return this;
 		if(other instanceof ZonePrec other1){
-			HashSet<VarDecl<RatType>> newclocks = new HashSet<>(clocks);
-
-			newclocks.addAll(other1.clocks);
-			return ZonePrec.of(newclocks);
+			return join(other1);
 		}
 		else{
 			throw new IllegalArgumentException();
 		}
+	}
+
+	public ZonePrec join(final ZonePrec other)  {
+		HashSet<VarDecl<RatType>> newclocks = new HashSet<>(clocks);
+		newclocks.addAll(other.clocks);
+		return ZonePrec.of(newclocks);
+
 	}
 }

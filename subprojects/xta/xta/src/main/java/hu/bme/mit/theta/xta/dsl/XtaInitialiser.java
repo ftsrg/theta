@@ -19,6 +19,9 @@ import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.CompoundInitialiserContext;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.InitialiserContext;
@@ -39,7 +42,13 @@ final class XtaInitialiser {
 
 	public Expr<?> instantiate(final Type type, final Env env) {
 		final InitialiserInstantiationVisitor visitor = new InitialiserInstantiationVisitor(env);
-		final Expr<?> expr = context.accept(visitor);
+		Expr<?> expr = context.accept(visitor);
+		if(type instanceof BoolType){
+			if(expr instanceof IntLitExpr){
+				if(((IntLitExpr) expr).getValue().intValue() <= 0) expr = BoolLitExpr.of(false);
+				else expr = BoolLitExpr.of(true);
+			}
+		}
 		checkArgument(expr.getType().equals(type));
 		return expr;
 	}

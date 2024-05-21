@@ -45,7 +45,7 @@ public class XtaTraceChecker {
     private final DBM initDBM;
 
     private final ZonePrec clocks;
-    private XtaTraceChecker(final Expr<BoolType> init, DBM initDBM, final Expr<BoolType> target, final ItpSolver solver,ZonePrec clocks ) {
+    protected XtaTraceChecker(final Expr<BoolType> init, DBM initDBM, final Expr<BoolType> target, final ItpSolver solver,ZonePrec clocks ) {
         this.solver = solver;
         this.init = init;
         this.target = target;

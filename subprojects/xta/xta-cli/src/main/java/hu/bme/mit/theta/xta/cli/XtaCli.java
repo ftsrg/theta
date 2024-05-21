@@ -138,7 +138,7 @@ public final class XtaCli {
 	String initPrec = "EMPTY";
 
 	@Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
-	PruneStrategy pruneStrategy = PruneStrategy.LAZY;
+	String pruneStrategy = "LAZY";
 
 	@Parameter(names = "--cex", description = "Write concrete counterexample to a file")
 	String cexfile = null;
@@ -353,20 +353,12 @@ public final class XtaCli {
 	}
 	private XtaConfig<?, ?, ?> buildConfiguration(final XtaSystem xta, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) throws Exception {
 		try {
-			if (clockpred) {
 				XtaConfigBuilder_ClockPred.Domain domainEnum = XtaConfigBuilder_ClockPred.Domain.valueOf(domain);
 				XtaConfigBuilder_ClockPred.Refinement refinementEnum = XtaConfigBuilder_ClockPred.Refinement.valueOf(refinement);
 				return new XtaConfigBuilder_ClockPred(domainEnum, refinementEnum, abstractionSolverFactory, refinementSolverFactory)
 						.precGranularity(precGranularity).search(search)
-						.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
+						.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec).setClockPred(clockpred)
 						.pruneStrategy(pruneStrategy).logger(logger).build(xta);
-			}
-			XtaConfigBuilder_Zone.Domain domainEnum = XtaConfigBuilder_Zone.Domain.valueOf(domain);
-			XtaConfigBuilder_Zone.Refinement refinementEnum = XtaConfigBuilder_Zone.Refinement.valueOf(refinement);
-			return new XtaConfigBuilder_Zone(domainEnum, refinementEnum, abstractionSolverFactory, refinementSolverFactory)
-					.precGranularity(precGranularity).search(search)
-					.predSplit(predSplit).maxEnum(maxEnum).initPrec(initPrec)
-					.pruneStrategy(pruneStrategy).logger(logger).build(xta);
 		} catch (final Exception ex) {
 			throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
 		}
