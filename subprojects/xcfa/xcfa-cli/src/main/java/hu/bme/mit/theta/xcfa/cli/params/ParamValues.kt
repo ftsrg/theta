@@ -340,12 +340,12 @@ enum class ConeOfInfluenceMode(
     }),
     POR_COI({ xcfa, ivr, por ->
         ConeOfInfluence.coreLts = getXcfaLts()
-        if(por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+        if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
         else XcfaSporCoiLts(xcfa, ConeOfInfluence.lts)
     }),
     POR_COI_POR({ xcfa, ivr, por ->
         ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
-        if(por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+        if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
         else XcfaSporCoiLts(xcfa, ConeOfInfluence.lts)
     })
     ;

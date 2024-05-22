@@ -33,6 +33,7 @@ internal typealias R = Relation<XcfaEvent>
 
 @Suppress("unused")
 enum class OcDecisionProcedureType(internal val checker: () -> OcChecker<E>) {
+
     BASIC({ BasicOcChecker() }),
     PROPAGATOR({ UserPropagatorOcChecker() }),
     PREVENTIVE({ PreventivePropagatorOcChecker() }),
@@ -88,6 +89,7 @@ internal data class Thread(
     val lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
     val pid: Int = uniqueId(),
 ) {
+
     val finalEvents: MutableSet<XcfaEvent> = mutableSetOf()
 
     companion object {

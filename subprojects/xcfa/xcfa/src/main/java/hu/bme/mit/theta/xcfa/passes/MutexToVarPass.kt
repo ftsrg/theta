@@ -36,7 +36,7 @@ class MutexToVarPass : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         builder.parent.getVars().forEach { (v) ->
-            if(v.type == BoolType.getInstance()) {
+            if (v.type == BoolType.getInstance()) {
                 mutexVars[v.name] = v as VarDecl<BoolType>
             }
         }

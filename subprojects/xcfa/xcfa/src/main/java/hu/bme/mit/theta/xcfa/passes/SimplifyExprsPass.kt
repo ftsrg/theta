@@ -57,9 +57,9 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
                     }
                 }
             } > 1).also { modified ->
-                if(!modified && firstWrite != null) {
+                if (!modified && firstWrite != null) {
                     val valuation = MutableValuation()
-                    firstWrite!!.getFlatLabels().forEach{ it.simplify(valuation, parseContext) }
+                    firstWrite!!.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
                     valuation.toMap()[v]?.let { constValuation.put(v, it) }
                 }
             }

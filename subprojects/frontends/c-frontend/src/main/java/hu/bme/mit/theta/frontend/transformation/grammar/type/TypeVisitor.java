@@ -160,6 +160,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
         return mergeCTypes(cSimpleTypes);
     }
+
     private CSimpleType createCType(
             List<CParser.DeclarationSpecifierContext> declarationSpecifierContexts) {
         List<CSimpleType> cSimpleTypes = new ArrayList<>();

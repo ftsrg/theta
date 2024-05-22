@@ -127,7 +127,7 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     public final void propagateConsequence(final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
         final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
         for (var expr : exprs) {
-            if(registeredTerms.get(expr) == null) {
+            if (registeredTerms.get(expr) == null) {
                 System.err.println(expr);
             }
         }

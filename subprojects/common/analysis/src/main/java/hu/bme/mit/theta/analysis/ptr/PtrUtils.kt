@@ -145,6 +145,7 @@ fun <T : Type> Expr<T>.uniqueDereferences(vargen: (String, Type) -> VarDecl<*>,
     }
 
 object TopCollection : Set<Expr<*>> {
+
     override val size: Int
         get() = error("No size information known for TopCollection")
 

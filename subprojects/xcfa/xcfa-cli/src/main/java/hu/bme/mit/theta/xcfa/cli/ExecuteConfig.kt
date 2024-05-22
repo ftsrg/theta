@@ -170,8 +170,8 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
 
     logger.write(
         Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
-            stopwatch.elapsed(TimeUnit.MILLISECONDS)
-        } ms)\n"
+        stopwatch.elapsed(TimeUnit.MILLISECONDS)
+    } ms)\n"
     )
 
     logger.write(RESULT, "ParsingResult Success\n")
@@ -220,8 +220,8 @@ private fun backend(
 
             logger.write(
                 Logger.Level.INFO, "Backend finished (in ${
-                    stopwatch.elapsed(TimeUnit.MILLISECONDS)
-                } ms)\n"
+                stopwatch.elapsed(TimeUnit.MILLISECONDS)
+            } ms)\n"
             )
 
             logger.write(RESULT, result.toString() + "\n")

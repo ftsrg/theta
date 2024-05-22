@@ -407,8 +407,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 // References
                 .addCase(Dereference.class, this::transformDereference)
 
-            ;
-            return builder;
+        ;
+        return builder;
     }
 
     @Override

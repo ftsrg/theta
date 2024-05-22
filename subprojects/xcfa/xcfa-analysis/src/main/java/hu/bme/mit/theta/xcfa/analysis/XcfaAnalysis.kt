@@ -116,9 +116,9 @@ fun getCoreXcfaLts() = LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
                                     lookup[originalVar] = tempVar
                                     val trial = Try.attempt {
                                         StmtLabel(
-                                        Stmts.Assign(
-                                            TypeUtils.cast(tempVar, tempVar.type),
-                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                            Stmts.Assign(
+                                                TypeUtils.cast(tempVar, tempVar.type),
+                                                TypeUtils.cast(label.params[iVal.index], tempVar.type)),
                                             metadata = label.metadata)
                                     }
                                     if (trial.isSuccess) {
@@ -262,10 +262,10 @@ private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int, isHavoc: Boolean)
 class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int,
     partialOrd: PartialOrd<XcfaState<PtrState<ExplState>>>, isHavoc: Boolean) :
     XcfaAnalysis<ExplState, PtrPrec<ExplPrec>>(
-    corePartialOrd = partialOrd,
-    coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
+        corePartialOrd = partialOrd,
+        coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
         coreTransFunc = getExplXcfaTransFunc(solver, maxEnum, isHavoc)
-)
+    )
 
 /// PRED
 
@@ -298,7 +298,7 @@ private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor,
 class PredXcfaAnalysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor,
     partialOrd: PartialOrd<XcfaState<PtrState<PredState>>>, isHavoc: Boolean) :
     XcfaAnalysis<PredState, PtrPrec<PredPrec>>(
-    corePartialOrd = partialOrd,
-    coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
+        corePartialOrd = partialOrd,
+        coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
         coreTransFunc = getPredXcfaTransFunc(predAbstractor, isHavoc)
-)
+    )

@@ -36,6 +36,7 @@ import org.junit.jupiter.params.provider.MethodSource
 class PtrAnalysisTest {
 
     companion object {
+
         private val x = Var("x", Int())
 
         private val explTop0 = PtrState(ExplState.top(), nextCnt = 0)
@@ -65,7 +66,8 @@ class PtrAnalysisTest {
 
     @ParameterizedTest
     @MethodSource("testInputs")
-    fun transFuncTest(state: PtrState<ExplState>, action: PtrAction, prec: PtrPrec<ExplPrec>, expectedResult: Collection<PtrState<ExplState>>) {
+    fun transFuncTest(state: PtrState<ExplState>, action: PtrAction, prec: PtrPrec<ExplPrec>,
+        expectedResult: Collection<PtrState<ExplState>>) {
         val analysis =
             PtrAnalysis(ExplAnalysis.create(Z3LegacySolverFactory.getInstance().createSolver(), True()))
         val result = analysis.transFunc.getSuccStates(state, action, prec)
