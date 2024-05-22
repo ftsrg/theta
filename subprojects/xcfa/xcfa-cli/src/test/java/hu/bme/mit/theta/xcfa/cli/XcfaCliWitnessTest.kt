@@ -43,8 +43,8 @@ class XcfaCliWitnessTest {
                     WitnessEdge(
                         startlineRange = Pair(5, 5),
                         endlineRange = Pair(5, 5),
-                        startoffsetRange = Pair(110, 112),
-                        endoffsetRange = Pair(111, 113),
+                        startoffsetRange = Pair(100, 130),
+                        endoffsetRange = Pair(100, 130),
                         assumption = Regex("i *== *-1"),
                     ),
                 )),
@@ -52,8 +52,8 @@ class XcfaCliWitnessTest {
                     WitnessEdge(
                         startlineRange = Pair(5, 5),
                         endlineRange = Pair(5, 5),
-                        startoffsetRange = Pair(110, 112),
-                        endoffsetRange = Pair(111, 113),
+                        startoffsetRange = Pair(100, 130),
+                        endoffsetRange = Pair(100, 130),
                         assumption = Regex("i *== *-1"),
                     ),
                 )),
