@@ -78,6 +78,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
     protected abstract fun propagate(reason: Reason?): Boolean
 
     protected fun derive(rels: Array<Array<Reason?>>, rf: Relation<E>, w: E): Reason? = when {
+        !rf.interferesWith(w) -> null // different referenced memory locations
         rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
         w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null // w within an atomic block with one of the rf ends
 

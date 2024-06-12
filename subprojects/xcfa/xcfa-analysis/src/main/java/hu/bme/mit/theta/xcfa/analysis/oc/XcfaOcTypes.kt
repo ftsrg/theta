@@ -19,7 +19,9 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
@@ -57,7 +59,7 @@ internal fun Collection<Set<Expr<BoolType>>>.toOrInSet(): Set<Expr<BoolType>> = 
     else -> setOf(Or(map { it.toAnd() }))
 }
 
-internal open class XcfaEvent(
+internal class XcfaEvent(
     const: IndexedConstDecl<*>,
     type: EventType,
     guard: Set<Expr<BoolType>>,
@@ -72,6 +74,36 @@ internal open class XcfaEvent(
 
         private var cnt: Int = 0
         private fun uniqueId(): Int = cnt++
+    }
+
+    private var arrayLit: LitExpr<*>? = null
+    private var offsetLit: LitExpr<*>? = null
+
+    // A (memory) event is only considered enabled if the array and offset expressions are also known values
+    override fun enabled(valuation: Valuation): Boolean? {
+        when (val e = super.enabled(valuation)) {
+            null, false -> return e
+            true -> {
+                if (array != null) {
+                    arrayLit = tryOrNull { array.eval(valuation) }
+                    if (arrayLit == null) enabled = null
+                }
+                if (offset != null) {
+                    offsetLit = tryOrNull { offset.eval(valuation) }
+                    if (offsetLit == null) enabled = null
+                }
+                return enabled
+            }
+        }
+    }
+
+    override fun sameMemory(other: Event): Boolean {
+        if (!super.sameMemory(other)) return false
+        if (javaClass != other.javaClass) return true // should not happen anyway
+        other as XcfaEvent
+        if (arrayLit != other.arrayLit) return false
+        if (offsetLit != other.offsetLit) return false
+        return true
     }
 }
 
