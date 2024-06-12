@@ -29,9 +29,11 @@ import hu.bme.mit.theta.core.decl.*
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
@@ -61,6 +63,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     )
     private var indexing = VarIndexingFactory.indexing(0)
     private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
+    private val derefVars = mutableMapOf<Dereference<*, *, *>, VarDecl<*>>()
+    private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())
 
     private val threads = mutableSetOf<Thread>()
     private val events = mutableMapOf<VarDecl<*>, MutableMap<Int, MutableList<E>>>()
@@ -73,7 +77,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
-        xcfa.initProcedures.forEach { processThread(Thread(it.first)) }
+        xcfa.initProcedures.forEach { ThreadProcessor(Thread(it.first)).process() }
         addCrossThreadRelations()
         if (!addToSolver()) return@let SafetyResult.safe() // no violations in the model
 
@@ -89,17 +93,18 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         }
     }.also { logger.write(Logger.Level.MAINSTEP, "OC checker result: $it\n") }
 
-    private fun processThread(thread: Thread): List<Thread> {
-        threads.add(thread)
-        val pid = thread.pid
-        var last = listOf<E>()
-        var guard = setOf<Expr<BoolType>>()
-        lateinit var lastWrites: MutableMap<VarDecl<*>, Set<E>>
-        lateinit var edge: XcfaEdge
-        var inEdge = false
-        var atomicEntered: Boolean? = null
+    private inner class ThreadProcessor(private val thread: Thread) {
 
-        val newEvent: (VarDecl<*>, EventType) -> List<E> = { d, type ->
+        private val pid = thread.pid
+        private var last = listOf<E>()
+        private var guard = setOf<Expr<BoolType>>()
+        private lateinit var lastWrites: MutableMap<VarDecl<*>, Set<E>>
+        private val memoryWrites = mutableSetOf<E>()
+        private lateinit var edge: XcfaEdge
+        private var inEdge = false
+        private var atomicEntered: Boolean? = null
+
+        fun event(d: VarDecl<*>, type: EventType): List<E> {
             check(!inEdge || last.size == 1)
             val decl = d.threadVar(pid)
             val useLastClk = inEdge || atomicEntered == true
@@ -113,183 +118,223 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                 EventType.READ -> lastWrites[decl]?.forEach { rfs.add(RelationType.RF, it, e) }
                 EventType.WRITE -> lastWrites[decl] = setOf(e)
             }
-            events[decl] = (events[decl] ?: mutableMapOf()).apply {
-                this[pid] = (this[pid] ?: mutableListOf()).apply { add(e) }
-            }
-            listOf(e)
+            events.getOrPut(decl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
+            return listOf(e)
         }
 
-        val waitList = mutableSetOf<SearchItem>()
-        val toVisit = mutableSetOf(SearchItem(thread.procedure.initLoc).apply {
-            guards.add(thread.guard)
-            thread.startEvent?.let { lastEvents.add(it) }
-            this.lastWrites.add(thread.lastWrites)
-        })
-        val threads = mutableListOf<Thread>()
-
-        while (toVisit.isNotEmpty()) {
-            val current = toVisit.first()
-            toVisit.remove(current)
-            check(current.incoming == current.loc.incomingEdges.size)
-            check(current.incoming == current.guards.size || current.loc.initial)
-            // lastEvents intentionally skipped
-            check(current.incoming == current.lastWrites.size || current.loc.initial)
-            check(current.incoming == current.threadLookups.size)
-            check(current.incoming == current.atomics.size)
-            check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
-
-            if (current.loc.error) {
-                val errorGuard = Or(current.lastEvents.map { it.guard.toAnd() })
-                violations.add(Violation(current.loc, pid, errorGuard, current.lastEvents))
-                continue
+        fun memoryEvent(deref: Dereference<*, *, *>, consts: Map<VarDecl<*>, ConstDecl<*>>, type: EventType): List<E> {
+            check(!inEdge || last.size == 1)
+            val array = deref.array.with(consts)
+            val offset = deref.offset.with(consts)
+            val useLastClk = inEdge || atomicEntered == true
+            val e =
+                if (useLastClk)
+                    E(memoryDecl.getNewIndexed(), type, guard, pid, edge, last.first().clkId, array, offset)
+                else
+                    E(memoryDecl.getNewIndexed(), type, guard, pid, edge, array = array, offset = offset)
+            last.forEach { po(it, e) }
+            inEdge = true
+            if (atomicEntered == false) atomicEntered = true
+            when (type) {
+                EventType.READ -> memoryWrites.forEach { rfs.add(RelationType.RF, it, e) }
+                EventType.WRITE -> memoryWrites.add(e)
             }
+            events.getOrPut(memoryDecl) { mutableMapOf() }.getOrPut(pid) { mutableListOf() }.add(e)
+            return listOf(e)
+        }
 
-            if (current.loc.final) {
-                thread.finalEvents.addAll(current.lastEvents)
+        fun <T : Type> Expr<T>.toEvents(consts: Map<VarDecl<*>, ConstDecl<*>>? = null): Map<VarDecl<*>, ConstDecl<*>> {
+            val (mutConsts, updateConsts) = if (consts == null) {
+                mutableMapOf<VarDecl<*>, ConstDecl<*>>() to true
+            } else {
+                consts.toMutableMap() to false
             }
+            vars.forEach {
+                last = event(it, EventType.READ)
+                if (updateConsts) mutConsts[it] = last.first().const
+            }
+            dereferences.forEach {
+                last = memoryEvent(it, mutConsts, EventType.READ)
+                if (updateConsts) mutConsts[it.derefVar] = last.first().const
+            }
+            return mutConsts
+        }
 
-            val mergedGuard = current.guards.toOrInSet()
-            val assumeConsts = mutableMapOf<VarDecl<*>, MutableList<ConstDecl<*>>>()
+        fun process() {
+            threads.add(thread)
+            val waitList = mutableSetOf<SearchItem>()
+            val toVisit = mutableSetOf(SearchItem(thread.procedure.initLoc).apply {
+                guards.add(thread.guard)
+                thread.startEvent?.let { lastEvents.add(it) }
+                this.lastWrites.add(thread.lastWrites)
+            })
 
-            for (e in current.loc.outgoingEdges) {
-                edge = e
-                inEdge = false
-                last = current.lastEvents
-                // intersection of guards of incoming edges:
-                guard = mergedGuard
-                lastWrites = current.lastWrites.merge().toMutableMap()
-                val threadLookup = current.threadLookups.merge { s1, s2 ->
-                    s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
-                }.toMutableMap()
-                var firstLabel = true
-                atomicEntered = current.atomics.firstOrNull()
+            while (toVisit.isNotEmpty()) {
+                val current = toVisit.first()
+                toVisit.remove(current)
+                check(current.incoming == current.loc.incomingEdges.size)
+                check(current.incoming == current.guards.size || current.loc.initial)
+                // lastEvents intentionally skipped
+                check(current.incoming == current.lastWrites.size || current.loc.initial)
+                check(current.incoming == current.threadLookups.size)
+                check(current.incoming == current.atomics.size)
+                check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
 
-                edge.getFlatLabels().forEach { label ->
-                    if (label.references.isNotEmpty() || label.dereferences.isNotEmpty()) {
-                        error("References not supported by OC checker.")
-                    }
-                    when (label) {
-                        is StmtLabel -> {
-                            when (val stmt = label.stmt) {
-                                is AssignStmt<*> -> {
-                                    val consts = mutableMapOf<VarDecl<*>, ConstDecl<*>>()
-                                    stmt.expr.vars.forEach {
-                                        last = newEvent(it, EventType.READ)
-                                        consts[it] = last.first().const
+                if (current.loc.error) {
+                    val errorGuard = Or(current.lastEvents.map { it.guard.toAnd() })
+                    violations.add(Violation(current.loc, pid, errorGuard, current.lastEvents))
+                    continue
+                }
+
+                if (current.loc.final) {
+                    thread.finalEvents.addAll(current.lastEvents)
+                }
+
+                val mergedGuard = current.guards.toOrInSet()
+                val assumeConsts = mutableMapOf<VarDecl<*>, MutableList<ConstDecl<*>>>()
+
+                for (e in current.loc.outgoingEdges) {
+                    edge = e
+                    inEdge = false
+                    last = current.lastEvents
+                    // intersection of guards of incoming edges:
+                    guard = mergedGuard
+                    lastWrites = current.lastWrites.merge().toMutableMap()
+                    val threadLookup = current.threadLookups.merge { s1, s2 ->
+                        s1 + s2.filter { (guard2, _) -> s1.none { (guard1, _) -> guard1 == guard2 } }
+                    }.toMutableMap()
+                    var firstLabel = true
+                    atomicEntered = current.atomics.firstOrNull()
+
+                    edge.getFlatLabels().forEach { label ->
+                        if (label.references.isNotEmpty()) error("References: not supported by OC checker")
+                        when (label) {
+                            is StmtLabel -> {
+                                when (val stmt = label.stmt) {
+                                    is AssignStmt<*> -> {
+                                        val consts = stmt.expr.toEvents()
+                                        last = event(stmt.varDecl, EventType.WRITE)
+                                        last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(consts))
                                     }
-                                    last = newEvent(stmt.varDecl, EventType.WRITE)
-                                    last.first().assignment = Eq(last.first().const.ref, stmt.expr.withConsts(consts))
-                                }
 
-                                is AssumeStmt -> {
-                                    val consts = stmt.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) }
-                                    val condWithConsts = stmt.cond.withConsts(consts)
-                                    val asAssign = consts.size == 1 && consts.keys.first().threadVar(pid) !in lastWrites
-                                    if (edge.source.outgoingEdges.size > 1 || !asAssign) {
-                                        guard = guard + condWithConsts
-                                        if (firstLabel) {
-                                            consts.forEach { (v, c) ->
-                                                assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
+                                    is AssumeStmt -> {
+                                        val consts = stmt.cond.vars.associateWith {
+                                            it.threadVar(pid).getNewIndexed(false)
+                                        } + stmt.cond.dereferences.associate {
+                                            it.derefVar to it.derefVar.getNewIndexed(false)
+                                        }
+                                        val condWithConsts = stmt.cond.with(consts)
+                                        val asAssign =
+                                            consts.size == 1 && consts.keys.first().threadVar(pid) !in lastWrites
+                                        if (edge.source.outgoingEdges.size > 1 || !asAssign) {
+                                            guard = guard + condWithConsts
+                                            if (firstLabel) {
+                                                consts.forEach { (v, c) ->
+                                                    assumeConsts.getOrPut(v) { mutableListOf() }.add(c)
+                                                }
                                             }
                                         }
+                                        stmt.cond.toEvents(consts)
+                                        if (edge.source.outgoingEdges.size == 1 && asAssign) {
+                                            last.first().assignment = condWithConsts
+                                        }
                                     }
-                                    stmt.cond.vars.forEach {
-                                        last = newEvent(it, EventType.READ)
+
+                                    is HavocStmt<*> -> {
+                                        last = event(stmt.varDecl, EventType.WRITE)
                                     }
-                                    if (edge.source.outgoingEdges.size == 1 && asAssign) {
-                                        last.first().assignment = condWithConsts
+
+                                    is MemoryAssignStmt<*, *, *> -> {
+                                        val consts = stmt.expr.toEvents()
+                                        last = memoryEvent(stmt.deref, consts, EventType.WRITE)
+                                        last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(consts))
                                     }
+
+                                    else -> error("Unsupported statement type: $stmt")
                                 }
+                            }
 
-                                is HavocStmt<*> -> {
-                                    last = newEvent(stmt.varDecl, EventType.WRITE)
+                            is StartLabel -> {
+                                // TODO StartLabel params
+                                if (label.name in thread.startHistory) {
+                                    error("Recursive thread start not supported by OC checker.")
                                 }
-
-                                else -> error("Unsupported statement type: $stmt")
+                                val procedure = xcfa.procedures.find { it.name == label.name }
+                                    ?: error("Procedure not found: ${label.name}")
+                                last = event(label.pidVar, EventType.WRITE)
+                                val pidVar = label.pidVar.threadVar(pid)
+                                if (threads.any { it.pidVar == pidVar }) {
+                                    error("Using a pthread_t variable in multiple threads: not supported by OC checker")
+                                }
+                                val newHistory = thread.startHistory + thread.procedure.name
+                                val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory, lastWrites)
+                                last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
+                                threadLookup[pidVar] = setOf(Pair(guard, newThread))
+                                ThreadProcessor(newThread).process()
                             }
-                        }
 
-                        is StartLabel -> {
-                            // TODO StartLabel params
-                            if (label.name in thread.startHistory) {
-                                error("Recursive thread start not supported by OC checker.")
+                            is JoinLabel -> {
+                                val incomingGuard = guard
+                                val lastEvents = mutableListOf<E>()
+                                val joinGuards = mutableListOf<Set<Expr<BoolType>>>()
+                                threadLookup[label.pidVar.threadVar(pid)]?.forEach { (g, thread) ->
+                                    guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
+                                    val joinEvent = event(label.pidVar, EventType.READ).first()
+                                    thread.finalEvents.forEach { final -> po(final, joinEvent) }
+                                    lastEvents.add(joinEvent)
+                                    joinGuards.add(guard)
+                                } ?: error("Thread started in a different thread: not supported by OC checker")
+                                guard = joinGuards.toOrInSet()
+                                last = lastEvents
                             }
-                            val procedure = xcfa.procedures.find { it.name == label.name }
-                                ?: error("Procedure not found: ${label.name}")
-                            last = newEvent(label.pidVar, EventType.WRITE)
-                            val pidVar = label.pidVar.threadVar(pid)
-                            if (this.threads.any { it.pidVar == pidVar }) {
-                                error("Using a pthread_t variable in multiple threads is not supported by OC checker.")
+
+                            is FenceLabel -> {
+                                if (label.labels.size > 1 || label.labels.firstOrNull()?.contains("ATOMIC") != true) {
+                                    error("Untransformed fence label: $label")
+                                }
+                                if (label.isAtomicBegin) atomicEntered = false
+                                if (label.isAtomicEnd) atomicEntered = null
                             }
-                            val newHistory = thread.startHistory + thread.procedure.name
-                            val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory, lastWrites)
-                            last.first().assignment = Eq(last.first().const.ref, Int(newThread.pid))
-                            threadLookup[pidVar] = setOf(Pair(guard, newThread))
-                            processThread(newThread)
-                        }
 
-                        is JoinLabel -> {
-                            val incomingGuard = guard
-                            val lastEvents = mutableListOf<E>()
-                            val joinGuards = mutableListOf<Set<Expr<BoolType>>>()
-                            threadLookup[label.pidVar.threadVar(pid)]?.forEach { (g, thread) ->
-                                guard = incomingGuard + g + thread.finalEvents.map { it.guard }.toOrInSet()
-                                val joinEvent = newEvent(label.pidVar, EventType.READ).first()
-                                thread.finalEvents.forEach { final -> po(final, joinEvent) }
-                                lastEvents.add(joinEvent)
-                                joinGuards.add(guard)
-                            } ?: error("Thread started in a different thread: not supported by OC checker.")
-                            guard = joinGuards.toOrInSet()
-                            last = lastEvents
+                            is NopLabel -> {}
+                            else -> error("Unsupported label type by OC checker: $label")
                         }
-
-                        is FenceLabel -> {
-                            if (label.labels.size > 1 || label.labels.firstOrNull()?.contains("ATOMIC") != true) {
-                                error("Untransformed fence label: $label")
-                            }
-                            if (label.isAtomicBegin) atomicEntered = false
-                            if (label.isAtomicEnd) atomicEntered = null
-                        }
-
-                        is NopLabel -> {}
-                        else -> error("Unsupported label type by OC checker: $label")
+                        firstLabel = false
                     }
-                    firstLabel = false
+
+                    val searchItem = waitList.find { it.loc == edge.target }
+                        ?: SearchItem(edge.target).apply { waitList.add(this) }
+                    searchItem.guards.add(guard)
+                    searchItem.lastEvents.addAll(last)
+                    searchItem.lastWrites.add(lastWrites)
+                    searchItem.threadLookups.add(threadLookup)
+                    searchItem.atomics.add(atomicEntered)
+                    searchItem.incoming++
+                    if (searchItem.incoming == searchItem.loc.incomingEdges.size) {
+                        waitList.remove(searchItem)
+                        toVisit.add(searchItem)
+                    }
                 }
 
-                val searchItem = waitList.find { it.loc == edge.target }
-                    ?: SearchItem(edge.target).apply { waitList.add(this) }
-                searchItem.guards.add(guard)
-                searchItem.lastEvents.addAll(last)
-                searchItem.lastWrites.add(lastWrites)
-                searchItem.threadLookups.add(threadLookup)
-                searchItem.atomics.add(atomicEntered)
-                searchItem.incoming++
-                if (searchItem.incoming == searchItem.loc.incomingEdges.size) {
-                    waitList.remove(searchItem)
-                    toVisit.add(searchItem)
+                if (current.loc.outgoingEdges.size > 1) {
+                    for (e in current.loc.outgoingEdges) {
+                        val first = e.getFlatLabels().first()
+                        if (first !is StmtLabel || first.stmt !is AssumeStmt) {
+                            error("Branching with non-assume labels: not supported by OC checker")
+                        }
+                    }
+                    assumeConsts.forEach { (_, set) ->
+                        for ((i1, v1) in set.withIndex())
+                            for ((i2, v2) in set.withIndex()) {
+                                if (i1 == i2) break
+                                branchingConditions.add(Eq(v1.ref, v2.ref))
+                            }
+                    }
                 }
             }
 
-            if (current.loc.outgoingEdges.size > 1) {
-                for (e in current.loc.outgoingEdges) {
-                    val first = e.getFlatLabels().first()
-                    if (first !is StmtLabel || first.stmt !is AssumeStmt) {
-                        error("Branching with non-assume labels not supported by OC checker.")
-                    }
-                }
-                assumeConsts.forEach { (_, set) ->
-                    for ((i1, v1) in set.withIndex())
-                        for ((i2, v2) in set.withIndex()) {
-                            if (i1 == i2) break
-                            branchingConditions.add(Eq(v1.ref, v2.ref))
-                        }
-                }
-            }
+            if (waitList.isNotEmpty()) error("Loops and dangling edges: not supported by OC checker")
         }
-
-        if (waitList.isNotEmpty()) error("Loops and dangling edges not supported by OC checker.")
-        return threads
     }
 
     private fun addCrossThreadRelations() {
@@ -318,15 +363,14 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         solver.add(Or(violations.map { it.guard }))
 
         // RF
-        rfs.forEach { (_, list) ->
+        rfs.forEach { (v, list) ->
             list.groupBy { it.to }.forEach { (event, rels) ->
                 rels.forEach { rel ->
-                    solver.add(
-                        Imply(
-                            rel.declRef,
-                            And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
-                        )
-                    ) // RF-Val
+                    var conseq = And(rel.from.guardExpr, rel.to.guardExpr, Eq(rel.from.const.ref, rel.to.const.ref))
+                    if (v == memoryDecl) {
+                        conseq = And(conseq, Eq(rel.from.array, rel.to.array), Eq(rel.from.offset, rel.to.offset))
+                    }
+                    solver.add(Imply(rel.declRef, conseq)) // RF-Val
                 }
                 solver.add(Imply(event.guardExpr, Or(rels.map { it.declRef }))) // RF-Some
             }
@@ -357,15 +401,14 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private fun MutableMap<VarDecl<*>, MutableSet<R>>.add(type: RelationType, from: E, to: E) =
         getOrPut(from.const.varDecl) { mutableSetOf() }.add(Relation(type, from, to))
 
-    private fun <T : Type> Expr<T>.withConsts(varToConst: Map<out Decl<*>, ConstDecl<*>>): Expr<T> {
-        if (this is RefExpr<T>) {
-            return varToConst[decl]?.ref?.let { cast(it, type) } ?: this
-        }
-        return map { it.withConsts(varToConst) }
+    private fun <T : Type> Expr<T>.with(consts: Map<out Decl<*>, ConstDecl<*>>): Expr<T> = when (this) {
+        is Dereference<*, *, T> -> consts[derefVar]?.ref?.let { cast(it, type) } ?: this
+        is RefExpr<T> -> consts[decl]?.ref?.let { cast(it, type) } ?: this
+        else -> map { it.with(consts) }
     }
 
     private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
-        if (xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }) { // if not global var
+        if (this !in derefVars.values && xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }) { // if not global var
             cast(localVars.getOrPut(this) { mutableMapOf() }.getOrPut(pid) {
                 Decls.Var("t$pid::$name", type)
             }, type)
@@ -376,4 +419,9 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         if (increment) indexing = indexing.inc(this)
         return constDecl
     }
+
+    private val <T : Type> Dereference<*, *, T>.derefVar: VarDecl<T>
+        get() = cast(derefVars.getOrPut(this) {
+            Decls.Var("__deref_var_${derefVars.size}", type)
+        }, type)
 }

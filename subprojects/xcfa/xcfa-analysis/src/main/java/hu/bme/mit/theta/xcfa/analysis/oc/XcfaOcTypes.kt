@@ -57,13 +57,15 @@ internal fun Collection<Set<Expr<BoolType>>>.toOrInSet(): Set<Expr<BoolType>> = 
     else -> setOf(Or(map { it.toAnd() }))
 }
 
-internal class XcfaEvent(
+internal open class XcfaEvent(
     const: IndexedConstDecl<*>,
     type: EventType,
     guard: Set<Expr<BoolType>>,
     pid: Int,
     val edge: XcfaEdge,
-    clkId: Int = uniqueId()
+    clkId: Int = uniqueId(),
+    val array: Expr<*>? = null,
+    val offset: Expr<*>? = null
 ) : Event(const, type, guard, pid, clkId) {
 
     companion object {
