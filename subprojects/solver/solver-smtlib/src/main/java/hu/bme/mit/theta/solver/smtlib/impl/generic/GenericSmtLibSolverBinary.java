@@ -51,6 +51,11 @@ public final class GenericSmtLibSolverBinary implements SmtLibSolverBinary {
         solverProcessBuilder.setProcessListener(processHandler);
 
         solverProcess = solverProcessBuilder.start();
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException ignored) {
+
+        }
         checkState(solverProcess.isRunning());
     }
 
