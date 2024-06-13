@@ -290,7 +290,9 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
 
                             is FenceLabel -> {
                                 if (label.labels.size > 1 || label.labels.firstOrNull()?.contains("ATOMIC") != true) {
-                                    error("Untransformed fence label: $label")
+                                    if (label.labels.size != 1 || label.labels.first() != "pthread_exit" || !edge.target.final) {
+                                        error("Untransformed fence label: $label")
+                                    }
                                 }
                                 if (label.isAtomicBegin) atomicEntered = false
                                 if (label.isAtomicEnd) atomicEntered = null

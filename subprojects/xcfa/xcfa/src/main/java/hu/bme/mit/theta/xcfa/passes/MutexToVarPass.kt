@@ -69,6 +69,11 @@ class MutexToVarPass : ProcedurePass {
                 val actions = mutableListOf<XcfaLabel>()
 
                 labels.forEach { l ->
+                    if (l == "pthread_exit") {
+                        actions.add(FenceLabel(setOf(l)))
+                        return@forEach
+                    }
+
                     if (l == "ATOMIC_BEGIN") {
                         actions.add(FenceLabel(setOf("ATOMIC_BEGIN")))
                         return@forEach

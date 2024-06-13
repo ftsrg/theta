@@ -126,7 +126,7 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                             "pthread_exit" -> {
                                 target = builder.finalLoc.get()
-                                listOf(NopLabel)
+                                listOf(FenceLabel(setOf("pthread_exit"), metadata))
                             }
 
                             else -> error("Unsupported library function ${invokeLabel.name}")
