@@ -143,19 +143,17 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             return listOf(e)
         }
 
-        fun <T : Type> Expr<T>.toEvents(consts: Map<VarDecl<*>, ConstDecl<*>>? = null): Map<VarDecl<*>, ConstDecl<*>> {
-            val (mutConsts, updateConsts) = if (consts == null) {
-                mutableMapOf<VarDecl<*>, ConstDecl<*>>() to true
-            } else {
-                consts.toMutableMap() to false
-            }
+        fun <T : Type> Expr<T>.toEvents(
+            consts: Map<VarDecl<*>, ConstDecl<*>>? = null, update: Boolean = true
+        ): Map<VarDecl<*>, ConstDecl<*>> {
+            val mutConsts = consts?.toMutableMap() ?: mutableMapOf()
             vars.forEach {
                 last = event(it, EventType.READ)
-                if (updateConsts) mutConsts[it] = last.first().const
+                if (update) mutConsts[it] = last.first().const
             }
             dereferences.forEach {
                 last = memoryEvent(it, mutConsts, EventType.READ)
-                if (updateConsts) mutConsts[it.derefVar] = last.first().const
+                if (update) mutConsts[it.derefVar] = last.first().const
             }
             return mutConsts
         }
@@ -234,7 +232,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                                                 }
                                             }
                                         }
-                                        stmt.cond.toEvents(consts)
+                                        stmt.cond.toEvents(consts, false)
                                         if (edge.source.outgoingEdges.size == 1 && asAssign) {
                                             last.first().assignment = condWithConsts
                                         }
@@ -245,9 +243,11 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                                     }
 
                                     is MemoryAssignStmt<*, *, *> -> {
-                                        val consts = stmt.expr.toEvents()
-                                        last = memoryEvent(stmt.deref, consts, EventType.WRITE)
-                                        last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(consts))
+                                        val exprConsts = stmt.expr.toEvents()
+                                        val arrayConsts = stmt.deref.array.toEvents(exprConsts)
+                                        val offsetConsts = stmt.deref.offset.toEvents(arrayConsts)
+                                        last = memoryEvent(stmt.deref, arrayConsts + offsetConsts, EventType.WRITE)
+                                        last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(exprConsts))
                                     }
 
                                     else -> error("Unsupported statement type: $stmt")
