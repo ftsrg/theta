@@ -63,7 +63,6 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     )
     private var indexing = VarIndexingFactory.indexing(0)
     private val localVars = mutableMapOf<VarDecl<*>, MutableMap<Int, VarDecl<*>>>()
-    private val derefVars = mutableMapOf<Dereference<*, *, *>, VarDecl<*>>()
     private val memoryDecl = Decls.Var("__oc_checker_memory_declaration__", Int())
 
     private val threads = mutableSetOf<Thread>()
@@ -122,7 +121,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             return listOf(e)
         }
 
-        fun memoryEvent(deref: Dereference<*, *, *>, consts: Map<VarDecl<*>, ConstDecl<*>>, type: EventType): List<E> {
+        fun memoryEvent(deref: Dereference<*, *, *>, consts: Map<Any, ConstDecl<*>>, type: EventType): List<E> {
             check(!inEdge || last.size == 1)
             val array = deref.array.with(consts)
             val offset = deref.offset.with(consts)
@@ -144,8 +143,8 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         }
 
         fun <T : Type> Expr<T>.toEvents(
-            consts: Map<VarDecl<*>, ConstDecl<*>>? = null, update: Boolean = true
-        ): Map<VarDecl<*>, ConstDecl<*>> {
+            consts: Map<Any, ConstDecl<*>>? = null, update: Boolean = true
+        ): Map<Any, ConstDecl<*>> {
             val mutConsts = consts?.toMutableMap() ?: mutableMapOf()
             vars.forEach {
                 last = event(it, EventType.READ)
@@ -153,7 +152,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
             }
             dereferences.forEach {
                 last = memoryEvent(it, mutConsts, EventType.READ)
-                if (update) mutConsts[it.derefVar] = last.first().const
+                if (update) mutConsts[it] = last.first().const
             }
             return mutConsts
         }
@@ -189,7 +188,7 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                 }
 
                 val mergedGuard = current.guards.toOrInSet()
-                val assumeConsts = mutableMapOf<VarDecl<*>, MutableList<ConstDecl<*>>>()
+                val assumeConsts = mutableMapOf<Any, MutableList<ConstDecl<*>>>()
 
                 for (e in current.loc.outgoingEdges) {
                     edge = e
@@ -216,14 +215,13 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
                                     }
 
                                     is AssumeStmt -> {
-                                        val consts = stmt.cond.vars.associateWith {
-                                            it.threadVar(pid).getNewIndexed(false)
-                                        } + stmt.cond.dereferences.associate {
-                                            it.derefVar to it.derefVar.getNewIndexed(false)
-                                        }
+                                        val consts =
+                                            stmt.cond.vars.associateWith { it.threadVar(pid).getNewIndexed(false) } +
+                                                stmt.cond.dereferences.associateWith { memoryDecl.getNewIndexed(false) }
                                         val condWithConsts = stmt.cond.with(consts)
-                                        val asAssign =
-                                            consts.size == 1 && consts.keys.first().threadVar(pid) !in lastWrites
+                                        val asAssign = consts.size == 1 && consts.keys.first().let {
+                                            it is VarDecl<*> && it !in lastWrites
+                                        }
                                         if (edge.source.outgoingEdges.size > 1 || !asAssign) {
                                             guard = guard + condWithConsts
                                             if (firstLabel) {
@@ -403,14 +401,14 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private fun MutableMap<VarDecl<*>, MutableSet<R>>.add(type: RelationType, from: E, to: E) =
         getOrPut(from.const.varDecl) { mutableSetOf() }.add(Relation(type, from, to))
 
-    private fun <T : Type> Expr<T>.with(consts: Map<out Decl<*>, ConstDecl<*>>): Expr<T> = when (this) {
-        is Dereference<*, *, T> -> consts[derefVar]?.ref?.let { cast(it, type) } ?: this
+    private fun <T : Type> Expr<T>.with(consts: Map<Any, ConstDecl<*>>): Expr<T> = when (this) {
+        is Dereference<*, *, T> -> consts[this]?.ref?.let { cast(it, type) } ?: this
         is RefExpr<T> -> consts[decl]?.ref?.let { cast(it, type) } ?: this
         else -> map { it.with(consts) }
     }
 
     private fun <T : Type> VarDecl<T>.threadVar(pid: Int): VarDecl<T> =
-        if (this !in derefVars.values && xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }) { // if not global var
+        if (this !== memoryDecl && xcfa.vars.none { it.wrappedVar == this && !it.threadLocal }) { // if not global var
             cast(localVars.getOrPut(this) { mutableMapOf() }.getOrPut(pid) {
                 Decls.Var("t$pid::$name", type)
             }, type)
@@ -421,9 +419,4 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
         if (increment) indexing = indexing.inc(this)
         return constDecl
     }
-
-    private val <T : Type> Dereference<*, *, T>.derefVar: VarDecl<T>
-        get() = cast(derefVars.getOrPut(this) {
-            Decls.Var("__deref_var_${derefVars.size}", type)
-        }, type)
 }
