@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.LoopStmt;
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
 import hu.bme.mit.theta.core.stmt.OrtStmt;
 import hu.bme.mit.theta.core.stmt.SequenceStmt;
@@ -30,6 +31,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.fptype.FpType;
@@ -119,6 +121,15 @@ final class StmtToExprTransformer {
                 expr = Eq(lhs, rhs);
             }
             return StmtUnfoldResult.of(ImmutableList.of(expr), newIndexing);
+        }
+
+        @Override
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> StmtUnfoldResult visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, VarIndexing indexing) {
+            final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
+            final Dereference<PtrType, OffsetType, DeclType> lhs = (Dereference<PtrType, OffsetType, DeclType>) ExprUtils.applyPrimes(stmt.getDeref(), indexing);
+
+            final var retExpr = Eq(lhs, rhs);
+            return StmtUnfoldResult.of(ImmutableList.of(retExpr), indexing);
         }
 
         @Override

@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
@@ -147,6 +148,8 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     private static final int CACHE_SIZE = 1000;
@@ -162,9 +165,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         this.env = new Env();
 
         this.exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
+        this.table = buildDispatchTable(DispatchTable.builder()).build();
+    }
 
-        this.table = DispatchTable.<String>builder()
-
+    protected DispatchTable.Builder<String> buildDispatchTable(DispatchTable.Builder<String> builder) {
+        builder
                 // General
 
                 .addCase(RefExpr.class, this::transformRef)
@@ -399,7 +404,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
-                .build();
+                // References
+                .addCase(Dereference.class, this::transformDereference)
+
+        ;
+        return builder;
     }
 
     @Override
@@ -1200,5 +1209,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                     toTerm(elem.get2()));
         }
         return running;
+    }
+
+    private String transformDereference(final Dereference<?, ?, ?> expr) {
+        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        return "(deref %s %s %s)".formatted(toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
     }
 }

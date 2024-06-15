@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.javasmt;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -37,6 +38,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -51,6 +53,8 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
     private final InterpolatingProverEnvironment interpolatingProverEnvironment;
 
     private final Stack<JavaSMTItpMarker> markers;
+    private final Stack<Tuple2<Expr<BoolType>, Object>> termMap;
+    private Map<Expr<BoolType>, Object> combinedTermMap = Map.of();
 
     private final JavaSMTTermTransformer termTransformer;
     private final SolverContext context;
@@ -68,6 +72,7 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         this.interpolatingProverEnvironment = interpolatingProverEnvironment;
 
         markers = new StackImpl<>();
+        termMap = new StackImpl<>();
     }
 
     @Override
@@ -88,10 +93,16 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
         checkNotNull(marker);
         checkNotNull(assertion);
         checkArgument(markers.toCollection().contains(marker), "Marker not found in solver");
-        final JavaSMTItpMarker z3Marker = (JavaSMTItpMarker) marker;
+        final JavaSMTItpMarker jsmtMarker = (JavaSMTItpMarker) marker;
         BooleanFormula term = (BooleanFormula) transformationManager.toTerm(assertion);
-        Object c = solver.add(assertion, term);
-        z3Marker.add(c);
+        if (!combinedTermMap.containsKey(assertion)) { // otherwise assertions are overridden
+            Object c = solver.add(assertion, term);
+            jsmtMarker.add(c);
+            termMap.add(Tuple2.of(assertion, c));
+            combinedTermMap = termMap.toCollection().stream().collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
+        } else {
+            jsmtMarker.add(combinedTermMap.get(assertion));
+        }
     }
 
     @Override
@@ -169,24 +180,29 @@ final class JavaSMTItpSolver implements ItpSolver, Solver {
     @Override
     public void push() {
         markers.push();
+        termMap.push();
         for (final JavaSMTItpMarker marker : markers) {
             marker.push();
         }
         solver.push();
+        combinedTermMap = termMap.toCollection().stream().collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
     }
 
     @Override
     public void pop(final int n) {
         markers.pop(n);
+        termMap.pop(n);
         for (final JavaSMTItpMarker marker : markers) {
             marker.pop(n);
         }
         solver.pop(n);
+        combinedTermMap = termMap.toCollection().stream().collect(Collectors.toMap(Tuple2::get1, Tuple2::get2));
     }
 
     @Override
     public void reset() {
         solver.reset();
+        combinedTermMap = Map.of();
     }
 
     @Override

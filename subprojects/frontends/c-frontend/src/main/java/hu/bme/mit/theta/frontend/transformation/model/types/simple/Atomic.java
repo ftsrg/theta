@@ -24,6 +24,13 @@ public class Atomic extends CSimpleType {
     }
 
     @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new Atomic();
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+    @Override
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setAtomic(true);
     }

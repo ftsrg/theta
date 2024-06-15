@@ -170,7 +170,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(array).add(index).add(elem).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(array).add(index).add(elem).toString();
     }
 
 }

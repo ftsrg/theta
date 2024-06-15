@@ -179,22 +179,22 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
     private class LabelVisitor extends LitmusAArch64BaseVisitor<XcfaLabel> {
         @Override
         public XcfaLabel visitMov32(LitmusAArch64Parser.Mov32Context ctx) {
-            return new StmtLabel(Assign(getOrCreateVar(ctx.r32.getText(), 32), ctx.expr32().accept(expressionVisitor)), EmptyMetaData.INSTANCE);
+            return new StmtLabel(Assign(getOrCreateVar(ctx.r32.getText(), 32), ctx.expr32().accept(expressionVisitor)));
         }
 
         @Override
         public XcfaLabel visitMov64(LitmusAArch64Parser.Mov64Context ctx) {
-            return new StmtLabel(Assign(getOrCreateVar(ctx.r64.getText(), 64), ctx.expr64().accept(expressionVisitor)), EmptyMetaData.INSTANCE);
+            return new StmtLabel(Assign(getOrCreateVar(ctx.r64.getText(), 64), ctx.expr64().accept(expressionVisitor)));
         }
 
         @Override
         public XcfaLabel visitCmp32(LitmusAArch64Parser.Cmp32Context ctx) {
-            return new StmtLabel(Assign(getOrCreateVar("Xcmp", 32), Sub(ctx.r32.accept(expressionVisitor), ctx.expr32().accept(expressionVisitor))), EmptyMetaData.INSTANCE);
+            return new StmtLabel(Assign(getOrCreateVar("Xcmp", 32), Sub(ctx.r32.accept(expressionVisitor), ctx.expr32().accept(expressionVisitor))));
         }
 
         @Override
         public XcfaLabel visitCmp64(LitmusAArch64Parser.Cmp64Context ctx) {
-            return new StmtLabel(Assign(getOrCreateVar("Wcmp", 64), Sub(ctx.r64.accept(expressionVisitor), ctx.expr64().accept(expressionVisitor))), EmptyMetaData.INSTANCE);
+            return new StmtLabel(Assign(getOrCreateVar("Wcmp", 64), Sub(ctx.r64.accept(expressionVisitor), ctx.expr64().accept(expressionVisitor))));
         }
 
         @Override
@@ -203,13 +203,10 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             final Expr<BvType> a = ctx.rV32.accept(expressionVisitor);
             final Expr<BvType> b = ctx.expr32().accept(expressionVisitor);
             return switch (ctx.arithmeticInstruction().getText()) {
-                case "ADD" ->
-                        new StmtLabel(Assign(target, Add(List.of(a, b))), EmptyMetaData.INSTANCE);
-                case "SUB" -> new StmtLabel(Assign(target, Sub(a, b)), EmptyMetaData.INSTANCE);
-                case "EOR" ->
-                        new StmtLabel(Assign(target, Xor(List.of(a, b))), EmptyMetaData.INSTANCE);
-                case "AND" ->
-                        new StmtLabel(Assign(target, And(List.of(a, b))), EmptyMetaData.INSTANCE);
+                case "ADD" -> new StmtLabel(Assign(target, Add(List.of(a, b))));
+                case "SUB" -> new StmtLabel(Assign(target, Sub(a, b)));
+                case "EOR" -> new StmtLabel(Assign(target, Xor(List.of(a, b))));
+                case "AND" -> new StmtLabel(Assign(target, And(List.of(a, b))));
                 default ->
                         throw new UnsupportedOperationException("Arithmetic instruction " + ctx.arithmeticInstruction().getText() + " not supported.");
             };
@@ -221,13 +218,10 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             final Expr<BvType> a = ctx.rV64.accept(expressionVisitor);
             final Expr<BvType> b = ctx.expr64().accept(expressionVisitor);
             return switch (ctx.arithmeticInstruction().getText()) {
-                case "ADD" ->
-                        new StmtLabel(Assign(target, Add(List.of(a, b))), EmptyMetaData.INSTANCE);
-                case "SUB" -> new StmtLabel(Assign(target, Sub(a, b)), EmptyMetaData.INSTANCE);
-                case "EOR" ->
-                        new StmtLabel(Assign(target, Xor(List.of(a, b))), EmptyMetaData.INSTANCE);
-                case "AND" ->
-                        new StmtLabel(Assign(target, And(List.of(a, b))), EmptyMetaData.INSTANCE);
+                case "ADD" -> new StmtLabel(Assign(target, Add(List.of(a, b))));
+                case "SUB" -> new StmtLabel(Assign(target, Sub(a, b)));
+                case "EOR" -> new StmtLabel(Assign(target, Xor(List.of(a, b))));
+                case "AND" -> new StmtLabel(Assign(target, And(List.of(a, b))));
                 default ->
                         throw new UnsupportedOperationException("Arithmetic instruction " + ctx.arithmeticInstruction().getText() + " not supported.");
             };
@@ -237,7 +231,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
         public XcfaLabel visitLoad32(LitmusAArch64Parser.Load32Context ctx) {
             final VarDecl<BvType> var = getOrCreateVar(ctx.rD32.getText(), 32);
             final VarDecl<BvType> tmp = getOrCreateVar("tmp" + XcfaLocation.Companion.uniqueCounter(), 64);
-            StmtLabel cast = new StmtLabel(Assign(var, Extract(tmp.getRef(), Int(0), Int(32))), EmptyMetaData.INSTANCE);
+            StmtLabel cast = new StmtLabel(Assign(var, Extract(tmp.getRef(), Int(0), Int(32))));
             ReadLabel load = new ReadLabel(getGlobalFromReg(ctx.address().r.getText()), tmp, Set.of(ctx.loadInstruction().mo), EmptyMetaData.INSTANCE);
             return new SequenceLabel(List.of(load, cast));
         }
@@ -251,7 +245,7 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
         public XcfaLabel visitStore32(LitmusAArch64Parser.Store32Context ctx) {
             final VarDecl<BvType> var = getOrCreateVar(ctx.rV32.getText(), 32);
             final VarDecl<BvType> tmp = getOrCreateVar("tmp" + XcfaLocation.Companion.uniqueCounter(), 64);
-            StmtLabel cast = new StmtLabel(Assign(tmp, ZExt(var.getRef(), BvType(64))), EmptyMetaData.INSTANCE);
+            StmtLabel cast = new StmtLabel(Assign(tmp, ZExt(var.getRef(), BvType(64))));
             WriteLabel store = new WriteLabel(getGlobalFromReg(ctx.address().r.getText()), tmp, Set.of(ctx.storeInstruction().mo), EmptyMetaData.INSTANCE);
             return new SequenceLabel(List.of(cast, store));
         }
@@ -273,11 +267,11 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             VarDecl<BvType> var = getOrCreateVar(ctx.rV32.getText(), 32);
             final StmtLabel stmt1, stmt2;
             if (ctx.branchRegInstruction().zerotest) {
-                stmt1 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))), EmptyMetaData.INSTANCE);
-                stmt2 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))), EmptyMetaData.INSTANCE);
+                stmt1 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
+                stmt2 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
             } else {
-                stmt1 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))), EmptyMetaData.INSTANCE);
-                stmt2 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))), EmptyMetaData.INSTANCE);
+                stmt1 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
+                stmt2 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 32))));
             }
             final XcfaLocation branchTo = getOrCreateLoc(ctx.label().getText());
             final XcfaLocation newLoc = newAnonymousLoc();
@@ -298,11 +292,11 @@ public class LitmusAArch64 extends LitmusAArch64BaseVisitor<XCFA> {
             VarDecl<BvType> var = getOrCreateVar(ctx.rV64.getText(), 64);
             final StmtLabel stmt1, stmt2;
             if (ctx.branchRegInstruction().zerotest) {
-                stmt1 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))), EmptyMetaData.INSTANCE);
-                stmt2 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))), EmptyMetaData.INSTANCE);
+                stmt1 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
+                stmt2 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
             } else {
-                stmt1 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))), EmptyMetaData.INSTANCE);
-                stmt2 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))), EmptyMetaData.INSTANCE);
+                stmt1 = new StmtLabel(Assume(Neq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
+                stmt2 = new StmtLabel(Assume(Eq(var.getRef(), BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ZERO, 64))));
             }
             final XcfaLocation branchTo = getOrCreateLoc(ctx.label().getText());
             final XcfaLocation newLoc = newAnonymousLoc();

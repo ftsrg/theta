@@ -72,7 +72,8 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
     @Override
     public final void onKnownValue(final BooleanFormula expr, final boolean value) {
         super.onKnownValue(expr, value);
-        final var tExpr = cast(toExpr.apply(expr), Bool());
+        final var entry = registeredTerms.entrySet().stream().filter(e -> e.getValue().equals(expr)).findAny();
+        final var tExpr = entry.isPresent() ? entry.get().getKey() : cast(toExpr.apply(expr), Bool());
         onKnownValue(tExpr, value);
     }
 
@@ -125,6 +126,11 @@ public abstract class JavaSMTUserPropagator extends AbstractUserPropagator {
 
     public final void propagateConsequence(final List<Expr<BoolType>> exprs, final Expr<BoolType> consequence) {
         final var terms = exprs.stream().map(registeredTerms::get).toArray(BooleanFormula[]::new);
+        for (var expr : exprs) {
+            if (registeredTerms.get(expr) == null) {
+                System.err.println(expr);
+            }
+        }
         checkState(Arrays.stream(terms).noneMatch(Objects::isNull), "Registered terms failed to look up one or more expressions from %s. Registered terms: %s", exprs, registeredTerms.keySet());
         final BooleanFormula consequenceTerm = (BooleanFormula) toTerm.apply(consequence);
         getBackend().propagateConsequence(terms, consequenceTerm);

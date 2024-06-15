@@ -45,14 +45,18 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
 
         typeToSmtLib = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
-        table = DispatchTable.<String>builder()
+        table = buildDispatchTable(DispatchTable.builder()).build();
+    }
+
+    protected DispatchTable.Builder<String> buildDispatchTable(DispatchTable.Builder<String> builder) {
+        builder
                 .addCase(BoolType.class, this::boolType)
                 .addCase(IntType.class, this::intType)
                 .addCase(RatType.class, this::ratType)
                 .addCase(BvType.class, this::bvType)
                 .addCase(FpType.class, this::fpType)
-                .addCase(ArrayType.class, this::arrayType)
-                .build();
+                .addCase(ArrayType.class, this::arrayType);
+        return builder;
     }
 
     @Override

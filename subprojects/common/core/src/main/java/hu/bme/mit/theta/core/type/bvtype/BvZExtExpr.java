@@ -117,6 +117,6 @@ public final class BvZExtExpr implements Expr<BvType> {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getOp()).add(getType()).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getOp()).add(getType()).toString();
     }
 }

@@ -19,24 +19,27 @@ package hu.bme.mit.theta.c2xcfa
 
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.logging.Logger.Level
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
+import hu.bme.mit.theta.core.type.anytype.Dereference
+import hu.bme.mit.theta.core.type.anytype.Exprs.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.arraytype.*
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.core.utils.BvUtils
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.Dereference
-import hu.bme.mit.theta.frontend.transformation.grammar.expression.Reference
+import hu.bme.mit.theta.frontend.transformation.grammar.expression.UnsupportedInitializer
 import hu.bme.mit.theta.frontend.transformation.model.statements.*
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid
@@ -47,16 +50,18 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInt
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
-import java.util.*
-import java.util.Set
+import org.abego.treelayout.internal.util.Contract.checkState
+import java.math.BigInteger
 import java.util.stream.Collectors
-import kotlin.collections.set
 
 class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false,
     val uniqueWarningLogger: Logger) :
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
+    private var ptrCnt = 1 // counts up, uses 3k+1
+        get() = field.also { field += 3 }
+
     private fun getLoc(builder: XcfaProcedureBuilder, name: String?,
         metadata: MetaData): XcfaLocation {
         if (name == null) return getAnonymousLoc(builder, metadata = metadata)
@@ -85,25 +90,60 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val initStmtList: MutableList<XcfaLabel> = ArrayList()
         for (globalDeclaration in cProgram.globalDeclarations) {
             val type = CComplexType.getType(globalDeclaration.get2().ref, parseContext)
-            if (type is CVoid || type is CStruct) {
-                uniqueWarningLogger.write(Level.INFO,
-                    "WARNING: Not handling init expression of " + globalDeclaration.get1() + " as it is non initializable\n")
+            if (type is CVoid) {
                 continue
             }
+            if (type is CStruct) {
+                error("Not handling init expression of struct array ${globalDeclaration.get1()}")
+            }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
-            if (globalDeclaration.get1().initExpr != null) {
+            if (type is CArray) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.castTo(globalDeclaration.get1().initExpr.expression),
-                            globalDeclaration.get2().type)),
-                    metadata = EmptyMetaData
+                        cast(type.getValue("$ptrCnt"), globalDeclaration.get2().type))
                 ))
             } else {
-                initStmtList.add(StmtLabel(
-                    Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.nullValue, globalDeclaration.get2().type)),
-                    metadata = EmptyMetaData
-                ))
+                if (globalDeclaration.get1().initExpr != null && globalDeclaration.get1().initExpr.expression !is UnsupportedInitializer) {
+                    initStmtList.add(StmtLabel(
+                        Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
+                            cast(type.castTo(globalDeclaration.get1().initExpr.expression),
+                                globalDeclaration.get2().type))
+                    ))
+                } else {
+                    initStmtList.add(StmtLabel(
+                        Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
+                            cast(type.nullValue, globalDeclaration.get2().type))
+                    ))
+                }
+            }
+
+            if (globalDeclaration.get1().arrayDimensions.size == 1) {
+                val bounds = ExprUtils.simplify(CComplexType.getUnsignedLong(parseContext)
+                    .castTo(globalDeclaration.get1().arrayDimensions[0].expression))
+                checkState(bounds is IntLitExpr || bounds is BvLitExpr,
+                    "Only IntLit and BvLit expression expected here.")
+                val literalValue = if (bounds is IntLitExpr) bounds.value.toLong() else BvUtils.neutralBvLitExprToBigInteger(
+                    bounds as BvLitExpr).toLong()
+                val literalToExpr = { x: Long ->
+                    if (bounds is IntLitExpr) IntLitExpr.of(
+                        BigInteger.valueOf(x)) else BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.valueOf(x),
+                        (bounds as BvLitExpr).type.size)
+                }
+                val initExprs: Map<Int, Expr<*>> = (globalDeclaration.get1()?.initExpr as? CInitializerList)?.statements?.mapIndexed { i, it ->
+                    Pair(i, it.get2().expression)
+                }?.toMap() ?: emptyMap()
+                for (i in 0 until literalValue) {
+                    checkState(globalDeclaration.get1().actualType is CArray, "Only arrays are expected here")
+                    val embeddedType = (globalDeclaration.get1().actualType as CArray).embeddedType
+                    initStmtList.add(StmtLabel(
+                        Stmts.MemoryAssign(
+                            Dereference(globalDeclaration.get2().ref, literalToExpr(i), embeddedType.smtType),
+                            cast(initExprs[i.toInt()]?.let { embeddedType.castTo(it) } ?: embeddedType.nullValue,
+                                embeddedType.smtType))
+                    ))
+                }
+            } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
+                error("Not handling init expression of high dimsension array ${globalDeclaration.get1()}")
             }
         }
         for (function in cProgram.functions) {
@@ -121,8 +161,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val compound = function.compound
         val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
         xcfaBuilder.addProcedure(builder)
-        for (flatVariable in flatVariables) {
-            builder.addVar(flatVariable)
+        val initStmtList = ArrayList<XcfaLabel>()
+        if (param.size > 0 && builder.name.equals("main")) {
+            initStmtList.addAll(param)
         }
 //        builder.setRetType(if (funcDecl.actualType is CVoid) null else funcDecl.actualType.smtType) TODO: we never need the ret type, do we?
         if (funcDecl.actualType !is CVoid) {
@@ -145,16 +186,34 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 if (varDecl != null) builder.addParam(varDecl, ParamDirection.IN)
             }
         }
+
+        for (flatVariable in flatVariables) {
+            builder.addVar(flatVariable)
+            val type = CComplexType.getType(flatVariable.ref, parseContext)
+            if (type is CArray && builder.getParams().none { it.first == flatVariable }) {
+                initStmtList.add(StmtLabel(
+                    Stmts.Assign(cast(flatVariable, flatVariable.type),
+                        cast(type.getValue("$ptrCnt"), flatVariable.type))
+                ))
+            }
+        }
         builder.createInitLoc(getMetadata(function))
         var init = builder.initLoc
-        if (param.size > 0 && builder.name.equals("main")) {
-            val endinit = getAnonymousLoc(builder, getMetadata(function))
-            builder.addLoc(endinit)
-            val edge = XcfaEdge(init, endinit, SequenceLabel(param),
-                metadata = getMetadata(function))
-            builder.addEdge(edge)
-            init = endinit
+
+        for (flatVariable in flatVariables) {
+            val type = CComplexType.getType(flatVariable.ref, parseContext)
+            if (type is CArray && type.embeddedType is CArray) {
+                // some day this is where initialization will occur. But this is not today.
+                error("Not handling init expression of high dimsension array $flatVariable")
+            }
         }
+
+        val endinit = getAnonymousLoc(builder, getMetadata(function))
+        builder.addLoc(endinit)
+        val initEdge = XcfaEdge(init, endinit, SequenceLabel(initStmtList),
+            metadata = getMetadata(function))
+        builder.addEdge(initEdge)
+        init = endinit
         builder.createFinalLoc(getMetadata(function))
         val ret = builder.finalLoc.get()
         builder.addLoc(ret)
@@ -172,7 +231,6 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val returnLoc = param.returnLoc
         val lValue = statement.getlValue()
         val rValue = statement.getrValue()
-        val memoryMaps = CAssignment.getMemoryMaps()
         var initLoc = getLoc(builder, statement.id, metadata = getMetadata(statement))
         builder.addLoc(initLoc)
         var xcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
@@ -180,81 +238,42 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
         builder.addLoc(location)
         initLoc = rValue.accept(this, ParamPack(builder, initLoc, breakLoc, continueLoc, returnLoc))
-        Preconditions.checkState(
-            lValue is Dereference<*, *> || lValue is ArrayReadExpr<*, *> || lValue is RefExpr<*> && lValue.decl is VarDecl<*>,
-            "lValue must be a variable, pointer dereference or an array element!")
         val rExpression = statement.getrExpression()
-        val label: StmtLabel = if (lValue is ArrayReadExpr<*, *>) {
-            val exprs = Stack<Expr<*>>()
-            val toAdd = createArrayWriteExpr(lValue as ArrayReadExpr<*, out Type>, rExpression,
-                exprs)
-            StmtLabel(Stmts.Assign(cast(toAdd, toAdd.type), cast(exprs.pop(), toAdd.type)),
-                metadata = getMetadata(statement))
-        } else if (lValue is Dereference<*, *>) {
-            val op = lValue.op
-            val type = op.type
-            val ptrType = CComplexType.getUnsignedLong(parseContext).smtType
-            if (!memoryMaps.containsKey(type)) {
-                val toAdd = Decls.Var<ArrayType<*, *>>("memory_$type", ArrayType.of(ptrType, type))
-                builder.parent.addVar(XcfaGlobalVar(toAdd,
-                    ArrayLitExpr.of(emptyList(), cast(CComplexType.getType(op, parseContext).nullValue, type),
-                        ArrayType.of(ptrType, type))))
-                memoryMaps[type] = toAdd
-                parseContext.metadata.create(toAdd, "defaultElement", CComplexType.getType(op, parseContext).nullValue)
+        val label: StmtLabel = when (lValue) {
+            is Dereference<*, *, *> -> {
+                val op = cast(lValue.array, lValue.array.type)
+                val offset = cast(lValue.offset, op.type)
+                val castRExpression = CComplexType.getType(lValue, parseContext).castTo(rExpression)
+                val type = CComplexType.getType(castRExpression, parseContext)
+
+                val deref = Dereference(op, offset, type.smtType)
+
+                val memassign = MemoryAssignStmt.create(deref, castRExpression)
+
+                parseContext.metadata.create(deref, "cType", CPointer(null, type, parseContext))
+                StmtLabel(memassign, metadata = getMetadata(statement))
             }
-            val memoryMap = checkNotNull(memoryMaps[type])
-            parseContext.metadata.create(op, "dereferenced", true)
-            parseContext.metadata.create(op, "refSubstitute", memoryMap)
-            val write = ArrayExprs.Write(cast(memoryMap.ref, ArrayType.of(ptrType, type)),
-                cast(lValue.op, ptrType),
-                cast(rExpression, type))
-            parseContext.metadata.create(write, "cType",
-                CArray(null, CComplexType.getType(lValue.op, parseContext), parseContext))
-            StmtLabel(Stmts.Assign(cast(memoryMap, ArrayType.of(ptrType, type)), write),
-                metadata = getMetadata(statement))
-        } else {
-            val label = StmtLabel(Stmts.Assign(
-                cast((lValue as RefExpr<*>).decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
-                cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type)),
-                metadata = getMetadata(statement))
-            if (CComplexType.getType(lValue, parseContext) is CPointer && CComplexType.getType(
-                    rExpression, parseContext) is CPointer) {
-                Preconditions.checkState(
-                    rExpression is RefExpr<*> || rExpression is Reference<*, *>)
-                if (rExpression is RefExpr<*>) {
-                    var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
-                    if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
-                        (pointsTo.get() as MutableCollection<Expr<*>?>).add(rExpression)
-                    } else {
-                        pointsTo = Optional.of(LinkedHashSet<Expr<*>>(Set.of(rExpression)))
-                    }
-                    parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
-                } else {
-                    var pointsTo = parseContext.metadata.getMetadataValue(lValue, "pointsTo")
-                    if (pointsTo.isPresent && pointsTo.get() is Collection<*>) {
-                        (pointsTo.get() as MutableCollection<Expr<*>?>).add(
-                            (rExpression as Reference<*, *>).op)
-                    } else {
-                        pointsTo = Optional.of(
-                            LinkedHashSet(Set.of((rExpression as Reference<*, *>).op)))
-                    }
-                    parseContext.metadata.create(lValue, "pointsTo", pointsTo.get())
-                }
+
+            is RefExpr<*> -> {
+                StmtLabel(Stmts.Assign(
+                    cast(lValue.decl as VarDecl<*>, (lValue.decl as VarDecl<*>).type),
+                    cast(CComplexType.getType(lValue, parseContext).castTo(rExpression), lValue.type)),
+                    metadata = getMetadata(statement))
             }
-            label
+
+            else -> {
+                error("Could not handle left-hand side of assignment $statement")
+            }
         }
 
-        val lhs = (label.stmt as AssignStmt<*>).varDecl
-        val type: CComplexType? = try {
-            CComplexType.getType(lhs.ref, parseContext)
-        } catch (_: Exception) {
-            null
-        }
+        val lhs = (label.stmt as? AssignStmt<*>)?.varDecl
+        val type = lhs?.let { CComplexType.getType(it.ref, parseContext) }
 
         if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
             xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
             builder.addEdge(xcfaEdge)
         } else {
+            lhs!!
             val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
             val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))
             xcfaEdge = XcfaEdge(initLoc, middleLoc1, label, metadata = getMetadata(statement))
@@ -274,23 +293,6 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             builder.addEdge(xcfaEdge)
         }
         return location
-    }
-
-    private fun <P : Type?, T : Type?> createArrayWriteExpr(lValue: ArrayReadExpr<P, T>,
-        rExpression: Expr<*>, exprs: Stack<Expr<*>>): VarDecl<*> {
-        val array = lValue.array
-        val index = lValue.index
-        val arrType = CComplexType.getType(array, parseContext)
-        check(arrType is CArray)
-        val castExpr = arrType.embeddedType.castTo(rExpression)
-        val arrayWriteExpr = ArrayWriteExpr.of(array, index, cast(castExpr, array.type.elemType))
-        parseContext.metadata.create(arrayWriteExpr, "cType", arrType)
-        return if (array is RefExpr<*> && (array as RefExpr<ArrayType<P, T>>).decl is VarDecl<*>) {
-            exprs.push(arrayWriteExpr)
-            array.decl as VarDecl<*>
-        } else if (array is ArrayReadExpr<*, *>) {
-            createArrayWriteExpr(array as ArrayReadExpr<P, *>, arrayWriteExpr, exprs)
-        } else throw UnsupportedOperationException("Possible malformed array write?")
     }
 
     override fun visit(statement: CAssume, param: ParamPack): XcfaLocation {

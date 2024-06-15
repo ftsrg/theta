@@ -36,6 +36,7 @@ public abstract class CSimpleType {
     private boolean isShort = false;
     private boolean isLong = false;
     private boolean isLongLong = false;
+    private boolean is128 = false;
     private boolean isThreadLocal = false;
 
     /**
@@ -128,12 +129,20 @@ public abstract class CSimpleType {
         return signed;
     }
 
-    public void setSigned(boolean signed) {
+    public void setSigned(Boolean signed) {
         this.signed = signed;
     }
 
     public boolean isVoid() {
         return false;
+    }
+
+    public boolean is128() {
+        return is128;
+    }
+
+    public void set128(boolean l128) {
+        is128 = l128;
     }
 
     public boolean isLongLong() {
@@ -176,5 +185,21 @@ public abstract class CSimpleType {
 
     public boolean isThreadLocal() {
         return isThreadLocal;
+    }
+
+    protected void setUpCopy(CSimpleType copy) {
+        copy.setAtomic(this.isAtomic());
+        copy.setExtern(this.isExtern());
+        copy.setTypedef(this.isTypedef());
+        copy.setVolatile(this.isVolatile());
+        copy.setSigned(this.isSigned());
+        copy.setShort(this.isShort());
+        copy.setLong(this.isLong());
+        copy.setBool(this.isBool());
+        copy.setLongLong(this.isLongLong());
+        copy.set128(this.is128());
+        for (int i = 0; i < this.getPointerLevel(); i++) {
+            copy.incrementPointer();
+        }
     }
 }

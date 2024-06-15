@@ -24,6 +24,14 @@ public class Unsigned extends CSimpleType {
     }
 
     @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new Unsigned();
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+
+    @Override
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setSigned(false);
     }

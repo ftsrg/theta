@@ -686,6 +686,9 @@ extern int pthread_atfork (void (*__prepare) (void),
 
 void reach_error(){}
 
+void __VERIFIER_atomic_begin() {}
+void __VERIFIER_atomic_end() {}
+
 int x = 0;
 int ERR = 0;
 

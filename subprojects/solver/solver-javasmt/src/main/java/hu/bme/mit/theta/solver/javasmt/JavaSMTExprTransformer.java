@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
@@ -167,6 +168,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 final class JavaSMTExprTransformer {
 
@@ -438,6 +442,8 @@ final class JavaSMTExprTransformer {
                 .addCase(ArrayLitExpr.class, this::transformArrayLit)
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
+
+                .addCase(Dereference.class, this::transformDereference)
 
                 .build();
     }
@@ -1310,6 +1316,21 @@ final class JavaSMTExprTransformer {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
         }
+    }
+
+    private Formula transformDereference(final Dereference<?, ?, ?> expr) {
+        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        final var sort = transformer.toSort(expr.getArray().getType());
+        final var sortName = expr.getArray().getType().toString() + "-" + expr.getType().toString();
+        final var constSort = transformer.toSort(Int());
+        final var funcDecl = context.getFormulaManager().getUFManager().declareUF(
+                "deref-" + sortName.replaceAll(" ", "_"),
+                transformer.toSort(expr.getType()),
+                List.of(sort, sort, constSort));
+
+        final var func = context.getFormulaManager().getUFManager()
+                .callUF(funcDecl, toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
+        return func;
     }
 
     private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {

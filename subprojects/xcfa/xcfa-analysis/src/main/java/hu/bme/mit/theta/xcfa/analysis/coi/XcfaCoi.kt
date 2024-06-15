@@ -20,9 +20,11 @@ import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.TransFunc
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
@@ -36,7 +38,7 @@ import kotlin.math.min
 
 lateinit var ConeOfInfluence: XcfaCoi
 
-internal typealias S = XcfaState<out ExprState>
+internal typealias S = XcfaState<out PtrState<out ExprState>>
 internal typealias A = XcfaAction
 
 internal var XcfaAction.transFuncVersion: XcfaAction? by nullableExtension()
@@ -48,7 +50,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     protected var lastPrec: Prec? = null
     protected var XcfaLocation.scc: Int by extension()
-    protected val directObservation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>> = mutableMapOf()
+    protected val directObservers: MutableMap<XcfaEdge, Set<XcfaEdge>> = mutableMapOf()
 
     abstract val lts: LTS<S, A>
 
@@ -104,37 +106,55 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
 
     protected fun findDirectObservers(edge: XcfaEdge, prec: Prec) {
         val precVars = prec.usedVars
-        val writtenVars = edge.collectVarsWithAccessType().filter { it.value.isWritten && it.key in precVars }
+        val writtenVars = edge.collectVarsWithAccessType()
+            .filter { it.value.isWritten && it.key in precVars } // TODO deref it.key in prec?
         if (writtenVars.isEmpty()) return
+        val writtenMemLocs = writtenVars.pointsTo(xcfa)
 
-        val toVisit = mutableListOf(edge)
+        val toVisit = edge.target.outgoingEdges.toMutableList()
         val visited = mutableSetOf<XcfaEdge>()
         while (toVisit.isNotEmpty()) {
             val visiting = toVisit.removeFirst()
             visited.add(visiting)
-            addEdgeIfObserved(edge, visiting, writtenVars, precVars, directObservation)
+            val currentVars = visiting.collectVarsWithAccessType()
+            addEdgeIfObserved(edge, visiting, writtenVars, writtenMemLocs, precVars, directObservers, currentVars)
+
+            if (writtenMemLocs.size <= 1) {
+                val currentWrites = currentVars.filter { it.value.isWritten }.map { it.key }
+                if (writtenVars.all { it.key in currentWrites }) {
+                    val currentMemWrites = currentWrites.pointsTo(xcfa)
+                    if (currentMemWrites.size <= 1 && writtenMemLocs.all { it in currentMemWrites }) {
+                        continue
+                    }
+                }
+            }
+
             toVisit.addAll(visiting.target.outgoingEdges.filter { it !in visited })
         }
     }
 
     protected open fun addEdgeIfObserved(
-        source: XcfaEdge, target: XcfaEdge, observableVars: Map<VarDecl<*>, AccessType>,
-        precVars: Collection<VarDecl<*>>, relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>
+        source: XcfaEdge, target: XcfaEdge, observableVars: VarAccessMap,
+        writtenMemLocs: Set<LitExpr<*>>, precVars: Collection<VarDecl<*>>,
+        relation: MutableMap<XcfaEdge, Set<XcfaEdge>>, vars: VarAccessMap = target.collectVarsWithAccessType()
     ) {
-        val vars = target.collectVarsWithAccessType()
         var relevantAction = vars.any { it.value.isWritten && it.key in precVars }
         if (!relevantAction) {
             val assumeVars = target.label.collectAssumesVars()
             relevantAction = assumeVars.any { it in precVars }
         }
 
-        if (relevantAction && vars.any { it.key in observableVars && it.value.isRead }) {
+        val readVars = vars.filter { it.value.isRead }
+        if (relevantAction && (readVars.any { it.key in observableVars } ||
+                readVars.pointsTo(xcfa).any { it in writtenMemLocs })) {
             addToRelation(source, target, relation)
         }
     }
 
-    protected abstract fun addToRelation(source: XcfaEdge, target: XcfaEdge,
-        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>)
+    protected abstract fun addToRelation(
+        source: XcfaEdge, target: XcfaEdge,
+        relation: MutableMap<XcfaEdge, Set<XcfaEdge>>
+    )
 
     protected fun isRealObserver(edge: XcfaEdge) = edge.label.collectAssumesVars().isNotEmpty()
 

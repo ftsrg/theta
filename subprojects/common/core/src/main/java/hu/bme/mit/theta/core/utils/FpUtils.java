@@ -115,8 +115,8 @@ public final class FpUtils {
         return bigFloatToFpLitExpr(new BigFloat(
                         value,
                         new BinaryMathContext(
-                                type.getExponent(),
-                                type.getSignificand())),
+                                type.getSignificand(),
+                                type.getExponent())),
                 type);
     }
 }

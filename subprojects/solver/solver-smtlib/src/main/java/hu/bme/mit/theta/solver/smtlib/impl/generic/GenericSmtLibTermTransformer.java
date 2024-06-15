@@ -496,6 +496,9 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             funcExpr = checkNotNull(symbolTable.getConst(funName).getRef());
         } else {
             final var funDefImpl = model.getTerm(funName);
+            if (funDefImpl == null) {
+                throw new SmtLibSolverException("Model (%s) does not have function \"%s\".".formatted(model, funName));
+            }
             funcExpr = toFuncLitExpr(funDefImpl, model);
         }
 

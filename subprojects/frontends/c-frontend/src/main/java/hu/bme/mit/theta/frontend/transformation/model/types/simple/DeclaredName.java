@@ -28,4 +28,15 @@ public class DeclaredName extends CSimpleType {
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setAssociatedName(declaredName);
     }
+
+    @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new DeclaredName(declaredName);
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+    public String getDeclaredName() {
+        return declaredName;
+    }
 }

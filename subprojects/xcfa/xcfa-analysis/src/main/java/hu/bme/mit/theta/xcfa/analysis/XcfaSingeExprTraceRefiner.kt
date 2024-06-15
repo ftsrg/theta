@@ -23,8 +23,11 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.WriteTriples
+import hu.bme.mit.theta.analysis.ptr.patch
 import hu.bme.mit.theta.common.logging.Logger
-import java.util.LinkedList
+import java.util.*
 
 
 class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Refutation> :
@@ -61,6 +64,60 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         return null
     }
 
+    fun refineTemp(arg: ARG<S, A>, prec: P?): RefinerResult<S, A, P?> {
+        Preconditions.checkNotNull(arg)
+        Preconditions.checkNotNull(prec)
+        assert(!arg.isSafe) { "ARG must be unsafe" }
+        val optionalNewCex = arg.cexs.findFirst()
+        val cexToConcretize = optionalNewCex.get()
+        val rawTrace = cexToConcretize.toTrace()
+        val (_, states, actions) = rawTrace.actions.foldIndexed(
+            Triple(Pair(emptyMap(), 0), listOf(rawTrace.getState(0)),
+                listOf())) { i: Int, (wTripleCnt: Pair<WriteTriples, Int>, states: List<S>, actions: List<A>): Triple<Pair<WriteTriples, Int>, List<S>, List<A>>, a: A ->
+            val (wTriple, cnt) = wTripleCnt
+            val newA = (a as XcfaAction).withLastWrites(wTriple, cnt)
+            val newState = (rawTrace.getState(i + 1) as XcfaState<PtrState<*>>).let {
+                it.withState(PtrState(it.sGlobal.innerState.patch(newA.nextWriteTriples())))
+            }
+            Triple(Pair(newA.nextWriteTriples(), newA.cnts.values.maxOrNull() ?: newA.inCnt), states + (newState as S),
+                actions + (newA as A))
+        }
+        val traceToConcretize = Trace.of(states, actions)
+
+        logger.write(Logger.Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length())
+        logger.write(Logger.Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize)
+        logger.write(Logger.Level.SUBSTEP, "|  |  Checking trace...")
+        val cexStatus = exprTraceChecker.check(traceToConcretize)
+        logger.write(Logger.Level.SUBSTEP, "done, result: %s%n", cexStatus)
+        assert(cexStatus.isFeasible() || cexStatus.isInfeasible()) { "Unknown CEX status" }
+        return if (cexStatus.isFeasible()) {
+            RefinerResult.unsafe(traceToConcretize)
+        } else {
+            val refutation = cexStatus.asInfeasible().refutation
+            logger.write(Logger.Level.DETAIL, "|  |  |  Refutation: %s%n", refutation)
+            val refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation)
+            val pruneIndex = refutation.getPruneIndex()
+            assert(0 <= pruneIndex) { "Pruning index must be non-negative" }
+            assert(pruneIndex <= cexToConcretize.length()) { "Pruning index larger than cex length" }
+            when (pruneStrategy) {
+                PruneStrategy.LAZY -> {
+                    logger.write(Logger.Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex)
+                    val nodeToPrune = cexToConcretize.node(pruneIndex)
+                    nodePruner.prune(arg, nodeToPrune)
+                }
+
+                PruneStrategy.FULL -> {
+                    logger.write(Logger.Level.SUBSTEP, "|  |  Pruning whole ARG", pruneIndex)
+                    arg.pruneAll()
+                }
+
+                else -> throw java.lang.UnsupportedOperationException("Unsupported pruning strategy")
+            }
+            logger.write(Logger.Level.SUBSTEP, "done%n")
+            RefinerResult.spurious(refinedPrec)
+        }
+    }
+
     override fun refine(arg: ARG<S, A>, prec: P?): RefinerResult<S, A, P?> {
         Preconditions.checkNotNull(arg)
         Preconditions.checkNotNull<P>(prec)
@@ -70,7 +127,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         val cexToConcretize = optionalNewCex.get()
         val traceToConcretize = cexToConcretize.toTrace()
 
-        val refinerResult = super.refine(arg, prec)
+        val refinerResult = refineTemp(arg, prec) //super.refine(arg, prec)
         val checkForPop = !(traceToConcretize.states.first() as XcfaState<*>).xcfa!!.isInlined
 
         return if (checkForPop && refinerResult.isUnsafe) findPoppedState(traceToConcretize)?.let { (i, state) ->

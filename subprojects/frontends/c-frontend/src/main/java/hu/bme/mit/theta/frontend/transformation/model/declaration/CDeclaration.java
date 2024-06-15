@@ -83,8 +83,16 @@ public class CDeclaration {
     public CComplexType getActualType() {
         CComplexType actualType = type.getActualType();
         for (CStatement arrayDimension : arrayDimensions) {
-            actualType = new CArray(type, actualType, actualType.getParseContext());
+            CSimpleType simpleType = type.copyOf();
+            simpleType.incrementPointer();
+            actualType = new CArray(simpleType, actualType, actualType.getParseContext()); // some day change this back to arrays, when simple & complex types are better synchronized...
         }
+//        for (int i = 0; i < derefCounter; i++) {
+//            CSimpleType simpleType = type.copyOf();
+//            simpleType.incrementPointer();
+//            actualType = new CPointer(simpleType, actualType, actualType.getParseContext());
+//        }
+
         return actualType;
     }
 

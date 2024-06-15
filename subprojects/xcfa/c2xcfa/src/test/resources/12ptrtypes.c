@@ -1,6 +1,6 @@
 void reach_error(){}
 
-void check_geq_110(void* param) {
+void check_geq_110(unsigned int* param) {
     if(*(unsigned int*)param <= 110) reach_error();
 }
 
