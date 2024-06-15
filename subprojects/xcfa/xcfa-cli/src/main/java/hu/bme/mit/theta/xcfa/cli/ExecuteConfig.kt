@@ -59,7 +59,6 @@ import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
-import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -245,13 +244,6 @@ private fun preVerificationLogging(
                 Logger.Level.INFO,
                 "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n"
             )
-
-            if (!config.outputConfig.chcOutputConfig.disable) {
-                xcfa.procedures.forEach {
-                    val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
-                    chcFile.writeText(it.toSMT2CHC())
-                }
-            }
 
             if (!config.outputConfig.xcfaOutputConfig.disable) {
                 val xcfaDotFile = File(resultFolder, "xcfa.dot")
