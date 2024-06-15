@@ -103,12 +103,11 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
             return FpExprs.ToBv(FpRoundingMode.RTZ, (Expr<FpType>) param, type.width(), false);
         } else if (that instanceof CInteger) {
             if (that.width() < type.width()) {
-//                if (that instanceof Signed) {
-//                    param = BvExprs.Add(List.of(BvExprs.Neg(cast(param, BvType.of(that.width()))),
-//                            BvUtils.bigIntegerToNeutralBvLitExpr(BigInteger.ONE, that.width())));
-//                }
-                return BvExprs.SExt(cast(param, BvType.of(that.width())),
-                        BvType.of(type.width(), false));
+                if (that instanceof Signed) {
+                    return BvExprs.SExt(cast(param, BvType.of(that.width())),
+                            BvType.of(type.width(), false));
+                }
+                return BvExprs.ZExt(cast(param, BvType.of(that.width())), BvType.of(type.width(), false));
             } else if (that.width() > type.width()) {
                 return BvExprs.Extract(cast(param, BvType.of(that.width())), Int(0),
                         Int(type.width()));

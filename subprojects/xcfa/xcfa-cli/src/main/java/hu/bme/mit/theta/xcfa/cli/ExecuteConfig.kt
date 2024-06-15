@@ -124,7 +124,9 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     rule("SensibleLoopUnrollLimits") {
         config.frontendConfig.loopUnroll != -1 && config.frontendConfig.loopUnroll < config.frontendConfig.forceUnroll
     }
-    // TODO add more validation options
+    rule("NoPredSplitUntilFixed(https://github.com/ftsrg/theta/issues/267)") {
+        (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.domain == Domain.PRED_SPLIT
+    }
 }
 
 fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Triple<XCFA, MCM, ParseContext> {
