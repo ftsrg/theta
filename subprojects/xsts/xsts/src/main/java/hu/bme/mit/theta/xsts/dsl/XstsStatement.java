@@ -15,17 +15,19 @@
  */
 package hu.bme.mit.theta.xsts.dsl;
 
-import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.dsl.*;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.ParseException;
+import hu.bme.mit.theta.core.stmt.NonDetStmt;
+import hu.bme.mit.theta.core.stmt.SequenceStmt;
 import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
@@ -39,7 +41,6 @@ import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -128,10 +129,15 @@ public class XstsStatement {
                 final Symbol lhsSymbol = currentScope.resolve(lhsId).get();
                 final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
 
+                if (var.getType() instanceof EnumType enumType) {
+                    env.push();
+                    enumType.getValues().forEach(literal -> CustomTypeDeclarationUtil.declareTypeWithShortName(currentScope, enumType, literal, env));
+                }
                 final XstsExpression expression = new XstsExpression(currentScope, typeTable,
                         ctx.value);
                 final Expr<?> expr = expression.instantiate(env);
-
+                if (var.getType() instanceof EnumType)
+                    env.pop();
                 if (expr.getType().equals(var.getType())) {
                     @SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
                     @SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;

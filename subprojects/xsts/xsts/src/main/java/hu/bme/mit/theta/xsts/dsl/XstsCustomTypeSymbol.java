@@ -17,25 +17,25 @@ package hu.bme.mit.theta.xsts.dsl;
 
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.xsts.type.XstsCustomType;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 
 import java.util.Objects;
 
 public final class XstsCustomTypeSymbol implements Symbol {
 
-    private XstsCustomType xstsType;
+    private final EnumType enumType;
 
-    private XstsCustomTypeSymbol(final XstsCustomType xstsType) {
-        this.xstsType = xstsType;
+    private XstsCustomTypeSymbol(final EnumType enumType) {
+        this.enumType = enumType;
     }
 
-    public static XstsCustomTypeSymbol of(final XstsCustomType xstsType) {
+    public static XstsCustomTypeSymbol of(final EnumType xstsType) {
         return new XstsCustomTypeSymbol(xstsType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(xstsType);
+        return Objects.hash(enumType);
     }
 
     @Override
@@ -44,7 +44,7 @@ public final class XstsCustomTypeSymbol implements Symbol {
             return true;
         } else if (obj != null && this.getClass() == obj.getClass()) {
             final XstsCustomTypeSymbol that = (XstsCustomTypeSymbol) obj;
-            return this.xstsType.equals(that.xstsType);
+            return this.enumType.equals(that.enumType);
         } else {
             return false;
         }
@@ -52,19 +52,15 @@ public final class XstsCustomTypeSymbol implements Symbol {
 
     @Override
     public String toString() {
-        return xstsType.toString();
-    }
-
-    public XstsCustomType getXstsType() {
-        return xstsType;
+        return enumType.toString();
     }
 
     @Override
     public String getName() {
-        return xstsType.getName();
+        return enumType.getName();
     }
 
     public Type instantiate() {
-        return xstsType.getType();
+        return enumType;
     }
 }
