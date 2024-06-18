@@ -33,7 +33,7 @@ public class GenericSmtLibTransformationManager implements SmtLibTransformationM
     public GenericSmtLibTransformationManager(final SmtLibSymbolTable symbolTable) {
         this.typeTransformer = instantiateTypeTransformer(this);
         this.declTransformer = instantiateDeclTransformer(this, symbolTable);
-        this.exprTransformer = instantiateExprTransformer(this);
+        this.exprTransformer = instantiateExprTransformer(this, symbolTable);
     }
 
     @Override
@@ -63,7 +63,8 @@ public class GenericSmtLibTransformationManager implements SmtLibTransformationM
     }
 
     protected SmtLibExprTransformer instantiateExprTransformer(
-            final SmtLibTransformationManager transformer) {
-        return new GenericSmtLibExprTransformer(transformer);
+            final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable
+    ) {
+        return new GenericSmtLibExprTransformer(transformer, symbolTable);
     }
 }

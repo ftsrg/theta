@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.smtlib.impl.princess;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.utils.Compress;
@@ -84,7 +85,9 @@ public class PrincessSmtLibSolverInstaller extends SmtLibSolverInstaller.Default
                                           final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName());
-        return PrincessSmtLibSolverFactory.create(solverFilePath, solverArgs);
+        // Even though all versions support interpolation with datatypes, the result interpolation
+        // contains arithmetic, so it's better to just use the sort approach
+        return PrincessSmtLibSolverFactory.create(solverFilePath, solverArgs, SmtLibEnumStrategy.SORTS);
     }
 
     @Override

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 import hu.bme.mit.theta.solver.smtlib.utils.Compress;
@@ -40,6 +41,9 @@ import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.MAC;
 import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.WINDOWS;
 
 public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
+
+    private static final SmtLibEnumStrategy ENUM_STRATEGY = SmtLibEnumStrategy.DATATYPES;
+
     private final List<SemVer.VersionDecoder> versions;
 
     public CVC5SmtLibSolverInstaller(final Logger logger) {
@@ -122,7 +126,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         } else {
             solverFilePath = solverPath != null ? solverPath : installDir.resolve("bin").resolve(getSolverBinaryName(version));
         }
-        return CVC5SmtLibSolverFactory.create(solverFilePath, solverArgs);
+        return CVC5SmtLibSolverFactory.create(solverFilePath, solverArgs, ENUM_STRATEGY);
     }
 
     @Override
