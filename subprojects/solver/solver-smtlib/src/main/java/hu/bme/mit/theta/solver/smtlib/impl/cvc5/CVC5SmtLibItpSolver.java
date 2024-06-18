@@ -90,6 +90,10 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
         try (final var itpSolverBinary = itpSolverBinaryFactory.get()) {
             itpSolverBinary.issueCommand("(set-option :produce-interpolants true)");
             itpSolverBinary.issueCommand("(set-logic ALL)");
+            typeStack.forEach(enumType -> {
+                Collection<String> literals = enumType.getLongValues().stream().map(name -> String.format("(%s)", name)).toList();
+                itpSolverBinary.issueCommand(String.format("(declare-datatypes ((%s 0)) ((%s)))", enumType.getName(), String.join(" ", literals)));
+            });
             declarationStack.forEach(
                     constDecl -> itpSolverBinary.issueCommand(symbolTable.getDeclaration(constDecl)));
 
@@ -115,6 +119,8 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
                     itpSolverBinary.issueCommand("(assert (= shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh 0))");
                     itpSolverBinary.issueCommand(
                             String.format("(assert (and %s))", aTerm.collect(Collectors.joining(" "))));
+                    itpSolverBinary.issueCommand("(check-sat)");
+                    itpSolverBinary.readResponse();
                     itpSolverBinary.issueCommand(
                             String.format("(get-interpolant _cvc5_interpolant%d (not (and %s)))",
                                     interpolantCount++, bTerm.collect(Collectors.joining(" "))));

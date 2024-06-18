@@ -19,7 +19,11 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,10 +36,12 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
 
     private final BiMap<ConstDecl<?>, String> constToSymbol;
     private final BiMap<ConstDecl<?>, String> constToDeclaration;
+    private final Map<String, EnumLitExpr> symbolToEnumLiteral;
 
     public GenericSmtLibSymbolTable() {
         constToSymbol = Maps.synchronizedBiMap(HashBiMap.create());
         constToDeclaration = Maps.synchronizedBiMap(HashBiMap.create());
+        symbolToEnumLiteral = new HashMap<>();
     }
 
     public GenericSmtLibSymbolTable(GenericSmtLibSymbolTable table) {
@@ -43,6 +49,8 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
         constToSymbol.putAll(table.constToSymbol);
         constToDeclaration = Maps.synchronizedBiMap(HashBiMap.create());
         constToDeclaration.putAll(table.constToDeclaration);
+        symbolToEnumLiteral = new HashMap<>();
+        symbolToEnumLiteral.putAll(table.symbolToEnumLiteral);
     }
 
     @Override
@@ -54,6 +62,11 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
     public boolean definesSymbol(final String symbol) {
         return constToSymbol.inverse().containsKey(
                 symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+    }
+
+    @Override
+    public boolean definesEnumLiteral(String literal) {
+        return symbolToEnumLiteral.containsKey(literal);
     }
 
     @Override
@@ -75,6 +88,11 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
     }
 
     @Override
+    public EnumLitExpr getEnumLiteral(String literal) {
+        return symbolToEnumLiteral.get(literal);
+    }
+
+    @Override
     public void put(final ConstDecl<?> constDecl, final String symbol, final String declaration) {
         checkNotNull(constDecl);
         checkNotNull(symbol);
@@ -84,5 +102,10 @@ public class GenericSmtLibSymbolTable implements SmtLibSymbolTable {
                 symbol.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
         constToDeclaration.put(constDecl,
                 declaration.replaceAll(problematicCharactersRegex, problematicCharactersReplacement));
+    }
+
+    @Override
+    public void putEnumLiteral(String symbol, EnumLitExpr litExpr) {
+        symbolToEnumLiteral.put(symbol, litExpr);
     }
 }

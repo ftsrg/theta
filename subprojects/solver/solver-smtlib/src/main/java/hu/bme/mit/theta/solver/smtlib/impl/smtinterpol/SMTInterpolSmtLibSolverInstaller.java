@@ -17,6 +17,7 @@ package hu.bme.mit.theta.solver.smtlib.impl.smtinterpol;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.solver.EnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
 
@@ -76,7 +77,7 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
                                           final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
         final var solverFilePath =
                 solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
-        return SMTInterpolSmtLibSolverFactory.create(solverFilePath, solverArgs);
+        return SMTInterpolSmtLibSolverFactory.create(solverFilePath, solverArgs, getEnumStrategyForVersion(version));
     }
 
     @Override
@@ -107,5 +108,13 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     private String getSolverBinaryName(final String version) {
         return String.format("smtinterpol-%s.jar", version);
+    }
+
+    private EnumStrategy getEnumStrategyForVersion(final String version) {
+        // pre-release version 2.5-1301-g2c871e40 already suppoprted datatype interpolation
+        if (Integer.valueOf(version.split("-")[1]) > 1256) {
+            return EnumStrategy.DATATYPES;
+        }
+        return EnumStrategy.SORTS;
     }
 }
