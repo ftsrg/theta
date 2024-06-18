@@ -81,34 +81,23 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
 
     @Override
     public List<String> getSupportedVersions() {
-        return Arrays.asList("2.5-1256", "2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
+        return Arrays.asList("2.5-1301", "2.5-1256", "2.5-1230", "2.5-916", "2.5-663", "2.5-479", "2.5-7");
     }
 
     private URL getDownloadUrl(final String version)
             throws SmtLibSolverInstallerException, MalformedURLException {
-        final String fileName;
-        switch (version) {
-            case "2.5-1256":
-                fileName = "2.5-1256-g55d6ba76";
-                break;
-            case "2.5-1230":
-                fileName = "2.5-1230-g3eafb46a";
-                break;
-            case "2.5-916":
-                fileName = "2.5-916-ga5843d8b";
-                break;
-            case "2.5-663":
-                fileName = "2.5-663-gf15aa217";
-                break;
-            case "2.5-479":
-                fileName = "2.5-479-ga49e50b1";
-                break;
-            case "2.5-7":
-                fileName = "2.5-7-g64ec65d";
-                break;
-            default:
-                throw new SmtLibSolverInstallerException("Unsupported solver version.");
-        }
+        final String fileName = switch (version) {
+
+            case "2.5-1256" -> "2.5-1256-g55d6ba76";
+            //TODO download won't work on this, switch to the latest on next release
+            case "2.5-1301" -> "2.5-1301-g2c871e40";
+            case "2.5-1230" -> "2.5-1230-g3eafb46a";
+            case "2.5-916" -> "2.5-916-ga5843d8b";
+            case "2.5-663" -> "2.5-663-gf15aa217";
+            case "2.5-479" -> "2.5-479-ga49e50b1";
+            case "2.5-7" -> "2.5-7-g64ec65d";
+            default -> throw new SmtLibSolverInstallerException("Unsupported solver version.");
+        };
 
         return URI.create(String.format(
                 "https://ultimate.informatik.uni-freiburg.de/smtinterpol/smtinterpol-%s.jar",

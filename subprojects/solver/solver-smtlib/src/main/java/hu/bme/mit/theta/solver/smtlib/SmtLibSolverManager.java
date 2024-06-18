@@ -304,16 +304,16 @@ public final class SmtLibSolverManager extends SolverManager {
         return installers.get(solver).getInstalledVersions(home.resolve(solver));
     }
 
-    private String getVersionString(final String solver, final String version,
+    public String getVersionString(final String solver, final String version,
                                     final boolean installed) throws SmtLibSolverInstallerException {
         if (!version.equals("latest")) {
             return version;
         } else {
             final var supportedVersions = getSupportedVersions(solver);
             final var versions = installed ? getInstalledVersions(solver).stream()
-                    .filter(supportedVersions::contains).collect(Collectors.toList())
+                    .filter(supportedVersions::contains).toList()
                     : supportedVersions;
-            if (versions.size() > 0) {
+            if (!versions.isEmpty()) {
                 return versions.get(0);
             } else {
                 throw new SmtLibSolverInstallerException(
