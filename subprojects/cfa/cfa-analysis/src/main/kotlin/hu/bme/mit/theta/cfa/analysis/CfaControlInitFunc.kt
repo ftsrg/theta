@@ -13,16 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
 
-dependencies {
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-xsts"))
-    testImplementation(project(":theta-solver-z3-legacy"))
+package hu.bme.mit.theta.cfa.analysis
+
+import hu.bme.mit.theta.analysis.Prec
+import hu.bme.mit.theta.analysis.unit.UnitState
+import hu.bme.mit.theta.cfa.CFA
+
+/**
+ * Used in a multianalysis to create initial location with no data state.
+ */
+internal fun <P : Prec> cfaControlInitFunc(initLoc: CFA.Loc): CfaInitFunc<UnitState, P> {
+    return CfaInitFunc.create(initLoc) { _: P -> listOf<UnitState>(UnitState.getInstance()) }
 }

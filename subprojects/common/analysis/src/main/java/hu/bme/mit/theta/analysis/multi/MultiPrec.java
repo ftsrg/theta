@@ -13,16 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
+package hu.bme.mit.theta.analysis.multi;
 
-dependencies {
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-xsts"))
-    testImplementation(project(":theta-solver-z3-legacy"))
+import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.core.decl.VarDecl;
+
+import java.util.Collection;
+
+@SuppressWarnings("java:S119")
+public record MultiPrec<LPrec extends Prec, RPrec extends Prec, DataPrec extends Prec>(
+        LPrec leftPrec, RPrec rightPrec, DataPrec dataPrec) implements Prec {
+
+    @Override
+    public Collection<VarDecl<?>> getUsedVars() {
+        return dataPrec.getUsedVars();
+    }
+
+    @Override
+    public String toString() {
+        return "MultiPrec{" +
+                "dataPrec=" + dataPrec +
+                '}';
+    }
 }

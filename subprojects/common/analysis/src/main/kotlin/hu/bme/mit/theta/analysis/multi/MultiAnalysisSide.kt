@@ -13,16 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
 
-dependencies {
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-xsts"))
-    testImplementation(project(":theta-solver-z3-legacy"))
-}
+package hu.bme.mit.theta.analysis.multi
+
+import hu.bme.mit.theta.analysis.*
+
+data class MultiAnalysisSide<S : State, DataS : State, ControlS : State, A : Action, P : Prec, ControlP : Prec>(
+    val analysis: Analysis<S, in A, in P>,
+    val controlInitFunc: InitFunc<ControlS, ControlP>,
+    val combineStates: (ControlS, DataS) -> S,
+    val extractControlState: (S) -> ControlS,
+    val extractDataState: (S) -> DataS,
+    val extractControlPrec: (P) -> ControlP
+)

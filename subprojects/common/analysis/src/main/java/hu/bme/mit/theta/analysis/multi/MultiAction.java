@@ -13,16 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
+package hu.bme.mit.theta.analysis.multi;
 
-dependencies {
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-xsts"))
-    testImplementation(project(":theta-solver-z3-legacy"))
+
+import hu.bme.mit.theta.analysis.Action;
+
+public interface MultiAction<L extends Action, R extends Action> extends Action {
+    L getLeftAction();
+
+    R getRightAction();
 }
