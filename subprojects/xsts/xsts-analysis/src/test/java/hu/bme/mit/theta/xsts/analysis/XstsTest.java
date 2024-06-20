@@ -21,6 +21,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
@@ -353,7 +354,7 @@ public class XstsTest {
 
     @BeforeClass
     public static void installSolver() {
-        if (SOLVER_STRING.contains("Z3")) {
+        if (SOLVER_STRING.contains("Z3") || SOLVER_STRING.contains("JavaSMT")) {
             return;
         }
         try (final var solverManager = SmtLibSolverManager.create(SMTLIB_HOME, new ConsoleLogger(Level.DETAIL))) {
@@ -373,6 +374,7 @@ public class XstsTest {
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
         SolverManager.registerSolverManager(SmtLibSolverManager.create(SMTLIB_HOME, logger));
+        SolverManager.registerSolverManager(JavaSMTSolverManager.create());
 
         final SolverFactory solverFactory;
         try {

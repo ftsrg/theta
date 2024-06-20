@@ -27,4 +27,5 @@ dependencies {
     testImplementation(project(":theta-solver-z3"))
     testImplementation(project(":theta-solver-z3-legacy"))
     testImplementation(project(":theta-solver-smtlib"))
+    testImplementation(project(":theta-solver-javasmt"))
 }
