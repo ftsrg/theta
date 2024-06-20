@@ -71,8 +71,8 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", getDownloadUrl(version).toString());
             if (SemVer.of(version).compareTo(SemVer.of("1.1.1")) < 0) {
                 try (
-                    final var inputChannel = Channels.newChannel(inputStream);
-                    final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
+                        final var inputChannel = Channels.newChannel(inputStream);
+                        final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
                 ) {
                     outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
                     installDir.resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
