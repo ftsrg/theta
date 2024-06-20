@@ -13,17 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-plugins {
-    id("java-common")
-    id("kotlin-common")
-}
 
-dependencies {
-    implementation(project(":theta-analysis"))
-    implementation(project(":theta-cfa"))
-    implementation(project(":theta-common"))
-    implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    testImplementation(project(":theta-solver-z3-legacy"))
-    testImplementation(project(":theta-solver-smtlib"))
+package hu.bme.mit.theta.cfa.analysis
+
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.cfa.CFA
+import java.util.function.Predicate
+
+/**
+ * Simple CFA location predicate for error locations
+ */
+class CfaErrorlocPredicate<S : ExprState>(private val errorLoc: CFA.Loc) : Predicate<CfaState<S>> {
+
+    override fun test(t: CfaState<S>) = t.loc == this.errorLoc
+
 }
