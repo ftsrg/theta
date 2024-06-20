@@ -17,6 +17,7 @@ package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.*;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
 
@@ -55,6 +57,8 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
                                final Supplier<? extends SmtLibSolverBinary> itpSolverBinaryFactory) {
         super(symbolTable, transformationManager, termTransformer, solverBinary);
         this.itpSolverBinaryFactory = itpSolverBinaryFactory;
+        final var tmp = Decls.Const("shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh", Int());
+//        symbolTable.put(tmp, "shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh", "(declare-fun shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh () Int)");
     }
 
     @Override
@@ -106,11 +110,15 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
                     final var bTerm = B.stream()
                             .flatMap(m -> m.getTerms().stream().map(Tuple2::get2));
 
+                    itpSolverBinary.issueCommand("(push)");
+                    itpSolverBinary.issueCommand("(declare-fun shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh () Int)");
+                    itpSolverBinary.issueCommand("(assert (= shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh 0))");
                     itpSolverBinary.issueCommand(
                             String.format("(assert (and %s))", aTerm.collect(Collectors.joining(" "))));
                     itpSolverBinary.issueCommand(
                             String.format("(get-interpolant _cvc5_interpolant%d (not (and %s)))",
                                     interpolantCount++, bTerm.collect(Collectors.joining(" "))));
+                    itpSolverBinary.issueCommand("(pop)");
 
                     itpMap.put(marker,
                             termTransformer.toExpr(parseItpResponse(itpSolverBinary.readResponse()),
