@@ -48,7 +48,7 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
         versions.add(SemVer.VersionDecoder.create(SemVer.of("1.0.0"))
                 .addString(LINUX, X64, "Linux")
                 .addString(MAC, X64, "macOS")
-                .addString(WINDOWS, X64, "Win64")
+                .addString(WINDOWS, X64, "Win64.exe")
                 .build()
         );
     }
