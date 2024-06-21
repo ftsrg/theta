@@ -20,6 +20,7 @@ include(
     "common/common",
     "common/core",
     "common/grammar",
+    "common/multi-tests",
 
     "frontends/c-frontend",
     "frontends/chc-frontend",

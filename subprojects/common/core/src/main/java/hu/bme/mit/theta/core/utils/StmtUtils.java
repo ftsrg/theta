@@ -20,7 +20,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -76,6 +78,12 @@ public final class StmtUtils {
     public static StmtUnfoldResult toExpr(final List<? extends Stmt> stmts,
                                           final VarIndexing indexing) {
         return StmtToExprTransformer.toExpr(stmts, indexing);
+    }
+
+    public static Stmt changeVars(final Stmt stmt, final Iterable<VarDecl<?>> varDecls) {
+        final Map<String, VarDecl<?>> map = new HashMap<>();
+        varDecls.forEach(varDecl -> map.put(varDecl.getName(), varDecl));
+        return VarChangerUtilsKt.changeVars(stmt, map);
     }
 
 }

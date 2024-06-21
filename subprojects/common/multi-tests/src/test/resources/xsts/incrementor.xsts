@@ -1,0 +1,11 @@
+var x: integer = 0
+
+trans {
+    x:=x+1;
+}
+
+init {}
+
+env {
+    x:=x+1;
+}
