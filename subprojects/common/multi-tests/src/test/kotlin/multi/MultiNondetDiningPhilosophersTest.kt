@@ -115,7 +115,8 @@ class MultiNondetDiningPhilosophersTest {
             RefToMultiPrec(cfaRefToPrec, cfaRefToPrec, ItpRefToExplPrec()),
             RefToMultiPrec(cfaRefToPrec, cfaRefToPrec, ItpRefToExplPrec()), ItpRefToExplPrec(),
             MultiPrec(cfaInitPrec, cfaInitPrec, dataInitPrec),
-            MultiPrec(cfaInitPrec, cfaInitPrec, dataInitPrec), dataInitPrec, Z3LegacySolverFactory.getInstance(), logger)
+            MultiPrec(cfaInitPrec, cfaInitPrec, dataInitPrec), dataInitPrec, Z3LegacySolverFactory.getInstance(),
+            logger)
         val result = multiConfigBuilder.build().check()
 
         Assertions.assertTrue(result.isUnsafe)
