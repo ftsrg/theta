@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":theta-analysis"))
     implementation(project(":theta-xcfa"))
     implementation(project(":theta-xcfa-analysis"))
+    implementation(project(":theta-xcfa2chc"))
     implementation(project(":theta-c2xcfa"))
     implementation(project(":theta-solver-z3"))
     implementation(project(":theta-solver-z3-legacy"))
