@@ -41,13 +41,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -57,8 +51,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLibItpMarker> {
 
-    private final Map<Expr<BoolType>, String> assertionNames = new HashMap<>();
-    private static final String assertionNamePattern = "_smtinterpol_assertion_%d";
+    private final Map<Expr<BoolType>, String> assertionNames = new IdentityHashMap<>();
+    private static final String assertionNamePattern = "_princess_assertion_%d";
     private static long assertionCount = 0;
 
     public PrincessSmtLibItpSolver(
