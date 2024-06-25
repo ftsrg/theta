@@ -1,0 +1,28 @@
+theta/theta-start.sh sv-benchmarks/c/pthread-wmm/mix000.oepc.i --witness-only --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/theta/theta.jar --witness-only --portfolio COMPLEX --loglevel RESULT --property sv-benchmarks/c/properties/valid-memsafety.prp --input sv-benchmarks/c/pthread-wmm/mix000.oepc.i --smt-home /home/runner/work/theta/theta/theta/solvers
+Arithmetic: []
+Current configuration: XcfaCegarConfig(errorDetectionType=NO_ERROR, abstractionSolver=mathsat:5.6.10, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, initPrec=EMPTY, porLevel=AASPOR, coi=COI, refinementSolver=mathsat:5.6.10, validateRefinementSolver=false, refinement=NWT_IT_WP, exprSplitter=WHOLE, pruneStrategy=LAZY, cexMonitor=CHECK, timeoutMs=100000) (inProcess=true)
+Serialized Config, XCFA and ParseContext in 102ms
+hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException: The version is not installed
+	at hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller$Default.getSolverFactory(SmtLibSolverInstaller.java:194)
+	at hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager.getSolverFactory(SmtLibSolverManager.java:260)
+	at hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager.getSolverFactory(SmtLibSolverManager.java:250)
+	at hu.bme.mit.theta.solver.SolverManager.resolveSolverFactory(SolverManager.java:36)
+	at hu.bme.mit.theta.xcfa.cli.SolverRegistrationKt.getSolver(SolverRegistration.kt:31)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCegarConfig.getCegarChecker(XcfaCegarConfig.kt:109)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCegarConfig.check(XcfaCegarConfig.kt:187)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCegarServer.lambda$run$0(XcfaCegarServer.java:183)
+	at hu.bme.mit.theta.xcfa.cli.ExitCodesKt.exitOnError(ExitCodes.kt:56)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCegarServer.run(XcfaCegarServer.java:108)
+	at hu.bme.mit.theta.xcfa.cli.XcfaCegarServer.main(XcfaCegarServer.java:204)
+Process failed! (hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller$Default.getSolverFactory(SmtLibSolverInstaller.java:194), hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException: The version is not installed)
+Caught exception: ErrorCodeException(code=1)
+Current configuration: XcfaCegarConfig(errorDetectionType=NO_ERROR, abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, initPrec=EMPTY, porLevel=AASPOR, coi=COI, refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY, cexMonitor=CHECK, timeoutMs=300000) (inProcess=true)
+Serialized Config, XCFA and ParseContext in 35ms
+(SafetyResult Safe)
+Config successful, exiting: XcfaCegarConfig(errorDetectionType=NO_ERROR, abstractionSolver=Z3, validateAbstractionSolver=false, domain=EXPL, maxEnum=1, search=BFS, initPrec=EMPTY, porLevel=AASPOR, coi=COI, refinementSolver=Z3, validateRefinementSolver=false, refinement=SEQ_ITP, exprSplitter=WHOLE, pruneStrategy=LAZY, cexMonitor=CHECK, timeoutMs=300000)

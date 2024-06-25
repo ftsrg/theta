@@ -1,0 +1,8 @@
+tool		Theta 5.2.0	Theta 5.2.0	Theta 5.2.0	Theta 5.2.0
+run set		SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops	SV-COMP24_unreach-call.ReachSafety-Loops
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+nla-digbench/ps3-ll.yml	true	TIMEOUT	120.32664	107.27119299599997	564.670464
+loop-crafted/simple_vardep_2.yml	true	TIMEOUT	120.703368	110.16812677200005	588.304384
+nla-digbench-scaling/divbin_valuebound100.yml	true	TIMEOUT	120.647931	108.02348851199997	504.246272
+nla-digbench-scaling/mannadiv_valuebound50.yml	true	true	22.258036	10.026149868999937	549.847040
+nla-digbench-scaling/mannadiv_unwindbound10.yml	false	Parsing OK	27.641928	11.935953290000043	483.516416

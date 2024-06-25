@@ -1,0 +1,8 @@
+tool		Theta 5.2.0	Theta 5.2.0	Theta 5.2.0	Theta 5.2.0
+run set		SV-COMP24_unreach-call.ReachSafety-ControlFlow	SV-COMP24_unreach-call.ReachSafety-ControlFlow	SV-COMP24_unreach-call.ReachSafety-ControlFlow	SV-COMP24_unreach-call.ReachSafety-ControlFlow
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+longjmp/68-longjmp_18-simple-else_unknown_1_pos.yml	false	ERROR (frontend failed)	3.425145	1.2128312330000313	263.614464
+locks/test_locks_11.yml	true	TIMEOUT	122.528582	103.53074700499997	1543.454720
+locks/test_locks_5.yml	true	true	13.413128	5.147856067000021	554.758144
+longjmp/68-longjmp_18-simple-else_unknown_2_pos.yml	false	ERROR (frontend failed)	4.133128	1.466389807999974	271.515648
+longjmp/68-longjmp_11-counting-return_true.yml	true	ERROR (frontend failed)	2.16519	0.8530091760000005	191.639552

@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Combinations, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Thu, 2024-02-15 18:26:38 UTC
+tool:                    Theta 5.0.1
+tool executable:         theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az529-494
+os:                      Linux-6.2.0-1019-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3171.176 MHz
+ram:                     16757.788672 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Combinations
+Run set 1 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                                status                       cpu time   wall time        host
+----------------------------------------------------------------------------------------------------------------------
+pc_sfifo_3.cil+token_ring.02.cil-2.yml                   Parsing OK                      47.57       25.81        None
+Problem05_label47+token_ring.02.cil-1.yml                TIMEOUT (Parsing OK)           121.29       80.43        None
+pc_sfifo_3.cil+token_ring.11.cil-1.yml                   TIMEOUT (Parsing OK)           120.31       91.05        None
+Problem05_label45+token_ring.01.cil-2.yml                TIMEOUT (Parsing OK)           121.76       75.77        None
+pals_lcr.3.1.ufo.UNBOUNDED.pals+Problem12_label04.yml    Parsing OK                      64.13       32.28        None
+----------------------------------------------------------------------------------------------------------------------
+Run set 1                                                done                           105.76      307.38           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               0
+    correct true:        0
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               5
+  Score:                 0 (max: 5)

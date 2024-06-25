@@ -1,0 +1,8 @@
+tool		Theta 5.0.4	Theta 5.0.4	Theta 5.0.4	Theta 5.0.4
+run set		SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats	SV-COMP24_unreach-call.ReachSafety-Floats
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+float-benchs/float_double.yml	true	true	5.921023	2.84586742099998	374.759424
+float-benchs/zonotope_loose.c.v+cfa-reducer.yml	true	Parsing OK	8.604534	4.339319303000025	561.668096
+float-benchs/float_int_inv_square.yml	false	false(unreach-call)	10.098352	5.954654409999989	512.581632
+floats-cdfpl/square_3.yml	false	TIMEOUT (false(unreach-call))	120.331332	115.93535519599993	702.521344
+floats-cbmc-regression/float11.yml	true	true	6.032591	3.04667198300001	374.206464
