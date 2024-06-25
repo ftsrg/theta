@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xta.analysis.zone;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
-import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Update;
@@ -82,8 +82,8 @@ public final class XtaLuZoneUtils {
 	private static void applyInverseUpdates(final BoundFunc.Builder succStateBuilder, final Edge edge) {
 		for (final Update update : edge.getUpdates()) {
 			if (update.isClockUpdate()) {
-				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<ClockType> varDecl = op.getVar();
+				final ResetStmt reset = (ResetStmt) update.asClockUpdate().toStmt();
+				final VarDecl<ClockType> varDecl = reset.getClockDecl();
 				succStateBuilder.remove(varDecl);
 			}
 		}

@@ -17,8 +17,6 @@ package hu.bme.mit.theta.xta;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.core.clock.op.ClockOp;
-import hu.bme.mit.theta.core.clock.op.ClockOps;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
 public abstract class Update {
@@ -31,7 +29,7 @@ public abstract class Update {
 	}
 
 	static ClockUpdate clockUpdate(final Stmt stmt) {
-		return new ClockUpdate(ClockOps.fromStmt(stmt));
+		return new ClockUpdate(stmt);
 	}
 
 	public abstract Stmt toStmt();
@@ -84,19 +82,21 @@ public abstract class Update {
 	}
 
 	public static final class ClockUpdate extends Update {
-		private final ClockOp clockOp;
+		private final Stmt stmt;
 
-		private ClockUpdate(final ClockOp clockOp) {
-			this.clockOp = checkNotNull(clockOp);
+		private ClockUpdate(final Stmt stmt) {
+			this.stmt = checkNotNull(stmt);
 		}
 
+		/*
 		public ClockOp getClockOp() {
 			return clockOp;
 		}
+		*/
 
 		@Override
 		public Stmt toStmt() {
-			return clockOp.toStmt();
+			return stmt;
 		}
 
 		@Override
@@ -121,7 +121,7 @@ public abstract class Update {
 
 		@Override
 		public String toString() {
-			return clockOp.toString();
+			return stmt.toString();
 		}
 
 	}

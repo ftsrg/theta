@@ -18,8 +18,8 @@ package hu.bme.mit.theta.xta.analysis.zone;
 import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Update;
@@ -265,9 +265,9 @@ public final class XtaZoneUtils {
 	private static void applyUpdates(final ZoneState.Builder builder, final Edge edge) {
 		for (final Update update : edge.getUpdates()) {
 			if (update.isClockUpdate()) {
-				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<ClockType> varDecl = op.getVar();
-				final int value = op.getValue();
+				final ResetStmt reset = (ResetStmt) update.asClockUpdate().toStmt();
+				final VarDecl<ClockType> varDecl = reset.getClockDecl();
+				final int value = reset.getValue();
 				builder.reset(varDecl, value);
 			}
 		}
@@ -276,9 +276,9 @@ public final class XtaZoneUtils {
 	private static void applyInverseUpdates(final ZoneState.Builder builder, final Edge edge) {
 		for (final Update update : Lists.reverse(edge.getUpdates())) {
 			if (update.isClockUpdate()) {
-				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<ClockType> varDecl = op.getVar();
-				final int value = op.getValue();
+				final ResetStmt reset = (ResetStmt) update.asClockUpdate().toStmt();
+				final VarDecl<ClockType> varDecl = reset.getClockDecl();
+				final int value = reset.getValue();
 				builder.and(Eq(varDecl, value));
 				builder.free(varDecl);
 			}

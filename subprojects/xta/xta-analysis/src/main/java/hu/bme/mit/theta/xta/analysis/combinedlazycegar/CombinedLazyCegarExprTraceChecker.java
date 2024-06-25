@@ -16,6 +16,7 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.utils.Lens;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaDataAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
 import java.util.stream.Stream;
@@ -48,7 +49,7 @@ final class CombinedLazyCegarExprTraceChecker<R extends Refutation> implements E
                 ),
                 typedTrace.getStates().stream().skip(1).map(s -> concrProd2Lens.get(s).getState1())
             ).toList(),
-            typedTrace.getActions()
+            typedTrace.getActions().stream().map(XtaDataAction::of).toList()
         );
 
         return exprTraceChecker.check(newTrace);

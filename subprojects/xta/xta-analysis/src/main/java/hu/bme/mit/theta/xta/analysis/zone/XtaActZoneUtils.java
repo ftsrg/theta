@@ -22,6 +22,7 @@ import java.util.Set;
 
 import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
 import hu.bme.mit.theta.core.type.clocktype.ClockType;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Update;
@@ -58,8 +59,8 @@ public final class XtaActZoneUtils {
 
 			for (final Update update : updates) {
 				if (update.isClockUpdate()) {
-					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<ClockType> varDecl = op.getVar();
+				    final ResetStmt reset = (ResetStmt) update.asClockUpdate().toStmt();
+					final VarDecl<ClockType> varDecl = reset.getClockDecl();
 					result.remove(varDecl);
 				}
 			}
@@ -95,16 +96,16 @@ public final class XtaActZoneUtils {
 
 			for (final Update update : receivingEdge.getUpdates()) {
 				if (update.isClockUpdate()) {
-					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<ClockType> varDecl = op.getVar();
+                    final ResetStmt reset = (ResetStmt) update.asClockUpdate().toStmt();
+                    final VarDecl<ClockType> varDecl = reset.getClockDecl();
 					result.remove(varDecl);
 				}
 			}
 
 			for (final Update update : emittingEdge.getUpdates()) {
 				if (update.isClockUpdate()) {
-					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<ClockType> varDecl = op.getVar();
+                    final ResetStmt reset = (ResetStmt) update.asClockUpdate().toStmt();
+                    final VarDecl<ClockType> varDecl = reset.getClockDecl();
 					result.remove(varDecl);
 				}
 			}

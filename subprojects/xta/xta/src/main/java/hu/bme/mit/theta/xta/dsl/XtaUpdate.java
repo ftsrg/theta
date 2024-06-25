@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.clocktype.ClockExprs.Clock;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
@@ -25,11 +26,16 @@ import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.ResetStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.clocktype.ClockType;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.xta.dsl.XtaExpression.ExpressionInstantiationVisitor;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslBaseVisitor;
@@ -48,13 +54,13 @@ final class XtaUpdate {
 		this.context = checkNotNull(context);
 	}
 
-	public AssignStmt<?> instantiate(final Env env) {
+	public Stmt instantiate(final Env env) {
 		final UpdateInstantiationVisitor visitor = new UpdateInstantiationVisitor(env);
-		final AssignStmt<?> result = context.accept(visitor);
+		final Stmt result = context.accept(visitor);
 		return result;
 	}
 
-	private final class UpdateInstantiationVisitor extends XtaDslBaseVisitor<AssignStmt<?>> {
+	private final class UpdateInstantiationVisitor extends XtaDslBaseVisitor<Stmt> {
 		private final ExpressionInstantiationVisitor visitor;
 
 		public UpdateInstantiationVisitor(final Env env) {
@@ -62,7 +68,7 @@ final class XtaUpdate {
 		}
 
 		@Override
-		public AssignStmt<?> visitAssignmentExpression(final AssignmentExpressionContext ctx) {
+		public Stmt visitAssignmentExpression(final AssignmentExpressionContext ctx) {
 			if (ctx.fOper == null) {
 				return visitChildren(ctx);
 			} else {
@@ -72,7 +78,14 @@ final class XtaUpdate {
 
 				final AssignmentOpContext op = ctx.fOper;
 				if (op.fAssignOp != null) {
-					return Stmts.Assign(varDecl, rightOp);
+					if (varDecl.getType() instanceof ClockType
+							&& ExprUtils.simplify(TypeUtils.cast(rightOp, Int())) instanceof final IntLitExpr value) {
+						final VarDecl<ClockType> clock = TypeUtils.cast(varDecl, Clock());
+						final int intValue = value.getValue().intValueExact();
+						return ResetStmt.of(clock, intValue);
+					} else {
+						return Stmts.Assign(varDecl, rightOp);
+					}
 				} else {
 					// TODO Auto-generated method stub
 					throw new UnsupportedOperationException();
@@ -81,7 +94,7 @@ final class XtaUpdate {
 		}
 
 		@Override
-		public AssignStmt<?> visitPostfixExpression(final PostfixExpressionContext ctx) {
+		public Stmt visitPostfixExpression(final PostfixExpressionContext ctx) {
 			if (ctx.fOpers == null || ctx.fOpers.isEmpty()) {
 				return visitChildren(ctx);
 			} else {

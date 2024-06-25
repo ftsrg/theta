@@ -138,7 +138,7 @@ public class CombinedLazyCegarXtaCheckerConfigFactory {
         final var prec = createConcrPrec();
 
         final var cegarChecker = CegarChecker.create(
-            new LazyAbstractor<>(
+            new LazyAbstractor<Prod2State, Prod2State, XtaState<Prod2State>, XtaState<Prod2State>, XtaAction, Prod2Prec>(
                 forceCast(XtaLts.create(system)),
                 searchStrategy,
                 lazyStrategy,
