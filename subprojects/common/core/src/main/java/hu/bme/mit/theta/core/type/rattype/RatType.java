@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.type.rattype;
 
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.Additive;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
@@ -112,4 +113,8 @@ public final class RatType
         return RatExprs.Geq(leftOp, rightOp);
     }
 
+    @Override
+    public DomainSize getDomainSize() {
+        return DomainSize.INFINITY;
+    }
 }

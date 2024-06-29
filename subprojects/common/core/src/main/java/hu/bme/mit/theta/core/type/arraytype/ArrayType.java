@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.arraytype;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
@@ -96,5 +97,10 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type>
     public String toString() {
         final String indexString = String.format("([%s] -> %s)", indexType, elemType);
         return Utils.lispStringBuilder(TYPE_LABEL).add(indexString).toString();
+    }
+
+    @Override
+    public DomainSize getDomainSize() {
+        return DomainSize.pow(elemType.getDomainSize(), indexType.getDomainSize());
     }
 }

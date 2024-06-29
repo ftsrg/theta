@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xta.utils;
 
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ChanType implements Type {
@@ -33,4 +34,8 @@ public final class ChanType implements Type {
         return "Chan";
     }
 
+    @Override
+    public DomainSize getDomainSize() {
+        return DomainSize.ONE;
+    }
 }

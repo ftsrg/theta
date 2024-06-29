@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xsts.pnml;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -29,7 +28,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.pnml.elements.*;
-import hu.bme.mit.theta.xsts.type.XstsType;
 
 import java.io.InputStream;
 import java.util.*;
@@ -104,8 +102,6 @@ public class PnmlToXSTS {
         final NonDetStmt tran = NonDetStmt.of(tranStmts);
         final NonDetStmt init = NonDetStmt.of(ImmutableList.of());
         final NonDetStmt env = NonDetStmt.of(ImmutableList.of());
-
-        final Map<VarDecl<?>, XstsType<?>> varToType = ImmutableMap.of();
         final Set<VarDecl<?>> ctrlVars = ImmutableSet.of();
 
         final Scanner propScanner = new Scanner(propStream).useDelimiter("\\A");
@@ -136,7 +132,7 @@ public class PnmlToXSTS {
             propExpr = cast(dslManager.parseExpr(property), Bool());
         }
 
-        return new XSTS(varToType, ctrlVars, init, tran, env, initExpr, propExpr);
+        return new XSTS(ctrlVars, init, tran, env, initExpr, propExpr);
     }
 
     private static String stripPropFromPropFile(final String propertyFile) {

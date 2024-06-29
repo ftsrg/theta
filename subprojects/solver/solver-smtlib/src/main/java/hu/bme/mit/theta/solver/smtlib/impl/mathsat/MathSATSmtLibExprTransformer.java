@@ -17,12 +17,13 @@ package hu.bme.mit.theta.solver.smtlib.impl.mathsat;
 
 import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibExprTransformer;
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 
 public class MathSATSmtLibExprTransformer extends GenericSmtLibExprTransformer {
 
-    public MathSATSmtLibExprTransformer(final SmtLibTransformationManager transformer) {
-        super(transformer);
+    public MathSATSmtLibExprTransformer(final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
+        super(transformer, symbolTable);
     }
 
     @Override

@@ -48,17 +48,6 @@ public final class SmtLibSolverManager extends SolverManager {
     private static final Map<String, Class<? extends SmtLibSolverInstaller>> installerDeclarations = new HashMap<>();
     private static Tuple2<String, Class<? extends GenericSmtLibSolverInstaller>> genericInstallerDeclaration;
 
-    public static <T extends SmtLibSolverInstaller> void registerInstaller(final String name,
-                                                                           final Class<T> decl) {
-        installerDeclarations.put(name, decl);
-    }
-
-    public static <T extends GenericSmtLibSolverInstaller> void registerGenericInstaller(
-            final String name, final Class<T> decl) {
-        checkState(genericInstallerDeclaration == null);
-        genericInstallerDeclaration = Tuple2.of(name, decl);
-    }
-
     static {
         registerInstaller("z3", Z3SmtLibSolverInstaller.class);
         registerInstaller("cvc4", CVC4SmtLibSolverInstaller.class);
@@ -71,42 +60,12 @@ public final class SmtLibSolverManager extends SolverManager {
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
     }
 
-    public static String getSolverName(final String name) {
-        final var solverName = decodeSolverName(name, 0);
-        if (solverName != null) {
-            return solverName;
-        } else {
-            throw new IllegalArgumentException("Invalid version string: " + name);
-        }
-    }
-
-    public static String getSolverVersion(final String name) {
-        final var solverVersion = decodeSolverName(name, 1);
-        if (solverVersion != null) {
-            return solverVersion;
-        } else {
-            throw new IllegalArgumentException("Invalid version string: " + name);
-        }
-    }
-
-    private static String decodeSolverName(final String name, final int part) {
-        final var versionArr = name.split(":");
-
-        if (versionArr.length != 2) {
-            return null;
-        }
-
-        return versionArr[part];
-    }
-
     private final Path home;
     private final Logger logger;
-
     private final Map<String, SmtLibSolverInstaller> installers;
     private final Tuple2<String, GenericSmtLibSolverInstaller> genericInstaller;
-
-    private boolean closed = false;
     private final Set<SolverBase> instantiatedSolvers;
+    private boolean closed = false;
 
     private SmtLibSolverManager(final Path home, final Logger logger) {
         this.logger = logger;
@@ -144,10 +103,56 @@ public final class SmtLibSolverManager extends SolverManager {
         this.instantiatedSolvers = new HashSet<>();
     }
 
+    public static <T extends SmtLibSolverInstaller> void registerInstaller(final String name,
+                                                                           final Class<T> decl) {
+        installerDeclarations.put(name, decl);
+    }
+
+    public static <T extends GenericSmtLibSolverInstaller> void registerGenericInstaller(
+            final String name, final Class<T> decl) {
+        checkState(genericInstallerDeclaration == null);
+        genericInstallerDeclaration = Tuple2.of(name, decl);
+    }
+
+    public static String getSolverName(final String name) {
+        final var solverName = decodeSolverName(name, 0);
+        if (solverName != null) {
+            return solverName;
+        } else {
+            throw new IllegalArgumentException("Invalid version string: " + name);
+        }
+    }
+
+    public static String getSolverVersion(final String name) {
+        final var solverVersion = decodeSolverName(name, 1);
+        if (solverVersion != null) {
+            return solverVersion;
+        } else {
+            throw new IllegalArgumentException("Invalid version string: " + name);
+        }
+    }
+
+    private static String decodeSolverName(final String name, final int part) {
+        final var versionArr = name.split(":");
+
+        if (versionArr.length != 2) {
+            return null;
+        }
+
+        return versionArr[part];
+    }
+
     public static SmtLibSolverManager create(final Path home, final Logger logger)
             throws IOException {
         createIfNotExists(home);
         return new SmtLibSolverManager(home, logger);
+    }
+
+    private static Path createIfNotExists(final Path path) throws IOException {
+        if (!Files.exists(path)) {
+            Files.createDirectory(path);
+        }
+        return path;
     }
 
     public String getGenericInstallerName() {
@@ -304,16 +309,16 @@ public final class SmtLibSolverManager extends SolverManager {
         return installers.get(solver).getInstalledVersions(home.resolve(solver));
     }
 
-    private String getVersionString(final String solver, final String version,
-                                    final boolean installed) throws SmtLibSolverInstallerException {
+    public String getVersionString(final String solver, final String version,
+                                   final boolean installed) throws SmtLibSolverInstallerException {
         if (!version.equals("latest")) {
             return version;
         } else {
             final var supportedVersions = getSupportedVersions(solver);
             final var versions = installed ? getInstalledVersions(solver).stream()
-                    .filter(supportedVersions::contains).collect(Collectors.toList())
+                    .filter(supportedVersions::contains).toList()
                     : supportedVersions;
-            if (versions.size() > 0) {
+            if (!versions.isEmpty()) {
                 return versions.get(0);
             } else {
                 throw new SmtLibSolverInstallerException(
@@ -321,13 +326,6 @@ public final class SmtLibSolverManager extends SolverManager {
                                 installed ? "installed" : "supported", solver));
             }
         }
-    }
-
-    private static Path createIfNotExists(final Path path) throws IOException {
-        if (!Files.exists(path)) {
-            Files.createDirectory(path);
-        }
-        return path;
     }
 
     @Override

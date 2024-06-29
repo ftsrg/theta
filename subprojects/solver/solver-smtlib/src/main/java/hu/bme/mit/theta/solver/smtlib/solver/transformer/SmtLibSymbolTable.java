@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.smtlib.solver.transformer;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 
 public interface SmtLibSymbolTable {
 
@@ -23,11 +24,17 @@ public interface SmtLibSymbolTable {
 
     boolean definesSymbol(String symbol);
 
+    boolean definesEnumLiteral(String literal);
+
     String getSymbol(ConstDecl<?> constDecl);
 
     String getDeclaration(ConstDecl<?> constDecl);
 
     ConstDecl<?> getConst(String symbol);
 
+    EnumLitExpr getEnumLiteral(String literal);
+
     void put(ConstDecl<?> constDecl, String symbol, String declaration);
+
+    void putEnumLiteral(String symbol, EnumLitExpr litExpr);
 }

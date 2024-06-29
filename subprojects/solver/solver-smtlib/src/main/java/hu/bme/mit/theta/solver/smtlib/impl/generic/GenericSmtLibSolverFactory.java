@@ -20,12 +20,15 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.smtlib.solver.EnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 
 import java.nio.file.Path;
 import java.util.EnumSet;
 
 public class GenericSmtLibSolverFactory implements SolverFactory {
+
+    protected final EnumStrategy enumStrategy;
 
     protected final Path solverPath;
     protected final String[] args;
@@ -37,13 +40,29 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
 
     protected GenericSmtLibSolverFactory(Path solverPath, String[] args,
                                          EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride) {
+        this(solverPath, args, solverOverride, EnumStrategy.SORTS);
+    }
+
+    protected GenericSmtLibSolverFactory(Path solverPath, String[] args,
+                                         EnumStrategy enumStrategy) {
+        this(solverPath, args, EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class), enumStrategy);
+    }
+
+    protected GenericSmtLibSolverFactory(Path solverPath, String[] args,
+                                         EnumSet<GenericSmtLibSolverBinary.Solver> solverOverride,
+                                         EnumStrategy enumStrategy) {
         this.solverPath = solverPath;
         this.args = args;
         this.solverOverride = solverOverride;
+        this.enumStrategy = enumStrategy;
     }
 
     public static GenericSmtLibSolverFactory create(Path solverPath, String[] args) {
         return new GenericSmtLibSolverFactory(solverPath, args);
+    }
+
+    public static GenericSmtLibSolverFactory create(Path solverPath, String[] args, EnumStrategy enumStrategy) {
+        return new GenericSmtLibSolverFactory(solverPath, args, enumStrategy);
     }
 
     @Override

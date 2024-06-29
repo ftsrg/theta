@@ -19,24 +19,34 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import org.sosy_lab.java_smt.api.BooleanFormula;
+import org.sosy_lab.java_smt.api.EnumerationFormula;
 import org.sosy_lab.java_smt.api.FormulaType;
 import org.sosy_lab.java_smt.api.NumeralFormula.IntegerFormula;
 import org.sosy_lab.java_smt.api.NumeralFormula.RationalFormula;
+import org.sosy_lab.java_smt.api.SolverContext;
+
+import java.util.HashMap;
+import java.util.Map;
 
 final class JavaSMTTypeTransformer {
 
+    private final SolverContext solverContext;
     private final FormulaType<BooleanFormula> boolSort;
     private final FormulaType<IntegerFormula> intSort;
     private final FormulaType<RationalFormula> realSort;
+    private final Map<String, FormulaType<EnumerationFormula>> enumSorts;
 
-    JavaSMTTypeTransformer() {
+    JavaSMTTypeTransformer(final SolverContext solverContext) {
+        this.solverContext = solverContext;
         boolSort = FormulaType.BooleanType;
         intSort = FormulaType.IntegerType;
         realSort = FormulaType.RationalType;
+        enumSorts = new HashMap<>();
     }
 
     public FormulaType<?> toSort(final Type type) {
@@ -46,6 +56,8 @@ final class JavaSMTTypeTransformer {
             return intSort;
         } else if (type instanceof RatType) {
             return realSort;
+        } else if (type instanceof EnumType enumType) {
+            return enumSorts.computeIfAbsent(enumType.getName(), name -> solverContext.getFormulaManager().getEnumerationFormulaManager().declareEnumeration(name, enumType.getLongValues()));
         } else if (type instanceof BvType bvType) {
             return FormulaType.getBitvectorTypeWithSize(bvType.getSize());
         } else if (type instanceof FpType fpType) {

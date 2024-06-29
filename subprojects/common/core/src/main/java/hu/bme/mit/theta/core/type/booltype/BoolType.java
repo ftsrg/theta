@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
@@ -57,6 +58,11 @@ public final class BoolType implements Equational<BoolType> {
     @Override
     public NeqExpr<BoolType> Neq(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
         return BoolExprs.Xor(leftOp, rightOp);
+    }
+
+    @Override
+    public DomainSize getDomainSize() {
+        return DomainSize.TWO;
     }
 
 }
