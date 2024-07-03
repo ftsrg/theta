@@ -90,10 +90,10 @@ public class SolverPool implements AutoCloseable {
         System.out.println(all.size() - available.size() + " solvers not returned");
         if (closingMode == ClosingMode.ALL) {
             for (Solver solver : all) solver.close();
-            System.out.println("Closed "+ all.size() + " solvers");
+            System.out.println("Closed " + all.size() + " solvers");
         } else {
             for (Solver solver : available) solver.close();
-            System.out.println("Closed "+ available.size() + " solvers");
+            System.out.println("Closed " + available.size() + " solvers");
         }
         this.available.clear();
         this.all.clear();

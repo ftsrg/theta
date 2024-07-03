@@ -429,7 +429,7 @@ public class CfaConfigBuilder {
                     .stopCriterion(refinement.getStopCriterion())
                     .logger(logger).build();
             final Refiner<CfaState<S>, CfaAction, CfaPrec<P>> refiner = refinement.getRefiner(this);
-            final SafetyChecker<CfaState<S>, CfaAction, CfaPrec<P>> checker = CegarChecker.create(
+            final SafetyChecker<ARG<CfaState<S>, CfaAction>, Trace<CfaState<S>, CfaAction>, CfaPrec<P>> checker = CegarChecker.create(
                     abstractor, refiner,
                     logger);
             return CfaConfig.create(checker, createInitPrec());

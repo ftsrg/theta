@@ -122,7 +122,8 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
         MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
     }
 
-    return object : SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> {
+    return object :
+        SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
         override fun check(
             prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
             return cegarChecker.check(

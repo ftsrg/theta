@@ -296,7 +296,8 @@ private fun postVerificationLogging(
                 "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n"
             )
 
-            if (!config.outputConfig.argConfig.disable && safetyResult.hasArg()) {
+            // TODO eliminate the need for the instanceof check
+            if (!config.outputConfig.argConfig.disable && safetyResult.witness is ARG<out State, out Action>?) {
                 val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
                 val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
                 argFile.writeText(GraphvizWriter.getInstance().writeString(g))
