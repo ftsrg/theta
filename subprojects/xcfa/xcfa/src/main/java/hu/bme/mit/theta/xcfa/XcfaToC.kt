@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
 import hu.bme.mit.theta.core.type.*
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq
@@ -27,6 +28,7 @@ import hu.bme.mit.theta.core.type.abstracttype.DivExpr
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr
 import hu.bme.mit.theta.core.type.abstracttype.ModExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.IteExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
@@ -58,6 +60,8 @@ private const val arraySize = 10;
 fun XCFA.toC(parseContext: ParseContext, arraySupport: Boolean, exactArraySupport: Boolean,
     intRangeConstraint: Boolean): String = """         
     extern void abort();
+    extern unsigned short __VERIFIER_nondet_ushort();
+    extern short __VERIFIER_nondet_short();
     extern int __VERIFIER_nondet_int();
     extern _Bool __VERIFIER_nondet__Bool();
     extern void reach_error();
@@ -263,6 +267,7 @@ private fun StmtLabel.toC(parseContext: ParseContext, intRangeConstraint: Boolea
         }(); ${setOf(stmt.varDecl).unsafeBounds(parseContext, intRangeConstraint)}"
 
         is AssignStmt<*> -> "${stmt.varDecl.name.toC()} = ${stmt.expr.toC(parseContext)};"
+        is MemoryAssignStmt<*, *, *> -> "${stmt.deref.toC(parseContext)} = ${stmt.expr.toC(parseContext)};"
         is AssumeStmt -> "if(!${stmt.cond.toC(parseContext)}) abort();"
         else -> TODO("Not yet supported: $stmt")
     }
@@ -294,9 +299,12 @@ fun Expr<*>.toC(parseContext: ParseContext) =
         is MultiaryExpr<*, *> -> this.toC(parseContext)
         is ArrayWriteExpr<*, *> -> this.toC(parseContext)
         is ArrayReadExpr<*, *> -> this.toC(parseContext)
+        is Dereference<*, *, *> -> this.toC(parseContext)
         is IteExpr<*> -> this.toC(parseContext)
         else -> TODO("Not yet supported: $this")
     }
+
+fun Dereference<*, *, *>.toC(parseContext: ParseContext): String = "$array[$offset]"
 
 fun ArrayWriteExpr<*, *>.toC(parseContext: ParseContext): String =
     "array_write(${this.array.toC(parseContext)}, ${this.index.toC(parseContext)}, ${this.elem.toC(parseContext)})"

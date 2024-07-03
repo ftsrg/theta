@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
@@ -371,6 +372,12 @@ public final class ExprSimplifier {
 
             .addCase(IteExpr.class, this::simplifyIte)
 
+            // Reference
+
+            .addCase(Dereference.class, this::simplifyDereference)
+
+//            .addCase(Reference.class, this::simplifyReference)
+
             // Default
 
             .addDefault((o, val) -> {
@@ -428,6 +435,10 @@ public final class ExprSimplifier {
         final Expr<ExprType> elze = simplify(expr.getElse(), val);
 
         return expr.with(cond, then, elze);
+    }
+
+    private Expr<?> simplifyDereference(final Dereference<?, ?, ?> expr, final Valuation val) {
+        return expr.map(it -> simplify(it, val));
     }
 
     private Expr<?> simplifyArrayRead(final ArrayReadExpr<?, ?> expr, final Valuation val) {
@@ -1944,6 +1955,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<FpType> simplifyFpMul(final FpMulExpr expr, final Valuation val) {
+        if (true) return expr; // Rationale: https://github.com/ftsrg/theta/issues/180
         final List<Expr<FpType>> ops = new ArrayList<>();
 
         for (final Expr<FpType> op : expr.getOps()) {
@@ -1994,12 +2006,6 @@ public final class ExprSimplifier {
             final FpLitExpr leftLit = (FpLitExpr) leftOp;
             final FpLitExpr rightLit = (FpLitExpr) rightOp;
             return leftLit.div(expr.getRoundingMode(), rightLit);
-        }
-
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (leftOp.equals(rightOp)) {
-                return FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
-            }
         }
 
         return expr.with(leftOp, rightOp);

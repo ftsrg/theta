@@ -1,3 +1,4 @@
+void reach_error(){}
 extern unsigned int __VERIFIER_nondet_uint();
 int main() {
     int i = 0;

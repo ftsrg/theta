@@ -34,10 +34,15 @@ import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter
+import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.Decl
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.*
@@ -61,13 +66,14 @@ enum class InputType {
 enum class Backend {
     CEGAR,
     BOUNDED,
+    OC,
     LAZY,
     PORTFOLIO,
     NONE,
 }
 
 enum class POR(
-    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>) -> LTS<XcfaState<out ExprState>, XcfaAction>,
+    val getLts: (XCFA, MutableMap<VarDecl<*>, MutableSet<ExprState>>) -> LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
     val isDynamic: Boolean,
     val isAbstractionAware: Boolean
 ) {
@@ -92,77 +98,78 @@ enum class Domain(
         xcfa: XCFA,
         solver: Solver,
         maxEnum: Int,
-        waitlist: Waitlist<out ArgNode<out XcfaState<out ExprState>, XcfaAction>>,
-        stopCriterion: StopCriterion<out XcfaState<out ExprState>, XcfaAction>,
+        waitlist: Waitlist<out ArgNode<out XcfaState<out PtrState<out ExprState>>, XcfaAction>>,
+        stopCriterion: StopCriterion<out XcfaState<out PtrState<out ExprState>>, XcfaAction>,
         logger: Logger,
-        lts: LTS<XcfaState<out ExprState>, XcfaAction>,
+        lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
         errorDetectionType: ErrorDetection,
-        partialOrd: PartialOrd<out XcfaState<out ExprState>>
+        partialOrd: PartialOrd<out XcfaState<out PtrState<out ExprState>>>,
+        isHavoc: Boolean
     ) -> Abstractor<out ExprState, out ExprAction, out Prec>,
     val itpPrecRefiner: (exprSplitter: ExprSplitter) -> PrecRefiner<out ExprState, out ExprAction, out Prec, out Refutation>,
-    val initPrec: (XCFA, InitPrec) -> XcfaPrec<*>,
-    val partialOrd: (Solver) -> PartialOrd<out ExprState>,
+    val initPrec: (XCFA, InitPrec) -> XcfaPrec<out PtrPrec<*>>,
+    val partialOrd: (Solver) -> PartialOrd<out PtrState<out ExprState>>,
     val nodePruner: NodePruner<out ExprState, out ExprAction>,
     val stateType: Type
 ) {
 
     EXPL(
-        abstractor = { a, b, c, d, e, f, g, h, i ->
-            getXcfaAbstractor(ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<ExplState>>), d,
+        abstractor = { a, b, c, d, e, f, g, h, i, j ->
+            getXcfaAbstractor(ExplXcfaAnalysis(a, b, c, i as PartialOrd<XcfaState<PtrState<ExplState>>>, j), d,
                 e, f, g, h)
         },
         itpPrecRefiner = {
-            XcfaPrecRefiner<ExplState, ExplPrec, ItpRefutation>(ItpRefToExplPrec())
+            XcfaPrecRefiner<PtrState<ExplState>, ExplPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToExplPrec()))
         },
         initPrec = { x, ip -> ip.explPrec(x) },
-        partialOrd = { PartialOrd<ExplState> { s1, s2 -> s1.isLeq(s2) } },
-        nodePruner = AtomicNodePruner<XcfaState<ExplState>, XcfaAction>(),
+        partialOrd = { PartialOrd<ExplState> { s1, s2 -> s1.isLeq(s2) }.getPtrPartialOrd() },
+        nodePruner = AtomicNodePruner<XcfaState<PtrState<ExplState>>, XcfaAction>(),
         stateType = TypeToken.get(ExplState::class.java).type
     ),
     PRED_BOOL(
-        abstractor = { a, b, c, d, e, f, g, h, i ->
+        abstractor = { a, b, c, d, e, f, g, h, i, j ->
             getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.booleanAbstractor(b),
-                i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h)
+                i as PartialOrd<XcfaState<PtrState<PredState>>>, j), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
-            XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
+            XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
-        partialOrd = { solver -> PredOrd.create(solver) },
-        nodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>(),
+        partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
+        nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
         stateType = TypeToken.get(PredState::class.java).type
     ),
     PRED_CART(
-        abstractor = { a, b, c, d, e, f, g, h, i ->
+        abstractor = { a, b, c, d, e, f, g, h, i, j ->
             getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.cartesianAbstractor(b),
-                i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h)
+                i as PartialOrd<XcfaState<PtrState<PredState>>>, j), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
-            XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
+            XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
-        partialOrd = { solver -> PredOrd.create(solver) },
-        nodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>(),
+        partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
+        nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
         stateType = TypeToken.get(PredState::class.java).type
     ),
     PRED_SPLIT(
-        abstractor = { a, b, c, d, e, f, g, h, i ->
+        abstractor = { a, b, c, d, e, f, g, h, i, j ->
             getXcfaAbstractor(PredXcfaAnalysis(a, b, PredAbstractors.booleanSplitAbstractor(b),
-                i as PartialOrd<XcfaState<PredState>>), d, e, f, g, h)
+                i as PartialOrd<XcfaState<PtrState<PredState>>>, j), d, e, f, g, h)
         },
         itpPrecRefiner = { a ->
-            XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(a))
+            XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(ItpRefToPtrPrec(ItpRefToPredPrec(a)))
         },
         initPrec = { x, ip -> ip.predPrec(x) },
-        partialOrd = { solver -> PredOrd.create(solver) },
-        nodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>(),
+        partialOrd = { solver -> PredOrd.create(solver).getPtrPartialOrd() },
+        nodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>(),
         stateType = TypeToken.get(PredState::class.java).type
     ),
 }
 
 enum class Refinement(
     val refiner: (solverFactory: SolverFactory, monitorOption: CexMonitorOptions) -> ExprTraceChecker<out Refutation>,
-    val stopCriterion: StopCriterion<XcfaState<out ExprState>, XcfaAction>,
+    val stopCriterion: StopCriterion<XcfaState<PtrState<ExprState>>, XcfaAction>,
 ) {
 
     FW_BIN_ITP(
@@ -294,31 +301,34 @@ enum class Search {
 }
 
 enum class InitPrec(
-    val explPrec: (xcfa: XCFA) -> XcfaPrec<ExplPrec>,
-    val predPrec: (xcfa: XCFA) -> XcfaPrec<PredPrec>,
+    val explPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<ExplPrec>>,
+    val predPrec: (xcfa: XCFA) -> XcfaPrec<PtrPrec<PredPrec>>,
 ) {
 
     EMPTY(
-        explPrec = { XcfaPrec(ExplPrec.empty()) },
-        predPrec = { XcfaPrec(PredPrec.of()) }
+        explPrec = { XcfaPrec(PtrPrec(ExplPrec.empty(), emptySet())) },
+        predPrec = { XcfaPrec(PtrPrec(PredPrec.of(), emptySet())) }
     ),
     ALLVARS(
-        explPrec = { xcfa -> XcfaPrec(ExplPrec.of(xcfa.collectVars())) },
+        explPrec = { xcfa -> XcfaPrec(PtrPrec(ExplPrec.of(xcfa.collectVars()), emptySet())) },
         predPrec = { error("ALLVARS is not interpreted for the predicate domain.") }
     ),
     ALLGLOBALS(
-        explPrec = { xcfa -> XcfaPrec(ExplPrec.of(xcfa.vars.map { it.wrappedVar })) },
+        explPrec = { xcfa -> XcfaPrec(PtrPrec(ExplPrec.of(xcfa.vars.map { it.wrappedVar }), emptySet())) },
         predPrec = { error("ALLGLOBALS is not interpreted for the predicate domain.") }
     ),
     ALLASSUMES(
-        explPrec = { error("ALLVARS is not interpreted for the predicate domain.") },
-        predPrec = { xcfa -> XcfaPrec(PredPrec.of(xcfa.collectAssumes())) },
+        explPrec = { xcfa ->
+            XcfaPrec(
+                PtrPrec(ExplPrec.of(xcfa.collectAssumes().flatMap(ExprUtils::getVars)), emptySet()))
+        },
+        predPrec = { xcfa -> XcfaPrec(PtrPrec(PredPrec.of(xcfa.collectAssumes()), emptySet())) },
     ),
 
 }
 
 enum class ConeOfInfluenceMode(
-    val getLts: (XCFA, MutableMap<Decl<out hu.bme.mit.theta.core.type.Type>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out ExprState>, XcfaAction>
+    val getLts: (XCFA, MutableMap<VarDecl<*>, MutableSet<ExprState>>, POR) -> LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>
 ) {
 
     NO_COI({ xcfa, ivr, por ->
@@ -328,17 +338,19 @@ enum class ConeOfInfluenceMode(
         ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { COI.porLts = it }
         ConeOfInfluence.lts
     }),
-    POR_COI({ xcfa, ivr, _ ->
+    POR_COI({ xcfa, ivr, por ->
         ConeOfInfluence.coreLts = getXcfaLts()
-        XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+        if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+        else XcfaSporCoiLts(xcfa, ConeOfInfluence.lts)
     }),
     POR_COI_POR({ xcfa, ivr, por ->
         ConeOfInfluence.coreLts = por.getLts(xcfa, ivr).also { POR_COI_POR.porLts = it }
-        XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+        if (por.isAbstractionAware) XcfaAasporCoiLts(xcfa, ivr, ConeOfInfluence.lts)
+        else XcfaSporCoiLts(xcfa, ConeOfInfluence.lts)
     })
     ;
 
-    var porLts: LTS<XcfaState<out ExprState>, XcfaAction>? = null
+    var porLts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>? = null
 }
 
 // TODO CexMonitor: disable for multi_seq

@@ -20,11 +20,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
@@ -35,7 +32,6 @@ import org.kframework.mpfr.BigFloat;
 
 import java.math.BigInteger;
 import java.util.Iterator;
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -104,7 +100,7 @@ public final class TypeUtils {
             return result;
         } else {
             throw new ClassCastException(
-                    "The type of expression " + expr + " is not of type " + type);
+                    "The type of expression " + expr + " is not of type " + type + ", but " + expr.getType());
         }
     }
 

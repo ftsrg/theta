@@ -21,6 +21,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -72,6 +74,23 @@ public class LimitVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Assu
                 Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
                 Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
     }
+
+    @Override
+    public AssumeStmt visit(CSigned128 type, Expr<?> param) {
+        int width = parseContext.getArchitecture().getBitWidth("__int128");
+        return Assume(And(
+                Geq(param, Int(BigInteger.TWO.pow(width - 1).negate())),
+                Leq(param, Int(BigInteger.TWO.pow(width - 1).subtract(BigInteger.ONE)))));
+    }
+
+    @Override
+    public AssumeStmt visit(CUnsigned128 type, Expr<?> param) {
+        int width = parseContext.getArchitecture().getBitWidth("__int128");
+        return Assume(And(
+                Geq(param, Int(0)),
+                Leq(param, Int(BigInteger.TWO.pow(width).subtract(BigInteger.ONE)))));
+    }
+
 
     @Override
     public AssumeStmt visit(CSignedLongLong type, Expr<?> param) {

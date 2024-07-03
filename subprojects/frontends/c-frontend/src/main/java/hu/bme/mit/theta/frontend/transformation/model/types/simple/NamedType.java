@@ -22,6 +22,8 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CUnsignedChar;
@@ -67,7 +69,9 @@ public class NamedType extends CSimpleType {
                 if (isBool()) {
                     type = new CBool(this, parseContext);
                 } else if (isSigned()) {
-                    if (isLong()) {
+                    if (is128()) {
+                        type = new CSigned128(this, parseContext);
+                    } else if (isLong()) {
                         type = new CSignedLong(this, parseContext);
                     } else if (isLongLong()) {
                         type = new CSignedLongLong(this, parseContext);
@@ -77,7 +81,9 @@ public class NamedType extends CSimpleType {
                         type = new CSignedInt(this, parseContext);
                     }
                 } else {
-                    if (isLong()) {
+                    if (is128()) {
+                        type = new CUnsigned128(this, parseContext);
+                    } else if (isLong()) {
                         type = new CUnsignedLong(this, parseContext);
                     } else if (isLongLong()) {
                         type = new CUnsignedLongLong(this, parseContext);
@@ -142,6 +148,9 @@ public class NamedType extends CSimpleType {
     @Override
     protected void patch(CSimpleType cSimpleType) {
         switch (namedType) {
+            case "__int128":
+                cSimpleType.set128(true);
+                break;
             case "long":
                 if (cSimpleType.isLong()) {
                     cSimpleType.setLongLong(true);
@@ -155,6 +164,8 @@ public class NamedType extends CSimpleType {
                 break;
             case "_Bool":
                 cSimpleType.setBool(true);
+                break;
+            case "int":
                 break;
             default:
                 if (!cSimpleType.isTypedef()) {
@@ -178,6 +189,7 @@ public class NamedType extends CSimpleType {
         namedType.setBool(this.isBool());
         namedType.setLong(this.isLong());
         namedType.setLongLong(this.isLongLong());
+        namedType.set128(this.is128());
 
         return namedType;
     }
@@ -213,7 +225,12 @@ public class NamedType extends CSimpleType {
             stringBuilder.append("long long ");
         }
 
-        stringBuilder.append(namedType);
+        if (is128()) {
+            stringBuilder.append("__int128");
+        } else {
+            stringBuilder.append(namedType);
+        }
+
         return stringBuilder.toString();
     }
 
@@ -225,19 +242,7 @@ public class NamedType extends CSimpleType {
     @Override
     public CSimpleType copyOf() {
         CSimpleType namedType = new NamedType(parseContext, getNamedType(), uniqueWarningLogger);
-        namedType.setAtomic(this.isAtomic());
-        namedType.setExtern(this.isExtern());
-        namedType.setTypedef(this.isTypedef());
-        namedType.setVolatile(this.isVolatile());
-        namedType.setSigned(this.isSigned());
-        namedType.setShort(this.isShort());
-        namedType.setLong(this.isLong());
-        namedType.setBool(this.isBool());
-        namedType.setLongLong(this.isLongLong());
-        for (int i = 0; i < this.getPointerLevel(); i++) {
-            namedType.incrementPointer();
-        }
-
+        setUpCopy(namedType);
         return namedType;
     }
 }

@@ -160,7 +160,7 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getCond()).add(getThen()).add(getElse())
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getCond()).add(getThen()).add(getElse())
                 .toString();
     }
 

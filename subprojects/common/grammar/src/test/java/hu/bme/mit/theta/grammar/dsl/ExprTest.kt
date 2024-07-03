@@ -25,7 +25,7 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.decl.ParamDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
-import hu.bme.mit.theta.core.type.anytype.Exprs.Prime
+import hu.bme.mit.theta.core.type.anytype.Exprs.*
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr
@@ -222,7 +222,8 @@ class ExprTest {
                 arrayOf(Extract(bvLit1, Int(1), Int(4)), "(extract #b1010 1 4)",
                     emptyMap<Symbol, Decl<*>>()),
 
-                )
+                arrayOf(Dereference(Int(0), Int(1), Int()), "(deref 0 1 Int)", emptyMap<Symbol, Decl<*>>()),
+            )
         }
     }
 

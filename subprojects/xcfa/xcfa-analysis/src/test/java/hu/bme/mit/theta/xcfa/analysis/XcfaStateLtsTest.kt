@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaAasporLts
@@ -32,10 +33,10 @@ class XcfaStateLtsTest {
 
     @Test
     fun testApply() {
-        val actionOrder: MutableList<(XcfaState<ExplState>) -> XcfaAction> = ArrayList()
-        val expectations: MutableList<Predicate<XcfaState<ExplState>>> = ArrayList()
+        val actionOrder: MutableList<(XcfaState<PtrState<ExplState>>) -> XcfaAction> = ArrayList()
+        val expectations: MutableList<Predicate<XcfaState<PtrState<ExplState>>>> = ArrayList()
         val lts = getXcfaLts()
-        lateinit var initState: XcfaState<ExplState>
+        lateinit var initState: XcfaState<PtrState<ExplState>>
         lateinit var xcfa: XCFA
 
         val edges: MutableList<XcfaEdge> = ArrayList()
@@ -73,7 +74,7 @@ class XcfaStateLtsTest {
                     )
                 )
             ),
-            ExplState.bottom()
+            PtrState(ExplState.bottom())
         )
         val sporLts = XcfaSporLts(xcfa)
         val aasporLts = XcfaAasporLts(xcfa, LinkedHashMap())

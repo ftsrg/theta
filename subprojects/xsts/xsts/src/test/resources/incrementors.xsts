@@ -1,0 +1,16 @@
+var x: integer = 0
+ctrl var y: integer
+
+trans {
+    x:=x+1;
+}
+
+init {
+    y:=0;
+}
+
+env {
+    x:=x+1;
+}
+
+prop {true}

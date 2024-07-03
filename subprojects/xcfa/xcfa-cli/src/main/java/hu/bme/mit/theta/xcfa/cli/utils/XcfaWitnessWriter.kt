@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.utils
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -45,7 +46,8 @@ class XcfaWitnessWriter {
         // TODO eliminate the need for the instanceof check
         if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex is Trace<*, *>) {
             val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                safetyResult.asUnsafe().cex as Trace<XcfaState<*>, XcfaAction>?, cexSolverFactory)
+                safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?, cexSolverFactory,
+                parseContext)
 
             val witnessTrace = traceToWitness(trace = concrTrace, parseContext = parseContext)
             val witness = Witness(witnessTrace, inputFile)

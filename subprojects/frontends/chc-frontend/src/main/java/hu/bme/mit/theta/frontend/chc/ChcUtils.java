@@ -87,7 +87,7 @@ public class ChcUtils {
                 }
             }
             Expr<BoolType> replacedExpr = changeVars(expr, varsToLocal);
-            labels.add(new StmtLabel(AssumeStmt.of(replacedExpr), EmptyMetaData.INSTANCE));
+            labels.add(new StmtLabel(AssumeStmt.of(replacedExpr)));
         });
         return labels;
     }

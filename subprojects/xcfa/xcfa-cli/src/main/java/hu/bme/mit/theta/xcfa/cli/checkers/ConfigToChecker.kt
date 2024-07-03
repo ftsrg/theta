@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
@@ -39,9 +40,10 @@ fun getChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, parseContext: Par
         when (config.backendConfig.backend) {
             Backend.CEGAR -> getCegarChecker(xcfa, mcm, config, logger)
             Backend.BOUNDED -> getBoundedChecker(xcfa, mcm, config, logger)
+            Backend.OC -> getOcChecker(xcfa, mcm, config, logger)
             Backend.LAZY -> TODO()
             Backend.PORTFOLIO -> getPortfolioChecker(xcfa, mcm, config, parseContext, logger, uniqueLogger)
-            Backend.NONE -> SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<*>, XcfaAction>, XcfaPrec<*>> { _ -> SafetyResult.unknown() }
+            Backend.NONE -> SafetyChecker<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> { _ -> SafetyResult.unknown() }
         }
     }
 

@@ -19,14 +19,17 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.xcfa.lazyPointsToGraph
 import java.util.*
 
 class XCFA(
     val name: String,
     val vars: Set<XcfaGlobalVar>,                                   // global variables
-    procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
-    initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList()
+    val procedureBuilders: Set<XcfaProcedureBuilder> = emptySet(),
+    val initProcedureBuilders: List<Pair<XcfaProcedureBuilder, List<Expr<*>>>> = emptyList()
 ) {
+
+    val pointsToGraph by this.lazyPointsToGraph
 
     var cachedHash: Int? = null
 
@@ -117,10 +120,8 @@ data class XcfaLocation @JvmOverloads constructor(
 
     companion object {
 
-        private var cnt: Int = 0;
-        fun uniqueCounter(): Int {
-            return cnt++;
-        }
+        private var cnt: Int = 0
+        fun uniqueCounter(): Int = cnt++
     }
 
     override fun toString(): String {

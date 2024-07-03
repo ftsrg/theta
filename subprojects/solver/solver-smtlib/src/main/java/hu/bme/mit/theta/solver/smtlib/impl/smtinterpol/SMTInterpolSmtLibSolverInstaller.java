@@ -89,7 +89,7 @@ public class SMTInterpolSmtLibSolverInstaller extends SmtLibSolverInstaller.Defa
         final String fileName;
         switch (version) {
             case "2.5-1256":
-                fileName = "2.5-1230-g55d6ba76";
+                fileName = "2.5-1256-g55d6ba76";
                 break;
             case "2.5-1230":
                 fileName = "2.5-1230-g3eafb46a";

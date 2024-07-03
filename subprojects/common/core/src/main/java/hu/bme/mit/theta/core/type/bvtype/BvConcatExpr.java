@@ -108,6 +108,6 @@ public final class BvConcatExpr implements Expr<BvType> {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).addAll(getOps()).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().addAll(getOps()).toString();
     }
 }

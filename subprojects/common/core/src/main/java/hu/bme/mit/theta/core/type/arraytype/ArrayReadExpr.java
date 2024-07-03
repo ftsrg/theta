@@ -152,7 +152,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(array).add(index).toString();
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(array).add(index).toString();
     }
 
 }

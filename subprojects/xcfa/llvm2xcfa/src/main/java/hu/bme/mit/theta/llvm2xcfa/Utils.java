@@ -187,7 +187,7 @@ public class Utils {
             Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
             XcfaEdge edge;
             if (!lhs.getRef().equals(op))
-                edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt, EmptyMetaData.INSTANCE), new LlvmMetadata(instruction.getLineNumber()));
+                edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt), new LlvmMetadata(instruction.getLineNumber()));
             else
                 edge = new XcfaEdge(blockState.getLastLocation(), loc, NopLabel.INSTANCE, new LlvmMetadata(instruction.getLineNumber()));
             functionState.getProcedureBuilder().addLoc(loc);

@@ -18,6 +18,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
 import hu.bme.mit.theta.core.type.Expr;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -53,4 +54,12 @@ public class Enum extends CSimpleType {
         anEnum.setVolatile(this.isVolatile());
         return anEnum;
     }
+
+    @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new Enum(id, new LinkedHashMap<>(fields));
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
 }

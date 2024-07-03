@@ -57,7 +57,7 @@ public final class JavaSMTSolverManager extends SolverManager {
         final var solverName = matcher.group(1);
         final var solver = Solvers.valueOf(solverName);
 
-        return new ManagedFactory(JavaSMTSolverFactory.create(solver, new String[]{}));
+        return new ManagedFactory(JavaSMTSolverFactory.create(solver, new String[]{"--nonLinearArithmetic=USE"}));
     }
 
     @Override

@@ -22,8 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.decl.VarDecl;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -36,11 +35,11 @@ public final class AasporRefiner<S extends ExprState, A extends ExprAction, P ex
 
     private final PruneStrategy pruneStrategy;
 
-    private final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry;
+    private final Map<VarDecl<?>, Set<S>> ignoredVarRegistry;
 
     private AasporRefiner(final Refiner<S, A, P> refiner,
                           final PruneStrategy pruneStrategy,
-                          final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
+                          final Map<VarDecl<?>, Set<S>> ignoredVarRegistry) {
         this.refiner = refiner;
         this.pruneStrategy = pruneStrategy;
         this.ignoredVarRegistry = ignoredVarRegistry;
@@ -48,7 +47,7 @@ public final class AasporRefiner<S extends ExprState, A extends ExprAction, P ex
 
     public static <S extends ExprState, A extends ExprAction, P extends Prec> AasporRefiner<S, A, P> create(
             final Refiner<S, A, P> refiner, final PruneStrategy pruneStrategy,
-            final Map<Decl<? extends Type>, Set<S>> ignoredVarRegistry) {
+            final Map<VarDecl<?>, Set<S>> ignoredVarRegistry) {
         return new AasporRefiner<>(refiner, pruneStrategy, ignoredVarRegistry);
     }
 
@@ -58,7 +57,7 @@ public final class AasporRefiner<S extends ExprState, A extends ExprAction, P ex
         if (result.isUnsafe() || pruneStrategy != PruneStrategy.LAZY) return result;
 
         final P newPrec = result.asSpurious().getRefinedPrec();
-        final Set<Decl<? extends Type>> newlyAddedVars = new HashSet<>(newPrec.getUsedVars());
+        final Set<VarDecl<?>> newlyAddedVars = new HashSet<>(newPrec.getUsedVars());
         newlyAddedVars.removeAll(prec.getUsedVars());
 
         newlyAddedVars.forEach(newVar -> {

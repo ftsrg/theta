@@ -45,12 +45,12 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                 val edges = edge.splitIf(pred)
                 if (edges.size > 1 || (edges.size == 1 && pred((edges[0].label as SequenceLabel).labels[0]))) {
                     builder.removeEdge(edge)
-                    edges.forEach {
-                        if (pred((it.label as SequenceLabel).labels[0])) {
+                    edges.forEach { e ->
+                        if (pred((e.label as SequenceLabel).labels[0])) {
                             foundOne = true
-                            val source = it.source
-                            val target = it.target
-                            val invokeLabel: InvokeLabel = it.label.labels[0] as InvokeLabel
+                            val source = e.source
+                            val target = e.target
+                            val invokeLabel: InvokeLabel = e.label.labels[0] as InvokeLabel
                             val procedure = builder.parent.getProcedures().find { p -> p.name == invokeLabel.name }
                             checkNotNull(procedure)
                             val inlineIndex = builder.manager.passes.indexOfFirst { phase ->
@@ -59,7 +59,7 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                             procedure.optimize(inlineIndex)
 
                             val newLocs: MutableMap<XcfaLocation, XcfaLocation> = LinkedHashMap()
-                            procedure.getLocs().forEach { newLocs.put(it, it.inlinedCopy()) }
+                            procedure.getLocs().forEach { newLocs[it] = it.inlinedCopy() }
                             procedure.getVars().forEach { builder.addVar(it) }
                             procedure.getParams().forEach { builder.addVar(it.first) }
                             procedure.getEdges().forEach {
@@ -101,7 +101,7 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                                         SequenceLabel(listOf())))
                             }
                         } else {
-                            builder.addEdge(it)
+                            builder.addEdge(e)
                         }
 
                     }
@@ -114,6 +114,6 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
     }
 
     private fun XcfaLocation.inlinedCopy(): XcfaLocation {
-        return copy(name + XcfaLocation.uniqueCounter(), initial = false, final = false, error = false)
+        return copy(name = name + "_" + XcfaLocation.uniqueCounter(), initial = false, final = false, error = false)
     }
 }

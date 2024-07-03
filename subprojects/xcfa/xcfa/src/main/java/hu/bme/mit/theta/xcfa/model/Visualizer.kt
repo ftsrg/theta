@@ -16,15 +16,14 @@
 
 package hu.bme.mit.theta.xcfa.model
 
-fun XCFA.toDot(): String {
+fun XCFA.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)? = null): String {
     val builder = StringBuilder()
     builder.appendLine("digraph G {")
     builder.appendLine("label=\"$name\";")
 
-    var i = 0
-    for (procedure in procedures) {
-        builder.appendLine("subgraph cluster_" + i++ + " {")
-        builder.appendLine(procedure.toDot())
+    for ((i, procedure) in procedures.withIndex()) {
+        builder.appendLine("subgraph cluster_$i {")
+        builder.appendLine(procedure.toDot(edgeLabelCustomizer))
         builder.appendLine("}")
     }
 
@@ -32,13 +31,13 @@ fun XCFA.toDot(): String {
     return builder.toString()
 }
 
-fun XcfaProcedure.toDot(): String {
+fun XcfaProcedure.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)?): String {
     val builder = StringBuilder()
     builder.appendLine("label=\"$name\";")
-    locs.forEach { builder.appendLine(it.name + "[];") }
+    locs.forEach { builder.appendLine("${it.name}[];") }
     edges.forEach {
         builder.appendLine(
-            it.source.name + " -> " + it.target.name + "[label=\"" + it.label.toString() + "\"];")
+            "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];")
     }
     return builder.toString()
 }

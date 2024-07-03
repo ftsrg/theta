@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
@@ -109,6 +110,9 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
         is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type),
             cast(expr.changeVars(varLut, parseContext), varDecl.type))
 
+        is MemoryAssignStmt<*, *, *> -> MemoryAssignStmt.create(deref.changeVars(varLut) as Dereference<out Type, *, *>,
+            expr.changeVars(varLut))
+
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
         is AssumeStmt -> AssumeStmt.of(cond.changeVars(varLut, parseContext))
         is SequenceStmt -> SequenceStmt.of(stmts.map { it.changeVars(varLut, parseContext) })
@@ -132,8 +136,12 @@ fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseCon
         ret
     }
 
-fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
+fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Decl<T> =
+    (varLut[this] as? Decl<T> ?: this)
+
+fun <T : Type> VarDecl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
     (varLut[this] ?: this) as VarDecl<T>
+
 
 fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
 private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
@@ -150,34 +158,4 @@ private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {
     tally.pop()
     metaData[if (recursive) "recursive" else "canInline"] = Unit
     return !recursive
-}
-
-internal fun XcfaLabel.removeUnusedWrites(unusedVars: Set<VarDecl<*>>): XcfaLabel {
-    return when (this) {
-        is SequenceLabel -> {
-            val newLabels = mutableListOf<XcfaLabel>()
-            this.labels.forEach { label ->
-                val newLabel = label.removeUnusedWrites(unusedVars)
-                if (newLabel !is NopLabel) newLabels.add(newLabel)
-            }
-            SequenceLabel(newLabels)
-        }
-
-        is NondetLabel -> {
-            val newLabels = mutableSetOf<XcfaLabel>()
-            this.labels.forEach { label ->
-                val newLabel = label.removeUnusedWrites(unusedVars)
-                if (newLabel !is NopLabel) newLabels.add(newLabel)
-            }
-            NondetLabel(newLabels)
-        }
-
-        is StmtLabel -> when (this.stmt) {
-            is AssignStmt<*> -> if (unusedVars.contains(this.stmt.varDecl)) NopLabel else this
-            is HavocStmt<*> -> if (unusedVars.contains(this.stmt.varDecl)) NopLabel else this
-            else -> this
-        }
-
-        else -> this
-    }
 }

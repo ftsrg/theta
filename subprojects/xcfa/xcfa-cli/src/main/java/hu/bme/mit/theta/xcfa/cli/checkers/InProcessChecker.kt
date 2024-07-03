@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
