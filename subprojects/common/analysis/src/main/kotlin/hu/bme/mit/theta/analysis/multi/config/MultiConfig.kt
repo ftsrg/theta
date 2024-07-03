@@ -19,8 +19,10 @@ package hu.bme.mit.theta.analysis.multi.config
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.multi.MultiAction
 import hu.bme.mit.theta.analysis.multi.MultiPrec
 import hu.bme.mit.theta.analysis.multi.MultiState
@@ -31,9 +33,9 @@ class MultiConfig<
     LPrec : Prec, RPrec : Prec, DataPrec : Prec,
     MState : MultiState<LControl, RControl, DataState>,
     MAction : MultiAction<LAction, RAction>>(
-    val checker: SafetyChecker<MState, MAction, MultiPrec<LPrec, RPrec, DataPrec>>,
+    val checker: SafetyChecker<ARG<MState, MAction>, Trace<MState, MAction>, MultiPrec<LPrec, RPrec, DataPrec>>,
     val initPrec: MultiPrec<LPrec, RPrec, DataPrec>
 ) {
 
-    fun check(): SafetyResult<MState, MAction> = checker.check(initPrec)
+    fun check(): SafetyResult<ARG<MState, MAction>, Trace<MState, MAction>> = checker.check(initPrec)
 }
