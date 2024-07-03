@@ -297,7 +297,7 @@ private fun postVerificationLogging(
             )
 
             // TODO eliminate the need for the instanceof check
-        if (!config.outputConfig.argConfig.disable && safetyResult.witness is ARG<out State, out Action>?) {
+            if (!config.outputConfig.argConfig.disable && safetyResult.witness is ARG<out State, out Action>?) {
                 val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
                 val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.witness as ARG<out State, out Action>?)
                 argFile.writeText(GraphvizWriter.getInstance().writeString(g))
