@@ -74,6 +74,11 @@ fun main() {
             return stmt.then.accept(this, stmt.elze.accept(this, param))
         }
 
+        override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
+            stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Set<VarDecl<*>>?): Set<VarDecl<*>> {
+            TODO("Not yet implemented")
+        }
+
     }
 
     val numCtrl = 2
@@ -135,6 +140,11 @@ fun generateXsts(seed: Int): XSTS {
 
         override fun visit(stmt: IfStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
             return stmt.then.accept(this, stmt.elze.accept(this, param))
+        }
+
+        override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
+            stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Set<VarDecl<*>>?): Set<VarDecl<*>> {
+            TODO("Not yet implemented")
         }
 
     }

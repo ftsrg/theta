@@ -99,4 +99,9 @@ object XstsSerializer : StmtVisitor<Void?, String> {
         """.trimIndent()
     }
 
+    override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
+        stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Void?): String {
+        TODO("Not yet implemented")
+    }
+
 }
