@@ -53,7 +53,6 @@ object Deps {
     val axiomApi = "org.apache.ws.commons.axiom:axiom-api:${Versions.axiom}"
     val axiomImpl = "org.apache.ws.commons.axiom:axiom-impl:${Versions.axiom}"
     val jing = "com.thaiopensource:jing:${Versions.jing}"
-    val logback = "ch.qos.logback:logback-classic:${Versions.logback}"
 
     val delta = "lib/hu.bme.mit.delta"
     val deltaCollections = "lib/hu.bme.mit.delta.collections:${Versions.deltaCollections}"
