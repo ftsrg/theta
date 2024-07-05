@@ -13,11 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint;
 
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
@@ -27,7 +28,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class GeneralizedSaturationProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
+public final class SimpleSaturationProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
     public static boolean verbose = false;
 
     private MddVariableOrder variableOrder;
@@ -35,11 +36,11 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
     private final CacheManager<SaturationCache> cacheManager = new CacheManager<>(v -> new SaturationCache());
     private MddNode terminalZeroNode;
 
-    public GeneralizedSaturationProvider(final MddVariableOrder variableOrder) {
+    public SimpleSaturationProvider(final MddVariableOrder variableOrder) {
         this(variableOrder, new LegacyRelationalProductProvider(variableOrder));
     }
 
-    public GeneralizedSaturationProvider(
+    public SimpleSaturationProvider(
             final MddVariableOrder variableOrder, final RelationalProductProvider relProdProvider
     ) {
         this.variableOrder = variableOrder;
@@ -53,7 +54,9 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
             AbstractNextStateDescriptor nextStateRelation,
             MddVariableHandle highestAffectedVariable
     ) {
-        final MddHandle initialStates = relProdProvider.compute(variableOrder.getMddGraph().getHandleForTop(), initializer, highestAffectedVariable);
+        final MddHandle initialStates = relProdProvider.compute(((MddGraph<Boolean>) variableOrder.getMddGraph()).getHandleFor(true,
+                highestAffectedVariable
+        ), initializer, highestAffectedVariable);
 
         MddNode result;
 
@@ -121,41 +124,20 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
         if (verbose) {
             printIndent();
             System.out.println("Saturating on level " + variable.getTraceInfo() + " with " + d);
-
         }
         // indent++;
 
         final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
 
-//
-//		IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode, MddNode>(n,
-//			(node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
-//				d.getDiagonal(stateSpaceInfo).get(key),
-//				variable.getLower().orElse(null),
-//				cache.getLower()
-//			))
-//		);
-//
-//		MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
+        IntObjMapView<MddNode> satTemplate = new IntObjMapViews.Transforming<MddNode, MddNode>(n,
+                (node, key) -> node == null ? null : terminalZeroToNull(saturate(node,
+                        d.getDiagonal(stateSpaceInfo).get(key),
+                        variable.getLower().orElse(null),
+                        cache.getLower()
+                ))
+        );
 
-
-        MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-
-        for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
-
-            MddNode s = saturate(cFrom.value(),
-                    d.getDiagonal(stateSpaceInfo).get(cFrom.key()),
-                    variable.getLower().orElse(null),
-                    cache.getLower()
-            );
-
-            templateBuilder.set(cFrom.key(),
-                    terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
-            );
-
-        }
-
-        MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
+        MddNode nsat = variable.checkInNode(MddStructuralTemplate.of(satTemplate));
 
         boolean changed;
 
@@ -170,6 +152,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
                         continue;
                     }
                     MddNode nfire = satFire(nsat, d, dfire, variable, cache, stateSpaceInfo);
+
                     nfire = variable.union(nsat, nfire);
 
                     if (nfire != nsat) {
@@ -180,6 +163,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
             } else if (!d.isLocallyIdentity(stateSpaceInfo)) {
                 //System.out.println("Applying transition: " + d);
                 MddNode nfire = satFire(nsat, d, d, variable, cache, stateSpaceInfo);
+
                 nfire = variable.union(nsat, nfire);
 
                 if (nfire != nsat) {
@@ -233,16 +217,36 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 
         MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
-//		final IntObjMapView<AbstractNextStateDescriptor> diagonal = dfire.getDiagonal(
-//				stateSpaceInfo);
-//		var c = diagonal.cursor();
-
-        var stateSpaceInfo2 = new MddStateSpaceInfo(variable, n);
-
+        final IntObjMapView<AbstractNextStateDescriptor> diagonal = dfire.getDiagonal(stateSpaceInfo);
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
-                stateSpaceInfo2);
+                stateSpaceInfo);
 
         for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
+
+            // Identity step
+            final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
+            if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
+
+                if (verbose) {
+                    System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
+                }
+
+                MddNode s = relProd(cFrom.value(),
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
+                        diagonalContinuation,
+                        variable.getLower().orElse(null),
+                        cache.getLower()
+                );
+
+                if (s != terminalZeroNode) {
+                    // confirm(variable, cFrom.key());
+
+                    templateBuilder.set(cFrom.key(),
+                            terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
+                    );
+                }
+            }
+
             for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
                     cFrom.key()).cursor(); cTo.moveNext(); ) {
                 if (cFrom.key() == cTo.key()) {
@@ -257,7 +261,8 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
                 assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
 
                 MddNode s = relProd(cFrom.value(),
-                        dsat.getDiagonal(stateSpaceInfo2).get(cTo.key()),
+                        // Level skip will be encoded as default value
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
                         cTo.value(),
                         variable.getLower().orElse(null),
                         cache.getLower()
@@ -340,7 +345,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
                 }
 
                 MddNode s = relProd(cFrom.value(),
-                        dsat.getDiagonal(stateSpaceInfo).get(cFrom.key()),
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
                         diagonalContinuation,
                         variable.getLower().orElse(null),
                         cache.getLower()
@@ -369,7 +374,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
                 assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
 
                 MddNode s = relProd(cFrom.value(),
-                        dsat.getDiagonal(stateSpaceInfo).get(cTo.key()),
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
                         cTo.value(),
                         variable.getLower().orElse(null),
                         cache.getLower()
@@ -494,6 +499,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 
         return new SaturateCache(cacheManager);
     }
+
 
     // TODO: HAXXXX DON'T DO THIS EVER AGAIN
     public Set<MddNode> getSaturatedNodes() {
