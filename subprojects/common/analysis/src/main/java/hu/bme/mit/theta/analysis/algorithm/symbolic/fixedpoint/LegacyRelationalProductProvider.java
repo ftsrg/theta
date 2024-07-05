@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint;
 
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
@@ -25,24 +25,28 @@ import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescr
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class CursorRelationalProductProvider implements RelationalProductProvider {
-    private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>> cacheManager = new CacheManager<>(v -> new BinaryOperationCache<>());
+public final class LegacyRelationalProductProvider implements RelationalProductProvider {
+    private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>> cacheManager = new CacheManager<>(
+            v -> new BinaryOperationCache<>());
     private final MddVariableOrder variableOrder;
 
-    public CursorRelationalProductProvider(final MddVariableOrder variableOrder) {
+    public LegacyRelationalProductProvider(final MddVariableOrder variableOrder) {
         this.variableOrder = variableOrder;
         this.variableOrder.getMddGraph().registerCleanupListener(this);
     }
 
-    private MddNode recurse(final MddNode mddNode, final AbstractNextStateDescriptor nextState, final AbstractNextStateDescriptor.Cursor nextStateCursor, MddVariable currentVariable, final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>>.CacheHolder currentCache) {
+    private MddNode recurse(final MddNode mddNode, final AbstractNextStateDescriptor nextState,
+                            MddVariable currentVariable, final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor,
+            MddNode>>.CacheHolder currentCache) {
         if (currentVariable.getLower().isPresent()) {
-            return doCompute(mddNode, nextState, nextStateCursor, currentVariable.getLower().get(), currentCache.getLower());
+            return doCompute(mddNode, nextState, currentVariable.getLower().get(), currentCache.getLower());
         } else {
             return computeTerminal(mddNode, nextState, currentVariable.getMddGraph());
         }
     }
 
-    private MddNode unionChildren(final MddNode lhs, final MddNode rhs, MddVariable currentVariable) {
+    private MddNode unionChildren(final MddNode lhs, final MddNode rhs,
+                                  MddVariable currentVariable) {
         if (currentVariable.getLower().isPresent()) {
             return currentVariable.getLower().get().union(lhs, rhs);
         } else {
@@ -51,11 +55,20 @@ public final class CursorRelationalProductProvider implements RelationalProductP
     }
 
     @Override
-    public MddNode compute(final MddNode mddNode, final AbstractNextStateDescriptor abstractNextStateDescriptor, final MddVariable mddVariable) {
-        return doCompute(mddNode, abstractNextStateDescriptor, abstractNextStateDescriptor.rootCursor(), mddVariable, cacheManager.getCacheFor(mddVariable));
+    public MddNode compute(
+            final MddNode mddNode,
+            final AbstractNextStateDescriptor abstractNextStateDescriptor,
+            final MddVariable mddVariable
+    ) {
+        return doCompute(mddNode, abstractNextStateDescriptor, mddVariable, cacheManager.getCacheFor(mddVariable));
     }
 
-    private MddNode doCompute(final MddNode lhs, final AbstractNextStateDescriptor nextState, final AbstractNextStateDescriptor.Cursor nextStateCursor, final MddVariable variable, final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>>.CacheHolder cache) {
+    private MddNode doCompute(
+            final MddNode lhs,
+            final AbstractNextStateDescriptor nextState,
+            final MddVariable variable,
+            final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>>.CacheHolder cache
+    ) {
         assert cache != null : "Invalid behavior for CacheManager: should have assigned a cache to every variable.";
         if (variable.isNullOrZero(lhs) || nextState == AbstractNextStateDescriptor.terminalIdentity()) {
             return lhs;
@@ -66,7 +79,8 @@ public final class CursorRelationalProductProvider implements RelationalProductP
 
         boolean lhsSkipped = !lhs.isOn(variable);
 
-        if ((lhsSkipped || !variable.isNullOrZero(lhs.defaultValue())) && !(lhs.isTerminal() && nextState instanceof AbstractNextStateDescriptor.Postcondition)) {
+        if ((lhsSkipped || !variable.isNullOrZero(lhs.defaultValue())) &&
+                !(lhs.isTerminal() && nextState instanceof AbstractNextStateDescriptor.Postcondition)) {
             throw new UnsupportedOperationException("Default values are not yet supported in relational product.");
         }
 
@@ -78,13 +92,16 @@ public final class CursorRelationalProductProvider implements RelationalProductP
         final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, lhs);
 
         final IntObjMapView<AbstractNextStateDescriptor> diagonal = nextState.getDiagonal(stateSpaceInfo);
-        final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = nextState.getOffDiagonal(stateSpaceInfo);
+        final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = nextState.getOffDiagonal(
+                stateSpaceInfo);
 
         IntObjMapView<MddNode> template;
 
         // Patch to enable initializers
         if (lhs.isTerminal() && nextState instanceof AbstractNextStateDescriptor.Postcondition) {
-            template = new IntObjMapViews.Transforming<AbstractNextStateDescriptor, MddNode>(nextState.getDiagonal(stateSpaceInfo), ns -> ns == null ? null : terminalZeroToNull(recurse(lhs, ns, nextStateCursor, variable, cache), variable.getMddGraph().getTerminalZeroNode()));
+            template = new IntObjMapViews.Transforming<AbstractNextStateDescriptor, MddNode>(nextState.getDiagonal(
+                    stateSpaceInfo), ns -> ns == null ? null : terminalZeroToNull(recurse(lhs, ns, variable, cache),
+                    variable.getMddGraph().getTerminalZeroNode()));
             // } else if (diagonal.isEmpty() && offDiagonal.isEmpty() && AbstractNextStateDescriptor.isNullOrEmpty(
             // 	offDiagonal.defaultValue())) {
             // 	// Either the ANSD does not affect this level or it is not fireable - will be evaluated in the next call
@@ -97,35 +114,22 @@ public final class CursorRelationalProductProvider implements RelationalProductP
         } else {
             MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
             for (IntObjCursor<? extends MddNode> c = lhs.cursor(); c.moveNext(); ) {
-                // TODO we might not need this
-//                try(var valueCursor = nextStateCursor.valueCursor(c.key())) {
-//                    valueCursor.moveTo(c.key());
-//                    final MddNode res = recurse(c.value(), diagonal.get(c.key()), valueCursor, variable, cache);
-//                    final MddNode unioned = unionChildren(res, templateBuilder.get(c.key()), variable);
-//
-//                    templateBuilder.set(c.key(), terminalZeroToNull(unioned, variable.getMddGraph().getTerminalZeroNode()));
-//                }
-                try (var valueCursor = nextStateCursor.valueCursor(c.key())) {
-//                  for (IntObjCursor<? extends AbstractNextStateDescriptor> next = offDiagonal.get(c.key()).cursor(); next.moveNext(); ) {
-                    for (; valueCursor.moveNext(); ) {
+                final MddNode res = recurse(c.value(), diagonal.get(c.key()), variable, cache);
+                final MddNode unioned = unionChildren(res, templateBuilder.get(c.key()), variable);
 
-                        final MddNode res1 = recurse(c.value(), valueCursor.value(), valueCursor, variable, cache);
-                        final MddNode unioned1 = unionChildren(res1, templateBuilder.get(valueCursor.key()), variable);
+                templateBuilder.set(c.key(),
+                        terminalZeroToNull(unioned, variable.getMddGraph().getTerminalZeroNode())
+                );
 
-                        templateBuilder.set(valueCursor.key(), terminalZeroToNull(unioned1, variable.getMddGraph().getTerminalZeroNode()));
-                    }
+                for (IntObjCursor<? extends AbstractNextStateDescriptor> next = offDiagonal.get(c.key()).cursor();
+                     next.moveNext(); ) {
+                    final MddNode res1 = recurse(c.value(), next.value(), variable, cache);
+                    final MddNode unioned1 = unionChildren(res1, templateBuilder.get(next.key()), variable);
+
+                    templateBuilder.set(next.key(),
+                            terminalZeroToNull(unioned1, variable.getMddGraph().getTerminalZeroNode())
+                    );
                 }
-
-
-//				for (IntObjCursor<? extends AbstractNextStateDescriptor> next = offDiagonal.get(c.key()).cursor();
-//				     next.moveNext(); ) {
-//					final MddNode res1 = recurse(c.value(), next.value(), variable, cache);
-//					final MddNode unioned1 = unionChildren(res1, templateBuilder.get(next.key()), variable);
-//
-//					templateBuilder.set(next.key(),
-//						terminalZeroToNull(unioned1, variable.getMddGraph().getTerminalZeroNode())
-//					);
-//				}
             }
             template = templateBuilder.buildAndReset();
         }
@@ -138,7 +142,9 @@ public final class CursorRelationalProductProvider implements RelationalProductP
     }
 
     @Override
-    public MddNode computeTerminal(final MddNode mddNode, final AbstractNextStateDescriptor abstractNextStateDescriptor, final MddGraph<?> mddGraph) {
+    public MddNode computeTerminal(
+            final MddNode mddNode, final AbstractNextStateDescriptor abstractNextStateDescriptor, final MddGraph<?> mddGraph
+    ) {
         if (mddNode == mddGraph.getTerminalZeroNode() || !abstractNextStateDescriptor.evaluate()) {
             return mddGraph.getTerminalZeroNode();
         }
@@ -161,7 +167,10 @@ public final class CursorRelationalProductProvider implements RelationalProductP
 
     @Override
     public void cleanup() {
-        this.cacheManager.forEachCache((cache) -> cache.clearSelectively((source, ns, result) -> source.getReferenceCount() == 0 || result.getReferenceCount() == 0));
+        this.cacheManager.forEachCache((cache) -> cache.clearSelectively((source, ns, result) -> source.getReferenceCount() ==
+                0 ||
+                result.getReferenceCount() ==
+                        0));
     }
 
     private class Aggregator implements Consumer<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>> {

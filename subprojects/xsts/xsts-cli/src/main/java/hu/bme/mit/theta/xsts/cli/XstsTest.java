@@ -20,7 +20,7 @@ import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.*;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint.*;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.OrNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
