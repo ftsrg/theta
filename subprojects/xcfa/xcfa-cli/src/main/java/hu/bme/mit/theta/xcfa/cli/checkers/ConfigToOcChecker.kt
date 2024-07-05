@@ -36,7 +36,9 @@ fun getOcChecker(xcfa: XCFA, mcm: MCM,
     logger: Logger): SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
     val ocChecker = XcfaOcChecker(xcfa, (config.backendConfig.specConfig as OcConfig).decisionProcedure, logger)
     return object : SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
-        override fun check(prec: XcfaPrec<*>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = check()
+        override fun check(
+            prec: XcfaPrec<*>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = check()
+
         override fun check(): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = ocChecker.check()
     }
 }
