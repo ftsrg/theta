@@ -71,7 +71,9 @@ public final class ExprSimplifier {
     @SuppressWarnings("unchecked")
     public <T extends Type> Expr<T> simplify(final Expr<T> expr, final Valuation valuation) {
         return (Expr<T>) TABLE.dispatch(expr, valuation);
-    }    private final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
+    }
+
+    private final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
 
             // Boolean
 
@@ -1958,8 +1960,8 @@ public final class ExprSimplifier {
         final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
-        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return Bool(leftOp.equals(rightOp));
+        if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
+            return lLit.eq(rLit);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2024,8 +2026,8 @@ public final class ExprSimplifier {
         final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
-        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return Bool(!leftOp.equals(rightOp));
+        if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
+            return lLit.neq(rLit);
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
             if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
                 return False();
