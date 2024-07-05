@@ -73,13 +73,15 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
-    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = let {
+    override fun check(
+        prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         xcfa.initProcedures.forEach { processThread(Thread(it.first)) }
         addCrossThreadRelations()
-        if (!addToSolver()) return@let SafetyResult.safe<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(EmptyWitness.getInstance()) // no violations in the model
+        if (!addToSolver()) return@let SafetyResult.safe<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(
+            EmptyWitness.getInstance()) // no violations in the model
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status = ocChecker.check(events, pos, rfs)
