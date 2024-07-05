@@ -13,14 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint;
+package hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint;
 
 import com.google.common.base.Preconditions;
 import com.koloboke.collect.map.ObjIntMap;
 import com.koloboke.collect.map.hash.HashObjIntMaps;
 import com.koloboke.collect.set.ObjSet;
 import com.koloboke.collect.set.hash.HashObjSets;
-import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.collections.IntStatistics;
