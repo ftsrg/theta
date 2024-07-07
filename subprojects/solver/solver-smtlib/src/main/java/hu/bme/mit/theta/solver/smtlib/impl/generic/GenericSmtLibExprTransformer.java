@@ -113,6 +113,7 @@ import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -145,12 +146,14 @@ import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -1171,16 +1174,25 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     protected String transformFuncApp(final FuncAppExpr<?, ?> expr) {
         final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
         final Expr<?> func = funcAndArgs.get1();
+        final List<Expr<?>> args = funcAndArgs.get2();
         if (func instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) func;
             final Decl<?> decl = ref.getDecl();
             final String funcDecl = transformer.toSymbol(decl);
-            final List<Expr<?>> args = funcAndArgs.get2();
             final String[] argTerms = args.stream()
                     .map(this::toTerm)
                     .toArray(String[]::new);
 
             return String.format("(%s %s)", funcDecl, String.join(" ", argTerms));
+        } else if (func instanceof FuncLitExpr<?, ?>) {
+            Expr<?> replaced = func;
+            int i = 0;
+            while (replaced instanceof FuncLitExpr<?, ?>) {
+                final ParamDecl<?> param = ((FuncLitExpr<?, ?>) replaced).getParam();
+                final Expr<?> funcExpr = ((FuncLitExpr<?, ?>) replaced).getResult();
+                replaced = ExprUtils.changeDecls(funcExpr, Map.of(param, ((RefExpr<?>) args.get(i++)).getDecl()));
+            }
+            return toTerm(replaced);
         } else {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);

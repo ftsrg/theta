@@ -18,7 +18,13 @@ package hu.bme.mit.theta.solver.smtlib;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.HornSolver;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverBase;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.bitwuzla.BitwuzlaSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.cvc4.CVC4SmtLibSolverInstaller;
@@ -35,11 +41,17 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public final class SmtLibSolverManager extends SolverManager {
 
@@ -364,6 +376,14 @@ public final class SmtLibSolverManager extends SolverManager {
         public ItpSolver createItpSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createItpSolver();
+            instantiatedSolvers.add(solver);
+            return solver;
+        }
+
+        @Override
+        public HornSolver createHornSolver() {
+            checkState(!closed, "Solver manager was closed");
+            final var solver = solverFactory.createHornSolver();
             instantiatedSolvers.add(solver);
             return solver;
         }

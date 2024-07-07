@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.solver.z3
 
+import hu.bme.mit.theta.common.OsHelper
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
@@ -27,7 +29,10 @@ import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.HornSolver
-import org.junit.jupiter.api.Assertions
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
+import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -37,10 +42,49 @@ import java.util.stream.Stream
 class Z3HornSolverTest {
     companion object {
 
+        private var solverInstalled: Boolean = false
+        private var solverManager: SmtLibSolverManager? = null
+        private var solverFactory: SolverFactory? = null
+
+        private val SOLVER: String = "z3"
+        private val VERSION: String = "4.13.0"
+
         @JvmStatic
         fun solvers(): Stream<Arguments> {
-            return Stream.of(Arguments.of(Z3SolverFactory.getInstance().createHornSolver()))
+            return Stream.of(
+                Arguments.of(Z3SolverFactory.getInstance().createHornSolver()),
+                Arguments.of(solverFactory!!.createHornSolver()),
+            )
         }
+
+        @BeforeAll
+        @JvmStatic
+        fun init() {
+            if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+                val home = SmtLibSolverManager.HOME
+
+                solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
+                try {
+                    solverManager!!.install(SOLVER, VERSION, VERSION, null, false)
+                    solverInstalled = true
+                } catch (e: SmtLibSolverInstallerException) {
+                    e.printStackTrace()
+                }
+
+                solverFactory = solverManager!!.getSolverFactory(SOLVER, VERSION)
+            }
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun destroy() {
+            if (solverInstalled) solverManager!!.uninstall(SOLVER, VERSION)
+        }
+    }
+
+    @BeforeEach
+    fun before() {
+        Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
     }
 
     @ParameterizedTest

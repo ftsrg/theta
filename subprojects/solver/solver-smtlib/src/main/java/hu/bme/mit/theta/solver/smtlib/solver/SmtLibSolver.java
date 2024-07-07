@@ -22,14 +22,25 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.HornSolver;
+import hu.bme.mit.theta.solver.ProofNode;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
+import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.*;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.CheckSatResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GeneralResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GetModelResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GetProofResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GetUnsatCoreResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
@@ -40,14 +51,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-public class SmtLibSolver implements UCSolver, Solver {
+public class SmtLibSolver implements UCSolver, Solver, HornSolver {
 
     private static final String ASSUMPTION_LABEL = "_LABEL_%d";
     protected final SmtLibSymbolTable symbolTable;
     protected final SmtLibTransformationManager transformationManager;
     protected final SmtLibTermTransformer termTransformer;
     protected final SmtLibSolverBinary solverBinary;
+    private final boolean unsatCoreEnabled;
+    private final String logic;
+
     protected final Stack<Expr<BoolType>> assertions;
     protected final Map<String, Expr<BoolType>> assumptions;
     protected final Stack<ConstDecl<?>> declarationStack;
@@ -66,7 +81,7 @@ public class SmtLibSolver implements UCSolver, Solver {
             final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
             boolean unsatCoreEnabled
     ) {
-        this(symbolTable, transformationManager, termTransformer, solverBinary, unsatCoreEnabled, SmtLibEnumStrategy.getDefaultStrategy());
+        this(symbolTable, transformationManager, termTransformer, solverBinary, unsatCoreEnabled, SmtLibEnumStrategy.getDefaultStrategy(), "ALL");
     }
 
     public SmtLibSolver(
@@ -74,7 +89,8 @@ public class SmtLibSolver implements UCSolver, Solver {
             final SmtLibTransformationManager transformationManager,
             final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
             boolean unsatCoreEnabled,
-            final SmtLibEnumStrategy enumStrategy
+            final SmtLibEnumStrategy enumStrategy,
+            final String logic
     ) {
         this.solverBinary = solverBinary;
         this.symbolTable = symbolTable;
@@ -83,6 +99,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         this.enumStrategy = enumStrategy;
 
         this.unsatCoreEnabled = unsatCoreEnabled;
+        this.logic = logic;
 
         assertions = new StackImpl<>();
         assumptions = new HashMap<>();
@@ -267,7 +284,10 @@ public class SmtLibSolver implements UCSolver, Solver {
         if (unsatCoreEnabled) {
             issueGeneralCommand("(set-option :produce-unsat-cores true)");
         }
-        issueGeneralCommand("(set-logic ALL)");
+        if (logic.equals("HORN")) {
+            issueGeneralCommand("(set-option :produce-proofs true)");
+        }
+        issueGeneralCommand("(set-logic " + logic + ")");
     }
 
     protected void clearState() {
@@ -295,6 +315,28 @@ public class SmtLibSolver implements UCSolver, Solver {
             return GeneralResponse.fromContext(parser.response());
         } catch (Exception e) {
             throw new SmtLibSolverException("Could not parse solver output: " + response, e);
+        }
+    }
+
+    @Override
+    public ProofNode getProof() {
+        solverBinary.issueCommand("(get-proof)");
+        var response = solverBinary.readResponse();
+        if (response.charAt(0) == '(' && response.charAt(response.length() - 1) == ')') {
+            // for some reason, this is encapsulated in brackets
+            response = response.substring(1, response.length() - 1);
+        }
+        response = response.substring(response.indexOf("(proof"));
+        // hopefully the proof is always the last line
+        final var res = parseResponse(response);
+        if (res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        } else if (res.isSpecific()) {
+            final GetProofResponse getModelResponse = res.asSpecific().asGetProofResponse();
+            final var proof = termTransformer.toExpr(getModelResponse.getProof(), Bool(), new SmtLibModel(Collections.emptyMap()));
+            return null;
+        } else {
+            throw new AssertionError();
         }
     }
 }

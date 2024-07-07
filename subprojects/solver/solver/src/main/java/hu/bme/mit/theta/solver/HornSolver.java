@@ -38,5 +38,7 @@ public interface HornSolver extends Solver {
     /**
      * Get the proof found in the solver.
      */
-    ProofNode getProof();
+    default ProofNode getProof() {
+        throw new UnsupportedOperationException("Cannot get proof.");
+    }
 }

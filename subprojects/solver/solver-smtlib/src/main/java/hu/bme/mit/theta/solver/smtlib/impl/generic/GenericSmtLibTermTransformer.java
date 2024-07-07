@@ -323,13 +323,14 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         final List<ParamDecl<? extends Type>> paramDecls = ctx.sorted_var().stream()
                 .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
                 .collect(toList());
-        checkArgument(paramDecls.size() == 1, "Only unary functions are supported");
 
         pushParams(paramDecls, vars);
-        final var op = transformTerm(ctx.term(), model, vars);
+        var op = transformTerm(ctx.term(), model, vars);
         popParams(paramDecls, vars);
-
-        return Func(paramDecls.get(0), op);
+        for (ParamDecl<?> param : paramDecls) {
+            op = Func(param, op);
+        }
+        return op;
     }
 
     protected Expr<?> transformTerm(final TermContext ctx, final SmtLibModel model,

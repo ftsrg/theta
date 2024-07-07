@@ -54,6 +54,7 @@ specific_success_response
     : check_sat_response
     | get_unsat_core_response
     | get_model_response
+    | proof_response
     | get_interpolants_response_smtinterpol
     ;
 
@@ -100,6 +101,10 @@ function_def
 
 function_dec
     : ParOpen symbol ParOpen sorted_var* ParClose sort ParClose
+    ;
+
+proof_response
+    : ParOpen PROOF term ParClose
     ;
 
 get_interpolants_response_smtinterpol
@@ -504,6 +509,11 @@ CMD_SetOption
     ;
 
 
+// proof
+
+PROOF
+    : 'proof'
+    ;
 
 
 // General reserved words
