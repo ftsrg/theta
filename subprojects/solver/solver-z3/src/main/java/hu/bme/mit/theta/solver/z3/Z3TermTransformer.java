@@ -19,6 +19,13 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.*;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 import com.microsoft.z3.enumerations.Z3_sort_kind;
+import com.microsoft.z3.ArrayExpr;
+import com.microsoft.z3.ArraySort;
+import com.microsoft.z3.FPNum;
+import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.Model;
+import com.microsoft.z3.Sort;
+import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -280,12 +287,13 @@ final class Z3TermTransformer {
     private Expr<?> transformFuncInterp(final com.microsoft.z3.FuncInterp funcInterp,
                                         final Model model, final List<Decl<?>> vars) {
         checkArgument(funcInterp.getArity() >= 1);
-        final ParamDecl<?> paramDecl = (ParamDecl<?>) vars.get(vars.size() - 1);
-        final Expr<?> op = createFuncLitExprBody(
-                vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream()
-                        .map(decl -> (ParamDecl<?>) decl).collect(Collectors.toList()), funcInterp, model,
-                vars);
-        return Func(paramDecl, op);
+        final List<ParamDecl<?>> params = vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream()
+                .map(decl -> (ParamDecl<?>) decl).collect(Collectors.toList());
+        Expr<?> op = createFuncLitExprBody(params, funcInterp, model, vars);
+        for (ParamDecl<?> param : params) {
+            op = Func(param, op);
+        }
+        return op;
     }
 
     private Expr<?> createFuncLitExprBody(final List<ParamDecl<?>> paramDecl,
@@ -410,8 +418,9 @@ final class Z3TermTransformer {
     private List<ParamDecl<?>> transformParams(final List<Decl<?>> vars,
                                                final com.microsoft.z3.Sort[] sorts) {
         final ImmutableList.Builder<ParamDecl<?>> builder = ImmutableList.builder();
+        int parambase = vars.size();
         for (final com.microsoft.z3.Sort sort : sorts) {
-            final ParamDecl<?> param = transformParam(vars, sort);
+            final ParamDecl<?> param = transformParam(vars, sort, parambase++);
             builder.add(param);
         }
         final List<ParamDecl<?>> paramDecls = builder.build();
@@ -419,9 +428,9 @@ final class Z3TermTransformer {
     }
 
     private ParamDecl<?> transformParam(final List<Decl<?>> vars,
-                                        final com.microsoft.z3.Sort sort) {
+                                        final Sort sort, int i) {
         final Type type = transformSort(sort);
-        final ParamDecl<?> param = Param(format(PARAM_NAME_FORMAT, vars.size()), type);
+        final ParamDecl<?> param = Param(format(PARAM_NAME_FORMAT, i), type);
         return param;
     }
 

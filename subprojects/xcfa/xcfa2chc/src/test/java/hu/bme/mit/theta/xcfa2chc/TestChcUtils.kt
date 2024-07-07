@@ -16,8 +16,11 @@
 
 package hu.bme.mit.theta.xcfa2chc
 
+import hu.bme.mit.theta.core.ParamHolder
+import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.ParamDecl
+import hu.bme.mit.theta.core.plus
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read
 import hu.bme.mit.theta.core.type.arraytype.ArrayType

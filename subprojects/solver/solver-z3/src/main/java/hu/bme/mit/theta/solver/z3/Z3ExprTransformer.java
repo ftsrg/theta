@@ -39,12 +39,15 @@ import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.*;
 import hu.bme.mit.theta.core.type.rattype.*;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
@@ -1140,15 +1143,24 @@ final class Z3ExprTransformer {
     private com.microsoft.z3.Expr transformFuncApp(final FuncAppExpr<?, ?> expr) {
         final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
         final Expr<?> func = funcAndArgs.get1();
+        final List<Expr<?>> args = funcAndArgs.get2();
         if (func instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) func;
             final Decl<?> decl = ref.getDecl();
             final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
-            final List<Expr<?>> args = funcAndArgs.get2();
             final com.microsoft.z3.Expr[] argTerms = args.stream()
                     .map(this::toTerm)
                     .toArray(com.microsoft.z3.Expr[]::new);
             return context.mkApp(funcDecl, argTerms);
+        } else if (func instanceof FuncLitExpr<?, ?>) {
+            Expr<?> replaced = func;
+            int i = 0;
+            while (replaced instanceof FuncLitExpr<?, ?>) {
+                final ParamDecl<?> param = ((FuncLitExpr<?, ?>) replaced).getParam();
+                final Expr<?> funcExpr = ((FuncLitExpr<?, ?>) replaced).getResult();
+                replaced = ExprUtils.changeDecls(funcExpr, Map.of(param, ((RefExpr<?>) args.get(i++)).getDecl()));
+            }
+            return toTerm(replaced);
         } else {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
