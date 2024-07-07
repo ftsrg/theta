@@ -75,17 +75,27 @@ class TestChcUtils {
 
         val init = Relation("init", i2i, i2i, i2i, i2i, Int()) // br, co, rf, com
 
-        val T0 = Relation("T0", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0G = Relation("T0_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0C = Relation("T0_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0CF = Relation("T0_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0F = Relation("T0_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0 = Relation("T0", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0G = Relation("T0_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0C = Relation("T0_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0CF = Relation("T0_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0F = Relation("T0_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
-        val T1 = Relation("T1", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1G = Relation("T1_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1C = Relation("T1_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1CF = Relation("T1_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1F = Relation("T1_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(), Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1 = Relation("T1", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1G = Relation("T1_gate", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1C = Relation("T1_critical", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1CF = Relation("T1_critical_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1F = Relation("T1_final", i2i, i2i, i2i, i2i, Int(), Int(), Int(), Int(),
+            Int()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
         val W = Relation("W", i2i, i2i, i2i, i2i, Int(), Int(), Int()) // br, co, rf, com, eid, vid, val
 
@@ -93,8 +103,8 @@ class TestChcUtils {
 
         init(br, co, rf, com, eid) +=
             Eq(eid, Int(0)) +
-            Eq(Read(co, Int(0)), Int(0)) +
-            Eq(Read(com, Int(0)), Int(0))
+                Eq(Read(co, Int(0)), Int(0)) +
+                Eq(Read(com, Int(0)), Int(0))
 
         W(br, co, rf, com, eid, vid, pI[0]) += // turn := 0
             init(br, co, rf, com, eid).expr +
@@ -120,14 +130,14 @@ class TestChcUtils {
 
         W(br, co, rf, com, eid, vid, pI[0]) += // flag0 := 1
             W(br, co, rf, com, eid2, vid, pI[1]).expr + // prevW
-            T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
+                T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
                 Eq(vid, Int(1)) +
                 Eq(pI[0], Int(1)) +
                 Eq(Add(Read(co, eid2), Int(1)), Read(co, eid)) + // co-next
                 Lt(Read(com, eid2), Read(com, eid))
         W(br, co, rf, com, eid, vid, pI[0]) += // flag1 := 1
             W(br, co, rf, com, eid2, vid, pI[1]).expr + // prevW
-            T1(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
+                T1(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
                 Eq(vid, Int(2)) +
                 Eq(pI[0], Int(1)) +
                 Eq(Add(Read(co, eid2), Int(1)), Read(co, eid)) + // co-next
@@ -135,7 +145,7 @@ class TestChcUtils {
 
         T0G(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             W(br, co, rf, com, eid, vid, pI[0]).expr + // successful write
-            T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
+                T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
                 Eq(Add(eid, Int(2)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
         T1G(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
@@ -161,7 +171,7 @@ class TestChcUtils {
 
         T0C(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             W(br, co, rf, com, eid3, vid3, pI[1]).expr + // rf-source
-            W(br, co, rf, com, eid4, vid3, pI[2]).expr + // rf-source
+                W(br, co, rf, com, eid4, vid3, pI[2]).expr + // rf-source
                 Eq(Add(eid, Int(2)), eid9) +               // eid update
                 Eq(vid3, Int(2)) + // flag[1] read
                 Eq(Read(rf, eid3), eid9) + // rf
@@ -169,36 +179,36 @@ class TestChcUtils {
                 Lt(Read(com, eid9), Read(com, eid4)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid3), Int(1)), Read(co, eid4)) + // co-after is eid4
                 Eq(pI[1], flag2) +
-            W(br, co, rf, com, eid5, vid4, pI[2]).expr + // turn
-            W(br, co, rf, com, eid6, vid4, pI[3]).expr + // turn
+                W(br, co, rf, com, eid5, vid4, pI[2]).expr + // turn
+                W(br, co, rf, com, eid6, vid4, pI[3]).expr + // turn
                 Eq(Add(eid, Int(4)), eid10) +               // eid update
                 Eq(vid4, Int(0)) + // turn read
-                Eq(Read(rf, eid10), eid5)  + // rf
+                Eq(Read(rf, eid10), eid5) + // rf
                 Lt(Read(com, eid5), Read(com, eid10)) +    // com constraint (because rf)
                 Lt(Read(com, eid10), Read(com, eid6)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid5), Int(1)), Read(co, eid6)) + // co-after is eid6
                 Eq(pI[2], turn) +
-            Or(Eq(turn, Int(0)), Eq(flag2, Int(0))) +
-            W(br, co, rf, com, eid7, vid5, pI[3]).expr + // turn
-            W(br, co, rf, com, eid8, vid5, pI[4]).expr + // turn
+                Or(Eq(turn, Int(0)), Eq(flag2, Int(0))) +
+                W(br, co, rf, com, eid7, vid5, pI[3]).expr + // turn
+                W(br, co, rf, com, eid8, vid5, pI[4]).expr + // turn
                 Eq(Add(eid, Int(6)), eid11) +               // eid update
                 Eq(vid5, Int(3)) + // turn read
-                Eq(Read(rf, eid11), eid7)  + // rf
+                Eq(Read(rf, eid11), eid7) + // rf
                 Lt(Read(com, eid7), Read(com, eid11)) +    // com constraint (because rf)
                 Lt(Read(com, eid11), Read(com, eid8)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid7), Int(1)), Read(co, eid8)) + // co-after is eid8
                 Eq(pI[3], cnt) +
-            W(br, co, rf, com, eid, vid, pI[0]).expr + // successful write
+                W(br, co, rf, com, eid, vid, pI[0]).expr + // successful write
                 T0G(br, co, rf, com, eid, turn_old, flag1, flag2_old, cnt_old).expr + // previous loc
                 Eq(Add(eid, Int(8)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid9)) +      // com constraint (because po)
                 Lt(Read(com, eid9), Read(com, eid10)) +    // com constraint (because po)
-                Lt(Read(com, eid10), Read(com, eid11))  +   // com constraint (because po)
+                Lt(Read(com, eid10), Read(com, eid11)) +   // com constraint (because po)
                 Lt(Read(com, eid11), Read(com, eid2))    // com constraint (because po)
 
         T1C(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             W(br, co, rf, com, eid3, vid3, pI[1]).expr + // rf-source
-            W(br, co, rf, com, eid4, vid3, pI[2]).expr + // rf-source
+                W(br, co, rf, com, eid4, vid3, pI[2]).expr + // rf-source
                 Eq(Add(eid, Int(2)), eid9) +               // eid update
                 Eq(vid3, Int(1)) + // flag[0] read
                 Eq(Read(rf, eid9), eid3) + // rf
@@ -206,33 +216,32 @@ class TestChcUtils {
                 Lt(Read(com, eid9), Read(com, eid4)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid3), Int(1)), Read(co, eid4)) + // co-after is eid4
                 Eq(pI[1], flag1) +
-            W(br, co, rf, com, eid5, vid4, pI[2]).expr + // turn
-            W(br, co, rf, com, eid6, vid4, pI[3]).expr + // turn
+                W(br, co, rf, com, eid5, vid4, pI[2]).expr + // turn
+                W(br, co, rf, com, eid6, vid4, pI[3]).expr + // turn
                 Eq(Add(eid, Int(4)), eid10) +               // eid update
                 Eq(vid4, Int(0)) + // turn read
-                Eq(Read(rf, eid10), eid5)  + // rf
+                Eq(Read(rf, eid10), eid5) + // rf
                 Lt(Read(com, eid5), Read(com, eid10)) +    // com constraint (because rf)
                 Lt(Read(com, eid10), Read(com, eid6)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid5), Int(1)), Read(co, eid6)) + // co-after is eid6
                 Eq(pI[2], turn) +
-            Or(Eq(turn, Int(1)), Eq(flag1, Int(0))) +
-            W(br, co, rf, com, eid7, vid5, pI[3]).expr + // cnt
-            W(br, co, rf, com, eid8, vid5, pI[4]).expr + // cnt
+                Or(Eq(turn, Int(1)), Eq(flag1, Int(0))) +
+                W(br, co, rf, com, eid7, vid5, pI[3]).expr + // cnt
+                W(br, co, rf, com, eid8, vid5, pI[4]).expr + // cnt
                 Eq(Add(eid, Int(6)), eid11) +               // eid update
                 Eq(vid5, Int(3)) + // turn
-                Eq(Read(rf, eid11), eid7)  + // rf
+                Eq(Read(rf, eid11), eid7) + // rf
                 Lt(Read(com, eid7), Read(com, eid11)) +    // com constraint (because rf)
                 Lt(Read(com, eid11), Read(com, eid8)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid7), Int(1)), Read(co, eid8)) + // co-after is eid8
                 Eq(pI[3], cnt) +
-            W(br, co, rf, com, eid, vid, pI[0]).expr + // successful write
+                W(br, co, rf, com, eid, vid, pI[0]).expr + // successful write
                 T1G(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
                 Eq(Add(eid, Int(8)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid9)) +      // com constraint (because po)
                 Lt(Read(com, eid9), Read(com, eid10)) +    // com constraint (because po)
                 Lt(Read(com, eid10), Read(com, eid11)) +   // com constraint (because po)
                 Lt(Read(com, eid11), Read(com, eid2))      // com constraint (because po)
-
 
         W(br, co, rf, com, eid, vid, pI[0]) += // cnt := cnt+1
             W(br, co, rf, com, eid2, vid, pI[1]).expr + // prevW
@@ -259,7 +268,6 @@ class TestChcUtils {
                 T1C(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
                 Eq(Add(eid, Int(2)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
-
 
         W(br, co, rf, com, eid, vid, pI[0]) += // cnt := 0
             W(br, co, rf, com, eid2, vid, pI[1]).expr + // prevW
@@ -288,7 +296,6 @@ class TestChcUtils {
                 T1CF(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
                 Eq(Add(eid, Int(2)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
-
 
         W(br, co, rf, com, eid, vid, pI[0]) += // flag1 := 0
             W(br, co, rf, com, eid2, vid, pI[1]).expr + // prevW
@@ -322,7 +329,6 @@ class TestChcUtils {
         val expr = listOf(init, T0, T0G, T0C, T0CF, T0F, T1, T1G, T1C, T1CF, T1F, W).toSMT2()
         println(expr)
     }
-
 
     @Test
     fun testPetersonNoCounting() {
@@ -363,22 +369,30 @@ class TestChcUtils {
 
         val init = Relation("init", i2i, i2i, i2i, i2i, Int()) // br, co, rf, com
 
-        val T0 = Relation("T0", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0G = Relation("T0_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0C = Relation("T0_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T0F = Relation("T0_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0 = Relation("T0", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0G = Relation("T0_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0C = Relation("T0_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T0F = Relation("T0_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
-        val T1 = Relation("T1", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1G = Relation("T1_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1C = Relation("T1_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
-        val T1F = Relation("T1_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(), Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1 = Relation("T1", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1G = Relation("T1_gate", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1C = Relation("T1_critical", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
+        val T1F = Relation("T1_final", i2i, i2i, i2i, i2i, Int(), Bool(), Bool(), Bool(),
+            Bool()) // br, co, rf, com, eid, turn, flag0, flag1, cnt
 
         val W = Relation("W", i2i, i2i, i2i, i2i, Int(), Int(), Bool()) // br, co, rf, com, eid, vid, val
 
         init(br, co, rf, com, eid) +=
             Eq(eid, Int(0)) +
-            Eq(Read(co, Int(0)), Int(0)) +
-            Eq(Read(com, Int(0)), Int(0))
+                Eq(Read(co, Int(0)), Int(0)) +
+                Eq(Read(com, Int(0)), Int(0))
 
         W(br, co, rf, com, eid, vid, pB[0]) += // turn := 0
             init(br, co, rf, com, eid).expr +
@@ -400,14 +414,14 @@ class TestChcUtils {
 
         W(br, co, rf, com, eid, vid, pB[0]) += // flag0 := 1
             W(br, co, rf, com, eid2, vid, pB[1]).expr + // prevW
-            T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
+                T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
                 Eq(vid, Int(1)) +
                 Eq(pB[0], True()) +
                 Eq(Add(Read(co, eid2), Int(1)), Read(co, eid)) + // co-next
                 Lt(Read(com, eid2), Read(com, eid))
         W(br, co, rf, com, eid, vid, pB[0]) += // flag1 := 1
             W(br, co, rf, com, eid2, vid, pB[1]).expr + // prevW
-            T1(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
+                T1(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr +
                 Eq(vid, Int(2)) +
                 Eq(pB[0], True()) +
                 Eq(Add(Read(co, eid2), Int(1)), Read(co, eid)) + // co-next
@@ -415,7 +429,7 @@ class TestChcUtils {
 
         T0G(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             W(br, co, rf, com, eid, vid, pB[0]).expr + // successful write
-            T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
+                T0(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
                 Eq(Add(eid, Int(2)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
         T1G(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
@@ -441,7 +455,7 @@ class TestChcUtils {
 
         T0C(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             W(br, co, rf, com, eid3, vid3, pB[1]).expr + // rf-source
-            W(br, co, rf, com, eid4, vid3, pB[2]).expr + // rf-source
+                W(br, co, rf, com, eid4, vid3, pB[2]).expr + // rf-source
                 Eq(Add(eid, Int(2)), eid9) +               // eid update
                 Eq(vid3, Int(2)) + // flag[1] read
                 Eq(Read(rf, eid3), eid9) + // rf
@@ -449,17 +463,17 @@ class TestChcUtils {
                 Lt(Read(com, eid9), Read(com, eid4)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid3), Int(1)), Read(co, eid4)) + // co-after is eid4
                 Eq(pB[1], flag2) +
-            W(br, co, rf, com, eid5, vid4, pB[2]).expr + // turn
-            W(br, co, rf, com, eid6, vid4, pB[3]).expr + // turn
+                W(br, co, rf, com, eid5, vid4, pB[2]).expr + // turn
+                W(br, co, rf, com, eid6, vid4, pB[3]).expr + // turn
                 Eq(Add(eid, Int(4)), eid10) +               // eid update
                 Eq(vid4, Int(0)) + // turn read
-                Eq(Read(rf, eid10), eid5)  + // rf
+                Eq(Read(rf, eid10), eid5) + // rf
                 Lt(Read(com, eid5), Read(com, eid10)) +    // com constraint (because rf)
                 Lt(Read(com, eid10), Read(com, eid6)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid5), Int(1)), Read(co, eid6)) + // co-after is eid6
                 Eq(pB[2], turn) +
-            Or(Not(turn), Not(flag2)) +
-            W(br, co, rf, com, eid, vid, pB[0]).expr + // successful write
+                Or(Not(turn), Not(flag2)) +
+                W(br, co, rf, com, eid, vid, pB[0]).expr + // successful write
                 T0G(br, co, rf, com, eid, turn_old, flag1, flag2_old, cnt).expr + // previous loc
                 Eq(Add(eid, Int(6)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid9)) +      // com constraint (because po)
@@ -468,7 +482,7 @@ class TestChcUtils {
 
         T1C(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             W(br, co, rf, com, eid3, vid3, pB[1]).expr + // rf-source
-            W(br, co, rf, com, eid4, vid3, pB[2]).expr + // rf-source
+                W(br, co, rf, com, eid4, vid3, pB[2]).expr + // rf-source
                 Eq(Add(eid, Int(2)), eid9) +               // eid update
                 Eq(vid3, Int(1)) + // flag[0] read
                 Eq(Read(rf, eid9), eid3) + // rf
@@ -476,17 +490,17 @@ class TestChcUtils {
                 Lt(Read(com, eid9), Read(com, eid4)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid3), Int(1)), Read(co, eid4)) + // co-after is eid4
                 Eq(pB[1], flag1) +
-            W(br, co, rf, com, eid5, vid4, pB[2]).expr + // turn
-            W(br, co, rf, com, eid6, vid4, pB[3]).expr + // turn
+                W(br, co, rf, com, eid5, vid4, pB[2]).expr + // turn
+                W(br, co, rf, com, eid6, vid4, pB[3]).expr + // turn
                 Eq(Add(eid, Int(4)), eid10) +               // eid update
                 Eq(vid4, Int(0)) + // turn read
-                Eq(Read(rf, eid10), eid5)  + // rf
+                Eq(Read(rf, eid10), eid5) + // rf
                 Lt(Read(com, eid5), Read(com, eid10)) +    // com constraint (because rf)
                 Lt(Read(com, eid10), Read(com, eid6)) +    // com constraint (because fr)
                 Eq(Add(Read(co, eid5), Int(1)), Read(co, eid6)) + // co-after is eid6
                 Eq(pB[2], turn) +
-            Or(turn, Not(flag1)) +
-            W(br, co, rf, com, eid, vid, pB[0]).expr + // successful write
+                Or(turn, Not(flag1)) +
+                W(br, co, rf, com, eid, vid, pB[0]).expr + // successful write
                 T1G(br, co, rf, com, eid, turn_old, flag1_old, flag2, cnt).expr + // previous loc
                 Eq(Add(eid, Int(6)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid9)) +      // com constraint (because po)
@@ -495,13 +509,12 @@ class TestChcUtils {
 
         T0F(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             T0C(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
-            Eq(Add(eid, Int(2)), eid2) +               // eid update
-            Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
+                Eq(Add(eid, Int(2)), eid2) +               // eid update
+                Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
         T1F(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
             T1C(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
-            Eq(Add(eid, Int(2)), eid2) +               // eid update
-            Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
-
+                Eq(Add(eid, Int(2)), eid2) +               // eid update
+                Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
 
         W(br, co, rf, com, eid, vid, pB[0]) += // cnt := 0
             W(br, co, rf, com, eid2, vid, pB[1]).expr + // prevW
@@ -531,7 +544,7 @@ class TestChcUtils {
 
         !(T0C(br, co, rf, com, eid, turn, flag1, flag2, cnt) with
             T1C(br, co, rf, com, eid2, turn_old, flag1_old, flag2_old, cnt).expr +
-                Eq(Read(com, eid), Read(com, eid2)))
+            Eq(Read(com, eid), Read(com, eid2)))
 
         val expr = listOf(init, T0, T0G, T0C, T0F, T1, T1G, T1C, T1F, W).toSMT2()
         println(expr)

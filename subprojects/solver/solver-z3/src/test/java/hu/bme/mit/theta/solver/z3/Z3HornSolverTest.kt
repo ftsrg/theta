@@ -109,7 +109,6 @@ class Z3HornSolverTest {
         }
     }
 
-
     @ParameterizedTest
     @MethodSource("solvers")
     fun testNonlinearUnsolvable(solver: HornSolver) {

@@ -50,16 +50,17 @@ fun XcfaProcedure.toCHC(): List<Relation> {
         // var[0] is oldParam, var[-1]is newParam, everything else is a fresh param
         var cnt = 0
         val consts = ExprUtils.getIndexedConstants(expr).associateWith {
-            if(it.index == 0) oldParams[it.varDecl]!!
+            if (it.index == 0) oldParams[it.varDecl]!!
             else if (it.index == unfoldResult.indexing[it.varDecl]) newParams[it.varDecl]!!
             else Param("__tmp_${cnt++}", it.type)
         }
-        val newParamList = vars.map { if(unfoldResult.indexing[it] == 0) oldParams[it]!!.ref else newParams[it]!!.ref }.toTypedArray()
+        val newParamList = vars.map { if (unfoldResult.indexing[it] == 0) oldParams[it]!!.ref else newParams[it]!!.ref }
+            .toTypedArray()
         val paramdExpr = ExprUtils.changeDecls(expr, consts)
         (ufs[it.target]!!)(*newParamList) += (ufs[it.source]!!)(*oldParamList).expr + paramdExpr
     }
 
-    if(errorLoc.isPresent) {
+    if (errorLoc.isPresent) {
         !(ufs[errorLoc.get()]!!(*oldParamList))
     }
 
@@ -78,7 +79,7 @@ fun XcfaProcedure.toSMT2CHC(): String {
 fun List<Relation>.toSMT2(): String {
     val symbolTable = GenericSmtLibSymbolTable()
     val transformationManager = GenericSmtLibTransformationManager(symbolTable)
-    val terms = flatMap { it.rules.map {  "(assert " + transformationManager.toTerm(it.toExpr()) + ")" } }
+    val terms = flatMap { it.rules.map { "(assert " + transformationManager.toTerm(it.toExpr()) + ")" } }
     val decls = map { symbolTable.getDeclaration(it.constDecl) }
 
     return """
@@ -97,4 +98,5 @@ ${terms.joinToString("\n")}
 (exit)
 """.trimIndent()
 }
+
 fun Relation.toSMT2() = listOf(this).toSMT2()

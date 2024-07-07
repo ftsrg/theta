@@ -40,7 +40,7 @@ public record ProofNode(int id, Expr<BoolType> expr, List<ProofNode> children) {
                 append(": ").
                 append(expr.toString().replaceAll("[\r\n]", " "));
 
-        if(!children.isEmpty()) {
+        if (!children.isEmpty()) {
             sb.append(" -> ").append(sj);
         }
 
