@@ -38,6 +38,7 @@ import org.junit.jupiter.params.provider.MethodSource
 
 class SmtLibHornSolverTest {
     companion object {
+
         private var solverManager: SmtLibSolverManager? = null
         private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
 

@@ -61,7 +61,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver {
         solverBinary.issueCommand("(check-sat)");
         final var response = solverBinary.readResponse().lines().toList();
         status = response.get(0).equals("sat") ? SolverStatus.SAT : response.get(0).equals("unsat") ? SolverStatus.UNSAT : null;
-        if(status == SolverStatus.SAT) {
+        if (status == SolverStatus.SAT) {
             // we have a model
             final var sb = new StringBuilder();
             sb.append("(");
@@ -70,7 +70,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver {
             }
             sb.append(")");
             final var generalResponse = parseResponse(sb.toString());
-            if(generalResponse.isSpecific() && generalResponse.asSpecific().isGetModelResponse()) {
+            if (generalResponse.isSpecific() && generalResponse.asSpecific().isGetModelResponse()) {
                 model = new SmtLibValuation(symbolTable, transformationManager, termTransformer,
                         generalResponse.asSpecific().asGetModelResponse().getModel());
             }
@@ -84,23 +84,23 @@ public class GenericSmtLibHornSolver extends SmtLibSolver {
                 int idx = -1;
                 String term = "";
                 List<Integer> dependencies = null;
-                if(matcher.matches()) {
+                if (matcher.matches()) {
                     idx = Integer.parseInt(matcher.group(1));
                     term = matcher.group(2);
-                    if(matcher.group(3) != null) {
+                    if (matcher.group(3) != null) {
                         dependencies = Arrays.stream(matcher.group(3).split(",?\s+")).filter(it -> !it.isEmpty()).map(it -> Integer.parseInt(it.trim())).toList();
                     } else {
                         dependencies = List.of();
                     }
                 } else {
                     final var rootMatcher = CEX_ROOT.matcher(response.get(i));
-                    if(rootMatcher.matches()) {
+                    if (rootMatcher.matches()) {
                         idx = Integer.parseInt(rootMatcher.group(1));
                         term = rootMatcher.group(2);
                         dependencies = List.of();
                     }
                 }
-                if(idx != -1) {
+                if (idx != -1) {
                     final var expr = termTransformer.toExpr(term, Bool(), new SmtLibModel(Collections.emptyMap()));
                     final var builder = new ProofNode.Builder(expr);
                     if (root == null && expr.equals(False())) {
@@ -111,8 +111,8 @@ public class GenericSmtLibHornSolver extends SmtLibSolver {
                 }
             }
             dependencyMap.forEach((builder, integers) ->
-                            integers.forEach(integer -> builder.addChild(builderMap.get(integer)))
-                    );
+                    integers.forEach(integer -> builder.addChild(builderMap.get(integer)))
+            );
             proof = root.build();
 
         }

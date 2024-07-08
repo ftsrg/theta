@@ -36,6 +36,7 @@ import java.util.stream.Stream
 
 class Z3HornSolverTest {
     companion object {
+
         @JvmStatic
         fun solvers(): Stream<Arguments> {
             return Stream.of(

@@ -58,7 +58,7 @@ public class GenericSmtLibOneshotSolverBinary implements SmtLibSolverBinary {
             final File file = File.createTempFile("input", ".smt2");
             file.deleteOnExit();
 
-            try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file))) {
+            try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file))) {
                 for (String command : commands) {
                     bufferedWriter.write(command);
                     bufferedWriter.newLine();
