@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver;
 
-import com.google.common.base.Function;
 import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -25,6 +24,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -38,6 +38,7 @@ import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
@@ -66,9 +67,11 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
@@ -337,6 +340,25 @@ public class SmtLibSolver implements UCSolver, Solver, HornSolver {
         }
     }
 
+
+    public static Type transformSort(final SortContext ctx) {
+        final String name = ctx.identifier().symbol().getText();
+        return switch (name) {
+            case "Int" -> Int();
+            case "Bool" -> Bool();
+            case "Real" -> Rat();
+            case "BitVec" -> {
+                assert ctx.identifier().index().size() == 1;
+                yield BvExprs.BvType(Integer.parseInt(ctx.identifier().index().get(0).getText()));
+            }
+            case "Array" -> {
+                assert ctx.sort().size() == 2;
+                yield Array(transformSort(ctx.sort().get(0)), transformSort(ctx.sort().get(1)));
+            }
+            default -> throw new UnsupportedOperationException();
+        };
+    }
+
     @Override
     public ProofNode getProof() {
         solverBinary.issueCommand("(get-proof)");
@@ -347,15 +369,9 @@ public class SmtLibSolver implements UCSolver, Solver, HornSolver {
         } else if (res.isSpecific()) {
             final GetProofResponse getModelResponse = res.asSpecific().asGetProofResponse();
             getModelResponse.getFunDeclarations().forEach((name, def) -> {
-                final Function<String, Type> stringToType = (String it) -> switch (it.toLowerCase()) {
-                    case "int" -> Int();
-                    case "bool" -> Bool();
-                    default ->
-                            throw new UnsupportedOperationException("Currently not supporting type " + it);
-                };
-                var type = stringToType.apply(def.get2());
-                for (String s : def.get1()) {
-                    type = FuncType.of(stringToType.apply(s), type);
+                var type = transformSort(def.get2());
+                for (SortContext s : def.get1()) {
+                    type = FuncType.of(transformSort(s), type);
                 }
                 symbolTable.put(Const(name, type), name, def.get3());
             });
