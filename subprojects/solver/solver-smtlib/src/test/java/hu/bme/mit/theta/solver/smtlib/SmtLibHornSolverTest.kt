@@ -44,7 +44,8 @@ class SmtLibHornSolverTest {
         private val SOLVERS: List<Pair<String, String>> = listOf(
             Pair("z3", "4.13.0"),
             Pair("z3", "4.12.6"),
-            Pair("eldarica", "2.1")
+            Pair("eldarica", "2.1"),
+            Pair("golem", "0.5.0"),
         )
 
         @JvmStatic
@@ -128,6 +129,7 @@ class SmtLibHornSolverTest {
 
                 checkerSolver.add(Lt(p1.ref, Int(0)))
                 Assertions.assertTrue(checkerSolver.check().isUnsat)
+                System.err.println(model.toMap())
             }
         }
     }
@@ -156,6 +158,7 @@ class SmtLibHornSolverTest {
 
             val proof = hornSolver.proof
             Assertions.assertTrue(proof != null)
+            System.err.println(proof)
         }
     }
 

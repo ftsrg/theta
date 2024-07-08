@@ -19,6 +19,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import java.io.BufferedInputStream;
@@ -33,26 +34,39 @@ public class Compress {
     }
 
     public enum CompressionType {
-        ZIP, TARGZ
+        ZIP, TARGZ, TARBZ2
     }
 
-    public static void extract(final InputStream inputStream, final Path extractDir,
-                               final CompressionType compressionType) throws IOException {
+    public static void extract(final InputStream inputStream, final Path extractDir, final CompressionType compressionType) throws IOException {
+        extract(inputStream, extractDir, compressionType, false);
+    }
+
+    public static void extractTarbomb(final InputStream inputStream, final Path extractDir, final CompressionType compressionType) throws IOException {
+        extract(inputStream, extractDir, compressionType, true);
+    }
+
+    private static void extract(final InputStream inputStream, final Path extractDir,
+                                final CompressionType compressionType, final boolean tarbomb) throws IOException {
         switch (compressionType) {
             case ZIP:
-                extract(new ZipArchiveInputStream(inputStream), extractDir);
+                extract(new ZipArchiveInputStream(inputStream), extractDir, tarbomb);
                 break;
             case TARGZ:
                 extract(new TarArchiveInputStream(
                                 new GzipCompressorInputStream(new BufferedInputStream(inputStream))),
-                        extractDir);
+                        extractDir, tarbomb);
+                break;
+            case TARBZ2:
+                extract(new TarArchiveInputStream(
+                                new BZip2CompressorInputStream(new BufferedInputStream(inputStream))),
+                        extractDir, tarbomb);
                 break;
             default:
                 throw new AssertionError();
         }
     }
 
-    private static void extract(final ArchiveInputStream archiveInputStream, final Path extractDir)
+    private static void extract(final ArchiveInputStream archiveInputStream, final Path extractDir, final boolean tarbomb)
             throws IOException {
         for (ArchiveEntry entry = archiveInputStream.getNextEntry(); entry != null;
              entry = archiveInputStream.getNextEntry()) {
@@ -60,12 +74,12 @@ public class Compress {
             if (entry.isDirectory()) {
                 if (entryPath.getNameCount() > 1) {
                     final var entryResolvedPath = extractDir.resolve(
-                            entryPath.subpath(1, entryPath.getNameCount()));
+                            entryPath.subpath(tarbomb ? 0 : 1, entryPath.getNameCount()));
                     Files.createDirectories(entryResolvedPath);
                 }
             } else {
                 final var entryResolvedPath = extractDir.resolve(
-                        entryPath.subpath(1, entryPath.getNameCount()));
+                        entryPath.subpath(tarbomb ? 0 : 1, entryPath.getNameCount()));
                 Files.createDirectories(entryResolvedPath.getParent());
                 Files.copy(archiveInputStream, entryResolvedPath);
             }

@@ -64,6 +64,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
@@ -139,7 +140,7 @@ public class SmtLibSolver implements UCSolver, Solver, HornSolver {
     }
 
     public void add(final Expr<BoolType> assertion, final String term) {
-        final var consts = ExprUtils.getConstants(assertion);
+        final var consts = ExprUtils.getConstants(assertion).stream().filter(symbolTable::definesConst).collect(Collectors.toSet());
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 

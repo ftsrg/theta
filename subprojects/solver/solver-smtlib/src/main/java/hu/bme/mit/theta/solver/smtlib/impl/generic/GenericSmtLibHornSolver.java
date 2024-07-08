@@ -42,8 +42,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public class GenericSmtLibHornSolver extends SmtLibSolver {
-    private static final Pattern CEX_PATTERN = Pattern.compile("([0-9]+): *(.*)(?=->)->( *([0-9]+)(, *[0-9]+)*)?");
-    private static final Pattern CEX_ROOT = Pattern.compile("([0-9]+): *(.*)");
+    private static final Pattern CEX_PATTERN = Pattern.compile("([0-9]+):\s*(.*)(?=->)->(\s*([0-9]+)(,?\s+[0-9]+)*)?");
+    private static final Pattern CEX_ROOT = Pattern.compile("([0-9]+):\s*(.*)");
 
     private ProofNode proof = null;
 
@@ -79,7 +79,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver {
             final Map<Integer, Builder> builderMap = new LinkedHashMap<>();
             final Map<Builder, List<Integer>> dependencyMap = new LinkedHashMap<>();
             Builder root = null;
-            for (int i = 2; i < response.size(); i++) {
+            for (int i = 1; i < response.size(); i++) {
                 final var matcher = CEX_PATTERN.matcher(response.get(i));
                 int idx = -1;
                 String term = "";
@@ -88,7 +88,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver {
                     idx = Integer.parseInt(matcher.group(1));
                     term = matcher.group(2);
                     if(matcher.group(3) != null) {
-                        dependencies = Arrays.stream(matcher.group(3).split(",")).map(it -> Integer.parseInt(it.trim())).toList();
+                        dependencies = Arrays.stream(matcher.group(3).split(",?\s+")).filter(it -> !it.isEmpty()).map(it -> Integer.parseInt(it.trim())).toList();
                     } else {
                         dependencies = List.of();
                     }

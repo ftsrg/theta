@@ -47,8 +47,8 @@ public final class FuncExprs {
     private static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
             final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> paramHead, final List<Expr> paramTail) {
         if (!paramTail.isEmpty()) {
-            final var newParamHead = paramTail.get(paramTail.size() - 1);
-            final var newParamTail = paramTail.subList(0, paramTail.size() - 1);
+            final var newParamHead = paramTail.get(0);
+            final var newParamTail = paramTail.subList(1, paramTail.size());
             return App(App(func, newParamHead, newParamTail), paramHead);
         } else {
             return App(func, paramHead);
@@ -58,8 +58,8 @@ public final class FuncExprs {
     public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
             final Expr<FuncType<ParamType, ResultType>> func, final List<Expr> params) {
         checkArgument(!params.isEmpty());
-        final var paramHead = params.get(params.size() - 1);
-        final var paramTail = params.subList(0, params.size() - 1);
+        final var paramHead = params.get(0);
+        final var paramTail = params.subList(1, params.size());
         return App(func, paramHead, paramTail);
     }
 

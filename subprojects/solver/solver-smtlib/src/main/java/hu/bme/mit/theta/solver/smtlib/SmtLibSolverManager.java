@@ -31,6 +31,7 @@ import hu.bme.mit.theta.solver.smtlib.impl.cvc4.CVC4SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.cvc5.CVC5SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.eldarica.EldaricaSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverInstaller;
+import hu.bme.mit.theta.solver.smtlib.impl.golem.GolemSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.mathsat.MathSATSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.princess.PrincessSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.smtinterpol.SMTInterpolSmtLibSolverInstaller;
@@ -71,6 +72,7 @@ public final class SmtLibSolverManager extends SolverManager {
         registerInstaller("smtinterpol", SMTInterpolSmtLibSolverInstaller.class);
         registerInstaller("princess", PrincessSmtLibSolverInstaller.class);
         registerInstaller("eldarica", EldaricaSmtLibSolverInstaller.class);
+        registerInstaller("golem", GolemSmtLibSolverInstaller.class);
         registerGenericInstaller("generic", GenericSmtLibSolverInstaller.class);
     }
 
