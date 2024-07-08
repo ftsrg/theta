@@ -518,7 +518,7 @@ public final class ExprUtils {
             final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
             final Expr<?> resFunc = funcAndArgs.get1();
             final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
+            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().add(arg).addAll(args)
                     .build();
             return Tuple2.of(resFunc, resArgs);
         } else {

@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
+import hu.bme.mit.theta.solver.smtlib.impl.z3.Z3SmtLibSolverFactory
 import org.junit.jupiter.api.Test
 
 private val iParamLut = LinkedHashMap<String, ParamDecl<IntType>>()
