@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -31,6 +33,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.ForallExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
@@ -502,5 +505,24 @@ public final class ExprUtils {
 
     public static <T extends Type> Expr<T> changeDecls(Expr<T> expr, Map<? extends Decl<?>, ? extends Decl<?>> lookup) {
         return changeSubexpr(expr, lookup.entrySet().stream().map(entry -> Map.entry(entry.getKey().getRef(), entry.getValue().getRef())).collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
+    }
+
+    /**
+     * Extracts function and its arguments from a nested expression
+     */
+    public static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
+        final Expr<?> func = expr.getFunc();
+        final Expr<?> arg = expr.getParam();
+        if (func instanceof FuncAppExpr) {
+            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
+            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
+            final Expr<?> resFunc = funcAndArgs.get1();
+            final List<Expr<?>> args = funcAndArgs.get2();
+            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
+                    .build();
+            return Tuple2.of(resFunc, resArgs);
+        } else {
+            return Tuple2.of(func, ImmutableList.of(arg));
+        }
     }
 }

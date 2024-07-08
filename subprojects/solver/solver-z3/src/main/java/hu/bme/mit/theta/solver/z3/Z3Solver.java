@@ -61,6 +61,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 final class Z3Solver implements UCSolver, Solver, HornSolver {
@@ -249,12 +250,6 @@ final class Z3Solver implements UCSolver, Solver, HornSolver {
         z3Context.interrupt();
     }
 
-    private <T1 extends Type, T2 extends Type> Expr<?> funcApp(Expr<?> func, Expr<?> param) {
-        final Expr<FuncType<T1, T2>> funcTyped = (Expr<FuncType<T1, T2>>) func;
-        final Expr<T1> paramTyped = (Expr<T1>) param;
-        return App(funcTyped, paramTyped);
-    }
-
     private Expr<BoolType> toProofExpr(com.microsoft.z3.Expr<?> expr) {
         final var args = expr.getArgs();
         final var lastArg = args[args.length - 1];
@@ -268,7 +263,7 @@ final class Z3Solver implements UCSolver, Solver, HornSolver {
         final var decl = Const(name, funcType);
         Expr<?> func = decl.getRef();
         for (Expr<?> paramValue : paramValues) {
-            func = funcApp(func, paramValue);
+            func = UnsafeApp(func, paramValue);
         }
         return (Expr<BoolType>) func;
     }

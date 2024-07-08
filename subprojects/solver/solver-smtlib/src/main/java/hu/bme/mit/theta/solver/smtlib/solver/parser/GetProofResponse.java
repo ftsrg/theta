@@ -15,24 +15,36 @@
  */
 package hu.bme.mit.theta.solver.smtlib.solver.parser;
 
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.Tuple3;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Proof_responseContext;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_funContext;
-import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_fun_recContext;
-import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Model_response_funs_recContext;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class GetProofResponse extends SpecificResponse {
 
     private final String proofTerm;
+    private final Map<String, Tuple3<List<String>, String, String>> funDeclarations; // name -> [inSorts, outSort, declaration]
 
-    private GetProofResponse(String proofNode) {
+    private GetProofResponse(String proofNode, Map<String, Tuple3<List<String>, String, String>> funDeclarations) {
         this.proofTerm = proofNode;
+        this.funDeclarations = funDeclarations;
     }
 
     public static GetProofResponse fromContext(final Proof_responseContext ctx) {
-        return new GetProofResponse(extractString(ctx.term()));
+        return new GetProofResponse(
+                extractString(ctx.proof_term().term()),
+                ctx.proof_funs().stream().map(it -> Tuple2.of(
+                        extractString(it.symbol()),
+                        Tuple3.of(
+                                it.in.stream().map(GetProofResponse::extractString).toList(),
+                                extractString(it.out),
+                                extractString(it)
+                        ))).collect(Collectors.toMap(Tuple2::get1, Tuple2::get2)));
     }
 
     public static String extractString(final ParserRuleContext ctx) {
@@ -42,5 +54,9 @@ public class GetProofResponse extends SpecificResponse {
 
     public String getProof() {
         return proofTerm;
+    }
+
+    public Map<String, Tuple3<List<String>, String, String>> getFunDeclarations() {
+        return funDeclarations;
     }
 }

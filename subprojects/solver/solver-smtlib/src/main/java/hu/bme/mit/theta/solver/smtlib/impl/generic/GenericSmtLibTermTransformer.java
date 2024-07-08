@@ -39,6 +39,62 @@ import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.*;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.IffExpr;
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.OrExpr;
+import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
+import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpExprs;
+import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -66,10 +122,12 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -176,6 +234,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             // Array
             put("select", exprArrayReadOperator());
             put("store", exprArrayWriteOperator());
+
+            // Proof
+            put("hyper-res", expectedFunc("hyper-res"));
+            put("asserted", expectedFunc("asserted"));
+            put("mp", expectedFunc("mp"));
         }};
     }
 
@@ -411,11 +474,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         } else if (funAppTransformer.containsKey(funName)) { // known function application
             return funAppTransformer.get(funName).apply(funParams, funAppParams, model, vars);
         } else { // custom function application
-            checkArgument(funParams.size() == 0,
-                    "Custom unary function application cannot have parameter");
-            checkArgument(funAppParams.size() == 1, "Only unary functions are supported");
+//            checkArgument(funParams.size() == 0,
+//                    "Custom unary function application cannot have parameter");
+//            checkArgument(funAppParams.size() == 1, "Only unary functions are supported");
 
-            return createFuncAppExpr(funName, funAppParams.get(0), model, vars);
+            return createFuncAppExpr(funName, funAppParams, model, vars);
         }
     }
 
@@ -426,7 +489,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(final String funName,
-                                                                       final TermContext funAppParam, final SmtLibModel model,
+                                                                       final List<TermContext> funAppParams, final SmtLibModel model,
                                                                        final BiMap<ParamDecl<?>, String> vars) {
         final Expr<?> funcExpr;
         if (symbolTable.definesSymbol(funName)) {
@@ -440,10 +503,14 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         }
 
         assert funcExpr.getType() instanceof FuncType;
-        @SuppressWarnings("unchecked") final var funType = (FuncType<P, R>) funcExpr.getType();
-        final var paramExpr = transformTerm(funAppParam, model, vars);
 
-        return FuncExprs.App(cast(funcExpr, funType), cast(paramExpr, funType.getParamType()));
+        var expr = funcExpr;
+        for (TermContext funAppParam : funAppParams) {
+            final var paramExpr = transformTerm(funAppParam, model, vars);
+            expr = UnsafeApp(expr, paramExpr);
+        }
+
+        return expr;
     }
 
     protected Expr<?> transformLetTerm(final Let_termContext ctx, final SmtLibModel model,
@@ -645,6 +712,33 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     /* Utilities */
+
+    /**
+     * We don't want to provide a separate Expr class for these, but we need to parse them.
+     *
+     * @param funcName: the name of the function to use in backtransformation
+     */
+    private OperatorCreatorFunction expectedFunc(String funcName) {
+        return (params, ops, model, vars) -> {
+            var opCnt = ops.size();
+            var name = funcName + opCnt;
+            if (!symbolTable.definesSymbol(name)) {
+                Type type = Bool();
+                var prefix = "(declare-fun " + name + " (";
+                var suffix = ") Bool)";
+                for (int i = 0; i < opCnt; i++) {
+                    type = FuncType.of(Bool(), type);
+                    suffix = " Bool" + suffix;
+                }
+                symbolTable.put(Const(name, type), name, prefix + suffix);
+            }
+            Expr<?> expr = symbolTable.getConst(name).getRef();
+            for (TermContext op : ops) {
+                expr = UnsafeApp(expr, transformTerm(op, model, vars));
+            }
+            return expr;
+        };
+    }
 
     @SuppressWarnings("unused")
     private OperatorCreatorFunction exprNullaryOperator(final Supplier<Expr<?>> function) {

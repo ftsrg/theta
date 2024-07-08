@@ -58,6 +58,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 final class JavaSMTExprTransformer {
 

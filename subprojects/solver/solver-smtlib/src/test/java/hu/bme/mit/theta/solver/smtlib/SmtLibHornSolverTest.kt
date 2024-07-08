@@ -13,8 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3
+package hu.bme.mit.theta.solver.smtlib
 
+import hu.bme.mit.theta.common.OsHelper
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
@@ -26,27 +28,68 @@ import hu.bme.mit.theta.core.type.functype.FuncLitExpr
 import hu.bme.mit.theta.core.type.functype.FuncType
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.solver.HornSolver
-import org.junit.jupiter.api.Assertions
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
+import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
 
 
-class Z3HornSolverTest {
+class SmtLibHornSolverTest {
     companion object {
+        private var solverManager: SmtLibSolverManager? = null
+        private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
+
+        private val SOLVERS: List<Pair<String, String>> = listOf(Pair("z3", "4.13.0"), Pair("z3", "4.12.6"))
+
         @JvmStatic
-        fun solvers(): Stream<Arguments> {
-            return Stream.of(
-                Arguments.of(Z3SolverFactory.getInstance().createHornSolver()),
-            )
+        fun solvers(): List<Arguments> {
+            return solverFactories.map { Arguments.of(it.key, it.value) }
+        }
+
+        @BeforeAll
+        @JvmStatic
+        fun init() {
+            if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+                val home = SmtLibSolverManager.HOME
+
+                solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
+                for ((solver, version) in SOLVERS) {
+
+                    try {
+                        solverManager!!.install(solver, version, version, null, false)
+                    } catch (e: SmtLibSolverInstallerException) {
+                        e.printStackTrace()
+                    }
+
+                    solverFactories.put(Pair(solver, version), solverManager!!.getSolverFactory(solver, version))
+                }
+            }
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun destroy() {
+            for ((solver, version) in SOLVERS) {
+                try {
+                    solverManager!!.uninstall(solver, version)
+                } catch (e: SmtLibSolverInstallerException) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
-    @ParameterizedTest
+    @BeforeEach
+    fun before() {
+        Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testSolvable(solver: HornSolver) {
+    fun testSolvable(name: Pair<String, String>, solverFactory: SolverFactory) {
+        val solver = solverFactory.createHornSolver()
         solver.use { hornSolver ->
             val p = ParamHolder(Int())
             val init = Relation("init", Int(), Int())
@@ -68,7 +111,7 @@ class Z3HornSolverTest {
             Assertions.assertTrue(model.containsKey(inv.constDecl))
             Assertions.assertTrue(model.containsKey(init.constDecl))
 
-            val checkerSolver = Z3SolverFactory.getInstance().createSolver()
+            val checkerSolver = solverFactory!!.createSolver()
             checkerSolver.use {
                 val p0 = Const("p0", Int())
                 val p1 = Const("p1", Int())
@@ -85,9 +128,11 @@ class Z3HornSolverTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testUnsolvable(solver: HornSolver) {
+    fun testUnsolvable(name: Pair<String, String>, solverFactory: SolverFactory) {
+        val solver = solverFactory.createHornSolver()
+
         solver.use { hornSolver ->
             val p = ParamHolder(Int())
             val init = Relation("init", Int(), Int())
@@ -110,9 +155,11 @@ class Z3HornSolverTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testNonlinearUnsolvable(solver: HornSolver) {
+    fun testNonlinearUnsolvable(name: Pair<String, String>, solverFactory: SolverFactory) {
+        val solver = solverFactory.createHornSolver()
+
         solver.use { hornSolver ->
             val p = ParamHolder(Int())
             val init1 = Relation("init1", Int(), Int())
@@ -144,6 +191,7 @@ class Z3HornSolverTest {
 
             val proof = hornSolver.proof
             Assertions.assertTrue(proof != null)
+            System.err.println(proof)
         }
     }
 }

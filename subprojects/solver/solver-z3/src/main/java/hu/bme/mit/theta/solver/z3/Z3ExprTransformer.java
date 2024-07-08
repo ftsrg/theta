@@ -19,6 +19,11 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.*;
+import com.microsoft.z3.BitVecExpr;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.FPExpr;
+import com.microsoft.z3.FPSort;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -50,6 +55,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 final class Z3ExprTransformer {
 
@@ -314,22 +321,6 @@ final class Z3ExprTransformer {
                 .addCase(EnumNeqExpr.class, this::transformEnumNeq)
 
                 .build();
-    }
-
-    private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
-        final Expr<?> func = expr.getFunc();
-        final Expr<?> arg = expr.getParam();
-        if (func instanceof FuncAppExpr) {
-            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
-            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
-            final Expr<?> resFunc = funcAndArgs.get1();
-            final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
-                    .build();
-            return Tuple2.of(resFunc, resArgs);
-        } else {
-            return Tuple2.of(func, ImmutableList.of(arg));
-        }
     }
 
     ////
