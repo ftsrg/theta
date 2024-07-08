@@ -303,11 +303,11 @@ public class CfaCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
+            writer.cell(status.getWitness().size());
+            writer.cell(status.getWitness().getDepth());
+            writer.cell(status.getWitness().getMeanBranchingFactor());
             if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
+                writer.cell(status.asUnsafe().getCex().length() + "");
             } else {
                 writer.cell("");
             }

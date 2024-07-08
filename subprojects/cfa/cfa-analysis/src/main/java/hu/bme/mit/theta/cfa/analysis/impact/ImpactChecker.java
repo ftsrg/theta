@@ -76,7 +76,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
             reachedSet = ImpactReachedSet.create(partitioning);
         }
 
-        private SafetyResult<S, A> run() {
+        private SafetyResult<ARG<S, A>, Trace<S, A>> run() {
             final Optional<ArgNode<S, A>> unsafeNode = unwind();
 
             if (unsafeNode.isPresent()) {

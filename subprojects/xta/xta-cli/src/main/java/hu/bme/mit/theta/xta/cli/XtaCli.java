@@ -128,7 +128,7 @@ public final class XtaCli {
 
     private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
         try {
-            return checker.check(UnitPrec.getInstance());
+            return (SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>) checker.check(UnitPrec.getInstance());
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(

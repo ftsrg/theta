@@ -376,7 +376,7 @@ public class XstsConfigBuilder {
                     .stopCriterion(refinement.getStopCriterion())
                     .logger(logger).build();
             final Refiner<XstsState<S>, XstsAction, P> refiner = getRefiner();
-            final SafetyChecker<XstsState<S>, XstsAction, P> checker = CegarChecker.create(
+            final SafetyChecker<ARG<XstsState<S>, XstsAction>, Trace<XstsState<S>, XstsAction>, P> checker = CegarChecker.create(
                     abstractor, refiner,
                     logger);
             return XstsConfig.create(checker, getInitPrec());

@@ -216,7 +216,7 @@ private fun backend(
                 when {
                     result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
                         logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
-                        SafetyResult.unknown<State, Action>()
+                        SafetyResult.unknown<EmptyWitness, EmptyCex>()
                     }
 
                     else -> result
@@ -299,14 +299,14 @@ private fun postVerificationLogging(
             // TODO eliminate the need for the instanceof check
             if (!config.outputConfig.argConfig.disable && safetyResult.witness is ARG<out State, out Action>?) {
                 val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
-                val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
+                val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.witness as ARG<out State, out Action>?)
                 argFile.writeText(GraphvizWriter.getInstance().writeString(g))
             }
 
             if (!config.outputConfig.witnessConfig.disable) {
-                if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
+                if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
                     val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                        safetyResult.asUnsafe().trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+                        safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
                         getSolver(
                             config.outputConfig.witnessConfig.concretizerSolver,
                             config.outputConfig.witnessConfig.validateConcretizerSolver
@@ -320,7 +320,7 @@ private fun postVerificationLogging(
 
                     val sequenceFile = File(resultFolder, "trace.plantuml")
                     writeSequenceTrace(sequenceFile,
-                        safetyResult.asUnsafe().trace as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
+                        safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
                         act.label.getFlatLabels().map(XcfaLabel::toString)
                     }
 

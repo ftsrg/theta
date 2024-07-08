@@ -60,7 +60,7 @@ final class LazyXtaChecker<S extends State> implements
     }
 
     @Override
-    public SafetyResult<XtaState<S>, XtaAction> check(final UnitPrec prec) {
+    public SafetyResult<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>> check(final UnitPrec prec) {
         return new CheckMethod().run();
     }
 
@@ -78,7 +78,7 @@ final class LazyXtaChecker<S extends State> implements
             waiting = searchStrategy.createWaitlist();
         }
 
-        public SafetyResult<XtaState<S>, XtaAction> run() {
+        public SafetyResult<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>> run() {
             stats.startAlgorithm();
 
             init();
@@ -95,7 +95,7 @@ final class LazyXtaChecker<S extends State> implements
 
             stats.stopAlgorithm();
             final LazyXtaStatistics statistics = stats.build();
-            final SafetyResult<XtaState<S>, XtaAction> result = SafetyResult.safe(arg, statistics);
+            final SafetyResult<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>> result = SafetyResult.safe(arg, statistics);
             return result;
         }
 
