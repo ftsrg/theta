@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
+import org.junit.Assume
 import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -51,7 +52,7 @@ class SmtLibHornSolverTest {
 
         @JvmStatic
         fun solvers(): List<Arguments> {
-            return solverFactories.map { Arguments.of(it.key, it.value) }
+            return SOLVERS.map { Arguments.of(it) }
         }
 
         @BeforeAll
@@ -94,7 +95,8 @@ class SmtLibHornSolverTest {
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testSolvable(name: Pair<String, String>, solverFactory: SolverFactory) {
+    fun testSolvable(name: Pair<String, String>) {
+        val solverFactory = solverFactories[name]!!
         val solver = solverFactory.createHornSolver()
         solver.use { hornSolver ->
             val p = ParamHolder(Int())
@@ -137,7 +139,8 @@ class SmtLibHornSolverTest {
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testUnsolvable(name: Pair<String, String>, solverFactory: SolverFactory) {
+    fun testUnsolvable(name: Pair<String, String>) {
+        val solverFactory = solverFactories[name]!!
         val solver = solverFactory.createHornSolver()
 
         solver.use { hornSolver ->
@@ -165,7 +168,8 @@ class SmtLibHornSolverTest {
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testNonlinearUnsolvable(name: Pair<String, String>, solverFactory: SolverFactory) {
+    fun testNonlinearUnsolvable(name: Pair<String, String>) {
+        val solverFactory = solverFactories[name]!!
         val solver = solverFactory.createHornSolver()
 
         solver.use { hornSolver ->

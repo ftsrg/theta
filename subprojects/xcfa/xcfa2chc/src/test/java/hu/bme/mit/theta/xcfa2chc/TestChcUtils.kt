@@ -34,7 +34,9 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -56,8 +58,8 @@ class TestChcUtils {
         )
 
         @JvmStatic
-        fun solvers(): List<Arguments> {
-            return solverFactories.map { Arguments.of(it.key, it.value) }
+        fun solvers(): List<Arguments?> {
+            return SOLVERS.map { Arguments.of(it) }
         }
 
         @BeforeAll
@@ -93,14 +95,10 @@ class TestChcUtils {
         }
     }
 
-    @BeforeEach
-    fun before() {
-        Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
-    }
-
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testPetersonManualCounting(name: Pair<String, String>, solverFactory: SolverFactory) {
+    fun testPetersonManualCounting(name: Pair<String, String>) {
+        val solverFactory = solverFactories[name]!!
         val i2i = ArrayType.of(Int(), Int())
 
         val pI = ParamHolder(Int())
@@ -400,7 +398,8 @@ class TestChcUtils {
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("solvers")
-    fun testPetersonNoCounting(name: Pair<String, String>, solverFactory: SolverFactory) {
+    fun testPetersonNoCounting(name: Pair<String, String>) {
+        val solverFactory = solverFactories[name]!!
         val i2i = ArrayType.of(Int(), Int())
 
         val pI = ParamHolder(Int())
