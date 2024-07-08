@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.solver.smtlib.impl.eldarica;
+package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import com.zaxxer.nuprocess.NuAbstractProcessHandler;
 import com.zaxxer.nuprocess.NuProcessBuilder;
@@ -31,13 +31,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class EldaricaSolverBinary implements SmtLibSolverBinary {
+/**
+ * Instead of an interactive solver, these binaries can only work with an input file.
+ * Therefore, we keep track of commands, and only execute them when readResponse() is called.
+ */
+public class GenericSmtLibOneshotSolverBinary implements SmtLibSolverBinary {
 
     private final List<String> commands;
     private final Path solverPath;
     private final String[] args;
 
-    public EldaricaSolverBinary(Path solverPath, String[] args) {
+    public GenericSmtLibOneshotSolverBinary(Path solverPath, String[] args) {
         this.solverPath = solverPath;
         this.args = args;
         commands = new ArrayList<>();

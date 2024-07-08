@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.solver.smtlib.impl.eldarica;
+package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -39,20 +39,21 @@ import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
-public class EldaricaSolver extends SmtLibSolver {
+public class GenericSmtLibHornSolver extends SmtLibSolver {
     private static final Pattern CEX_PATTERN = Pattern.compile("([0-9]+): *(.*)(?=->)->( *([0-9]+)(, *[0-9]+)*)?");
     private static final Pattern CEX_ROOT = Pattern.compile("([0-9]+): *(.*)");
 
     private ProofNode proof = null;
 
-    public EldaricaSolver(SmtLibSymbolTable symbolTable, SmtLibTransformationManager transformationManager, SmtLibTermTransformer termTransformer, SmtLibSolverBinary solverBinary) {
+    public GenericSmtLibHornSolver(SmtLibSymbolTable symbolTable, SmtLibTransformationManager transformationManager, SmtLibTermTransformer termTransformer, SmtLibSolverBinary solverBinary) {
         super(symbolTable, transformationManager, termTransformer, solverBinary, false, "HORN");
     }
 
     @Override
     public void track(Expr<BoolType> assertion) {
-        throw new UnsupportedOperationException("Tracking is not supported by Eldarica.");
+        throw new UnsupportedOperationException("Tracking is not supported by this solver.");
     }
 
     @Override
@@ -102,7 +103,7 @@ public class EldaricaSolver extends SmtLibSolver {
                 if(idx != -1) {
                     final var expr = termTransformer.toExpr(term, Bool(), new SmtLibModel(Collections.emptyMap()));
                     final var builder = new ProofNode.Builder(expr);
-                    if(root == null) {
+                    if (root == null && expr.equals(False())) {
                         root = builder;
                     }
                     builderMap.put(idx, builder);
@@ -130,7 +131,7 @@ public class EldaricaSolver extends SmtLibSolver {
 
     @Override
     public Collection<Expr<BoolType>> getUnsatCore() {
-        throw new UnsupportedOperationException("Eldarica cannot return unsat cores");
+        throw new UnsupportedOperationException("This solver cannot return unsat cores");
     }
 
     @Override

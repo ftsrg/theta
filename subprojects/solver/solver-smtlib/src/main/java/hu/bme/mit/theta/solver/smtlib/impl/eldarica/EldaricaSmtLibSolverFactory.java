@@ -19,6 +19,8 @@ import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibHornSolver;
+import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibOneshotSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSolverFactory;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTermTransformer;
@@ -51,9 +53,9 @@ public class EldaricaSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
-        final var solverBinary = new EldaricaSolverBinary(solverPath, args);
+        final var solverBinary = new GenericSmtLibOneshotSolverBinary(solverPath, args);
 
-        return new EldaricaSolver(symbolTable, transformationManager, termTransformer, solverBinary);
+        return new GenericSmtLibHornSolver(symbolTable, transformationManager, termTransformer, solverBinary);
     }
 
     @Override
