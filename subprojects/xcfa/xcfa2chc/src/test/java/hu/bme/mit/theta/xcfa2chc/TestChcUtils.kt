@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa2chc
 
+import hu.bme.mit.theta.common.OsHelper
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls
@@ -28,8 +30,14 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
-import hu.bme.mit.theta.solver.smtlib.impl.z3.Z3SmtLibSolverFactory
-import org.junit.jupiter.api.Test
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
+import org.junit.jupiter.api.*
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 
 private val iParamLut = LinkedHashMap<String, ParamDecl<IntType>>()
 private fun iP(name: String) = iParamLut.getOrPut(name) { Decls.Param(name, IntExprs.Int()) }
@@ -37,8 +45,62 @@ private fun iP(name: String) = iParamLut.getOrPut(name) { Decls.Param(name, IntE
 
 class TestChcUtils {
 
-    @Test
-    fun testPetersonManualCounting() {
+    companion object {
+
+        private var solverManager: SmtLibSolverManager? = null
+        private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
+
+        private val SOLVERS: List<Pair<String, String>> = listOf(
+            Pair("z3", "4.12.6"),
+            Pair("z3", "4.13.0"),
+        )
+
+        @JvmStatic
+        fun solvers(): List<Arguments> {
+            return solverFactories.map { Arguments.of(it.key, it.value) }
+        }
+
+        @BeforeAll
+        @JvmStatic
+        fun init() {
+            if (OsHelper.getOs() == OsHelper.OperatingSystem.LINUX) {
+                val home = SmtLibSolverManager.HOME
+
+                solverManager = SmtLibSolverManager.create(home, NullLogger.getInstance())
+                for ((solver, version) in SOLVERS) {
+
+                    try {
+                        solverManager!!.install(solver, version, version, null, false)
+                    } catch (e: SmtLibSolverInstallerException) {
+                        e.printStackTrace()
+                    }
+
+                    solverFactories.put(Pair(solver, version), solverManager!!.getSolverFactory(solver, version))
+                }
+            }
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun destroy() {
+            for ((solver, version) in SOLVERS) {
+                try {
+                    solverManager!!.uninstall(solver, version)
+                } catch (e: SmtLibSolverInstallerException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    @BeforeEach
+    fun before() {
+        Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("solvers")
+    fun testPetersonManualCounting(name: Pair<String, String>, solverFactory: SolverFactory) {
         val i2i = ArrayType.of(Int(), Int())
 
         val pI = ParamHolder(Int())
@@ -237,7 +299,7 @@ class TestChcUtils {
                 Eq(Add(Read(co, eid7), Int(1)), Read(co, eid8)) + // co-after is eid8
                 Eq(pI[3], cnt) +
                 W(br, co, rf, com, eid, vid, pI[0]).expr + // successful write
-                T1G(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
+                T1G(br, co, rf, com, eid, turn, flag1, flag2, cnt_old).expr + // previous loc
                 Eq(Add(eid, Int(8)), eid2) +               // eid update
                 Lt(Read(com, eid), Read(com, eid9)) +      // com constraint (because po)
                 Lt(Read(com, eid9), Read(com, eid10)) +    // com constraint (because po)
@@ -327,12 +389,18 @@ class TestChcUtils {
         !(T0C(br, co, rf, com, eid, turn, flag1, flag2, cnt) with Eq(cnt, Int(1)))
         !(T1C(br, co, rf, com, eid, turn, flag1, flag2, cnt) with Eq(cnt, Int(1)))
 
-        val expr = listOf(init, T0, T0G, T0C, T0CF, T0F, T1, T1G, T1C, T1CF, T1F, W).toSMT2()
+        val relations = listOf(init, T0, T0G, T0C, T0CF, T0F, T1, T1G, T1C, T1CF, T1F, W)
+        val expr = relations.toSMT2()
         println(expr)
+        val solver = solverFactory.createHornSolver()
+        solver.add(relations)
+        solver.check()
+        Assertions.assertTrue(solver.status == SolverStatus.SAT)
     }
 
-    @Test
-    fun testPetersonNoCounting() {
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("solvers")
+    fun testPetersonNoCounting(name: Pair<String, String>, solverFactory: SolverFactory) {
         val i2i = ArrayType.of(Int(), Int())
 
         val pI = ParamHolder(Int())
@@ -532,23 +600,17 @@ class TestChcUtils {
                 Eq(Add(Read(co, eid2), Int(1)), Read(co, eid)) + // co-next
                 Lt(Read(com, eid2), Read(com, eid))
 
-//        T0(br, co, rf, com, eid2, turn, flag1, flag2, cnt) +=
-//            W(br, co, rf, com, eid, vid, pB[0]).expr + // successful write
-//                T0F(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
-//                Eq(Add(eid, Int(2)), eid2) +               // eid update
-//                Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
-//        T1(br, co, rf, com, eid, turn, flag1, flag2, cnt) +=
-//            W(br, co, rf, com, eid, vid, pB[0]).expr + // successful write
-//                T1F(br, co, rf, com, eid, turn, flag1, flag2, cnt).expr + // previous loc
-//                Eq(Add(eid, Int(2)), eid2) +               // eid update
-//                Lt(Read(com, eid), Read(com, eid2))    // com constraint (because po)
-
         !(T0C(br, co, rf, com, eid, turn, flag1, flag2, cnt) with
             T1C(br, co, rf, com, eid2, turn_old, flag1_old, flag2_old, cnt).expr +
             Eq(Read(com, eid), Read(com, eid2)))
 
-        val expr = listOf(init, T0, T0G, T0C, T0F, T1, T1G, T1C, T1F, W).toSMT2()
+        val relations = listOf(init, T0, T0G, T0C, T0F, T1, T1G, T1C, T1F, W)
+        val expr = relations.toSMT2()
         println(expr)
+        val solver = solverFactory.createHornSolver()
+        solver.add(relations)
+        solver.check()
+        Assertions.assertTrue(solver.status == SolverStatus.SAT)
     }
 
 }

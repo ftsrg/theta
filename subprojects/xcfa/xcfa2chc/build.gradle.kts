@@ -22,4 +22,6 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-xcfa"))
     implementation(project(":theta-solver-smtlib"))
+    testImplementation(project(":theta-solver-z3"))
+    testImplementation(project(":theta-solver"))
 }
