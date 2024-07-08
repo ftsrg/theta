@@ -65,11 +65,8 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
         return new Unsafe<>(cex, witness, Optional.of(stats));
     }
 
-    // Factory methods
-
-    public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg,
-                                                                      final Statistics stats) {
-        return new Safe<>(arg, Optional.of(stats));
+    public static <W extends Witness, C extends Cex> Unknown<W, C> unknown() {
+        return new Unknown<>();
     }
 
     public abstract boolean isSafe();
@@ -164,47 +161,16 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
 
         @Override
         public boolean isUnsafe() {
-            return true;
-        }
-
-        @Override
-        public Safe<S, A> asSafe() {
-            throw new ClassCastException(
-                    "Cannot cast " + Unsafe.class.getSimpleName() + " to "
-                            + Safe.class.getSimpleName());
-        }
-
-        @Override
-        public Unsafe<S, A> asUnsafe() {
-            return this;
-        }
-
-        @Override
-        public String toString() {
-            return Utils.lispStringBuilder(SafetyResult.class.getSimpleName())
-                    .add(Unsafe.class.getSimpleName())
-                    .add("Trace length: " + cex.map(Trace::length).orElse(-1)).toString();
-        }
-    }
-
-    public static final class Unknown<S extends State, A extends Action> extends SafetyResult<S, A> {
-        @Override
-        public boolean isSafe() {
             return false;
         }
 
         @Override
-        public boolean isUnsafe() {
-            return false;
-        }
-
-        @Override
-        public Safe<S, A> asSafe() {
+        public Safe<W, C> asSafe() {
             return null;
         }
 
         @Override
-        public Unsafe<S, A> asUnsafe() {
+        public Unsafe<W, C> asUnsafe() {
             return null;
         }
 

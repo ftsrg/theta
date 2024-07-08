@@ -72,7 +72,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
     }
 
     @Override
-    public SafetyResult<S, A> check(final P initPrec) {
+    public SafetyResult<ARG<S, A>, Trace<S, A>> check(final P initPrec) {
         logger.write(Level.INFO, "Configuration: %s%n", this);
         final Stopwatch stopwatch = Stopwatch.createStarted();
         long abstractorTime = 0;
@@ -123,7 +123,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
         stopwatch.stop();
-        SafetyResult<S, A> cegarResult = null;
+        SafetyResult<ARG<S, A>, Trace<S, A>> cegarResult = null;
         final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
                 refinerTime, iteration);
 

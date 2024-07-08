@@ -72,7 +72,7 @@ public final class LazyXtaCheckerTest {
     @Parameter(2)
     public ClockStrategy clockStrategy;
 
-    private SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> checker;
+    private SafetyChecker<? extends ARG<? extends XtaState<?>, XtaAction>, ? extends Trace<? extends XtaState<?>, XtaAction>, UnitPrec> checker;
 
     @Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
     public static Collection<Object[]> data() {

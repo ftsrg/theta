@@ -123,7 +123,7 @@ public class StsPredTest {
         final SafetyResult<ARG<PredState, StsAction>, Trace<PredState, StsAction>> safetyStatus = checker.check(prec);
         System.out.println(safetyStatus);
 
-        final ARG<PredState, StsAction> arg = safetyStatus.getArg();
+        final ARG<PredState, StsAction> arg = safetyStatus.getWitness();
         assertTrue(isWellLabeled(arg, abstractionSolver));
 
         // System.out.println(new
