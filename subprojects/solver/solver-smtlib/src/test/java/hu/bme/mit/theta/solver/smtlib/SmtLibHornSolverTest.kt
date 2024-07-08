@@ -41,7 +41,11 @@ class SmtLibHornSolverTest {
         private var solverManager: SmtLibSolverManager? = null
         private val solverFactories: MutableMap<Pair<String, String>, SolverFactory> = LinkedHashMap()
 
-        private val SOLVERS: List<Pair<String, String>> = listOf(Pair("z3", "4.13.0"), Pair("z3", "4.12.6"))
+        private val SOLVERS: List<Pair<String, String>> = listOf(
+            Pair("z3", "4.13.0"),
+            Pair("z3", "4.12.6"),
+            Pair("eldarica", "2.1")
+        )
 
         @JvmStatic
         fun solvers(): List<Arguments> {
@@ -111,7 +115,7 @@ class SmtLibHornSolverTest {
             Assertions.assertTrue(model.containsKey(inv.constDecl))
             Assertions.assertTrue(model.containsKey(init.constDecl))
 
-            val checkerSolver = solverFactory!!.createSolver()
+            val checkerSolver = solverFactories.filter { it.key.first.equals("z3") }.values.first().createSolver()
             checkerSolver.use {
                 val p0 = Const("p0", Int())
                 val p1 = Const("p1", Int())

@@ -90,9 +90,9 @@ public class SmtLibSolver implements UCSolver, Solver, HornSolver {
     private final boolean unsatCoreEnabled;
     private int labelNum = 0;
 
-    private Valuation model;
-    private Collection<Expr<BoolType>> unsatCore;
-    private SolverStatus status;
+    protected Valuation model;
+    protected Collection<Expr<BoolType>> unsatCore;
+    protected SolverStatus status;
 
     public SmtLibSolver(
             final SmtLibSymbolTable symbolTable,
@@ -315,7 +315,7 @@ public class SmtLibSolver implements UCSolver, Solver, HornSolver {
         unsatCore = null;
     }
 
-    protected final void issueGeneralCommand(String command) {
+    protected void issueGeneralCommand(String command) {
         solverBinary.issueCommand(command);
         var res = parseResponse(solverBinary.readResponse());
         if (res.isError()) {
