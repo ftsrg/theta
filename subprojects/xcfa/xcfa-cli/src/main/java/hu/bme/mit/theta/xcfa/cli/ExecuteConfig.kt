@@ -248,8 +248,12 @@ private fun preVerificationLogging(
 
             if (!config.outputConfig.chcOutputConfig.disable) {
                 xcfa.procedures.forEach {
-                    val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
-                    chcFile.writeText(it.toSMT2CHC())
+                    try {
+                        val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
+                        chcFile.writeText(it.toSMT2CHC())
+                    } catch (e: Exception) {
+                        logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
+                    }
                 }
             }
 
