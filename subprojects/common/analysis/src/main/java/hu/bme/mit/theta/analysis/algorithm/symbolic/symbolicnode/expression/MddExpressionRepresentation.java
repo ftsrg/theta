@@ -32,6 +32,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -178,7 +179,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 final Decl<?> decl = variable.getTraceInfo(Decl.class);
                 final LitExpr<?> lowerBound = LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
                 final LitExpr<?> upperBound = LitExprConverter.toLitExpr(statistics.highestValue(), decl.getType());
-                if (!decl.getType().equals(BoolType.getInstance())) { // TODO delete
+                if (!decl.getType().equals(BoolType.getInstance()) && !(decl.getType() instanceof EnumType)) { // TODO delete
                     if (lowerBound.equals(upperBound)) {
                         exprs.add(Eq(decl.getRef(), lowerBound));
                     } else {
