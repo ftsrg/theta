@@ -130,7 +130,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         declarationStack.add(consts);
 
         assertions.add(assertion);
-        enumStrategy.declareDatatypes((Collection<Type>) consts.stream().map(ConstDecl::getType).toList(), typeStack, this::issueGeneralCommand);
+        enumStrategy.declareDatatypes(consts.stream().map(ConstDecl::getType).toList(), typeStack, this::issueGeneralCommand);
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
         issueGeneralCommand(String.format("(assert %s)", enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().filter(symbolTable::definesConst).collect(Collectors.toMap(c -> c, symbolTable::getSymbol)))));
 
