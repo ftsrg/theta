@@ -104,7 +104,7 @@ public final class Z3SolverFactory implements SolverFactory {
                 symbolTable, z3Context);
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
-        return new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context,
+        return new Z3HornSolver(symbolTable, transformationManager, termTransformer, z3Context,
                 z3Solver);
     }
 
