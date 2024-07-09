@@ -192,7 +192,6 @@ class RandomXsts(seed: Int, val exprMaxDepth: Int) {
             do expr = randomBoolExpr(0)
             while (ExprUtils.getVars(expr).isEmpty())
             xsts = XSTS(
-                mapOf(),
                 ctrlVars.toSet(),
                 init, NonDetStmt.of(listOf(trans)), env, initExpr, expr
             )
