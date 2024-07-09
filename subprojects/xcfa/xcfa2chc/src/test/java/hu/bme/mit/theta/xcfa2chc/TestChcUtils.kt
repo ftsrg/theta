@@ -87,7 +87,7 @@ class TestChcUtils {
         fun destroy() {
             for ((solver, version) in SOLVERS) {
                 try {
-                    solverManager!!.uninstall(solver, version)
+                    solverManager?.uninstall(solver, version)
                 } catch (e: SmtLibSolverInstallerException) {
                     e.printStackTrace()
                 }
