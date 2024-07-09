@@ -34,9 +34,7 @@ import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -93,6 +91,11 @@ class TestChcUtils {
                 }
             }
         }
+    }
+
+    @BeforeEach
+    fun before() {
+        Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
     }
 
     @ParameterizedTest(name = "[{index}] {0}")
