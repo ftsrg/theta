@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.Additive;
@@ -139,5 +140,10 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
         } else {
             throw new ClassCastException("Int cannot be cast to " + type);
         }
+    }
+
+    @Override
+    public DomainSize getDomainSize() {
+        return DomainSize.INFINITY;
     }
 }

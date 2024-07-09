@@ -19,13 +19,10 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.ItpMarkerTree;
-import hu.bme.mit.theta.solver.ItpPattern;
-import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibItpSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
@@ -44,9 +41,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLibItpMarker> {
@@ -58,9 +53,10 @@ public final class PrincessSmtLibItpSolver extends SmtLibItpSolver<PrincessSmtLi
     public PrincessSmtLibItpSolver(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
-            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+            final SmtLibEnumStrategy enumStrategy
     ) {
-        super(symbolTable, transformationManager, termTransformer, solverBinary);
+        super(symbolTable, transformationManager, termTransformer, solverBinary, enumStrategy);
     }
 
     @Override

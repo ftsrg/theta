@@ -47,7 +47,7 @@ public class Z3SmtLibSolverFactory extends GenericSmtLibSolverFactory {
         if (!itpSupport.equals(Z3ItpSupport.NONE)) {
             final var symbolTable = new GenericSmtLibSymbolTable();
             final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
-            final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+            final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
             final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
             if (itpSupport.equals(Z3ItpSupport.OLD)) {

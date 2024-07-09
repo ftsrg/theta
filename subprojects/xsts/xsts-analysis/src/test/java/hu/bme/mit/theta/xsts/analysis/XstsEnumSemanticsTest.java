@@ -13,20 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xsts.type;
+package hu.bme.mit.theta.xsts.analysis;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
+import org.junit.Test;
 
-public interface XstsType<T extends Type> {
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 
-    T getType();
+public class XstsEnumSemanticsTest {
 
-    Expr<BoolType> createBoundExpr(final VarDecl<T> decl);
+    @Test(expected = ClassCastException.class)
+    public void test() throws IOException {
 
-    String serializeLiteral(final LitExpr<T> literal);
+        try (InputStream inputStream = new SequenceInputStream(new FileInputStream("src/test/resources/model/literals_bad.xsts"),
+                new FileInputStream("src/test/resources/property/literals.prop"))) {
+            XstsDslManager.createXsts(inputStream);
+        }
+    }
 
 }

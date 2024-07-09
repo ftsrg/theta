@@ -82,6 +82,10 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
@@ -142,6 +146,7 @@ import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 
 import java.math.BigInteger;
@@ -155,13 +160,15 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     private static final int CACHE_SIZE = 1000;
 
     private final SmtLibTransformationManager transformer;
+    private final SmtLibSymbolTable symbolTable;
 
     private final Cache<Expr<?>, String> exprToTerm;
     private final DispatchTable<String> table;
     private final Env env;
 
-    public GenericSmtLibExprTransformer(final SmtLibTransformationManager transformer) {
+    public GenericSmtLibExprTransformer(final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
         this.transformer = transformer;
+        this.symbolTable = symbolTable;
         this.env = new Env();
 
         this.exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
@@ -261,6 +268,14 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(IntLtExpr.class, this::transformIntLt)
 
                 .addCase(IntToRatExpr.class, this::transformIntToRat)
+
+                // Enums
+
+                .addCase(EnumLitExpr.class, this::transformEnumLit)
+
+                .addCase(EnumNeqExpr.class, this::transformEnumNeq)
+
+                .addCase(EnumEqExpr.class, this::transformEnumEq)
 
                 // Bitvectors
 
@@ -720,6 +735,25 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformIntToRat(final IntToRatExpr expr) {
         return String.format("(to_real %s)", toTerm(expr.getOp()));
+    }
+
+    /*
+     * Enums
+     */
+
+    protected String transformEnumEq(final EnumEqExpr expr) {
+        return String.format("(= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformEnumNeq(final EnumNeqExpr expr) {
+        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()),
+                toTerm(expr.getRightOp()));
+    }
+
+    protected String transformEnumLit(final EnumLitExpr expr) {
+        String longName = EnumType.makeLongName(expr.getType(), expr.getValue());
+        symbolTable.putEnumLiteral(longName, expr);
+        return longName;
     }
 
     /*

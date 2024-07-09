@@ -17,17 +17,17 @@ package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.collect.Sets;
 import com.microsoft.z3legacy.Context;
+import com.microsoft.z3legacy.EnumSort;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 final class Z3TypeTransformer {
 
@@ -40,6 +40,7 @@ final class Z3TypeTransformer {
     private final com.microsoft.z3legacy.RealSort realSort;
     private final Set<com.microsoft.z3legacy.BitVecSort> bvSorts;
     private final Set<com.microsoft.z3legacy.FPSort> fpSorts;
+    private final Map<String, EnumSort> enumSorts;
 
     Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
         this.context = context;
@@ -50,6 +51,7 @@ final class Z3TypeTransformer {
         realSort = context.mkRealSort();
         bvSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
         fpSorts = Sets.synchronizedNavigableSet(new TreeSet<>());
+        enumSorts = new HashMap<>();
     }
 
     public com.microsoft.z3legacy.Sort toSort(final Type type) {
@@ -89,14 +91,20 @@ final class Z3TypeTransformer {
             final com.microsoft.z3legacy.Sort indexSort = toSort(arrayType.getIndexType());
             final com.microsoft.z3legacy.Sort elemSort = toSort(arrayType.getElemType());
             return context.mkArraySort(indexSort, elemSort);
+        } else if (type instanceof EnumType enumType) {
+            return enumSorts.computeIfAbsent(enumType.getName(), key -> createEnumSort(enumType));
         } else {
             throw new UnsupportedOperationException(
-                    "Unsupporte type: " + type.getClass().getSimpleName());
+                    "Unsupported type: " + type.getClass().getSimpleName());
         }
     }
 
     public void reset() {
         bvSorts.clear();
+    }
+
+    private EnumSort createEnumSort(EnumType enumType) {
+        return context.mkEnumSort(enumType.getName(), enumType.getValues().stream().map(lit -> EnumType.makeLongName(enumType, lit)).toArray(String[]::new));
     }
 
 }

@@ -18,33 +18,33 @@ package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.smtlib.impl.generic.*;
-import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 
 import java.nio.file.Path;
 import java.util.EnumSet;
 
 public class CVC5SmtLibSolverFactory extends GenericSmtLibSolverFactory {
 
-    private CVC5SmtLibSolverFactory(Path solverPath, String[] args) {
-        super(solverPath, args);
+    private CVC5SmtLibSolverFactory(Path solverPath, String[] args, SmtLibEnumStrategy enumStrategy) {
+        super(solverPath, args, enumStrategy);
     }
 
-    public static CVC5SmtLibSolverFactory create(Path solverPath, String[] args) {
-        return new CVC5SmtLibSolverFactory(solverPath, args);
+    public static CVC5SmtLibSolverFactory create(Path solverPath, String[] args, SmtLibEnumStrategy enumStrategy) {
+        return new CVC5SmtLibSolverFactory(solverPath, args, enumStrategy);
     }
 
     @Override
     public ItpSolver createItpSolver() {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
-        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args,
                 EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class));
 
         return new CVC5SmtLibItpSolver(
                 symbolTable, transformationManager, termTransformer, solverBinary,
                 () -> new GenericSmtLibSolverBinary(solverPath, args,
-                        EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class))
+                        EnumSet.noneOf(GenericSmtLibSolverBinary.Solver.class)), enumStrategy
         );
     }
 }
