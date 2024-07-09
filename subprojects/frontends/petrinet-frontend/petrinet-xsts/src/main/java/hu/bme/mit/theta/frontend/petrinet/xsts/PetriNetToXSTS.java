@@ -29,14 +29,12 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.petrinet.model.*;
 import hu.bme.mit.theta.xsts.XSTS;
-import hu.bme.mit.theta.xsts.pnml.elements.*;
 
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
