@@ -89,6 +89,10 @@ public final class EnumType implements Equational<EnumType>, Type {
         return name;
     }
 
+    public int getIntValue(EnumLitExpr literal) {
+        return getIntValue(literal.getValue());
+    }
+
     public int getIntValue(String literal) {
         checkArgument(literals.containsKey(literal), String.format("Enum type %s does not contain literal '%s'", name, literal));
         return literals.get(literal);
@@ -105,6 +109,15 @@ public final class EnumType implements Equational<EnumType>, Type {
         } catch (Exception e) {
             throw new RuntimeException(String.format("%s is not valid for type %s", longName, name), e);
         }
+    }
+
+    public EnumLitExpr litFromIntValue(int value) {
+        for (Map.Entry<String, Integer> entry : literals.entrySet()) {
+            if (entry.getValue() == value) {
+                return EnumLitExpr.of(this, entry.getKey());
+            }
+        }
+        throw new IllegalArgumentException(String.format("Enum type %s does not contain value %d", name, value));
     }
 
     @Override
