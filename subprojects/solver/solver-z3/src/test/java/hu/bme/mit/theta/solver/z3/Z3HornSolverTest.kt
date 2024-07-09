@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3
 
+import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.core.ParamHolder
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Const
@@ -28,6 +29,8 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.type.inttype.IntType
 import hu.bme.mit.theta.solver.HornSolver
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -43,6 +46,11 @@ class Z3HornSolverTest {
                 Arguments.of(Z3SolverFactory.getInstance().createHornSolver()),
             )
         }
+    }
+
+    @BeforeEach
+    fun before() {
+        Assumptions.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX)
     }
 
     @ParameterizedTest
