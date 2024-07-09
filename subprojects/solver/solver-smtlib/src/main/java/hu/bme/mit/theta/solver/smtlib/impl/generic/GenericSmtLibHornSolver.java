@@ -13,141 +13,150 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.bvtype.BvExprs;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ProofNode;
 import hu.bme.mit.theta.solver.ProofNode.Builder;
-import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
-import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GetProofResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
-public class GenericSmtLibHornSolver extends SmtLibSolver {
-    private static final Pattern CEX_PATTERN = Pattern.compile("([0-9]+):\s*(.*)(?=->)->(\s*([0-9]+)(,?\s+[0-9]+)*)?");
-    private static final Pattern CEX_ROOT = Pattern.compile("([0-9]+):\s*(.*)");
-
-    private ProofNode proof = null;
+/**
+ * This class is a HornSolver that expects the proofs to be in the style of Z3 (using hyper-res
+ * predicates)
+ */
+public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver {
 
     public GenericSmtLibHornSolver(SmtLibSymbolTable symbolTable, SmtLibTransformationManager transformationManager, SmtLibTermTransformer termTransformer, SmtLibSolverBinary solverBinary) {
         super(symbolTable, transformationManager, termTransformer, solverBinary, false, "HORN");
     }
 
-    @Override
-    public void track(Expr<BoolType> assertion) {
-        throw new UnsupportedOperationException("Tracking is not supported by this solver.");
-    }
-
-    @Override
-    public SolverStatus check() {
-        solverBinary.issueCommand("(check-sat)");
-        final var response = solverBinary.readResponse().lines().toList();
-        status = response.get(0).equals("sat") ? SolverStatus.SAT : response.get(0).equals("unsat") ? SolverStatus.UNSAT : null;
-        if (status == SolverStatus.SAT) {
-            // we have a model
-            final var sb = new StringBuilder();
-            sb.append("(");
-            for (int i = 1; i < response.size(); i++) {
-                sb.append(response.get(i)).append("\n");
+    public static Type transformSort(final SortContext ctx) {
+        final String name = ctx.identifier().symbol().getText();
+        return switch (name) {
+            case "Int" -> Int();
+            case "Bool" -> Bool();
+            case "Real" -> Rat();
+            case "BitVec" -> {
+                assert ctx.identifier().index().size() == 1;
+                yield BvExprs.BvType(Integer.parseInt(ctx.identifier().index().get(0).getText()));
             }
-            sb.append(")");
-            final var generalResponse = parseResponse(sb.toString());
-            if (generalResponse.isSpecific() && generalResponse.asSpecific().isGetModelResponse()) {
-                model = new SmtLibValuation(symbolTable, transformationManager, termTransformer,
-                        generalResponse.asSpecific().asGetModelResponse().getModel());
+            case "Array" -> {
+                assert ctx.sort().size() == 2;
+                yield Array(transformSort(ctx.sort().get(0)), transformSort(ctx.sort().get(1)));
             }
-        } else if (status == SolverStatus.UNSAT) {
-            // we have a cex (beginning with an empty line)
-            final Map<Integer, Builder> builderMap = new LinkedHashMap<>();
-            final Map<Builder, List<Integer>> dependencyMap = new LinkedHashMap<>();
-            Builder root = null;
-            for (int i = 1; i < response.size(); i++) {
-                final var matcher = CEX_PATTERN.matcher(response.get(i));
-                int idx = -1;
-                String term = "";
-                List<Integer> dependencies = null;
-                if (matcher.matches()) {
-                    idx = Integer.parseInt(matcher.group(1));
-                    term = matcher.group(2);
-                    if (matcher.group(3) != null) {
-                        dependencies = Arrays.stream(matcher.group(3).split(",?\s+")).filter(it -> !it.isEmpty()).map(it -> Integer.parseInt(it.trim())).toList();
-                    } else {
-                        dependencies = List.of();
-                    }
-                } else {
-                    final var rootMatcher = CEX_ROOT.matcher(response.get(i));
-                    if (rootMatcher.matches()) {
-                        idx = Integer.parseInt(rootMatcher.group(1));
-                        term = rootMatcher.group(2);
-                        dependencies = List.of();
-                    }
-                }
-                if (idx != -1) {
-                    final var expr = termTransformer.toExpr(term, Bool(), new SmtLibModel(Collections.emptyMap()));
-                    final var builder = new ProofNode.Builder(expr);
-                    if (root == null && expr.equals(False())) {
-                        root = builder;
-                    }
-                    builderMap.put(idx, builder);
-                    dependencyMap.put(builder, dependencies);
-                }
-            }
-            dependencyMap.forEach((builder, integers) ->
-                    integers.forEach(integer -> builder.addChild(builderMap.get(integer)))
-            );
-            proof = root.build();
-
-        }
-        return status;
-    }
-
-    @Override
-    public void push() {
-        throw new UnsupportedOperationException("Push is not supported.");
-    }
-
-    @Override
-    public void pop(int n) {
-        throw new UnsupportedOperationException("Pop is not supported.");
-    }
-
-    @Override
-    public Collection<Expr<BoolType>> getUnsatCore() {
-        throw new UnsupportedOperationException("This solver cannot return unsat cores");
-    }
-
-    @Override
-    protected void issueGeneralCommand(String command) {
-        solverBinary.issueCommand(command);
+            default -> throw new UnsupportedOperationException();
+        };
     }
 
     @Override
     public ProofNode getProof() {
-        checkState(proof != null, "Proof cannot be null! Did you call check()?");
-        return proof;
+        solverBinary.issueCommand("(get-proof)");
+        var response = solverBinary.readResponse();
+        final var res = parseResponse(response);
+        if (res.isError()) {
+            throw new SmtLibSolverException(res.getReason());
+        } else if (res.isSpecific()) {
+            final GetProofResponse getModelResponse = res.asSpecific().asGetProofResponse();
+            getModelResponse.getFunDeclarations().forEach((name, def) -> {
+                var type = transformSort(def.get2());
+                for (SortContext s : def.get1()) {
+                    type = FuncType.of(transformSort(s), type);
+                }
+                symbolTable.put(Const(name, type), name, def.get3());
+            });
+            final var proof = termTransformer.toExpr(getModelResponse.getProof(), Bool(), new SmtLibModel(Collections.emptyMap()));
+            return proofFromExpr(proof);
+        } else {
+            throw new AssertionError();
+        }
     }
 
-    @Override
-    public void clearState() {
-        super.clearState();
-        proof = null;
+    private ProofNode proofFromExpr(Expr<BoolType> proof) {
+        checkState(proof instanceof FuncAppExpr<?, ?>, "Proof must be a function application.");
+        int id = 0;
+        final Map<Expr<?>, Integer> lookup = new LinkedHashMap<>();
+
+        final var args = extractFuncAndArgs((FuncAppExpr<?, ?>) proof).get2();
+
+        Deque<Expr<?>> proofStack = new LinkedList<>();
+        proofStack.push(args.get(0));
+        lookup.put(args.get(0), id++);
+
+        Expr<BoolType> root = cast(False(), Bool());
+        final var rootBuilder = new ProofNode.Builder(root);
+
+        Map<Integer, ProofNode.Builder> visited = new LinkedHashMap<>();
+        visited.put(lookup.get(args.get(0)), rootBuilder);
+
+        while (!proofStack.isEmpty()) {
+            final var proofNodeExpr = proofStack.pop();
+            if (!visited.containsKey(lookup.getOrDefault(proofNodeExpr, -1))) {
+                throw new Z3Exception("Node should exist in the graph nodes");
+            }
+            final var proofNode = visited.get(lookup.get(proofNodeExpr));
+
+            if (proofNodeExpr instanceof FuncAppExpr<?, ?> funcAppExpr) {
+                final var nameAndArgs = extractFuncAndArgs(funcAppExpr);
+                if (nameAndArgs.get1() instanceof RefExpr<?> refName && refName.getDecl().getName().startsWith("hyper-res")) {
+                    if (!nameAndArgs.get2().isEmpty()) {
+                        for (int i = 1; i < nameAndArgs.get2().size() - 1; ++i) {
+                            final var child = nameAndArgs.get2().get(i);
+                            if (!visited.containsKey(lookup.getOrDefault(child, -1))) {
+                                if (!lookup.containsKey(child)) {
+                                    lookup.put(child, id++);
+                                }
+                                visited.put(lookup.get(child), new Builder(extractProofExpr(child)));
+                                proofStack.push(child);
+                            }
+                            proofNode.addChild(visited.get(lookup.get(child)));
+                        }
+                    }
+                }
+            }
+        }
+        return rootBuilder.build();
     }
+
+    private Expr<BoolType> extractProofExpr(Expr<?> expr) {
+        checkState(expr instanceof FuncAppExpr<?, ?>, "Proof should be function application.");
+        final var nameAndArgs = extractFuncAndArgs((FuncAppExpr<?, ?>) expr);
+        final var args = nameAndArgs.get2();
+        final var lastArg = args.get(args.size() - 1);
+        checkState(lastArg instanceof FuncAppExpr<?, ?>, "Proof should be function application.");
+        return (Expr<BoolType>) lastArg;
+    }
+
+
 }

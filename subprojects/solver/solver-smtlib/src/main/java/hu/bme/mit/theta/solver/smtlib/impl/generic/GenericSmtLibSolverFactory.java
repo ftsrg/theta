@@ -101,7 +101,6 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
         final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
 
-        return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
-                false, "HORN");
+        return new GenericSmtLibHornSolver(symbolTable, transformationManager, termTransformer, solverBinary);
     }
 }
