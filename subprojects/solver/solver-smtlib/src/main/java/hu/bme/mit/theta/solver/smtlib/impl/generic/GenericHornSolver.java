@@ -22,6 +22,7 @@ import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ProofNode;
 import hu.bme.mit.theta.solver.ProofNode.Builder;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
@@ -53,7 +54,7 @@ public class GenericHornSolver extends SmtLibSolver implements HornSolver {
     private ProofNode proof = null;
 
     public GenericHornSolver(SmtLibSymbolTable symbolTable, SmtLibTransformationManager transformationManager, SmtLibTermTransformer termTransformer, SmtLibSolverBinary solverBinary) {
-        super(symbolTable, transformationManager, termTransformer, solverBinary, false, "HORN");
+        super(symbolTable, transformationManager, termTransformer, solverBinary, false, SmtLibEnumStrategy.getDefaultStrategy(), "HORN");
     }
 
     @Override

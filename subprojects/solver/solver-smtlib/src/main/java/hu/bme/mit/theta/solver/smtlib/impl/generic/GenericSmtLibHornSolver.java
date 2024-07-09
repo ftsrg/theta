@@ -27,6 +27,7 @@ import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ProofNode;
 import hu.bme.mit.theta.solver.ProofNode.Builder;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
@@ -59,7 +60,7 @@ import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver {
 
     public GenericSmtLibHornSolver(SmtLibSymbolTable symbolTable, SmtLibTransformationManager transformationManager, SmtLibTermTransformer termTransformer, SmtLibSolverBinary solverBinary) {
-        super(symbolTable, transformationManager, termTransformer, solverBinary, false, "HORN");
+        super(symbolTable, transformationManager, termTransformer, solverBinary, false, SmtLibEnumStrategy.getDefaultStrategy(), "HORN");
     }
 
     public static Type transformSort(final SortContext ctx) {

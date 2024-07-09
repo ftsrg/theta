@@ -21,19 +21,17 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
-import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.*;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.CheckSatResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.GeneralResponse;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.GetModelResponse;
@@ -45,8 +43,6 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationMan
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.util.*;
-import java.util.stream.Collectors;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,7 +67,6 @@ public class SmtLibSolver implements UCSolver, Solver {
     protected final Stack<ConstDecl<?>> declarationStack;
     protected final Stack<EnumType> typeStack;
     protected final SmtLibEnumStrategy enumStrategy;
-    private final boolean unsatCoreEnabled;
     private int labelNum = 0;
 
     protected Valuation model;
@@ -85,6 +80,16 @@ public class SmtLibSolver implements UCSolver, Solver {
             boolean unsatCoreEnabled
     ) {
         this(symbolTable, transformationManager, termTransformer, solverBinary, unsatCoreEnabled, SmtLibEnumStrategy.getDefaultStrategy(), "ALL");
+    }
+
+    public SmtLibSolver(
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+            boolean unsatCoreEnabled,
+            final SmtLibEnumStrategy enumStrategy
+    ) {
+        this(symbolTable, transformationManager, termTransformer, solverBinary, unsatCoreEnabled, enumStrategy, "ALL");
     }
 
     public SmtLibSolver(
@@ -127,7 +132,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         assertions.add(assertion);
         enumStrategy.declareDatatypes((Collection<Type>) consts.stream().map(ConstDecl::getType).toList(), typeStack, this::issueGeneralCommand);
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-        issueGeneralCommand(String.format("(assert %s)", enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol)))));
+        issueGeneralCommand(String.format("(assert %s)", enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().filter(symbolTable::definesConst).collect(Collectors.toMap(c -> c, symbolTable::getSymbol)))));
 
         clearState();
     }
