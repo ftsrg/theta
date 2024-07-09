@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.Type;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 public final class FuncExprs {
 
@@ -62,4 +63,16 @@ public final class FuncExprs {
         return App(func, paramHead, paramTail);
     }
 
+    public static <T1 extends Type, T2 extends Type> Expr<?> UnsafeApp(final Expr<?> func, final Expr<?> param) {
+        checkState(func.getType() instanceof FuncType<?, ?> fFunc && fFunc.getParamType().equals(param.getType()), "Parameter of type " + param.getType() + " is not suitable for function of type " + func.getType());
+        final Expr<FuncType<T1, T2>> funcTyped = (Expr<FuncType<T1, T2>>) func;
+        final Expr<T1> paramTyped = (Expr<T1>) param;
+        return App(funcTyped, paramTyped);
+    }
+
+    public static <T1 extends Type, T2 extends Type> Expr<?> UnsafeApp(final Expr<?> func, final List<Expr<?>> param) {
+        checkState(func.getType() instanceof FuncType<?, ?> fFunc, "Supposed function is of type " + func.getType());
+        final Expr<FuncType<T1, T2>> funcTyped = (Expr<FuncType<T1, T2>>) func;
+        return App(funcTyped, param.stream().map(it -> (Expr) it).toList());
+    }
 }

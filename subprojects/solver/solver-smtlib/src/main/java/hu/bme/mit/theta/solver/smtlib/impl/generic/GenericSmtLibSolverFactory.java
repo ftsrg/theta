@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
@@ -91,5 +92,15 @@ public class GenericSmtLibSolverFactory implements SolverFactory {
     public ItpSolver createItpSolver() {
         throw new UnsupportedOperationException(
                 "The generic driver does not support interpolation");
+    }
+
+    @Override
+    public HornSolver createHornSolver() {
+        final var symbolTable = new GenericSmtLibSymbolTable();
+        final var transformationManager = new GenericSmtLibTransformationManager(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args, solverOverride);
+
+        return new GenericSmtLibHornSolver(symbolTable, transformationManager, termTransformer, solverBinary);
     }
 }

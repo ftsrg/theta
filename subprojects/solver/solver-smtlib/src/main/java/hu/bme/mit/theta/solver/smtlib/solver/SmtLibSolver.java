@@ -22,21 +22,32 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibValuation;
-import hu.bme.mit.theta.solver.smtlib.solver.parser.*;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.CheckSatResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GeneralResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GetModelResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.GetUnsatCoreResponse;
+import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -48,17 +59,19 @@ public class SmtLibSolver implements UCSolver, Solver {
     protected final SmtLibTransformationManager transformationManager;
     protected final SmtLibTermTransformer termTransformer;
     protected final SmtLibSolverBinary solverBinary;
+    private final boolean unsatCoreEnabled;
+    private final String logic;
+
     protected final Stack<Expr<BoolType>> assertions;
     protected final Map<String, Expr<BoolType>> assumptions;
     protected final Stack<ConstDecl<?>> declarationStack;
     protected final Stack<EnumType> typeStack;
     protected final SmtLibEnumStrategy enumStrategy;
-    private final boolean unsatCoreEnabled;
     private int labelNum = 0;
 
-    private Valuation model;
-    private Collection<Expr<BoolType>> unsatCore;
-    private SolverStatus status;
+    protected Valuation model;
+    protected Collection<Expr<BoolType>> unsatCore;
+    protected SolverStatus status;
 
     public SmtLibSolver(
             final SmtLibSymbolTable symbolTable,
@@ -66,7 +79,7 @@ public class SmtLibSolver implements UCSolver, Solver {
             final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
             boolean unsatCoreEnabled
     ) {
-        this(symbolTable, transformationManager, termTransformer, solverBinary, unsatCoreEnabled, SmtLibEnumStrategy.getDefaultStrategy());
+        this(symbolTable, transformationManager, termTransformer, solverBinary, unsatCoreEnabled, SmtLibEnumStrategy.getDefaultStrategy(), "ALL");
     }
 
     public SmtLibSolver(
@@ -76,6 +89,17 @@ public class SmtLibSolver implements UCSolver, Solver {
             boolean unsatCoreEnabled,
             final SmtLibEnumStrategy enumStrategy
     ) {
+        this(symbolTable, transformationManager, termTransformer, solverBinary, unsatCoreEnabled, enumStrategy, "ALL");
+    }
+
+    public SmtLibSolver(
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+            boolean unsatCoreEnabled,
+            final SmtLibEnumStrategy enumStrategy,
+            final String logic
+    ) {
         this.solverBinary = solverBinary;
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
@@ -83,6 +107,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         this.enumStrategy = enumStrategy;
 
         this.unsatCoreEnabled = unsatCoreEnabled;
+        this.logic = logic;
 
         assertions = new StackImpl<>();
         assumptions = new HashMap<>();
@@ -100,14 +125,14 @@ public class SmtLibSolver implements UCSolver, Solver {
     }
 
     public void add(final Expr<BoolType> assertion, final String term) {
-        final var consts = ExprUtils.getConstants(assertion);
+        final var consts = ExprUtils.getConstants(assertion).stream().filter(symbolTable::definesConst).collect(Collectors.toSet());
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
 
         assertions.add(assertion);
-        enumStrategy.declareDatatypes((Collection<Type>) consts.stream().map(ConstDecl::getType).toList(), typeStack, this::issueGeneralCommand);
+        enumStrategy.declareDatatypes(consts.stream().map(ConstDecl::getType).toList(), typeStack, this::issueGeneralCommand);
         consts.stream().map(symbolTable::getDeclaration).forEach(this::issueGeneralCommand);
-        issueGeneralCommand(String.format("(assert %s)", enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol)))));
+        issueGeneralCommand(String.format("(assert %s)", enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().filter(symbolTable::definesConst).collect(Collectors.toMap(c -> c, symbolTable::getSymbol)))));
 
         clearState();
     }
@@ -267,7 +292,10 @@ public class SmtLibSolver implements UCSolver, Solver {
         if (unsatCoreEnabled) {
             issueGeneralCommand("(set-option :produce-unsat-cores true)");
         }
-        issueGeneralCommand("(set-logic ALL)");
+        if (logic.equals("HORN")) {
+            issueGeneralCommand("(set-option :produce-proofs true)");
+        }
+        issueGeneralCommand("(set-logic " + logic + ")");
     }
 
     protected void clearState() {
@@ -276,7 +304,7 @@ public class SmtLibSolver implements UCSolver, Solver {
         unsatCore = null;
     }
 
-    protected final void issueGeneralCommand(String command) {
+    protected void issueGeneralCommand(String command) {
         solverBinary.issueCommand(command);
         var res = parseResponse(solverBinary.readResponse());
         if (res.isError()) {

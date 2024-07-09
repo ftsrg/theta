@@ -14,15 +14,14 @@
  *  limitations under the License.
  */
 plugins {
-    id("java-common")
     id("kotlin-common")
 }
 
 dependencies {
     implementation(project(":theta-common"))
     implementation(project(":theta-core"))
-    implementation(project(":theta-solver"))
-    implementation(project(":theta-solver-smtlib")) // necessary for interpolation right now
-    implementation(files(rootDir.resolve(Deps.z3)))
-    testImplementation(testFixtures(project(":theta-core")))
+    implementation(project(":theta-xcfa"))
+    implementation(project(":theta-solver-smtlib"))
+    testImplementation(project(":theta-solver-z3"))
+    testImplementation(project(":theta-solver"))
 }

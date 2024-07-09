@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.z3;
 
 import hu.bme.mit.theta.common.OsHelper;
+import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
@@ -90,6 +91,20 @@ public final class Z3SolverFactory implements SolverFactory {
         final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 
         return new Z3ItpSolver(symbolTable, transformationManager, termTransformer, z3Context,
+                z3Solver);
+    }
+
+    public HornSolver createHornSolver() {
+        final com.microsoft.z3.Context z3Context = new com.microsoft.z3.Context();
+        z3Context.updateParamValue("proof", "true");
+        final com.microsoft.z3.Solver z3Solver = z3Context.mkSolver("HORN");
+
+        final Z3SymbolTable symbolTable = new Z3SymbolTable();
+        final Z3TransformationManager transformationManager = new Z3TransformationManager(
+                symbolTable, z3Context);
+        final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
+
+        return new Z3HornSolver(symbolTable, transformationManager, termTransformer, z3Context,
                 z3Solver);
     }
 

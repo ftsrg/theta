@@ -39,6 +39,7 @@ include(
     "xcfa/c2xcfa",
     "xcfa/litmus2xcfa",
     "xcfa/llvm2xcfa",
+    "xcfa/xcfa2chc",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
 

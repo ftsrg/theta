@@ -51,6 +51,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 final class Z3ExprTransformer {
 
@@ -319,22 +320,6 @@ final class Z3ExprTransformer {
                 .addCase(EnumNeqExpr.class, this::transformEnumNeq)
 
                 .build();
-    }
-
-    private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
-        final Expr<?> func = expr.getFunc();
-        final Expr<?> arg = expr.getParam();
-        if (func instanceof FuncAppExpr) {
-            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
-            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
-            final Expr<?> resFunc = funcAndArgs.get1();
-            final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
-                    .build();
-            return Tuple2.of(resFunc, resArgs);
-        } else {
-            return Tuple2.of(func, ImmutableList.of(arg));
-        }
     }
 
     ////

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.params.ParameterizedTest
@@ -263,6 +264,7 @@ class XcfaCliParseTest {
             "--debug"
         ))
         val xcfaC = temp.resolve("xcfa.c").toFile()
+        checkState(xcfaC.exists(), "File does not exist: $xcfaC")
         main(arrayOf(
             "--input-type", "C",
             "--input", xcfaC.absolutePath.toString(),

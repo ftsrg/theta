@@ -16,7 +16,13 @@
 package hu.bme.mit.theta.solver.z3;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3.*;
+import com.microsoft.z3.ArrayExpr;
+import com.microsoft.z3.ArraySort;
+import com.microsoft.z3.FPNum;
+import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.Model;
+import com.microsoft.z3.Sort;
+import com.microsoft.z3.Z3Exception;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 import com.microsoft.z3.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
@@ -27,12 +33,25 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.*;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
-import hu.bme.mit.theta.core.type.booltype.*;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.IffExpr;
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.OrExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
@@ -60,16 +79,21 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.lang.String.format;
@@ -280,12 +304,13 @@ final class Z3TermTransformer {
     private Expr<?> transformFuncInterp(final com.microsoft.z3.FuncInterp funcInterp,
                                         final Model model, final List<Decl<?>> vars) {
         checkArgument(funcInterp.getArity() >= 1);
-        final ParamDecl<?> paramDecl = (ParamDecl<?>) vars.get(vars.size() - 1);
-        final Expr<?> op = createFuncLitExprBody(
-                vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream()
-                        .map(decl -> (ParamDecl<?>) decl).collect(Collectors.toList()), funcInterp, model,
-                vars);
-        return Func(paramDecl, op);
+        final List<ParamDecl<?>> params = vars.subList(vars.size() - funcInterp.getArity(), vars.size()).stream()
+                .map(decl -> (ParamDecl<?>) decl).collect(Collectors.toList());
+        Expr<?> op = createFuncLitExprBody(params, funcInterp, model, vars);
+        for (ParamDecl<?> param : params) {
+            op = Func(param, op);
+        }
+        return op;
     }
 
     private Expr<?> createFuncLitExprBody(final List<ParamDecl<?>> paramDecl,
@@ -370,11 +395,7 @@ final class Z3TermTransformer {
         if (terms.size() == 0) {
             return expr;
         }
-        final com.microsoft.z3.Expr term = terms.get(0);
-        terms.remove(0);
-        final Expr<P> transformed = (Expr<P>) transform(term, model, vars);
-        return toApp((Expr<FuncType<FuncType<P, R>, R>>) App(expr, transformed), terms, model,
-                vars);
+        return UnsafeApp(expr, terms.stream().map(it -> transform(it, model, vars)).collect(Collectors.toUnmodifiableList()));
     }
 
     ////
@@ -410,8 +431,9 @@ final class Z3TermTransformer {
     private List<ParamDecl<?>> transformParams(final List<Decl<?>> vars,
                                                final com.microsoft.z3.Sort[] sorts) {
         final ImmutableList.Builder<ParamDecl<?>> builder = ImmutableList.builder();
+        int parambase = vars.size();
         for (final com.microsoft.z3.Sort sort : sorts) {
-            final ParamDecl<?> param = transformParam(vars, sort);
+            final ParamDecl<?> param = transformParam(vars, sort, parambase++);
             builder.add(param);
         }
         final List<ParamDecl<?>> paramDecls = builder.build();
@@ -419,9 +441,9 @@ final class Z3TermTransformer {
     }
 
     private ParamDecl<?> transformParam(final List<Decl<?>> vars,
-                                        final com.microsoft.z3.Sort sort) {
+                                        final Sort sort, int i) {
         final Type type = transformSort(sort);
-        final ParamDecl<?> param = Param(format(PARAM_NAME_FORMAT, vars.size()), type);
+        final ParamDecl<?> param = Param(format(PARAM_NAME_FORMAT, i), type);
         return param;
     }
 

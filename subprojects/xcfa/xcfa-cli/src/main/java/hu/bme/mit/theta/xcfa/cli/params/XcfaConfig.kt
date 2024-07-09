@@ -330,6 +330,7 @@ data class OutputConfig(
 
     val cOutputConfig: COutputConfig = COutputConfig(),
     val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
+    val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),
     val witnessConfig: WitnessConfig = WitnessConfig(),
     val argConfig: ArgConfig = ArgConfig(),
 ) : Config {
@@ -344,6 +345,11 @@ data class OutputConfig(
 
 data class XcfaOutputConfig(
     @Parameter(names = ["--disable-xcfa-serialization"])
+    var disable: Boolean = false,
+) : Config
+
+data class ChcOutputConfig(
+    @Parameter(names = ["--disable-chc-serialization"])
     var disable: Boolean = false,
 ) : Config
 
