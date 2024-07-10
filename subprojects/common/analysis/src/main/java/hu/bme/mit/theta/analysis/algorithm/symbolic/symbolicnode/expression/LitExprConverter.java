@@ -19,6 +19,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
@@ -29,6 +30,8 @@ import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 import java.math.BigInteger;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 /**
  * Util class for converting between integers and {@link LitExpr}
@@ -64,9 +67,9 @@ public class LitExprConverter {
             return IntLitExpr.of(BigInteger.valueOf(integer));
         }
         if (type instanceof BoolType) {
-//            if(integer > 1 || integer < 0) {
-//                throw new IllegalArgumentException("Invalid integer for boolean type");
-//            }
+            if (integer > 1 || integer < 0) {
+                return new InvalidLitExpr<>(Bool());
+            }
             return BoolLitExpr.of(integer != 0);
         }
         if (type instanceof ArrayType<?, ?>) {

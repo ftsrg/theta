@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.smtlib.solver;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
@@ -51,7 +52,7 @@ public enum SmtLibEnumStrategy {
         }
 
         @Override
-        public EnumLitExpr transformEnumTerm(Function_defContext funcDef, EnumType type, SmtLibModel model) {
+        public LitExpr<EnumType> transformEnumTerm(Function_defContext funcDef, EnumType type, SmtLibModel model) {
             final String longName = funcDef.term().qual_identifier().identifier().symbol().getText();
             return type.litFromLongName(longName);
         }
@@ -93,7 +94,7 @@ public enum SmtLibEnumStrategy {
         }
 
         @Override
-        public EnumLitExpr transformEnumTerm(Function_defContext funcDef, EnumType type, SmtLibModel model) {
+        public LitExpr<EnumType> transformEnumTerm(Function_defContext funcDef, EnumType type, SmtLibModel model) {
             final String id = funcDef.term().qual_identifier().identifier().symbol().getText();
             for (var lit : type.getLongValues()) {
                 if (model.getTerm(lit).contains(id))
@@ -116,7 +117,7 @@ public enum SmtLibEnumStrategy {
         return assertion;
     }
 
-    public abstract EnumLitExpr transformEnumTerm(final SMTLIBv2Parser.Function_defContext funcDef, final EnumType type, final SmtLibModel model);
+    public abstract LitExpr<EnumType> transformEnumTerm(final SMTLIBv2Parser.Function_defContext funcDef, final EnumType type, final SmtLibModel model);
 
     public static SmtLibEnumStrategy getDefaultStrategy() {
         return SmtLibEnumStrategy.SORTS;

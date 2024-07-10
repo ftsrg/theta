@@ -17,10 +17,12 @@ package hu.bme.mit.theta.core.type.enumtype;
 
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
+import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -98,7 +100,7 @@ public final class EnumType implements Equational<EnumType>, Type {
         return literals.get(literal);
     }
 
-    public EnumLitExpr litFromLongName(String longName) {
+    public LitExpr<EnumType> litFromLongName(String longName) {
         if (!longName.contains(FULLY_QUALIFIED_NAME_SEPARATOR))
             throw new RuntimeException(String.format("%s is an invalid enum longname"));
         String[] parts = longName.split(Pattern.quote(FULLY_QUALIFIED_NAME_SEPARATOR));
@@ -111,13 +113,13 @@ public final class EnumType implements Equational<EnumType>, Type {
         }
     }
 
-    public EnumLitExpr litFromIntValue(int value) {
+    public LitExpr<EnumType> litFromIntValue(int value) {
         for (Map.Entry<String, Integer> entry : literals.entrySet()) {
             if (entry.getValue() == value) {
                 return EnumLitExpr.of(this, entry.getKey());
             }
         }
-        throw new IllegalArgumentException(String.format("Enum type %s does not contain value %d", name, value));
+        return new InvalidLitExpr<>(this);
     }
 
     @Override
