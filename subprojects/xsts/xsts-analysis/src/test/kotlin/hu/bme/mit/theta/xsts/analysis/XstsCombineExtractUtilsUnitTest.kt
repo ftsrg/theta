@@ -17,6 +17,10 @@ package hu.bme.mit.theta.xsts.analysis
 import hu.bme.mit.theta.analysis.pred.PredState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
+import hu.bme.mit.theta.xsts.analysis.util.xstsCombineStates
+import hu.bme.mit.theta.xsts.analysis.util.xstsExtractControlPrec
+import hu.bme.mit.theta.xsts.analysis.util.xstsExtractControlState
+import hu.bme.mit.theta.xsts.analysis.util.xstsExtractDataState
 import org.junit.jupiter.api.Test
 
 class XstsCombineExtractUtilsUnitTest {

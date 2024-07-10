@@ -1,3 +1,18 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package hu.bme.mit.theta.xsts.analysis;
 
 import com.koloboke.collect.map.hash.HashObjObjMaps;
@@ -8,9 +23,9 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddToStructuralTransformer;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.SolverPool;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.symbolicnode.expression.MddExpressionTemplate;
+import hu.bme.mit.theta.solver.SolverPool;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Expr;
@@ -19,13 +34,11 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +50,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.xsts.analysis.RandomXstsKt.generateXsts;
+import static hu.bme.mit.theta.xsts.analysis.util.RandomXstsKt.generateXsts;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(value = org.junit.runners.Parameterized.class)
@@ -59,7 +72,7 @@ public class XstsMddStructuralSymbolicComparisonTest {
     @Test
     public void test() throws Exception {
 
-        try(var pool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
+        try (var pool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             var xsts = generateXsts(seed);
 
             final MddGraph<Expr> transGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());

@@ -22,8 +22,8 @@ import com.koloboke.collect.map.hash.HashObjObjMap;
 import com.koloboke.collect.map.hash.HashObjObjMaps;
 import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.delta.collections.impl.MapUniqueTable;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.model.impl.OrNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor;
 import hu.bme.mit.theta.frontend.petrinet.model.*;
 
 import java.awt.*;

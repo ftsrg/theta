@@ -58,6 +58,8 @@ import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsNewAtomsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsNewOperandsAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.autoexpl.XstsStaticAutoExpl;
 import hu.bme.mit.theta.xsts.analysis.initprec.*;
+import hu.bme.mit.theta.xsts.analysis.util.XstsCombineExtractUtilsKt;
+import hu.bme.mit.theta.xsts.analysis.util.XstsControlInitFuncKt;
 
 import java.util.HashSet;
 import java.util.List;

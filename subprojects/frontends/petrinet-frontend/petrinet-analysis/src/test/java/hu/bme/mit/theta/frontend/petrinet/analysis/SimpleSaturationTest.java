@@ -21,7 +21,7 @@ import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint.SimpleSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.frontend.petrinet.model.PetriNet;
 import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
