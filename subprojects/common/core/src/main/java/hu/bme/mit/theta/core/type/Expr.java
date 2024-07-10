@@ -33,7 +33,7 @@ public interface Expr<ExprType extends Type> {
     List<? extends Expr<?>> getOps();
 
     default boolean isInvalid() {
-        for(var op: getOps()) {
+        for (var op : getOps()) {
             if (op.isInvalid()) {
                 return true;
             }

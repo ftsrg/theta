@@ -67,7 +67,7 @@ public class LitExprConverter {
             return IntLitExpr.of(BigInteger.valueOf(integer));
         }
         if (type instanceof BoolType) {
-            if(integer > 1 || integer < 0) {
+            if (integer > 1 || integer < 0) {
                 return new InvalidLitExpr<>(Bool());
             }
             return BoolLitExpr.of(integer != 0);

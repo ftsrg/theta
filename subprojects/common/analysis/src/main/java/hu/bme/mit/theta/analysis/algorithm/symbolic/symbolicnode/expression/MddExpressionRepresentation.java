@@ -123,7 +123,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         final MutableValuation val = new MutableValuation();
         final LitExpr<?> litExpr = LitExprConverter.toLitExpr(key, decl.getType());
-        if(litExpr.isInvalid()) {
+        if (litExpr.isInvalid()) {
             return null;
         }
 
