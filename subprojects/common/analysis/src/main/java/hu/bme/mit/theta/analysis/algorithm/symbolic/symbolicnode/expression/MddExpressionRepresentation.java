@@ -122,7 +122,12 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         // TODO: this way null values are never cached and have to be recomputed every time
 
         final MutableValuation val = new MutableValuation();
-        val.put(decl, LitExprConverter.toLitExpr(key, decl.getType()));
+        final LitExpr<?> litExpr = LitExprConverter.toLitExpr(key, decl.getType());
+        if(litExpr.isInvalid()) {
+            return null;
+        }
+
+        val.put(decl, litExpr);
         final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, val);
 
         final MddNode childNode;
@@ -222,7 +227,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                     Objects.equals(mddVariable, ((MddExpressionRepresentation) that).mddVariable);
         }
         if (that instanceof MddNode) {
-            return Objects.equals(this, ((MddNode) that).getRepresentation());
+            return this.equals(((MddNode) that).getRepresentation());
         }
         return false;
     }
