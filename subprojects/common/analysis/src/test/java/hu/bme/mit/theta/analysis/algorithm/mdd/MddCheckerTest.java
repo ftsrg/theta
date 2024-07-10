@@ -16,10 +16,6 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddCex;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddChecker;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddWitness;
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;

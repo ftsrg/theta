@@ -16,6 +16,7 @@ package hu.bme.mit.theta.xsts.analysis
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
+import hu.bme.mit.theta.xsts.analysis.util.xstsControlInitFunc
 import org.junit.jupiter.api.Test
 
 class XstsControlInitFuncUnitTest {
