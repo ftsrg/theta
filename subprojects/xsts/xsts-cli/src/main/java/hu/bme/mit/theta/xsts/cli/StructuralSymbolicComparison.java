@@ -42,7 +42,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.xsts.RandomXstsKt.generateXsts;
+import static hu.bme.mit.theta.xsts.analysis.RandomXstsKt.generateXsts;
 
 public class StructuralSymbolicComparison {
 
