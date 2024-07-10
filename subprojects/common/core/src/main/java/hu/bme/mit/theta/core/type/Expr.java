@@ -32,6 +32,15 @@ public interface Expr<ExprType extends Type> {
 
     List<? extends Expr<?>> getOps();
 
+    default boolean isInvalid() {
+        for (var op : getOps()) {
+            if (op.isInvalid()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     Expr<ExprType> withOps(List<? extends Expr<?>> ops);
 
     default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {

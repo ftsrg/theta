@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
+import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
@@ -70,6 +71,9 @@ public final class ExprSimplifier {
 
     @SuppressWarnings("unchecked")
     public <T extends Type> Expr<T> simplify(final Expr<T> expr, final Valuation valuation) {
+        if (expr.isInvalid()) {
+            return new InvalidLitExpr<>(expr.getType());
+        }
         return (Expr<T>) TABLE.dispatch(expr, valuation);
     }
 

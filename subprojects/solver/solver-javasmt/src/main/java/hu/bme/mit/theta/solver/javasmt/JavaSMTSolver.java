@@ -315,7 +315,7 @@ final class JavaSMTSolver implements UCSolver, Solver {
             }
         }
 
-        private EnumLitExpr extractEnumLiteral(Formula formula, EnumType enumType) {
+        private LitExpr<EnumType> extractEnumLiteral(Formula formula, EnumType enumType) {
             final Formula term = model.eval(formula);
             if (term == null) {
                 return null;
