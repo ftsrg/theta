@@ -354,7 +354,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         return expr;
     }
 
-    private EnumLitExpr toEnumLitExpr(final String litImpl, final EnumType type, final SmtLibModel model) {
+    private LitExpr<EnumType> toEnumLitExpr(final String litImpl, final EnumType type, final SmtLibModel model) {
         final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(litImpl));
         final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
         lexer.removeErrorListeners();
