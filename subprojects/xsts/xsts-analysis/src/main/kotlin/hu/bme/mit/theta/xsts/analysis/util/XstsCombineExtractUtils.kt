@@ -14,12 +14,13 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xsts.analysis
+package hu.bme.mit.theta.xsts.analysis.util
 
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
+import hu.bme.mit.theta.xsts.analysis.XstsState
 
 fun <S : ExprState> xstsCombineStates(xstsState: XstsState<UnitState>, dataState: S): XstsState<S> {
     return XstsState.of(dataState, xstsState.lastActionWasEnv(), xstsState.isInitialized)

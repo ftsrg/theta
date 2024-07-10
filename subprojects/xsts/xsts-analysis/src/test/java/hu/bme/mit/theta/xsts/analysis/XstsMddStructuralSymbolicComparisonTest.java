@@ -19,13 +19,11 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +35,7 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.xsts.analysis.RandomXstsKt.generateXsts;
+import static hu.bme.mit.theta.xsts.analysis.util.RandomXstsKt.generateXsts;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(value = org.junit.runners.Parameterized.class)
