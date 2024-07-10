@@ -310,7 +310,12 @@ final class Z3Solver implements UCSolver, Solver {
         }
 
         private LitExpr<?> extractEnumLiteral(final ConstDecl<?> constDecl, final FuncDecl funcDecl) {
-            return EnumLitExpr.of((EnumType) constDecl.getType(), z3Model.getConstInterp(funcDecl).toString());
+            final com.microsoft.z3legacy.Expr term = z3Model.getConstInterp(funcDecl);
+            if (term == null) {
+                return null;
+            } else {
+                return EnumLitExpr.of((EnumType) constDecl.getType(), term.toString());
+            }
         }
 
         private LitExpr<?> extractConstLiteral(final FuncDecl funcDecl) {
