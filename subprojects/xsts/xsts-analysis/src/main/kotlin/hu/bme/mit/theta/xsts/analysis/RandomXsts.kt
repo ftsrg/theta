@@ -28,7 +28,8 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.xsts.XSTS
 import kotlin.random.Random
 
-fun main() {
+@JvmOverloads
+fun generateXsts(seed: Int, numCtrl: Int = 1, numClock: Int = 1, numOther: Int = 3, requireAllVarsWritten: Boolean = false): XSTS {
     val writtenVars = object : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
         override fun visit(stmt: SkipStmt?, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
             return param
@@ -81,82 +82,15 @@ fun main() {
 
     }
 
-    val numCtrl = 2
-    val numOther = 3
-    val numClock = 2
+
     val all = numCtrl + numOther + numClock
-    val xsts = RandomXsts(100, 3).generateRandomXsts(12, numCtrl, numClock, numOther) {
-        val decls = it.tran.accept(writtenVars, setOf())
-        decls.size == all // all vars are written
-    }
-    var orig = XstsSerializer.serializeXsts(xsts)
-    orig = orig.replace(Regex("var clock([0-9]+) : integer")) { "var clock${it.groupValues[1]} : clock" }
-    orig = orig.replace(Regex("havoc clock([0-9]+)"), "__delay")
-    println(orig)
-    println("prop { ${XstsSerializer.serializeExpr(xsts.prop)} }")
-}
-
-fun generateXsts(seed: Int): XSTS {
-    val writtenVars = object : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
-        override fun visit(stmt: SkipStmt?, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            return param
+    val xsts = RandomXsts(seed, 3).generateRandomXsts(10, numCtrl, numClock, numOther) {
+        if(requireAllVarsWritten) {
+            val decls = it.tran.accept(writtenVars, setOf())
+            decls.size == all // all vars are written
+        } else {
+            true
         }
-
-        override fun visit(stmt: AssumeStmt?, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            return param
-        }
-
-        override fun <DeclType : Type?> visit(stmt: AssignStmt<DeclType>, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            return setOf(stmt.varDecl) + param
-        }
-
-        override fun <DeclType : Type?> visit(stmt: HavocStmt<DeclType>, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            return setOf(stmt.varDecl) + param
-        }
-
-        override fun visit(stmt: SequenceStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            var res = param
-            for (s in stmt.stmts) {
-                res = s.accept(this, setOf())
-            }
-            return res
-        }
-
-        override fun visit(stmt: NonDetStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            var res = param
-            for (s in stmt.stmts) {
-                res = s.accept(this, setOf())
-            }
-            return res
-        }
-
-        override fun visit(stmt: OrtStmt?, param: Set<VarDecl<*>>?): Set<VarDecl<*>> {
-            TODO("Not yet implemented")
-        }
-
-        override fun visit(stmt: LoopStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            return stmt.stmt.accept(this, param)
-        }
-
-        override fun visit(stmt: IfStmt, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
-            return stmt.then.accept(this, stmt.elze.accept(this, param))
-        }
-
-        override fun <PtrType : Type?, OffsetType : Type?, DeclType : Type?> visit(
-            stmt: MemoryAssignStmt<PtrType, OffsetType, DeclType>?, param: Set<VarDecl<*>>?): Set<VarDecl<*>> {
-            TODO("Not yet implemented")
-        }
-
-    }
-
-    val numCtrl = 2
-    val numOther = 3
-    val numClock = 2
-    val all = numCtrl + numOther + numClock
-    val xsts = RandomXsts(seed, 3).generateRandomXsts(10, 1, 1, 3) {
-//        val decls = it.tran.accept(writtenVars, setOf())
-//        decls.size == all // all vars are written
-        true
     }
     return xsts
 }
