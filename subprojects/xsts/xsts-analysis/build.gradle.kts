@@ -29,7 +29,3 @@ dependencies {
     testImplementation(project(":theta-solver-smtlib"))
     testImplementation(project(":theta-solver-javasmt"))
 }
-
-repositories {
-    mavenLocal()
-}
