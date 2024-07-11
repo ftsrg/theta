@@ -66,24 +66,21 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
     private final XSTS xsts;
 
     private final Logger logger;
+    private IterationStrategy iterationStrategy;
 
-    private  boolean visualize = true;
-    private IterationStrategy iterationStrategy = IterationStrategy.GSAT;
-
-    private XstsMddChecker(XSTS xsts, SolverPool solverPool, Logger logger, boolean visualize, IterationStrategy iterationStrategy) {
+    private XstsMddChecker(XSTS xsts, SolverPool solverPool, Logger logger, IterationStrategy iterationStrategy) {
         this.xsts = xsts;
         this.solverPool = solverPool;
         this.logger = logger;
-        this.visualize = visualize;
         this.iterationStrategy = iterationStrategy;
     }
 
     public static XstsMddChecker create(XSTS xsts, SolverPool solverPool, Logger logger) {
-        return new XstsMddChecker(xsts, solverPool, logger, true, IterationStrategy.GSAT);
+        return new XstsMddChecker(xsts, solverPool, logger, IterationStrategy.GSAT);
     }
 
-    public static XstsMddChecker create(XSTS xsts, SolverPool solverPool, Logger logger, boolean visualize, IterationStrategy iterationStrategy) {
-        return new XstsMddChecker(xsts, solverPool, logger, visualize, iterationStrategy);
+    public static XstsMddChecker create(XSTS xsts, SolverPool solverPool, Logger logger, IterationStrategy iterationStrategy) {
+        return new XstsMddChecker(xsts, solverPool, logger, iterationStrategy);
     }
 
     @Override
@@ -161,23 +158,23 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         switch (iterationStrategy) {
             case BFS -> {
                 final var bfs = new BfsProvider(stateSig.getVariableOrder());
-                stateSpace = bfs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+                stateSpace = bfs.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
                 cache = bfs.getRelProdCache();
             }
             case SAT -> {
                 final var sat = new SimpleSaturationProvider(stateSig.getVariableOrder());
-                stateSpace = sat.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+                stateSpace = sat.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
                 cache = sat.getSaturateCache();
             }
             case GSAT -> {
                 final var gsat = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-                stateSpace = gsat.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+                stateSpace = gsat.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
                 cache = gsat.getSaturateCache();
 
             }
             default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
         }
-        logger.write(Level.MAINSTEP, "Enumerated state-space");
+        logger.write(Level.SUBSTEP, "Enumerated state-space");
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
         final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
@@ -196,34 +193,14 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         logger.write(Level.DETAIL, "Query count: " + cache.getQueryCount());
         logger.write(Level.DETAIL, "Cache size: " + cache.getCacheSize());
 
-        if (visualize) {
-            final Graph stateSpaceGraph = new MddNodeVisualizer(XstsMddChecker::nodeToString).visualize(stateSpace.getNode());
-            final Graph violatingGraph = new MddNodeVisualizer(XstsMddChecker::nodeToString).visualize(propViolating.getNode());
-            final Graph initGraph = new MddNodeVisualizer(XstsMddChecker::nodeToString).visualize(initNode.getNode());
-
-            try {
-                GraphvizWriter.getInstance().writeFile(stateSpaceGraph, "build\\statespace.dot");
-                GraphvizWriter.getInstance().writeFile(violatingGraph, "build\\violating.dot");
-                GraphvizWriter.getInstance().writeFile(initGraph, "build\\init.dot");
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-
+        final SafetyResult<MddWitness, MddCex> result;
         if (violatingSize != 0) {
-            logger.write(Level.MAINSTEP, "Model is unsafe");
-            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
+            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
         } else {
-            logger.write(Level.MAINSTEP, "Model is safe");
-            return SafetyResult.safe(MddWitness.of(stateSpace));
+            result = SafetyResult.safe(MddWitness.of(stateSpace));
         }
+        logger.write(Level.RESULT, "%s%n", result);
+        return result;
 
-    }
-
-    private static String nodeToString(MddNode node) {
-        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
-            return "";
-        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 }
