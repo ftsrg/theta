@@ -184,10 +184,4 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
         logger.write(Level.RESULT, "%s%n", result);
         return result;
     }
-
-    private static String nodeToString(MddNode node) {
-        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
-            return "";
-        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
-    }
 }
