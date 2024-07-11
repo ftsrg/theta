@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
@@ -57,6 +58,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     private final Expr<BoolType> safetyProperty;
     private final SolverFactory solverFactory;
     private final Logger logger;
+
+    private final boolean visualize = true;
 
     private MddChecker(Expr<BoolType> initRel,
                        VarIndexing initIndexing,
@@ -106,40 +109,49 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
             final Expr<BoolType> initExpr = PathUtils.unfold(initRel, initIndexing);
             final MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, solverPool));
 
+            logger.write(Level.INFO, "Created initial node");
+
             final Expr<BoolType> transExpr = PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0));
             final MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
             final AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
 
+            logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
+
             final var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
             final MddHandle satResult = gs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+
+            logger.write(Level.MAINSTEP, "Enumerated state-space");
 
             final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
             final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
 
             final MddHandle propViolating = (MddHandle) satResult.intersection(propNode);
 
+            logger.write(Level.INFO, "Calculated violating states");
+
             final Long violatingSize = MddInterpreter.calculateNonzeroCount(propViolating);
-            System.out.println("States violating the property: " + violatingSize);
+            logger.write(Level.INFO,"States violating the property: " + violatingSize);
 
             final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
-            System.out.println("State space size: " + stateSpaceSize);
+            logger.write(Level.DETAIL,"State space size: " + stateSpaceSize);
 
-            System.out.println("Hit count: " + gs.getSaturateCache().getHitCount());
-            System.out.println("Query count: " + gs.getSaturateCache().getQueryCount());
-            System.out.println("Cache size: " + gs.getSaturateCache().getCacheSize());
-//
-            final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(satResult.getNode());
-            final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
-//          final Graph transGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(transitionNode.getNode());
-            final Graph initGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(initNode.getNode());
-            try {
+            logger.write(Level.DETAIL,"Hit count: " + gs.getSaturateCache().getHitCount());
+            logger.write(Level.DETAIL,"Query count: " + gs.getSaturateCache().getQueryCount());
+            logger.write(Level.DETAIL,"Cache size: " + gs.getSaturateCache().getCacheSize());
+
+            if(visualize) {
+                final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(satResult.getNode());
+                final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
+//                final Graph transGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(transitionNode.getNode());
+                final Graph initGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(initNode.getNode());
+
                 GraphvizWriter.getInstance().writeFile(stateSpaceGraph, "build\\statespace.dot");
                 GraphvizWriter.getInstance().writeFile(violatingGraph, "build\\violating.dot");
-//              GraphvizWriter.getInstance().writeFile(transGraph, "build\\trans.dot");
+//                GraphvizWriter.getInstance().writeFile(transGraph, "build\\trans.dot");
                 GraphvizWriter.getInstance().writeFile(initGraph, "build\\init.dot");
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+
             }
+
 
             if (violatingSize != 0)
                 return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(satResult));
