@@ -174,7 +174,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
             }
             default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
         }
-        logger.write(Level.MAINSTEP, "Enumerated state-space");
+        logger.write(Level.SUBSTEP, "Enumerated state-space");
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
         final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
