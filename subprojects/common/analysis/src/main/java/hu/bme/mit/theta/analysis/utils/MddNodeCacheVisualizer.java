@@ -17,7 +17,7 @@ package hu.bme.mit.theta.analysis.utils;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddExpressionRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;

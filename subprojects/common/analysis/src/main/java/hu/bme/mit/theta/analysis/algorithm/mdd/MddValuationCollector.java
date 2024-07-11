@@ -13,12 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode;
+package hu.bme.mit.theta.analysis.algorithm.mdd;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
 import hu.bme.mit.delta.java.mdd.MddNode;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.LitExprConverter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddExpressionRepresentation;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.LitExprConverter;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionRepresentation;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;

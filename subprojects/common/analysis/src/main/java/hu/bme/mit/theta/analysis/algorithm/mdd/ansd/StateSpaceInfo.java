@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.model;
+package hu.bme.mit.theta.analysis.algorithm.mdd.ansd;
 
 import hu.bme.mit.delta.collections.IntSetView;
 import hu.bme.mit.delta.java.mdd.MddNode;

@@ -28,7 +28,7 @@ import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.delta.Pair;
 import hu.bme.mit.theta.core.type.Expr;

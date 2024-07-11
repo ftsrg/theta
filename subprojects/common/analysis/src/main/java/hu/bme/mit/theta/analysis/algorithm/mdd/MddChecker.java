@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.checker;
+package hu.bme.mit.theta.analysis.algorithm.mdd;
 
 import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
@@ -22,12 +22,12 @@ import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.solver.SolverPool;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddExpressionTemplate;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.MddNodeInitializer;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.logging.Logger;

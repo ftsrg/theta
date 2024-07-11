@@ -16,10 +16,10 @@
 package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.MddValuationCollector;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddValuationCollector;
 import hu.bme.mit.theta.solver.SolverPool;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;

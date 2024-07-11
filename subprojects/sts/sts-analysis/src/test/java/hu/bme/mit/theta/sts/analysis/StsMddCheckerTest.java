@@ -16,9 +16,9 @@
 package hu.bme.mit.theta.sts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.mdd.checker.MddCex;
-import hu.bme.mit.theta.analysis.algorithm.mdd.checker.MddChecker;
-import hu.bme.mit.theta.analysis.algorithm.mdd.checker.MddWitness;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;

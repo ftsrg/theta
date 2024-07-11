@@ -17,7 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
 import hu.bme.mit.delta.java.mdd.Cache;
 import hu.bme.mit.delta.java.mdd.MddTransformationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 
 public interface RelationalProductProvider extends MddTransformationProvider<AbstractNextStateDescriptor> {
 

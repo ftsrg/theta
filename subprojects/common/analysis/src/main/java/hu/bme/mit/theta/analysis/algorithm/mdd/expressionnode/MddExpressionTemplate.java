@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression;
+package hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.MddCanonizationStrategy;

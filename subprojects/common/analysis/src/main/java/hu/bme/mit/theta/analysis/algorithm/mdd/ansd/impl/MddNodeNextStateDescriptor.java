@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode;
+package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;
@@ -23,8 +23,8 @@ import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariableHandle;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 
 import java.util.List;
 import java.util.Objects;

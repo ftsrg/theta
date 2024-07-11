@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
 import hu.bme.mit.delta.java.mdd.*;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 
 import java.util.Optional;
 

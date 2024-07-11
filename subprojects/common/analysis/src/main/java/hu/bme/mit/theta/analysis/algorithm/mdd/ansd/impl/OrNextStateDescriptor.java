@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.model.impl;
+package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
 import com.koloboke.collect.map.IntObjMap;
 import com.koloboke.collect.map.hash.HashIntObjMaps;
@@ -22,8 +22,8 @@ import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.UniqueTable;
 import hu.bme.mit.delta.collections.impl.MapUniqueTable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 
 import java.util.*;
 import java.util.stream.Collectors;

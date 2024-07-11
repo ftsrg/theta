@@ -13,12 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.model;
+package hu.bme.mit.theta.analysis.algorithm.mdd.ansd;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.impl.EmptyNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.impl.IdentityNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.EmptyNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.IdentityNextStateDescriptor;
 
 import java.io.Closeable;
 import java.util.Optional;

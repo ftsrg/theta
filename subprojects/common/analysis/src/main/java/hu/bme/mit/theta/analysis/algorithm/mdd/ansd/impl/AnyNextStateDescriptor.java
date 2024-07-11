@@ -13,14 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.model.impl;
+package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
 import java.util.Optional;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.UniqueTable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.StateSpaceInfo;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 
 public class AnyNextStateDescriptor implements AbstractNextStateDescriptor {
     private static final UniqueTable<AnyNextStateDescriptor> uniqueTable = UniqueTable.newInstance();

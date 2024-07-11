@@ -13,40 +13,55 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.model.impl;
+package hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl;
 
 import java.util.Optional;
 
 import hu.bme.mit.delta.collections.IntObjMapView;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.model.StateSpaceInfo;
+import hu.bme.mit.delta.collections.UniqueTable;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.StateSpaceInfo;
 
-public final class EmptyNextStateDescriptor implements AbstractNextStateDescriptor {
-    private EmptyNextStateDescriptor() {
+public final class IdentityNextStateDescriptor implements AbstractNextStateDescriptor {
+    private static final UniqueTable<IdentityNextStateDescriptor> uniqueTable = UniqueTable.newInstance();
+
+    public static final AbstractNextStateDescriptor TERMINAL_IDENTITY = new IdentityNextStateDescriptor();
+
+    public static AbstractNextStateDescriptor withChild(AbstractNextStateDescriptor child) {
+        return uniqueTable.checkIn(new IdentityNextStateDescriptor(child));
     }
 
-    public static final EmptyNextStateDescriptor INSTANCE = new EmptyNextStateDescriptor();
+    private final AbstractNextStateDescriptor child;
+
+    private IdentityNextStateDescriptor(AbstractNextStateDescriptor child) {
+        this.child = child;
+    }
+
+    private IdentityNextStateDescriptor() {
+        this.child = this;
+    }
 
     @Override
     public IntObjMapView<AbstractNextStateDescriptor> getDiagonal(StateSpaceInfo localStateSpace) {
         // TODO: cache this instead of creating on demand
-        return IntObjMapView.empty(INSTANCE);
+        return IntObjMapView.empty(child);
     }
 
     @Override
     public IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> getOffDiagonal(
             StateSpaceInfo localStateSpace) {
         // TODO: cache this instead of creating on demand
-        return IntObjMapView.empty(IntObjMapView.empty(INSTANCE));
+        return IntObjMapView.empty(IntObjMapView.empty(AbstractNextStateDescriptor.terminalEmpty()));
     }
 
     @Override
     public Optional<Iterable<AbstractNextStateDescriptor>> split() {
+        // TODO: this might be a performance overhead
         return Optional.empty();
     }
 
     @Override
     public boolean evaluate() {
-        return false;
+        return true;
     }
 }
