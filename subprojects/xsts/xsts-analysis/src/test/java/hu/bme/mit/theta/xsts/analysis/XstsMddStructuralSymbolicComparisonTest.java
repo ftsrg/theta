@@ -72,7 +72,7 @@ public class XstsMddStructuralSymbolicComparisonTest {
     @Test
     public void test() throws Exception {
 
-        try(var pool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
+        try (var pool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             var xsts = generateXsts(seed);
 
             final MddGraph<Expr> transGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());

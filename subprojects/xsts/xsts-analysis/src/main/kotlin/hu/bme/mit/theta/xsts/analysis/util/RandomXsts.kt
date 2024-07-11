@@ -29,7 +29,8 @@ import hu.bme.mit.theta.xsts.XSTS
 import kotlin.random.Random
 
 @JvmOverloads
-fun generateXsts(seed: Int, numCtrl: Int = 1, numClock: Int = 1, numOther: Int = 3, requireAllVarsWritten: Boolean = false): XSTS {
+fun generateXsts(seed: Int, numCtrl: Int = 1, numClock: Int = 1, numOther: Int = 3,
+    requireAllVarsWritten: Boolean = false): XSTS {
     val writtenVars = object : StmtVisitor<Set<VarDecl<*>>, Set<VarDecl<*>>> {
         override fun visit(stmt: SkipStmt?, param: Set<VarDecl<*>>): Set<VarDecl<*>> {
             return param
@@ -82,10 +83,9 @@ fun generateXsts(seed: Int, numCtrl: Int = 1, numClock: Int = 1, numOther: Int =
 
     }
 
-
     val all = numCtrl + numOther + numClock
     val xsts = RandomXsts(seed, 3).generateRandomXsts(10, numCtrl, numClock, numOther) {
-        if(requireAllVarsWritten) {
+        if (requireAllVarsWritten) {
             val decls = it.tran.accept(writtenVars, setOf())
             decls.size == all // all vars are written
         } else {

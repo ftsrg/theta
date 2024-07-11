@@ -153,7 +153,6 @@ public class MddCheckerTest {
         assertEquals(stateSpaceSize, status.getWitness().size());
 
 
-
     }
 
 }

@@ -61,8 +61,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     private final SolverPool solverPool;
     private final Logger logger;
 
-    private  boolean visualize = true;
-    private  IterationStrategy iterationStrategy = IterationStrategy.GSAT;
+    private boolean visualize = true;
+    private IterationStrategy iterationStrategy = IterationStrategy.GSAT;
 
     public enum IterationStrategy {
         BFS, SAT, GSAT

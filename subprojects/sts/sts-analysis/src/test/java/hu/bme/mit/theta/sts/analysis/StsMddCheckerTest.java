@@ -100,7 +100,7 @@ public class StsMddCheckerTest {
         }
 
         final SafetyResult<MddWitness, MddCex> status;
-        try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())){
+        try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
             final MddChecker<ExprAction> checker = MddChecker.create(sts.getInit(), VarIndexingFactory.indexing(0), new ExprAction() {
                 @Override
                 public Expr<BoolType> toExpr() {

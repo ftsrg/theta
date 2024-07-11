@@ -260,7 +260,7 @@ public class XstsCli {
 
             if (algorithm == Algorithm.CEGAR) {
                 runCegarAnalysis();
-            } else if(algorithm == Algorithm.MDD){
+            } else if (algorithm == Algorithm.MDD) {
                 if (model.endsWith(".pnml")) {
                     runPetrinetMddAnalysis();
                 } else {
@@ -276,7 +276,7 @@ public class XstsCli {
         }
     }
 
-    private void runCegarAnalysis() throws Exception{
+    private void runCegarAnalysis() throws Exception {
         final Stopwatch sw = Stopwatch.createStarted();
 
         final XSTS xsts = loadXSTSModel();
@@ -298,7 +298,7 @@ public class XstsCli {
         }
     }
 
-    private void runXstsMddAnalysis() throws Exception{
+    private void runXstsMddAnalysis() throws Exception {
         final Stopwatch sw = Stopwatch.createStarted();
 
         final XSTS xsts = loadXSTSModel();
@@ -313,7 +313,8 @@ public class XstsCli {
             case BFS -> mddIterationStrategy = MddChecker.IterationStrategy.BFS;
             case SAT -> mddIterationStrategy = MddChecker.IterationStrategy.SAT;
             case GSAT -> mddIterationStrategy = MddChecker.IterationStrategy.GSAT;
-            default -> throw new UnsupportedOperationException("Iteration strategy not supported: " + iterationStrategy);
+            default ->
+                    throw new UnsupportedOperationException("Iteration strategy not supported: " + iterationStrategy);
         }
 
         final SafetyResult<MddWitness, MddCex> status;
@@ -324,12 +325,12 @@ public class XstsCli {
         }
 
         printSymbolicResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
-        if(dotfile != null) {
+        if (dotfile != null) {
             writeXstsMddVisualStatus(status, dotfile);
         }
     }
 
-    private void runPetrinetMddAnalysis() throws Exception{
+    private void runPetrinetMddAnalysis() throws Exception {
         final Stopwatch totalTimer = Stopwatch.createStarted();
 
         final List<PetriNet> petriNets = loadPetriNetModel();
@@ -800,7 +801,7 @@ public class XstsCli {
 
     private void writeXstsMddVisualStatus(final SafetyResult<MddWitness, MddCex> status, final String filename)
             throws FileNotFoundException {
-        final Graph graph = status.isSafe() ?  new MddNodeVisualizer(XstsCli::nodeToString).visualize(status.asSafe().getWitness().getMdd().getNode())
+        final Graph graph = status.isSafe() ? new MddNodeVisualizer(XstsCli::nodeToString).visualize(status.asSafe().getWitness().getMdd().getNode())
                 : new MddNodeVisualizer(XstsCli::nodeToString).visualize(status.asUnsafe().getCex().getMdd().getNode());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }
