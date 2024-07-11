@@ -18,6 +18,7 @@ package hu.bme.mit.theta.sts.analysis;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.Utils;
@@ -27,6 +28,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
@@ -86,7 +88,7 @@ public class StsMddCheckerTest {
     }
 
     @Test
-    public void test() throws IOException {
+    public void test() throws Exception {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         final STS sts;
@@ -97,19 +99,23 @@ public class StsMddCheckerTest {
                 throw new UnsupportedOperationException("STS contains multiple properties.");
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-        final MddChecker<ExprAction> checker = MddChecker.create(sts.getInit(), VarIndexingFactory.indexing(0), new ExprAction() {
-            @Override
-            public Expr<BoolType> toExpr() {
-                return sts.getTrans();
-            }
 
-            @Override
-            public VarIndexing nextIndexing() {
-                return VarIndexingFactory.indexing(1);
-            }
-        }, sts.getProp(), Z3LegacySolverFactory.getInstance(), logger);
+        final SafetyResult<MddWitness, MddCex> status;
+        try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
+            final MddChecker<ExprAction> checker = MddChecker.create(sts.getInit(), VarIndexingFactory.indexing(0), new ExprAction() {
+                @Override
+                public Expr<BoolType> toExpr() {
+                    return sts.getTrans();
+                }
 
-        final SafetyResult<MddWitness, MddCex> status = checker.check(null);
+                @Override
+                public VarIndexing nextIndexing() {
+                    return VarIndexingFactory.indexing(1);
+                }
+            }, sts.getProp(), solverPool, logger, IterationStrategy.GSAT);
+            status = checker.check(null);
+        }
+
         if (safe) {
             assertTrue(status.isSafe());
         } else {
