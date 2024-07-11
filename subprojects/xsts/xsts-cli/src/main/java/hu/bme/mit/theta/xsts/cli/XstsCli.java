@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -305,9 +306,17 @@ public class XstsCli {
             return;
         }
 
+        final MddChecker.IterationStrategy mddIterationStrategy;
+        switch (iterationStrategy) {
+            case BFS -> mddIterationStrategy = MddChecker.IterationStrategy.BFS;
+            case SAT -> mddIterationStrategy = MddChecker.IterationStrategy.SAT;
+            case GSAT -> mddIterationStrategy = MddChecker.IterationStrategy.GSAT;
+            default -> throw new UnsupportedOperationException("Iteration strategy not supported: " + iterationStrategy);
+        }
+
         final SafetyResult<MddWitness, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger);
+            final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger, true, mddIterationStrategy);
             status = checker.check(null);
             sw.stop();
         }
