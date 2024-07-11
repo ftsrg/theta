@@ -79,10 +79,10 @@ public class XstsConfigBuilder {
         CEGAR,
         KINDUCTION,
         IMC,
-        SYMBOLIC
+        MDD
     }
 
-    //////////// symbolic configuration ////////////
+    //////////// symbolic MDD analysis configuration ////////////
 
     public enum IterationStrategy {
         BFS, SAT, GSAT

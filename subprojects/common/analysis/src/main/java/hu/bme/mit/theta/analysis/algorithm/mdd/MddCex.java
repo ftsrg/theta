@@ -39,4 +39,8 @@ public class MddCex implements Cex {
     public Long size() {
         return MddInterpreter.calculateNonzeroCount(violatingStates);
     }
+
+    public MddHandle getMdd() {
+        return violatingStates;
+    }
 }
