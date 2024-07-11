@@ -170,16 +170,13 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
         logger.write(Level.DETAIL, "State space size: " + stateSpaceSize);
 
-
-        logger.write(Level.DETAIL, "Hit count: " + cache.getHitCount());
-        logger.write(Level.DETAIL, "Query count: " + cache.getQueryCount());
-        logger.write(Level.DETAIL, "Cache size: " + cache.getCacheSize());
+        final MddAnalysisStatistics statistics = new MddAnalysisStatistics(violatingSize, stateSpaceSize, cache.getHitCount(), cache.getQueryCount(), cache.getCacheSize());
 
         final SafetyResult<MddWitness, MddCex> result;
         if (violatingSize != 0) {
-            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
+            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace), statistics);
         } else {
-            result = SafetyResult.safe(MddWitness.of(stateSpace));
+            result = SafetyResult.safe(MddWitness.of(stateSpace), statistics);
         }
         logger.write(Level.RESULT, "%s%n", result);
         return result;
