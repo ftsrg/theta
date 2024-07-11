@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
+import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
@@ -37,6 +38,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
 import hu.bme.mit.theta.common.OsHelper;
@@ -316,12 +318,15 @@ public class XstsCli {
 
         final SafetyResult<MddWitness, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger, true, mddIterationStrategy);
+            final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger, mddIterationStrategy);
             status = checker.check(null);
             sw.stop();
         }
 
         printSymbolicResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+        if(dotfile != null) {
+            writeXstsMddVisualStatus(status, dotfile);
+        }
     }
 
     private void runPetrinetMddAnalysis() throws Exception{
@@ -791,6 +796,19 @@ public class XstsCli {
         try (PrintWriter printWriter = new PrintWriter(file)) {
             printWriter.write(concrTrace.toString());
         }
+    }
+
+    private void writeXstsMddVisualStatus(final SafetyResult<MddWitness, MddCex> status, final String filename)
+            throws FileNotFoundException {
+        final Graph graph = status.isSafe() ?  new MddNodeVisualizer(XstsCli::nodeToString).visualize(status.asSafe().getWitness().getMdd().getNode())
+                : new MddNodeVisualizer(XstsCli::nodeToString).visualize(status.asUnsafe().getCex().getMdd().getNode());
+        GraphvizWriter.getInstance().writeFile(graph, filename);
+    }
+
+    private static String nodeToString(MddNode node) {
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
+            return "";
+        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
     private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)

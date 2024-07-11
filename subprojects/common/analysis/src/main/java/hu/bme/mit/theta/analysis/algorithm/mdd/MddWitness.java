@@ -34,4 +34,8 @@ public class MddWitness implements Witness {
     public Long size() {
         return MddInterpreter.calculateNonzeroCount(stateSpace);
     }
+
+    public MddHandle getMdd() {
+        return stateSpace;
+    }
 }
