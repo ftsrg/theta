@@ -15,13 +15,10 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddCex;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddChecker;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.checker.MddWitness;
+import hu.bme.mit.theta.analysis.algorithm.mdd.checker.MddCex;
+import hu.bme.mit.theta.analysis.algorithm.mdd.checker.MddChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.checker.MddWitness;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
@@ -34,11 +31,8 @@ import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
-import hu.bme.mit.theta.sts.analysis.config.StsConfig;
-import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,9 +42,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Domain.EXPL;
-import static hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Domain.PRED_CART;
-import static hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Refinement.SEQ_ITP;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
