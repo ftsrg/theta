@@ -22,7 +22,7 @@ import hu.bme.mit.delta.collections.*;
 import hu.bme.mit.delta.java.mdd.MddGraph;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.delta.java.mdd.MddVariable;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.SolverPool;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.common.GrowingIntArray;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;

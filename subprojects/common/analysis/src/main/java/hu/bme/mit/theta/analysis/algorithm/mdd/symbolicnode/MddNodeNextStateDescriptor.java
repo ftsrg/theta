@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression;
+package hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;

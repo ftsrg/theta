@@ -8,7 +8,7 @@ import hu.bme.mit.delta.java.mdd.MddHandle;
 import hu.bme.mit.delta.java.mdd.MddToStructuralTransformer;
 import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.SolverPool;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.core.decl.Decl;

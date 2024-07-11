@@ -47,7 +47,7 @@ public class MddValuationCollector {
     /**
      * Collect all vectors from the subtree represented by a symbolic node.
      *
-     * @param interpretation intrerpretation of the node
+     * @param node the node
      * @return the set of vectors represented by the node
      */
     public static Set<Valuation> collect(MddNode node) {

@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.MddValuationCollector;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.SolverPool;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;

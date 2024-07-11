@@ -28,11 +28,11 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationP
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProductProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.model.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.model.impl.OrNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.SolverPool;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.ExprLatticeDefinition;
 import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddExpressionTemplate;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddNodeInitializer;
-import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.expression.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.MddNodeInitializer;
+import hu.bme.mit.theta.analysis.algorithm.mdd.symbolicnode.MddNodeNextStateDescriptor;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
