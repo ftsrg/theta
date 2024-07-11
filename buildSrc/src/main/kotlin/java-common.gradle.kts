@@ -50,12 +50,6 @@ tasks {
         enableAssertions = true
     }
 
-    withType<JavaExec>() {
-        environment["PATH"] = execPath
-        environment["LD_LIBRARY_PATH"] = libPath
-        enableAssertions = false
-    }
-
     named("jacocoTestReport") {
         dependsOn(named("test"))
     }
