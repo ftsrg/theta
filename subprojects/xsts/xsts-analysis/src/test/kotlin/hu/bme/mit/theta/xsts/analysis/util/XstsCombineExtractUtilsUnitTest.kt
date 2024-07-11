@@ -12,20 +12,25 @@
  * limitations under the License.
  */
 
-package hu.bme.mit.theta.xsts.analysis
+package hu.bme.mit.theta.xsts.analysis.util
 
-import hu.bme.mit.theta.analysis.expl.ExplPrec
+import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.analysis.unit.UnitState
-import hu.bme.mit.theta.xsts.analysis.util.xstsControlInitFunc
+import hu.bme.mit.theta.xsts.analysis.XstsState
 import org.junit.jupiter.api.Test
 
-class XstsControlInitFuncUnitTest {
+class XstsCombineExtractUtilsUnitTest {
+
+    val dataState = PredState.of()
+    val controlState = XstsState.of(UnitState.getInstance(), true, false)
+    val xstsState = XstsState.of(dataState, true, false)
 
     @Test
-    fun `Returns single unitstate`() {
-        val result = xstsControlInitFunc<ExplPrec>().getInitStates(ExplPrec.empty())
-
-        assert(result.size == 1)
-        assert(result.single().state == UnitState.getInstance())
+    fun `Utils work as expected`() {
+        assert(xstsCombineStates(controlState, dataState) == xstsState)
+        assert(xstsExtractControlState(xstsState) == controlState)
+        assert(xstsExtractDataState(xstsState) == dataState)
+        assert(xstsExtractControlPrec(UnitPrec.getInstance()) == UnitPrec.getInstance())
     }
 }
