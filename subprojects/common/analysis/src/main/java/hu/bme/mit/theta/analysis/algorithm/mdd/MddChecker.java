@@ -60,8 +60,6 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     private final Expr<BoolType> safetyProperty;
     private final SolverPool solverPool;
     private final Logger logger;
-
-    private boolean visualize = true;
     private IterationStrategy iterationStrategy = IterationStrategy.GSAT;
 
     public enum IterationStrategy {
@@ -74,7 +72,6 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
                        Expr<BoolType> safetyProperty,
                        SolverPool solverPool,
                        Logger logger,
-                       boolean visualize,
                        IterationStrategy iterationStrategy) {
         this.initRel = initRel;
         this.initIndexing = initIndexing;
@@ -82,7 +79,6 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
         this.safetyProperty = safetyProperty;
         this.solverPool = solverPool;
         this.logger = logger;
-        this.visualize = visualize;
         this.iterationStrategy = iterationStrategy;
     }
 
@@ -92,7 +88,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
                                                               Expr<BoolType> safetyProperty,
                                                               SolverPool solverPool,
                                                               Logger logger) {
-        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger, true, IterationStrategy.GSAT);
+        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger, IterationStrategy.GSAT);
     }
 
     public static <A extends ExprAction> MddChecker<A> create(Expr<BoolType> initRel,
@@ -101,9 +97,8 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
                                                               Expr<BoolType> safetyProperty,
                                                               SolverPool solverPool,
                                                               Logger logger,
-                                                              boolean visualize,
                                                               IterationStrategy iterationStrategy) {
-        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger, visualize, iterationStrategy);
+        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger, iterationStrategy);
     }
 
     @Override
@@ -180,29 +175,14 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
         logger.write(Level.DETAIL, "Query count: " + cache.getQueryCount());
         logger.write(Level.DETAIL, "Cache size: " + cache.getCacheSize());
 
-        if (visualize) {
-            final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(stateSpace.getNode());
-            final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
-//                final Graph transGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(transitionNode.getNode());
-            final Graph initGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(initNode.getNode());
-
-            try {
-                GraphvizWriter.getInstance().writeFile(stateSpaceGraph, "build\\statespace.dot");
-                GraphvizWriter.getInstance().writeFile(violatingGraph, "build\\violating.dot");
-//                GraphvizWriter.getInstance().writeFile(transGraph, "build\\trans.dot");
-                GraphvizWriter.getInstance().writeFile(initGraph, "build\\init.dot");
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
+        final SafetyResult<MddWitness, MddCex> result;
         if (violatingSize != 0) {
-            logger.write(Level.MAINSTEP, "Model is unsafe");
-            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
+            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
         } else {
-            logger.write(Level.MAINSTEP, "Model is safe");
-            return SafetyResult.safe(MddWitness.of(stateSpace));
+            result = SafetyResult.safe(MddWitness.of(stateSpace));
         }
+        logger.write(Level.RESULT, "%s%n", result);
+        return result;
     }
 
     private static String nodeToString(MddNode node) {

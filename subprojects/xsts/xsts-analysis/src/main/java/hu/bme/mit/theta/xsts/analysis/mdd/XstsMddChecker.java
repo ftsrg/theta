@@ -193,13 +193,14 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         logger.write(Level.DETAIL, "Query count: " + cache.getQueryCount());
         logger.write(Level.DETAIL, "Cache size: " + cache.getCacheSize());
 
+        final SafetyResult<MddWitness, MddCex> result;
         if (violatingSize != 0) {
-            logger.write(Level.MAINSTEP, "Model is unsafe");
-            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
+            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
         } else {
-            logger.write(Level.MAINSTEP, "Model is safe");
-            return SafetyResult.safe(MddWitness.of(stateSpace));
+            result = SafetyResult.safe(MddWitness.of(stateSpace));
         }
+        logger.write(Level.RESULT, "%s%n", result);
+        return result;
 
     }
 }
