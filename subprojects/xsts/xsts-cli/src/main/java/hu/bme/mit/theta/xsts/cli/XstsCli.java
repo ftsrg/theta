@@ -32,6 +32,8 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -57,6 +59,7 @@ import hu.bme.mit.theta.frontend.petrinet.pnml.PnmlParseException;
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
@@ -75,6 +78,7 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.OptimizeStmts;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
+import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 
@@ -250,128 +254,162 @@ public class XstsCli {
         }
 
         try {
+
             if (algorithm == Algorithm.CEGAR) {
-                final Stopwatch sw = Stopwatch.createStarted();
-
-                final XSTS xsts = loadXSTSModel();
-
-                if (metrics) {
-                    XstsMetrics.printMetrics(logger, xsts);
-                    return;
-                }
-
-                final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-                final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status = check(configuration);
-                sw.stop();
-                printCegarResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
-                if (status.isUnsafe() && cexfile != null) {
-                    writeCex(status.asUnsafe(), xsts);
-                }
-                if (dotfile != null) {
-                    writeVisualStatus(status, dotfile);
+                runCegarAnalysis();
+            } else if(algorithm == Algorithm.MDD){
+                if (model.endsWith(".pnml")) {
+                    runPetrinetMddAnalysis();
+                } else {
+                    runXstsMddAnalysis();
                 }
             } else {
-                final Stopwatch totalTimer = Stopwatch.createStarted();
-
-                final List<PetriNet> petriNets = loadPetriNetModel();
-                final List<Place> ordering = loadOrdering(petriNets);
-
-                final PtNetSystem system = new PtNetSystem(petriNets.get(0), ordering);
-
-                if (depGxl != null) {
-                    createDepGxl(system);
-                }
-
-                if (depGxlGsat != null) {
-                    createDepGxlGSat(system);
-                }
-
-                if (depMat != null) {
-                    createDepMat(system);
-                }
-
-                if (depMatPng != null) {
-                    createDepMatPng(system);
-                }
-
-                final MddVariableOrder variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
-                ordering.forEach(p -> variableOrder.createOnTop(MddVariableDescriptor.create(p)));
-
-                final Stopwatch ssgTimer = Stopwatch.createStarted();
-
-                switch (iterationStrategy) {
-                    // TODO: NODE COUNT IN MDD!!!!
-                    case BFS: {
-                        final BfsProvider bfs = new BfsProvider(variableOrder);
-
-                        final MddHandle stateSpace = bfs.compute(system.getInitializer(),
-                                system.getTransitions(),
-                                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-                        );
-
-                        ssgTimer.stop();
-                        totalTimer.stop();
-
-                        printSymbolicResult(writer,
-                                variableOrder,
-                                system,
-                                stateSpace,
-                                bfs,
-                                totalTimer.elapsed(TimeUnit.MICROSECONDS),
-                                ssgTimer.elapsed(TimeUnit.MICROSECONDS)
-                        );
-                    }
-                    break;
-                    case SAT: {
-                        final SimpleSaturationProvider ss = new SimpleSaturationProvider(variableOrder);
-
-                        final MddHandle stateSpace = ss.compute(system.getInitializer(),
-                                system.getTransitions(),
-                                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-                        );
-
-                        ssgTimer.stop();
-                        totalTimer.stop();
-
-                        printSymbolicResult(writer,
-                                variableOrder,
-                                system,
-                                stateSpace,
-                                ss,
-                                totalTimer.elapsed(TimeUnit.MICROSECONDS),
-                                ssgTimer.elapsed(TimeUnit.MICROSECONDS)
-                        );
-                    }
-                    break;
-                    case GSAT: {
-                        final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
-
-                        final MddHandle stateSpace = gs.compute(system.getInitializer(),
-                                system.getTransitions(),
-                                variableOrder.getDefaultSetSignature().getTopVariableHandle()
-                        );
-
-                        ssgTimer.stop();
-                        totalTimer.stop();
-
-                        printSymbolicResult(writer,
-                                variableOrder,
-                                system,
-                                stateSpace,
-                                gs,
-                                totalTimer.elapsed(TimeUnit.MICROSECONDS),
-                                ssgTimer.elapsed(TimeUnit.MICROSECONDS)
-                        );
-                    }
-                    break;
-
-                }
-
+                throw new UnsupportedOperationException("Algorithm not supported: " + algorithm);
             }
 
         } catch (final Throwable ex) {
             printError(ex);
             System.exit(1);
+        }
+    }
+
+    private void runCegarAnalysis() throws Exception{
+        final Stopwatch sw = Stopwatch.createStarted();
+
+        final XSTS xsts = loadXSTSModel();
+
+        if (metrics) {
+            XstsMetrics.printMetrics(logger, xsts);
+            return;
+        }
+
+        final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
+        final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status = check(configuration);
+        sw.stop();
+        printCegarResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+        if (status.isUnsafe() && cexfile != null) {
+            writeCex(status.asUnsafe(), xsts);
+        }
+        if (dotfile != null) {
+            writeVisualStatus(status, dotfile);
+        }
+    }
+
+    private void runXstsMddAnalysis() throws Exception{
+        final Stopwatch sw = Stopwatch.createStarted();
+
+        final XSTS xsts = loadXSTSModel();
+
+        if (metrics) {
+            XstsMetrics.printMetrics(logger, xsts);
+            return;
+        }
+
+        final SafetyResult<MddWitness, MddCex> status;
+        try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
+            final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger);
+            status = checker.check(null);
+            sw.stop();
+        }
+
+        printSymbolicResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+    }
+
+    private void runPetrinetMddAnalysis() throws Exception{
+        final Stopwatch totalTimer = Stopwatch.createStarted();
+
+        final List<PetriNet> petriNets = loadPetriNetModel();
+        final List<Place> ordering = loadOrdering(petriNets);
+
+        final PtNetSystem system = new PtNetSystem(petriNets.get(0), ordering);
+
+        if (depGxl != null) {
+            createDepGxl(system);
+        }
+
+        if (depGxlGsat != null) {
+            createDepGxlGSat(system);
+        }
+
+        if (depMat != null) {
+            createDepMat(system);
+        }
+
+        if (depMatPng != null) {
+            createDepMatPng(system);
+        }
+
+        final MddVariableOrder variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets());
+        ordering.forEach(p -> variableOrder.createOnTop(MddVariableDescriptor.create(p)));
+
+        final Stopwatch ssgTimer = Stopwatch.createStarted();
+
+        switch (iterationStrategy) {
+            // TODO: NODE COUNT IN MDD!!!!
+            case BFS: {
+                final BfsProvider bfs = new BfsProvider(variableOrder);
+
+                final MddHandle stateSpace = bfs.compute(system.getInitializer(),
+                        system.getTransitions(),
+                        variableOrder.getDefaultSetSignature().getTopVariableHandle()
+                );
+
+                ssgTimer.stop();
+                totalTimer.stop();
+
+                printSymbolicResult(writer,
+                        variableOrder,
+                        system,
+                        stateSpace,
+                        bfs,
+                        totalTimer.elapsed(TimeUnit.MICROSECONDS),
+                        ssgTimer.elapsed(TimeUnit.MICROSECONDS)
+                );
+            }
+            break;
+            case SAT: {
+                final SimpleSaturationProvider ss = new SimpleSaturationProvider(variableOrder);
+
+                final MddHandle stateSpace = ss.compute(system.getInitializer(),
+                        system.getTransitions(),
+                        variableOrder.getDefaultSetSignature().getTopVariableHandle()
+                );
+
+                ssgTimer.stop();
+                totalTimer.stop();
+
+                printSymbolicResult(writer,
+                        variableOrder,
+                        system,
+                        stateSpace,
+                        ss,
+                        totalTimer.elapsed(TimeUnit.MICROSECONDS),
+                        ssgTimer.elapsed(TimeUnit.MICROSECONDS)
+                );
+            }
+            break;
+            case GSAT: {
+                final GeneralizedSaturationProvider gs = new GeneralizedSaturationProvider(variableOrder);
+
+                final MddHandle stateSpace = gs.compute(system.getInitializer(),
+                        system.getTransitions(),
+                        variableOrder.getDefaultSetSignature().getTopVariableHandle()
+                );
+
+                ssgTimer.stop();
+                totalTimer.stop();
+
+                printSymbolicResult(writer,
+                        variableOrder,
+                        system,
+                        stateSpace,
+                        gs,
+                        totalTimer.elapsed(TimeUnit.MICROSECONDS),
+                        ssgTimer.elapsed(TimeUnit.MICROSECONDS)
+                );
+            }
+            break;
+
         }
     }
 
@@ -539,6 +577,21 @@ public class XstsCli {
             writer.cell(status.getWitness().size());
             writer.cell(status.getWitness().getDepth());
             writer.cell(status.getWitness().getMeanBranchingFactor());
+            if (status.isUnsafe()) {
+                writer.cell(status.asUnsafe().getCex().length() + "");
+            } else {
+                writer.cell("");
+            }
+            writer.cell(sts.getVars().size());
+            writer.newRow();
+        }
+    }
+
+    private void printSymbolicResult(final SafetyResult<MddWitness, MddCex> status, final XSTS sts, final long totalTimeMs) {
+        if (benchmarkMode) {
+            writer.cell(status.isSafe());
+            writer.cell(totalTimeMs);
+            writer.cell(status.getWitness().size());
             if (status.isUnsafe()) {
                 writer.cell(status.asUnsafe().getCex().length() + "");
             } else {
