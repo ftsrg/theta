@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
@@ -603,10 +604,17 @@ public class XstsCli {
     }
 
     private void printSymbolicResult(final SafetyResult<MddWitness, MddCex> status, final XSTS sts, final long totalTimeMs) {
+        final MddAnalysisStatistics stats = (MddAnalysisStatistics)
+                status.getStats().orElse(new MddAnalysisStatistics(0L, 0L, 0L, 0L, 0L));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
             writer.cell(status.getWitness().size());
+            writer.cell(stats.getViolatingSize());
+            writer.cell(stats.getStateSpaceSize());
+            writer.cell(stats.getHitCount());
+            writer.cell(stats.getQueryCount());
+            writer.cell(stats.getCacheSize());
             if (status.isUnsafe()) {
                 writer.cell(status.asUnsafe().getCex().length() + "");
             } else {

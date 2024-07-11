@@ -22,6 +22,7 @@ import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
@@ -174,7 +175,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
             }
             default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
         }
-        logger.write(Level.SUBSTEP, "Enumerated state-space");
+        logger.write(Level.INFO, "Enumerated state-space");
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
         final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
@@ -189,15 +190,13 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
         logger.write(Level.DETAIL, "State space size: " + stateSpaceSize);
 
-        logger.write(Level.DETAIL, "Hit count: " + cache.getHitCount());
-        logger.write(Level.DETAIL, "Query count: " + cache.getQueryCount());
-        logger.write(Level.DETAIL, "Cache size: " + cache.getCacheSize());
+        final MddAnalysisStatistics statistics = new MddAnalysisStatistics(violatingSize, stateSpaceSize, cache.getHitCount(), cache.getQueryCount(), cache.getCacheSize());
 
         final SafetyResult<MddWitness, MddCex> result;
         if (violatingSize != 0) {
-            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
+            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace), statistics);
         } else {
-            result = SafetyResult.safe(MddWitness.of(stateSpace));
+            result = SafetyResult.safe(MddWitness.of(stateSpace), statistics);
         }
         logger.write(Level.RESULT, "%s%n", result);
         return result;
