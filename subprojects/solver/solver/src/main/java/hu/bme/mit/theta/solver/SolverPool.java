@@ -65,7 +65,7 @@ public class SolverPool implements AutoCloseable {
 
     public void returnSolver(Solver solver) {
         Preconditions.checkState(solver.getAssertions().isEmpty(), "Only empty solvers can be returned");
-        System.out.println("Returned solver");
+//        System.out.println("Returned solver");
         this.available.add(solver);
     }
 
@@ -75,8 +75,8 @@ public class SolverPool implements AutoCloseable {
             this.available.add(solver);
             this.all.add(solver);
         }
-        System.out.println(created + " solvers created");
-        System.out.println("Free size: " + Runtime.getRuntime().freeMemory());
+//        System.out.println(created + " solvers created");
+//        System.out.println("Free size: " + Runtime.getRuntime().freeMemory());
         this.created = created + GROWING;
     }
 

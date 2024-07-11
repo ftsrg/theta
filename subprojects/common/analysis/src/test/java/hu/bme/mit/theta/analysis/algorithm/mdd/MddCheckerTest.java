@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
+import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -124,28 +125,33 @@ public class MddCheckerTest {
     }
 
     @Test
-    public void test() throws IOException {
+    public void test() throws Exception {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
-        final MddChecker<ExprAction> checker = MddChecker.create(initExpr, VarIndexingFactory.indexing(0), new ExprAction() {
-            @Override
-            public Expr<BoolType> toExpr() {
-                return tranExpr;
-            }
+        final SafetyResult<MddWitness, MddCex> status;
+        try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
+            final MddChecker<ExprAction> checker = MddChecker.create(initExpr, VarIndexingFactory.indexing(0), new ExprAction() {
+                @Override
+                public Expr<BoolType> toExpr() {
+                    return tranExpr;
+                }
 
-            @Override
-            public VarIndexing nextIndexing() {
-                return VarIndexingFactory.indexing(1);
-            }
-        }, propExpr, Z3LegacySolverFactory.getInstance(), logger);
-        final SafetyResult<MddWitness, MddCex> status = checker.check(null);
+                @Override
+                public VarIndexing nextIndexing() {
+                    return VarIndexingFactory.indexing(1);
+                }
+            }, propExpr, solverPool, logger);
+            status = checker.check(null);
+        }
+
         if (safe) {
             assertTrue(status.isSafe());
         } else {
             assertTrue(status.isUnsafe());
         }
         assertEquals(stateSpaceSize, status.getWitness().size());
+
 
 
     }

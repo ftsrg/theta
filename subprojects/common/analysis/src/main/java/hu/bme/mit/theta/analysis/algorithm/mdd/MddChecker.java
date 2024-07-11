@@ -56,7 +56,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     private final VarIndexing initIndexing;
     private final A transRel;
     private final Expr<BoolType> safetyProperty;
-    private final SolverFactory solverFactory;
+    private final SolverPool solverPool;
     private final Logger logger;
 
     private final boolean visualize = true;
@@ -65,13 +65,13 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
                        VarIndexing initIndexing,
                        A transRel,
                        Expr<BoolType> safetyProperty,
-                       SolverFactory solverFactory,
+                       SolverPool solverPool,
                        Logger logger) {
         this.initRel = initRel;
         this.initIndexing = initIndexing;
         this.transRel = transRel;
         this.safetyProperty = safetyProperty;
-        this.solverFactory = solverFactory;
+        this.solverPool = solverPool;
         this.logger = logger;
     }
 
@@ -79,85 +79,88 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
                                                               VarIndexing initIndexing,
                                                               A transRel,
                                                               Expr<BoolType> safetyProperty,
-                                                              SolverFactory solverFactory,
+                                                              SolverPool solverPool,
                                                               Logger logger) {
-        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverFactory, logger);
+        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger);
     }
 
     @Override
     public SafetyResult<MddWitness, MddCex> check(Void input) {
 
-        try (var solverPool = new SolverPool(solverFactory)) {
-            final MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
+        final MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
 
-            final MddVariableOrder stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
-            final MddVariableOrder transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
+        final MddVariableOrder stateOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
+        final MddVariableOrder transOrder = JavaMddFactory.getDefault().createMddVariableOrder(mddGraph);
 
-            final Set<VarDecl<?>> vars = ExprUtils.getVars(List.of(initRel, transRel.toExpr(), safetyProperty));
-            for (var v : vars) {
-                final var domainSize = v.getType() instanceof BoolType ? 2 : 0;
+        final Set<VarDecl<?>> vars = ExprUtils.getVars(List.of(initRel, transRel.toExpr(), safetyProperty));
+        for (var v : vars) {
+            final var domainSize = v.getType() instanceof BoolType ? 2 : 0;
 
-                stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
+            stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(initIndexing.get(v)), domainSize));
 
-                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(transRel.nextIndexing().get(v)), domainSize));
-                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
-            }
+            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(transRel.nextIndexing().get(v)), domainSize));
+            transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
+        }
 
-            final var stateSig = stateOrder.getDefaultSetSignature();
-            final var transSig = transOrder.getDefaultSetSignature();
+        final var stateSig = stateOrder.getDefaultSetSignature();
+        final var transSig = transOrder.getDefaultSetSignature();
 
-            final Expr<BoolType> initExpr = PathUtils.unfold(initRel, initIndexing);
-            final MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, solverPool));
+        final Expr<BoolType> initExpr = PathUtils.unfold(initRel, initIndexing);
+        final MddHandle initNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(initExpr, o -> (Decl) o, solverPool));
 
-            logger.write(Level.INFO, "Created initial node");
+        logger.write(Level.INFO, "Created initial node");
 
-            final Expr<BoolType> transExpr = PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0));
-            final MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
-            final AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
+        final Expr<BoolType> transExpr = PathUtils.unfold(transRel.toExpr(), VarIndexingFactory.indexing(0));
+        final MddHandle transitionNode = transSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(transExpr, o -> (Decl) o, solverPool));
+        final AbstractNextStateDescriptor nextStates = MddNodeNextStateDescriptor.of(transitionNode);
 
-            logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
+        logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
 
-            final var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-            final MddHandle satResult = gs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+        final var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+        final MddHandle satResult = gs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
 
-            logger.write(Level.MAINSTEP, "Enumerated state-space");
+        logger.write(Level.MAINSTEP, "Enumerated state-space");
 
-            final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
-            final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
+        final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
+        final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
 
-            final MddHandle propViolating = (MddHandle) satResult.intersection(propNode);
+        final MddHandle propViolating = (MddHandle) satResult.intersection(propNode);
 
-            logger.write(Level.INFO, "Calculated violating states");
+        logger.write(Level.INFO, "Calculated violating states");
 
-            final Long violatingSize = MddInterpreter.calculateNonzeroCount(propViolating);
-            logger.write(Level.INFO,"States violating the property: " + violatingSize);
+        final Long violatingSize = MddInterpreter.calculateNonzeroCount(propViolating);
+        logger.write(Level.INFO, "States violating the property: " + violatingSize);
 
-            final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
-            logger.write(Level.DETAIL,"State space size: " + stateSpaceSize);
+        final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
+        logger.write(Level.DETAIL, "State space size: " + stateSpaceSize);
 
-            logger.write(Level.DETAIL,"Hit count: " + gs.getSaturateCache().getHitCount());
-            logger.write(Level.DETAIL,"Query count: " + gs.getSaturateCache().getQueryCount());
-            logger.write(Level.DETAIL,"Cache size: " + gs.getSaturateCache().getCacheSize());
+        logger.write(Level.DETAIL, "Hit count: " + gs.getSaturateCache().getHitCount());
+        logger.write(Level.DETAIL, "Query count: " + gs.getSaturateCache().getQueryCount());
+        logger.write(Level.DETAIL, "Cache size: " + gs.getSaturateCache().getCacheSize());
 
-            if(visualize) {
-                final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(satResult.getNode());
-                final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
+        if (visualize) {
+            final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(satResult.getNode());
+            final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
 //                final Graph transGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(transitionNode.getNode());
-                final Graph initGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(initNode.getNode());
+            final Graph initGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(initNode.getNode());
 
+            try {
                 GraphvizWriter.getInstance().writeFile(stateSpaceGraph, "build\\statespace.dot");
                 GraphvizWriter.getInstance().writeFile(violatingGraph, "build\\violating.dot");
 //                GraphvizWriter.getInstance().writeFile(transGraph, "build\\trans.dot");
                 GraphvizWriter.getInstance().writeFile(initGraph, "build\\init.dot");
-
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
             }
 
+        }
 
-            if (violatingSize != 0)
-                return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(satResult));
-            else return SafetyResult.safe(MddWitness.of(satResult));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (violatingSize != 0) {
+            logger.write(Level.MAINSTEP, "Model is unsafe");
+            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(satResult));
+        } else {
+            logger.write(Level.MAINSTEP, "Model is safe");
+            return SafetyResult.safe(MddWitness.of(satResult));
         }
     }
 
