@@ -152,7 +152,6 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
-
         }
 
         if (violatingSize != 0) {
