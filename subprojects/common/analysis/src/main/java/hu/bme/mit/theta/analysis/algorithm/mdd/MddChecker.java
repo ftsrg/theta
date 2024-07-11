@@ -21,8 +21,10 @@ import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.solver.SolverPool;
 import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
@@ -59,20 +61,29 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     private final SolverPool solverPool;
     private final Logger logger;
 
-    private final boolean visualize = true;
+    private  boolean visualize = true;
+    private  IterationStrategy iterationStrategy = IterationStrategy.GSAT;
+
+    public enum IterationStrategy {
+        BFS, SAT, GSAT
+    }
 
     private MddChecker(Expr<BoolType> initRel,
                        VarIndexing initIndexing,
                        A transRel,
                        Expr<BoolType> safetyProperty,
                        SolverPool solverPool,
-                       Logger logger) {
+                       Logger logger,
+                       boolean visualize,
+                       IterationStrategy iterationStrategy) {
         this.initRel = initRel;
         this.initIndexing = initIndexing;
         this.transRel = transRel;
         this.safetyProperty = safetyProperty;
         this.solverPool = solverPool;
         this.logger = logger;
+        this.visualize = visualize;
+        this.iterationStrategy = iterationStrategy;
     }
 
     public static <A extends ExprAction> MddChecker<A> create(Expr<BoolType> initRel,
@@ -81,7 +92,18 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
                                                               Expr<BoolType> safetyProperty,
                                                               SolverPool solverPool,
                                                               Logger logger) {
-        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger);
+        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger, true, IterationStrategy.GSAT);
+    }
+
+    public static <A extends ExprAction> MddChecker<A> create(Expr<BoolType> initRel,
+                                                              VarIndexing initIndexing,
+                                                              A transRel,
+                                                              Expr<BoolType> safetyProperty,
+                                                              SolverPool solverPool,
+                                                              Logger logger,
+                                                              boolean visualize,
+                                                              IterationStrategy iterationStrategy) {
+        return new MddChecker<A>(initRel, initIndexing, transRel, safetyProperty, solverPool, logger, visualize, iterationStrategy);
     }
 
     @Override
@@ -116,30 +138,50 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
 
         logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
 
-        final var gs = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-        final MddHandle satResult = gs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+        final MddHandle stateSpace;
+        final Cache cache;
+        switch (iterationStrategy) {
+            case BFS -> {
+                final var bfs = new BfsProvider(stateSig.getVariableOrder());
+                stateSpace = bfs.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+                cache = bfs.getRelProdCache();
+            }
+            case SAT -> {
+                final var sat = new SimpleSaturationProvider(stateSig.getVariableOrder());
+                stateSpace = sat.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+                cache = sat.getSaturateCache();
+            }
+            case GSAT -> {
+                final var gsat = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+                stateSpace = gsat.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+                cache = gsat.getSaturateCache();
+
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
+        }
 
         logger.write(Level.MAINSTEP, "Enumerated state-space");
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
         final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
 
-        final MddHandle propViolating = (MddHandle) satResult.intersection(propNode);
+        final MddHandle propViolating = (MddHandle) stateSpace.intersection(propNode);
 
         logger.write(Level.INFO, "Calculated violating states");
 
         final Long violatingSize = MddInterpreter.calculateNonzeroCount(propViolating);
         logger.write(Level.INFO, "States violating the property: " + violatingSize);
 
-        final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(satResult);
+        final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
         logger.write(Level.DETAIL, "State space size: " + stateSpaceSize);
 
-        logger.write(Level.DETAIL, "Hit count: " + gs.getSaturateCache().getHitCount());
-        logger.write(Level.DETAIL, "Query count: " + gs.getSaturateCache().getQueryCount());
-        logger.write(Level.DETAIL, "Cache size: " + gs.getSaturateCache().getCacheSize());
+
+        logger.write(Level.DETAIL, "Hit count: " + cache.getHitCount());
+        logger.write(Level.DETAIL, "Query count: " + cache.getQueryCount());
+        logger.write(Level.DETAIL, "Cache size: " + cache.getCacheSize());
 
         if (visualize) {
-            final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(satResult.getNode());
+            final Graph stateSpaceGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(stateSpace.getNode());
             final Graph violatingGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(propViolating.getNode());
 //                final Graph transGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(transitionNode.getNode());
             final Graph initGraph = new MddNodeVisualizer(MddChecker::nodeToString).visualize(initNode.getNode());
@@ -156,10 +198,10 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
 
         if (violatingSize != 0) {
             logger.write(Level.MAINSTEP, "Model is unsafe");
-            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(satResult));
+            return SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace));
         } else {
             logger.write(Level.MAINSTEP, "Model is safe");
-            return SafetyResult.safe(MddWitness.of(satResult));
+            return SafetyResult.safe(MddWitness.of(stateSpace));
         }
     }
 
