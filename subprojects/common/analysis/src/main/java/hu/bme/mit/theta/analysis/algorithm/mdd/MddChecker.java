@@ -155,7 +155,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
             default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
         }
 
-        logger.write(Level.MAINSTEP, "Enumerated state-space");
+        logger.write(Level.INFO, "Enumerated state-space");
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(safetyProperty), initIndexing);
         final MddHandle propNode = stateSig.getTopVariableHandle().checkInNode(MddExpressionTemplate.of(negatedPropExpr, o -> (Decl) o, solverPool));
