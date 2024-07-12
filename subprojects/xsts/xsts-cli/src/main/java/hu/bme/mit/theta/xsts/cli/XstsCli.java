@@ -809,15 +809,9 @@ public class XstsCli {
 
     private void writeXstsMddVisualStatus(final SafetyResult<MddWitness, MddCex> status, final String filename)
             throws FileNotFoundException {
-        final Graph graph = status.isSafe() ? new MddNodeVisualizer(XstsCli::nodeToString).visualize(status.asSafe().getWitness().getMdd().getNode())
-                : new MddNodeVisualizer(XstsCli::nodeToString).visualize(status.asUnsafe().getCex().getMdd().getNode());
+        final Graph graph = status.isSafe() ? MddNodeVisualizer.create().visualize(status.asSafe().getWitness().getMdd().getNode())
+                : MddNodeVisualizer.create().visualize(status.asUnsafe().getCex().getMdd().getNode());
         GraphvizWriter.getInstance().writeFile(graph, filename);
-    }
-
-    private static String nodeToString(MddNode node) {
-        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
-            return "";
-        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
     private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)

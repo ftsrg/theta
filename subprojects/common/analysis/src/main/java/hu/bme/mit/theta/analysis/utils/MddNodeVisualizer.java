@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.utils;
 
 import hu.bme.mit.delta.collections.RecursiveIntObjCursor;
+import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.MddNode;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
@@ -63,13 +64,17 @@ public class MddNodeVisualizer {
         static final MddNodeVisualizer INSTANCE = new MddNodeVisualizer(n -> "");
     }
 
-    public MddNodeVisualizer(final Function<MddNode, String> nodeToString) {
+    private MddNodeVisualizer(final Function<MddNode, String> nodeToString) {
         this.nodeToString = nodeToString;
     }
 
     public static MddNodeVisualizer create(
             final Function<MddNode, String> nodeToString) {
         return new MddNodeVisualizer(nodeToString);
+    }
+
+    public static MddNodeVisualizer create() {
+        return new MddNodeVisualizer(MddNodeVisualizer::nodeToString);
     }
 
     public static MddNodeVisualizer getDefault() {
@@ -135,6 +140,12 @@ public class MddNodeVisualizer {
             }
         }
 
+    }
+
+    private static String nodeToString(MddNode node) {
+        if (node.getRepresentation() instanceof RecursiveIntObjMapViews.OfIntObjMapView<?, ?>)
+            return "";
+        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
 }
