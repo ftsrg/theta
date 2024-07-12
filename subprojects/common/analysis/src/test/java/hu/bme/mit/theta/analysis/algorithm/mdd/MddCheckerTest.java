@@ -125,7 +125,21 @@ public class MddCheckerTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testBfs() throws Exception {
+        testWithIterationStrategy(MddChecker.IterationStrategy.BFS);
+    }
+
+    @Test
+    public void testSat() throws Exception {
+        testWithIterationStrategy(MddChecker.IterationStrategy.SAT);
+    }
+
+    @Test
+    public void testGsat() throws Exception {
+        testWithIterationStrategy(MddChecker.IterationStrategy.GSAT);
+    }
+
+    public void testWithIterationStrategy(MddChecker.IterationStrategy iterationStrategy) throws Exception {
 
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
@@ -141,7 +155,7 @@ public class MddCheckerTest {
                 public VarIndexing nextIndexing() {
                     return VarIndexingFactory.indexing(1);
                 }
-            }, propExpr, solverPool, logger);
+            }, propExpr, solverPool, logger, iterationStrategy);
             status = checker.check(null);
         }
 
