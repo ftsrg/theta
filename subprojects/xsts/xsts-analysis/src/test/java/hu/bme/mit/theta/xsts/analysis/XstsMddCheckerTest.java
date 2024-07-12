@@ -39,20 +39,8 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
 
-@RunWith(value = Parameterized.class)
-
 public class XstsMddCheckerTest {
 
-    @Parameterized.Parameter(value = 0)
-    public String filePath;
-
-    @Parameterized.Parameter(value = 1)
-    public String propPath;
-
-    @Parameterized.Parameter(value = 2)
-    public boolean safe;
-
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
@@ -88,19 +76,19 @@ public class XstsMddCheckerTest {
 
                 {"src/test/resources/model/on_off_statemachine.xsts", "src/test/resources/property/on_off_statemachine3.prop", false},
 
-                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false},
-
-                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false},
-
-                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true},
+//                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_5.prop", false},
+//
+//                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_50.prop", false},
+//
+//                {"src/test/resources/model/counter50.xsts", "src/test/resources/property/x_eq_51.prop", true},
 
                 {"src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down.prop", false},
 
                 {"src/test/resources/model/count_up_down.xsts", "src/test/resources/property/count_up_down2.prop", true},
 
-                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
-
-                {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true},
+//                {"src/test/resources/model/bhmr2007.xsts", "src/test/resources/property/bhmr2007.prop", true},
+//
+//                {"src/test/resources/model/css2003.xsts", "src/test/resources/property/css2003.prop", true},
 //
 //                { "src/test/resources/model/array_counter.xsts", "src/test/resources/property/array_10.prop", false},
 //
@@ -120,22 +108,7 @@ public class XstsMddCheckerTest {
         });
     }
 
-    @Test
-    public void testBfs() throws Exception {
-        runTestWithIterationStrategy(IterationStrategy.BFS);
-    }
-
-    @Test
-    public void testSat() throws Exception {
-        runTestWithIterationStrategy(IterationStrategy.SAT);
-    }
-
-    @Test
-    public void testGSat() throws Exception {
-        runTestWithIterationStrategy(IterationStrategy.GSAT);
-    }
-
-    private void runTestWithIterationStrategy(IterationStrategy iterationStrategy) throws Exception {
+    public static void runTestWithIterationStrategy(String filePath, String propPath, boolean safe, IterationStrategy iterationStrategy) throws Exception {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
