@@ -169,7 +169,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
                     if (dfire.isLocallyIdentity(stateSpaceInfo)) {
                         continue;
                     }
-                    MddNode nfire = satFire(nsat, d, dfire, variable, cache, stateSpaceInfo);
+                    MddNode nfire = satFire(nsat, d, dfire, variable, cache);
                     nfire = variable.union(nsat, nfire);
 
                     if (nfire != nsat) {
@@ -179,7 +179,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
                 }
             } else if (!d.isLocallyIdentity(stateSpaceInfo)) {
                 //System.out.println("Applying transition: " + d);
-                MddNode nfire = satFire(nsat, d, d, variable, cache, stateSpaceInfo);
+                MddNode nfire = satFire(nsat, d, d, variable, cache);
                 nfire = variable.union(nsat, nfire);
 
                 if (nfire != nsat) {
@@ -209,8 +209,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
             AbstractNextStateDescriptor dsat,
             AbstractNextStateDescriptor dfire,
             MddVariable variable,
-            CacheManager<SaturationCache>.CacheHolder cache,
-            final MddStateSpaceInfo stateSpaceInfo
+            CacheManager<SaturationCache>.CacheHolder cache
     ) {
         if (n == terminalZeroNode || dfire == AbstractNextStateDescriptor.terminalEmpty()) {
             return terminalZeroNode;
@@ -237,10 +236,10 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
 //				stateSpaceInfo);
 //		var c = diagonal.cursor();
 
-        var stateSpaceInfo2 = new MddStateSpaceInfo(variable, n);
+        final var stateSpaceInfo = new MddStateSpaceInfo(variable, n);
 
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
-                stateSpaceInfo2);
+                stateSpaceInfo);
 
         for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
             for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
@@ -257,7 +256,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
                 assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
 
                 MddNode s = relProd(cFrom.value(),
-                        dsat.getDiagonal(stateSpaceInfo2).get(cTo.key()),
+                        dsat.getDiagonal(stateSpaceInfo).get(cTo.key()),
                         cTo.value(),
                         variable.getLower().orElse(null),
                         cache.getLower()
