@@ -104,7 +104,8 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         }
 
         private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped, MddVariableHandle variableHandle) {
-            this(wrapped, variableHandle, () -> {});
+            this(wrapped, variableHandle, () -> {
+            });
         }
 
         @Override
