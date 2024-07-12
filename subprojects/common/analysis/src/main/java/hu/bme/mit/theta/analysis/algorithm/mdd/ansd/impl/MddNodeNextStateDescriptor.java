@@ -87,21 +87,25 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public AbstractNextStateDescriptor.Cursor rootCursor() {
-        return new Cursor(RecursiveIntObjCursor.singleton(0, this.node));
+        return new Cursor(RecursiveIntObjCursor.singleton(0, this.node), this.variableHandle);
     }
 
     public class Cursor implements AbstractNextStateDescriptor.Cursor {
         private final RecursiveIntObjCursor<? extends MddNode> wrapped;
 
+        private final MddVariableHandle variableHandle;
+
         private final Runnable closer;
 
-        private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped, Runnable closer) {
+        private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped, MddVariableHandle variableHandle, Runnable closer) {
             this.wrapped = wrapped;
+            this.variableHandle = variableHandle;
             this.closer = closer;
         }
 
-        private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped) {
+        private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped, MddVariableHandle variableHandle) {
             this.wrapped = wrapped;
+            this.variableHandle = variableHandle;
             this.closer = () -> {
             };
         }
@@ -113,7 +117,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
         @Override
         public AbstractNextStateDescriptor value() {
-            return MddNodeNextStateDescriptor.of(wrapped.value(), variableHandle.getLower().orElseThrow().getLower().orElseThrow());
+            return MddNodeNextStateDescriptor.of(wrapped.value(), Cursor.this.variableHandle);
         }
 
         @Override
@@ -130,7 +134,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
             var fromCursor = wrapped.valueCursor();
             if (fromCursor.moveTo(from)) {
-                return new Cursor(fromCursor.valueCursor(), () -> fromCursor.close());
+                return new Cursor(fromCursor.valueCursor(), Cursor.this.variableHandle.getLower().orElseThrow().getLower().orElseThrow(), () -> fromCursor.close());
             } else return new EmptyCursor(() -> fromCursor.close());
         }
 
