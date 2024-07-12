@@ -112,7 +112,7 @@ public class StsMddCheckerTest {
                 public VarIndexing nextIndexing() {
                     return VarIndexingFactory.indexing(1);
                 }
-            }, sts.getProp(), solverPool, logger, IterationStrategy.SAT);
+            }, sts.getProp(), solverPool, logger, IterationStrategy.GSAT);
             status = checker.check(null);
         }
 
