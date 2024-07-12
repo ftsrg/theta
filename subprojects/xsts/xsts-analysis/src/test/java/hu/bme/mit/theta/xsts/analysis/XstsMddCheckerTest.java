@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xsts.analysis;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -120,8 +121,21 @@ public class XstsMddCheckerTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void testBfs() throws Exception {
+        runTestWithIterationStrategy(IterationStrategy.BFS);
+    }
 
+    @Test
+    public void testSat() throws Exception {
+        runTestWithIterationStrategy(IterationStrategy.SAT);
+    }
+
+    @Test
+    public void testGSat() throws Exception {
+        runTestWithIterationStrategy(IterationStrategy.GSAT);
+    }
+
+    private void runTestWithIterationStrategy(IterationStrategy iterationStrategy) throws Exception {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
@@ -131,7 +145,7 @@ public class XstsMddCheckerTest {
 
         final SafetyResult<MddWitness, MddCex> status;
         try (var solverPool = new SolverPool(Z3LegacySolverFactory.getInstance())) {
-            final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger);
+            final XstsMddChecker checker = XstsMddChecker.create(xsts, solverPool, logger, iterationStrategy);
             status = checker.check(null);
         }
 
@@ -140,8 +154,6 @@ public class XstsMddCheckerTest {
         } else {
             assertTrue(status.isUnsafe());
         }
-
-
     }
 
 }
