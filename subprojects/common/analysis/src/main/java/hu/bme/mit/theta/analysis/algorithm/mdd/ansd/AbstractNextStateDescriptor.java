@@ -140,7 +140,7 @@ public interface AbstractNextStateDescriptor {
 
         boolean moveTo(int key);
 
-        Cursor valueCursor(int from);
+        Cursor valueCursor(int from, StateSpaceInfo localStateSpace);
 
         void close();
 
@@ -181,8 +181,8 @@ public interface AbstractNextStateDescriptor {
             }
 
             @Override
-            public Cursor valueCursor(int from) {
-                return value.cursor(from);
+            public Cursor valueCursor(int from, StateSpaceInfo localStateSpace) {
+                return value.cursor(from, localStateSpace);
             }
 
             @Override
@@ -193,7 +193,7 @@ public interface AbstractNextStateDescriptor {
 
     }
 
-    default Cursor cursor(int from) {
+    default Cursor cursor(int from, StateSpaceInfo localStateSpace) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 

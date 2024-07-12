@@ -145,7 +145,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
         MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
         for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
-            try (var cTo = dCursor.valueCursor(cFrom.key())) {
+            try (var cTo = dCursor.valueCursor(cFrom.key(), stateSpaceInfo)) {
                 MddNode s = saturate(cFrom.value(),
                         cTo.moveTo(cFrom.key()) ? cTo.value() : AbstractNextStateDescriptor.terminalEmpty(),
                         cTo,
@@ -176,7 +176,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
                         continue;
                     }
 
-                    MddNode nfire = satFire(nsat, d, dfireCursor.value(), dfireCursor, variable, cache, stateSpaceInfo);
+                    MddNode nfire = satFire(nsat, d, dfireCursor.value(), dfireCursor, variable, cache);
                     nfire = variable.union(nsat, nfire);
 
                     if (nfire != nsat) {
@@ -190,7 +190,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
                 //System.out.println("Applying transition: " + d);
 //				try(var dCursor = d.rootCursor()){
 //					Preconditions.checkState(dCursor.moveNext());
-                MddNode nfire = satFire(nsat, d, d, dCursor, variable, cache, stateSpaceInfo);
+                MddNode nfire = satFire(nsat, d, d, dCursor, variable, cache);
                 nfire = variable.union(nsat, nfire);
 
                 if (nfire != nsat) {
@@ -223,8 +223,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
             AbstractNextStateDescriptor dfire,
             AbstractNextStateDescriptor.Cursor dfireCursor,
             MddVariable variable,
-            CacheManager<SaturationCache>.CacheHolder cache,
-            final MddStateSpaceInfo stateSpaceInfo
+            CacheManager<SaturationCache>.CacheHolder cache
     ) {
         if (n == terminalZeroNode || dfire == AbstractNextStateDescriptor.terminalEmpty()) {
             return terminalZeroNode;
@@ -247,11 +246,13 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 
         MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
+        final var stateSpaceInfo = new MddStateSpaceInfo(variable, n);
+
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
                 stateSpaceInfo);
 
         for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
-            try (var cTo = dfireCursor.valueCursor(cFrom.key())) {
+            try (var cTo = dfireCursor.valueCursor(cFrom.key(), stateSpaceInfo)) {
                 while (cTo.moveNext()) {
                     if (cFrom.key() == cTo.key()) {
                         continue;
@@ -365,7 +366,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
 //					);
 //				}
 //			}
-            try (var cTo = dfireCursor.valueCursor(cFrom.key())) {
+            try (var cTo = dfireCursor.valueCursor(cFrom.key(), stateSpaceInfo)) {
                 if (cTo.moveTo(cFrom.key())) {
 
                     if (verbose) {
@@ -390,7 +391,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
                 }
             }
 
-            try (var cTo = dfireCursor.valueCursor(cFrom.key())) {
+            try (var cTo = dfireCursor.valueCursor(cFrom.key(), stateSpaceInfo)) {
                 while (cTo.moveNext()) {
                     if (cFrom.key() == cTo.key()) {
                         continue;

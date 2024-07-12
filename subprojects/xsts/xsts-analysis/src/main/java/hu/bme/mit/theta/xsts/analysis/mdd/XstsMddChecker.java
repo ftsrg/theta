@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.CursorGeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProductProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;

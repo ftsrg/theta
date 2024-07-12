@@ -204,8 +204,8 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
     }
 
     @Override
-    public Cursor cursor(int from) {
-        return AbstractNextStateDescriptor.super.cursor(from);
+    public Cursor cursor(int from, StateSpaceInfo localStateSpace) {
+        return AbstractNextStateDescriptor.super.cursor(from, localStateSpace);
     }
 
     @Override
@@ -252,8 +252,8 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
         }
 
         @Override
-        public Cursor valueCursor(int from) {
-            return OrCursor.of(cursors.stream().map(c -> c.valueCursor(from)).toList());
+        public Cursor valueCursor(int from, StateSpaceInfo localStateSpace) {
+            return OrCursor.of(cursors.stream().map(c -> c.valueCursor(from, localStateSpace)).toList());
         }
 
         @Override
@@ -329,8 +329,8 @@ public class OrNextStateDescriptor implements AbstractNextStateDescriptor {
         }
 
         @Override
-        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
-            return OrCursor.of(activeCursors.stream().map(c -> c.valueCursor(from)).toList());
+        public AbstractNextStateDescriptor.Cursor valueCursor(int from, StateSpaceInfo localStateSpace) {
+            return OrCursor.of(activeCursors.stream().map(c -> c.valueCursor(from, localStateSpace)).toList());
         }
 
         @Override
