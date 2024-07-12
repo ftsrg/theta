@@ -90,13 +90,6 @@ public class MddExpressionTest {
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
 
         assertEquals(valuations.size(), 5);
-
-        final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
-        try {
-            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
@@ -140,14 +133,6 @@ public class MddExpressionTest {
 
         // TODO This might be 2 if default values are enabled
         assertEquals(valuations.size(), 3);
-
-        final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
-        try {
-            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
     }
 
     @Test
@@ -187,13 +172,6 @@ public class MddExpressionTest {
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
 
         assertEquals(valuations.size(), 5);
-
-        final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
-        try {
-            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -242,13 +220,6 @@ public class MddExpressionTest {
 
         assertEquals(valuations.size(), 5);
 
-        final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
-        try {
-            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
     }
 
     @Test
@@ -281,13 +252,6 @@ public class MddExpressionTest {
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
 
         assertEquals(valuations.size(), 1);
-
-        final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
-        try {
-            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -335,18 +299,6 @@ public class MddExpressionTest {
 
         assertEquals(27, valuations.size());
 
-        final Graph graph = new MddNodeVisualizer(MddExpressionTest::nodeToString).visualize(rootNode);
-        try {
-            GraphvizWriter.getInstance().writeFile(graph, "build\\mddasd.dot");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-
-    }
-
-    private static String nodeToString(MddNode node) {
-        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
 }
