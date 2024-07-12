@@ -104,10 +104,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         }
 
         private Cursor(RecursiveIntObjCursor<? extends MddNode> wrapped, MddVariableHandle variableHandle) {
-            this.wrapped = wrapped;
-            this.variableHandle = variableHandle;
-            this.closer = () -> {
-            };
+            this(wrapped, variableHandle, () -> {});
         }
 
         @Override
@@ -130,8 +127,18 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
             return wrapped.moveTo(key);
         }
 
+//        @Override
+//        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
+//            var fromCursor = wrapped.valueCursor();
+//            if (fromCursor.moveTo(from)) {
+//                return new Cursor(fromCursor.valueCursor(), Cursor.this.variableHandle.getLower().orElseThrow().getLower().orElseThrow(), () -> fromCursor.close());
+//            } else return new EmptyCursor(() -> fromCursor.close());
+//        }
+
         @Override
-        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
+        public AbstractNextStateDescriptor.Cursor valueCursor(int from, StateSpaceInfo localStateSpace) {
+            final MddNode constraint = localStateSpace.toStructuralRepresentation();
+            // TODO the valueCursor call of the wrapped cursor has to propagate the constraint
             var fromCursor = wrapped.valueCursor();
             if (fromCursor.moveTo(from)) {
                 return new Cursor(fromCursor.valueCursor(), Cursor.this.variableHandle.getLower().orElseThrow().getLower().orElseThrow(), () -> fromCursor.close());
@@ -245,7 +252,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         }
 
         @Override
-        public AbstractNextStateDescriptor.Cursor valueCursor(int from) {
+        public AbstractNextStateDescriptor.Cursor valueCursor(int from, StateSpaceInfo localStateSpace) {
             throw new UnsupportedOperationException("This operation is not supported on the root cursor");
         }
 

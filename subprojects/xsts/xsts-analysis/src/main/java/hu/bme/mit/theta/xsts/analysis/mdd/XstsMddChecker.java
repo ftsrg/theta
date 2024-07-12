@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.CursorGeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProductProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
@@ -168,7 +169,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
                 cache = sat.getSaturateCache();
             }
             case GSAT -> {
-                final var gsat = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
+                final var gsat = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
                 stateSpace = gsat.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
                 cache = gsat.getSaturateCache();
 
