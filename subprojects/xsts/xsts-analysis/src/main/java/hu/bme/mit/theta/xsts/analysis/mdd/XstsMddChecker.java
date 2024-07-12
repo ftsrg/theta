@@ -169,7 +169,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
                 cache = sat.getSaturateCache();
             }
             case GSAT -> {
-                final var gsat = new CursorGeneralizedSaturationProvider(stateSig.getVariableOrder());
+                final var gsat = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
                 stateSpace = gsat.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
                 cache = gsat.getSaturateCache();
 
