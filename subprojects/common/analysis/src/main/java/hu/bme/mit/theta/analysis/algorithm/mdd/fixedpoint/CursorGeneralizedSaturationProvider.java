@@ -54,9 +54,7 @@ public final class CursorGeneralizedSaturationProvider implements MddTransformat
             AbstractNextStateDescriptor nextStateRelation,
             MddVariableHandle highestAffectedVariable
     ) {
-        final MddHandle initialStates = relProdProvider.compute(((MddGraph<Boolean>) variableOrder.getMddGraph()).getHandleFor(true,
-                highestAffectedVariable
-        ), initializer, highestAffectedVariable);
+        final MddHandle initialStates = relProdProvider.compute(variableOrder.getMddGraph().getHandleForTop(), initializer, highestAffectedVariable);
 
         MddNode result;
 
