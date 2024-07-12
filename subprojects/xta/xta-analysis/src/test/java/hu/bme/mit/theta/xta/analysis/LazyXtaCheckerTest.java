@@ -17,9 +17,11 @@ package hu.bme.mit.theta.xta.analysis;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
@@ -39,7 +41,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static hu.bme.mit.theta.analysis.algorithm.SearchStrategy.BFS;
+import static hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy.BFS;
 import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
 import static org.junit.Assert.assertTrue;
 
@@ -70,7 +72,7 @@ public final class LazyXtaCheckerTest {
     @Parameter(2)
     public ClockStrategy clockStrategy;
 
-    private SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> checker;
+    private SafetyChecker<? extends ARG<? extends XtaState<?>, XtaAction>, ? extends Trace<? extends XtaState<?>, XtaAction>, UnitPrec> checker;
 
     @Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
     public static Collection<Object[]> data() {
@@ -98,13 +100,13 @@ public final class LazyXtaCheckerTest {
     @Test
     public void test() {
         // Act
-        final SafetyResult<? extends XtaState<?>, XtaAction> status = checker.check(
+        final SafetyResult<? extends ARG<? extends XtaState<?>, XtaAction>, ? extends Trace<? extends XtaState<?>, XtaAction>> status = checker.check(
                 UnitPrec.getInstance());
 
         // Assert
         final ArgChecker argChecker = ArgChecker.create(
                 Z3LegacySolverFactory.getInstance().createSolver());
-        final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
+        final boolean argCheckResult = argChecker.isWellLabeled(status.getWitness());
         assertTrue(argCheckResult);
     }
 

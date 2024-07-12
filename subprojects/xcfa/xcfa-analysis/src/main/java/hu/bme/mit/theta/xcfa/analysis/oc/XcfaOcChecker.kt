@@ -16,8 +16,12 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import hu.bme.mit.theta.analysis.EmptyCex
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
@@ -51,7 +55,7 @@ import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger) :
-    SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<UnitPrec>> {
+    SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<UnitPrec>> {
 
     private val ocChecker: OcChecker<E> = decisionProcedure.checker()
     private val solver = ocChecker.solver
@@ -69,20 +73,23 @@ class XcfaOcChecker(xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, priv
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
-    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<out PtrState<*>>, XcfaAction> = let {
+    override fun check(
+        prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         xcfa.initProcedures.forEach { processThread(Thread(it.first)) }
         addCrossThreadRelations()
-        if (!addToSolver()) return@let SafetyResult.safe() // no violations in the model
+        if (!addToSolver()) return@let SafetyResult.safe<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(
+            EmptyWitness.getInstance()) // no violations in the model
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status = ocChecker.check(events, pos, rfs)
         when {
-            status?.isUnsat == true -> SafetyResult.safe()
+            status?.isUnsat == true -> SafetyResult.safe(EmptyWitness.getInstance())
             status?.isSat == true -> SafetyResult.unsafe(
-                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
+                XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace,
+                EmptyWitness.getInstance()
             )
 
             else -> SafetyResult.unknown()

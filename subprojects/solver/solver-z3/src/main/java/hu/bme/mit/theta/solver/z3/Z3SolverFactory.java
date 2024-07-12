@@ -22,6 +22,8 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 public final class Z3SolverFactory implements SolverFactory {
 
     private static final Z3SolverFactory INSTANCE;

@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 
 /**
  * Common interface for refiners. It takes an ARG and a precision, checks if the counterexample in

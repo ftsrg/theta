@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.analysis.multi.config
 
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
 import hu.bme.mit.theta.analysis.expr.ExprState
