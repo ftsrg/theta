@@ -66,22 +66,9 @@ public class XstsInitExprNodeTest {
         recursiveCursor.moveNext();
 
         final Set<Valuation> valuations = MddValuationCollector.collect(rootNode);
-        System.out.println(valuations);
 
         assertEquals(valuations.size(), 1);
 
-        final Graph graph = new MddNodeVisualizer(XstsInitExprNodeTest::nodeToString).visualize(rootNode);
-        try {
-            GraphvizWriter.getInstance().writeFile(graph, "build\\mdd.dot");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-
-    }
-
-    private static String nodeToString(MddNode node) {
-        return node instanceof MddNode.Terminal ? ((MddNode.Terminal<?>) node).getTerminalData().toString() : node.getRepresentation().toString();
     }
 
 }
