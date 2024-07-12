@@ -15,7 +15,7 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
-import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgUtils.isWellLabeled;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
@@ -30,6 +30,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.function.Predicate;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.refinement.*;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
@@ -39,10 +41,9 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
@@ -116,13 +117,13 @@ public class StsPredTest {
                         JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
                         PruneStrategy.LAZY, logger);
 
-        final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(
+        final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec> checker = CegarChecker.create(
                 abstractor, refiner, logger);
 
-        final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
+        final SafetyResult<ARG<PredState, StsAction>, Trace<PredState, StsAction>> safetyStatus = checker.check(prec);
         System.out.println(safetyStatus);
 
-        final ARG<PredState, StsAction> arg = safetyStatus.getArg();
+        final ARG<PredState, StsAction> arg = safetyStatus.getWitness();
         assertTrue(isWellLabeled(arg, abstractionSolver));
 
         // System.out.println(new

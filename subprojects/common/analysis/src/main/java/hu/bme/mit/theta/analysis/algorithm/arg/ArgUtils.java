@@ -13,23 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.expr.refinement;
+package hu.bme.mit.theta.analysis.algorithm.arg;
 
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.solver.Solver;
 
-/**
- * Functional interface for pruning a node from an ARG.
- */
-public interface NodePruner<S extends ExprState, A extends ExprAction> {
+public final class ArgUtils {
 
-    /**
-     * Prunes the given node or one of its ancestors in the ARG from the given ARG.
-     *
-     * @param arg  the ARG
-     * @param node the node which or whose ancestor will be pruned from the ARG
-     */
-    void prune(final ARG<S, A> arg, ArgNode<S, A> node);
+    private ArgUtils() {
+    }
+
+    public static <S extends ExprState, A extends ExprAction> boolean isWellLabeled(
+            final ARG<S, A> arg,
+            final Solver solver) {
+        return ArgChecker.create(solver).isWellLabeled(arg);
+    }
+
 }

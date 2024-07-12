@@ -13,21 +13,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis;
 
-import hu.bme.mit.theta.analysis.*;
-import hu.bme.mit.theta.analysis.algorithm.Checker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+public class EmptyCex implements Cex {
 
-@FunctionalInterface
-public interface SafetyChecker<W extends Witness, C extends Cex, I> extends Checker<W, I> {
+    private final static EmptyCex empty = new EmptyCex();
 
-    @Override
-    SafetyResult<W, C> check(final I input);
-
-    default SafetyResult<W, C> check() {
-        return check(null);
+    private EmptyCex() {
     }
 
+    public static EmptyCex getInstance() {
+        return empty;
+    }
+
+    @Override
+    public int length() {
+        return 0;
+    }
 }

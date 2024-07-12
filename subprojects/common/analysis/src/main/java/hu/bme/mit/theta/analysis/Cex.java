@@ -13,21 +13,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis;
 
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.solver.Solver;
+public interface Cex {
 
-public final class ArgUtils {
-
-    private ArgUtils() {
-    }
-
-    public static <S extends ExprState, A extends ExprAction> boolean isWellLabeled(
-            final ARG<S, A> arg,
-            final Solver solver) {
-        return ArgChecker.create(solver).isWellLabeled(arg);
-    }
-
+    int length();
 }

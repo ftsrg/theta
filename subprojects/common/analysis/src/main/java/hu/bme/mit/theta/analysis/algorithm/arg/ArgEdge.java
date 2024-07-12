@@ -13,26 +13,32 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.cegar;
+package hu.bme.mit.theta.analysis.algorithm.arg;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 
-/**
- * Common interface for refiners. It takes an ARG and a precision, checks if the counterexample in
- * the ARG is feasible and if not, it refines the precision and may also prune the ARG.
- */
-public interface Refiner<S extends State, A extends Action, P extends Prec> {
+public final class ArgEdge<S extends State, A extends Action> {
+    private final ArgNode<S, A> source;
+    private final ArgNode<S, A> target;
+    private final A action;
 
-    /**
-     * Checks if the counterexample in the ARG is feasible. If not, refines the precision and prunes
-     * the ARG.
-     *
-     * @param arg
-     * @param prec
-     * @return
-     */
-    RefinerResult<S, A, P> refine(ARG<S, A> arg, P prec);
+    ArgEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
+        this.source = source;
+        this.action = action;
+        this.target = target;
+    }
+
+    public ArgNode<S, A> getSource() {
+        return source;
+    }
+
+    public ArgNode<S, A> getTarget() {
+        return target;
+    }
+
+    public A getAction() {
+        return action;
+    }
+
 }

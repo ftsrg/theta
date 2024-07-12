@@ -13,7 +13,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.arg;
+
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.bfs;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.combine;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.creationAsc;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.creationDesc;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.dfs;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.targetFirst;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
+import org.junit.Assert;
+import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
@@ -26,7 +41,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.*;
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.*;
 
 public class ArgNodeComparatorsTest {
 

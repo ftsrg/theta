@@ -107,7 +107,7 @@ class MultiAlternatingTest {
         val result = multiConfigBuilder.build().check()
 
         assertTrue(result.isUnsafe)
-        assertEquals(8, result.asUnsafe().trace.length())
+        assertEquals(8, result.asUnsafe().cex.length())
     }
 
     @Test

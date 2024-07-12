@@ -24,7 +24,7 @@ import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.Statistics
 import java.lang.reflect.Type
@@ -34,17 +34,18 @@ class SafetyResultAdapter(
     val gsonSupplier: () -> Gson,
     private val argTypeSupplier: () -> Type,
     private val traceTypeSupplier: () -> Type,
-) : TypeAdapter<SafetyResult<out State, out Action>>() {
+) : TypeAdapter<SafetyResult<ARG<out State, out Action>, Trace<out State, out Action>>>() {
 
     private lateinit var gson: Gson
     private lateinit var argType: Type
     private lateinit var traceType: Type
 
-    override fun write(writer: JsonWriter, value: SafetyResult<out State, out Action>) {
+    override fun write(writer: JsonWriter,
+        value: SafetyResult<ARG<out State, out Action>, Trace<out State, out Action>>) {
         initGson()
         writer.beginObject()
         writer.name("arg")
-        gson.toJson(gson.toJsonTree(value.arg), writer)
+        gson.toJson(gson.toJsonTree(value.witness), writer)
         writer.name("stats")
 //        gson.toJson(gson.toJsonTree(value.stats), writer)
         gson.toJson(gson.toJsonTree(Optional.empty<Statistics>()), writer)
@@ -54,12 +55,12 @@ class SafetyResultAdapter(
             val unsafe = value.asUnsafe()
             writer.name("safe").value(false)
             writer.name("trace")
-            gson.toJson(gson.toJsonTree(unsafe.trace), writer)
+            gson.toJson(gson.toJsonTree(unsafe.cex), writer)
         }
         writer.endObject()
     }
 
-    override fun read(reader: JsonReader): SafetyResult<State, Action> {
+    override fun read(reader: JsonReader): SafetyResult<ARG<out State, out Action>, Trace<out State, out Action>> {
         initGson()
         initTypes()
         lateinit var arg: ARG<State, Action>

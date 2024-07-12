@@ -26,8 +26,11 @@ import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -41,9 +44,9 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.BfsProvider;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.symbolic.fixpoint.SimpleSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint.BfsProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint.GeneralizedSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.symbolic.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetDependency2Gxl;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem;
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory;
@@ -78,14 +81,13 @@ import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.IterationStrategy;
 
 public class XstsCli {
@@ -259,7 +261,7 @@ public class XstsCli {
                 }
 
                 final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-                final SafetyResult<?, ?> status = check(configuration);
+                final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status = check(configuration);
                 sw.stop();
                 printCegarResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
                 if (status.isUnsafe() && cexfile != null) {
@@ -373,7 +375,7 @@ public class XstsCli {
         }
     }
 
-    private SafetyResult<?, ?> check(XstsConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> check(XstsConfig<?, ?, ?> configuration) throws Exception {
         try {
             return configuration.check();
         } catch (final Exception ex) {
@@ -504,6 +506,17 @@ public class XstsCli {
     }
 
     private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
+        // set up stopping analysis if it is stuck on same ARGs and precisions
+        //if (noStuckCheck) {
+        //ArgCexCheckHandler.instance.setArgCexCheck(false, false);
+        //} else {
+        //ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
+        //        }
+
+        registerAllSolverManagers(solverHome, logger);
+        SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+        SolverFactory refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+
         try {
             return new XstsConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
                     .maxEnum(maxEnum).autoExpl(autoExpl).initPrec(initPrec).pruneStrategy(pruneStrategy)
@@ -513,8 +526,9 @@ public class XstsCli {
         }
     }
 
-    private void printCegarResult(final SafetyResult<?, ?> status, final XSTS sts, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+    private void printCegarResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status, final XSTS sts, final long totalTimeMs) {
+        final CegarStatistics stats = (CegarStatistics)
+                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
@@ -522,11 +536,11 @@ public class XstsCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
+            writer.cell(status.getWitness().size());
+            writer.cell(status.getWitness().getDepth());
+            writer.cell(status.getWitness().getMeanBranchingFactor());
             if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
+                writer.cell(status.asUnsafe().getCex().length() + "");
             } else {
                 writer.cell("");
             }
@@ -709,18 +723,18 @@ public class XstsCli {
 
     private void writeCex(final SafetyResult.Unsafe<?, ?> status, final XSTS xsts) throws FileNotFoundException {
 
-        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getTrace();
-        final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3SolverFactory.getInstance(), xsts);
+        @SuppressWarnings("unchecked") final Trace<XstsState<?>, XstsAction> trace = (Trace<XstsState<?>, XstsAction>) status.getCex();
+        final XstsStateSequence concrTrace = XstsTraceConcretizerUtil.concretize(trace, Z3LegacySolverFactory.getInstance(), xsts);
         final File file = new File(cexfile);
         try (PrintWriter printWriter = new PrintWriter(file)) {
             printWriter.write(concrTrace.toString());
         }
     }
 
-    private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
+    private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)
             throws FileNotFoundException {
-        final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
-                : TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
+        final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
+                : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }
 
@@ -782,7 +796,7 @@ public class XstsCli {
         }
     }
 
-    private void createDepMat(PtNetSystem system) throws Exception{
+    private void createDepMat(PtNetSystem system) throws Exception {
         try {
             final File depMatFile = new File(depMat);
             if (!depMatFile.exists()) {
@@ -798,7 +812,7 @@ public class XstsCli {
         }
     }
 
-    private void createDepMatPng(PtNetSystem system) throws Exception{
+    private void createDepMatPng(PtNetSystem system) throws Exception {
         if (system.getPlaceCount() < 10000 && system.getTransitionCount() < 10000) {
             try {
                 final BufferedImage image = system.dependencyMatrixImage(1);
@@ -807,7 +821,7 @@ public class XstsCli {
                 throw new Exception("Error creating dependency matrix file: " + e.getMessage());
             }
         } else {
-            logger.write(Logger.Level.INFO,"[WARNING] Skipping image generation because the model size exceeds 10k places or " +
+            logger.write(Logger.Level.INFO, "[WARNING] Skipping image generation because the model size exceeds 10k places or " +
                     "transitions.");
         }
     }

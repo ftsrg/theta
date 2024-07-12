@@ -15,30 +15,12 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.State;
+import java.util.Optional;
 
-public final class ArgEdge<S extends State, A extends Action> {
-    private final ArgNode<S, A> source;
-    private final ArgNode<S, A> target;
-    private final A action;
+public interface Result<W extends Witness> {
 
-    ArgEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
-        this.source = source;
-        this.action = action;
-        this.target = target;
-    }
+    W getWitness();
 
-    public ArgNode<S, A> getSource() {
-        return source;
-    }
-
-    public ArgNode<S, A> getTarget() {
-        return target;
-    }
-
-    public A getAction() {
-        return action;
-    }
+    Optional<Statistics> getStats();
 
 }

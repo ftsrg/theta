@@ -15,19 +15,15 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.*;
-import hu.bme.mit.theta.analysis.algorithm.Checker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+public class EmptyWitness implements Witness {
 
-@FunctionalInterface
-public interface SafetyChecker<W extends Witness, C extends Cex, I> extends Checker<W, I> {
+    private final static EmptyWitness empty = new EmptyWitness();
 
-    @Override
-    SafetyResult<W, C> check(final I input);
+    private EmptyWitness() {
+    }
 
-    default SafetyResult<W, C> check() {
-        return check(null);
+    public static EmptyWitness getInstance() {
+        return empty;
     }
 
 }
