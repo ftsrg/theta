@@ -38,7 +38,7 @@ public class XstsBfsMddCheckerTest {
     }
 
     @Test
-    public void testBfs() throws Exception {
+    public void test() throws Exception {
         XstsMddCheckerTest.runTestWithIterationStrategy(filePath, propPath, safe, IterationStrategy.BFS);
     }
 
