@@ -105,7 +105,7 @@ public final class CursorRelationalProductProvider implements RelationalProductP
 //
 //                    templateBuilder.set(c.key(), terminalZeroToNull(unioned, variable.getMddGraph().getTerminalZeroNode()));
 //                }
-                try (var valueCursor = nextStateCursor.valueCursor(c.key())) {
+                try (var valueCursor = nextStateCursor.valueCursor(c.key(), stateSpaceInfo)) {
 //                  for (IntObjCursor<? extends AbstractNextStateDescriptor> next = offDiagonal.get(c.key()).cursor(); next.moveNext(); ) {
                     for (; valueCursor.moveNext(); ) {
 
