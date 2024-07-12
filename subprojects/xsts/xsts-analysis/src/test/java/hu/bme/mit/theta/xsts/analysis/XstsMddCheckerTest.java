@@ -39,20 +39,8 @@ import java.util.Collection;
 
 import static org.junit.Assert.assertTrue;
 
-@RunWith(value = Parameterized.class)
-
 public class XstsMddCheckerTest {
 
-    @Parameterized.Parameter(value = 0)
-    public String filePath;
-
-    @Parameterized.Parameter(value = 1)
-    public String propPath;
-
-    @Parameterized.Parameter(value = 2)
-    public boolean safe;
-
-    @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
@@ -120,22 +108,7 @@ public class XstsMddCheckerTest {
         });
     }
 
-    @Test
-    public void testBfs() throws Exception {
-        runTestWithIterationStrategy(IterationStrategy.BFS);
-    }
-
-    @Test
-    public void testSat() throws Exception {
-        runTestWithIterationStrategy(IterationStrategy.SAT);
-    }
-
-    @Test
-    public void testGSat() throws Exception {
-        runTestWithIterationStrategy(IterationStrategy.GSAT);
-    }
-
-    private void runTestWithIterationStrategy(IterationStrategy iterationStrategy) throws Exception {
+    public static void runTestWithIterationStrategy(String filePath, String propPath, boolean safe, IterationStrategy iterationStrategy) throws Exception {
         final Logger logger = new ConsoleLogger(Logger.Level.SUBSTEP);
 
         XSTS xsts;
