@@ -17,6 +17,7 @@ class XstsTracegenPredInitPrec : XstsInitPrec{
         val ctrlVars = xsts.ctrlVars // TODO add to pred
 
         val assumes = StmtAtomCollector.collectAtoms(tran)
+        //val assumes = StmtAssumeCollector.collectAssumes(tran)
         return PredPrec.of(assumes)
     }
 

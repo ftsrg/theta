@@ -38,6 +38,7 @@ class XstsTracegenBuilder(
     private var logger: Logger = NullLogger.getInstance()
     private var varFile: File? = null
     private var abstraction = TracegenerationAbstraction.NONE
+    private var getFullTraces = false
 
     fun logger(logger: Logger): XstsTracegenBuilder {
         this.logger = logger
@@ -75,7 +76,7 @@ class XstsTracegenBuilder(
                     .stopCriterion(StopCriterions.fullExploration())
                     .logger(logger).build()
 
-            val tracegenChecker = create(logger, abstractor)
+            val tracegenChecker = create(logger, abstractor, getFullTraces)
 
             assert(varFile!=null)
             try {
@@ -111,7 +112,7 @@ class XstsTracegenBuilder(
                     .stopCriterion(StopCriterions.fullExploration())
                     .logger(logger).build()
 
-            val tracegenChecker = create(logger, abstractor)
+            val tracegenChecker = create(logger, abstractor, getFullTraces)
             return XstsTracegenConfig.create(
                 tracegenChecker,
                 XstsAllVarsInitPrec().createExpl(xsts)
@@ -120,6 +121,7 @@ class XstsTracegenBuilder(
 
     }
 
+    /*
     private fun buildPred(xsts: XSTS) : XstsTracegenConfig<out ExprState?, out ExprAction?, out PredPrec?> {
         assert(abstraction==TracegenerationAbstraction.AUTOPRED)
         val lts = XstsLts.create(xsts, XstsStmtOptimizer.create(PredStmtOptimizer.getInstance()))
@@ -129,11 +131,11 @@ class XstsTracegenBuilder(
         val target: Predicate<XstsState<PredState>?> =
             XstsStatePredicate<ExprStatePredicate, PredState>(
                 ExprStatePredicate(negProp, solver2)
-            );
+            )
 
         val analysis = XstsAnalysis.create<PredState, PredPrec>(
             PredAnalysis.create<XstsAction>(
-                solver2, PredAbstractors.cartesianAbstractor(solver2),
+                solver2, PredAbstractors.booleanAbstractor(solver2),
                 xsts.initFormula
             )
         )
@@ -150,10 +152,9 @@ class XstsTracegenBuilder(
             XstsTracegenPredInitPrec().createPred(xsts)
         )
     }
+    */
 
     fun build(xsts: XSTS): XstsTracegenConfig<out ExprState?, out ExprAction?, out Prec?> {
-        abstraction = TracegenerationAbstraction.AUTOPRED
-
         val solver2 =
             solverFactory.createSolver() // abstraction // TODO handle separate solvers in a nicer way
 
@@ -167,12 +168,18 @@ class XstsTracegenBuilder(
 
         if (abstraction==TracegenerationAbstraction.VARLIST) {
             return buildExpl(xsts)
-        } else if (abstraction==TracegenerationAbstraction.AUTOPRED) {
+        } /*else if (abstraction==TracegenerationAbstraction.AUTOPRED) {
             return buildPred(xsts)
-        } else {
+        } */
+            else {
             assert(abstraction==TracegenerationAbstraction.NONE)
             return buildExpl(xsts)
         }
 
+    }
+
+    fun setGetFullTraces(getFullTraces: Boolean): XstsTracegenBuilder {
+        this.getFullTraces = getFullTraces
+        return this
     }
 }

@@ -165,7 +165,10 @@ public class XstsCli {
 	@Parameter(names = "--tracegen", description = "Generate all possible traces of the model (instead of verification)")
 	boolean tracegen = false;
 
-	@Parameter(names = "--variable-list", description = "A list of variable names (one in each line) to be included when generating traces")
+    @Parameter(names = "--get-full-traces", description = "Generates more, but longer and maximal traces")
+    boolean getFullTraces = false;
+
+    @Parameter(names = "--variable-list", description = "A list of variable names (one in each line) to be included when generating traces")
 	String varFile = null;
 
 	@Parameter(names = "--no-transition-coverage", description = "Generates more, but longer and maximal traces")
@@ -218,13 +221,13 @@ public class XstsCli {
             final SafetyResult<?, ?> status;
             if(tracegen) {
                 XstsTracegenConfig<? extends State, ? extends Action, ? extends Prec> tracegenConfig = new XstsTracegenBuilder(
-                    Z3LegacySolverFactory.getInstance(), !noTransitionCoverage).logger(logger).setVarFile(varFile).build(xsts);
+                    Z3LegacySolverFactory.getInstance(), !noTransitionCoverage).logger(logger).setVarFile(varFile).setGetFullTraces(getFullTraces).build(xsts);
 
                 SafetyResult<? extends State, ? extends Action> result = tracegenConfig.check();
                 Collection<? extends Trace<? extends State, ? extends Action>> traces = result.asTraces()
                     .getTraces();
                 final File modelFile = new File(model);
-                final String tracePath = modelFile.getParent() + File.separator + "traces";
+                final String tracePath = modelFile.getParent() + File.separator + "theta-traces";
                 final File traceDir = new File(tracePath);
                 if(traceDir.exists()) {
                     MoreFiles.deleteRecursively(traceDir.toPath(), RecursiveDeleteOption.ALLOW_INSECURE);
