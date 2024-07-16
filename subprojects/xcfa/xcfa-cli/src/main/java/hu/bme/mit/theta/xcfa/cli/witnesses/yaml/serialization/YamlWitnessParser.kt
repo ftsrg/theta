@@ -40,6 +40,16 @@ fun main() {
                   file_name: "while_infinite_loop_1.c"
                   line: 22
                   column: 3
+          - segment:
+            - waypoint:
+                type: "branching"
+                action: "follow"
+                constraint:
+                  value: "true"
+                location:
+                  file_name: "while_infinite_loop_1.c"
+                  line: 224
+                  column: 34
           - cycle:
             - honda:
                 location:

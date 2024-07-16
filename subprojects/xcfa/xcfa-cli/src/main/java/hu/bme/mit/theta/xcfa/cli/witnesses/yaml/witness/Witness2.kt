@@ -12,6 +12,7 @@ data class Witness2(
             for (entry in serializedEntries) {
                 entries.add(WitnessEntry.create(entry))
             }
+            return Witness2(entries)
         }
     }
 }
@@ -23,7 +24,7 @@ data class WitnessEntry(
 ) {
     companion object {
         fun create(entry: YamlWitnessEntry): WitnessEntry {
-            WitnessEntry(entry.entry_type, Metadata.create(entry.metadata), Content.create(entry.content))
+            return WitnessEntry(entry.entry_type, Metadata.create(entry.metadata), Content.create(entry.content))
         }
     }
 }
@@ -82,14 +83,10 @@ data class Content (
             val items = content.map {
                 val contentItems = mutableSetOf<ContentItem>()
                 if (it.segment != null) {
-                    for (segment in it.segment) {
-                        contentItems.add(Segment.create(segment))
-                    }
+                    contentItems.add(Segment.create(it.segment))
                 }
                 if (it.cycle != null) {
-                    for (cycle in it.cycle) {
-                        contentItems.add(Cycle.create(cycle))
-                    }
+                    contentItems.add(Cycle.create(it.cycle))
                 }
                 contentItems
             }.flatten().toSet()
@@ -102,13 +99,17 @@ interface ContentItem
 interface CycleItem
 
 data class Segment(
-    val waypoint: List<Waypoint>? = null,
+    val waypoint: Set<Waypoint>? = null,
 ) : ContentItem, CycleItem {
     companion object {
-        fun create(segment: YamlSegment) : Segment {
-            if(segment.waypoint!=null) {
-                Waypoint.create(segment.waypoint)
+        fun create(segment: List<YamlSegment>) : Segment {
+            val waypoints = mutableSetOf<Waypoint>()
+            for(s in segment) {
+                if(s.waypoint != null) {
+                    waypoints.add(Waypoint.create(s.waypoint))
+                }
             }
+            return Segment(waypoints)
         }
     }
 }
@@ -117,14 +118,14 @@ data class Cycle(
     val items : Set<CycleItem>? = null,
 ) : ContentItem {
     companion object {
-        fun create(cycle: YamlCycle) : Cycle {
+        fun create(cycle: List<YamlCycle>) : Cycle {
             val cycleItems = mutableSetOf<CycleItem>()
-            if(cycle.honda!=null) {
-                cycleItems.add(Honda.create(cycle.honda))
-            }
-            if(cycle.segment!=null) {
-                for(segment in cycle.segment) {
-                    cycleItems.add(Segment.create(segment))
+            for(c in cycle) {
+                if(c.honda!=null) {
+                    cycleItems.add(Honda.create(c.honda))
+                }
+                if(c.segment!=null) {
+                    cycleItems.add(Segment.create(c.segment))
                 }
             }
             return Cycle(cycleItems)
@@ -137,12 +138,25 @@ data class Waypoint(
     val constraint: Constraint? = null,
     val location: Location,
     val action: ActionEnum,
-)
+) {
+    companion object {
+        fun create(waypoint: YamlWaypoint) : Waypoint {
+            return Waypoint(waypoint.type,
+                waypoint.constraint?.let { Constraint.create(it) }, Location.create(waypoint.location), waypoint.action)
+        }
+    }
+}
 
 data class Constraint(
     val value: String,
     val format: FormatEnum? = null,
-)
+) {
+    companion object {
+        fun create(constraint: YamlConstraint) : Constraint {
+            return Constraint(constraint.value, constraint.format)
+        }
+    }
+}
 
 data class Location(
     val file_name: String,
