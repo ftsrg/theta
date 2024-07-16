@@ -52,7 +52,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
                         val metadata = invokeLabel.metadata
                         val labels: List<XcfaLabel> = when (invokeLabel.name) {
-                            "printf" -> listOf(NopLabel)
+                            "printf" -> listOf(NopLabel(EmptyMetaData))
                             "pthread_join" -> {
                                 var handle = invokeLabel.params[1]
                                 while (handle is Reference<*, *>) handle = handle.expr
@@ -115,15 +115,15 @@ class CLibraryFunctionsPass : ProcedurePass {
                                 listOf(FenceLabel(setOf("cond_signal(${cond.decl.name})"), metadata))
                             }
 
-                            "pthread_mutex_init", "pthread_cond_init" -> listOf(NopLabel)
+                            "pthread_mutex_init", "pthread_cond_init" -> listOf(NopLabel(EmptyMetaData))
 
                             else -> error("Unsupported library function ${invokeLabel.name}")
                         }
-                        edge.withLabel(SequenceLabel(labels)).splitIf { label ->
+                        edge.withLabel(SequenceLabel(labels, EmptyMetaData)).splitIf { label ->
                             label is FenceLabel && label.labels.any { l -> l.startsWith("start_cond_wait") }
                         }.forEach(builder::addEdge)
                     } else {
-                        builder.addEdge(edge.withLabel(SequenceLabel(it.label.labels)))
+                        builder.addEdge(edge.withLabel(SequenceLabel(it.label.labels, EmptyMetaData)))
                     }
                 }
             }

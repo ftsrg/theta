@@ -111,7 +111,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 158,
                     "offsetEnd": 160,
-                    "sourceText": "ush"
+                    "sourceText": ["ush"]
                   }
                 },
                 "content": "(assume (\u003d main::ush 0))"
@@ -140,7 +140,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 158,
                     "offsetEnd": 160,
-                    "sourceText": "ush"
+                    "sourceText": ["ush"]
                   }
                 },
                 "content": "(assume (/\u003d main::ush 0))"
@@ -169,7 +169,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::ush -32768) (\u003c\u003d main::ush 32767)))"
@@ -185,7 +185,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::c -2147483648) (\u003c\u003d main::c 2147483647)))"
@@ -201,7 +201,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 123,
                     "offsetEnd": 148,
-                    "sourceText": "__VERIFIER_nondet_ushort()"
+                    "sourceText": ["__VERIFIER_nondet_ushort()"]
                   }
                 },
                 "content": "(havoc call___VERIFIER_nondet_ushort_ret69)"
@@ -217,7 +217,7 @@
                     "colNumberStop": 35,
                     "offsetStart": 123,
                     "offsetEnd": 148,
-                    "sourceText": "__VERIFIER_nondet_ushort()"
+                    "sourceText": ["__VERIFIER_nondet_ushort()"]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d call___VERIFIER_nondet_ushort_ret69 0) (\u003c\u003d call___VERIFIER_nondet_ushort_ret69 65535)))"
@@ -233,7 +233,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::ush (ite (\u003e\u003d call___VERIFIER_nondet_ushort_ret69 32768) (- call___VERIFIER_nondet_ushort_ret69 65536) call___VERIFIER_nondet_ushort_ret69))"

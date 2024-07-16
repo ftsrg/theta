@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.xcfa.model.MetaData;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaBuilder;
@@ -57,9 +58,9 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
     public XcfaBuilder buildXcfa(CHCParser parser) {
         XcfaBuilder xcfaBuilder = new XcfaBuilder("chc");
         builder = new XcfaProcedureBuilder("main", procedurePassManager);
-        builder.createInitLoc();
-        builder.createErrorLoc();
-        builder.createFinalLoc();
+        builder.createInitLoc(EmptyMetaData.INSTANCE);
+        builder.createErrorLoc(EmptyMetaData.INSTANCE);
+        builder.createFinalLoc(EmptyMetaData.INSTANCE);
 
         initLocation = builder.getInitLoc();
         errorLocation = builder.getErrorLoc().get();
@@ -88,7 +89,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             builder.addVar(var);
             transformConst(Decls.Const(varName, type), true);
         }
-        XcfaLocation location = new XcfaLocation(name);
+        XcfaLocation location = new XcfaLocation(name, EmptyMetaData.INSTANCE);
         locations.put(name, new UPred(location, vars));
         locations.put(ctx.symbol().getText(), new UPred(location, vars));
         builder.addLoc(location);
@@ -118,7 +119,9 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             from = initLocation;
             to = locations.get(locName).location;
         }
-        XcfaEdge edge = new XcfaEdge(from, to, new SequenceLabel(labels));
+        MetaData metaData = labels.stream().map(xcfaLabel -> xcfaLabel.getMetadata()).reduce(
+            MetaData::join).get();
+        XcfaEdge edge = new XcfaEdge(from, to, metaData, new SequenceLabel(labels, metaData));
         builder.addEdge(edge);
         return super.visitChc_assert(ctx);
     }
@@ -130,7 +133,9 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
         List<XcfaLabel> labels = new ArrayList<>();
         labels.addAll(getIncomingAssignments(ctx.chc_tail(), vars));
         labels.addAll(getTailConditionLabels(ctx.chc_tail(), vars));
-        XcfaEdge edge = new XcfaEdge(from, errorLocation, new SequenceLabel(labels));
+        MetaData metaData = labels.stream().map(xcfaLabel -> xcfaLabel.getMetadata()).reduce(
+            MetaData::join).get();
+        XcfaEdge edge = new XcfaEdge(from, errorLocation, metaData, new SequenceLabel(labels, metaData));
         builder.addEdge(edge);
         return super.visitChc_query(ctx);
     }
@@ -142,7 +147,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
             List<? extends VarDecl<?>> params = u_pred.symbol().stream().map(symbol -> localVars.get(symbol.getText())).toList();
             localVars.values().forEach(var -> {
                 if (!params.contains(var))
-                    labels.add(new StmtLabel(HavocStmt.of(var)));
+                    labels.add(new StmtLabel(HavocStmt.of(var), EmptyMetaData.INSTANCE));
             });
             labels.addAll(getParamAssignments(params, from.vars));
         });
@@ -174,7 +179,7 @@ public class ChcForwardXcfaBuilder extends CHCBaseVisitor<Object> implements Chc
     private List<XcfaLabel> getParamAssignments(List<? extends VarDecl<?>> lhs, List<? extends VarDecl<?>> rhs) {
         List<XcfaLabel> labels = new ArrayList<>();
         for (int i = 0; i < lhs.size(); ++i) {
-            labels.add(new StmtLabel(AssignStmt.create(lhs.get(i), rhs.get(i).getRef())));
+            labels.add(new StmtLabel(AssignStmt.create(lhs.get(i), rhs.get(i).getRef()), EmptyMetaData.INSTANCE));
         }
         return labels;
     }

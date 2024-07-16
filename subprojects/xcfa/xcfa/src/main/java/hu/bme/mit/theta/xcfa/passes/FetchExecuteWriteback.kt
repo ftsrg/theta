@@ -74,7 +74,7 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                     val lut = getDerefLut(dereferences, builder)
                     SequenceLabel(lut.map {
                         StmtLabel(Assign(cast(it.value, it.value.type),
-                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)))
+                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)), EmptyMetaData)
                     } + InvokeLabel(this.name, this.params.map { it.replaceDerefs(lut) }, metadata,
                         tempLookup), metadata)
                 }
@@ -83,11 +83,11 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                     val lut = getDerefLut(dereferences, builder)
                     SequenceLabel(lut.map {
                         StmtLabel(Assign(cast(it.value, it.value.type),
-                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)))
+                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)), EmptyMetaData)
                     } + StartLabel(name, params.map { it.replaceDerefs(lut) }, pidVar, metadata, tempLookup), metadata)
                 }
 
-                is StmtLabel -> SequenceLabel(stmt.replaceDerefs(builder).map { StmtLabel(it, choiceType, metadata) },
+                is StmtLabel -> SequenceLabel(stmt.replaceDerefs(builder).map { StmtLabel(it, metadata, choiceType) },
                     metadata)
 
                 else -> error("Not implemented for ${this.javaClass.simpleName}")

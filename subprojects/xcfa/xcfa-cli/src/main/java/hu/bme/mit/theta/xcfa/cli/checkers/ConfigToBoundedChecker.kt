@@ -96,7 +96,7 @@ private fun getMonolithicExpr(xcfa: XCFA): MonolithicExpr {
         map[x] = i++
     }
     val locVar = Decls.Var("__loc_", IntExprs.Int())
-    val tranList = proc.edges.stream().map { (source, target, label): XcfaEdge ->
+    val tranList = proc.edges.stream().map { (source, target, _, label): XcfaEdge ->
         SequenceStmt.of(java.util.List.of(
             AssumeStmt.of(IntExprs.Eq(locVar.ref, IntExprs.Int(map[source]!!))),
             label.toStmt(),

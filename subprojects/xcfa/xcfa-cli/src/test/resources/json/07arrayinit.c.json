@@ -107,7 +107,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::x -2147483648) (\u003c\u003d main::x 2147483647)))"
@@ -123,7 +123,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 50,
                     "offsetEnd": 72,
-                    "sourceText": "int a[3] \u003d {2, x+1, 4};"
+                    "sourceText": ["int a[3] \u003d {2, x+1, 4};"]
                   }
                 },
                 "content": "(assign main::a (arrayinit 0 0 1 2 2 (+ main::x 1) 4))"
@@ -152,7 +152,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 81,
                     "offsetEnd": 88,
-                    "sourceText": "a[1] \u003e 2"
+                    "sourceText": ["a[1] \u003e 2"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e (read main::a 1) 2) 1 0) 0))"
@@ -181,7 +181,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 81,
                     "offsetEnd": 88,
-                    "sourceText": "a[1] \u003e 2"
+                    "sourceText": ["a[1] \u003e 2"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e (read main::a 1) 2) 1 0) 0))"

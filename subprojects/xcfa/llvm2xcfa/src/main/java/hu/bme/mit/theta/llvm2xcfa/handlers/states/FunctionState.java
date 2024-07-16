@@ -86,7 +86,7 @@ public class FunctionState {
         }
 
         // Adding final location
-        procedureBuilder.createFinalLoc();
+        procedureBuilder.createFinalLoc(EmptyMetaData.INSTANCE);
 
         // Adding blocks and first location
         List<String> blocks = globalState.getProvider().getBlocks(function.get1());
@@ -95,11 +95,11 @@ public class FunctionState {
         for (String block : blocks) {
             XcfaLocation loc;
             if (first) {
-                procedureBuilder.createInitLoc();
+                procedureBuilder.createInitLoc(EmptyMetaData.INSTANCE);
                 loc = procedureBuilder.getInitLoc();
                 first = false;
             } else {
-                loc = new XcfaLocation(block);
+                loc = new XcfaLocation(block, EmptyMetaData.INSTANCE);
                 procedureBuilder.addLoc(loc);
             }
             locations.put(block, loc);
@@ -119,7 +119,8 @@ public class FunctionState {
                 }
                 return stmt;
             }).collect(Collectors.toUnmodifiableList());
-            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()), new LlvmMetadata(edgeTup.get4()));
+            LlvmMetadata llvmMetadata = new LlvmMetadata(edgeTup.get4());
+            XcfaEdge edge = new XcfaEdge(edgeTup.get1(), edgeTup.get2(), llvmMetadata, new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt, llvmMetadata)).toList(), llvmMetadata));
             procedureBuilder.addEdge(edge);
         });
     }

@@ -107,7 +107,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::a (write main::a 0 12))"
@@ -123,7 +123,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::b (write main::b 3 (read main::a 0)))"
@@ -152,7 +152,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 94,
                     "offsetEnd": 102,
-                    "sourceText": "b[3] \u003e 11"
+                    "sourceText": ["b[3] \u003e 11"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e (read main::b 3) 11) 1 0) 0))"
@@ -181,7 +181,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 94,
                     "offsetEnd": 102,
-                    "sourceText": "b[3] \u003e 11"
+                    "sourceText": ["b[3] \u003e 11"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e (read main::b 3) 11) 1 0) 0))"

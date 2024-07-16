@@ -83,7 +83,7 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                             error("Should not be here")
                         }
                     }
-                    builder.addEdge(edge.withLabel(SequenceLabel(newLabels)))
+                    builder.addEdge(edge.withLabel(SequenceLabel(newLabels, edge.metadata)))
                 }
             }
         }
@@ -106,7 +106,7 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                         }
                     }
                 }
-                builder.addEdge(edge.withLabel(SequenceLabel(list)))
+                builder.addEdge(edge.withLabel(SequenceLabel(list, edge.metadata)))
             }
         }
 

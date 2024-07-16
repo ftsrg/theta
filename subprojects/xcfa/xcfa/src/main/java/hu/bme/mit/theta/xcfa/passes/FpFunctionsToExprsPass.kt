@@ -50,7 +50,7 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
             }
             if (found) {
                 builder.removeEdge(edge)
-                builder.addEdge(XcfaEdge(edge.source, edge.target, SequenceLabel(newStmts)))
+                builder.addEdge(XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(newStmts, edge.metadata)))
             }
         }
         return builder

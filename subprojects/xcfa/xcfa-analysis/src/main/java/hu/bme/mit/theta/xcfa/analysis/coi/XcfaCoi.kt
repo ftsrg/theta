@@ -161,7 +161,7 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
     protected fun replace(action: A, prec: Prec): XcfaAction {
         val replacedLabel = action.label.replace(prec)
         action.transFuncVersion = action.withLabel(replacedLabel.run {
-            if (this !is SequenceLabel) SequenceLabel(listOf(this)) else this
+            if (this !is SequenceLabel) SequenceLabel(listOf(this), listOf(this).map{it.metadata}.fold(EmptyMetaData, MetaData::join)) else this
         })
         return action
     }
@@ -174,13 +174,13 @@ abstract class XcfaCoi(protected val xcfa: XCFA) {
                 is AssignStmt<*> -> if (stmt.varDecl in prec.usedVars) {
                     StmtLabel(HavocStmt.of(stmt.varDecl), metadata = this.metadata)
                 } else {
-                    NopLabel
+                    NopLabel(EmptyMetaData)
                 }
 
                 is HavocStmt<*> -> if (stmt.varDecl in prec.usedVars) {
                     this
                 } else {
-                    NopLabel
+                    NopLabel(EmptyMetaData)
                 }
 
                 else -> this

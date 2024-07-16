@@ -60,9 +60,9 @@ internal class SSAUtils {
         return when (this) {
             is StmtLabel -> {
                 when (val stmt = this.stmt) {
-                    is AssignStmt<*> -> StmtLabel(stmt.toSSA(), choiceType, metadata)
-                    is AssumeStmt -> StmtLabel(stmt.toSSA(), choiceType, metadata)
-                    is HavocStmt<*> -> StmtLabel(stmt.toSSA(), choiceType, metadata)
+                    is AssignStmt<*> -> StmtLabel(stmt.toSSA(), metadata, choiceType)
+                    is AssumeStmt -> StmtLabel(stmt.toSSA(), metadata, choiceType)
+                    is HavocStmt<*> -> StmtLabel(stmt.toSSA(), metadata, choiceType)
                     else -> error("Unsupported statement at SSA conversion: $stmt")
                 }
             }
@@ -106,9 +106,9 @@ internal class SSAUtils {
         return when (this) {
             is StmtLabel -> {
                 when (val stmt = this.stmt) {
-                    is AssignStmt<*> -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
-                    is AssumeStmt -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
-                    is HavocStmt<*> -> StmtLabel(stmt.removeSSA(), choiceType, metadata)
+                    is AssignStmt<*> -> StmtLabel(stmt.removeSSA(), metadata, choiceType)
+                    is AssumeStmt -> StmtLabel(stmt.removeSSA(), metadata, choiceType)
+                    is HavocStmt<*> -> StmtLabel(stmt.removeSSA(), metadata, choiceType)
                     else -> this
                 }
             }

@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.model
 
+import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
@@ -109,10 +110,10 @@ data class XcfaProcedure(
 
 data class XcfaLocation @JvmOverloads constructor(
     val name: String,                                               // label of the location
+    val metadata: MetaData,
     val initial: Boolean = false,                                   // is this the initial location?
     val final: Boolean = false,                                     // is this the final location?
     val error: Boolean = false,                                     // is this the error location?
-    val metadata: MetaData = EmptyMetaData,
 ) {
 
     val incomingEdges: MutableSet<XcfaEdge> = LinkedHashSet()           // all incoming edges in the current procedure
@@ -132,13 +133,16 @@ data class XcfaLocation @JvmOverloads constructor(
 data class XcfaEdge @JvmOverloads constructor(
     val source: XcfaLocation,                                       // source location
     val target: XcfaLocation,                                       // target location
-    val label: XcfaLabel = NopLabel,                                // edge label
-    val metadata: MetaData = EmptyMetaData,
+    val metadata: MetaData,
+    val label: XcfaLabel = NopLabel(metadata),                                // edge label
 ) {
+    init {
+        Preconditions.checkState(metadata==label.metadata, "Metadata on edge and on label should be equal: ${metadata}, ${label.metadata}")
+    }
 
-    fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label)
-    fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
-    fun withSource(source: XcfaLocation): XcfaEdge = XcfaEdge(source, target, label)
+    fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label.metadata, label)
+    fun withTarget(target: XcfaLocation): XcfaEdge = XcfaEdge(source, target, metadata, label)
+    fun withSource(source: XcfaLocation): XcfaEdge = XcfaEdge(source, target, metadata, label)
 }
 
 data class XcfaGlobalVar @JvmOverloads constructor(

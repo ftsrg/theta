@@ -124,7 +124,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 67,
                     "offsetEnd": 71,
-                    "sourceText": "!cond"
+                    "sourceText": ["!cond"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d assume_abort_if_not::cond 0) 1 0) 0))"
@@ -153,7 +153,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 67,
                     "offsetEnd": 71,
-                    "sourceText": "!cond"
+                    "sourceText": ["!cond"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d assume_abort_if_not::cond 0) 1 0) 0))"
@@ -332,7 +332,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 30689,
                     "offsetEnd": 30695,
-                    "sourceText": "f2 \u003e\u003d 1"
+                    "sourceText": ["f2 \u003e\u003d 1"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e\u003d thr1::f2 1) 1 0) 0))"
@@ -361,7 +361,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 30802,
                     "offsetEnd": 30807,
-                    "sourceText": "t !\u003d 0"
+                    "sourceText": ["t !\u003d 0"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (/\u003d thr1::while1::t 0) 1 0) 0))"
@@ -390,7 +390,7 @@
                     "colNumberStop": 24,
                     "offsetStart": 31028,
                     "offsetEnd": 31033,
-                    "sourceText": "t !\u003d 0"
+                    "sourceText": ["t !\u003d 0"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (/\u003d thr1::while1::t 0) 1 0) 0))"
@@ -419,7 +419,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 31021,
                     "offsetEnd": 31160,
-                    "sourceText": "while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
+                    "sourceText": ["while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"]
                   }
                 },
                 "content": "(assume (\u003d (ite (/\u003d thr1::while1::t 0) 1 0) 0))"
@@ -448,7 +448,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 30802,
                     "offsetEnd": 30807,
-                    "sourceText": "t !\u003d 0"
+                    "sourceText": ["t !\u003d 0"]
                   }
                 },
                 "content": "(assume (\u003d (ite (/\u003d thr1::while1::t 0) 1 0) 0))"
@@ -477,7 +477,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 30682,
                     "offsetEnd": 31364,
-                    "sourceText": "while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }"
+                    "sourceText": ["while (f2 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 0) {\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 0) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag1 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f2 \u003d flag2;\n        __VERIFIER_atomic_end();\n    }"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e\u003d thr1::f2 1) 1 0) 0))"
@@ -506,7 +506,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign x 0)"
@@ -535,7 +535,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 31385,
                     "offsetEnd": 31391,
-                    "sourceText": "!(x\u003c\u003d0)"
+                    "sourceText": ["!(x\u003c\u003d0)"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d (ite (\u003c\u003d x 0) 1 0) 0) 1 0) 0))"
@@ -564,7 +564,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 30527,
                     "offsetEnd": 30551,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -580,7 +580,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag1 1)"
@@ -596,7 +596,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 30573,
                     "offsetEnd": 30595,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -625,7 +625,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 30602,
                     "offsetEnd": 30626,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -641,7 +641,7 @@
                     "colNumberStop": 18,
                     "offsetStart": 30633,
                     "offsetEnd": 30647,
-                    "sourceText": "int f2 \u003d flag2;"
+                    "sourceText": ["int f2 \u003d flag2;"]
                   }
                 },
                 "content": "(assign thr1::f2 flag2)"
@@ -657,7 +657,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 30653,
                     "offsetEnd": 30675,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -686,7 +686,7 @@
                     "colNumberStop": 32,
                     "offsetStart": 30708,
                     "offsetEnd": 30732,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -702,7 +702,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 30743,
                     "offsetEnd": 30755,
-                    "sourceText": "int t \u003d turn;"
+                    "sourceText": ["int t \u003d turn;"]
                   }
                 },
                 "content": "(assign thr1::while1::t turn)"
@@ -718,7 +718,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 30765,
                     "offsetEnd": 30787,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -747,7 +747,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 31420,
                     "offsetEnd": 31444,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -763,7 +763,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign turn 1)"
@@ -779,7 +779,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 31465,
                     "offsetEnd": 31487,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -808,7 +808,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 30824,
                     "offsetEnd": 30848,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -824,7 +824,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag1 0)"
@@ -840,7 +840,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 30886,
                     "offsetEnd": 30908,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -869,7 +869,7 @@
                     "colNumberStop": 32,
                     "offsetStart": 31280,
                     "offsetEnd": 31304,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -885,7 +885,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign thr1::f2 flag2)"
@@ -901,7 +901,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 31335,
                     "offsetEnd": 31357,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -930,7 +930,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 30923,
                     "offsetEnd": 30947,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -946,7 +946,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign thr1::while1::t turn)"
@@ -962,7 +962,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 30984,
                     "offsetEnd": 31006,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -991,7 +991,7 @@
                     "colNumberStop": 40,
                     "offsetStart": 31054,
                     "offsetEnd": 31078,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1007,7 +1007,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign thr1::while1::t turn)"
@@ -1023,7 +1023,7 @@
                     "colNumberStop": 38,
                     "offsetStart": 31123,
                     "offsetEnd": 31145,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1052,7 +1052,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 31175,
                     "offsetEnd": 31199,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1068,7 +1068,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag1 1)"
@@ -1084,7 +1084,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 31237,
                     "offsetEnd": 31259,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1113,7 +1113,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 31385,
                     "offsetEnd": 31391,
-                    "sourceText": "!(x\u003c\u003d0)"
+                    "sourceText": ["!(x\u003c\u003d0)"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d (ite (\u003c\u003d x 0) 1 0) 0) 1 0) 0))"
@@ -1142,7 +1142,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 31494,
                     "offsetEnd": 31518,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1158,7 +1158,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag1 0)"
@@ -1174,7 +1174,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 31540,
                     "offsetEnd": 31562,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1190,7 +1190,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 31569,
                     "offsetEnd": 31576,
-                    "sourceText": "return 0"
+                    "sourceText": ["return 0"]
                   }
                 },
                 "content": "(assign thr1_ret 0)"
@@ -1298,7 +1298,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 31769,
                     "offsetEnd": 31775,
-                    "sourceText": "f1 \u003e\u003d 1"
+                    "sourceText": ["f1 \u003e\u003d 1"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e\u003d thr2::f1 1) 1 0) 0))"
@@ -1327,7 +1327,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 31882,
                     "offsetEnd": 31887,
-                    "sourceText": "t !\u003d 1"
+                    "sourceText": ["t !\u003d 1"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (/\u003d thr2::while5::t 1) 1 0) 0))"
@@ -1356,7 +1356,7 @@
                     "colNumberStop": 24,
                     "offsetStart": 32108,
                     "offsetEnd": 32113,
-                    "sourceText": "t !\u003d 1"
+                    "sourceText": ["t !\u003d 1"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (/\u003d thr2::while5::t 1) 1 0) 0))"
@@ -1385,7 +1385,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 32101,
                     "offsetEnd": 32240,
-                    "sourceText": "while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"
+                    "sourceText": ["while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            }"]
                   }
                 },
                 "content": "(assume (\u003d (ite (/\u003d thr2::while5::t 1) 1 0) 0))"
@@ -1414,7 +1414,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 31882,
                     "offsetEnd": 31887,
-                    "sourceText": "t !\u003d 1"
+                    "sourceText": ["t !\u003d 1"]
                   }
                 },
                 "content": "(assume (\u003d (ite (/\u003d thr2::while5::t 1) 1 0) 0))"
@@ -1443,7 +1443,7 @@
                     "colNumberStop": 4,
                     "offsetStart": 31762,
                     "offsetEnd": 32444,
-                    "sourceText": "while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }"
+                    "sourceText": ["while (f1 \u003e\u003d 1) {\n        __VERIFIER_atomic_begin();\n        int t \u003d turn;\n        __VERIFIER_atomic_end();\n        if (t !\u003d 1) {\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 0;\n            __VERIFIER_atomic_end();\n            __VERIFIER_atomic_begin();\n            t \u003d turn;\n            __VERIFIER_atomic_end();\n            while (t !\u003d 1) {\n                __VERIFIER_atomic_begin();\n                t \u003d turn;\n                __VERIFIER_atomic_end();\n            };\n            __VERIFIER_atomic_begin();\n            flag2 \u003d 1;\n            __VERIFIER_atomic_end();\n        }\n        __VERIFIER_atomic_begin();\n        f1 \u003d flag1;\n        __VERIFIER_atomic_end();\n    }"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e\u003d thr2::f1 1) 1 0) 0))"
@@ -1472,7 +1472,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign x 1)"
@@ -1501,7 +1501,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 32465,
                     "offsetEnd": 32471,
-                    "sourceText": "!(x\u003e\u003d1)"
+                    "sourceText": ["!(x\u003e\u003d1)"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d (ite (\u003e\u003d x 1) 1 0) 0) 1 0) 0))"
@@ -1530,7 +1530,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 31607,
                     "offsetEnd": 31631,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1546,7 +1546,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag2 1)"
@@ -1562,7 +1562,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 31653,
                     "offsetEnd": 31675,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1591,7 +1591,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 31682,
                     "offsetEnd": 31706,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1607,7 +1607,7 @@
                     "colNumberStop": 18,
                     "offsetStart": 31713,
                     "offsetEnd": 31727,
-                    "sourceText": "int f1 \u003d flag1;"
+                    "sourceText": ["int f1 \u003d flag1;"]
                   }
                 },
                 "content": "(assign thr2::f1 flag1)"
@@ -1623,7 +1623,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 31733,
                     "offsetEnd": 31755,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1652,7 +1652,7 @@
                     "colNumberStop": 32,
                     "offsetStart": 31788,
                     "offsetEnd": 31812,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1668,7 +1668,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 31823,
                     "offsetEnd": 31835,
-                    "sourceText": "int t \u003d turn;"
+                    "sourceText": ["int t \u003d turn;"]
                   }
                 },
                 "content": "(assign thr2::while5::t turn)"
@@ -1684,7 +1684,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 31845,
                     "offsetEnd": 31867,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1713,7 +1713,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 32500,
                     "offsetEnd": 32524,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1729,7 +1729,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign turn 1)"
@@ -1745,7 +1745,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 32545,
                     "offsetEnd": 32567,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1774,7 +1774,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 31904,
                     "offsetEnd": 31928,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1790,7 +1790,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag2 0)"
@@ -1806,7 +1806,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 31966,
                     "offsetEnd": 31988,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1835,7 +1835,7 @@
                     "colNumberStop": 32,
                     "offsetStart": 32360,
                     "offsetEnd": 32384,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1851,7 +1851,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign thr2::f1 flag1)"
@@ -1867,7 +1867,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 32415,
                     "offsetEnd": 32437,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1896,7 +1896,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 32003,
                     "offsetEnd": 32027,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1912,7 +1912,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign thr2::while5::t turn)"
@@ -1928,7 +1928,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 32064,
                     "offsetEnd": 32086,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -1957,7 +1957,7 @@
                     "colNumberStop": 40,
                     "offsetStart": 32134,
                     "offsetEnd": 32158,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -1973,7 +1973,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign thr2::while5::t turn)"
@@ -1989,7 +1989,7 @@
                     "colNumberStop": 38,
                     "offsetStart": 32203,
                     "offsetEnd": 32225,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -2018,7 +2018,7 @@
                     "colNumberStop": 36,
                     "offsetStart": 32255,
                     "offsetEnd": 32279,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -2034,7 +2034,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag2 1)"
@@ -2050,7 +2050,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 32317,
                     "offsetEnd": 32339,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -2079,7 +2079,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 32465,
                     "offsetEnd": 32471,
-                    "sourceText": "!(x\u003e\u003d1)"
+                    "sourceText": ["!(x\u003e\u003d1)"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d (ite (\u003e\u003d x 1) 1 0) 0) 1 0) 0))"
@@ -2108,7 +2108,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 32574,
                     "offsetEnd": 32598,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -2124,7 +2124,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign flag2 0)"
@@ -2140,7 +2140,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 32620,
                     "offsetEnd": 32642,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -2156,7 +2156,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 32649,
                     "offsetEnd": 32656,
-                    "sourceText": "return 0"
+                    "sourceText": ["return 0"]
                   }
                 },
                 "content": "(assign thr2_ret 0)"
@@ -2248,7 +2248,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 32855,
                     "offsetEnd": 32862,
-                    "sourceText": "return 0"
+                    "sourceText": ["return 0"]
                   }
                 },
                 "content": "(assign main_ret 0)"
@@ -2322,7 +2322,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::t1 0) (\u003c\u003d main::t1 4294967295)))"
@@ -2351,7 +2351,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::t2 0) (\u003c\u003d main::t2 4294967295)))"
@@ -2380,7 +2380,7 @@
                     "colNumberStop": 32,
                     "offsetStart": 32739,
                     "offsetEnd": 32769,
-                    "sourceText": "pthread_create(\u0026t1, 0, thr1, 0)"
+                    "sourceText": ["pthread_create(\u0026t1, 0, thr1, 0)"]
                   }
                 },
                 "content": "(var main::t1 Int) \u003d start thr1(0)"
@@ -2409,7 +2409,7 @@
                     "colNumberStop": 32,
                     "offsetStart": 32774,
                     "offsetEnd": 32804,
-                    "sourceText": "pthread_create(\u0026t2, 0, thr2, 0)"
+                    "sourceText": ["pthread_create(\u0026t2, 0, thr2, 0)"]
                   }
                 },
                 "content": "(var main::t2 Int) \u003d start thr2(0)"
@@ -2438,7 +2438,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 32809,
                     "offsetEnd": 32827,
-                    "sourceText": "pthread_join(t1, 0)"
+                    "sourceText": ["pthread_join(t1, 0)"]
                   }
                 },
                 "content": "join (var main::t1 Int)"
@@ -2467,7 +2467,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 32832,
                     "offsetEnd": 32850,
-                    "sourceText": "pthread_join(t2, 0)"
+                    "sourceText": ["pthread_join(t2, 0)"]
                   }
                 },
                 "content": "join (var main::t2 Int)"
@@ -2520,7 +2520,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 67,
                     "offsetEnd": 71,
-                    "sourceText": "!cond"
+                    "sourceText": ["!cond"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d assume_abort_if_not::cond 0) 1 0) 0))"
@@ -2549,7 +2549,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 67,
                     "offsetEnd": 71,
-                    "sourceText": "!cond"
+                    "sourceText": ["!cond"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d assume_abort_if_not::cond 0) 1 0) 0))"
@@ -2599,7 +2599,7 @@
                     "colNumberStop": 40,
                     "offsetStart": 32696,
                     "offsetEnd": 32734,
-                    "sourceText": "assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1)"
+                    "sourceText": ["assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1)"]
                   }
                 },
                 "content": "(assign assume_abort_if_not::cond (+ (ite (and (/\u003d 0 (ite (\u003c\u003d (+ 0) (+ turn)) 1 0)) (/\u003d 0 (ite (\u003c\u003d (+ turn) (+ 1)) 1 0))) 1 0)))"
@@ -2628,7 +2628,7 @@
                     "colNumberStop": 40,
                     "offsetStart": 32696,
                     "offsetEnd": 32734,
-                    "sourceText": "assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1)"
+                    "sourceText": ["assume_abort_if_not(0\u003c\u003dturn \u0026\u0026 turn\u003c\u003d1)"]
                   }
                 },
                 "content": "(assign call_assume_abort_if_not_ret43 assume_abort_if_not_ret)"

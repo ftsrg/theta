@@ -103,7 +103,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 99,
                     "offsetEnd": 105,
-                    "sourceText": "(char)a"
+                    "sourceText": ["(char)a"]
                   }
                 },
                 "content": "(assume (\u003d main::a 0))"
@@ -132,7 +132,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 99,
                     "offsetEnd": 105,
-                    "sourceText": "(char)a"
+                    "sourceText": ["(char)a"]
                   }
                 },
                 "content": "(assume (/\u003d main::a 0))"
@@ -161,7 +161,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 71,
                     "offsetEnd": 89,
-                    "sourceText": "__VERIFIER_nondet()"
+                    "sourceText": ["__VERIFIER_nondet()"]
                   }
                 },
                 "content": "(havoc main::a)"
@@ -177,7 +177,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 71,
                     "offsetEnd": 89,
-                    "sourceText": "__VERIFIER_nondet()"
+                    "sourceText": ["__VERIFIER_nondet()"]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::a -2147483648) (\u003c\u003d main::a 2147483647)))"

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.cli.utils;
+package hu.bme.mit.theta.xcfa.cli.witnesses.graphml;
 
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.Graph;

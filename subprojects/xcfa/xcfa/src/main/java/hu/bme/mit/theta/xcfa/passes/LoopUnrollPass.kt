@@ -60,7 +60,7 @@ class LoopUnrollPass : ProcedurePass {
 
         private class BasicStmtAction(private val stmt: Stmt) : StmtAction() {
             constructor(edge: XcfaEdge) : this(edge.label.toStmt())
-            constructor(edges: List<XcfaEdge>) : this(SequenceLabel(edges.map { it.label }).toStmt())
+            constructor(edges: List<XcfaEdge>) : this(SequenceLabel(edges.map { it.label }, edges.map { it.metadata }.fold(EmptyMetaData, MetaData::join)).toStmt())
 
             override fun getStmts() = listOf(stmt)
         }
@@ -86,7 +86,7 @@ class LoopUnrollPass : ProcedurePass {
 
             exitEdges[loopStart]?.forEach { edge ->
                 val label = if (removeCond) edge.label.removeCondition() else edge.label
-                builder.addEdge(XcfaEdge(startLocation, edge.target, label, edge.metadata))
+                builder.addEdge(XcfaEdge(startLocation, edge.target, edge.metadata, label))
             }
         }
 
@@ -112,7 +112,7 @@ class LoopUnrollPass : ProcedurePass {
         private fun copyBody(builder: XcfaProcedureBuilder, startLoc: XcfaLocation, index: Int, removeCond: Boolean)
             : XcfaLocation {
             val locs = loopLocs.associateWith {
-                val loc = XcfaLocation("${it.name}_loop${index}")
+                val loc = XcfaLocation("${it.name}_loop${index}", it.metadata)
                 builder.addLoc(loc)
                 loc
             }
@@ -120,7 +120,7 @@ class LoopUnrollPass : ProcedurePass {
             loopEdges.forEach {
                 val newSource = if (it.source == loopStart) startLoc else locs[it.source]!!
                 val newLabel = if (it.source == loopStart && removeCond) it.label.removeCondition() else it.label
-                val edge = XcfaEdge(newSource, locs[it.target]!!, newLabel, it.metadata)
+                val edge = XcfaEdge(newSource, locs[it.target]!!, it.metadata, newLabel)
                 builder.addEdge(edge)
             }
 
@@ -128,7 +128,7 @@ class LoopUnrollPass : ProcedurePass {
                 for (edge in edges) {
                     if (removeCond && loc == loopStart) continue
                     val source = if (loc == loopStart) startLoc else locs[loc]!!
-                    builder.addEdge(XcfaEdge(source, edge.target, edge.label, edge.metadata))
+                    builder.addEdge(XcfaEdge(source, edge.target, edge.metadata, edge.label))
                 }
             }
 
@@ -140,7 +140,7 @@ class LoopUnrollPass : ProcedurePass {
                 it is StmtLabel && it.stmt is AssumeStmt && (it.collectVars() - loopVar).isEmpty()
             }
             return when {
-                this == stmtToRemove -> NopLabel
+                this == stmtToRemove -> NopLabel(EmptyMetaData)
                 this is SequenceLabel -> SequenceLabel(labels.map { it.removeCondition() }, metadata)
                 else -> this
             }

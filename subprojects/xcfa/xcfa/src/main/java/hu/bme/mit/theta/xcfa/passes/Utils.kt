@@ -40,26 +40,26 @@ fun XcfaEdge.splitIf(function: (XcfaLabel) -> Boolean): List<XcfaEdge> {
     for (label in label.labels) {
         if (function(label)) {
             if (current.size > 0) {
-                newLabels.add(SequenceLabel(current))
+                newLabels.add(SequenceLabel(current, current.map { it.metadata }.fold(EmptyMetaData, MetaData::join)))
                 current = ArrayList()
             }
-            newLabels.add(SequenceLabel(listOf(label)))
+            newLabels.add(SequenceLabel(listOf(label), label.metadata))
         } else {
             current.add(label)
         }
     }
-    if (current.size > 0) newLabels.add(SequenceLabel(current))
+    if (current.size > 0) newLabels.add(SequenceLabel(current, current.map { it.metadata }.fold(EmptyMetaData, MetaData::join)))
 
     val locations = ArrayList<XcfaLocation>()
     locations.add(source)
     for (i in 2..(newLabels.size)) {
-        locations.add(XcfaLocation("loc" + XcfaLocation.uniqueCounter()))
+        locations.add(XcfaLocation("loc" + XcfaLocation.uniqueCounter(), source.metadata))
     }
     locations.add(target)
 
     val newEdges = ArrayList<XcfaEdge>()
     for ((i, label) in newLabels.withIndex()) {
-        newEdges.add(XcfaEdge(locations[i], locations[i + 1], label))
+        newEdges.add(XcfaEdge(locations[i], locations[i + 1], label.metadata, label))
     }
     return newEdges
 }

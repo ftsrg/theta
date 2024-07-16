@@ -25,10 +25,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.isWritten
-import hu.bme.mit.theta.xcfa.model.SequenceLabel
-import hu.bme.mit.theta.xcfa.model.StmtLabel
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.simplify
 
 /**
@@ -89,7 +86,7 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
                     builder.removeEdge(edge)
                     valuations.remove(edge)
                     if (newLabels.firstOrNull().let { (it as? StmtLabel)?.stmt != Assume(False()) }) {
-                        val newEdge = edge.withLabel(SequenceLabel(newLabels))
+                        val newEdge = edge.withLabel(SequenceLabel(newLabels, newLabels.map { it.metadata }.fold(EmptyMetaData, MetaData::join)))
                         builder.addEdge(newEdge)
                         valuations[newEdge] = localValuation
                     }

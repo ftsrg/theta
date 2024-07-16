@@ -157,7 +157,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign x 1)"
@@ -186,7 +186,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign x 2)"
@@ -215,7 +215,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 29619,
                     "offsetEnd": 29643,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -244,7 +244,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 29661,
                     "offsetEnd": 29683,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -273,7 +273,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 29690,
                     "offsetEnd": 29714,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -302,7 +302,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 29732,
                     "offsetEnd": 29754,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -411,7 +411,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 29817,
                     "offsetEnd": 29826,
-                    "sourceText": "int i \u003d x;"
+                    "sourceText": ["int i \u003d x;"]
                   }
                 },
                 "content": "(assign thr2::i x)"
@@ -440,7 +440,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 29892,
                     "offsetEnd": 29901,
-                    "sourceText": "int j \u003d x;"
+                    "sourceText": ["int j \u003d x;"]
                   }
                 },
                 "content": "(assign thr2::j x)"
@@ -469,7 +469,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 29939,
                     "offsetEnd": 29944,
-                    "sourceText": "i !\u003d j"
+                    "sourceText": ["i !\u003d j"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (/\u003d thr2::i thr2::j) 1 0) 0))"
@@ -498,7 +498,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 29939,
                     "offsetEnd": 29944,
-                    "sourceText": "i !\u003d j"
+                    "sourceText": ["i !\u003d j"]
                   }
                 },
                 "content": "(assume (\u003d (ite (/\u003d thr2::i thr2::j) 1 0) 0))"
@@ -527,7 +527,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign ERR 1)"
@@ -556,7 +556,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 29786,
                     "offsetEnd": 29810,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -585,7 +585,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 29832,
                     "offsetEnd": 29854,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -614,7 +614,7 @@
                     "colNumberStop": 28,
                     "offsetStart": 29861,
                     "offsetEnd": 29885,
-                    "sourceText": "__VERIFIER_atomic_begin()"
+                    "sourceText": ["__VERIFIER_atomic_begin()"]
                   }
                 },
                 "content": "F[ATOMIC_BEGIN]"
@@ -643,7 +643,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 29907,
                     "offsetEnd": 29929,
-                    "sourceText": "__VERIFIER_atomic_end()"
+                    "sourceText": ["__VERIFIER_atomic_end()"]
                   }
                 },
                 "content": "F[ATOMIC_END]"
@@ -714,7 +714,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 29998,
                     "offsetEnd": 30028,
-                    "sourceText": "pthread_create(\u0026t1, 0, thr1, 0)"
+                    "sourceText": ["pthread_create(\u0026t1, 0, thr1, 0)"]
                   }
                 },
                 "content": "(var main::t1 Int) \u003d start thr1(0)"
@@ -743,7 +743,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 30035,
                     "offsetEnd": 30065,
-                    "sourceText": "pthread_create(\u0026t2, 0, thr2, 0)"
+                    "sourceText": ["pthread_create(\u0026t2, 0, thr2, 0)"]
                   }
                 },
                 "content": "(var main::t2 Int) \u003d start thr2(0)"
@@ -788,7 +788,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::t1 0) (\u003c\u003d main::t1 4294967295)))"
@@ -804,7 +804,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::t2 0) (\u003c\u003d main::t2 4294967295)))"
@@ -833,7 +833,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 30075,
                     "offsetEnd": 30077,
-                    "sourceText": "ERR"
+                    "sourceText": ["ERR"]
                   }
                 },
                 "content": "(assume (/\u003d ERR 0))"
@@ -862,7 +862,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 30075,
                     "offsetEnd": 30077,
-                    "sourceText": "ERR"
+                    "sourceText": ["ERR"]
                   }
                 },
                 "content": "(assume (\u003d ERR 0))"
@@ -878,7 +878,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 30099,
                     "offsetEnd": 30106,
-                    "sourceText": "return 0"
+                    "sourceText": ["return 0"]
                   }
                 },
                 "content": "(assign main_ret 0)"

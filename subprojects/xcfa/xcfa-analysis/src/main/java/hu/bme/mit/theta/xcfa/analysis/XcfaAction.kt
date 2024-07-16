@@ -36,10 +36,10 @@ constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTripl
     constructor(pid: Int,
         source: XcfaLocation,
         target: XcfaLocation,
-        label: XcfaLabel = NopLabel,
+        label: XcfaLabel = NopLabel(EmptyMetaData),
         lastWrites: WriteTriples = emptyMap(),
         nextCnt: Int = 0) :
-        this(pid, XcfaEdge(source, target, label), lastWrites, nextCnt)
+        this(pid, XcfaEdge(source, target, label.metadata, label), lastWrites, nextCnt)
 
     override val stmtList: List<Stmt>
         get() = stmts

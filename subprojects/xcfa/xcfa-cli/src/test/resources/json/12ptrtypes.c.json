@@ -128,7 +128,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
-                    "sourceText": "*(unsigned int*)param \u003c\u003d 110"
+                    "sourceText": ["*(unsigned int*)param \u003c\u003d 110"]
                   }
                 },
                 "content": "(assume (\u003d (ite (bvule (* check_geq_110::param) #b00000000000000000000000001101110) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"
@@ -157,7 +157,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
-                    "sourceText": "*(unsigned int*)param \u003c\u003d 110"
+                    "sourceText": ["*(unsigned int*)param \u003c\u003d 110"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (bvule (* check_geq_110::param) #b00000000000000000000000001101110) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"
@@ -234,7 +234,7 @@
                     "colNumberStop": 18,
                     "offsetStart": 128,
                     "offsetEnd": 142,
-                    "sourceText": "float f \u003d 0.3f;"
+                    "sourceText": ["float f \u003d 0.3f;"]
                   }
                 },
                 "content": "(assign main::f (#b0 #b01111101 #b00110011001100110011010))"
@@ -250,7 +250,7 @@
                     "colNumberStop": 25,
                     "offsetStart": 148,
                     "offsetEnd": 169,
-                    "sourceText": "unsigned int all \u003d -1;"
+                    "sourceText": ["unsigned int all \u003d -1;"]
                   }
                 },
                 "content": "(assign main::all #b11111111111111111111111111111111)"
@@ -266,7 +266,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 175,
                     "offsetEnd": 193,
-                    "sourceText": "check_geq_110(\u0026all)"
+                    "sourceText": ["check_geq_110(\u0026all)"]
                   }
                 },
                 "content": "(assign check_geq_110::param (\u0026 main::all))"
@@ -295,7 +295,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
-                    "sourceText": "*(unsigned int*)param \u003c\u003d 110"
+                    "sourceText": ["*(unsigned int*)param \u003c\u003d 110"]
                   }
                 },
                 "content": "(assume (\u003d (ite (bvule (* check_geq_110::param) #b00000000000000000000000001101110) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"
@@ -311,7 +311,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 175,
                     "offsetEnd": 193,
-                    "sourceText": "check_geq_110(\u0026all)"
+                    "sourceText": ["check_geq_110(\u0026all)"]
                   }
                 },
                 "content": "(assign call_check_geq_110_ret28 check_geq_110_ret)"
@@ -340,7 +340,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 63,
                     "offsetEnd": 90,
-                    "sourceText": "*(unsigned int*)param \u003c\u003d 110"
+                    "sourceText": ["*(unsigned int*)param \u003c\u003d 110"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (bvule (* check_geq_110::param) #b00000000000000000000000001101110) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"

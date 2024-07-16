@@ -190,7 +190,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 29606,
                     "offsetEnd": 29615,
-                    "sourceText": "int i \u003d 0;"
+                    "sourceText": ["int i \u003d 0;"]
                   }
                 },
                 "content": "(assign thr1::i 0)"
@@ -219,7 +219,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29621,
                     "offsetEnd": 29623,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -248,7 +248,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29630,
                     "offsetEnd": 29632,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -277,7 +277,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29639,
                     "offsetEnd": 29641,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -306,7 +306,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29648,
                     "offsetEnd": 29650,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -335,7 +335,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29657,
                     "offsetEnd": 29659,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -364,7 +364,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29666,
                     "offsetEnd": 29668,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -393,7 +393,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29675,
                     "offsetEnd": 29677,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -422,7 +422,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29684,
                     "offsetEnd": 29686,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -451,7 +451,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29693,
                     "offsetEnd": 29695,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -480,7 +480,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29702,
                     "offsetEnd": 29704,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -509,7 +509,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29711,
                     "offsetEnd": 29713,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -538,7 +538,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29720,
                     "offsetEnd": 29722,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -567,7 +567,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29729,
                     "offsetEnd": 29731,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -596,7 +596,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29738,
                     "offsetEnd": 29740,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -625,7 +625,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29747,
                     "offsetEnd": 29749,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -654,7 +654,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29756,
                     "offsetEnd": 29758,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -683,7 +683,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29765,
                     "offsetEnd": 29767,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -712,7 +712,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29774,
                     "offsetEnd": 29776,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -741,7 +741,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29783,
                     "offsetEnd": 29785,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -770,7 +770,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29792,
                     "offsetEnd": 29794,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -799,7 +799,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29801,
                     "offsetEnd": 29803,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -828,7 +828,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29810,
                     "offsetEnd": 29812,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -857,7 +857,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29819,
                     "offsetEnd": 29821,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -886,7 +886,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29828,
                     "offsetEnd": 29830,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -915,7 +915,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29837,
                     "offsetEnd": 29839,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -944,7 +944,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29846,
                     "offsetEnd": 29848,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -973,7 +973,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29855,
                     "offsetEnd": 29857,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1002,7 +1002,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29864,
                     "offsetEnd": 29866,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1031,7 +1031,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29873,
                     "offsetEnd": 29875,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1060,7 +1060,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29882,
                     "offsetEnd": 29884,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1089,7 +1089,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29891,
                     "offsetEnd": 29893,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1118,7 +1118,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29900,
                     "offsetEnd": 29902,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1147,7 +1147,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29909,
                     "offsetEnd": 29911,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1176,7 +1176,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29918,
                     "offsetEnd": 29920,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1205,7 +1205,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29927,
                     "offsetEnd": 29929,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1234,7 +1234,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29936,
                     "offsetEnd": 29938,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1263,7 +1263,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29945,
                     "offsetEnd": 29947,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1292,7 +1292,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29954,
                     "offsetEnd": 29956,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1321,7 +1321,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29963,
                     "offsetEnd": 29965,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1350,7 +1350,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 29972,
                     "offsetEnd": 29974,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr1::i (+ thr1::i 1))"
@@ -1379,7 +1379,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign x (+ x thr1::i))"
@@ -1518,7 +1518,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 30018,
                     "offsetEnd": 30027,
-                    "sourceText": "int i \u003d 0;"
+                    "sourceText": ["int i \u003d 0;"]
                   }
                 },
                 "content": "(assign thr2::i 0)"
@@ -1547,7 +1547,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30033,
                     "offsetEnd": 30035,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1576,7 +1576,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30042,
                     "offsetEnd": 30044,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1605,7 +1605,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30051,
                     "offsetEnd": 30053,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1634,7 +1634,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30060,
                     "offsetEnd": 30062,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1663,7 +1663,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30069,
                     "offsetEnd": 30071,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1692,7 +1692,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30078,
                     "offsetEnd": 30080,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1721,7 +1721,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30087,
                     "offsetEnd": 30089,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1750,7 +1750,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30096,
                     "offsetEnd": 30098,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1779,7 +1779,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30105,
                     "offsetEnd": 30107,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1808,7 +1808,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30114,
                     "offsetEnd": 30116,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1837,7 +1837,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30123,
                     "offsetEnd": 30125,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1866,7 +1866,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30132,
                     "offsetEnd": 30134,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1895,7 +1895,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30141,
                     "offsetEnd": 30143,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1924,7 +1924,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30150,
                     "offsetEnd": 30152,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1953,7 +1953,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30159,
                     "offsetEnd": 30161,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -1982,7 +1982,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30168,
                     "offsetEnd": 30170,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2011,7 +2011,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30177,
                     "offsetEnd": 30179,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2040,7 +2040,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30186,
                     "offsetEnd": 30188,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2069,7 +2069,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30195,
                     "offsetEnd": 30197,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2098,7 +2098,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30204,
                     "offsetEnd": 30206,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2127,7 +2127,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30213,
                     "offsetEnd": 30215,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2156,7 +2156,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30222,
                     "offsetEnd": 30224,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2185,7 +2185,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30231,
                     "offsetEnd": 30233,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2214,7 +2214,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30240,
                     "offsetEnd": 30242,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2243,7 +2243,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30249,
                     "offsetEnd": 30251,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2272,7 +2272,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30258,
                     "offsetEnd": 30260,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2301,7 +2301,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30267,
                     "offsetEnd": 30269,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2330,7 +2330,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30276,
                     "offsetEnd": 30278,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2359,7 +2359,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30285,
                     "offsetEnd": 30287,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2388,7 +2388,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30294,
                     "offsetEnd": 30296,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2417,7 +2417,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30303,
                     "offsetEnd": 30305,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2446,7 +2446,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30312,
                     "offsetEnd": 30314,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2475,7 +2475,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30321,
                     "offsetEnd": 30323,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2504,7 +2504,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30330,
                     "offsetEnd": 30332,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2533,7 +2533,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30339,
                     "offsetEnd": 30341,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2562,7 +2562,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30348,
                     "offsetEnd": 30350,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2591,7 +2591,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30357,
                     "offsetEnd": 30359,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2620,7 +2620,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30366,
                     "offsetEnd": 30368,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2649,7 +2649,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30375,
                     "offsetEnd": 30377,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2678,7 +2678,7 @@
                     "colNumberStop": 6,
                     "offsetStart": 30384,
                     "offsetEnd": 30386,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign thr2::i (+ thr2::i 1))"
@@ -2707,7 +2707,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign x (+ x thr2::i))"
@@ -2780,7 +2780,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 30552,
                     "offsetEnd": 30557,
-                    "sourceText": "x \u003e 41"
+                    "sourceText": ["x \u003e 41"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e x 41) 1 0) 0))"
@@ -2809,7 +2809,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 30477,
                     "offsetEnd": 30507,
-                    "sourceText": "pthread_create(\u0026t1, 0, thr1, 0)"
+                    "sourceText": ["pthread_create(\u0026t1, 0, thr1, 0)"]
                   }
                 },
                 "content": "(var main::t1 Int) \u003d start thr1(0)"
@@ -2838,7 +2838,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 30514,
                     "offsetEnd": 30544,
-                    "sourceText": "pthread_create(\u0026t2, 0, thr2, 0)"
+                    "sourceText": ["pthread_create(\u0026t2, 0, thr2, 0)"]
                   }
                 },
                 "content": "(var main::t2 Int) \u003d start thr2(0)"
@@ -2867,7 +2867,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 30579,
                     "offsetEnd": 30597,
-                    "sourceText": "pthread_join(t1, 0)"
+                    "sourceText": ["pthread_join(t1, 0)"]
                   }
                 },
                 "content": "join (var main::t1 Int)"
@@ -2904,7 +2904,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::t1 0) (\u003c\u003d main::t1 4294967295)))"
@@ -2920,7 +2920,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::t2 0) (\u003c\u003d main::t2 4294967295)))"
@@ -2949,7 +2949,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 30552,
                     "offsetEnd": 30557,
-                    "sourceText": "x \u003e 41"
+                    "sourceText": ["x \u003e 41"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e x 41) 1 0) 0))"
@@ -2978,7 +2978,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 30604,
                     "offsetEnd": 30622,
-                    "sourceText": "pthread_join(t2, 0)"
+                    "sourceText": ["pthread_join(t2, 0)"]
                   }
                 },
                 "content": "join (var main::t2 Int)"
@@ -2994,7 +2994,7 @@
                     "colNumberStop": 9,
                     "offsetStart": 30634,
                     "offsetEnd": 30641,
-                    "sourceText": "return 0"
+                    "sourceText": ["return 0"]
                   }
                 },
                 "content": "(assign main_ret 0)"

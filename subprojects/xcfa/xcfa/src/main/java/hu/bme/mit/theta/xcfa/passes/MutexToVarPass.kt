@@ -52,7 +52,7 @@ class MutexToVarPass : ProcedurePass {
                 val initEdge = proc.initLoc.outgoingEdges.first()
                 val initLabels = initEdge.getFlatLabels()
                 if (initLabels.none { it is StmtLabel && it.stmt is AssignStmt<*> && it.stmt.varDecl == v }) {
-                    val assign = StmtLabel(AssignStmt.of(v, False()))
+                    val assign = StmtLabel(AssignStmt.of(v, False()), initEdge.metadata)
                     val label = SequenceLabel(initLabels + assign, metadata = initEdge.label.metadata)
                     proc.removeEdge(initEdge)
                     proc.addEdge(initEdge.withLabel(label))
@@ -70,37 +70,37 @@ class MutexToVarPass : ProcedurePass {
 
                 labels.forEach { l ->
                     if (l == "ATOMIC_BEGIN") {
-                        actions.add(FenceLabel(setOf("ATOMIC_BEGIN")))
+                        actions.add(FenceLabel(setOf("ATOMIC_BEGIN"), this.metadata))
                         return@forEach
                     }
                     if (l == "ATOMIC_END") {
-                        actions.add(FenceLabel(setOf("ATOMIC_END")))
+                        actions.add(FenceLabel(setOf("ATOMIC_END"), this.metadata))
                         return@forEach
                     }
 
                     if (Regex("start_cond_wait\\((.*)\\)").matches(l)) {
                         val args = l.substring("start_cond_wait".length + 1, l.length - 1).split(",")
-                        actions.add(StmtLabel(AssignStmt.of(args[0].signalFlag, False())))
+                        actions.add(StmtLabel(AssignStmt.of(args[0].signalFlag, False()), this.metadata))
                     }
                     if (Regex("cond_wait\\((.*)\\)").matches(l)) {
                         val args = l.substring("cond_wait".length + 1, l.length - 1).split(",")
-                        actions.add(StmtLabel(AssumeStmt.of(args[0].signalFlag.ref)))
+                        actions.add(StmtLabel(AssumeStmt.of(args[0].signalFlag.ref), this.metadata))
                     }
                     if (Regex("cond_signal\\((.*)\\)").matches(l)) {
                         val arg = l.substring("cond_signal".length + 1, l.length - 1)
-                        actions.add(StmtLabel(AssignStmt.of(arg.signalFlag, True())))
+                        actions.add(StmtLabel(AssignStmt.of(arg.signalFlag, True()), this.metadata))
                     }
 
                     l.acquiredMutex?.let {
-                        actions.add(StmtLabel(AssumeStmt.of(Not(it.mutexFlag.ref))))
-                        actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, True())))
+                        actions.add(StmtLabel(AssumeStmt.of(Not(it.mutexFlag.ref)), this.metadata))
+                        actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, True()), this.metadata))
                     }
                     l.releasedMutex?.let {
-                        actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, False())))
+                        actions.add(StmtLabel(AssignStmt.of(it.mutexFlag, False()), this.metadata))
                     }
                 }
 
-                SequenceLabel(actions) // Labels are atomic in XCFA semantics: no need to wrap them in an atomic block
+                SequenceLabel(actions, actions.map { it.metadata }.fold(EmptyMetaData, MetaData::join)) // Labels are atomic in XCFA semantics: no need to wrap them in an atomic block
             }
 
             else -> this

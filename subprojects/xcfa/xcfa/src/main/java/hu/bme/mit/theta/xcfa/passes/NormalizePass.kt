@@ -42,7 +42,8 @@ class NormalizePass : ProcedurePass {
         val collector: MutableList<MutableList<XcfaLabel>> = ArrayList()
         collector.add(ArrayList())
         normalize(label, collector)
-        return NondetLabel(collector.map { SequenceLabel(it) }.toSet())
+        val labelSet = collector.map { SequenceLabel(it, it.map { it.metadata }.fold(EmptyMetaData, MetaData::join)) }.toSet()
+        return NondetLabel(labelSet, labelSet.map { it.metadata }.fold(EmptyMetaData, MetaData::join))
     }
 
     private fun normalize(label: XcfaLabel, collector: MutableList<MutableList<XcfaLabel>>) {

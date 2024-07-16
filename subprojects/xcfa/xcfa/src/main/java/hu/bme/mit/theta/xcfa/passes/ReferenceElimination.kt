@@ -61,7 +61,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                     builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
                     parseContext.metadata.create(varDecl.ref, "cType", ptrType)
                     val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
-                        cast(lit, varDecl.type)))
+                        cast(lit, varDecl.type)), EmptyMetaData)
                     Pair(varDecl, assign)
                 }
         }
@@ -78,7 +78,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                 builder.addVar(varDecl)
                 parseContext.metadata.create(varDecl.ref, "cType", ptrType)
                 val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
-                    cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)))
+                    cast(CComplexType.getType(varDecl.ref, parseContext).getValue("$cnt"), varDecl.type)), EmptyMetaData)
                 Pair(varDecl, assign)
             } + globalReferredVars
 
@@ -125,7 +125,7 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                 is StmtLabel -> SequenceLabel(stmt.changeReferredVars(varLut, parseContext).map {
                     StmtLabel(it, metadata = metadata,
                         choiceType = this.choiceType)
-                }).let { if (it.labels.size == 1) it.labels[0] else it }
+                }, metadata).let { if (it.labels.size == 1) it.labels[0] else it }
 
                 else -> this
             }

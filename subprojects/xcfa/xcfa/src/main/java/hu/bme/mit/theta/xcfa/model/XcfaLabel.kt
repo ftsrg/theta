@@ -124,8 +124,8 @@ enum class ChoiceType {
 
 data class StmtLabel @JvmOverloads constructor(
     val stmt: Stmt,
+    override val metadata: MetaData,
     val choiceType: ChoiceType = ChoiceType.NONE,
-    override val metadata: MetaData = EmptyMetaData
 ) : XcfaLabel(metadata = metadata) {
 
     init {
@@ -183,7 +183,7 @@ data class WriteLabel constructor(
 
 data class FenceLabel(
     val labels: Set<String>,
-    override val metadata: MetaData = EmptyMetaData
+    override val metadata: MetaData
 ) : XcfaLabel(metadata = metadata) {
 
     override fun toString(): String {
@@ -201,7 +201,7 @@ data class FenceLabel(
 
 data class SequenceLabel @JvmOverloads constructor(
     val labels: List<XcfaLabel>,
-    override val metadata: MetaData = EmptyMetaData
+    override val metadata: MetaData
 ) : XcfaLabel(metadata = metadata) {
 
     override fun toStmt(): Stmt {
@@ -217,7 +217,7 @@ data class SequenceLabel @JvmOverloads constructor(
 
 data class NondetLabel @JvmOverloads constructor(
     val labels: Set<XcfaLabel>,
-    override val metadata: MetaData = EmptyMetaData
+    override val metadata: MetaData
 ) : XcfaLabel(metadata = metadata) {
 
     override fun toStmt(): Stmt {
@@ -229,7 +229,7 @@ data class NondetLabel @JvmOverloads constructor(
     }
 }
 
-object NopLabel : XcfaLabel(metadata = EmptyMetaData) {
+data class NopLabel(override val metadata: MetaData) : XcfaLabel(metadata) {
 
     override fun toStmt(): Stmt {
         return Skip()

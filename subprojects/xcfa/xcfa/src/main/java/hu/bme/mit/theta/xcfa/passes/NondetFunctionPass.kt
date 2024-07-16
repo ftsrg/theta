@@ -39,8 +39,8 @@ class NondetFunctionPass : ProcedurePass {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
                         val havoc = HavocStmt.of(
                             (invokeLabel.params[0] as RefExpr<*>).decl as VarDecl<*>)
-                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(
-                            listOf(StmtLabel(havoc, metadata = invokeLabel.metadata)))))
+                        builder.addEdge(XcfaEdge(it.source, it.target, invokeLabel.metadata, SequenceLabel(
+                            listOf(StmtLabel(havoc, metadata = invokeLabel.metadata)), invokeLabel.metadata)))
                     } else {
                         builder.addEdge(it)
                     }

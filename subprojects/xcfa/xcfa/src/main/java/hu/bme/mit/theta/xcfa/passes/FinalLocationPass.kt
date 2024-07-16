@@ -35,11 +35,13 @@ class FinalLocationPass(private val checkOverflow: Boolean) : ProcedurePass {
                 builder.removeEdge(edge)
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
-                        if (builder.finalLoc.isEmpty) builder.createFinalLoc()
-                        builder.addEdge(XcfaEdge(it.source, builder.finalLoc.get(), SequenceLabel(
+                        if (builder.finalLoc.isEmpty) builder.createFinalLoc(EmptyMetaData)
+                        builder.addEdge(XcfaEdge(it.source, builder.finalLoc.get(), metadata = it.metadata,
+                            SequenceLabel(
                             listOf(
                                 StmtLabel(Stmts.Assume(BoolExprs.False()), metadata = it.metadata)),
-                            metadata = it.metadata)))
+                            it.metadata
+                            )))
                     } else {
                         builder.addEdge(it)
                     }

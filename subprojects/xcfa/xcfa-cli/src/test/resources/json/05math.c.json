@@ -167,7 +167,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 187,
                     "offsetEnd": 203,
-                    "sourceText": "float f \u003d 12.65f;"
+                    "sourceText": ["float f \u003d 12.65f;"]
                   }
                 },
                 "content": "(assign main::f (#b0 #b10000010 #b10010100110011001100110))"
@@ -183,7 +183,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 220,
                     "offsetEnd": 226,
-                    "sourceText": "fabs(f)"
+                    "sourceText": ["fabs(f)"]
                   }
                 },
                 "content": "(assign call_fabs_ret56 (fpabs main::f))"
@@ -199,7 +199,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 209,
                     "offsetEnd": 227,
-                    "sourceText": "float f1 \u003d fabs(f);"
+                    "sourceText": ["float f1 \u003d fabs(f);"]
                   }
                 },
                 "content": "(assign main::f1 call_fabs_ret56)"
@@ -215,7 +215,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 244,
                     "offsetEnd": 251,
-                    "sourceText": "floor(f)"
+                    "sourceText": ["floor(f)"]
                   }
                 },
                 "content": "(assign call_floor_ret57 (fproundtoint main::f))"
@@ -231,7 +231,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 233,
                     "offsetEnd": 252,
-                    "sourceText": "float f2 \u003d floor(f);"
+                    "sourceText": ["float f2 \u003d floor(f);"]
                   }
                 },
                 "content": "(assign main::f2 call_floor_ret57)"
@@ -247,7 +247,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 269,
                     "offsetEnd": 276,
-                    "sourceText": "round(f)"
+                    "sourceText": ["round(f)"]
                   }
                 },
                 "content": "(assign call_round_ret58 (fproundtoint main::f))"
@@ -263,7 +263,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 258,
                     "offsetEnd": 277,
-                    "sourceText": "float f3 \u003d round(f);"
+                    "sourceText": ["float f3 \u003d round(f);"]
                   }
                 },
                 "content": "(assign main::f3 call_round_ret58)"
@@ -279,7 +279,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 294,
                     "offsetEnd": 305,
-                    "sourceText": "fmax(f2, f3)"
+                    "sourceText": ["fmax(f2, f3)"]
                   }
                 },
                 "content": "(assign call_fmax_ret59 (fpmax main::f2 main::f3))"
@@ -295,7 +295,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 283,
                     "offsetEnd": 306,
-                    "sourceText": "float f4 \u003d fmax(f2, f3);"
+                    "sourceText": ["float f4 \u003d fmax(f2, f3);"]
                   }
                 },
                 "content": "(assign main::f4 call_fmax_ret59)"
@@ -311,7 +311,7 @@
                     "colNumberStop": 26,
                     "offsetStart": 323,
                     "offsetEnd": 334,
-                    "sourceText": "fmin(f2, f3)"
+                    "sourceText": ["fmin(f2, f3)"]
                   }
                 },
                 "content": "(assign call_fmin_ret60 (fpmin main::f2 main::f3))"
@@ -327,7 +327,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 312,
                     "offsetEnd": 335,
-                    "sourceText": "float f5 \u003d fmin(f2, f3);"
+                    "sourceText": ["float f5 \u003d fmin(f2, f3);"]
                   }
                 },
                 "content": "(assign main::f5 call_fmin_ret60)"
@@ -343,7 +343,7 @@
                     "colNumberStop": 21,
                     "offsetStart": 352,
                     "offsetEnd": 358,
-                    "sourceText": "sqrt(f)"
+                    "sourceText": ["sqrt(f)"]
                   }
                 },
                 "content": "(assign call_sqrt_ret61 (fpsqrt main::f))"
@@ -359,7 +359,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 341,
                     "offsetEnd": 359,
-                    "sourceText": "float f6 \u003d sqrt(f);"
+                    "sourceText": ["float f6 \u003d sqrt(f);"]
                   }
                 },
                 "content": "(assign main::f6 call_sqrt_ret61)"
@@ -375,7 +375,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 376,
                     "offsetEnd": 383,
-                    "sourceText": "isnan(f)"
+                    "sourceText": ["isnan(f)"]
                   }
                 },
                 "content": "(assign call_isnan_ret62 (ite (fpisnan main::f) #b00000000000000000000000000000001 #b00000000000000000000000000000000))"
@@ -391,7 +391,7 @@
                     "colNumberStop": 23,
                     "offsetStart": 365,
                     "offsetEnd": 384,
-                    "sourceText": "float f7 \u003d isnan(f);"
+                    "sourceText": ["float f7 \u003d isnan(f);"]
                   }
                 },
                 "content": "(assign main::f7 (fpfrombv[8,24][s] call_isnan_ret62))"
@@ -407,7 +407,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::f (#b0 #b00000000 #b00000000000000000000000))"
@@ -423,7 +423,7 @@
                     "colNumberStop": 30,
                     "offsetStart": 415,
                     "offsetEnd": 430,
-                    "sourceText": "isnan(0.0f/0.0f)"
+                    "sourceText": ["isnan(0.0f/0.0f)"]
                   }
                 },
                 "content": "(assign call_isnan_ret63 (ite (fpisnan (fpdiv[rne] (#b0 #b00000000 #b00000000000000000000000) (#b0 #b00000000 #b00000000000000000000000))) #b00000000000000000000000000000001 #b00000000000000000000000000000000))"
@@ -439,7 +439,7 @@
                     "colNumberStop": 31,
                     "offsetStart": 404,
                     "offsetEnd": 431,
-                    "sourceText": "float f8 \u003d isnan(0.0f/0.0f);"
+                    "sourceText": ["float f8 \u003d isnan(0.0f/0.0f);"]
                   }
                 },
                 "content": "(assign main::f8 (fpfrombv[8,24][s] call_isnan_ret63))"
@@ -468,7 +468,7 @@
                     "colNumberStop": 8,
                     "offsetStart": 440,
                     "offsetEnd": 441,
-                    "sourceText": "f8"
+                    "sourceText": ["f8"]
                   }
                 },
                 "content": "(assume (\u003d main::f8 (#b0 #b00000000 #b00000000000000000000000)))"
@@ -497,7 +497,7 @@
                     "colNumberStop": 8,
                     "offsetStart": 440,
                     "offsetEnd": 441,
-                    "sourceText": "f8"
+                    "sourceText": ["f8"]
                   }
                 },
                 "content": "(assume (/\u003d main::f8 (#b0 #b00000000 #b00000000000000000000000)))"

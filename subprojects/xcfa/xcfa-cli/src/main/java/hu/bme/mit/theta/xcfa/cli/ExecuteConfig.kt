@@ -53,6 +53,7 @@ import hu.bme.mit.theta.xcfa.cli.checkers.getChecker
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
+import hu.bme.mit.theta.xcfa.cli.witnesses.graphml.XcfaWitnessWriter
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -345,7 +346,7 @@ private fun postVerificationLogging(
                     writeSequenceTrace(cSequenceFile, concrTrace) { (state, act) ->
                         val proc = state.processes[act.pid]
                         val loc = proc?.locs?.peek()
-                        (loc?.metadata as? CMetaData)?.sourceText?.split("\n") ?: listOf("<unknown>")
+                        (loc?.metadata as? CMetaData)?.sourceText?.joinToString("\n")?.split("\n") ?: listOf("<unknown>")
                     }
                 }
                 val witnessFile = File(resultFolder, "witness.graphml")

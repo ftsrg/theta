@@ -120,7 +120,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::char2 -128) (\u003c\u003d main::char2 127)))"
@@ -149,7 +149,7 @@
                     "colNumberStop": 25,
                     "offsetStart": 71,
                     "offsetEnd": 89,
-                    "sourceText": "char1 + char2 \u003e 256"
+                    "sourceText": ["char1 + char2 \u003e 256"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e (+ char1 main::char2) 256) 1 0) 0))"
@@ -178,7 +178,7 @@
                     "colNumberStop": 25,
                     "offsetStart": 71,
                     "offsetEnd": 89,
-                    "sourceText": "char1 + char2 \u003e 256"
+                    "sourceText": ["char1 + char2 \u003e 256"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e (+ char1 main::char2) 256) 1 0) 0))"

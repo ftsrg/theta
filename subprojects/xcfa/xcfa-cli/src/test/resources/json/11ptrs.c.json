@@ -128,7 +128,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"
@@ -157,7 +157,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"
@@ -248,7 +248,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 112,
                     "offsetEnd": 141,
-                    "sourceText": "int a \u003d 100, b \u003d 110, c \u003d 120;"
+                    "sourceText": ["int a \u003d 100, b \u003d 110, c \u003d 120;"]
                   }
                 },
                 "content": "(assign main::a 100)"
@@ -264,7 +264,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 112,
                     "offsetEnd": 141,
-                    "sourceText": "int a \u003d 100, b \u003d 110, c \u003d 120;"
+                    "sourceText": ["int a \u003d 100, b \u003d 110, c \u003d 120;"]
                   }
                 },
                 "content": "(assign main::b 110)"
@@ -280,7 +280,7 @@
                     "colNumberStop": 33,
                     "offsetStart": 112,
                     "offsetEnd": 141,
-                    "sourceText": "int a \u003d 100, b \u003d 110, c \u003d 120;"
+                    "sourceText": ["int a \u003d 100, b \u003d 110, c \u003d 120;"]
                   }
                 },
                 "content": "(assign main::c 120)"
@@ -296,7 +296,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 147,
                     "offsetEnd": 163,
-                    "sourceText": "check_geq_110(\u0026a)"
+                    "sourceText": ["check_geq_110(\u0026a)"]
                   }
                 },
                 "content": "(assign check_geq_110::param (\u0026 main::a))"
@@ -325,7 +325,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"
@@ -354,7 +354,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"
@@ -370,7 +370,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 147,
                     "offsetEnd": 163,
-                    "sourceText": "check_geq_110(\u0026a)"
+                    "sourceText": ["check_geq_110(\u0026a)"]
                   }
                 },
                 "content": "(assign call_check_geq_110_ret24 check_geq_110_ret)"
@@ -386,7 +386,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 170,
                     "offsetEnd": 186,
-                    "sourceText": "check_geq_110(\u0026b)"
+                    "sourceText": ["check_geq_110(\u0026b)"]
                   }
                 },
                 "content": "(assign check_geq_110::param (\u0026 main::b))"
@@ -415,7 +415,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"
@@ -444,7 +444,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"
@@ -460,7 +460,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 170,
                     "offsetEnd": 186,
-                    "sourceText": "check_geq_110(\u0026b)"
+                    "sourceText": ["check_geq_110(\u0026b)"]
                   }
                 },
                 "content": "(assign call_check_geq_110_ret25 check_geq_110_ret)"
@@ -476,7 +476,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 193,
                     "offsetEnd": 209,
-                    "sourceText": "check_geq_110(\u0026c)"
+                    "sourceText": ["check_geq_110(\u0026c)"]
                   }
                 },
                 "content": "(assign check_geq_110::param (\u0026 main::c))"
@@ -505,7 +505,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"
@@ -521,7 +521,7 @@
                     "colNumberStop": 20,
                     "offsetStart": 193,
                     "offsetEnd": 209,
-                    "sourceText": "check_geq_110(\u0026c)"
+                    "sourceText": ["check_geq_110(\u0026c)"]
                   }
                 },
                 "content": "(assign call_check_geq_110_ret26 check_geq_110_ret)"
@@ -550,7 +550,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 62,
                     "offsetEnd": 74,
-                    "sourceText": "*param \u003e\u003d 110"
+                    "sourceText": ["*param \u003e\u003d 110"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e\u003d (* check_geq_110::param) 110) 1 0) 0))"

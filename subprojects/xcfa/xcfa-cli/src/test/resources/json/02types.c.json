@@ -143,7 +143,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": []
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::a 0) (\u003c\u003d main::a 1)))"
@@ -159,7 +159,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::uc 0) (\u003c\u003d main::uc 255)))"
@@ -175,7 +175,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::c -128) (\u003c\u003d main::c 127)))"
@@ -191,7 +191,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::us 0) (\u003c\u003d main::us 65535)))"
@@ -207,7 +207,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::s -32768) (\u003c\u003d main::s 32767)))"
@@ -223,7 +223,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::ui 0) (\u003c\u003d main::ui 4294967295)))"
@@ -239,7 +239,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::i -2147483648) (\u003c\u003d main::i 2147483647)))"
@@ -255,7 +255,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::ul 0) (\u003c\u003d main::ul 4294967295)))"
@@ -271,7 +271,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::l -2147483648) (\u003c\u003d main::l 2147483647)))"
@@ -287,7 +287,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::ull 0) (\u003c\u003d main::ull 18446744073709551615)))"
@@ -303,7 +303,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::ll -9223372036854775808) (\u003c\u003d main::ll 9223372036854775807)))"
@@ -332,7 +332,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 243,
                     "offsetEnd": 270,
-                    "sourceText": "a+uc+c+us+s+ui+i+ul+l+ull+ll"
+                    "sourceText": ["a+uc+c+us+s+ui+i+ul+l+ull+ll"]
                   }
                 },
                 "content": "(assume (\u003d (mod (+ (mod main::a 18446744073709551616) (mod main::uc 18446744073709551616) (mod main::c 18446744073709551616) (mod main::us 18446744073709551616) (mod main::s 18446744073709551616) (mod main::ui 18446744073709551616) (mod main::i 18446744073709551616) (mod main::ul 18446744073709551616) (mod main::l 18446744073709551616) (mod main::ull 18446744073709551616) (mod main::ll 18446744073709551616)) 18446744073709551616) 0))"
@@ -361,7 +361,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 243,
                     "offsetEnd": 270,
-                    "sourceText": "a+uc+c+us+s+ui+i+ul+l+ull+ll"
+                    "sourceText": ["a+uc+c+us+s+ui+i+ul+l+ull+ll"]
                   }
                 },
                 "content": "(assume (/\u003d (mod (+ (mod main::a 18446744073709551616) (mod main::uc 18446744073709551616) (mod main::c 18446744073709551616) (mod main::us 18446744073709551616) (mod main::s 18446744073709551616) (mod main::ui 18446744073709551616) (mod main::i 18446744073709551616) (mod main::ul 18446744073709551616) (mod main::l 18446744073709551616) (mod main::ull 18446744073709551616) (mod main::ll 18446744073709551616)) 18446744073709551616) 0))"

@@ -37,14 +37,14 @@ class SvCompIntrinsicsPass : ProcedurePass {
                 val labels: MutableList<XcfaLabel> = ArrayList()
                 labels.add(FenceLabel(setOf("ATOMIC_BEGIN"), metadata = outgoingEdge.metadata))
                 labels.addAll((outgoingEdge.label as SequenceLabel).labels)
-                builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels)))
+                builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels, labels.map { it.metadata }.fold(EmptyMetaData, MetaData::join))))
             }
             for (incomingEdge in ArrayList(
                 builder.finalLoc.getOrNull()?.incomingEdges ?: listOf())) {
                 builder.removeEdge(incomingEdge)
                 val labels = ArrayList((incomingEdge.label as SequenceLabel).labels)
                 labels.add(FenceLabel(setOf("ATOMIC_END"), metadata = incomingEdge.metadata))
-                builder.addEdge(incomingEdge.withLabel(SequenceLabel(labels)))
+                builder.addEdge(incomingEdge.withLabel(SequenceLabel(labels, labels.map { it.metadata }.fold(EmptyMetaData, MetaData::join))))
             }
         }
         for (edge in ArrayList(builder.getEdges())) {
@@ -70,7 +70,7 @@ class SvCompIntrinsicsPass : ProcedurePass {
                         labels.addAll(it.label.labels)
                     }
                 }
-                builder.addEdge(edge.withLabel(SequenceLabel(labels)))
+                builder.addEdge(edge.withLabel(SequenceLabel(labels, labels.map { it.metadata }.fold(EmptyMetaData, MetaData::join))))
             }
         }
         return builder

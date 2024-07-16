@@ -95,7 +95,7 @@ class XcfaStateLtsTest {
                 aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
         }
 
-        actionOrder.add { XcfaAction(0, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel))) }
+        actionOrder.add { XcfaAction(0, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel(EmptyMetaData)))) }
         expectations.add {
             it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[1].target &&
                 lts.getEnabledActionsFor(it).size == 1 &&
@@ -124,7 +124,7 @@ class XcfaStateLtsTest {
         }
 
         actionOrder.add { s ->
-            XcfaAction(s.foreignKey()!!, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel)))
+            XcfaAction(s.foreignKey()!!, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel(EmptyMetaData))))
         }
         expectations.add {
             it.processes.size == 1 && it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[2].target &&

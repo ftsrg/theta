@@ -104,7 +104,7 @@
                     "colNumberStop": 24,
                     "offsetStart": 54,
                     "offsetEnd": 59,
-                    "sourceText": "i \u003c 30"
+                    "sourceText": ["i \u003c 30"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003c main::for0::i 30) 1 0) 0))"
@@ -133,7 +133,7 @@
                     "colNumberStop": 24,
                     "offsetStart": 54,
                     "offsetEnd": 59,
-                    "sourceText": "i \u003c 30"
+                    "sourceText": ["i \u003c 30"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003c main::for0::i 30) 1 0) 0))"
@@ -162,7 +162,7 @@
                     "colNumberStop": 16,
                     "offsetStart": 43,
                     "offsetEnd": 51,
-                    "sourceText": "int i \u003d 0"
+                    "sourceText": ["int i \u003d 0"]
                   }
                 },
                 "content": "(assign main::for0::i 0)"
@@ -191,7 +191,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 80,
                     "offsetEnd": 86,
-                    "sourceText": "i \u003d\u003d 28"
+                    "sourceText": ["i \u003d\u003d 28"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d main::for0::i 28) 1 0) 0))"
@@ -220,7 +220,7 @@
                     "colNumberStop": 17,
                     "offsetStart": 80,
                     "offsetEnd": 86,
-                    "sourceText": "i \u003d\u003d 28"
+                    "sourceText": ["i \u003d\u003d 28"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d main::for0::i 28) 1 0) 0))"
@@ -236,7 +236,7 @@
                     "colNumberStop": 29,
                     "offsetStart": 62,
                     "offsetEnd": 64,
-                    "sourceText": "i++"
+                    "sourceText": ["i++"]
                   }
                 },
                 "content": "(assign main::for0::i (+ main::for0::i 1))"

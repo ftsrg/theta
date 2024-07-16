@@ -182,14 +182,17 @@ public class Utils {
         //noinspection OptionalGetWithoutIsPresent
         RegArgument ret = instruction.getRetVar().get();
         if (ret instanceof LocalArgument) {
-            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
+            XcfaLocation loc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
             VarDecl<?> lhs = Utils.getOrCreateVar(functionState, ret);
             Stmt stmt = Assign(cast(lhs, lhs.getType()), cast(op, lhs.getType()));
             XcfaEdge edge;
-            if (!lhs.getRef().equals(op))
-                edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(stmt), new LlvmMetadata(instruction.getLineNumber()));
-            else
-                edge = new XcfaEdge(blockState.getLastLocation(), loc, NopLabel.INSTANCE, new LlvmMetadata(instruction.getLineNumber()));
+            LlvmMetadata llvmMetadata = new LlvmMetadata(instruction.getLineNumber());
+            if (!lhs.getRef().equals(op)) {
+                edge = new XcfaEdge(blockState.getLastLocation(), loc, llvmMetadata,
+                    new StmtLabel(stmt, new LlvmMetadata(instruction.getLineNumber())));
+            } else {
+                edge = new XcfaEdge(blockState.getLastLocation(), loc, llvmMetadata, new NopLabel(EmptyMetaData.INSTANCE));
+            }
             functionState.getProcedureBuilder().addLoc(loc);
             functionState.getProcedureBuilder().addEdge(edge);
             blockState.setLastLocation(loc);

@@ -19,6 +19,9 @@ object Deps {
     val guava = "com.google.guava:guava:${Versions.guava}"
     val gson = "com.google.code.gson:gson:${Versions.gson}"
 
+    val kaml = "com.charleskorn.kaml:kaml:${Versions.kaml}"
+    val kotlinserialization = "org.jetbrains.kotlin:kotlin-serialization:${Versions.kotlinserialization}"
+
     object Antlr {
 
         val antlr = "org.antlr:antlr4:${Versions.antlr}"
@@ -76,5 +79,7 @@ object Deps {
 
         val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
         val reflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
+        val serialization = "org.jetbrains.kotlin.plugin.serialization:${Versions.kotlin}"
     }
+
 }

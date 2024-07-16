@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.xcfa.cli.witnesses
+package hu.bme.mit.theta.xcfa.cli.witnesses.graphml
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
@@ -59,8 +59,10 @@ class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: F
 
         attributes.add(WitnessAttribute("assumption", "string", "edge", "assumption"))
         attributes.add(WitnessAttribute("assumption.scope", "string", "edge", "assumption.scope"))
-        attributes.add(WitnessAttribute("assumption.resultfunction", "string", "edge",
-            "assumption.resultfunction"))
+        attributes.add(
+            WitnessAttribute("assumption.resultfunction", "string", "edge",
+            "assumption.resultfunction")
+        )
         attributes.add(WitnessAttribute("control", "string", "edge", "control"))
         attributes.add(WitnessAttribute("startline", "string", "edge", "startline"))
         attributes.add(WitnessAttribute("endline", "string", "edge", "endline"))
@@ -69,7 +71,8 @@ class Witness(private val trace: Trace<WitnessNode, WitnessEdge>, programFile: F
         attributes.add(WitnessAttribute("enterLoopHead", "string", "edge", "enterLoopHead"))
         attributes.add(WitnessAttribute("enterFunction", "string", "edge", "enterFunction"))
         attributes.add(
-            WitnessAttribute("returnFromFunction", "string", "edge", "returnFromFunction"))
+            WitnessAttribute("returnFromFunction", "string", "edge", "returnFromFunction")
+        )
         attributes.add(WitnessAttribute("threadId", "string", "edge", "threadId"))
         attributes.add(WitnessAttribute("createThread", "string", "edge", "createThread"))
         attributes.add(WitnessAttribute("stmt", "string", "edge", "stmt"))
@@ -193,7 +196,7 @@ data class WitnessEdge(
     val createThread: String? = null,
 
     val stmt: String? = null,
-    val cSource: String? = null,
+    val cSource: List<String>? = emptyList(),
 ) : Action {
 
     fun toXml(): String = """
@@ -214,8 +217,8 @@ data class WitnessEdge(
 
             ${if (stmt != null) "<data key=\"stmt\">${escapeXml(stmt)}</data>" else ""}
             ${
-        if (cSource != null && cSource != "") "<data key=\"cSource\">${
-            escapeXml(cSource)
+        if (cSource != null && cSource.isNotEmpty()) "<data key=\"cSource\">${
+            escapeXml(cSource.toString())
         }</data>" else ""
     }
 

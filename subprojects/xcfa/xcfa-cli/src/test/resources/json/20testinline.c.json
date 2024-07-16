@@ -70,7 +70,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d func::x -2147483648) (\u003c\u003d func::x 2147483647)))"
@@ -99,7 +99,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 58,
                     "offsetEnd": 73,
-                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                    "sourceText": ["a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
@@ -128,7 +128,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 58,
                     "offsetEnd": 73,
-                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                    "sourceText": ["a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"]
                   }
                 },
                 "content": "(assume (\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
@@ -144,7 +144,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign func::x 1)"
@@ -222,7 +222,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 122,
                     "offsetEnd": 128,
-                    "sourceText": "func(0)"
+                    "sourceText": ["func(0)"]
                   }
                 },
                 "content": "(assign func::a (+ 0))"
@@ -238,7 +238,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d func::x -2147483648) (\u003c\u003d func::x 2147483647)))"
@@ -267,7 +267,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 58,
                     "offsetEnd": 73,
-                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                    "sourceText": ["a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
@@ -296,7 +296,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 58,
                     "offsetEnd": 73,
-                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                    "sourceText": ["a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"]
                   }
                 },
                 "content": "(assume (\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
@@ -312,7 +312,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign func::x 1)"
@@ -328,7 +328,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 122,
                     "offsetEnd": 128,
-                    "sourceText": "func(0)"
+                    "sourceText": ["func(0)"]
                   }
                 },
                 "content": "(assign call_func_ret94 func_ret)"
@@ -344,7 +344,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 135,
                     "offsetEnd": 141,
-                    "sourceText": "func(1)"
+                    "sourceText": ["func(1)"]
                   }
                 },
                 "content": "(assign func::a (+ 1))"
@@ -360,7 +360,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d func::x -2147483648) (\u003c\u003d func::x 2147483647)))"
@@ -389,7 +389,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 58,
                     "offsetEnd": 73,
-                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                    "sourceText": ["a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
@@ -418,7 +418,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 58,
                     "offsetEnd": 73,
-                    "sourceText": "a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"
+                    "sourceText": ["a \u003d\u003d 1 \u0026\u0026 x \u003d\u003d 2"]
                   }
                 },
                 "content": "(assume (\u003d (ite (and (/\u003d 0 (ite (\u003d func::a 1) 1 0)) (/\u003d 0 (ite (\u003d func::x 2) 1 0))) 1 0) 0))"
@@ -434,7 +434,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign func::x 1)"
@@ -450,7 +450,7 @@
                     "colNumberStop": 10,
                     "offsetStart": 135,
                     "offsetEnd": 141,
-                    "sourceText": "func(1)"
+                    "sourceText": ["func(1)"]
                   }
                 },
                 "content": "(assign call_func_ret95 func_ret)"

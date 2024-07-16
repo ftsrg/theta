@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.c2xcfa
 
+import com.google.common.base.Preconditions
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.xcfa.model.MetaData
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -27,8 +29,102 @@ data class CMetaData(
     val colNumberStop: Int?,
     val offsetStart: Int?,
     val offsetEnd: Int?,
-    val sourceText: String?
-) : MetaData()
+    val sourceText: List<String>
+) : MetaData() {
+    init {
+        if(offsetStart != null && offsetEnd != null) {
+            checkState(offsetStart<=offsetEnd, "start offset should be before end offset!")
+        }
+        if(lineNumberStart != null && lineNumberStop != null) {
+            checkState(lineNumberStart<=lineNumberStop, "start line should be before stop line!")
+        }
+    }
+
+    override fun join(m: MetaData): MetaData {
+        Preconditions.checkState(m is CMetaData)
+        assert(m is CMetaData)
+
+        // the idea here is that we take the earlier start line (and possibly start column with it)
+        // and the later stop line (and possibly stop column)
+        val jLineNumberStart : Int?
+        val jColNumberStart : Int?
+        if (m is CMetaData) {
+            if(this.lineNumberStart!=null && m.lineNumberStart!=null) {
+                if(this.lineNumberStart<m.lineNumberStart) {
+                    jLineNumberStart = this.lineNumberStart
+                    jColNumberStart = this.colNumberStart
+                } else {
+                    jLineNumberStart = m.lineNumberStart
+                    if(this.lineNumberStart==m.lineNumberStart) {
+                        jColNumberStart = listOfNotNull(this.colNumberStart, m.colNumberStart).minOrNull()
+                    } else {
+                        jColNumberStart = m.colNumberStart
+                    }
+                }
+            } else if(this.lineNumberStart==null && m.lineNumberStart==null) {
+                jLineNumberStart = null
+                jColNumberStart = null
+            } else if(this.lineNumberStart==null) {
+                jLineNumberStart = m.lineNumberStart
+                jColNumberStart = m.colNumberStart
+            } else {
+                jLineNumberStart = this.lineNumberStart
+                jColNumberStart = this.colNumberStart
+            }
+
+            val jLineNumberStop : Int?
+            val jColNumberStop : Int?
+            if(this.lineNumberStop!=null && m.lineNumberStop!=null) {
+                if(this.lineNumberStop>m.lineNumberStop) {
+                    jLineNumberStop = this.lineNumberStop
+                    jColNumberStop = this.colNumberStop
+                } else {
+                    jLineNumberStop = m.lineNumberStop
+                    if(this.lineNumberStop==m.lineNumberStop) {
+                        jColNumberStop = listOfNotNull(this.colNumberStop, m.colNumberStop).minOrNull()
+                    } else {
+                        jColNumberStop = m.colNumberStop
+                    }
+                }
+            } else if(this.lineNumberStop==null && m.lineNumberStop==null) {
+                jLineNumberStop = null
+                jColNumberStop = null
+            } else if(this.lineNumberStop==null) {
+                jLineNumberStop = m.lineNumberStop
+                jColNumberStop = m.colNumberStop
+            } else {
+                jLineNumberStop = this.lineNumberStop
+                jColNumberStop = this.colNumberStop
+            }
+
+            val jOffsetStart = listOfNotNull(this.offsetStart, m.offsetStart).minOrNull()
+            val jOffsetEnd = listOfNotNull(this.offsetEnd, m.offsetEnd).minOrNull()
+            val jSourceTexts: List<String> =
+            if(this.lineNumberStart!=null && m.lineNumberStart!=null) {
+                if (this.lineNumberStart < m.lineNumberStart) {
+                    (this.sourceText + m.sourceText)
+                } else if(this.lineNumberStart > m.lineNumberStart) {
+                    (m.sourceText + this.sourceText)
+                } else if(this.colNumberStart!=null && m.colNumberStart!=null) {
+                    if(this.colNumberStart < m.colNumberStart) {
+                        (this.sourceText + m.sourceText)
+                    } else {
+                        (m.sourceText + this.sourceText)
+                    }
+                } else {
+                    (this.sourceText + m.sourceText)
+                }
+            } else {
+                (this.sourceText + m.sourceText)
+            }
+
+            return CMetaData(jLineNumberStart, jLineNumberStop, jColNumberStart, jColNumberStop, jOffsetStart, jOffsetEnd, jSourceTexts)
+        } else {
+            throw RuntimeException("CMetaData can only be joined with CMetaData")
+        }
+    }
+
+}
 
 fun XcfaLabel.getCMetaData(): CMetaData? {
     return if (this.metadata is CMetaData) {

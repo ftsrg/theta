@@ -58,14 +58,14 @@ class AtomicReadsOneWritePass : ProcedurePass {
 
                     val newStartEdge = edge.replaceAccesses(localVersions)
                     val initialAssigns = SequenceLabel(localVersions.map { (v, local) ->
-                        StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
-                    })
+                        StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)), EmptyMetaData)
+                    }, EmptyMetaData)
                     val atomicBeginIndex = newStartEdge.getFlatLabels().indexOfFirst { it.isAtomicBegin }
                     val newLabels = newStartEdge.getFlatLabels().toMutableList().apply {
                         add(atomicBeginIndex + 1, initialAssigns)
                     }
                     builder.removeEdge(newStartEdge)
-                    builder.addEdge(newStartEdge.withLabel(SequenceLabel(newLabels)))
+                    builder.addEdge(newStartEdge.withLabel(SequenceLabel(newLabels, EmptyMetaData)))
                 }
             }
         }
@@ -79,14 +79,14 @@ class AtomicReadsOneWritePass : ProcedurePass {
                     v.localVersion(indexing)
                 }
                 val initialAssigns = localVersions.map { (v, local) ->
-                    StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)))
+                    StmtLabel(AssignStmt.of(cast(local, local.type), cast(v.ref, local.type)), EmptyMetaData)
                 }
                 val newLabels = edge.getFlatLabels().map { it.replaceAccesses(localVersions) }
                 val finalAssigns = localVersions.map { (v, local) ->
-                    StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)))
+                    StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)), EmptyMetaData)
                 }
                 builder.removeEdge(edge)
-                builder.addEdge(edge.withLabel(SequenceLabel(initialAssigns + newLabels + finalAssigns)))
+                builder.addEdge(edge.withLabel(SequenceLabel(initialAssigns + newLabels + finalAssigns, EmptyMetaData)))
             }
         }
         return builder
@@ -145,12 +145,12 @@ class AtomicReadsOneWritePass : ProcedurePass {
             } else {
                 val atomicEndIndex = newLabels.indexOfFirst { it.isAtomicEnd }
                 val finalAssigns = SequenceLabel(localVersions.map { (v, local) ->
-                    StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)))
-                })
+                    StmtLabel(AssignStmt.of(cast(v, local.type), cast(local.ref, v.type)), EmptyMetaData)
+                }, EmptyMetaData)
                 newLabels.add(atomicEndIndex, finalAssigns)
             }
 
-            val newEdge = current.withLabel(SequenceLabel(newLabels))
+            val newEdge = current.withLabel(SequenceLabel(newLabels, EmptyMetaData))
             builder.addEdge(newEdge)
             first = first ?: newEdge
         }
@@ -162,10 +162,10 @@ class AtomicReadsOneWritePass : ProcedurePass {
             is StmtLabel -> when (val stmt = stmt) {
                 is AssignStmt<*> -> StmtLabel(AssignStmt.of(
                     cast(localVersions[stmt.varDecl] ?: stmt.varDecl, stmt.varDecl.type),
-                    cast(stmt.expr.replace(localVersions), stmt.varDecl.type)))
+                    cast(stmt.expr.replace(localVersions), stmt.varDecl.type)), EmptyMetaData)
 
-                is AssumeStmt -> StmtLabel(AssumeStmt.of(stmt.cond.replace(localVersions)))
-                is HavocStmt<*> -> StmtLabel(HavocStmt.of(localVersions[stmt.varDecl] ?: stmt.varDecl))
+                is AssumeStmt -> StmtLabel(AssumeStmt.of(stmt.cond.replace(localVersions)), EmptyMetaData)
+                is HavocStmt<*> -> StmtLabel(HavocStmt.of(localVersions[stmt.varDecl] ?: stmt.varDecl), EmptyMetaData)
                 else -> this
             }
 

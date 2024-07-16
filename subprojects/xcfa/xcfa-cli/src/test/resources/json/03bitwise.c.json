@@ -103,7 +103,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 122,
                     "offsetEnd": 129,
-                    "sourceText": "a \u003d\u003d -10"
+                    "sourceText": ["a \u003d\u003d -10"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d main::a #b11111111111111111111111111110110) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"
@@ -132,7 +132,7 @@
                     "colNumberStop": 14,
                     "offsetStart": 122,
                     "offsetEnd": 129,
-                    "sourceText": "a \u003d\u003d -10"
+                    "sourceText": ["a \u003d\u003d -10"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d main::a #b11111111111111111111111111110110) #b00000000000000000000000000000001 #b00000000000000000000000000000000) #b00000000000000000000000000000000))"
@@ -161,7 +161,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 75,
                     "offsetEnd": 97,
-                    "sourceText": "__VERIFIER_nondet_int()"
+                    "sourceText": ["__VERIFIER_nondet_int()"]
                   }
                 },
                 "content": "(havoc main::a)"
@@ -177,7 +177,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 75,
                     "offsetEnd": 97,
-                    "sourceText": "__VERIFIER_nondet_int()"
+                    "sourceText": ["__VERIFIER_nondet_int()"]
                   }
                 },
                 "content": "(assume true)"
@@ -193,7 +193,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::a main::a)"

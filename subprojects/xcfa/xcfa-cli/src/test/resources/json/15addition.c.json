@@ -107,7 +107,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 39,
                     "offsetEnd": 48,
-                    "sourceText": "int z \u003d 6;"
+                    "sourceText": ["int z \u003d 6;"]
                   }
                 },
                 "content": "(assign main::z 6)"
@@ -123,7 +123,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 54,
                     "offsetEnd": 63,
-                    "sourceText": "int y \u003d 1;"
+                    "sourceText": ["int y \u003d 1;"]
                   }
                 },
                 "content": "(assign main::y 1)"
@@ -152,7 +152,7 @@
                     "colNumberStop": 38,
                     "offsetStart": 72,
                     "offsetEnd": 103,
-                    "sourceText": "(z*z) - 12 * y - 6 * z + 12 \u003d\u003d 0"
+                    "sourceText": ["(z*z) - 12 * y - 6 * z + 12 \u003d\u003d 0"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d (+ (* main::z main::z) (- (* 12 main::y)) (- (* 6 main::z)) 12) 0) 1 0) 0))"
@@ -181,7 +181,7 @@
                     "colNumberStop": 38,
                     "offsetStart": 72,
                     "offsetEnd": 103,
-                    "sourceText": "(z*z) - 12 * y - 6 * z + 12 \u003d\u003d 0"
+                    "sourceText": ["(z*z) - 12 * y - 6 * z + 12 \u003d\u003d 0"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d (+ (* main::z main::z) (- (* 12 main::y)) (- (* 6 main::z)) 12) 0) 1 0) 0))"

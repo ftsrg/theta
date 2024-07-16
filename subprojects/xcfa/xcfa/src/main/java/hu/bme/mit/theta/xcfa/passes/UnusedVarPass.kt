@@ -75,14 +75,14 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
     private fun XcfaLabel.removeUnusedWrites(usedVars: Set<VarDecl<*>>): XcfaLabel {
         return when (this) {
             is SequenceLabel ->
-                SequenceLabel(labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel })
+                SequenceLabel(labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel }, this.metadata)
 
             is NondetLabel ->
-                NondetLabel(labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel }.toSet())
+                NondetLabel(labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel }.toSet(), this.metadata)
 
             is StmtLabel -> when (stmt) {
-                is AssignStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel
-                is HavocStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel
+                is AssignStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel(EmptyMetaData)
+                is HavocStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel(EmptyMetaData)
                 else -> this
             }
 

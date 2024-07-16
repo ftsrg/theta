@@ -103,7 +103,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 38,
                     "offsetEnd": 47,
-                    "sourceText": "int a \u003d 1;"
+                    "sourceText": ["int a \u003d 1;"]
                   }
                 },
                 "content": "(assign main::a 1)"
@@ -132,7 +132,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 56,
                     "offsetEnd": 56,
-                    "sourceText": "a"
+                    "sourceText": ["a"]
                   }
                 },
                 "content": "(assume (\u003d main::a 0))"
@@ -161,7 +161,7 @@
                     "colNumberStop": 7,
                     "offsetStart": 56,
                     "offsetEnd": 56,
-                    "sourceText": "a"
+                    "sourceText": ["a"]
                   }
                 },
                 "content": "(assume (/\u003d main::a 0))"

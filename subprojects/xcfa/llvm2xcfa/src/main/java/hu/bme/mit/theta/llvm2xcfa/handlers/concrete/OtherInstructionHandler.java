@@ -94,7 +94,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
 
     private void call(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
         Argument functionName = instruction.getArguments().get(instruction.getArguments().size() - 1);
-        XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt());
+        XcfaLocation newLoc = new XcfaLocation(blockState.getName() + "_" + blockState.getBlockCnt(), EmptyMetaData.INSTANCE);
         if (globalState.getProcedures().stream().anyMatch(objects -> objects.get1().equals(functionName.getName()))) {
             System.err.println("More than one function.");
             System.exit(-80);
@@ -108,7 +108,8 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
                 if (objects != null && objects.get2() > 0)
                     stmts.add(havocVar(argument, functionState, blockState));
             }
-            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()), new LlvmMetadata(instruction.getLineNumber()));
+            LlvmMetadata llvmMetadata = new LlvmMetadata(instruction.getLineNumber());
+            XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, llvmMetadata, new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt, llvmMetadata)).toList(), llvmMetadata));
             functionState.getProcedureBuilder().addLoc(newLoc);
             functionState.getProcedureBuilder().addEdge(edge);
         }
@@ -144,7 +145,7 @@ public class OtherInstructionHandler extends BaseInstructionHandler {
             Argument block = instruction.getArguments().get(2 * i + 1);
             Argument value = instruction.getArguments().get(2 * i);
             Tuple2<String, String> key = Tuple2.of(block.getName(), blockState.getName());
-            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1()), new XcfaLocation(key.get2()), new ArrayList<>(), instruction.getLineNumber()));
+            Tuple4<XcfaLocation, XcfaLocation, List<Stmt>, Integer> val = functionState.getInterBlockEdges().getOrDefault(key, Tuple4.of(new XcfaLocation(key.get1(), EmptyMetaData.INSTANCE), new XcfaLocation(key.get2(), EmptyMetaData.INSTANCE), new ArrayList<>(), instruction.getLineNumber()));
             checkState(phiVar.getType().equals(value.getType()), "phiVar and value has to be of the same type!");
             Stmt stmt;
             Expr<?> expr;

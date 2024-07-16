@@ -17,11 +17,21 @@
 package hu.bme.mit.theta.llvm2xcfa;
 
 import hu.bme.mit.theta.xcfa.model.MetaData;
+import jdk.jshell.spi.ExecutionControl;
+import jdk.jshell.spi.ExecutionControl.NotImplementedException;
+import kotlin.NotImplementedError;
+import org.jetbrains.annotations.NotNull;
 
 public class LlvmMetadata extends MetaData {
     private final int lineNumber;
 
     public LlvmMetadata(int lineNumber) {
         this.lineNumber = lineNumber;
+    }
+
+    @NotNull
+    @Override
+    public MetaData join(@NotNull MetaData metadata) {
+        throw new NotImplementedError("Join on llvm metadata not implemented");
     }
 }

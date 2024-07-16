@@ -82,7 +82,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         colNumberStop = source.colNumberStop,
         offsetStart = source.offsetStart,
         offsetEnd = source.offsetEnd,
-        sourceText = source.sourceText
+        sourceText = listOf(source.sourceText)
     )
 
     fun buildXcfa(cProgram: CProgram): XcfaBuilder {
@@ -100,19 +100,20 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             if (type is CArray) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                        cast(type.getValue("$ptrCnt"), globalDeclaration.get2().type))
+                        cast(type.getValue("$ptrCnt"), globalDeclaration.get2().type)),
+                    EmptyMetaData
                 ))
             } else {
                 if (globalDeclaration.get1().initExpr != null && globalDeclaration.get1().initExpr.expression !is UnsupportedInitializer) {
                     initStmtList.add(StmtLabel(
                         Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
                             cast(type.castTo(globalDeclaration.get1().initExpr.expression),
-                                globalDeclaration.get2().type))
+                                globalDeclaration.get2().type)), getMetadata(globalDeclaration.get1().initExpr)
                     ))
                 } else {
                     initStmtList.add(StmtLabel(
                         Stmts.Assign(cast(globalDeclaration.get2(), globalDeclaration.get2().type),
-                            cast(type.nullValue, globalDeclaration.get2().type))
+                            cast(type.nullValue, globalDeclaration.get2().type)), EmptyMetaData
                     ))
                 }
             }
@@ -139,7 +140,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                         Stmts.MemoryAssign(
                             Dereference(globalDeclaration.get2().ref, literalToExpr(i), embeddedType.smtType),
                             cast(initExprs[i.toInt()]?.let { embeddedType.castTo(it) } ?: embeddedType.nullValue,
-                                embeddedType.smtType))
+                                embeddedType.smtType)), EmptyMetaData
                     ))
                 }
             } else if (globalDeclaration.get1().arrayDimensions.size > 1) {
@@ -193,7 +194,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             if (type is CArray && builder.getParams().none { it.first == flatVariable }) {
                 initStmtList.add(StmtLabel(
                     Stmts.Assign(cast(flatVariable, flatVariable.type),
-                        cast(type.getValue("$ptrCnt"), flatVariable.type))
+                        cast(type.getValue("$ptrCnt"), flatVariable.type)), EmptyMetaData
                 ))
             }
         }
@@ -210,8 +211,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
 
         val endinit = getAnonymousLoc(builder, getMetadata(function))
         builder.addLoc(endinit)
-        val initEdge = XcfaEdge(init, endinit, SequenceLabel(initStmtList),
-            metadata = getMetadata(function))
+        val initEdge = XcfaEdge(init, endinit, metadata = getMetadata(function), SequenceLabel(initStmtList, getMetadata(function)))
         builder.addEdge(initEdge)
         init = endinit
         builder.createFinalLoc(getMetadata(function))
@@ -270,26 +270,28 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val type = lhs?.let { CComplexType.getType(it.ref, parseContext) }
 
         if (!checkOverflow || type == null || type !is CInteger || !type.isSsigned) {
-            xcfaEdge = XcfaEdge(initLoc, location, label, metadata = getMetadata(statement))
+            xcfaEdge = XcfaEdge(initLoc, location, metadata = getMetadata(statement), label)
             builder.addEdge(xcfaEdge)
         } else {
             lhs!!
             val middleLoc1 = getAnonymousLoc(builder, getMetadata(statement))
             val middleLoc2 = getAnonymousLoc(builder, getMetadata(statement))
-            xcfaEdge = XcfaEdge(initLoc, middleLoc1, label, metadata = getMetadata(statement))
+            xcfaEdge = XcfaEdge(initLoc, middleLoc1, metadata = getMetadata(statement), label)
             builder.addEdge(xcfaEdge)
 
             xcfaEdge = XcfaEdge(middleLoc1, location,
-                StmtLabel(type.limit(lhs.ref), metadata = getMetadata(statement)),
-                metadata = getMetadata(statement))
+                metadata = getMetadata(statement),
+                StmtLabel(type.limit(lhs.ref), metadata = getMetadata(statement)))
             builder.addEdge(xcfaEdge)
             xcfaEdge = XcfaEdge(middleLoc1, middleLoc2,
+                metadata = getMetadata(statement),
                 StmtLabel(Assume(Not(type.limit(lhs.ref).cond)), metadata = getMetadata(statement)),
-                metadata = getMetadata(statement))
+                )
             builder.addEdge(xcfaEdge)
             xcfaEdge = XcfaEdge(middleLoc2, location,
+                metadata = getMetadata(statement),
                 InvokeLabel("overflow", listOf(), metadata = getMetadata(statement)),
-                metadata = getMetadata(statement))
+                )
             builder.addEdge(xcfaEdge)
         }
         return location
@@ -307,11 +309,11 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         builder.addEdge(xcfaEdge)
         val location = getAnonymousLoc(builder, metadata = getMetadata(statement))
         builder.addLoc(location)
-        xcfaEdge = XcfaEdge(initLoc, location, StmtLabel(
+        xcfaEdge = XcfaEdge(initLoc, location, metadata = getMetadata(statement), StmtLabel(
             statement.assumeStmt,
             choiceType = ChoiceType.MAIN_PATH,
             metadata = getMetadata(statement)
-        ), metadata = getMetadata(statement))
+        ))
         builder.addEdge(xcfaEdge)
         return location
     }
@@ -359,7 +361,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         params.addAll(myParams.stream().map { obj: CStatement -> obj.expression }
             .collect(Collectors.toList()))
         val call = InvokeLabel(statement.functionId, params, metadata = getMetadata(statement))
-        xcfaEdge = XcfaEdge(initLoc, location, call, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(initLoc, location, metadata = getMetadata(statement), call)
         builder.addEdge(xcfaEdge)
         return location
     }
@@ -454,12 +456,12 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val assume = StmtLabel(Stmts.Assume(
             AbstractExprs.Neq(guard.expression, CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.MAIN_PATH, metadata = getMetadata(guard))
-        xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, assume, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, metadata = getMetadata(statement), assume)
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(Stmts.Assume(
             AbstractExprs.Eq(guard.expression, CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.ALTERNATIVE_PATH, metadata = getMetadata(guard))
-        xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, assume1, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, metadata = getMetadata(statement), assume1)
         builder.addEdge(xcfaEdge)
         val outerLastGuard = buildPostStatement(guard,
             ParamPack(builder, outerInnerGuard, null, null, null))
@@ -514,7 +516,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             metadata = if (guard == null) getMetadata(statement) else getMetadata(guard)
         )
         check(lastTest != null)
-        xcfaEdge = XcfaEdge(lastTest, endInit, assume, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(lastTest, endInit, metadata = if (guard == null) getMetadata(statement) else getMetadata(guard), assume)
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(
             Stmts.Assume(if (guard == null) False() else AbstractExprs.Eq(guard.expression,
@@ -522,7 +524,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             choiceType = ChoiceType.ALTERNATIVE_PATH,
             metadata = if (guard == null) getMetadata(statement) else getMetadata(guard)
         )
-        xcfaEdge = XcfaEdge(lastTest, outerLastTest, assume1, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(lastTest, outerLastTest, metadata = if (guard == null) getMetadata(statement) else getMetadata(guard), assume1)
         builder.addEdge(xcfaEdge)
         val innerLastGuard = if (guard == null) endInit else buildPostStatement(guard,
             ParamPack(builder, endInit, endLoc, startIncrement, returnLoc))
@@ -557,7 +559,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         var edge: XcfaEdge = XcfaEdge(lastLoc, initLoc, metadata = getMetadata(statement))
         builder.addEdge(edge)
         edge = XcfaEdge(initLoc,
-            getLoc(builder, statement.label, metadata = getMetadata(statement)))
+            getLoc(builder, statement.label, metadata = getMetadata(statement)), getMetadata(statement))
         builder.addLoc(getLoc(builder, statement.label, metadata = getMetadata(statement)))
         val unreachableLoc: XcfaLocation = XcfaLocation(
             "Unreachable" + XcfaLocation.uniqueCounter(), metadata = getMetadata(statement))
@@ -593,7 +595,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             choiceType = ChoiceType.MAIN_PATH,
             metadata = getMetadata(guard)
         )
-        xcfaEdge = XcfaEdge(endGuard, mainBranch, assume, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(endGuard, mainBranch, metadata = getMetadata(guard), assume)
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(
             Stmts.Assume(AbstractExprs.Eq(guard.expression,
@@ -601,7 +603,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             choiceType = ChoiceType.ALTERNATIVE_PATH,
             metadata = getMetadata(guard)
         )
-        xcfaEdge = XcfaEdge(endGuard, elseBranch, assume1, metadata = getMetadata(statement))
+        xcfaEdge = XcfaEdge(endGuard, elseBranch, metadata = getMetadata(guard), assume1)
         builder.addEdge(xcfaEdge)
         val mainAfterGuard = buildPostStatement(guard,
             ParamPack(builder, mainBranch, breakLoc, continueLoc, returnLoc))
@@ -654,9 +656,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val key: VarDecl<*> = builder.getParams()[0].first
         check(returnLoc != null)
         val type = CComplexType.getType(key.ref, parseContext)
-        val edge = XcfaEdge(endExpr, returnLoc, StmtLabel(Stmts.Assign(cast(key, key.type),
+        val edge = XcfaEdge(endExpr, returnLoc, metadata = getMetadata(statement), StmtLabel(Stmts.Assign(cast(key, key.type),
             cast(type.castTo(expr?.expression ?: type.nullValue), key.type)),
-            metadata = getMetadata(statement)), metadata = getMetadata(statement))
+            metadata = getMetadata(statement)))
         builder.addEdge(edge)
         return endLoc
     }
@@ -703,7 +705,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                     choiceType = ChoiceType.MAIN_PATH,
                     metadata = getMetadata(testValue)
                 )
-                xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(statement))
+                xcfaEdge = XcfaEdge(afterGuard, location, metadata = getMetadata(testValue), assume)
                 builder.addEdge(xcfaEdge)
             } else if (cStatement is CDefault) {
                 val afterGuard = buildPostStatement(testValue,
@@ -711,9 +713,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 val assume = StmtLabel(
                     Stmts.Assume(defaultExpr),
                     choiceType = ChoiceType.MAIN_PATH, // TODO: is this what validators expect?
-                    metadata = getMetadata(cStatement)
+                    metadata = getMetadata(testValue)
                 )
-                xcfaEdge = XcfaEdge(afterGuard, location, assume, metadata = getMetadata(statement))
+                xcfaEdge = XcfaEdge(afterGuard, location, metadata = getMetadata(testValue), assume)
                 builder.addEdge(xcfaEdge)
             }
             lastLocation = cStatement.accept(this,
@@ -759,7 +761,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 choiceType = ChoiceType.MAIN_PATH,
                 metadata = getMetadata(guard)
             )
-            xcfaEdge = XcfaEdge(testEndLoc, innerLoop, assume, metadata = getMetadata(statement))
+            xcfaEdge = XcfaEdge(testEndLoc, innerLoop, metadata = getMetadata(guard), assume)
             builder.addEdge(xcfaEdge)
             val assume1 = StmtLabel(
                 Stmts.Assume(AbstractExprs.Eq(guard.expression,
@@ -767,8 +769,8 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 choiceType = ChoiceType.ALTERNATIVE_PATH,
                 metadata = getMetadata(statement)
             )
-            xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard, assume1,
-                metadata = getMetadata(statement))
+            xcfaEdge = XcfaEdge(testEndLoc, outerBeforeGuard,
+                metadata = getMetadata(statement), assume1)
             builder.addEdge(xcfaEdge)
             val lastGuard = buildPostStatement(guard,
                 ParamPack(builder, innerLoop, endLoc, initLoc, returnLoc))

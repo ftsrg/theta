@@ -126,7 +126,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 129,
                     "offsetEnd": 135,
-                    "sourceText": "d \u003e 100"
+                    "sourceText": ["d \u003e 100"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e main::d 100) 1 0) 0))"
@@ -155,7 +155,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 39,
                     "offsetEnd": 50,
-                    "sourceText": "int a \u003d 110;"
+                    "sourceText": ["int a \u003d 110;"]
                   }
                 },
                 "content": "(assign main::a 110)"
@@ -171,7 +171,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 56,
                     "offsetEnd": 67,
-                    "sourceText": "int *b \u003d \u0026a;"
+                    "sourceText": ["int *b \u003d \u0026a;"]
                   }
                 },
                 "content": "(assign main::b (\u0026 main::a))"
@@ -187,7 +187,7 @@
                     "colNumberStop": 22,
                     "offsetStart": 73,
                     "offsetEnd": 91,
-                    "sourceText": "char *c \u003d (char*)b;"
+                    "sourceText": ["char *c \u003d (char*)b;"]
                   }
                 },
                 "content": "(assign main::c (mod main::b 4294967296))"
@@ -203,7 +203,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::a 90)"
@@ -219,7 +219,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 109,
                     "offsetEnd": 120,
-                    "sourceText": "char d \u003d *c;"
+                    "sourceText": ["char d \u003d *c;"]
                   }
                 },
                 "content": "(assign main::d (* main::c))"
@@ -248,7 +248,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 129,
                     "offsetEnd": 135,
-                    "sourceText": "d \u003e 100"
+                    "sourceText": ["d \u003e 100"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e main::d 100) 1 0) 0))"
@@ -277,7 +277,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign memory_Int (write memory_Int main::b 120))"
@@ -293,7 +293,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::d (* main::c))"
@@ -322,7 +322,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 186,
                     "offsetEnd": 192,
-                    "sourceText": "d \u003e 100"
+                    "sourceText": ["d \u003e 100"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003e main::d 100) 1 0) 0))"
@@ -351,7 +351,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 186,
                     "offsetEnd": 192,
-                    "sourceText": "d \u003e 100"
+                    "sourceText": ["d \u003e 100"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003e main::d 100) 1 0) 0))"

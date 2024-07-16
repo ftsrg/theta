@@ -59,7 +59,7 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
                             initProc.forEach {
                                 val initAssign = StmtLabel(Assign(cast(mallocVar, mallocVar.type),
-                                    cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type)))
+                                    cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type)), EmptyMetaData)
                                 val newEdges = it.initLoc.outgoingEdges.map {
                                     it.withLabel(
                                         SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata))
@@ -74,10 +74,11 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                                 ret.type))
                         val assign2 = AssignStmt.of(
                             cast(ret.decl as VarDecl<*>, ret.type), cast(mallocVar.ref, ret.type))
-                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(
+                        builder.addEdge(XcfaEdge(it.source, it.target, invokeLabel.metadata, SequenceLabel(
                             listOf(
                                 StmtLabel(assign1, metadata = invokeLabel.metadata),
-                                StmtLabel(assign2, metadata = invokeLabel.metadata)))))
+                                StmtLabel(assign2, metadata = invokeLabel.metadata)),
+                                invokeLabel.metadata)))
                     } else {
                         builder.addEdge(it)
                     }

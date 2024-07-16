@@ -81,7 +81,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 19,
                     "offsetEnd": 30,
-                    "sourceText": "return x - 1"
+                    "sourceText": ["return x - 1"]
                   }
                 },
                 "content": "(assign f_ret (+ f::x -1))"
@@ -170,7 +170,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 56,
                     "offsetEnd": 67,
-                    "sourceText": "return x + 1"
+                    "sourceText": ["return x + 1"]
                   }
                 },
                 "content": "(assign fp_ret (+ fp::x 1))"
@@ -271,7 +271,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 170,
                     "offsetEnd": 176,
-                    "sourceText": "x \u003d\u003d -2"
+                    "sourceText": ["x \u003d\u003d -2"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d main::x -2) 1 0) 0))"
@@ -300,7 +300,7 @@
                     "colNumberStop": 13,
                     "offsetStart": 170,
                     "offsetEnd": 176,
-                    "sourceText": "x \u003d\u003d -2"
+                    "sourceText": ["x \u003d\u003d -2"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d main::x -2) 1 0) 0))"
@@ -329,7 +329,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::x -2147483648) (\u003c\u003d main::x 2147483647)))"
@@ -345,7 +345,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 105,
                     "offsetEnd": 108,
-                    "sourceText": "f(x)"
+                    "sourceText": ["f(x)"]
                   }
                 },
                 "content": "(assign f::x (+ main::x))"
@@ -361,7 +361,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 19,
                     "offsetEnd": 30,
-                    "sourceText": "return x - 1"
+                    "sourceText": ["return x - 1"]
                   }
                 },
                 "content": "(assign f_ret (+ f::x -1))"
@@ -377,7 +377,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 105,
                     "offsetEnd": 108,
-                    "sourceText": "f(x)"
+                    "sourceText": ["f(x)"]
                   }
                 },
                 "content": "(assign call_f_ret96 (+ f_ret))"
@@ -393,7 +393,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 112,
                     "offsetEnd": 116,
-                    "sourceText": "fp(x)"
+                    "sourceText": ["fp(x)"]
                   }
                 },
                 "content": "(assign fp::x (+ main::x))"
@@ -409,7 +409,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 56,
                     "offsetEnd": 67,
-                    "sourceText": "return x + 1"
+                    "sourceText": ["return x + 1"]
                   }
                 },
                 "content": "(assign fp_ret (+ fp::x 1))"
@@ -425,7 +425,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 112,
                     "offsetEnd": 116,
-                    "sourceText": "fp(x)"
+                    "sourceText": ["fp(x)"]
                   }
                 },
                 "content": "(assign call_fp_ret97 (+ fp_ret))"
@@ -441,7 +441,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::x (+ call_f_ret96 (- call_fp_ret97)))"
@@ -457,7 +457,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 127,
                     "offsetEnd": 130,
-                    "sourceText": "f(x)"
+                    "sourceText": ["f(x)"]
                   }
                 },
                 "content": "(assign f::x (+ main::x))"
@@ -473,7 +473,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 19,
                     "offsetEnd": 30,
-                    "sourceText": "return x - 1"
+                    "sourceText": ["return x - 1"]
                   }
                 },
                 "content": "(assign f_ret (+ f::x -1))"
@@ -489,7 +489,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 127,
                     "offsetEnd": 130,
-                    "sourceText": "f(x)"
+                    "sourceText": ["f(x)"]
                   }
                 },
                 "content": "(assign call_f_ret98 (+ f_ret))"
@@ -505,7 +505,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 134,
                     "offsetEnd": 138,
-                    "sourceText": "fp(x)"
+                    "sourceText": ["fp(x)"]
                   }
                 },
                 "content": "(assign fp::x (+ main::x))"
@@ -521,7 +521,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 56,
                     "offsetEnd": 67,
-                    "sourceText": "return x + 1"
+                    "sourceText": ["return x + 1"]
                   }
                 },
                 "content": "(assign fp_ret (+ fp::x 1))"
@@ -537,7 +537,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 134,
                     "offsetEnd": 138,
-                    "sourceText": "fp(x)"
+                    "sourceText": ["fp(x)"]
                   }
                 },
                 "content": "(assign call_fp_ret99 (+ fp_ret))"
@@ -553,7 +553,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::x (+ call_f_ret98 (- call_fp_ret99)))"
@@ -569,7 +569,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 149,
                     "offsetEnd": 152,
-                    "sourceText": "f(x)"
+                    "sourceText": ["f(x)"]
                   }
                 },
                 "content": "(assign f::x (+ main::x))"
@@ -585,7 +585,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 19,
                     "offsetEnd": 30,
-                    "sourceText": "return x - 1"
+                    "sourceText": ["return x - 1"]
                   }
                 },
                 "content": "(assign f_ret (+ f::x -1))"
@@ -601,7 +601,7 @@
                     "colNumberStop": 11,
                     "offsetStart": 149,
                     "offsetEnd": 152,
-                    "sourceText": "f(x)"
+                    "sourceText": ["f(x)"]
                   }
                 },
                 "content": "(assign call_f_ret100 (+ f_ret))"
@@ -617,7 +617,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 156,
                     "offsetEnd": 160,
-                    "sourceText": "fp(x)"
+                    "sourceText": ["fp(x)"]
                   }
                 },
                 "content": "(assign fp::x (+ main::x))"
@@ -633,7 +633,7 @@
                     "colNumberStop": 15,
                     "offsetStart": 56,
                     "offsetEnd": 67,
-                    "sourceText": "return x + 1"
+                    "sourceText": ["return x + 1"]
                   }
                 },
                 "content": "(assign fp_ret (+ fp::x 1))"
@@ -649,7 +649,7 @@
                     "colNumberStop": 19,
                     "offsetStart": 156,
                     "offsetEnd": 160,
-                    "sourceText": "fp(x)"
+                    "sourceText": ["fp(x)"]
                   }
                 },
                 "content": "(assign call_fp_ret101 (+ fp_ret))"
@@ -665,7 +665,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::x (+ call_f_ret100 (- call_fp_ret101)))"

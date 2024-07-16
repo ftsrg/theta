@@ -80,9 +80,9 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
     }
 
     private void unreachable(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-        functionState.getProcedureBuilder().createErrorLoc();
+        functionState.getProcedureBuilder().createErrorLoc(EmptyMetaData.INSTANCE);
         XcfaLocation errLoc = functionState.getProcedureBuilder().getErrorLoc().get();
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, NopLabel.INSTANCE, new LlvmMetadata(instruction.getLineNumber()));
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), errLoc, new LlvmMetadata(instruction.getLineNumber()), new NopLabel(EmptyMetaData.INSTANCE));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(errLoc);
     }
@@ -102,7 +102,8 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             default:
                 throw new IllegalStateException("Unexpected value: " + instruction.getArguments().size());
         }
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), functionState.getProcedureBuilder().getFinalLoc().orElseThrow(), new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt)).toList()), new LlvmMetadata(instruction.getLineNumber()));
+        LlvmMetadata llvmMetadata = new LlvmMetadata(instruction.getLineNumber());
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), functionState.getProcedureBuilder().getFinalLoc().orElseThrow(), llvmMetadata, new SequenceLabel(stmts.stream().map(stmt -> new StmtLabel(stmt, llvmMetadata)).toList(), llvmMetadata));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc().orElseThrow());
     }
@@ -156,7 +157,8 @@ public class TerminatorInstructionHandler extends BaseInstructionHandler {
             functionState.getInterBlockEdges().put(key, Tuple4.of(blockState.getLastLocation(), loc, stmts, instruction.getLineNumber()));
         }
         XcfaLocation loc = functionState.getLocations().get(instruction.getArguments().get(1).getName());
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, new StmtLabel(Assume(BoolExprs.Not(defaultBranch))), new LlvmMetadata(instruction.getLineNumber()));
+        LlvmMetadata llvmMetadata = new LlvmMetadata(instruction.getLineNumber());
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), loc, llvmMetadata, new StmtLabel(Assume(BoolExprs.Not(defaultBranch)), llvmMetadata));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(functionState.getProcedureBuilder().getFinalLoc().get());
     }

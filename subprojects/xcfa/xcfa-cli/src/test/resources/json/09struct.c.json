@@ -111,7 +111,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::a.a -2147483648) (\u003c\u003d main::a.a 2147483647)))"
@@ -127,7 +127,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::a.c -128) (\u003c\u003d main::a.c 127)))"
@@ -143,7 +143,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::a.b.a -2147483648) (\u003c\u003d main::a.b.a 2147483647)))"
@@ -159,7 +159,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::a.a 3)"
@@ -175,7 +175,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::a.c 1)"
@@ -204,7 +204,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 158,
                     "offsetEnd": 178,
-                    "sourceText": "a.a + a.c + a.b.a \u003c 4"
+                    "sourceText": ["a.a + a.c + a.b.a \u003c 4"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003c (+ main::a.a main::a.c main::a.b.a) 4) 1 0) 0))"
@@ -233,7 +233,7 @@
                     "colNumberStop": 27,
                     "offsetStart": 158,
                     "offsetEnd": 178,
-                    "sourceText": "a.a + a.c + a.b.a \u003c 4"
+                    "sourceText": ["a.a + a.c + a.b.a \u003c 4"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003c (+ main::a.a main::a.c main::a.b.a) 4) 1 0) 0))"

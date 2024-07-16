@@ -22,6 +22,7 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.Instruction;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
+import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
 import hu.bme.mit.theta.xcfa.model.NopLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -52,9 +53,10 @@ public class BuiltinFunctionHandler extends BaseInstructionHandler {
     }
 
     private void error(Instruction instruction, GlobalState globalState, FunctionState functionState, BlockState blockState) {
-        functionState.getProcedureBuilder().createErrorLoc();
+        functionState.getProcedureBuilder().createErrorLoc(EmptyMetaData.INSTANCE);
         XcfaLocation newLoc = functionState.getProcedureBuilder().getErrorLoc().get();
-        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, NopLabel.INSTANCE, new LlvmMetadata(instruction.getLineNumber()));
+        LlvmMetadata llvmMetadata = new LlvmMetadata(instruction.getLineNumber());
+        XcfaEdge edge = new XcfaEdge(blockState.getLastLocation(), newLoc, llvmMetadata, new NopLabel(EmptyMetaData.INSTANCE));
         functionState.getProcedureBuilder().addEdge(edge);
         blockState.setLastLocation(newLoc);
     }

@@ -53,7 +53,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 128,
                     "offsetEnd": 133,
-                    "sourceText": "i \u003d\u003d 1"
+                    "sourceText": ["i \u003d\u003d 1"]
                   }
                 },
                 "content": "(assume (\u003d (ite (\u003d main::i 1) 1 0) 0))"
@@ -82,7 +82,7 @@
                     "colNumberStop": 12,
                     "offsetStart": 128,
                     "offsetEnd": 133,
-                    "sourceText": "i \u003d\u003d 1"
+                    "sourceText": ["i \u003d\u003d 1"]
                   }
                 },
                 "content": "(assume (/\u003d (ite (\u003d main::i 1) 1 0) 0))"
@@ -111,7 +111,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 81,
                     "offsetEnd": 103,
-                    "sourceText": "__VERIFIER_nondet_int()"
+                    "sourceText": ["__VERIFIER_nondet_int()"]
                   }
                 },
                 "content": "(havoc main::i)"
@@ -127,7 +127,7 @@
                     "colNumberStop": 34,
                     "offsetStart": 81,
                     "offsetEnd": 103,
-                    "sourceText": "__VERIFIER_nondet_int()"
+                    "sourceText": ["__VERIFIER_nondet_int()"]
                   }
                 },
                 "content": "(assume (and (\u003e\u003d main::i -2147483648) (\u003c\u003d main::i 2147483647)))"
@@ -143,7 +143,7 @@
                     "colNumberStop": -1,
                     "offsetStart": -1,
                     "offsetEnd": -1,
-                    "sourceText": ""
+                    "sourceText": [""]
                   }
                 },
                 "content": "(assign main::i (* 2 main::i))"

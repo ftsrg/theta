@@ -28,6 +28,8 @@ import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.cli.witnesses.graphml.WitnessEdge
+import hu.bme.mit.theta.xcfa.cli.witnesses.graphml.WitnessNode
 import hu.bme.mit.theta.xcfa.model.*
 import java.math.BigInteger
 
@@ -61,7 +63,7 @@ fun traceToWitness(
             violation = state.processes.any { it.value.locs.any(XcfaLocation::error) },
             xcfaLocations = state.processes.map { Pair(it.key, it.value.locs) }.toMap(),
             cSources = state.processes.map {
-                Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+                Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText?.joinToString("\n") ?: "<unknown>" })
             }.toMap(),
             globalState = state.sGlobal
         )
@@ -99,7 +101,7 @@ fun traceToWitness(
         violation = lastState.processes.any { it.value.locs.any(XcfaLocation::error) },
         xcfaLocations = lastState.processes.map { Pair(it.key, it.value.locs) }.toMap(),
         cSources = lastState.processes.map {
-            Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText ?: "<unknown>" })
+            Pair(it.key, it.value.locs.map { it.getCMetaData()?.sourceText?.joinToString("\n") ?: "<unknown>" })
         }.toMap(),
         globalState = lastState.sGlobal
     )
@@ -121,7 +123,7 @@ fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
 
 
 private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: XcfaLabel, pid: Int,
-    valuation: Valuation, parseContext: ParseContext): WitnessEdge =
+                        valuation: Valuation, parseContext: ParseContext): WitnessEdge =
     WitnessEdge(
         sourceId = lastNode.id,
         targetId = node.id,

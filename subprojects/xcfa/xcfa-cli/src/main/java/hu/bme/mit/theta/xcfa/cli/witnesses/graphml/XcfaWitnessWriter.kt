@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xcfa.cli.utils
+package hu.bme.mit.theta.xcfa.cli.witnesses.graphml
 
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
@@ -23,7 +23,6 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.solver.SolverFactory
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.cli.witnesses.Witness
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesses.traceToWitness
 import java.io.BufferedWriter
