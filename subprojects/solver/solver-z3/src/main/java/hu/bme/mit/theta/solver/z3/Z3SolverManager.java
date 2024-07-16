@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import hu.bme.mit.theta.solver.HornSolver;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverBase;
@@ -89,6 +90,14 @@ public final class Z3SolverManager extends SolverManager {
         public ItpSolver createItpSolver() {
             checkState(!closed, "Solver manager was closed");
             final var solver = solverFactory.createItpSolver();
+            instantiatedSolvers.add(solver);
+            return solver;
+        }
+
+        @Override
+        public HornSolver createHornSolver() {
+            checkState(!closed, "Solver manager was closed");
+            final var solver = solverFactory.createHornSolver();
             instantiatedSolvers.add(solver);
             return solver;
         }
