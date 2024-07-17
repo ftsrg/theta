@@ -121,7 +121,7 @@ data class Segment(
 }
 
 data class Cycle(
-    val items : Set<CycleItem>? = null,
+    val items : Set<CycleItem>,
 ) : ContentItem {
     companion object {
         fun create(cycle: List<YamlCycle>) : Cycle {

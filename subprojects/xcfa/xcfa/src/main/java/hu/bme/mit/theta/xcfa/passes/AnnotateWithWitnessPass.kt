@@ -5,12 +5,10 @@ import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.stmt.Stmts.SequenceStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.witness.yaml.model.Cycle
-import hu.bme.mit.theta.witness.yaml.model.Segment
-import hu.bme.mit.theta.witness.yaml.model.Waypoint
-import hu.bme.mit.theta.witness.yaml.model.Witness2
 import hu.bme.mit.theta.witness.yaml.serialization.WaypointType
 import hu.bme.mit.theta.metadata.CMetaData
+import hu.bme.mit.theta.witness.yaml.model.*
+import hu.bme.mit.theta.witness.yaml.serialization.ActionEnum
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -31,7 +29,7 @@ class AnnotateWithWitnessPass : ProcedurePass {
             for (item in entry.content.items) {
                 when (item) {
                     is Cycle -> {
-                        //annotateWithCycle(item, builder)
+                        annotateWithCycle(item, builder)
                     }
 
                     is Segment -> {
@@ -43,19 +41,27 @@ class AnnotateWithWitnessPass : ProcedurePass {
         return builder
     }
 
-    fun annotateWithSegment(segment: Segment, builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+    private fun annotateWithSegment(segment: Segment, builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+        var b = builder
         for (waypoint in segment.waypoint) {
-            when (waypoint.type) {
-                WaypointType.ASSUMPTION -> TODO()
-                WaypointType.TARGET -> TODO()
-                WaypointType.FUNCTION_ENTER -> TODO()
-                WaypointType.FUNCTION_RETURN -> TODO()
-                WaypointType.BRANCHING -> annotateBranching(waypoint, builder)
-            }
+            b = annotateWithWaypoint(waypoint, b)
         }
-        return builder
+        return b
     }
 
+    private fun annotateWithWaypoint(waypoint : Waypoint, builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
+        return when (waypoint.type) {
+            WaypointType.ASSUMPTION -> TODO()
+            WaypointType.TARGET -> TODO()
+            WaypointType.FUNCTION_ENTER -> TODO()
+            WaypointType.FUNCTION_RETURN -> TODO()
+            WaypointType.BRANCHING -> annotateBranching(waypoint, builder)
+        }
+    }
+
+    /**
+     * Branching waypoint shows which way we took in that branch
+     */
     private fun annotateBranching(
         waypoint: Waypoint,
         builder: XcfaProcedureBuilder
@@ -66,41 +72,67 @@ class AnnotateWithWitnessPass : ProcedurePass {
                 for(edge in loc.outgoingEdges) {
                     checkState(edge.label is SequenceLabel)
                     if(edge.label is SequenceLabel) {
-                        if(edge.getFlatLabels().any { it is StmtLabel && it.choiceType == ChoiceType.MAIN_PATH }) {
-                            newEdges[edge] = XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(
-                                (listOf(
-                                    StmtLabel(Assume(BoolExprs.True()), edge.metadata)) + edge.label.labels
-                                        ),
-                                edge.metadata
-                            ))
-                        } else if(edge.getFlatLabels().any { it is StmtLabel && it.choiceType == ChoiceType.ALTERNATIVE_PATH }){
-                            newEdges[edge] = XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(
-                                (listOf(
-                                    StmtLabel(Assume(BoolExprs.True()), edge.metadata)) + edge.label.labels
-                                        ),
-                                edge.metadata
-                            ))
+                        // there must be a constraint, we know it's a branching
+                        if((waypoint.constraint!!.value=="true" && waypoint.action==ActionEnum.FOLLOW) || (waypoint.constraint!!.value=="false" && waypoint.action==ActionEnum.AVOID)) {
+                            if(edge.getFlatLabels().any { it is StmtLabel && it.choiceType == ChoiceType.MAIN_PATH }) {
+                                newEdges[edge] = XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(
+                                    (listOf(
+                                        StmtLabel(Assume(BoolExprs.True()), edge.metadata)) + edge.label.labels
+                                            ),
+                                    edge.metadata
+                                ))
+                            } else if(edge.getFlatLabels().any { it is StmtLabel && it.choiceType == ChoiceType.ALTERNATIVE_PATH }) {
+                                newEdges[edge] = XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(
+                                    (listOf(
+                                        StmtLabel(Assume(BoolExprs.False()), edge.metadata)) + edge.label.labels
+                                            ),
+                                    edge.metadata
+                                ))
+                            }
+
+                        } else if((waypoint.constraint!!.value=="false" && waypoint.action==ActionEnum.FOLLOW) || (waypoint.constraint!!.value=="true" && waypoint.action==ActionEnum.AVOID)) {
+                            if(edge.getFlatLabels().any { it is StmtLabel && it.choiceType == ChoiceType.ALTERNATIVE_PATH }) {
+                                newEdges[edge] = XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(
+                                    (listOf(
+                                        StmtLabel(Assume(BoolExprs.True()), edge.metadata)) + edge.label.labels
+                                            ),
+                                    edge.metadata
+                                ))
+                            } else if(edge.getFlatLabels().any { it is StmtLabel && it.choiceType == ChoiceType.MAIN_PATH }) {
+                                newEdges[edge] = XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(
+                                    (listOf(
+                                        StmtLabel(Assume(BoolExprs.False()), edge.metadata)) + edge.label.labels
+                                            ),
+                                    edge.metadata
+                                ))
+                            }
+                        } else {
+                            throw RuntimeException("Branching waypoint with unknown constrain-action combination: ${waypoint.constraint!!.value}, ${waypoint.action}")
                         }
                     }
                 }
             }
 
         }
-        for(edge in builder.getEdges()) {
-            val cMetaData = edge.getCMetaData()
-            // TODO add col number check
-            if(cMetaData!=null && cMetaData.lineNumberStart?.equals(waypoint.location.line) == true) {
-                newEdges[edge] = XcfaEdge(edge.source, edge.target, edge.metadata, SequenceLabel(StmtLabel(Assume(), edge.metadata, ChoiceType.MAIN_PATH), edge.label))
-            }
-        }
         for(edgePair in newEdges.entries) {
             builder.addEdge(edgePair.key)
             builder.removeEdge(edgePair.value)
         }
+        return builder
     }
 
-    fun annotateWithCycle(cycle: Cycle, builder : XcfaProcedureBuilder) : XcfaProcedureBuilder {
-        TODO()
+    private fun annotateWithCycle(cycle: Cycle, builder : XcfaProcedureBuilder) : XcfaProcedureBuilder {
+        var b = builder
+        for(item in cycle.items) {
+            b = when (item) {
+                is Segment -> annotateWithSegment(item, b)
+                is Honda -> b // xcfa is not annotated with the honda, it is used elsewhere
+                else -> {
+                    throw RuntimeException("Unexpected item type ${item.javaClass.canonicalName}")
+                }
+            }
+        }
+        return b
     }
 }
 
