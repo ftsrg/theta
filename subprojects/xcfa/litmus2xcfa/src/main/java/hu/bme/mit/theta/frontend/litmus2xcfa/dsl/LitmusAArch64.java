@@ -24,6 +24,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64BaseVisitor;
 import hu.bme.mit.theta.litmus2xcfa.dsl.gen.LitmusAArch64Parser;
+import hu.bme.mit.theta.metadata.EmptyMetaData;
 import hu.bme.mit.theta.xcfa.model.*;
 import hu.bme.mit.theta.xcfa.passes.LitmusPasses;
 

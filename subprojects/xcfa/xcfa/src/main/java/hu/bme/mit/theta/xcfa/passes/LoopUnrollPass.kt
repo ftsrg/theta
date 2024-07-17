@@ -23,6 +23,8 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.metadata.EmptyMetaData
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xcfa.collectVars
@@ -60,7 +62,8 @@ class LoopUnrollPass : ProcedurePass {
 
         private class BasicStmtAction(private val stmt: Stmt) : StmtAction() {
             constructor(edge: XcfaEdge) : this(edge.label.toStmt())
-            constructor(edges: List<XcfaEdge>) : this(SequenceLabel(edges.map { it.label }, edges.map { it.metadata }.fold(EmptyMetaData, MetaData::join)).toStmt())
+            constructor(edges: List<XcfaEdge>) : this(SequenceLabel(edges.map { it.label }, edges.map { it.metadata }.fold(
+                EmptyMetaData, MetaData::join)).toStmt())
 
             override fun getStmts() = listOf(stmt)
         }

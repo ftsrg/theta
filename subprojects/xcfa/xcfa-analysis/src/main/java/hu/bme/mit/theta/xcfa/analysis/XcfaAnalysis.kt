@@ -42,6 +42,8 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.utils.TypeUtils
+import hu.bme.mit.theta.metadata.EmptyMetaData
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.coi.ConeOfInfluence

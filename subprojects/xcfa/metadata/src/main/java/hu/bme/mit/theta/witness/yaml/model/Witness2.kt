@@ -1,7 +1,13 @@
-package hu.bme.mit.theta.xcfa.cli.witnesses.yaml.witness
+package hu.bme.mit.theta.witness.yaml.model
 
 import com.google.common.base.Preconditions.checkState
-import hu.bme.mit.theta.xcfa.cli.witnesses.yaml.serialization.*
+import hu.bme.mit.theta.witness.yaml.serialization.*
+
+/**
+ * Data classes for the Witness 2.0 format
+ * Note: line and column numbers are already changed to 0-indexed!
+ * (from the 1-indexed values in the witness)
+ */
 
 data class Witness2(
     val entries : Set<WitnessEntry>
@@ -99,7 +105,7 @@ interface ContentItem
 interface CycleItem
 
 data class Segment(
-    val waypoint: Set<Waypoint>? = null,
+    val waypoint: Set<Waypoint>,
 ) : ContentItem, CycleItem {
     companion object {
         fun create(segment: List<YamlSegment>) : Segment {
@@ -165,13 +171,13 @@ data class Location(
     val function: String? = null
 ) {
     init {
-        checkState(line >= 1, "line value must be >=1: $line")
-        checkState(if(column != null) column>=1 else true, "column value must be >=1: $column")
+        checkState(line >= 0, "line value must be >=0: $line")
+        checkState(if(column != null) column>=0 else true, "column value must be >=0: $column")
     }
 
     companion object {
         fun create(location: YamlLocation) : Location {
-            return Location(location.file_name, location.line, location.column, location.function)
+            return Location(location.file_name, location.line-1, if(location.column!=null) location.column-1 else null, location.function)
         }
     }
 }

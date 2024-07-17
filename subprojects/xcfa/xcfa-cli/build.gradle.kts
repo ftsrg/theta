@@ -17,7 +17,6 @@
 plugins {
     id("kotlin-common")
     id("cli-tool")
-    id("org.jetbrains.kotlin.plugin.serialization") version Versions.kotlinserialization apply true
 }
 
 dependencies {
@@ -42,11 +41,10 @@ dependencies {
     implementation(project(":theta-litmus2xcfa"))
     implementation(project(":theta-graph-solver"))
     implementation(project(":theta-cat"))
+    implementation(project(":theta-metadata"))
     implementation(files(rootDir.resolve(Deps.z3legacy)))
     implementation("com.zaxxer:nuprocess:2.0.5")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:${Versions.kotlin}")
-    implementation(Deps.kotlinserialization)
-    implementation(Deps.kaml)
     testImplementation(kotlin("script-runtime"))
 }
 

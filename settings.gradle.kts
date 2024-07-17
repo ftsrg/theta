@@ -45,6 +45,7 @@ include(
     "xcfa/xcfa2chc",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
+    "xcfa/metadata",
 
     "xta/xta",
     "xta/xta-analysis",

@@ -35,7 +35,7 @@ import hu.bme.mit.theta.solver.smtlib.impl.generic.GenericSmtLibTypeTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTypeTransformer;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.metadata.EmptyMetaData;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder;

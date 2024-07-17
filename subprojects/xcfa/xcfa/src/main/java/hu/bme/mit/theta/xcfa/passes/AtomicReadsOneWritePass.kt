@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
 

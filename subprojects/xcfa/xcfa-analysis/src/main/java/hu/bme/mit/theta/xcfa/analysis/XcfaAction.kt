@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.ptr.PtrAction
 import hu.bme.mit.theta.analysis.ptr.WriteTriples
 import hu.bme.mit.theta.core.stmt.Stmt
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.flatten
 
@@ -34,11 +35,11 @@ constructor(val pid: Int, val edge: XcfaEdge, private val lastWrites: WriteTripl
     private val stmts: List<Stmt> = label.toStmt().flatten()
 
     constructor(pid: Int,
-        source: XcfaLocation,
-        target: XcfaLocation,
-        label: XcfaLabel = NopLabel(EmptyMetaData),
-        lastWrites: WriteTriples = emptyMap(),
-        nextCnt: Int = 0) :
+                source: XcfaLocation,
+                target: XcfaLocation,
+                label: XcfaLabel = NopLabel(EmptyMetaData),
+                lastWrites: WriteTriples = emptyMap(),
+                nextCnt: Int = 0) :
         this(pid, XcfaEdge(source, target, label.metadata, label), lastWrites, nextCnt)
 
     override val stmtList: List<Stmt>

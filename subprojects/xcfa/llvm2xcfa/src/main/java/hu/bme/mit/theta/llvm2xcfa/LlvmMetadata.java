@@ -16,9 +16,7 @@
 
 package hu.bme.mit.theta.llvm2xcfa;
 
-import hu.bme.mit.theta.xcfa.model.MetaData;
-import jdk.jshell.spi.ExecutionControl;
-import jdk.jshell.spi.ExecutionControl.NotImplementedException;
+import hu.bme.mit.theta.metadata.MetaData;
 import kotlin.NotImplementedError;
 import org.jetbrains.annotations.NotNull;
 

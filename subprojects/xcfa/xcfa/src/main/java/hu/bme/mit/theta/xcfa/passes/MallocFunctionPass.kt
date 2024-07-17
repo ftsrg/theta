@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import org.abego.treelayout.internal.util.Contract.checkState
@@ -59,7 +60,8 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
                             initProc.forEach {
                                 val initAssign = StmtLabel(Assign(cast(mallocVar, mallocVar.type),
-                                    cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type)), EmptyMetaData)
+                                    cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type)), EmptyMetaData
+                                )
                                 val newEdges = it.initLoc.outgoingEdges.map {
                                     it.withLabel(
                                         SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata))

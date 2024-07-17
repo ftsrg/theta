@@ -26,10 +26,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTra
 import hu.bme.mit.theta.llvm2xcfa.ArithmeticType
 import hu.bme.mit.theta.llvm2xcfa.XcfaUtils
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
-import hu.bme.mit.theta.xcfa.cli.params.CHCFrontendConfig
-import hu.bme.mit.theta.xcfa.cli.params.ExitCodes
-import hu.bme.mit.theta.xcfa.cli.params.InputType
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.ChcPasses
 import org.antlr.v4.runtime.CharStreams
@@ -52,7 +49,8 @@ fun getXcfa(config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger
 
             InputType.C -> {
                 parseC(config.inputConfig.input!!, config.inputConfig.property, parseContext, logger,
-                    uniqueWarningLogger)
+                    uniqueWarningLogger, config.backendConfig.backend == Backend.VALIDATOR
+                )
             }
 
             InputType.LLVM -> XcfaUtils.fromFile(config.inputConfig.input!!, ArithmeticType.efficient)
@@ -77,18 +75,18 @@ fun getXcfa(config: XcfaConfig<*, *>, parseContext: ParseContext, logger: Logger
     }
 
 private fun parseC(input: File, explicitProperty: ErrorDetection, parseContext: ParseContext, logger: Logger,
-    uniqueWarningLogger: Logger): XCFA {
+    uniqueWarningLogger: Logger, validation: Boolean = false): XCFA {
     val xcfaFromC = try {
         val stream = FileInputStream(input)
         getXcfaFromC(stream, parseContext, false,
-            explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+            explicitProperty == ErrorDetection.OVERFLOW, validation, uniqueWarningLogger).first
     } catch (e: Throwable) {
         if (parseContext.arithmetic == ArchitectureConfig.ArithmeticType.efficient) {
             parseContext.arithmetic = ArchitectureConfig.ArithmeticType.bitvector
             logger.write(Logger.Level.INFO, "Retrying parsing with bitvector arithmetic...\n")
             val stream = FileInputStream(input)
             val xcfa = getXcfaFromC(stream, parseContext, false,
-                explicitProperty == ErrorDetection.OVERFLOW, uniqueWarningLogger).first
+                explicitProperty == ErrorDetection.OVERFLOW, validation, uniqueWarningLogger).first
             parseContext.addArithmeticTrait(ArithmeticTrait.BITWISE)
             xcfa
         } else {

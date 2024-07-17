@@ -34,10 +34,10 @@ fun XCFA.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)? = null): String {
 fun XcfaProcedure.toDot(edgeLabelCustomizer: ((XcfaEdge) -> String)?): String {
     val builder = StringBuilder()
     builder.appendLine("label=\"$name\";")
-    locs.forEach { builder.appendLine("${it.name}[];") }
+    locs.forEach { builder.appendLine("${it.name}[label=\"${it.name}\\n${it.metadata.toString().replace(Regex("[\r\n\t ]+"), " ").replace("\"", "'")}\"];") }
     edges.forEach {
         builder.appendLine(
-            "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\"];")
+            "${it.source.name} -> ${it.target.name} [label=\"${it.label} ${edgeLabelCustomizer?.invoke(it) ?: ""}\\n${it.metadata.toString().replace(Regex("[\r\n\t ]+"), " ").replace("\"", "'")}\"];")
     }
     return builder.toString()
 }

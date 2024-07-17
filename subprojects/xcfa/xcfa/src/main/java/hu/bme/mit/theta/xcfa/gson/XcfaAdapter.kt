@@ -24,6 +24,7 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 

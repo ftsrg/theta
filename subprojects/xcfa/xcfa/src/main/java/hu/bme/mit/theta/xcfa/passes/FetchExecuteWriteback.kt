@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.model.*
 
@@ -74,7 +75,8 @@ class FetchExecuteWriteback(val parseContext: ParseContext) : ProcedurePass {
                     val lut = getDerefLut(dereferences, builder)
                     SequenceLabel(lut.map {
                         StmtLabel(Assign(cast(it.value, it.value.type),
-                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)), EmptyMetaData)
+                            cast(it.key.map { it.replaceDerefs(lut) }, it.value.type)), EmptyMetaData
+                        )
                     } + InvokeLabel(this.name, this.params.map { it.replaceDerefs(lut) }, metadata,
                         tempLookup), metadata)
                 }

@@ -101,3 +101,27 @@ class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : Proce
 ))
 
 class LitmusPasses : ProcedurePassManager()
+
+class CValidationPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(
+    listOf(
+        // formatting
+        NormalizePass(),
+        DeterministicPass(),
+        // handling intrinsics
+        ErrorLocationPass(checkOverflow),
+        FinalLocationPass(checkOverflow),
+        SvCompIntrinsicsPass(),
+        FpFunctionsToExprsPass(parseContext),
+        CLibraryFunctionsPass(),
+    ),
+    listOf(
+        ReferenceElimination(parseContext),
+        MallocFunctionPass(parseContext),
+    ),
+    listOf(
+        // handling remaining function calls
+        NoSideEffectPass(parseContext),
+        NondetFunctionPass(),
+        HavocPromotionAndRange(parseContext),
+    ),
+)

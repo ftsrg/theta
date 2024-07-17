@@ -70,7 +70,13 @@ class XcfaPredAnalysisTest {
     fun testNoporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         println("Testing NOPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        val xcfa = getXcfaFromC(
+            stream!!,
+            ParseContext(),
+            false,
+            false,
+            warningLogger = NullLogger.getInstance()
+        ).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val solver = Z3LegacySolverFactory.getInstance().createSolver()
@@ -117,7 +123,13 @@ class XcfaPredAnalysisTest {
     fun testSporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         println("Testing SPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        val xcfa = getXcfaFromC(
+            stream!!,
+            ParseContext(),
+            false,
+            false,
+            warningLogger = NullLogger.getInstance()
+        ).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val solver = Z3LegacySolverFactory.getInstance().createSolver()
@@ -164,7 +176,13 @@ class XcfaPredAnalysisTest {
         XcfaDporLts.random = Random(seed)
         println("Testing DPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        val xcfa = getXcfaFromC(
+            stream!!,
+            ParseContext(),
+            false,
+            false,
+            warningLogger = NullLogger.getInstance()
+        ).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val solver = Z3LegacySolverFactory.getInstance().createSolver()
@@ -210,7 +228,13 @@ class XcfaPredAnalysisTest {
     fun testAasporPred(filepath: String, verdict: (SafetyResult<*, *>) -> Boolean) {
         println("Testing AASPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        val xcfa = getXcfaFromC(
+            stream!!,
+            ParseContext(),
+            false,
+            false,
+            warningLogger = NullLogger.getInstance()
+        ).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val solver = Z3LegacySolverFactory.getInstance().createSolver()
@@ -258,7 +282,13 @@ class XcfaPredAnalysisTest {
         XcfaDporLts.random = Random(seed)
         println("Testing AADPOR on $filepath...")
         val stream = javaClass.getResourceAsStream(filepath)
-        val xcfa = getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance()).first
+        val xcfa = getXcfaFromC(
+            stream!!,
+            ParseContext(),
+            false,
+            false,
+            warningLogger = NullLogger.getInstance()
+        ).first
         ConeOfInfluence = XcfaCoiMultiThread(xcfa)
 
         val solver = Z3LegacySolverFactory.getInstance().createSolver()

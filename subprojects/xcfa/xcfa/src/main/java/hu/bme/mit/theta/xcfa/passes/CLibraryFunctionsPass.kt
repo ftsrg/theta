@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.anytype.Reference
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -115,7 +116,9 @@ class CLibraryFunctionsPass : ProcedurePass {
                                 listOf(FenceLabel(setOf("cond_signal(${cond.decl.name})"), metadata))
                             }
 
-                            "pthread_mutex_init", "pthread_cond_init" -> listOf(NopLabel(EmptyMetaData))
+                            "pthread_mutex_init", "pthread_cond_init" -> listOf(NopLabel(
+                                EmptyMetaData
+                            ))
 
                             else -> error("Unsupported library function ${invokeLabel.name}")
                         }

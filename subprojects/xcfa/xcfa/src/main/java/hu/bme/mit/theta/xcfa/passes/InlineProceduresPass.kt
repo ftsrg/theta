@@ -22,6 +22,8 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
+import hu.bme.mit.theta.metadata.EmptyMetaData
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.xcfa.model.*
 
 /**
@@ -90,10 +92,21 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
                             val finalLoc = procedure.finalLoc
                             val errorLoc = procedure.errorLoc
 
-                            builder.addEdge(XcfaEdge(source, checkNotNull(newLocs[initLoc]), EmptyMetaData, SequenceLabel(inStmts, EmptyMetaData)))
-                            if (finalLoc.isPresent)
-                                builder.addEdge(XcfaEdge(checkNotNull(newLocs[finalLoc.get()]), target, EmptyMetaData,
-                                    SequenceLabel(outStmts, EmptyMetaData)))
+                            val inMetaData =
+                                inStmts.map { it.metadata }.fold(EmptyMetaData, MetaData::join)
+                            builder.addEdge(XcfaEdge(source, checkNotNull(newLocs[initLoc]), inMetaData, SequenceLabel(inStmts, inMetaData)))
+                            if (finalLoc.isPresent) {
+                                val outMetaData =
+                                    outStmts.map { it.metadata }.fold(EmptyMetaData, MetaData::join)
+                                builder.addEdge(
+                                    XcfaEdge(
+                                        checkNotNull(newLocs[finalLoc.get()]),
+                                        target,
+                                        outMetaData,
+                                        SequenceLabel(outStmts, outMetaData)
+                                    )
+                                )
+                            }
                             if (errorLoc.isPresent) {
                                 if (builder.errorLoc.isEmpty) builder.createErrorLoc(EmptyMetaData)
                                 builder.addEdge(

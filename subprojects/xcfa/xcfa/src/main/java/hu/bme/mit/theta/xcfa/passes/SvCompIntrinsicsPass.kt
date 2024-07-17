@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xcfa.passes
 
+import hu.bme.mit.theta.metadata.EmptyMetaData
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.xcfa.model.*
 import kotlin.jvm.optionals.getOrNull
 
@@ -37,7 +39,8 @@ class SvCompIntrinsicsPass : ProcedurePass {
                 val labels: MutableList<XcfaLabel> = ArrayList()
                 labels.add(FenceLabel(setOf("ATOMIC_BEGIN"), metadata = outgoingEdge.metadata))
                 labels.addAll((outgoingEdge.label as SequenceLabel).labels)
-                builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels, labels.map { it.metadata }.fold(EmptyMetaData, MetaData::join))))
+                builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels, labels.map { it.metadata }.fold(
+                    EmptyMetaData, MetaData::join))))
             }
             for (incomingEdge in ArrayList(
                 builder.finalLoc.getOrNull()?.incomingEdges ?: listOf())) {

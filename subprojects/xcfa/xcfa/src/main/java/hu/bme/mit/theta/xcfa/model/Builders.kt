@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xcfa.model
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 import java.util.*
 

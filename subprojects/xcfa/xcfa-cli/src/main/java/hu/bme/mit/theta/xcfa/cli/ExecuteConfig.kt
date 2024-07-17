@@ -31,7 +31,6 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
-import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
@@ -41,6 +40,7 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.metadata.CMetaData
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -58,10 +58,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
-import hu.bme.mit.theta.xcfa.passes.FetchExecuteWriteback
-import hu.bme.mit.theta.xcfa.passes.LbePass
-import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
-import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
+import hu.bme.mit.theta.xcfa.passes.*
 import hu.bme.mit.theta.xcfa.toC
 import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
@@ -100,6 +97,14 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
         val random = Random(cegarConfig.porRandomSeed)
         XcfaSporLts.random = random
         XcfaDporLts.random = random
+    }
+    if(config.backendConfig.backend == Backend.VALIDATOR) {
+        if(LbePass.level!=LbePass.LbeLevel.NO_LBE) {
+            uniqueLogger.write(Logger.Level.INFO, "LBE switched OFF due to validation")
+        }
+        LbePass.level = LbePass.LbeLevel.NO_LBE
+        AnnotateWithWitnessPass.enabled = true
+        //AnnotateWithWitnessPass.witness = TODO()
     }
     if (config.debugConfig.argToFile) {
         WebDebuggerLogger.enableWebDebuggerLogger()

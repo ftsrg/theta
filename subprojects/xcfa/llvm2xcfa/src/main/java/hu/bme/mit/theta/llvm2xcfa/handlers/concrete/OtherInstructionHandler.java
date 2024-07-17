@@ -36,7 +36,7 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.GlobalState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.utils.PlaceholderAssignmentStmt;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.metadata.EmptyMetaData;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;

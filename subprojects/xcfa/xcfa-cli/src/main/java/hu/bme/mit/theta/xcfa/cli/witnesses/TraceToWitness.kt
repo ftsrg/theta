@@ -19,13 +19,13 @@ package hu.bme.mit.theta.xcfa.cli.witnesses
 import com.google.common.collect.Lists
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.expl.ExplState
-import hu.bme.mit.theta.c2xcfa.getCMetaData
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.HavocStmt
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.metadata.CMetaData
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.witnesses.graphml.WitnessEdge
@@ -207,5 +207,29 @@ private fun printLit(litExpr: LitExpr<*>): String? {
         stringBuilder.toString()
     } else {
         litExpr.toString()
+    }
+}
+
+fun XcfaLabel.getCMetaData(): CMetaData? {
+    return if (this.metadata is CMetaData) {
+        this.metadata as CMetaData
+    } else {
+        null
+    }
+}
+
+fun XcfaLocation.getCMetaData(): CMetaData? {
+    return if (this.metadata is CMetaData) {
+        this.metadata as CMetaData
+    } else {
+        null
+    }
+}
+
+fun XcfaEdge.getCMetaData(): CMetaData? {
+    return if (this.metadata is CMetaData) {
+        this.metadata as CMetaData
+    } else {
+        null
     }
 }

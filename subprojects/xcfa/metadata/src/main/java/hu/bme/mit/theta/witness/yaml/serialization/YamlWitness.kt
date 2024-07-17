@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.xcfa.cli.witnesses.yaml.serialization
+package hu.bme.mit.theta.witness.yaml.serialization
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

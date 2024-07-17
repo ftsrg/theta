@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.grammar.dsl.SimpleScope
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
 
 fun xcfa(name: String, lambda: XcfaBuilder.() -> Unit): XCFA =

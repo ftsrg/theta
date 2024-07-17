@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.metadata.EmptyMetaData;
 import hu.bme.mit.theta.xcfa.model.InvokeLabel;
 import hu.bme.mit.theta.xcfa.model.ParamDirection;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;

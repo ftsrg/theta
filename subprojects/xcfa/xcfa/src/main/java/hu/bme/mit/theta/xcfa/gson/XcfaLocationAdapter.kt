@@ -16,7 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.gson
 
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 val xcfaLocationAdapter: (String) -> XcfaLocation = {

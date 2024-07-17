@@ -18,6 +18,8 @@ package hu.bme.mit.theta.xcfa.passes
 
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
+import hu.bme.mit.theta.metadata.EmptyMetaData
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.xcfa.model.*
 
 /**

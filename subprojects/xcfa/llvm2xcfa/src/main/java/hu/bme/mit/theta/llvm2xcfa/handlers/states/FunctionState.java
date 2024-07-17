@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.llvm2xcfa.LlvmMetadata;
 import hu.bme.mit.theta.llvm2xcfa.handlers.utils.PlaceholderAssignmentStmt;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.metadata.EmptyMetaData;
 import hu.bme.mit.theta.xcfa.model.ParamDirection;
 import hu.bme.mit.theta.xcfa.model.SequenceLabel;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;

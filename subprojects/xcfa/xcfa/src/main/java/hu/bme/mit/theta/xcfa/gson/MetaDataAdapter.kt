@@ -20,7 +20,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
-import hu.bme.mit.theta.xcfa.model.MetaData
+import hu.bme.mit.theta.metadata.MetaData
 
 class MetaDataAdapter : TypeAdapter<MetaData>() {
 

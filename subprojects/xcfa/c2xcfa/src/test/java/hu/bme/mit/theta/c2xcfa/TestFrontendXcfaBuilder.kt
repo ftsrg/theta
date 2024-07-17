@@ -69,7 +69,13 @@ class TestFrontendXcfaBuilder {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, ParseContext(), false, false, NullLogger.getInstance())
+        getXcfaFromC(
+            stream!!,
+            ParseContext(),
+            false,
+            false,
+            warningLogger = NullLogger.getInstance()
+        )
     }
 
     @Test
@@ -78,6 +84,12 @@ class TestFrontendXcfaBuilder {
 
         val stream = javaClass.getResourceAsStream(filepath)
 
-        getXcfaFromC(stream!!, ParseContext(), false, true, NullLogger.getInstance())
+        getXcfaFromC(
+            stream!!,
+            ParseContext(),
+            false,
+            true,
+            warningLogger = NullLogger.getInstance()
+        )
     }
 }

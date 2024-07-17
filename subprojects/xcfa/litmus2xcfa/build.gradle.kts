@@ -20,6 +20,7 @@ plugins {
 dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-common"))
+    implementation(project(":theta-metadata"))
     implementation(project(":theta-xcfa"))
     testImplementation(project(":theta-xcfa-analysis"))
     testImplementation(project(":theta-cat"))

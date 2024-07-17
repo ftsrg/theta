@@ -36,7 +36,7 @@ import hu.bme.mit.theta.llvm2xcfa.handlers.arguments.LocalArgument;
 import hu.bme.mit.theta.llvm2xcfa.handlers.arguments.RegArgument;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.BlockState;
 import hu.bme.mit.theta.llvm2xcfa.handlers.states.FunctionState;
-import hu.bme.mit.theta.xcfa.model.EmptyMetaData;
+import hu.bme.mit.theta.metadata.EmptyMetaData;
 import hu.bme.mit.theta.xcfa.model.NopLabel;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge;

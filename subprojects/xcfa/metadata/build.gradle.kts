@@ -13,23 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package hu.bme.mit.theta.xcfa.model
-
-abstract class MetaData {
-    abstract fun join(metadata : MetaData) : MetaData
+plugins {
+    id("kotlin-common")
+    id("org.jetbrains.kotlin.plugin.serialization") version Versions.kotlinserialization apply true
 }
 
-object EmptyMetaData : MetaData() {
-    // TODO why is this necessary? {@see GsonTest.kt}
-
-    private val hash = 123123
-    override fun join(metadata: MetaData): MetaData {
-        return this
-    }
-
-    override fun equals(other: Any?): Boolean =
-        other is EmptyMetaData
-
-    override fun hashCode(): Int = hash
+dependencies {
+    implementation(Deps.kotlinserialization)
+    implementation(Deps.kaml)
 }

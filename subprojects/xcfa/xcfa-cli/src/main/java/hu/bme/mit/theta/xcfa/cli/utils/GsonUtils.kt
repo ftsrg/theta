@@ -47,7 +47,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaStateAdapter
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.getSymbols
 import hu.bme.mit.theta.xcfa.gson.*
-import hu.bme.mit.theta.xcfa.model.MetaData
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.XcfaLocation

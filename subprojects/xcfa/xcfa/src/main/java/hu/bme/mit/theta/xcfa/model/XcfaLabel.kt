@@ -26,6 +26,7 @@ import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.grammar.dsl.expr.ExpressionWrapper
 import hu.bme.mit.theta.grammar.dsl.stmt.StatementWrapper
+import hu.bme.mit.theta.metadata.MetaData
 import java.util.*
 
 sealed class XcfaLabel(open val metadata: MetaData) {

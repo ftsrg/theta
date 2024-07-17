@@ -71,6 +71,7 @@ enum class Backend {
     LAZY,
     PORTFOLIO,
     NONE,
+    VALIDATOR,
 }
 
 enum class POR(

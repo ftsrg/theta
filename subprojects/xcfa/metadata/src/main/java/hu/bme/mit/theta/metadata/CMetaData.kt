@@ -13,14 +13,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.c2xcfa
+package hu.bme.mit.theta.metadata
 
 import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
-import hu.bme.mit.theta.xcfa.model.MetaData
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLabel
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
 
 data class CMetaData(
     val lineNumberStart: Int?,
@@ -124,28 +120,9 @@ data class CMetaData(
         }
     }
 
-}
-
-fun XcfaLabel.getCMetaData(): CMetaData? {
-    return if (this.metadata is CMetaData) {
-        this.metadata as CMetaData
-    } else {
-        null
+    override fun toString(): String {
+        val source = sourceText.toString()
+        return "%d:%d-%d:%d [%s]".format(lineNumberStart ?: -1, colNumberStart ?: -1, lineNumberStop ?: -1, colNumberStop ?: -1, if(source.length > 25) source.substring(0, 20) + "... " + source.substring(source.length - 10, source.length) else sourceText)
     }
-}
 
-fun XcfaLocation.getCMetaData(): CMetaData? {
-    return if (this.metadata is CMetaData) {
-        this.metadata as CMetaData
-    } else {
-        null
-    }
-}
-
-fun XcfaEdge.getCMetaData(): CMetaData? {
-    return if (this.metadata is CMetaData) {
-        this.metadata as CMetaData
-    } else {
-        null
-    }
 }

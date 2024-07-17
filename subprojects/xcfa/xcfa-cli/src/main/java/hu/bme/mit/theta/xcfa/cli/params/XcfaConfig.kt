@@ -170,6 +170,7 @@ data class BackendConfig<T : SpecBackendConfig>(
             Backend.LAZY -> null
             Backend.PORTFOLIO -> PortfolioConfig() as T
             Backend.NONE -> null
+            Backend.VALIDATOR -> WitnessValidationConfig() as T
         }
     }
 }
@@ -251,6 +252,11 @@ data class HornConfig(
         description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
     )
     var validateSolver: Boolean = false,
+) : SpecBackendConfig
+
+data class WitnessValidationConfig(
+    @Parameter(names = ["--witness-file"], description = "2.0 witness file")
+    var witnessFile: File? = null,
 ) : SpecBackendConfig
 
 data class BoundedConfig(

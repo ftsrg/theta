@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.type.booltype.FalseExpr
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getAtomicBlockInnerLocations
 import hu.bme.mit.theta.xcfa.getFlatLabels

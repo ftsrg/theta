@@ -1,7 +1,7 @@
-package hu.bme.mit.theta.xcfa.cli.witnesses.yaml.serialization
+package hu.bme.mit.theta.witness.yaml.serialization
 
 import com.charleskorn.kaml.Yaml
-import hu.bme.mit.theta.xcfa.cli.witnesses.yaml.witness.Witness2
+import hu.bme.mit.theta.witness.yaml.model.Witness2
 import kotlinx.serialization.builtins.SetSerializer
 
 class YamlWitnessParser {

@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.references
@@ -61,7 +62,8 @@ class ReferenceElimination(val parseContext: ParseContext) : ProcedurePass {
                     builder.parent.addVar(XcfaGlobalVar(varDecl, lit))
                     parseContext.metadata.create(varDecl.ref, "cType", ptrType)
                     val assign = StmtLabel(AssignStmt.of(cast(varDecl, varDecl.type),
-                        cast(lit, varDecl.type)), EmptyMetaData)
+                        cast(lit, varDecl.type)), EmptyMetaData
+                    )
                     Pair(varDecl, assign)
                 }
         }

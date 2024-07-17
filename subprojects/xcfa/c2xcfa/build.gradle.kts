@@ -22,4 +22,5 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-xcfa"))
     implementation(project(":theta-c-frontend"))
+    implementation(project(":theta-metadata"))
 }

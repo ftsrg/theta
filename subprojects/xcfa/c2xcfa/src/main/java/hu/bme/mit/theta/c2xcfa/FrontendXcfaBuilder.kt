@@ -48,14 +48,21 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory
+import hu.bme.mit.theta.metadata.CMetaData
+import hu.bme.mit.theta.metadata.EmptyMetaData
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.CPasses
+import hu.bme.mit.theta.xcfa.passes.CValidationPasses
 import org.abego.treelayout.internal.util.Contract.checkState
 import java.math.BigInteger
 import java.util.stream.Collectors
 
-class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boolean = false,
-    val uniqueWarningLogger: Logger) :
+class FrontendXcfaBuilder(
+    val parseContext: ParseContext, val checkOverflow: Boolean = false,
+    val validation: Boolean = false,
+    val uniqueWarningLogger: Logger
+) :
     CStatementVisitorBase<FrontendXcfaBuilder.ParamPack, XcfaLocation>() {
 
     private val locationLut: MutableMap<String, XcfaLocation> = LinkedHashMap()
@@ -160,7 +167,7 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
         val flatVariables = function.flatVariables
         val funcDecl = function.funcDecl
         val compound = function.compound
-        val builder = XcfaProcedureBuilder(funcDecl.name, CPasses(checkOverflow, parseContext, uniqueWarningLogger))
+        val builder = XcfaProcedureBuilder(funcDecl.name, if(validation) CValidationPasses(checkOverflow, parseContext, uniqueWarningLogger) else CPasses(checkOverflow, parseContext, uniqueWarningLogger))
         xcfaBuilder.addProcedure(builder)
         val initStmtList = ArrayList<XcfaLabel>()
         if (param.size > 0 && builder.name.equals("main")) {
@@ -455,12 +462,12 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             ParamPack(builder, innerEndLoc, null, null, returnLoc))
         val assume = StmtLabel(Stmts.Assume(
             AbstractExprs.Neq(guard.expression, CComplexType.getType(guard.expression, parseContext).nullValue)),
-            choiceType = ChoiceType.MAIN_PATH, metadata = getMetadata(guard))
+            choiceType = ChoiceType.MAIN_PATH, metadata = getMetadata(statement))
         xcfaEdge = XcfaEdge(lastPre, innerInnerGuard, metadata = getMetadata(statement), assume)
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(Stmts.Assume(
             AbstractExprs.Eq(guard.expression, CComplexType.getType(guard.expression, parseContext).nullValue)),
-            choiceType = ChoiceType.ALTERNATIVE_PATH, metadata = getMetadata(guard))
+            choiceType = ChoiceType.ALTERNATIVE_PATH, metadata = getMetadata(statement))
         xcfaEdge = XcfaEdge(lastPre, outerInnerGuard, metadata = getMetadata(statement), assume1)
         builder.addEdge(xcfaEdge)
         val outerLastGuard = buildPostStatement(guard,
@@ -513,18 +520,18 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             Stmts.Assume(if (guard == null) True() else AbstractExprs.Neq(guard.expression,
                 CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.MAIN_PATH,
-            metadata = if (guard == null) getMetadata(statement) else getMetadata(guard)
+            metadata = getMetadata(statement)
         )
         check(lastTest != null)
-        xcfaEdge = XcfaEdge(lastTest, endInit, metadata = if (guard == null) getMetadata(statement) else getMetadata(guard), assume)
+        xcfaEdge = XcfaEdge(lastTest, endInit, metadata = getMetadata(statement), assume)
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(
             Stmts.Assume(if (guard == null) False() else AbstractExprs.Eq(guard.expression,
                 CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.ALTERNATIVE_PATH,
-            metadata = if (guard == null) getMetadata(statement) else getMetadata(guard)
+            metadata = getMetadata(statement)
         )
-        xcfaEdge = XcfaEdge(lastTest, outerLastTest, metadata = if (guard == null) getMetadata(statement) else getMetadata(guard), assume1)
+        xcfaEdge = XcfaEdge(lastTest, outerLastTest, metadata = getMetadata(statement), assume1)
         builder.addEdge(xcfaEdge)
         val innerLastGuard = if (guard == null) endInit else buildPostStatement(guard,
             ParamPack(builder, endInit, endLoc, startIncrement, returnLoc))
@@ -593,17 +600,17 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
             Stmts.Assume(AbstractExprs.Neq(guard.expression,
                 CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.MAIN_PATH,
-            metadata = getMetadata(guard)
+            metadata = getMetadata(statement)
         )
-        xcfaEdge = XcfaEdge(endGuard, mainBranch, metadata = getMetadata(guard), assume)
+        xcfaEdge = XcfaEdge(endGuard, mainBranch, metadata = getMetadata(statement), assume)
         builder.addEdge(xcfaEdge)
         val assume1 = StmtLabel(
             Stmts.Assume(AbstractExprs.Eq(guard.expression,
                 CComplexType.getType(guard.expression, parseContext).nullValue)),
             choiceType = ChoiceType.ALTERNATIVE_PATH,
-            metadata = getMetadata(guard)
+            metadata = getMetadata(statement)
         )
-        xcfaEdge = XcfaEdge(endGuard, elseBranch, metadata = getMetadata(guard), assume1)
+        xcfaEdge = XcfaEdge(endGuard, elseBranch, metadata = getMetadata(statement), assume1)
         builder.addEdge(xcfaEdge)
         val mainAfterGuard = buildPostStatement(guard,
             ParamPack(builder, mainBranch, breakLoc, continueLoc, returnLoc))
@@ -759,9 +766,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 Stmts.Assume(AbstractExprs.Neq(guard.expression,
                     CComplexType.getType(guard.expression, parseContext).nullValue)),
                 choiceType = ChoiceType.MAIN_PATH,
-                metadata = getMetadata(guard)
+                metadata = getMetadata(statement)
             )
-            xcfaEdge = XcfaEdge(testEndLoc, innerLoop, metadata = getMetadata(guard), assume)
+            xcfaEdge = XcfaEdge(testEndLoc, innerLoop, metadata = getMetadata(statement), assume)
             builder.addEdge(xcfaEdge)
             val assume1 = StmtLabel(
                 Stmts.Assume(AbstractExprs.Eq(guard.expression,
