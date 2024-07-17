@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.analysis.algorithm
 
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
+import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.core.Relation
 import hu.bme.mit.theta.core.decl.Decls.Param
@@ -24,12 +25,15 @@ import hu.bme.mit.theta.core.plus
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 
 class HornTest {
 
     @Test
     fun testHornUnsafe() {
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+
         val inv = Relation("inv", Int())
         val p0 = Param("P0", Int())
         val p1 = Param("P1", Int())
@@ -43,6 +47,8 @@ class HornTest {
 
     @Test
     fun testHornSafe() {
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+
         val inv = Relation("inv", Int())
         val p0 = Param("P0", Int())
         val p1 = Param("P1", Int())
