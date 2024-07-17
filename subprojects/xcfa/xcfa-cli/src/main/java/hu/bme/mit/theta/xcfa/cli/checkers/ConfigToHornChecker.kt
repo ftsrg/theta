@@ -58,7 +58,6 @@ fun getHornChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, logger: Logge
         } else if (result.isUnsafe) {
             val proof = result.asUnsafe().cex
             val state = XcfaState<PtrState<PredState>>(xcfa, mapOf(), PtrState(PredState.of(proof.proofNode.expr)))
-            //TODO: actual counterexample
             SafetyResult.unsafe(Trace.of(listOf(state), listOf()), EmptyWitness.getInstance())
         } else{
             SafetyResult.unknown()
