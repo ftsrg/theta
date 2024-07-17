@@ -33,6 +33,7 @@ import hu.bme.mit.theta.solver.SolverStatus
 data class Invariant(val lookup: Map<Relation, Expr<BoolType>>) : Witness
 
 data class CexTree(val proofNode: ProofNode) : Cex {
+
     override fun length(): Int = proofNode.depth()
 }
 
@@ -66,13 +67,16 @@ class HornChecker(
             SolverStatus.SAT -> {
                 logger.write(Logger.Level.MAINSTEP, "Proof (model) found\n")
                 val model = solver.model.toMap()
-                SafetyResult.safe(Invariant(relations.associateWith { model[it.constDecl] as? Expr<BoolType> ?: True() }))
+                SafetyResult.safe(
+                    Invariant(relations.associateWith { model[it.constDecl] as? Expr<BoolType> ?: True() }))
             }
+
             SolverStatus.UNSAT -> {
                 logger.write(Logger.Level.MAINSTEP, "Counterexample found\n")
                 val proof = solver.proof
                 SafetyResult.unsafe(CexTree(proof), Invariant(emptyMap()))
             }
+
             else -> {
                 logger.write(Logger.Level.MAINSTEP, "No solution found.\n")
                 SafetyResult.unknown()
