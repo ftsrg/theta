@@ -23,9 +23,9 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.expr.refinement.*
@@ -43,14 +43,20 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getCegarChecker(xcfa: XCFA, mcm: MCM,
+fun getCegarChecker(
+    xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
-    logger: Logger): SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+    logger: Logger
+): SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
     val cegarConfig = config.backendConfig.specConfig as CegarConfig
-    val abstractionSolverFactory: SolverFactory = getSolver(cegarConfig.abstractorConfig.abstractionSolver,
-        cegarConfig.abstractorConfig.validateAbstractionSolver)
-    val refinementSolverFactory: SolverFactory = getSolver(cegarConfig.refinerConfig.refinementSolver,
-        cegarConfig.refinerConfig.validateRefinementSolver)
+    val abstractionSolverFactory: SolverFactory = getSolver(
+        cegarConfig.abstractorConfig.abstractionSolver,
+        cegarConfig.abstractorConfig.validateAbstractionSolver
+    )
+    val refinementSolverFactory: SolverFactory = getSolver(
+        cegarConfig.refinerConfig.refinementSolver,
+        cegarConfig.refinerConfig.validateRefinementSolver
+    )
 
     val ignoredVarRegistry = mutableMapOf<VarDecl<*>, MutableSet<ExprState>>()
 
@@ -59,16 +65,18 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
         (cegarConfig.coi.porLts as XcfaDporLts).waitlist
     } else {
         PriorityWaitlist.create<ArgNode<out XcfaState<PtrState<ExprState>>, XcfaAction>>(
-            cegarConfig.abstractorConfig.search.getComp(xcfa))
+            cegarConfig.abstractorConfig.search.getComp(xcfa)
+        )
     }
 
     val abstractionSolverInstance = abstractionSolverFactory.createSolver()
     val globalStatePartialOrd: PartialOrd<PtrState<ExprState>> = cegarConfig.abstractorConfig.domain.partialOrd(
-        abstractionSolverInstance) as PartialOrd<PtrState<ExprState>>
+        abstractionSolverInstance
+    ) as PartialOrd<PtrState<ExprState>>
     val corePartialOrd: PartialOrd<XcfaState<PtrState<ExprState>>> =
         if (xcfa.isInlined) getPartialOrder(globalStatePartialOrd)
         else getStackPartialOrder(globalStatePartialOrd)
-    val abstractor: Abstractor<ExprState, ExprAction, Prec> = cegarConfig.abstractorConfig.domain.abstractor(
+    val abstractor: ArgAbstractor<ExprState, ExprAction, Prec> = cegarConfig.abstractorConfig.domain.abstractor(
         xcfa,
         abstractionSolverInstance,
         cegarConfig.abstractorConfig.maxEnum,
@@ -83,7 +91,7 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
             corePartialOrd
         },
         cegarConfig.abstractorConfig.havocMemory
-    ) as Abstractor<ExprState, ExprAction, Prec>
+    ) as ArgAbstractor<ExprState, ExprAction, Prec>
 
     val ref: ExprTraceChecker<Refutation> =
         cegarConfig.refinerConfig.refinement.refiner(refinementSolverFactory, cegarConfig.cexMonitor)
@@ -91,43 +99,50 @@ fun getCegarChecker(xcfa: XCFA, mcm: MCM,
     val precRefiner: PrecRefiner<ExprState, ExprAction, Prec, Refutation> =
         cegarConfig.abstractorConfig.domain.itpPrecRefiner(cegarConfig.refinerConfig.exprSplitter.exprSplitter)
             as PrecRefiner<ExprState, ExprAction, Prec, Refutation>
-    val atomicNodePruner: NodePruner<ExprState, ExprAction> = cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
-    val refiner: Refiner<ExprState, ExprAction, Prec> =
+    val atomicNodePruner: NodePruner<ExprState, ExprAction> =
+        cegarConfig.abstractorConfig.domain.nodePruner as NodePruner<ExprState, ExprAction>
+    val refiner: ArgRefiner<ExprState, ExprAction, Prec> =
         if (cegarConfig.refinerConfig.refinement == Refinement.MULTI_SEQ)
             if (cegarConfig.porLevel == POR.AASPOR)
-                MultiExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy, logger,
-                    atomicNodePruner)
+                MultiExprTraceRefiner.create(
+                    ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy, logger,
+                    atomicNodePruner
+                )
             else
                 MultiExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy, logger)
         else
             if (cegarConfig.porLevel == POR.AASPOR)
-                XcfaSingleExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy, logger,
-                    atomicNodePruner)
+                XcfaSingleExprTraceRefiner.create(
+                    ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy, logger,
+                    atomicNodePruner
+                )
             else
                 XcfaSingleExprTraceRefiner.create(ref, precRefiner, cegarConfig.refinerConfig.pruneStrategy, logger)
 
     val cegarChecker = if (cegarConfig.porLevel == POR.AASPOR)
-        CegarChecker.create(
+        ArgCegarChecker.create(
             abstractor,
             AasporRefiner.create(refiner, cegarConfig.refinerConfig.pruneStrategy, ignoredVarRegistry),
             logger
         )
     else
-        CegarChecker.create(abstractor, refiner, logger)
+        ArgCegarChecker.create(abstractor, refiner, logger)
 
     // initialize monitors
     MonitorCheckpoint.reset()
     if (cegarConfig.cexMonitor == CexMonitorOptions.CHECK) {
-        val cm = CexMonitor(logger, cegarChecker.arg)
+        val cm = CexMonitor(logger, cegarChecker.witness)
         MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
     }
 
     return object :
         SafetyChecker<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
         override fun check(
-            prec: XcfaPrec<*>?): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
+            prec: XcfaPrec<*>?
+        ): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {
             return cegarChecker.check(
-                prec) as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>>
+                prec
+            ) as SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>>
         }
 
         override fun check(): SafetyResult<ARG<XcfaState<*>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>> {

@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
-        implements Refiner<S, A, P> {
+        implements ArgRefiner<S, A, P> {
 
     private final ExprTraceChecker<R> exprTraceChecker;
     private final PrecRefiner<S, A, P, R> precRefiner;
@@ -76,17 +76,17 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
     }
 
     @Override
-    public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
+    public RefinerResult<S, A, P, Trace<S, A>> refine(final ARG<S, A> arg, final P prec) {
         checkNotNull(arg);
         checkNotNull(prec);
         assert !arg.isSafe() : "ARG must be unsafe";
 
-        final List<ArgTrace<S, A>> cexs = arg.getCexs().collect(Collectors.toList());
-        final List<Trace<S, A>> traces = arg.getCexs().map(ArgTrace::toTrace).collect(Collectors.toList());
+        final List<ArgTrace<S, A>> cexs = arg.getCexs().toList();
+        final List<Trace<S, A>> traces = arg.getCexs().map(ArgTrace::toTrace).toList();
         assert traces.size() == cexs.size();
 
         logger.write(Level.INFO, "|  |  Number of traces: %d%n", traces.size());
-        assert traces.size() > 0 : "No counterexample in ARG";
+        assert !traces.isEmpty() : "No counterexample in ARG";
 
         logger.write(Level.SUBSTEP, "|  |  Checking traces...");
         final List<ExprTraceStatus<R>> cexStatuses = new ArrayList<>(traces.size());
@@ -106,7 +106,7 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
             assert cexStatuses.size() == cexs.size();
             logger.write(Level.SUBSTEP, "done, result: all infeasible%n");
             final List<R> refutations = cexStatuses.stream().map(s -> s.asInfeasible().getRefutation())
-                    .collect(Collectors.toList());
+                    .toList();
             assert refutations.size() == cexs.size();
 
             final List<ArgNode<S, A>> nodesToPrune = new ArrayList<>(traces.size());
@@ -120,7 +120,7 @@ public final class MultiExprTraceRefiner<S extends ExprState, A extends ExprActi
 
             for (int i = 0; i < nodesToPrune.size(); ++i) {
                 final ArgNode<S, A> node = nodesToPrune.get(i);
-                if (node.properAncestors().anyMatch(a -> nodesToPrune.contains(a))) {
+                if (node.properAncestors().anyMatch(nodesToPrune::contains)) {
                     skip.set(i, true);
                 }
             }

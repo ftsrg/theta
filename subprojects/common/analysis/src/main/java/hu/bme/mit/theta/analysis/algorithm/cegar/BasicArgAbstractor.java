@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Basic implementation for the abstractor, relying on an ArgBuilder.
  */
-public class BasicAbstractor<S extends State, A extends Action, P extends Prec> implements Abstractor<S, A, P> {
+public class BasicArgAbstractor<S extends State, A extends Action, P extends Prec> implements ArgAbstractor<S, A, P> {
 
     protected final ArgBuilder<S, A, P> argBuilder;
     protected final Function<? super S, ?> projection;
@@ -49,8 +49,8 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
     protected final StopCriterion<S, A> stopCriterion;
     protected final Logger logger;
 
-    protected BasicAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
-                              final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {
+    protected BasicArgAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
+                                 final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {
         this.argBuilder = checkNotNull(argBuilder);
         this.projection = checkNotNull(projection);
         this.waitlist = checkNotNull(waitlist);
@@ -64,7 +64,7 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
     }
 
     @Override
-    public ARG<S, A> createArg() {
+    public ARG<S, A> createWitness() {
         return argBuilder.createArg();
     }
 
@@ -174,8 +174,8 @@ public class BasicAbstractor<S extends State, A extends Action, P extends Prec> 
             return this;
         }
 
-        public BasicAbstractor<S, A, P> build() {
-            return new BasicAbstractor<>(argBuilder, projection, waitlist, stopCriterion, logger);
+        public BasicArgAbstractor<S, A, P> build() {
+            return new BasicArgAbstractor<>(argBuilder, projection, waitlist, stopCriterion, logger);
         }
     }
 

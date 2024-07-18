@@ -64,7 +64,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         return null
     }
 
-    fun refineTemp(arg: ARG<S, A>, prec: P?): RefinerResult<S, A, P?> {
+    fun refineTemp(arg: ARG<S, A>, prec: P?): RefinerResult<S, A, P?, Trace<S, A>> {
         Preconditions.checkNotNull(arg)
         Preconditions.checkNotNull(prec)
         assert(!arg.isSafe) { "ARG must be unsafe" }
@@ -118,7 +118,7 @@ class XcfaSingleExprTraceRefiner<S : ExprState, A : ExprAction, P : Prec, R : Re
         }
     }
 
-    override fun refine(arg: ARG<S, A>, prec: P?): RefinerResult<S, A, P?> {
+    override fun refine(arg: ARG<S, A>, prec: P?): RefinerResult<S, A, P?, Trace<S, A>> {
         Preconditions.checkNotNull(arg)
         Preconditions.checkNotNull<P>(prec)
         assert(!arg.isSafe) { "ARG must be unsafe" }

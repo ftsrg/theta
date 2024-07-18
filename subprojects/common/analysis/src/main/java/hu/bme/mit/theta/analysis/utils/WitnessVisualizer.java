@@ -13,22 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Cex;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
+package hu.bme.mit.theta.analysis.utils;
+
 import hu.bme.mit.theta.analysis.algorithm.Witness;
+import hu.bme.mit.theta.common.visualization.Graph;
 
-/**
- * Common interface for refiners. It takes a witness and a precision, checks if the counterexample in
- * the witness is feasible and if not, it refines the precision
- */
-public interface Refiner<S extends State, A extends Action, P extends Prec, W extends Witness, C extends Cex> {
+public interface WitnessVisualizer<W extends Witness> {
 
-    /**
-     * Checks if the counterexample in the witness is feasible. If not, refines the precision
-     */
-    RefinerResult<S, A, P, C> refine(W witness, P prec);
+    Graph visualize(W witness);
+
 }
