@@ -36,7 +36,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 
-public final class ArgVisualizer<S extends State, A extends Action> {
+public final class ArgVisualizer<S extends State, A extends Action> implements WitnessVisualizer<ARG<? extends S, ? extends A>> {
 
     private static final LineStyle COVER_EDGE_STYLE = LineStyle.DASHED;
     private static final LineStyle SUCC_EDGE_STYLE = LineStyle.NORMAL;
@@ -53,8 +53,8 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 
     private static class LazyHolderDefault {
 
-        static final ArgVisualizer<State, Action> INSTANCE = new ArgVisualizer<>(s -> s.toString(),
-                a -> a.toString());
+        static final ArgVisualizer<State, Action> INSTANCE = new ArgVisualizer<>(Object::toString,
+                Object::toString);
     }
 
     private static class LazyHolderStructureOnly {
@@ -81,6 +81,7 @@ public final class ArgVisualizer<S extends State, A extends Action> {
         return LazyHolderStructureOnly.INSTANCE;
     }
 
+    @Override
     public Graph visualize(final ARG<? extends S, ? extends A> arg) {
         final Graph graph = new Graph(ARG_ID, ARG_LABEL);
 

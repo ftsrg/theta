@@ -15,31 +15,23 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.Witness;
 
 /**
- * Common interface for the abstractor component. It can create an initial ARG and check an ARG with
+ * Common interface for the abstractor component. It can create an initial witness and check a witness with
  * a given precision.
  */
-public interface Abstractor<S extends State, A extends Action, P extends Prec> {
+public interface Abstractor<P extends Prec, W extends Witness> {
 
     /**
-     * Create initial ARG.
-     *
-     * @return
+     * Create initial witness
      */
-    ARG<S, A> createArg();
+    W createWitness();
 
     /**
-     * Check ARG with given precision.
-     *
-     * @param arg
-     * @param prec
-     * @return
+     * Check witness with given precision
      */
-    AbstractorResult check(ARG<S, A> arg, P prec);
+    AbstractorResult check(W witness, P prec);
 
 }
