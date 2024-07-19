@@ -13,9 +13,16 @@ dest/
 .classpath
 
 # Intellij
-.idea/
+.idea/**
 *.iml
 *.iws
+# useful exclusions
+!.idea/copyright
+!.idea/copyright/bme_apache2.xml
+!.idea/copyright/profiles_settings.xml
+!.idea/codeStyles
+!.idea/codeStyles/codeStyleConfig.xml
+!.idea/codeStyles/Project.xml
 
 # Other
 wdl-output.json
