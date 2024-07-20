@@ -13,7 +13,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -28,10 +27,6 @@ repositories {
 }
 
 apply(from = rootDir.resolve("../gradle/shared-with-buildSrc/mirrors.gradle.kts"))
-
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
-}
 
 val kotlinVersion: String by project
 val shadowVersion: String by project
@@ -60,30 +55,29 @@ configurations.all {
 }
 
 val versionsClassName = "Versions"
-val generatedVersionsKotlinSrcDir = buildDir.resolve("generated-sources/versions/kotlin")
+val generatedVersionsKotlinSrcDir = layout.buildDirectory.dir("generated-sources/versions/kotlin").get().asFile
 val generatedVersionsFile = generatedVersionsKotlinSrcDir.resolve("$versionsClassName.kt")
 
 sourceSets {
     named("main") {
-        withConvention(KotlinSourceSet::class) {
-            kotlin.srcDir(generatedVersionsKotlinSrcDir)
-        }
+        kotlin.srcDir(generatedVersionsKotlinSrcDir)
     }
 }
+
 
 fun generateVersionsSource(): String {
     val text = StringBuilder()
 
-    text.appendln("object $versionsClassName {")
+    text.appendLine("object $versionsClassName {")
 
     for (property in project.properties) {
         if (property.key.endsWith("Version")) {
             val keyWithoutVersion = property.key.substringBefore("Version")
-            text.appendln("   const val `$keyWithoutVersion` = \"${property.value}\"")
+            text.appendLine("   const val `$keyWithoutVersion` = \"${property.value}\"")
         }
     }
 
-    text.appendln("}")
+    text.appendLine("}")
 
     return text.toString()
 }

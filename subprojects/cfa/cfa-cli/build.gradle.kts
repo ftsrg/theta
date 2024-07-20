@@ -30,5 +30,5 @@ dependencies {
 }
 
 application {
-    mainClassName = "hu.bme.mit.theta.cfa.cli.CfaCli"
+    mainClass.set("hu.bme.mit.theta.cfa.cli.CfaCli")
 }

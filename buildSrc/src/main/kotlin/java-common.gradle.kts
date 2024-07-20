@@ -13,9 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-apply<JavaPlugin>()
-apply(plugin = "jacoco-common")
-apply(plugin = "maven-artifact")
+plugins {
+    java
+    id("jacoco-common")
+    id("maven-publish") // The correct plugin id for maven-related tasks
+}
 
 dependencies {
     val implementation: Configuration by configurations
@@ -33,6 +35,7 @@ dependencies {
     testImplementation(Deps.junit5param)
     testImplementation(Deps.junit5engine)
     testImplementation(Deps.Mockito.core)
+    testImplementation(Deps.Mockito.extension)
 }
 
 tasks {
