@@ -573,7 +573,7 @@ GRW_String
 
 Numeral
     : '0'
-    | [1-9] Digit*
+    | '-'? [1-9] Digit*
     ;
 
 Binary

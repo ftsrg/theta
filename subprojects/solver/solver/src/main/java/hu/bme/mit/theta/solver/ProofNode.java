@@ -32,6 +32,10 @@ public record ProofNode(int id, Expr<BoolType> expr, List<ProofNode> children) {
         return And(Stream.concat(Stream.of(expr), children.stream().flatMap(it -> it.toExpr().getOps().stream())).toList());
     }
 
+    public int depth() {
+        return children.stream().map(ProofNode::depth).max(Integer::compareTo).orElse(0);
+    }
+
     public String toString() {
         final var sj = new StringJoiner(", ");
         children.stream().map(ProofNode::id).forEach(it -> sj.add(it.toString()));

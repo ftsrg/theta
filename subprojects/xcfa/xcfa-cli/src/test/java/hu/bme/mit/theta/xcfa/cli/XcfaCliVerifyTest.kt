@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import hu.bme.mit.theta.common.OsHelper
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -84,6 +86,19 @@ class XcfaCliVerifyTest {
                 Arguments.of("/c/litmustest/singlethread/02types.c", null),
                 Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
                 Arguments.of("/c/litmustest/singlethread/04real.c", null),
+            )
+        }
+
+        @JvmStatic
+        fun cFilesShortInt(): Stream<Arguments> {
+            return Stream.of(
+                Arguments.of("/c/litmustest/singlethread/00assignment.c", null),
+                Arguments.of("/c/litmustest/singlethread/01cast.c", null),
+                Arguments.of("/c/litmustest/singlethread/02types.c", null),
+                Arguments.of("/c/litmustest/singlethread/15addition.c", null),
+                Arguments.of("/c/litmustest/singlethread/20testinline.c", null),
+                Arguments.of("/c/litmustest/singlethread/21namecollision.c", null),
+                Arguments.of("/c/litmustest/singlethread/22nondet.c", null),
             )
         }
 
@@ -231,6 +246,21 @@ class XcfaCliVerifyTest {
     fun testCVerifyIMCThenKind(filePath: String, extraArgs: String?) {
         val params = arrayOf(
             "--backend", "BOUNDED",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
+    }
+
+    @ParameterizedTest
+    @MethodSource("cFilesShortInt")
+    fun testCVerifyCHC(filePath: String, extraArgs: String?) {
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+
+        val params = arrayOf(
+            "--backend", "CHC",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--stacktrace",

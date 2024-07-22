@@ -165,6 +165,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         specConfig = when (backend) {
             Backend.CEGAR -> CegarConfig() as T
             Backend.BOUNDED -> BoundedConfig() as T
+            Backend.CHC -> HornConfig() as T
             Backend.OC -> OcConfig() as T
             Backend.LAZY -> null
             Backend.PORTFOLIO -> PortfolioConfig() as T
@@ -241,6 +242,16 @@ data class CegarRefinerConfig(
     @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
     var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
 ) : Config
+
+data class HornConfig(
+    @Parameter(names = ["--solver"], description = "Solver to use.")
+    var solver: String = "Z3:4.13",
+    @Parameter(
+        names = ["--validate-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
+    )
+    var validateSolver: Boolean = false,
+) : SpecBackendConfig
 
 data class BoundedConfig(
     @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
