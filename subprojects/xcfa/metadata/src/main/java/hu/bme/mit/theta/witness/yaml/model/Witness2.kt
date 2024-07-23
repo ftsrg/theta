@@ -21,6 +21,22 @@ data class Witness2(
             return Witness2(entries)
         }
     }
+
+    // we do not check if that is the only honda or not!
+    fun getHonda() : Honda? {
+        for (entry in entries) {
+            for (item in entry.content.items) {
+                if (item is Cycle) {
+                    for (item2 in item.items) {
+                        if (item2 is Honda) {
+                            return item2
+                        }
+                    }
+                }
+            }
+        }
+        return null
+    }
 }
 
 data class WitnessEntry(

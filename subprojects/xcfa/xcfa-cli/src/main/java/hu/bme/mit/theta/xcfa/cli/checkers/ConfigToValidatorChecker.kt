@@ -23,22 +23,24 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.cli.params.WitnessValidationConfig
-import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
+import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.passes.AnnotateWithWitnessPass
 
 fun getValidatorChecker(xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
     logger: Logger): SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
-    val boundedConfig = config.backendConfig.specConfig as WitnessValidationConfig
+    val cegarConfig = XcfaConfig<SpecFrontendConfig, CegarConfig>(inputConfig = InputConfig(property = ErrorDetection.CYCLE_HEAD_LOCATION), backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig()))
+    val cegarChecker = getCegarChecker(xcfa, mcm, cegarConfig, logger)
+    val witnessValidationConfig = config.backendConfig.specConfig as WitnessValidationConfig
     return SafetyChecker { _ ->
 
-
-
+        // stem check: we can reach a state in the cycle head which is in the recurrent set
 
         SafetyResult.unknown()
     }

@@ -124,4 +124,8 @@ class CValidationPasses(checkOverflow: Boolean, parseContext: ParseContext, uniq
         NondetFunctionPass(),
         HavocPromotionAndRange(parseContext),
     ),
+    listOf(
+        // validation specific pass
+        AnnotateWithWitnessPass(),
+    )
 )

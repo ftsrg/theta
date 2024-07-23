@@ -1,9 +1,7 @@
 package hu.bme.mit.theta.xcfa.passes
 
-import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
-import hu.bme.mit.theta.core.stmt.Stmts.SequenceStmt
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.witness.yaml.serialization.WaypointType
 import hu.bme.mit.theta.metadata.CMetaData
@@ -24,7 +22,6 @@ class AnnotateWithWitnessPass : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         if (!enabled) return builder
-        // TODO metadata check, here or earlier..?
         for (entry in witness.entries) {
             for (item in entry.content.items) {
                 when (item) {
@@ -60,7 +57,7 @@ class AnnotateWithWitnessPass : ProcedurePass {
     }
 
     /**
-     * Branching waypoint shows which way we took in that branch
+     * Branching waypoint, shows which way we took in that branch
      */
     private fun annotateBranching(
         waypoint: Waypoint,

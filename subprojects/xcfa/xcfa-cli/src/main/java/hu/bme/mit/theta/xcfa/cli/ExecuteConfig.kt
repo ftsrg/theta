@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xcfa.cli
 
+import com.google.common.base.Preconditions.checkState
 import com.google.common.base.Stopwatch
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
@@ -41,6 +42,8 @@ import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.metadata.CMetaData
+import hu.bme.mit.theta.witness.yaml.model.Witness2
+import hu.bme.mit.theta.witness.yaml.serialization.YamlWitnessParser
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -104,7 +107,10 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
         }
         LbePass.level = LbePass.LbeLevel.NO_LBE
         AnnotateWithWitnessPass.enabled = true
-        //AnnotateWithWitnessPass.witness = TODO()
+        checkState((config.backendConfig.specConfig as WitnessValidationConfig).witnessFile!=null)
+        val parsedYaml =
+            YamlWitnessParser().parseYaml((config.backendConfig.specConfig as WitnessValidationConfig).witnessFile!!)
+        AnnotateWithWitnessPass.witness = Witness2.create(parsedYaml)
     }
     if (config.debugConfig.argToFile) {
         WebDebuggerLogger.enableWebDebuggerLogger()

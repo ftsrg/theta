@@ -51,6 +51,7 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.getGlobalVarsWithNeededMutexes
 import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.AnnotateWithWitnessPass
 import hu.bme.mit.theta.xcfa.passes.changeVars
 import java.util.*
 import java.util.function.Predicate
@@ -175,7 +176,8 @@ enum class ErrorDetection {
     ERROR_LOCATION,
     DATA_RACE,
     OVERFLOW,
-    NO_ERROR
+    NO_ERROR,
+    CYCLE_HEAD_LOCATION,
 }
 
 fun getXcfaErrorPredicate(
@@ -207,6 +209,12 @@ fun getXcfaErrorPredicate(
     }
 
     ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
+    ErrorDetection.CYCLE_HEAD_LOCATION -> Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
+        s.processes.any {
+            AnnotateWithWitnessPass.witness.getHonda()!!.location.line
+            AnnotateWithWitnessPass.witness.getHonda()!!.location.column
+            it.value.locs.peek() == AnnotateWithWitnessPass.witness.getHonda(); TODO("helper to get cycle head") }
+    }
 }
 
 fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =

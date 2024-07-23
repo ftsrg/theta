@@ -1,15 +1,17 @@
 package hu.bme.mit.theta.witness.yaml.serialization
 
 import com.charleskorn.kaml.Yaml
-import hu.bme.mit.theta.witness.yaml.model.Witness2
 import kotlinx.serialization.builtins.SetSerializer
+import java.io.File
 
 class YamlWitnessParser {
-    fun parseYaml(yamlContent: String) : Set<YamlWitnessEntry> {
-        return Yaml.default.decodeFromString(SetSerializer(YamlWitnessEntry.serializer()), yamlContent)
+    fun parseYaml(yamlFile: File) : Set<YamlWitnessEntry> {
+        return Yaml.default.decodeFromStream(SetSerializer(YamlWitnessEntry.serializer()), yamlFile.inputStream())
     }
 }
 
+// TODO - make a parser unit test out of this
+/*
 fun main() {
     val yamlContent = """
         - entry_type: "violation_sequence"
@@ -87,3 +89,4 @@ fun main() {
     val yamlWitness = Witness2.create(serializedEntries)
 
 }
+*/
