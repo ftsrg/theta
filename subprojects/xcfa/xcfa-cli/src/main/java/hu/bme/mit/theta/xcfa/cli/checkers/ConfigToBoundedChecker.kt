@@ -34,6 +34,9 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Neq
 import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller
+import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -57,21 +60,29 @@ fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
 
     return BoundedChecker(
         monolithicExpr = getMonolithicExpr(xcfa),
-        bmcSolver = getSolver(boundedConfig.bmcConfig.bmcSolver,
-            boundedConfig.bmcConfig.validateBMCSolver).createSolver(),
+        bmcSolver = tryGetSolver(boundedConfig.bmcConfig.bmcSolver,
+            boundedConfig.bmcConfig.validateBMCSolver)?.createSolver(),
         bmcEnabled = { !boundedConfig.bmcConfig.disable },
         lfPathOnly = { !boundedConfig.bmcConfig.nonLfPath },
-        itpSolver = getSolver(boundedConfig.itpConfig.itpSolver,
-            boundedConfig.itpConfig.validateItpSolver).createItpSolver(),
+        itpSolver = tryGetSolver(boundedConfig.itpConfig.itpSolver,
+            boundedConfig.itpConfig.validateItpSolver)?.createItpSolver(),
         imcEnabled = { !boundedConfig.itpConfig.disable },
-        indSolver = getSolver(boundedConfig.indConfig.indSolver,
-            boundedConfig.indConfig.validateIndSolver).createSolver(),
+        indSolver = tryGetSolver(boundedConfig.indConfig.indSolver,
+            boundedConfig.indConfig.validateIndSolver)?.createSolver(),
         kindEnabled = { !boundedConfig.indConfig.disable },
         valToState = { valToState(xcfa, it) },
         biValToAction = { val1, val2 -> valToAction(xcfa, val1, val2) },
         logger = logger
     ) as SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 
+}
+
+private fun tryGetSolver(name : String, validate : Boolean) : SolverFactory? {
+    try {
+        return getSolver(name, validate)
+    } catch (e : SmtLibSolverInstallerException) {
+        return null
+    }
 }
 
 private fun getMonolithicExpr(xcfa: XCFA): MonolithicExpr {
