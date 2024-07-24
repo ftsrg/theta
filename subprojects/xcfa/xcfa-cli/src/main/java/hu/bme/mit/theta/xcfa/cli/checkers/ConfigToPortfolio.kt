@@ -31,6 +31,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.params.PortfolioConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.portfolio.STM
+import hu.bme.mit.theta.xcfa.cli.portfolio.boundedPortfolio
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
 import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -54,6 +55,7 @@ fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
         "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
         "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+        "BOUNDED" -> boundedPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
         else -> {
             if (File(portfolioName).exists()) {
                 val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
