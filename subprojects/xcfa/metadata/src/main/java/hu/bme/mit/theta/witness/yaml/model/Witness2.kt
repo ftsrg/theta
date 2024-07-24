@@ -193,7 +193,7 @@ data class Location(
 
     companion object {
         fun create(location: YamlLocation) : Location {
-            return Location(location.file_name, location.line-1, if(location.column!=null) location.column-1 else null, location.function)
+            return Location(location.file_name, location.line, if(location.column!=null) location.column-1 else null, location.function)
         }
     }
 }

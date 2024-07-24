@@ -114,7 +114,7 @@ data class CMetaData(
                 (this.sourceText + m.sourceText)
             }
 
-            return CMetaData(jLineNumberStart, jLineNumberStop, jColNumberStart, jColNumberStop, jOffsetStart, jOffsetEnd, jSourceTexts)
+            return CMetaData(jLineNumberStart, jColNumberStart, jLineNumberStop, jColNumberStop, jOffsetStart, jOffsetEnd, jSourceTexts)
         } else {
             throw RuntimeException("CMetaData can only be joined with CMetaData")
         }

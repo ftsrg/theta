@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.xcfa.UtilsKt;
+import hu.bme.mit.theta.xcfa.model.NopLabel;
 import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
@@ -46,7 +47,7 @@ public class XcfaMonolithicTransFunc extends AbstractMonolithicTransFunc {
         Preconditions.checkArgument(xcfa.getInitProcedures().size() == 1);
         var proc = xcfa.getInitProcedures().stream().findFirst().orElse(null).getFirst();
         assert proc != null;
-        Preconditions.checkArgument(proc.getEdges().stream().map(UtilsKt::getFlatLabels).noneMatch(it -> it.stream().anyMatch(i -> !(i instanceof StmtLabel))));
+        Preconditions.checkArgument(proc.getEdges().stream().map(UtilsKt::getFlatLabels).noneMatch(it -> it.stream().anyMatch(i -> !(i instanceof StmtLabel || i instanceof NopLabel))));
         Preconditions.checkArgument(proc.getErrorLoc().isPresent());
         int i = 0;
         final Map<XcfaLocation, Integer> map = new HashMap<>();

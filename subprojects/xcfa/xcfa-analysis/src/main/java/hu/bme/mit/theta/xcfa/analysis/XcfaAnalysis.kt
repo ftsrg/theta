@@ -53,6 +53,7 @@ import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AnnotateWithWitnessPass
 import hu.bme.mit.theta.xcfa.passes.changeVars
+import hu.bme.mit.theta.xcfa.passes.getCMetaData
 import java.util.*
 import java.util.function.Predicate
 
@@ -210,10 +211,14 @@ fun getXcfaErrorPredicate(
 
     ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
     ErrorDetection.CYCLE_HEAD_LOCATION -> Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
+        val hondaLineStart = AnnotateWithWitnessPass.witness.getHonda()!!.location.line
+        val hondaColumnStart = AnnotateWithWitnessPass.witness.getHonda()!!.location.column
         s.processes.any {
-            AnnotateWithWitnessPass.witness.getHonda()!!.location.line
-            AnnotateWithWitnessPass.witness.getHonda()!!.location.column
-            it.value.locs.peek() == AnnotateWithWitnessPass.witness.getHonda(); TODO("helper to get cycle head") }
+            val outEdgeMetadata = it.value.locs.peek().outgoingEdges.firstOrNull()?.getCMetaData()
+            (outEdgeMetadata != null
+                    && outEdgeMetadata.lineNumberStart == hondaLineStart
+                    && outEdgeMetadata.colNumberStart == hondaColumnStart)
+        }
     }
 }
 

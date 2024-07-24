@@ -16,33 +16,84 @@
 
 package hu.bme.mit.theta.xcfa.cli.checkers
 
+import com.google.common.collect.ImmutableSet
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
+import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
+import hu.bme.mit.theta.xcfa.analysis.XcfaMonolithicTransFunc
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.params.*
-import hu.bme.mit.theta.xcfa.model.XCFA
-import hu.bme.mit.theta.xcfa.passes.AnnotateWithWitnessPass
+import hu.bme.mit.theta.xcfa.model.*
+import hu.bme.mit.theta.xcfa.passes.*
+import java.util.*
 
 fun getValidatorChecker(xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
     logger: Logger): SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
-    val cegarConfig = XcfaConfig<SpecFrontendConfig, CegarConfig>(inputConfig = InputConfig(property = ErrorDetection.CYCLE_HEAD_LOCATION), backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig()))
-    val cegarChecker = getCegarChecker(xcfa, mcm, cegarConfig, logger)
-    val witnessValidationConfig = config.backendConfig.specConfig as WitnessValidationConfig
     return SafetyChecker { _ ->
+        // stem check: we can reach a state in the cycle head (TODO Should I also check if cycle head is in recurrent set??)
+        val cegarConfig = XcfaConfig<SpecFrontendConfig, CegarConfig>(inputConfig = InputConfig(property = ErrorDetection.CYCLE_HEAD_LOCATION), backendConfig = BackendConfig(backend = Backend.CEGAR, specConfig = CegarConfig()))
+        val cegarChecker = getCegarChecker(xcfa, mcm, cegarConfig, logger)
+        // val witnessValidationConfig = config.backendConfig.specConfig as WitnessValidationConfig // what to do with this one?
 
-        // stem check: we can reach a state in the cycle head which is in the recurrent set
+        val stemSafetyResult = cegarChecker.check()
 
+        val monolithicExpr = XcfaMonolithicTransFunc.create(getCycle(xcfa))
         SafetyResult.unknown()
     }
 
+}
+
+private fun getCycle(xcfa: XCFA): XCFA {
+    val builder = XcfaBuilder("cycle")
+    val proc = XcfaProcedureBuilder("cycle", ProcedurePassManager(listOf(InlineProceduresPass())))
+    builder.addEntryPoint(proc, listOf())
+
+    val hondaLineStart = AnnotateWithWitnessPass.witness.getHonda()!!.location.line
+    val hondaColumnStart = AnnotateWithWitnessPass.witness.getHonda()!!.location.column
+
+    proc.createInitLoc(EmptyMetaData)
+    val honda: XcfaLocation? = xcfa.initProcedures.first().first.locs.find {
+        val outEdgeMetadata = it.outgoingEdges.firstOrNull()?.getCMetaData()
+        (outEdgeMetadata != null
+                && outEdgeMetadata.lineNumberStart == hondaLineStart
+                && outEdgeMetadata.colNumberStart == hondaColumnStart)
+    }
+    if(honda == null) error("Honda does not exist at $hondaLineStart:${hondaColumnStart?.plus(1)}")
+    proc.addLoc(honda)
+    proc.addEdge(XcfaEdge(proc.initLoc, honda, EmptyMetaData))
+    for (outgoingEdge in honda.outgoingEdges) {
+        buildCycleXcfa(honda, proc, outgoingEdge.target, setOf(honda, outgoingEdge.target), setOf(outgoingEdge))
+    }
+    return builder.build()
+}
+
+private fun buildCycleXcfa(honda: XcfaLocation, proc: XcfaProcedureBuilder, loc: XcfaLocation, reachedSet: Set<XcfaLocation>, edges: Set<XcfaEdge>) {
+    for (outgoingEdge in loc.outgoingEdges) {
+        val outLoc = outgoingEdge.target
+        if(outLoc == honda) {
+            reachedSet.forEach(proc::addLoc)
+            edges.forEach(proc::addEdge)
+        } else if (!reachedSet.contains(outLoc)) {
+            buildCycleXcfa(
+                honda,
+                proc,
+                outLoc,
+                ImmutableSet.builder<XcfaLocation>().addAll(reachedSet).add(outLoc).build(),
+                ImmutableSet.builder<XcfaEdge>().addAll(edges).add(outgoingEdge).build()
+            )
+        }
+    }
 }
