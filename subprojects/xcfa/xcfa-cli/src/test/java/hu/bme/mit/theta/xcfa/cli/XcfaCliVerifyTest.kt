@@ -255,6 +255,20 @@ class XcfaCliVerifyTest {
     }
 
     @ParameterizedTest
+    @MethodSource("singleThreadedCFiles")
+    fun testCVerifyBoundedPortfolio(filePath: String, extraArgs: String?) {
+        val params = arrayOf(
+            "--backend", "PORTFOLIO",
+            "--portfolio", "BOUNDED",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
+    }
+
+    @ParameterizedTest
     @MethodSource("cFilesShortInt")
     fun testCVerifyCHC(filePath: String, extraArgs: String?) {
         Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
