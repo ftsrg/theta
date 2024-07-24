@@ -80,7 +80,7 @@ fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
 private fun tryGetSolver(name: String, validate: Boolean): SolverFactory? {
     try {
         return getSolver(name, validate)
-    } catch (e: SmtLibSolverInstallerException) {
+    } catch (e: Throwable) {
         return null
     }
 }
