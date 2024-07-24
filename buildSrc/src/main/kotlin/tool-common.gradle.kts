@@ -34,6 +34,7 @@ tasks {
 
 tasks.withType<ShadowJar>() {
     manifest {
-        attributes["Implementation-Version"] = version
+        attributes["Implementation-Version"] = archiveVersion
     }
+    isZip64 = true
 }

@@ -68,6 +68,8 @@ object Deps {
     object Mockito {
 
         val core = "org.mockito:mockito-core:${Versions.mockito}"
+        val extension = "org.mockito:mockito-junit-jupiter:${Versions.mockito}"
+        val kotlin = "org.mockito.kotlin:mockito-kotlin:${Versions.mockitoKotlin}"
     }
 
     object Kotlin {

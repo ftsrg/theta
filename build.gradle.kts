@@ -28,7 +28,7 @@ buildscript {
 
 allprojects {
     group = "hu.bme.mit.theta"
-    version = "6.2.0"
+    version = "6.2.1"
 
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
@@ -39,7 +39,7 @@ sonar {
         property("sonar.organization", "ftsrg-github")
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.coverage.jacoco.xmlReportPaths",
-            "${project.buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml")
+            "${project.layout.buildDirectory.asFile.get()}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml")
     }
 }
 
@@ -51,9 +51,9 @@ tasks {
         description = "Generates merged code coverage report for all test tasks."
 
         reports {
-            html.isEnabled = false
-            xml.isEnabled = true
-            csv.isEnabled = false
+            html.required.set(false)
+            xml.required.set(true)
+            csv.required.set(false)
         }
 
         val reportTasks = subprojects.mapNotNull { subproject ->

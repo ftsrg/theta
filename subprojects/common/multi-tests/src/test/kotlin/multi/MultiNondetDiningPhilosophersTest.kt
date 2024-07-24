@@ -75,19 +75,19 @@ class MultiNondetDiningPhilosophersTest {
 
         val cfa1ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
             Z3LegacySolverFactory.getInstance())
-        cfa1ConfigBuilder.encoding(CfaConfigBuilder.Encoding.SBE)
+        cfa1ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa1ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil1cfa)
         val cfa2ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
             Z3LegacySolverFactory.getInstance())
-        cfa2ConfigBuilder.encoding(CfaConfigBuilder.Encoding.SBE)
+        cfa2ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa2ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil2cfa)
         val cfa3ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
             Z3LegacySolverFactory.getInstance())
-        cfa3ConfigBuilder.encoding(CfaConfigBuilder.Encoding.SBE)
+        cfa3ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa3ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil3cfa)
         val cfa4ConfigBuilder = CfaConfigBuilder(CfaConfigBuilder.Domain.EXPL, CfaConfigBuilder.Refinement.SEQ_ITP,
             Z3LegacySolverFactory.getInstance())
-        cfa4ConfigBuilder.encoding(CfaConfigBuilder.Encoding.SBE)
+        cfa4ConfigBuilder.encoding(CfaConfigBuilder.Encoding.LBE)
         val cfa4ExplBuilder = cfa1ConfigBuilder.ExplStrategy(phil4cfa)
 
         val cfaRefToPrec = RefutationToGlobalCfaPrec(ItpRefToExplPrec(), phil1cfa.initLoc)
