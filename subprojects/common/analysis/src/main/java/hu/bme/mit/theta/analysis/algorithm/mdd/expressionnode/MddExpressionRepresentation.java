@@ -409,7 +409,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
             return QueryResult.failed();
         }
 
-        // TODO összevonni queryChilddal
+        // TODO osszevonni queryChilddal
         public MddNode moveDown(int assignment) {
             if (queryEdge(assignment)) {
                 popNegatedAssignments();
