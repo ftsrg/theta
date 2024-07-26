@@ -8,6 +8,6 @@ runs:
     - name: Check for formatting
       uses: leventeBajczi/intellij-idea-format@v1.0
       with:
-        settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
+        settings-file: "./.idea/codeStyles/Project.xml"
         file-mask: "*.java,*.kt"
         additional-options: "-dry"

@@ -30,7 +30,7 @@ jobs:
     - name: Do reformat
       uses: leventeBajczi/intellij-idea-format@v1.0
       with:
-        settings-file: "./doc/ThetaIntelliJCodeStyle.xml"
+        settings-file: "./.idea/codeStyles/Project.xml"
         file-mask: ${{ inputs.file_mask }}
 
     - name: Create Pull Request
