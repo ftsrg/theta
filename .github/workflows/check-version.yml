@@ -11,6 +11,9 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     steps:
+      - name: Set java home to java 17
+        run: |
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: New version
