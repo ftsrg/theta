@@ -35,6 +35,7 @@ import hu.bme.mit.theta.grammar.gson.OptionalAdapter
 import hu.bme.mit.theta.grammar.gson.PairAdapter
 import hu.bme.mit.theta.grammar.gson.StringTypeAdapter
 import hu.bme.mit.theta.grammar.gson.VarDeclAdapter
+import hu.bme.mit.theta.metadata.MetaData
 import hu.bme.mit.theta.xcfa.XcfaScope
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions.assertEquals

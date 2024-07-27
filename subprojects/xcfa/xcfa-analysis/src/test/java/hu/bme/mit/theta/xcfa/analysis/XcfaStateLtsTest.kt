@@ -20,6 +20,7 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.type.inttype.IntExprs
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState.Companion.createLookup
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaAasporLts
 import hu.bme.mit.theta.xcfa.analysis.por.XcfaSporLts
@@ -95,7 +96,7 @@ class XcfaStateLtsTest {
                 aasporLts.getEnabledActionsFor(it, emptyList(), ExplPrec.empty()).size == 1
         }
 
-        actionOrder.add { XcfaAction(0, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel(EmptyMetaData)))) }
+        actionOrder.add { XcfaAction(0, XcfaEdge(edges[0].target, edges[0].target, EmptyMetaData, ReturnLabel(NopLabel(EmptyMetaData)))) }
         expectations.add {
             it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[1].target &&
                 lts.getEnabledActionsFor(it).size == 1 &&
@@ -124,7 +125,7 @@ class XcfaStateLtsTest {
         }
 
         actionOrder.add { s ->
-            XcfaAction(s.foreignKey()!!, XcfaEdge(edges[0].target, edges[0].target, ReturnLabel(NopLabel(EmptyMetaData))))
+            XcfaAction(s.foreignKey()!!, XcfaEdge(edges[0].target, edges[0].target, EmptyMetaData, ReturnLabel(NopLabel(EmptyMetaData))))
         }
         expectations.add {
             it.processes.size == 1 && it.processes[0]!!.locs.size == 1 && it.processes[0]!!.locs.peek() == edges[2].target &&

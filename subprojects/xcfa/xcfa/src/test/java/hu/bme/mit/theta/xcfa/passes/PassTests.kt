@@ -28,6 +28,7 @@ import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CSignedInt
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.real.CFloat
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions
@@ -550,7 +551,7 @@ class PassTests {
         val x = Var("x", Int())
         val y = Var("y", Int())
         val xcfaLabel = { a: VarDecl<IntType>, b: VarDecl<IntType> ->
-            StmtLabel(Assign(a, b.ref))
+            StmtLabel(Assign(a, b.ref), EmptyMetaData)
         }
 
         val x_prime = Var("x'", Int())

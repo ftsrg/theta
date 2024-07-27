@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.metadata
 
-import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 
 data class CMetaData(
@@ -37,7 +36,7 @@ data class CMetaData(
     }
 
     override fun join(m: MetaData): MetaData {
-        Preconditions.checkState(m is CMetaData)
+        if (m == EmptyMetaData) return this
         assert(m is CMetaData)
 
         // the idea here is that we take the earlier start line (and possibly start column with it)

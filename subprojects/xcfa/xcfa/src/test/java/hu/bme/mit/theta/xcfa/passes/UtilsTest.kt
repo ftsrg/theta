@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.Stmts.*
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -52,13 +53,13 @@ class UtilsTest {
                 StartLabel("", listOf(xPrime.ref), y, EmptyMetaData)),
             Arguments.of(ReturnLabel(JoinLabel(x, EmptyMetaData)), ReturnLabel(JoinLabel(xPrime, EmptyMetaData))),
 
-            Arguments.of(StmtLabel(Assign(x, y.ref)),
-                StmtLabel(Assign(xPrime, y.ref))),
-            Arguments.of(StmtLabel(Havoc(x)),
-                StmtLabel(Havoc(xPrime))),
-            Arguments.of(StmtLabel(Assume(Eq(x.ref, y.ref))),
-                StmtLabel(Assume(Eq(xPrime.ref, y.ref)))),
-            Arguments.of(StmtLabel(Skip()), StmtLabel(Skip())),
+            Arguments.of(StmtLabel(Assign(x, y.ref), EmptyMetaData),
+                StmtLabel(Assign(xPrime, y.ref), EmptyMetaData)),
+            Arguments.of(StmtLabel(Havoc(x), EmptyMetaData),
+                StmtLabel(Havoc(xPrime), EmptyMetaData)),
+            Arguments.of(StmtLabel(Assume(Eq(x.ref, y.ref)), EmptyMetaData),
+                StmtLabel(Assume(Eq(xPrime.ref, y.ref)), EmptyMetaData)),
+            Arguments.of(StmtLabel(Skip(), EmptyMetaData), StmtLabel(Skip(), EmptyMetaData)),
         )
     }
 
