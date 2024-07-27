@@ -180,19 +180,21 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
             val flatLabels = e.getFlatLabels()
             if (flatLabels.size == 1 && flatLabels[0] is InvokeLabel) {
                 val invokeLabel = flatLabels[0] as InvokeLabel
-                val proc = xcfa.procedures.find { it.name == invokeLabel.name }!!
+                val calledProc = xcfa.procedures.find { it.name == invokeLabel.name } ?: error(
+                    "No such procedure ${invokeLabel.name}"
+                )
                 SequenceStmt.of(
                     listOf(
                         AssumeStmt.of(Eq(getCurrLoc, Int(locMap[e.source]!!))),     // entry loc match
                         setCurrLoc(Int(locMap[e.target]!!))                         // exit loc match
-                    ) + proc.params.mapIndexed { i, (varDecl, dir) ->               // param assignments
+                    ) + calledProc.params.mapIndexed { i, (varDecl, dir) ->               // param assignments
                         if (dir != ParamDirection.OUT) {
                             Assign(cast(varDecl, varDecl.type), cast(invokeLabel.params[i], varDecl.type))
                         } else {
                             null
                         }
                     }.filterNotNull() +
-                        enterFuncStmt(proc, invokeLabel)                            // stack assignment
+                        enterFuncStmt(calledProc, invokeLabel)                            // stack assignment
                 )
             } else {
                 checkState(flatLabels.none { it is InvokeLabel }, "InvokeLabels deserve their own private edge.")
@@ -250,7 +252,8 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
 private fun XCFA.callGraph(): Map<XcfaProcedure, Set<XcfaProcedure>> =
     procedures.associateBy { it.name }.let { map ->
         procedures.associateWith {
-            it.edges.flatMap(XcfaEdge::getFlatLabels).filterIsInstance<InvokeLabel>().map { map[it.name]!! }
+            it.edges.flatMap(XcfaEdge::getFlatLabels).filterIsInstance<InvokeLabel>()
+                .map { map[it.name] ?: error("No such procedure ${it.name}") }
                 .toSet()
         }
     }
