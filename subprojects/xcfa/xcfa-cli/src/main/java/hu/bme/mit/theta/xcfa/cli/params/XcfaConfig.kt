@@ -136,7 +136,12 @@ data class CFrontendConfig(
 
     @Parameter(names = ["--architecture"], description = "Architecture (see https://unix.org/whitepapers/64bit.html)")
     var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
-) : SpecFrontendConfig
+
+    @Parameter(names = ["--no-inline"],
+        description = "Do not inline the program, even if possible.")
+    var noInline: Boolean = false,
+
+    ) : SpecFrontendConfig
 
 data class CHCFrontendConfig(
     @Parameter(names = ["--chc-transformation"], description = "Direction of transformation from CHC to XCFA")

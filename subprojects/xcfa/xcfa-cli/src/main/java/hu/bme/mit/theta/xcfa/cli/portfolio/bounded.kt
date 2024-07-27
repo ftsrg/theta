@@ -16,15 +16,10 @@
 
 package hu.bme.mit.theta.xcfa.cli.portfolio
 
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
-import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.ArithmeticTrait
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
-import hu.bme.mit.theta.solver.Solver
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
-import hu.bme.mit.theta.xcfa.analysis.isInlined
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.runConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
@@ -76,10 +71,6 @@ fun boundedPortfolio(
 
     if (parseContext.multiThreading) {
         throw UnsupportedOperationException("Multithreading for bounded checkers not supported")
-    }
-
-    if (!xcfa.isInlined) {
-        throw UnsupportedOperationException("Recursive XCFA for bounded checkers not supported")
     }
 
     val timeoutOrNotSolvableError = ExceptionTrigger(

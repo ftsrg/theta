@@ -34,7 +34,7 @@ import hu.bme.mit.theta.xcfa.model.*
 class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
-        if (!builder.canInline()) return builder
+        if (!builder.canInline() || disable) return builder
         checkNotNull(builder.metaData["deterministic"])
         check(builder.metaData["inlined"] == null) { "Recursive programs are not supported by inlining." }
         builder.metaData["inlined"] = Unit
@@ -128,5 +128,10 @@ class InlineProceduresPass(val parseContext: ParseContext) : ProcedurePass {
 
     private fun XcfaLocation.inlinedCopy(): XcfaLocation {
         return copy(name = name + "_" + XcfaLocation.uniqueCounter(), initial = false, final = false, error = false)
+    }
+
+    companion object {
+
+        var disable: Boolean = false
     }
 }

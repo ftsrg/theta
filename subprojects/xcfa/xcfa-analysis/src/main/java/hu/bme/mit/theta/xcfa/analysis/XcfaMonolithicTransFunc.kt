@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.algorithm.AbstractMonolithicTransFunc
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
@@ -247,6 +248,11 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
         offsetIndex = transUnfold.indexing
         propExpr = IntExprs.Neq(locVar.ref, Int(map[proc.errorLoc.get()]!!))
     }
+
+    fun toMonolithicExpr() = MonolithicExpr(
+        initExpr, transExpr, propExpr, offsetIndex
+    )
+
 }
 
 private fun XCFA.callGraph(): Map<XcfaProcedure, Set<XcfaProcedure>> =

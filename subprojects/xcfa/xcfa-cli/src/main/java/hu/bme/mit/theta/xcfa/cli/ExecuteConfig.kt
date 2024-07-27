@@ -93,6 +93,9 @@ fun runConfig(
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
     config.inputConfig.property = determineProperty(config, logger)
     LbePass.level = config.frontendConfig.lbeLevel
+    if (config.frontendConfig.specConfig is CFrontendConfig) {
+        InlineProceduresPass.disable = (config.frontendConfig.specConfig as CFrontendConfig).noInline
+    }
     StaticCoiPass.enabled = config.frontendConfig.staticCoi
     if (config.backendConfig.backend == Backend.CEGAR) {
         val cegarConfig = config.backendConfig.specConfig
