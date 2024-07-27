@@ -56,7 +56,7 @@ fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
             boundedConfig.indConfig.validateIndSolver)?.createSolver(),
         kindEnabled = { !boundedConfig.indConfig.disable },
         valToState = { valToState(xcfa, transFunc.locMap, it) },
-        biValToAction = { val1, val2 -> valToAction(xcfa, val1, val2, transFunc.locMap) },
+        biValToAction = { val1, val2 -> valToAction(xcfa, val1, val2, transFunc.locMap, transFunc.callsiteMap) },
         logger = logger
     ) as SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 

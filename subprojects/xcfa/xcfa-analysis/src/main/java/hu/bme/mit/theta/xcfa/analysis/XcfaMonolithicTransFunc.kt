@@ -53,6 +53,7 @@ import kotlin.collections.associateBy
 import kotlin.collections.associateWith
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.collections.emptyMap
 import kotlin.collections.filter
 import kotlin.collections.filterIsInstance
 import kotlin.collections.filterNotNull
@@ -76,6 +77,7 @@ import kotlin.jvm.optionals.getOrNull
 class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
 
     lateinit var locMap: Map<XcfaLocation, Int>
+    var callsiteMap: Map<InvokeLabel, Int> = emptyMap()
 
     init {
         Preconditions.checkArgument(xcfa.initProcedures.size == 1)
@@ -112,7 +114,7 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
 
         var i = 0
         locMap = locs.associateWith { i++ }
-        val callsiteMap = edges.flatMap { it.getFlatLabels() }.filterIsInstance<InvokeLabel>().associateWith { i++ }
+        callsiteMap = edges.flatMap { it.getFlatLabels() }.filterIsInstance<InvokeLabel>().associateWith { i++ }
 
         val stackDepthVar = Decls.Var("__curr_depth_", Int())
         val locVars = (0..longestCallPath).associateWith { Decls.Var("__loc_${it}_", Int()) }
