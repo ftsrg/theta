@@ -22,47 +22,57 @@ import hu.bme.mit.theta.core.decl.Decls.Var
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr
+import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaProcessState
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.reverseMapping
+import hu.bme.mit.theta.xcfa.model.NopLabel
 import hu.bme.mit.theta.xcfa.model.XCFA
+import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import java.util.*
 
-fun valToAction(xcfa: XCFA, val1: Valuation, val2: Valuation): XcfaAction {
-    val val1Map = val1.toMap()
-    val val2Map = val2.toMap()
-    var i = 0
-    val map: MutableMap<XcfaLocation, Int> = HashMap()
-    for (x in xcfa.procedures.first { it.name == "main" }.locs) {
-        map[x] = i++
+private fun Valuation.getLocation(locMap: Map<XcfaLocation, Int>): XcfaLocation {
+    val map = toMap()
+    val currDepth = map.keys.firstOrNull { it.name == "__curr_depth_" }
+    val value = if (currDepth != null) {
+        // we have a depth counter
+        val lit = map[currDepth] as IntLitExpr
+        val stackDepth = lit.value.toInt()
+        map.keys.firstOrNull() { it.name == "__loc_${stackDepth}_" }
+    } else {
+        map.keys.firstOrNull() { it.name == "__loc_" }
     }
-    return XcfaAction(
-        pid = 0,
-        edge = xcfa.procedures.first { it.name == "main" }.edges.first { edge ->
-            map[edge.source] == (val1Map[val1Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt() &&
-                map[edge.target] == (val2Map[val2Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()
-        })
+    val lit = map[value] as? IntLitExpr ?: error("Location not in valuation.")
+    return locMap.reverseMapping()[lit.value.toInt()] ?: error("Location not found.")
 }
 
-fun valToState(xcfa: XCFA, val1: Valuation): XcfaState<PtrState<ExplState>> {
+fun valToAction(xcfa: XCFA, val1: Valuation, val2: Valuation, locMap: Map<XcfaLocation, Int>): XcfaAction {
+    val loc1 = val1.getLocation(locMap)
+    val loc2 = val2.getLocation(locMap)
+    return XcfaAction(
+        pid = 0,
+        edge = xcfa.procedures.flatMap { it.edges }.firstOrNull { edge ->
+            edge.source == loc1 && edge.target == loc2
+        } ?: XcfaEdge(loc1, loc2, EmptyMetaData, NopLabel(EmptyMetaData))
+    )
+}
+
+fun valToState(xcfa: XCFA, locMap: Map<XcfaLocation, Int>, val1: Valuation): XcfaState<PtrState<ExplState>> {
     val valMap = val1.toMap()
-    var i = 0
-    val map: MutableMap<Int, XcfaLocation> = HashMap()
-    for (x in xcfa.procedures.first { it.name == "main" }.locs) {
-        map[i++] = x
-    }
     return XcfaState(
         xcfa = xcfa,
         processes = mapOf(Pair(0, XcfaProcessState(
             locs = LinkedList(
-                listOf(map[(valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()])),
+                listOf(val1.getLocation(locMap))
+            ),
             varLookup = LinkedList(),
         ))),
         PtrState(ExplState.of(
             ImmutableValuation.from(
                 val1.toMap()
-                    .filter { it.key.name != "__loc_" && !it.key.name.startsWith("__temp_") }
+                    .filter { !it.key.name.startsWith("__loc_") && !it.key.name.startsWith("__temp_") }
                     .map { Pair(Var("_" + "_" + it.key.name, it.key.type), it.value) }.toMap()))),
         mutexes = emptyMap(),
         threadLookup = emptyMap(),

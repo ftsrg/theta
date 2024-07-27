@@ -74,6 +74,9 @@ import kotlin.collections.toSet
 import kotlin.jvm.optionals.getOrNull
 
 class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
+
+    lateinit var locMap: Map<XcfaLocation, Int>
+
     init {
         Preconditions.checkArgument(xcfa.initProcedures.size == 1)
         val proc = checkNotNull(xcfa.initProcedures.stream().findFirst().get().first)
@@ -108,7 +111,7 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
         val edges = procedures.flatMap { it.edges }.toSet()
 
         var i = 0
-        val locMap = locs.associateWith { i++ }
+        locMap = locs.associateWith { i++ }
         val callsiteMap = edges.flatMap { it.getFlatLabels() }.filterIsInstance<InvokeLabel>().associateWith { i++ }
 
         val stackDepthVar = Decls.Var("__curr_depth_", Int())
@@ -220,13 +223,14 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
         )
         firstIndex = VarIndexingFactory.indexing(0)
         offsetIndex = transUnfold.indexing
-        propExpr = And(procedures.mapNotNull { it.finalLoc.getOrNull()?.let { Neq(getCurrLoc, Int(locMap[it]!!)) } })
+        propExpr = And(procedures.mapNotNull { it.errorLoc.getOrNull()?.let { Neq(getCurrLoc, Int(locMap[it]!!)) } })
     }
 
     private fun singleProc(proc: XcfaProcedure) {
         Preconditions.checkArgument(proc.errorLoc.isPresent)
         var i = 0
         val map: MutableMap<XcfaLocation, Int> = HashMap()
+        locMap = map
         for (x in proc.locs) {
             map[x] = i++
         }
@@ -259,7 +263,7 @@ private fun XCFA.callGraph(): Map<XcfaProcedure, Set<XcfaProcedure>> =
     procedures.associateBy { it.name }.let { map ->
         procedures.associateWith {
             it.edges.flatMap(XcfaEdge::getFlatLabels).filterIsInstance<InvokeLabel>()
-                .map { map[it.name] ?: error("No such procedure ${it.name}") }
+                .mapNotNull { map[it.name] }
                 .toSet()
         }
     }

@@ -41,8 +41,10 @@ fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
 
     val boundedConfig = config.backendConfig.specConfig as BoundedConfig
 
+    val transFunc = XcfaMonolithicTransFunc(xcfa)
+
     return BoundedChecker(
-        monolithicExpr = XcfaMonolithicTransFunc(xcfa).toMonolithicExpr(),
+        monolithicExpr = transFunc.toMonolithicExpr(),
         bmcSolver = tryGetSolver(boundedConfig.bmcConfig.bmcSolver,
             boundedConfig.bmcConfig.validateBMCSolver)?.createSolver(),
         bmcEnabled = { !boundedConfig.bmcConfig.disable },
@@ -53,8 +55,8 @@ fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
         indSolver = tryGetSolver(boundedConfig.indConfig.indSolver,
             boundedConfig.indConfig.validateIndSolver)?.createSolver(),
         kindEnabled = { !boundedConfig.indConfig.disable },
-        valToState = { valToState(xcfa, it) },
-        biValToAction = { val1, val2 -> valToAction(xcfa, val1, val2) },
+        valToState = { valToState(xcfa, transFunc.locMap, it) },
+        biValToAction = { val1, val2 -> valToAction(xcfa, val1, val2, transFunc.locMap) },
         logger = logger
     ) as SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 
