@@ -138,7 +138,7 @@ data class XcfaEdge @JvmOverloads constructor(
     val label: XcfaLabel = NopLabel(metadata),                                // edge label
 ) {
     init {
-        Preconditions.checkState(metadata==label.metadata, "Metadata on edge and on label should be equal: ${metadata}, ${label.metadata}")
+        Preconditions.checkState(metadata==label.metadata, "Metadata on edge and on label ($label) should be equal: ${metadata}, ${label.metadata}")
     }
 
     fun withLabel(label: XcfaLabel): XcfaEdge = XcfaEdge(source, target, label.metadata, label)

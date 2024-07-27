@@ -24,6 +24,7 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.metadata.CMetaData
 import hu.bme.mit.theta.metadata.EmptyMetaData
 import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
@@ -56,7 +57,11 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
                     writer.beginObject()
                         .name("source").value(it.source.name)
                         .name("target").value(it.target.name)
-                        .name("label")
+                    if (it.metadata is CMetaData) {
+                        writer.name("c_metadata")
+                        gson.toJson(gson.toJsonTree(it.metadata as CMetaData), writer)
+                    }
+                    writer.name("label")
                     gson.toJson(gson.toJsonTree(it.label), writer)
                     writer.endObject()
                 }
@@ -140,6 +145,7 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
         val varsType = object : TypeToken<Set<VarDecl<*>>>() {}.type
         val locsType = object : TypeToken<Set<XcfaLocation>>() {}.type
         val labelType = object : TypeToken<XcfaLabel>() {}.type
+        val metadataType = object : TypeToken<CMetaData>() {}.type
 
         while (reader.peek() != JsonToken.END_ARRAY) {
             reader.beginObject()
@@ -173,15 +179,17 @@ class XcfaAdapter(val gsonSupplier: () -> Gson) : TypeAdapter<XCFA>() {
                             reader.beginObject()
                             lateinit var source: XcfaLocation
                             lateinit var target: XcfaLocation
+                            var metadata: CMetaData? = null
                             lateinit var label: XcfaLabel
                             while (reader.peek() != JsonToken.END_OBJECT) {
                                 when (reader.nextName()) {
                                     "source" -> source = checkNotNull(locs[reader.nextString()])
                                     "target" -> target = checkNotNull(locs[reader.nextString()])
+                                    "c_metadata" -> metadata = gson.fromJson(reader, metadataType)
                                     "label" -> label = gson.fromJson(reader, labelType)
                                 }
                             }
-                            val edge = XcfaEdge(source, target, EmptyMetaData, label)
+                            val edge = XcfaEdge(source, target, metadata ?: EmptyMetaData, label)
                             edges.add(edge)
                             source.outgoingEdges.add(edge)
                             target.incomingEdges.add(edge)
