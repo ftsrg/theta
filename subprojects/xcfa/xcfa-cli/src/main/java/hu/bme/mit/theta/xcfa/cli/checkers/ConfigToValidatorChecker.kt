@@ -22,21 +22,15 @@ import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.ptr.PtrState
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
-import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.metadata.EmptyMetaData
-import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaMonolithicTransFunc
-import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
+import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.model.*
-import hu.bme.mit.theta.xcfa.passes.*
-import java.util.*
+import hu.bme.mit.theta.xcfa.passes.AnnotateWithWitnessPass
+import hu.bme.mit.theta.xcfa.passes.ProcedurePassManager
+import hu.bme.mit.theta.xcfa.passes.getCMetaData
 
 fun getValidatorChecker(xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
@@ -50,7 +44,7 @@ fun getValidatorChecker(xcfa: XCFA, mcm: MCM,
 
         val stemSafetyResult = cegarChecker.check()
 
-        val monolithicExpr = XcfaMonolithicTransFunc.create(getCycle(xcfa))
+        val monolithicExpr = XcfaMonolithicTransFunc(getCycle(xcfa))
         SafetyResult.unknown()
     }
 
@@ -58,7 +52,7 @@ fun getValidatorChecker(xcfa: XCFA, mcm: MCM,
 
 private fun getCycle(xcfa: XCFA): XCFA {
     val builder = XcfaBuilder("cycle")
-    val proc = XcfaProcedureBuilder("cycle", ProcedurePassManager(listOf(InlineProceduresPass())))
+    val proc = XcfaProcedureBuilder("cycle", ProcedurePassManager())
     builder.addEntryPoint(proc, listOf())
 
     val hondaLineStart = AnnotateWithWitnessPass.witness.getHonda()!!.location.line
