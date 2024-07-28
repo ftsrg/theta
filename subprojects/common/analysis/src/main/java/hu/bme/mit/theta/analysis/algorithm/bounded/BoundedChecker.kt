@@ -126,7 +126,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
         bmcSolver.add(exprs.last())
 
         if (lfPathOnly()) { // indices contains currIndex as last()
-            for (indexing in indices) {
+            for (indexing in indices.subList(1, indices.count())) { // 0th index is the initial state's
                 if (indexing != indices.last()) {
                     val allVarsSame = And(vars.map {
                         Eq(PathUtils.unfold(it.ref, indexing), PathUtils.unfold(it.ref, indices.last()))

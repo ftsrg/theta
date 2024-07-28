@@ -30,7 +30,8 @@ import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Exprs.Ite
 import hu.bme.mit.theta.core.type.anytype.RefExpr
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
+import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.*
@@ -43,6 +44,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import java.util.*
 import java.util.List
 import java.util.stream.Collectors
+import kotlin.collections.Collection
 import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashSet
 import kotlin.collections.Map
@@ -58,6 +60,7 @@ import kotlin.collections.filter
 import kotlin.collections.filterIsInstance
 import kotlin.collections.filterNotNull
 import kotlin.collections.find
+import kotlin.collections.first
 import kotlin.collections.flatMap
 import kotlin.collections.fold
 import kotlin.collections.isNotEmpty
@@ -74,7 +77,21 @@ import kotlin.collections.toList
 import kotlin.collections.toSet
 import kotlin.jvm.optionals.getOrNull
 
-class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
+/**
+ * creates a monolithic transition function from an XCFA.
+ * @param xcfa  the xcfa to create the expressions for
+ * @param initLoc   the initial location of the xcfa (by default the actual initLoc)
+ * @param propLocs  the error locations (by default the actual error locations)
+ * @param initState the initial data state (by default, True)
+ * @param propState the error data state in the error locations (by default, True)
+ */
+class XcfaMonolithicTransFunc(
+    val xcfa: XCFA,
+    val initLoc: XcfaLocation = xcfa.initProcedures.first().first.initLoc,
+    val propLocs: Collection<XcfaLocation> = xcfa.procedures.mapNotNull { it.errorLoc.getOrNull() },
+    val initState: Expr<BoolType> = True(),
+    val propState: Expr<BoolType> = True()
+) : AbstractMonolithicTransFunc() {
 
     lateinit var locMap: Map<XcfaLocation, Int>
     var callsiteMap: Map<InvokeLabel, Int> = emptyMap()
@@ -88,14 +105,14 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
         Preconditions.checkArgument(
             labels.stream().noneMatch { i: XcfaLabel? -> !(i is StmtLabel || i is NopLabel || i is InvokeLabel) })
         if (labels.stream().anyMatch { i: XcfaLabel? -> i is InvokeLabel }) {
-            multiProc(xcfa, proc)
+            multiProc(proc)
         } else {
             singleProc(proc)
         }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    private fun multiProc(xcfa: XCFA, proc: XcfaProcedure) {
+    private fun multiProc(proc: XcfaProcedure) {
         val cG = xcfa.callGraph()
         val longestCallPath = longestPathFrom(proc, cG)
         checkState(longestCallPath != Int.MAX_VALUE, "Cannot handle statically-infinitely-recursive programs.")
@@ -219,13 +236,17 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
         transExpr = SmartBoolExprs.And(transUnfold.exprs)
         initExpr = And(
             listOf(
-                Eq(locVars[0]!!.ref, Int(locMap[proc.initLoc]!!)),
+                Eq(locVars[0]!!.ref, Int(locMap[initLoc] ?: error("Initial location not in map"))),
                 Eq(stackDepthVar.ref, Int(0)),
+                initState
             )
         )
         firstIndex = VarIndexingFactory.indexing(0)
         offsetIndex = transUnfold.indexing
-        propExpr = And(procedures.mapNotNull { it.errorLoc.getOrNull()?.let { Neq(getCurrLoc, Int(locMap[it]!!)) } })
+        propExpr = Or(
+            And(propLocs.map { Neq(getCurrLoc, Int(locMap[it] ?: error("Property location not in map"))) }),
+            Not(propState)
+        )
     }
 
     private fun singleProc(proc: XcfaProcedure) {
@@ -249,10 +270,18 @@ class XcfaMonolithicTransFunc(xcfa: XCFA) : AbstractMonolithicTransFunc() {
         val trans = NonDetStmt.of(tranList)
         val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
         transExpr = SmartBoolExprs.And(transUnfold.exprs)
-        initExpr = IntExprs.Eq(locVar.ref, Int(map[proc.initLoc]!!))
+        initExpr = And(
+            listOf(
+                Eq(locVar.ref, Int(locMap[initLoc] ?: error("Initial location not in map"))),
+                initState
+            )
+        )
         firstIndex = VarIndexingFactory.indexing(0)
         offsetIndex = transUnfold.indexing
-        propExpr = IntExprs.Neq(locVar.ref, Int(map[proc.errorLoc.get()]!!))
+        propExpr = Or(
+            And(propLocs.map { Neq(locVar.ref, Int(locMap[it] ?: error("Property location not in map"))) }),
+            Not(propState)
+        )
     }
 
     fun toMonolithicExpr() = MonolithicExpr(

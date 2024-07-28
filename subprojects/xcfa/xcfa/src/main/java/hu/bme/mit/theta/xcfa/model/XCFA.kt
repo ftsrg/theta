@@ -91,6 +91,13 @@ class XCFA(
         return "XCFA(name='$name', vars=$vars, procedures=$procedures, initProcedures=$initProcedures)"
     }
 
+    fun substituteInitProc(proc: XcfaProcedure, params: List<Expr<*>>): XCFA {
+        val ret = XCFA(name, vars)
+        ret.procedures =
+            procedures.map { it.copy().also { it.parent = ret } }.toSet() + proc.copy().also { it.parent = ret }
+        ret.initProcedures = listOf(Pair(proc, params))
+        return ret
+    }
 
 }
 
