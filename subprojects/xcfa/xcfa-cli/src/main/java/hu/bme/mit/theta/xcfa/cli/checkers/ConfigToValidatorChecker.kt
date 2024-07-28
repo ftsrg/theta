@@ -84,8 +84,8 @@ fun getValidatorChecker(xcfa: XCFA, mcm: MCM,
             bmcSolver = Z3SolverFactory.getInstance().createSolver(),
             indSolver = Z3SolverFactory.getInstance().createSolver(),
             lfPathOnly = { true },
-            kindEnabled = { true },
             imcEnabled = { false },
+            kindEnabled = { false },
             valToState = { valToState(xcfa, monolithicExpr.locMap, it) as XcfaState<PtrState<*>> },
             biValToAction = { val1, val2 ->
                 valToAction(
