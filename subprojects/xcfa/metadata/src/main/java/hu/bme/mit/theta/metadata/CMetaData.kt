@@ -24,7 +24,8 @@ data class CMetaData(
     val colNumberStop: Int?,
     val offsetStart: Int?,
     val offsetEnd: Int?,
-    val sourceText: List<String>
+    val sourceText: List<String>,
+    val scope: List<String>,
 ) : MetaData() {
     init {
         if(offsetStart != null && offsetEnd != null) {
@@ -113,7 +114,15 @@ data class CMetaData(
                 (this.sourceText + m.sourceText)
             }
 
-            return CMetaData(jLineNumberStart, jColNumberStart, jLineNumberStop, jColNumberStop, jOffsetStart, jOffsetEnd, jSourceTexts)
+            val scope = if (this.scope.containsAll(m.scope)) this.scope else if (m.scope.containsAll(
+                    this.scope
+                )
+            ) m.scope else emptyList()
+
+            return CMetaData(
+                jLineNumberStart, jColNumberStart, jLineNumberStop, jColNumberStop, jOffsetStart, jOffsetEnd,
+                jSourceTexts, scope
+            )
         } else {
             throw RuntimeException("CMetaData can only be joined with CMetaData")
         }

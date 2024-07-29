@@ -18,17 +18,23 @@ package hu.bme.mit.theta.c2xcfa
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CLexer
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser
+import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.frontend.CStatistics
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.getStatistics
 import hu.bme.mit.theta.frontend.transformation.grammar.function.FunctionVisitor
+import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound
 import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.XCFA
 import org.antlr.v4.runtime.BailErrorStrategy
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.InputStream
+import java.util.*
 
 fun getXcfaFromC(
     stream: InputStream, parseContext: ParseContext, collectStatistics: Boolean,
@@ -68,4 +74,42 @@ fun getXcfaFromC(
     }
 
     return Triple(xcfa, null, null)
+}
+
+fun parseCExpression(
+    str: String,
+    vars: Map<VarDecl<*>, CComplexType>,
+    scope: List<String>,
+    warningLogger: Logger,
+): Expr<*> {
+    val parseContext = ParseContext()
+    val variables: LinkedList<Tuple2<String, MutableMap<String, VarDecl<*>>>> = LinkedList()
+    scope.forEach { variables.add(Tuple2.of(it, LinkedHashMap())) }
+    val flatVariables: MutableList<VarDecl<*>> = ArrayList()
+    for ((varDecl, type) in vars) {
+        val name = varDecl.name
+        val nameParts = name.split("::")
+        val varScope = nameParts.subList(0, nameParts.size - 1)
+        if (scope.containsAll(varScope)) {
+            variables[nameParts.size - 1].get2()[nameParts.last()] = varDecl
+            flatVariables.add(varDecl)
+            parseContext.metadata.create(varDecl.ref, "cType", type)
+            parseContext.metadata.create(varDecl.name, "cName", nameParts.last())
+        }
+    }
+
+    val input = CharStreams.fromString(str)
+    val lexer = CLexer(input)
+    val tokens = CommonTokenStream(lexer)
+    val parser = CParser(tokens)
+    parser.errorHandler = BailErrorStrategy()
+    val context = parser.assignmentExpression()
+    val funcVisitor = FunctionVisitor(parseContext, warningLogger, variables, flatVariables)
+    val statement = context.accept(funcVisitor) as CCompound
+
+    val preStatements = statement.preStatements
+    val postStatements = statement.postStatements
+    val statementList = statement.getcStatementList()
+
+    return statement.expression
 }

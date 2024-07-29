@@ -19,6 +19,8 @@ package hu.bme.mit.theta.frontend.transformation.model.statements;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
 
+import java.util.List;
+
 /**
  * Every Program, Function and Statement is a subclass of this base class.
  * Any CStatement might have an id associated with it, in case there was a label in the source code. This also provides
@@ -38,6 +40,7 @@ public abstract class CStatement {
     private int offsetStart = -1;
     private int offsetEnd = -1;
     private String sourceText = "";
+    private List<String> scope = List.of();
 
     protected CStatement(ParseContext parseContext) {
         this.parseContext = parseContext;
@@ -135,5 +138,13 @@ public abstract class CStatement {
 
     public void setSourceText(String sourceText) {
         this.sourceText = sourceText;
+    }
+
+    public void setScope(List<String> scope) {
+        this.scope = scope;
+    }
+
+    public List<String> getScope() {
+        return scope;
     }
 }

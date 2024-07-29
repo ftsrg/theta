@@ -40,26 +40,7 @@ import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisito
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.TypeVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CAssignment;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CAssume;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CBreak;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCase;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CCompound;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CContinue;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDecls;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDefault;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CDoWhile;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CExpr;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CFor;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CFunction;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CGoto;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CIf;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CInitializerList;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CProgram;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CRet;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CSwitch;
-import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile;
+import hu.bme.mit.theta.frontend.transformation.model.statements.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
@@ -67,16 +48,7 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -153,6 +125,18 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         globalDeclUsageVisitor = new GlobalDeclUsageVisitor(declarationVisitor);
     }
 
+    public FunctionVisitor(final ParseContext parseContext, Logger uniqueWarningLogger, Deque<Tuple2<String, Map<String, VarDecl<?>>>> variables, List<VarDecl<?>> flatVariables) {
+        this.declarationVisitor = new DeclarationVisitor(parseContext, this, uniqueWarningLogger);
+        this.uniqueWarningLogger = uniqueWarningLogger;
+        this.typedefVisitor = declarationVisitor.getTypedefVisitor();
+        this.typeVisitor = declarationVisitor.getTypeVisitor();
+        functions = new LinkedHashMap<>();
+        this.parseContext = parseContext;
+        globalDeclUsageVisitor = new GlobalDeclUsageVisitor(declarationVisitor);
+        this.variables = variables;
+        this.flatVariables = flatVariables;
+    }
+
     @Override
     public CStatement visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         variables.clear();
@@ -210,6 +194,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         statement.setOffsetStart(offsetStart);
         statement.setOffsetEnd(offsetEnd);
         statement.setSourceText(textWithWS(ctx));
+        statement.setScope(variables.stream().map(Tuple2::get1).toList());
     }
 
 

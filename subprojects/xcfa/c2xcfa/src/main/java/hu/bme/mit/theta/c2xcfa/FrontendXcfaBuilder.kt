@@ -89,7 +89,8 @@ class FrontendXcfaBuilder(
         colNumberStop = source.colNumberStop,
         offsetStart = source.offsetStart,
         offsetEnd = source.offsetEnd,
-        sourceText = listOf(source.sourceText)
+        sourceText = listOf(source.sourceText),
+        scope = source.scope,
     )
 
     fun buildXcfa(cProgram: CProgram): XcfaBuilder {
