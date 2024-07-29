@@ -19,6 +19,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":theta-core"))
     implementation(Deps.kotlinserialization)
     implementation(Deps.kaml)
 }

@@ -32,14 +32,18 @@ import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
+import hu.bme.mit.theta.c2xcfa.parseCExpression
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
+import hu.bme.mit.theta.common.logging.NullLogger
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.common.visualization.writer.WebDebuggerLogger
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.metadata.CMetaData
 import hu.bme.mit.theta.witness.yaml.model.Witness2
@@ -57,6 +61,7 @@ import hu.bme.mit.theta.xcfa.cli.params.*
 import hu.bme.mit.theta.xcfa.cli.utils.*
 import hu.bme.mit.theta.xcfa.cli.witnesses.XcfaTraceConcretizer
 import hu.bme.mit.theta.xcfa.cli.witnesses.graphml.XcfaWitnessWriter
+import hu.bme.mit.theta.xcfa.collectVars
 import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
@@ -187,6 +192,26 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
         val cConfig = config.backendConfig.specConfig as CegarConfig
         cConfig.abstractorConfig.search = Search.DFS
         uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
+    }
+
+    if (config.backendConfig.backend == Backend.VALIDATOR) {
+        val hondaLocation = AnnotateWithWitnessPass.witness.getHonda()!!.location
+        val recurrentSetStr = AnnotateWithWitnessPass.witness.getHonda()!!.value
+        val proc = xcfa.initProcedures.first().first
+
+        val hondaEdge = proc.edges.filter { it.getCMetaData()?.let { it.lineNumberStart == hondaLocation.line && it.colNumberStart == hondaLocation.column } ?: false }.first()
+
+        val recurrentSetExpr = parseCExpression(
+            recurrentSetStr,
+            xcfa.collectVars().associateWith { CComplexType.getType(it.ref, parseContext) },
+            hondaEdge.getCMetaData()!!.scope.reversed(),
+            NullLogger.getInstance()
+        )
+
+        val vars = ExprUtils.getVars(recurrentSetExpr)
+        checkState(xcfa.collectVars().toSet().containsAll(vars))
+
+        AnnotateWithWitnessPass.witness.getHonda()!!.valueExpr = recurrentSetExpr
     }
 
     logger.write(

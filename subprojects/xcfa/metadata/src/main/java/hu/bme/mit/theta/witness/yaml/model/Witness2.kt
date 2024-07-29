@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.witness.yaml.model
 
 import com.google.common.base.Preconditions.checkState
+import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.witness.yaml.serialization.*
 
 /**
@@ -203,8 +204,10 @@ data class Honda(
     val value: String,
     val format: String,
     val invariant: Boolean,
-    val inductive: Boolean
+    val inductive: Boolean,
 ) : CycleItem {
+    lateinit var valueExpr: Expr<*>
+
     companion object {
         fun create(honda: YamlHonda) : Honda {
             return Honda(Location.create(honda.location), honda.value, honda.format, honda.invariant, honda.inductive)
