@@ -19,6 +19,6 @@ package hu.bme.mit.theta.sts.analysis
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.sts.STS
 
-fun STS.toMonolithicExpr(): MonolithicExpr{
+fun STS.toMonolithicExpr(): MonolithicExpr {
     return MonolithicExpr(this.init, this.trans, this.prop)
 }

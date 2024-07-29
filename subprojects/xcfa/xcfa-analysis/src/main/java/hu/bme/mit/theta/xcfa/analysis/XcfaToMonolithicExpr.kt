@@ -46,11 +46,11 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
     }
     val locVar = Decls.Var("__loc_", IntExprs.Int())
     val tranList = proc.edges.map { (source, target, label): XcfaEdge ->
-            SequenceStmt.of(listOf(
-                AssumeStmt.of(Eq(locVar.ref, IntExprs.Int(map[source]!!))),
-                label.toStmt(),
-                AssignStmt.of(locVar,
-                    IntExprs.Int(map[target]!!))
+        SequenceStmt.of(listOf(
+            AssumeStmt.of(Eq(locVar.ref, IntExprs.Int(map[source]!!))),
+            label.toStmt(),
+            AssignStmt.of(locVar,
+                IntExprs.Int(map[target]!!))
         ))
     }.toList()
     val trans = NonDetStmt.of(tranList)

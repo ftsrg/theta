@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.xsts.XSTS;
+
 fun XSTS.toMonolithicExpr(): MonolithicExpr {
 
     val initUnfoldResult = StmtUtils.toExpr(this.init, VarIndexingFactory.indexing(0))
