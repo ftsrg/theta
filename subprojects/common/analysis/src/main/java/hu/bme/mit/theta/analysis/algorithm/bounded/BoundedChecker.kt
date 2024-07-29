@@ -74,9 +74,9 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
 ) : SafetyChecker<EmptyWitness, Trace<S, A>, UnitPrec> {
 
     private val vars = monolithicExpr.vars()
-    private val unfoldedInitExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
+    private val unfoldedInitExpr = PathUtils.unfold(monolithicExpr.initExpr, VarIndexingFactory.indexing(0))
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
-    private val indices = mutableListOf(VarIndexingFactory.indexing(0))
+    private val indices = mutableListOf(monolithicExpr.initOffsetIndex)
     private val exprs = mutableListOf<Expr<BoolType>>()
     private var kindLastIterLookup = 0
 
@@ -98,7 +98,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
 
             exprs.add(PathUtils.unfold(monolithicExpr.transExpr, indices.last()))
 
-            indices.add(indices.last().add(monolithicExpr.offsetIndex))
+            indices.add(indices.last().add(monolithicExpr.transOffsetIndex))
 
             if (isBmcEnabled) {
                 bmc()?.let { return it }

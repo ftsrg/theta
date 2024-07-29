@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
 import hu.bme.mit.theta.analysis.ptr.PtrState
@@ -35,8 +34,6 @@ import hu.bme.mit.theta.core.utils.StmtUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller
-import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -111,6 +108,6 @@ private fun getMonolithicExpr(xcfa: XCFA): MonolithicExpr {
         initExpr = Eq(locVar.ref, IntExprs.Int(map[proc.initLoc]!!)),
         transExpr = And(transUnfold.exprs),
         propExpr = Neq(locVar.ref, IntExprs.Int(map[proc.errorLoc.get()]!!)),
-        offsetIndex = transUnfold.indexing
+        transOffsetIndex = transUnfold.indexing
     )
 }

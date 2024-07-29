@@ -13,24 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
 
-import com.google.errorprone.annotations.Var;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
-import hu.bme.mit.theta.solver.SolverFactory;
+package hu.bme.mit.theta.sts.analysis
 
-public interface MonolithicTransFunc {
-    Expr<BoolType> getTransExpr();
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.sts.STS
 
-    Expr<BoolType> getInitExpr();
-
-    Expr<BoolType> getPropExpr();
-
-    VarIndexing getInitIndexing();
-
-    VarIndexing getOffsetIndexing();
-
-
+fun STS.toMonoliticExpr(): MonolithicExpr{
+    return MonolithicExpr(this.init, this.trans, this.prop)
 }
