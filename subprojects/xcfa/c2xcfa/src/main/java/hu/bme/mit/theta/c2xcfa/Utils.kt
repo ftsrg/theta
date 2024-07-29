@@ -77,6 +77,13 @@ fun getXcfaFromC(
     return Triple(xcfa, null, null)
 }
 
+/**
+ * Creates a Theta-expression from a C expression.
+ * @param str           the expression to parse
+ * @param vars          the variables available to use, with C types (@see TestExpressionParsing)
+ * @param scope         the scope to use (retrievable from CMetaData for any metadata-bearing object)
+ * @param warningLogger the logger to use for parser warnings
+ */
 fun parseCExpression(
     str: String,
     vars: Map<VarDecl<*>, CComplexType>,
