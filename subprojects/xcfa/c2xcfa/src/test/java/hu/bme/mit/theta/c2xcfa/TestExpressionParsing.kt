@@ -42,7 +42,7 @@ class TestExpressionParsing {
 
         val proc = xcfa.first.initProcedures.first().first
         val ifBeforeReachErrorCall = proc.edges.filter { it.getCMetaData()?.let { it.lineNumberStart == 11 && it.colNumberStart == 8 } ?: false }.first()
-        val invariant = "j + 2 < 10"
+        val invariant = "(j == 0) && (i % 2 == 0) && (x % 3 == 0)"
 
         val invariantExpr = parseCExpression(
             invariant,
