@@ -994,6 +994,19 @@ public final class ExprSimplifier {
             }
         }
 
+        if (leftOp instanceof IteExpr<IntType> ite && ite.getElse().equals(rightOp)) { // (= (ite c 1 0) 0) === not(c)
+            return simplify(Not(ite.getCond()), val);
+        }
+        if (leftOp instanceof IteExpr<IntType> ite && ite.getThen().equals(rightOp)) { // (= (ite c 1 0) 1) === (c)
+            return simplify(ite.getCond(), val);
+        }
+        if (rightOp instanceof IteExpr<IntType> ite && ite.getElse().equals(leftOp)) { // (= 0 (ite c 1 0)) === not(c)
+            return simplify(Not(ite.getCond()), val);
+        }
+        if (rightOp instanceof IteExpr<IntType> ite && ite.getThen().equals(leftOp)) { // (= 1 (ite c 1 0)) === (c)
+            return simplify(ite.getCond(), val);
+        }
+
         return expr.with(leftOp, rightOp);
     }
 
@@ -1007,6 +1020,19 @@ public final class ExprSimplifier {
             if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
                 return False();
             }
+        }
+
+        if (leftOp instanceof IteExpr<IntType> ite && ite.getElse().equals(rightOp)) { // (\= (ite c 1 0) 0) === c
+            return simplify(ite.getCond(), val);
+        }
+        if (leftOp instanceof IteExpr<IntType> ite && ite.getThen().equals(rightOp)) { // (\= (ite c 1 0) 1) === not(c)
+            return simplify(Not(ite.getCond()), val);
+        }
+        if (rightOp instanceof IteExpr<IntType> ite && ite.getElse().equals(leftOp)) { // (\= 0 (ite c 1 0)) === (c)
+            return simplify(ite.getCond(), val);
+        }
+        if (rightOp instanceof IteExpr<IntType> ite && ite.getThen().equals(leftOp)) { // (\= 1 (ite c 1 0)) === not(c)
+            return simplify(Not(ite.getCond()), val);
         }
 
         return expr.with(leftOp, rightOp);

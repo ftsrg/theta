@@ -22,6 +22,7 @@ import hu.bme.mit.theta.common.Tuple2
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.frontend.CStatistics
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.getStatistics
@@ -111,5 +112,5 @@ fun parseCExpression(
     val postStatements = statement.postStatements
     val statementList = statement.getcStatementList()
 
-    return statement.expression
+    return ExprUtils.simplify(statement.expression)
 }
