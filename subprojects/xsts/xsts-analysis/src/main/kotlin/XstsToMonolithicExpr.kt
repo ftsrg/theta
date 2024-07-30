@@ -15,11 +15,15 @@
  */
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.xsts.XSTS;
+import hu.bme.mit.theta.xsts.analysis.XstsAction
+import hu.bme.mit.theta.xsts.analysis.XstsState
 
 fun XSTS.toMonolithicExpr(): MonolithicExpr {
 
@@ -33,4 +37,18 @@ fun XSTS.toMonolithicExpr(): MonolithicExpr {
     val propExpr = this.prop
 
     return MonolithicExpr(initExpr, transExpr, propExpr, transOffsetIndex, initOffsetIndex)
+}
+
+fun XSTS.valToAction(val1: Valuation, val2: Valuation): XstsAction {
+    return XstsAction.create(
+        Stmts.SequenceStmt(listOf(this.env, this.tran))
+    )
+}
+
+fun XSTS.valToState(val1: Valuation): XstsState<ExplState> {
+    return XstsState.of(
+        ExplState.of(val1),
+        false,
+        true
+    )
 }
