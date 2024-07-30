@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -238,38 +239,25 @@ public class StsCli {
         final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
         final BoundedChecker<?, ?> checker;
         switch (algorithm) {
-            case BMC -> checker = new BoundedChecker<>(
+            case BMC -> checker = BoundedCheckerBuilderKt.buildBMC(
                     monolithicExpr,
-                    (i) -> false,
                     abstractionSolverFactory.createSolver(),
                     val -> StsToMonolithicExprKt.valToState(sts, val),
                     (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
                     logger
             );
-            case KINDUCTION -> checker = new BoundedChecker<>(
+            case KINDUCTION -> checker = BoundedCheckerBuilderKt.buildKIND(
                     monolithicExpr,
-                    (i) -> false,
                     abstractionSolverFactory.createSolver(),
-                    () -> true,
-                    () -> true,
-                    null,
-                    (i) -> false,
                     abstractionSolverFactory.createSolver(),
-                    (i) -> true,
                     val -> StsToMonolithicExprKt.valToState(sts, val),
                     (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
                     logger
             );
-            case IMC -> checker = new BoundedChecker<>(
+            case IMC -> checker = BoundedCheckerBuilderKt.buildIMC(
                     monolithicExpr,
-                    (i) -> false,
                     abstractionSolverFactory.createSolver(),
-                    () -> true,
-                    () -> true,
                     abstractionSolverFactory.createItpSolver(),
-                    (i) -> true,
-                    null,
-                    (i) -> false,
                     val -> StsToMonolithicExprKt.valToState(sts, val),
                     (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
                     logger

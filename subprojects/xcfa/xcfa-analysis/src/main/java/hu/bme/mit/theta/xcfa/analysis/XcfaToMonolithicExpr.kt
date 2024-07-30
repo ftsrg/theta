@@ -17,7 +17,11 @@ package hu.bme.mit.theta.xcfa.analysis;
 
 import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decls;
+import hu.bme.mit.theta.core.model.ImmutableValuation
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.NonDetStmt;
@@ -26,6 +30,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.inttype.IntExprs
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Eq
 import hu.bme.mit.theta.core.type.inttype.IntExprs.Neq
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 import hu.bme.mit.theta.xcfa.getFlatLabels
@@ -33,6 +38,7 @@ import hu.bme.mit.theta.xcfa.model.StmtLabel;
 import hu.bme.mit.theta.xcfa.model.XCFA;
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
 import hu.bme.mit.theta.xcfa.model.XcfaLocation;
+import java.util.*
 
 fun XCFA.toMonolithicExpr(): MonolithicExpr {
     Preconditions.checkArgument(this.initProcedures.size == 1)
@@ -61,5 +67,46 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
         transExpr = And(transUnfold.exprs),
         propExpr = Neq(locVar.ref, IntExprs.Int(map[proc.errorLoc.get()]!!)),
         transOffsetIndex = transUnfold.indexing
+    )
+}
+
+fun XCFA.valToAction(val1: Valuation, val2: Valuation): XcfaAction {
+    val val1Map = val1.toMap()
+    val val2Map = val2.toMap()
+    var i = 0
+    val map: MutableMap<XcfaLocation, Int> = HashMap()
+    for (x in this.procedures.first { it.name == "main" }.locs) {
+        map[x] = i++
+    }
+    return XcfaAction(
+        pid = 0,
+        edge = this.procedures.first { it.name == "main" }.edges.first { edge ->
+            map[edge.source] == (val1Map[val1Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt() &&
+                map[edge.target] == (val2Map[val2Map.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()
+        })
+}
+
+fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
+    val valMap = val1.toMap()
+    var i = 0
+    val map: MutableMap<Int, XcfaLocation> = HashMap()
+    for (x in this.procedures.first { it.name == "main" }.locs) {
+        map[i++] = x
+    }
+    return XcfaState(
+        xcfa = this,
+        processes = mapOf(Pair(0, XcfaProcessState(
+            locs = LinkedList(
+                listOf(map[(valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()])),
+            varLookup = LinkedList(),
+        ))),
+        PtrState(ExplState.of(
+            ImmutableValuation.from(
+                val1.toMap()
+                    .filter { it.key.name != "__loc_" && !it.key.name.startsWith("__temp_") }
+                    .map { Pair(Decls.Var("_" + "_" + it.key.name, it.key.type), it.value) }.toMap()))),
+        mutexes = emptyMap(),
+        threadLookup = emptyMap(),
+        bottom = false
     )
 }

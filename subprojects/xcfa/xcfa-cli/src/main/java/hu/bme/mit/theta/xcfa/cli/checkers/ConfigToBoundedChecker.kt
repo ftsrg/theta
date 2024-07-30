@@ -24,15 +24,10 @@ import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.SolverFactory
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
-import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
-import hu.bme.mit.theta.xcfa.analysis.toMonolithicExpr
+import hu.bme.mit.theta.xcfa.analysis.*
 import hu.bme.mit.theta.xcfa.cli.params.BoundedConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.cli.utils.getSolver
-import hu.bme.mit.theta.xcfa.cli.utils.valToAction
-import hu.bme.mit.theta.xcfa.cli.utils.valToState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
@@ -53,8 +48,8 @@ fun getBoundedChecker(xcfa: XCFA, mcm: MCM,
         indSolver = tryGetSolver(boundedConfig.indConfig.indSolver,
             boundedConfig.indConfig.validateIndSolver)?.createSolver(),
         kindEnabled = { !boundedConfig.indConfig.disable },
-        valToState = { valToState(xcfa, it) },
-        biValToAction = { val1, val2 -> valToAction(xcfa, val1, val2) },
+        valToState = { xcfa.valToState(it) },
+        biValToAction = { val1, val2 -> xcfa.valToAction(val1, val2) },
         logger = logger
     ) as SafetyChecker<EmptyWitness, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>>
 
