@@ -17,8 +17,18 @@
 package hu.bme.mit.theta.sts.analysis
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.sts.STS
 
 fun STS.toMonolithicExpr(): MonolithicExpr {
     return MonolithicExpr(this.init, this.trans, this.prop)
+}
+
+fun STS.valToAction(val1: Valuation, val2: Valuation): StsAction {
+    return StsAction(this);
+}
+
+fun STS.valToState(val1: Valuation): ExplState {
+    return ExplState.of(val1);
 }
