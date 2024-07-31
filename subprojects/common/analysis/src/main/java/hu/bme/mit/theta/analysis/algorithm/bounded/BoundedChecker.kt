@@ -62,21 +62,21 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
     private val monolithicExpr: MonolithicExpr,
     private val shouldGiveUp: (Int) -> Boolean = { false },
     private val bmcSolver: Solver? = null,
-    private val bmcEnabled: () -> Boolean = { true },
+    private val bmcEnabled: () -> Boolean = { bmcSolver != null },
     private val lfPathOnly: () -> Boolean = { true },
     private val itpSolver: ItpSolver? = null,
-    private val imcEnabled: (Int) -> Boolean = { true },
+    private val imcEnabled: (Int) -> Boolean = { itpSolver != null },
     private val indSolver: Solver? = null,
-    private val kindEnabled: (Int) -> Boolean = { true },
+    private val kindEnabled: (Int) -> Boolean = { indSolver != null },
     private val valToState: (Valuation) -> S,
     private val biValToAction: (Valuation, Valuation) -> A,
     private val logger: Logger,
 ) : SafetyChecker<EmptyWitness, Trace<S, A>, UnitPrec> {
 
     private val vars = monolithicExpr.vars()
-    private val unfoldedInitExpr = PathUtils.unfold(monolithicExpr.initExpr, 0)
+    private val unfoldedInitExpr = PathUtils.unfold(monolithicExpr.initExpr, VarIndexingFactory.indexing(0))
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
-    private val indices = mutableListOf(VarIndexingFactory.indexing(0))
+    private val indices = mutableListOf(monolithicExpr.initOffsetIndex)
     private val exprs = mutableListOf<Expr<BoolType>>()
     private var kindLastIterLookup = 0
 
@@ -98,7 +98,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
 
             exprs.add(PathUtils.unfold(monolithicExpr.transExpr, indices.last()))
 
-            indices.add(indices.last().add(monolithicExpr.offsetIndex))
+            indices.add(indices.last().add(monolithicExpr.transOffsetIndex))
 
             if (isBmcEnabled) {
                 bmc()?.let { return it }

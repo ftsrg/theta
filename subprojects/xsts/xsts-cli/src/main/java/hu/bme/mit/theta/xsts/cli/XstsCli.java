@@ -22,7 +22,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
-import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
@@ -32,6 +31,9 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
@@ -82,6 +84,7 @@ import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.OptimizeStmts;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
+import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
 import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
 import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
@@ -259,8 +262,8 @@ public class XstsCli {
 
         try {
 
-            if (algorithm == Algorithm.CEGAR) {
-                runCegarAnalysis();
+            if (algorithm == Algorithm.CEGAR || algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
+                runCegarOrBoundedAnalysis();
             } else if (algorithm == Algorithm.MDD) {
                 if (model.endsWith(".pnml")) {
                     runPetrinetMddAnalysis();
@@ -277,7 +280,7 @@ public class XstsCli {
         }
     }
 
-    private void runCegarAnalysis() throws Exception {
+    private void runCegarOrBoundedAnalysis() throws Exception {
         final Stopwatch sw = Stopwatch.createStarted();
 
         final XSTS xsts = loadXSTSModel();
@@ -287,15 +290,28 @@ public class XstsCli {
             return;
         }
 
-        final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts);
-        final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status = check(configuration);
+        registerAllSolverManagers(solverHome, logger);
+        final SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
+        final SolverFactory refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
+
+        final SafetyResult<?, ? extends Trace<? extends State, ? extends Action>> status;
+        if (algorithm == Algorithm.CEGAR) {
+            final XstsConfig<?, ?, ?> configuration = buildConfiguration(xsts, abstractionSolverFactory, refinementSolverFactory);
+            status = check(configuration);
+        } else if (algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
+            final BoundedChecker<?, ?> checker = buildBoundedChecker(xsts, abstractionSolverFactory);
+            status = checker.check(null);
+        } else {
+            throw new UnsupportedOperationException("Algorithm not supported: " + algorithm);
+        }
+
         sw.stop();
-        printCegarResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
+        printCegarOrBoundedResult(status, xsts, sw.elapsed(TimeUnit.MILLISECONDS));
         if (status.isUnsafe() && cexfile != null) {
             writeCex(status.asUnsafe(), xsts);
         }
-        if (dotfile != null) {
-            writeVisualStatus(status, dotfile);
+        if (dotfile != null && algorithm == Algorithm.CEGAR) {
+            writeVisualStatus((SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>) status, dotfile);
         }
     }
 
@@ -559,17 +575,13 @@ public class XstsCli {
         return ordering;
     }
 
-    private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts) throws Exception {
+    private XstsConfig<?, ?, ?> buildConfiguration(final XSTS xsts, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) throws Exception {
         // set up stopping analysis if it is stuck on same ARGs and precisions
         //if (noStuckCheck) {
         //ArgCexCheckHandler.instance.setArgCexCheck(false, false);
         //} else {
         //ArgCexCheckHandler.instance.setArgCexCheck(true, refinement.equals(Refinement.MULTI_SEQ));
         //        }
-
-        registerAllSolverManagers(solverHome, logger);
-        SolverFactory abstractionSolverFactory = SolverManager.resolveSolverFactory(abstractionSolver);
-        SolverFactory refinementSolverFactory = SolverManager.resolveSolverFactory(refinementSolver);
 
         try {
             return new XstsConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
@@ -580,7 +592,40 @@ public class XstsCli {
         }
     }
 
-    private void printCegarResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> status, final XSTS sts, final long totalTimeMs) {
+    private BoundedChecker<?, ?> buildBoundedChecker(final XSTS xsts, final SolverFactory abstractionSolverFactory) {
+        final MonolithicExpr monolithicExpr = XstsToMonolithicExprKt.toMonolithicExpr(xsts);
+        final BoundedChecker<?, ?> checker;
+        switch (algorithm) {
+            case BMC -> checker = BoundedCheckerBuilderKt.buildBMC(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    val -> XstsToMonolithicExprKt.valToState(xsts, val),
+                    (val1, val2) -> XstsToMonolithicExprKt.valToAction(xsts, val1, val2),
+                    logger
+            );
+            case KINDUCTION -> checker = BoundedCheckerBuilderKt.buildKIND(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    abstractionSolverFactory.createSolver(),
+                    val -> XstsToMonolithicExprKt.valToState(xsts, val),
+                    (val1, val2) -> XstsToMonolithicExprKt.valToAction(xsts, val1, val2),
+                    logger
+            );
+            case IMC -> checker = BoundedCheckerBuilderKt.buildIMC(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    abstractionSolverFactory.createItpSolver(),
+                    val -> XstsToMonolithicExprKt.valToState(xsts, val),
+                    (val1, val2) -> XstsToMonolithicExprKt.valToAction(xsts, val1, val2),
+                    logger
+            );
+            default ->
+                    throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+        }
+        return checker;
+    }
+
+    private void printCegarOrBoundedResult(final SafetyResult<?, ? extends Trace<?, ?>> status, final XSTS sts, final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics)
                 status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
@@ -590,9 +635,15 @@ public class XstsCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            writer.cell(status.getWitness().size());
-            writer.cell(status.getWitness().getDepth());
-            writer.cell(status.getWitness().getMeanBranchingFactor());
+            if (status.getWitness() instanceof ARG<?, ?> arg) {
+                writer.cell(arg.size());
+                writer.cell(arg.getDepth());
+                writer.cell(arg.getMeanBranchingFactor());
+            } else {
+                writer.cell("");
+                writer.cell("");
+                writer.cell("");
+            }
             if (status.isUnsafe()) {
                 writer.cell(status.asUnsafe().getCex().length() + "");
             } else {

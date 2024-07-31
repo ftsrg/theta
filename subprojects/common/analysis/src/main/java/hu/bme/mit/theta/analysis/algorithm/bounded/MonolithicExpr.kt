@@ -21,12 +21,14 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils.getVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
 data class MonolithicExpr(
     val initExpr: Expr<BoolType>,
     val transExpr: Expr<BoolType>,
     val propExpr: Expr<BoolType>,
-    val offsetIndex: VarIndexing
+    val transOffsetIndex: VarIndexing = VarIndexingFactory.indexing(1),
+    val initOffsetIndex: VarIndexing = VarIndexingFactory.indexing(0)
 ) {
 
     fun vars(): Collection<VarDecl<*>> {

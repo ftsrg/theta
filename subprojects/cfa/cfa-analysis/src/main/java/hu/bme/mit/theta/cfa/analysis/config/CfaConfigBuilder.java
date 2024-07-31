@@ -145,6 +145,7 @@ public class CfaConfigBuilder {
 
     public enum Algorithm {
         CEGAR,
+        BMC,
         KINDUCTION,
         IMC
     }
