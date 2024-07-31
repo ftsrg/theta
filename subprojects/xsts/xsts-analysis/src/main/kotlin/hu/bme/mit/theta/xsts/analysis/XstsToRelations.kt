@@ -50,16 +50,17 @@ fun XSTS.toRelations(): List<Relation> {
     val varChangeMap = LinkedHashMap<VarDecl<*>, VarDecl<*>>()
     var cnt = 0
     fun Expr<*>.replaceEnums(): Expr<*> {
-        if(type is EnumType) {
+        if (type is EnumType) {
             when (this) {
                 is EnumLitExpr -> {
                     val value =
-                        enumValueLut.computeIfAbsent(this.type) { LinkedHashMap() }.computeIfAbsent(this.value) { cnt++ }
+                        enumValueLut.computeIfAbsent(this.type) { LinkedHashMap() }.computeIfAbsent(
+                            this.value) { cnt++ }
                     return IntLitExpr.of(BigInteger.valueOf(value.toLong()))
                 }
 
                 is RefExpr -> {
-                    return varChangeMap.computeIfAbsent(decl as VarDecl) { Var(this.decl.name, Int()) } .ref
+                    return varChangeMap.computeIfAbsent(decl as VarDecl) { Var(this.decl.name, Int()) }.ref
                 }
 
                 is PrimeExpr -> {
@@ -68,9 +69,9 @@ fun XSTS.toRelations(): List<Relation> {
 
                 else -> error("I expect that only EnumLiterals and RefExprs may have EnumType")
             }
-        } else if(this is EnumEqExpr) {
+        } else if (this is EnumEqExpr) {
             return IntEqExpr.of(leftOp.replaceEnums() as Expr<IntType>, rightOp.replaceEnums() as Expr<IntType>);
-        } else if(this is EnumNeqExpr) {
+        } else if (this is EnumNeqExpr) {
             return IntNeqExpr.of(leftOp.replaceEnums() as Expr<IntType>, rightOp.replaceEnums() as Expr<IntType>);
         } else {
             return this.map(Expr<*>::replaceEnums)
@@ -121,7 +122,7 @@ fun XSTS.toRelations(): List<Relation> {
         val newParamList = vars.map { if (indexing[it] == 0) oldParams[it]!!.ref else newParams[it]!!.ref }
             .toTypedArray()
         val paramdExpr = ExprUtils.changeDecls(expr, consts)
-        if(prevRels.isEmpty()) {
+        if (prevRels.isEmpty()) {
             rel(*newParamList) += paramdExpr
         } else {
             for (prevRel in prevRels) {

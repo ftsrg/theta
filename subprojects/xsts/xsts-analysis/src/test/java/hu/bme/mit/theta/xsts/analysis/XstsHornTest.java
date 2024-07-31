@@ -369,7 +369,7 @@ public class XstsHornTest {
         }
     }
 
-    @Test(timeout=10_000)
+    @Test(timeout = 10_000)
     public void test() throws Exception {
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
         SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
