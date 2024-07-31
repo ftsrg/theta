@@ -278,7 +278,7 @@ public class StsCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            if(status.getWitness() instanceof ARG<?, ?> arg) {
+            if (status.getWitness() instanceof ARG<?, ?> arg) {
                 writer.cell(arg.size());
                 writer.cell(arg.getDepth());
                 writer.cell(arg.getMeanBranchingFactor());
