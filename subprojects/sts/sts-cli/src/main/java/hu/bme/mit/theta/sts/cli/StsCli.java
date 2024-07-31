@@ -270,7 +270,7 @@ public class StsCli {
 
     private void printResult(final SafetyResult<?, ? extends Trace<?, ?>> status, final STS sts,
                              final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        final CegarStatistics stats = (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);

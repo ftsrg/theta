@@ -262,7 +262,7 @@ public class XstsCli {
 
         try {
 
-            if (algorithm == Algorithm.CEGAR) {
+            if (algorithm == Algorithm.CEGAR || algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
                 runCegarOrBoundedAnalysis();
             } else if (algorithm == Algorithm.MDD) {
                 if (model.endsWith(".pnml")) {
