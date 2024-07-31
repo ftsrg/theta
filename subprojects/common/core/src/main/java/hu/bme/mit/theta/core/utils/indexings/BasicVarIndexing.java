@@ -28,8 +28,7 @@ import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 import static java.lang.Math.max;
 
 /**
@@ -285,6 +284,18 @@ public class BasicVarIndexing implements VarIndexing {
             checkNotNull(varDecl);
             final Integer offset = varToOffset.getOrDefault(varDecl, 0);
             return defaultIndex + offset;
+        }
+
+        @Override
+        public VarIndexingBuilder copyVars(Map<VarDecl<?>, VarDecl<?>> decls) {
+            checkNotNull(decls);
+            decls.forEach((varDecl, varDecl2) -> {
+                if (varToOffset.containsKey(varDecl)) {
+                    checkState(!varToOffset.containsKey(varDecl2), "Cannot copy, as new decl already in map.");
+                    varToOffset.put(varDecl2, varToOffset.get(varDecl));
+                }
+            });
+            return this;
         }
 
         @Override

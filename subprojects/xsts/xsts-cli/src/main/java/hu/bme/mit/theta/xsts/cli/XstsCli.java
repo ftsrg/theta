@@ -22,23 +22,33 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
-import hu.bme.mit.delta.java.mdd.*;
+import hu.bme.mit.delta.java.mdd.JavaMddFactory;
+import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.java.mdd.MddNode;
+import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.LatticeDefinition;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
 import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
@@ -52,9 +62,6 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetDependency2Gxl;
 import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem;
 import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory;
@@ -63,6 +70,7 @@ import hu.bme.mit.theta.frontend.petrinet.model.Place;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PetriNetParser;
 import hu.bme.mit.theta.frontend.petrinet.pnml.PnmlParseException;
 import hu.bme.mit.theta.frontend.petrinet.pnml.XMLPnmlToPetrinet;
+import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -72,22 +80,14 @@ import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.XstsAction;
 import hu.bme.mit.theta.xsts.analysis.XstsState;
+import hu.bme.mit.theta.xsts.analysis.XstsToRelationsKt;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsStateSequence;
 import hu.bme.mit.theta.xsts.analysis.concretizer.XstsTraceConcretizerUtil;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Algorithm;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.AutoExpl;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Domain;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.InitPrec;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.OptimizeStmts;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.PredSplit;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Refinement;
-import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.Search;
 import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.XstsToMonolithicExprKt;
 import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
-import hu.bme.mit.theta.frontend.petrinet.xsts.PetriNetToXSTS;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -99,7 +99,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.IterationStrategy;
+import static hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder.*;
 
 public class XstsCli {
 
@@ -262,7 +262,7 @@ public class XstsCli {
 
         try {
 
-            if (algorithm == Algorithm.CEGAR || algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
+            if (algorithm == Algorithm.CEGAR || algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC || algorithm == Algorithm.CHC) {
                 runCegarOrBoundedAnalysis();
             } else if (algorithm == Algorithm.MDD) {
                 if (model.endsWith(".pnml")) {
@@ -300,6 +300,9 @@ public class XstsCli {
             status = check(configuration);
         } else if (algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
             final BoundedChecker<?, ?> checker = buildBoundedChecker(xsts, abstractionSolverFactory);
+            status = checker.check(null);
+        } else if (algorithm == Algorithm.CHC) {
+            final SafetyChecker<?, ? extends Trace<? extends State, ? extends Action>, ?> checker = buildHornChecker(xsts, abstractionSolverFactory);
             status = checker.check(null);
         } else {
             throw new UnsupportedOperationException("Algorithm not supported: " + algorithm);
@@ -623,6 +626,28 @@ public class XstsCli {
                     throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
         }
         return checker;
+    }
+
+    private SafetyChecker<?, ? extends Trace<? extends State, ? extends Action>, ?> buildHornChecker(final XSTS xsts, final SolverFactory abstractionSolverFactory) {
+        final var checker = new HornChecker(
+                XstsToRelationsKt.toRelations(xsts),
+                abstractionSolverFactory,
+                logger
+        );
+        return (SafetyChecker<EmptyWitness, Trace<? extends State, ? extends Action>, Void>) prec -> {
+            final var result = checker.check(null);
+            if (result.isSafe()) {
+                return SafetyResult.safe(EmptyWitness.getInstance());
+            } else if (result.isUnsafe()) {
+                // TODO: create trace from proof
+                return SafetyResult.unsafe(Trace.of(
+                        List.of(XstsState.of(ExplState.top(), false, false)),
+                        List.of()
+                ), EmptyWitness.getInstance());
+            } else {
+                return SafetyResult.unknown();
+            }
+        };
     }
 
     private void printCegarOrBoundedResult(final SafetyResult<?, ? extends Trace<?, ?>> status, final XSTS sts, final long totalTimeMs) {
