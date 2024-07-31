@@ -357,8 +357,8 @@ public class XstsHornTest {
         if (solverString.contains("Z3") || solverString.contains("JavaSMT")) {
             return;
         }
+        Assume.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX); // chc solvers are only properly on linux
         try (final var solverManager = SmtLibSolverManager.create(SMTLIB_HOME, new ConsoleLogger(Level.DETAIL))) {
-            Assume.assumeTrue(OsHelper.getOs() == OsHelper.OperatingSystem.LINUX); // chc solvers are only properly on linux
             String solverVersion = SmtLibSolverManager.getSolverVersion(solverString);
             String solverName = SmtLibSolverManager.getSolverName(solverString);
             if (solverManager.managesSolver(solverString) && !solverManager.getInstalledVersions(solverName).contains(solverManager.getVersionString(solverName, solverVersion, false))) {
