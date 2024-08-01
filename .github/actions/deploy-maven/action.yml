@@ -20,7 +20,7 @@ runs:
         distribution: temurin
         java-version: 17
     - name: Publish to Maven Staging
-      uses: ./.github/actions/cache-build
+      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
       env:
         OSSRH_PASSWORD: ${{ inputs.OSSRH_PASSWORD }}
         OSSRH_USERNAME: ${{ inputs.OSSRH_USERNAME }}
@@ -28,9 +28,9 @@ runs:
         PGP_KEY_ID: ${{ inputs.PGP_KEY_ID }}
         PGP_PWD: ${{ inputs.PGP_PWD }} 
       with:
-        arguments: publish
+        arguments: publish -x test
     - name: Close staging and publish release
-      uses: ./.github/actions/cache-build
+      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
       env:
         OSSRH_PASSWORD: ${{ inputs.OSSRH_PASSWORD }}
         OSSRH_USERNAME: ${{ inputs.OSSRH_USERNAME }}
