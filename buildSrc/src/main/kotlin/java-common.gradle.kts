@@ -16,7 +16,7 @@
 plugins {
     java
     id("jacoco-common")
-    id("maven-publish") // The correct plugin id for maven-related tasks
+    id("maven-artifact")
 }
 
 dependencies {
