@@ -50,7 +50,7 @@ val sourcesJar by tasks.creating(Jar::class) {
 project.plugins.withType<AntlrPlugin> {
     val generateGrammarTask = tasks.findByName("generateGrammarSource")
     if (generateGrammarTask != null) {
-        sourcesJar.configure<Task> { dependsOn(generateGrammarTask) }
+        project.tasks.named("sourcesJar") { dependsOn(generateGrammarTask) }
     }
 }
 
