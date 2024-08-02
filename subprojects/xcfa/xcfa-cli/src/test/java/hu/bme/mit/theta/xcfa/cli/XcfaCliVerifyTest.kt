@@ -283,4 +283,20 @@ class XcfaCliVerifyTest {
         main(params)
     }
 
+    @ParameterizedTest
+    @MethodSource("cFilesShortInt")
+    fun testCVerifyCHCPortfolio(filePath: String, extraArgs: String?) {
+        Assumptions.assumeTrue(OsHelper.getOs().equals(OsHelper.OperatingSystem.LINUX));
+
+        val params = arrayOf(
+            "--backend", "portfolio",
+            "--portfolio", "HORN",
+            "--input-type", "C",
+            "--input", javaClass.getResource(filePath)!!.path,
+            "--stacktrace",
+            "--debug"
+        )
+        main(params)
+    }
+
 }

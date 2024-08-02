@@ -59,6 +59,7 @@ fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
         "BOUNDED" -> boundedPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
         "TESTING",
+        "CHC",
         "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
         else -> {
