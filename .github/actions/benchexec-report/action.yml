@@ -21,6 +21,7 @@ runs:
         cd artifacts
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
+        lasttask=""
         for i in *
         do 
           if (ls $i/*xml.bz2 >/dev/null 2>/dev/null)
@@ -36,15 +37,14 @@ runs:
             emoji=":white_check_mark:"
             [ $correct -eq 0 ] && emoji=":question:"
             [ $incorrect -eq 0 ] || emoji=":exclamation:"
-            echo "<details><summary> $emoji ${i#BenchexecResults-} ($correct / $incorrect / $all)</summary>" >> $GITHUB_OUTPUT
-            echo >> $GITHUB_OUTPUT
-            echo '`table-generator`'" output: [HTML](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.html))/[CSV](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.csv))" >> $GITHUB_OUTPUT
-            echo >> $GITHUB_OUTPUT
-            # echo '```'  >> $GITHUB_OUTPUT
-            # cat *.txt  >> $GITHUB_OUTPUT
-            # echo '```'  >> $GITHUB_OUTPUT
-            echo "</details>" >> $GITHUB_OUTPUT
-            echo >> $GITHUB_OUTPUT
+            filename=${i#BenchexecResults-}
+            portfolio=${filename##*:}
+            task=${filename%-$portfolio}
+            if [ "$task" != "$lasttask" ]
+            then printf "\n| $task | " >> $GITHUB_OUTPUT
+            fi
+            lasttask="$task"
+            printf " $emoji ($correct / $incorrect / $all) [HTML](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.html))/[CSV](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.csv)) | " >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
             popd
           else
