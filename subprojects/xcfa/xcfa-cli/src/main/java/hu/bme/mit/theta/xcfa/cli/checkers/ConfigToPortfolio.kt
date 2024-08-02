@@ -60,6 +60,7 @@ fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
 
         "TESTING",
         "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
         else -> {
             if (File(portfolioName).exists()) {
                 val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
