@@ -40,9 +40,9 @@ runs:
             echo >> $GITHUB_OUTPUT
             echo '`table-generator`'" output: [HTML](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.html))/[CSV](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.csv))" >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
-            echo '```'  >> $GITHUB_OUTPUT
-            cat *.txt  >> $GITHUB_OUTPUT
-            echo '```'  >> $GITHUB_OUTPUT
+            # echo '```'  >> $GITHUB_OUTPUT
+            # cat *.txt  >> $GITHUB_OUTPUT
+            # echo '```'  >> $GITHUB_OUTPUT
             echo "</details>" >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
             echo >> $GITHUB_OUTPUT
