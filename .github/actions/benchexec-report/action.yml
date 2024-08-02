@@ -23,7 +23,7 @@ runs:
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
         ls
         header1=$(printf '|task set|'; for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u | xargs printf '%s|')
-        header2=$(printf '|--|'; for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u | xargs printf '--|')
+        header2=$(printf '|--|'; for ff in $(for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u); do printf '--|'; done)
         echo "$header1" >> $GITHUB_OUTPUT
         printf "$header2" >> $GITHUB_OUTPUT
         lasttask=""
