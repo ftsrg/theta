@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 
 import java.util.Optional;
 
-public final class BfsProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
+public final class BfsProvider implements FixedPointEnumerationProvider {
     public static boolean verbose = false;
 
     private final CacheManager<BinaryOperationCache<MddNode, AbstractNextStateDescriptor, MddNode>> cacheManager = new CacheManager<>(
@@ -134,5 +134,15 @@ public final class BfsProvider implements MddTransformationProvider<AbstractNext
 
     public Cache getRelProdCache() {
         return relProdProvider.getRelProdCache();
+    }
+
+    @Override
+    public Cache getCache() {
+        return getRelProdCache();
+    }
+
+    @Override
+    public CacheManager<?> getCacheManager() {
+        return cacheManager;
     }
 }

@@ -48,7 +48,7 @@ public final class BfsTest {
 
         assertEquals(1, petriNets.size());
 
-        final List<Place> ordering = VariableOrderingFactory.fromFile(getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(), petriNets.get(0));
+        final List<Place> ordering = VariableOrderingFactory.fromPathString(getClass().getResource(TestData.ORDERINGPATH).toURI().getPath(), petriNets.get(0));
         // 	ordering = new ArrayList<>(petriNets.get(0).getPlaces());
         // ordering.sort((p1, p2) -> String.CASE_INSENSITIVE_ORDER.compare(reverseString(p1.getId()),
         // 	reverseString(p2.getId())));

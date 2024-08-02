@@ -15,13 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import hu.bme.mit.theta.solver.HornSolver;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverBase;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.*;
 
 import java.util.HashSet;
 import java.util.Set;

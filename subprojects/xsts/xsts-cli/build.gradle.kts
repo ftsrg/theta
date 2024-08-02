@@ -27,11 +27,13 @@ dependencies {
     implementation(project(":theta-analysis"))
     implementation(project(":theta-core"))
     implementation(project(":theta-common"))
-    implementation(project(":theta-solver-z3-legacy"))
-    implementation(project(":theta-solver-smtlib"))
     implementation(project(":theta-solver"))
+    implementation(project(":theta-solver-z3-legacy"))
+    implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-solver-smtlib"))
+    implementation(project(":theta-solver-javasmt"))
 }
 
 application {
-    mainClass.set("hu.bme.mit.theta.xsts.cli.XstsCli")
+    mainClass.set("hu.bme.mit.theta.xsts.cli.XstsCliMainKt")
 }

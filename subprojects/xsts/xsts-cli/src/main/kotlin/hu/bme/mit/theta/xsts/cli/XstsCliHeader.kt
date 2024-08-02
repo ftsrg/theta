@@ -1,0 +1,87 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package hu.bme.mit.theta.xsts.cli
+
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.enum
+import hu.bme.mit.theta.common.table.BasicTableWriter
+
+class XstsCliHeader : CliktCommand(name = "header") {
+
+    private val writer = BasicTableWriter(System.out, ",", "\"", "\"")
+
+    enum class Algorithm { CEGAR, MDD, BOUNDED }
+    enum class IterationStrategy {
+        BFS, SAT, GSAT
+    }
+
+    private val algorithm: Algorithm by option(
+        help = "Whether to print header for cegar or symbolic based algorithms"
+    ).enum<Algorithm>().default(Algorithm.CEGAR)
+    private val iterationStrategy: IterationStrategy by option(
+        "--iterationStrategy",
+        help = "The state space generation algorithm for symbolic checking"
+    ).enum<IterationStrategy>().default(IterationStrategy.GSAT)
+
+    override fun run() {
+        when (algorithm) {
+            Algorithm.CEGAR, Algorithm.BOUNDED -> printCegarHeader()
+            Algorithm.MDD -> printSymbolicHeader()
+        }
+    }
+
+    private fun printCegarHeader() {
+        listOf(
+            "Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+            "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars"
+        ).forEach(writer::cell)
+        writer.newRow()
+    }
+
+    private fun printSymbolicHeader() {
+        listOf(
+            "id",
+            "modelPath",
+            "modelName",
+            "stateSpaceSize",
+            "finalMddSize",
+            "totalTimeUs",
+            "ssgTimeUs",
+            "nodeCount",
+            "unionCacheSize",
+            "unionQueryCount",
+            "unionHitCount",
+        ).forEach(writer::cell)
+        if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
+            listOf(
+                "saturateCacheSize",
+                "saturateQueryCount",
+                "saturateHitCount"
+            ).forEach(writer::cell)
+        }
+        listOf(
+            "relProdCacheSize",
+            "relProdQueryCount",
+            "relProdHitCount",
+        ).forEach(writer::cell)
+        if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
+            listOf("saturatedNodeCount").forEach(writer::cell)
+        }
+    }
+}
