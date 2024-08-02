@@ -8,7 +8,6 @@
     <option name="--disable-c-serialization"/>
     <option name="--disable-arg-generation"/>
     <option name="--backend">PORTFOLIO</option>
-    <option name="--portfolio">COMPLEX</option>
     <option name="--loglevel">INFO</option>
 
     <rundefinition name="SV-COMP24_unreach-call">
