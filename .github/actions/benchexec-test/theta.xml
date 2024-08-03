@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
-<benchmark tool="theta" timelimit="120 s" hardtimelimit="130 s">
+<benchmark tool="theta" timelimit="20 s" hardtimelimit="30 s">
 
     <resultfiles>**/witness.*</resultfiles>
 
@@ -8,7 +8,6 @@
     <option name="--disable-c-serialization"/>
     <option name="--disable-arg-generation"/>
     <option name="--backend">PORTFOLIO</option>
-    <option name="--portfolio">COMPLEX</option>
     <option name="--loglevel">INFO</option>
 
     <rundefinition name="SV-COMP24_unreach-call">

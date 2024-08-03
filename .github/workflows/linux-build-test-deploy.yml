@@ -50,6 +50,7 @@ jobs:
     strategy:
       matrix:
         task: [ReachSafety-Arrays, ReachSafety-BitVectors, ReachSafety-ControlFlow, ReachSafety-ECA, ReachSafety-Floats, ReachSafety-Heap, ReachSafety-Loops, ReachSafety-ProductLines, ReachSafety-Recursive, ReachSafety-Sequentialized, ReachSafety-XCSP, ReachSafety-Combinations, ReachSafety-Hardware, ConcurrencySafety-Main, NoDataRace-Main, ConcurrencySafety-NoOverflows, ConcurrencySafety-MemSafety]
+        portfolio: [CEGAR, BOUNDED, HORN]
     runs-on: ubuntu-latest
     needs: create-archives
     steps:
@@ -59,7 +60,8 @@ jobs:
         uses: ./.github/actions/benchexec-test
         with:
           task: ${{ matrix.task }}
-          test_number: 5
+          portfolio: ${{ matrix.portfolio }}
+          test_number: 50
   
   collect-results:
     needs: test-benchexec
@@ -80,12 +82,12 @@ jobs:
         uses: ./.github/actions/build-archive
         with:
           name: "Theta"
-          inputflag: "--portfolio COMPLEX"
+          inputflag: "--portfolio STABLE"
       - name: Create emergentheta.zip
         uses: ./.github/actions/build-archive
         with:
           name: "EmergenTheta"
-          inputflag: "--algorithm IMC_THEN_KIND"
+          inputflag: "--algorithm EMERGENT"
 
 
   javadoc:

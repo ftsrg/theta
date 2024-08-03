@@ -5,6 +5,8 @@ inputs:
         required: true
     test_number:
         required: true
+    portfolio:
+        required: true
 runs:
   using: "composite"
   steps:
@@ -46,6 +48,7 @@ runs:
       shell: bash
       run: |
         unzip release/Theta.zip
+        sed -i 's/ --input \$1/ --portfolio ${{ inputs.portfolio }} --input \$1/g' Theta/theta-start.sh
     - name: Cut setfile if too long
       id: setfile 
       shell: bash
@@ -59,10 +62,10 @@ runs:
       shell: bash
       if: steps.setfile.outputs.length != '0'
       run: |
-        benchexec xml/theta.xml --no-container --tool-directory Theta -t ${{ inputs.task }}
+        benchexec xml/theta.xml -n 2 --no-container --tool-directory Theta -t ${{ inputs.task }}
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       if: steps.setfile.outputs.length != '0'
       with:
-        name: BenchexecResults-${{ inputs.task }}
+        name: BenchexecResults-${{ inputs.task }}-${{ inputs.portfolio }}
         path: results
