@@ -61,7 +61,7 @@ jobs:
         with:
           task: ${{ matrix.task }}
           portfolio: ${{ matrix.portfolio }}
-          test_number: 20
+          test_number: 50
   
   collect-results:
     needs: test-benchexec
