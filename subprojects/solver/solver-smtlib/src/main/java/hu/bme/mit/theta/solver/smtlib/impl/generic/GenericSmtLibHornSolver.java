@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
+import com.google.common.collect.Lists;
 import com.microsoft.z3.Z3Exception;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -37,11 +38,7 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTermTransformer;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
@@ -92,7 +89,7 @@ public class GenericSmtLibHornSolver extends SmtLibSolver implements HornSolver 
             final GetProofResponse getModelResponse = res.asSpecific().asGetProofResponse();
             getModelResponse.getFunDeclarations().forEach((name, def) -> {
                 var type = transformSort(def.get2());
-                for (SortContext s : def.get1()) {
+                for (SortContext s : Lists.reverse(def.get1())) {
                     type = FuncType.of(transformSort(s), type);
                 }
                 symbolTable.put(Const(name, type), name, def.get3());

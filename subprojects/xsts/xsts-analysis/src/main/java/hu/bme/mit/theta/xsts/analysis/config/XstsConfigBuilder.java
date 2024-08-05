@@ -77,7 +77,7 @@ public class XstsConfigBuilder {
 
     public enum Algorithm {
         CEGAR,
-
+        CHC,
         BMC,
         KINDUCTION,
         IMC,
