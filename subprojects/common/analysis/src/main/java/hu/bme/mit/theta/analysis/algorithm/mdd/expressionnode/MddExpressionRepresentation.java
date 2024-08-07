@@ -172,7 +172,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
         final MddNode mddNodeConstraint = (MddNode) constraint;
         final List<Expr<BoolType>> exprs = new ArrayList<>();
 
-        if (mddVariable.getLower().isPresent()) {
+        if (mddVariable.getLower().isPresent() && !mddNodeConstraint.isTerminal()) {
             MddVariable variable = mddVariable.getLower().get();
             MddNode mddNode = mddNodeConstraint.get(mddNodeConstraint.statistics().lowestValue());
             while (true) {
