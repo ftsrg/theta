@@ -47,15 +47,13 @@ class XstsCliBounded : XstsCliBaseCommand(
 
     enum class Variant {
         BMC {
-
             override fun buildChecker(
                 monolithicExpr: MonolithicExpr, solverFactory: SolverFactory,
                 valToState: (Valuation) -> S, biValToAction: (Valuation, Valuation) -> XstsAction,
                 logger: Logger
             ) = buildBMC(monolithicExpr, solverFactory.createSolver(), valToState, biValToAction, logger)
         },
-        IMC {
-
+        KINDUCTION {
             override fun buildChecker(
                 monolithicExpr: MonolithicExpr, solverFactory: SolverFactory,
                 valToState: (Valuation) -> S, biValToAction: (Valuation, Valuation) -> XstsAction,
@@ -65,7 +63,7 @@ class XstsCliBounded : XstsCliBaseCommand(
                 logger
             )
         },
-        KINDUCTION {
+        IMC {
 
             override fun buildChecker(
                 monolithicExpr: MonolithicExpr, solverFactory: SolverFactory,
