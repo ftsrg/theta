@@ -100,17 +100,21 @@ public final class EnumType implements Equational<EnumType>, Type {
         return literals.get(literal);
     }
 
+    public LitExpr<EnumType> litFromShortName(String shortName) {
+        try {
+            return EnumLitExpr.of(this, shortName);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("%s is not valid for type %s", shortName, name), e);
+        }
+    }
+
     public LitExpr<EnumType> litFromLongName(String longName) {
         if (!longName.contains(FULLY_QUALIFIED_NAME_SEPARATOR))
             throw new RuntimeException(String.format("%s is an invalid enum longname"));
         String[] parts = longName.split(Pattern.quote(FULLY_QUALIFIED_NAME_SEPARATOR));
         String type = parts[0];
         checkArgument(name.equals(type), String.format("%s does not belong to type %s", type, name));
-        try {
-            return EnumLitExpr.of(this, parts[1]);
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("%s is not valid for type %s", longName, name), e);
-        }
+        return litFromShortName(parts[1]);
     }
 
     public LitExpr<EnumType> litFromIntValue(int value) {
