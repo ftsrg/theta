@@ -16,163 +16,80 @@
 
 package hu.bme.mit.theta.xsts.cli
 
-import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
-import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Stopwatch
-import hu.bme.mit.delta.java.mdd.JavaMddFactory
-import hu.bme.mit.delta.java.mdd.MddHandle
-import hu.bme.mit.delta.java.mdd.MddNode
-import hu.bme.mit.delta.mdd.LatticeDefinition
-import hu.bme.mit.delta.mdd.MddInterpreter
-import hu.bme.mit.delta.mdd.MddVariableDescriptor
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.bounded.*
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetDependency2Gxl
-import hu.bme.mit.theta.frontend.petrinet.analysis.PtNetSystem
-import hu.bme.mit.theta.frontend.petrinet.analysis.VariableOrderingFactory
-import hu.bme.mit.theta.frontend.petrinet.model.PetriNet
-import hu.bme.mit.theta.frontend.petrinet.model.Place
-import hu.bme.mit.theta.xsts.cli.optiongroup.PetrinetDependencyOutputOptions
-import java.io.File
-import java.io.PrintStream
-import java.util.*
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.solver.SolverFactory
+import hu.bme.mit.theta.solver.SolverManager
+import hu.bme.mit.theta.solver.SolverPool
+import hu.bme.mit.theta.xsts.XSTS
+import hu.bme.mit.theta.xsts.analysis.XstsAction
+import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.toMonolithicExpr
+import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToAction
+import hu.bme.mit.theta.xsts.analysis.hu.bme.mit.theta.xsts.analysis.valToState
+import hu.bme.mit.theta.xsts.analysis.mdd.XstsMddChecker
 import java.util.concurrent.TimeUnit
-import javax.imageio.ImageIO
 import kotlin.system.exitProcess
 
 class XstsCliMdd : XstsCliBaseCommand(
     name = "MDD",
-    help = "Model checking using the MDD (Multi-value Decision Diagrams) method"
+    help = "Model checking of XSTS using MDDs (Multi-value Decision Diagrams)"
 ) {
 
-    private val ordering: File? by option(help = "Path of the input variable ordering").file(
-        mustExist = true, canBeDir = false, mustBeReadable = true
-    )
     private val iterationStrategy: MddChecker.IterationStrategy by option(
-        help = "The state space generation algorithm to use"
+        help = "The state space enumeration algorithm to use"
     ).enum<MddChecker.IterationStrategy>().default(MddChecker.IterationStrategy.GSAT)
-    private val dependencyOutput by PetrinetDependencyOutputOptions()
 
-    private fun loadOrdering(petriNet: PetriNet): List<Place> =
-        if (ordering == null) petriNet.places.sortedWith { p1: Place, p2: Place ->
-            String.CASE_INSENSITIVE_ORDER.compare(
-                p1.id.reversed(), p2.id.reversed()
-            )
-        } else VariableOrderingFactory.fromFile(ordering, petriNet)
-
-    private fun petrinetAnalysis() {
-        val totalTimer = Stopwatch.createStarted()
-        val petriNet = inputOptions.loadPetriNet()[0]
-        val effectiveOrdering = loadOrdering(petriNet)
-        val system = PtNetSystem(petriNet, effectiveOrdering)
-        createDepGxl(system)
-        createDepGxlGSat(system)
-        createDepMat(system)
-        createDepMatPng(system)
-        val variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets())
-        effectiveOrdering.forEach { variableOrder.createOnTop(MddVariableDescriptor.create(it)) }
-        val ssgTimer = Stopwatch.createStarted()
-        val provider: StateSpaceEnumerationProvider = when (iterationStrategy) {
-            MddChecker.IterationStrategy.BFS -> BfsProvider(variableOrder)
-            MddChecker.IterationStrategy.SAT -> SimpleSaturationProvider(variableOrder)
-            MddChecker.IterationStrategy.GSAT -> GeneralizedSaturationProvider(variableOrder)
-        }
-        val stateSpace = provider.compute(
-            system.initializer, system.transitions, variableOrder.defaultSetSignature.topVariableHandle
-        )
-        ssgTimer.stop()
-        totalTimer.stop()
-
-        val unionProvider = variableOrder.defaultUnionProvider
+    private fun printResult(status: SafetyResult<MddWitness, MddCex>, xsts: XSTS, totalTimeMs: Long) {
+        if (!outputOptions.benchmarkMode) return
+        val stats = status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0)) as MddAnalysisStatistics
         listOf(
-            outputOptions.id,
-            inputOptions.model.path,
-            system.name,
-            MddInterpreter.calculateNonzeroCount(stateSpace),
-            numberOfNodes(stateSpace),
-            totalTimer.elapsed(TimeUnit.MICROSECONDS),
-            ssgTimer.elapsed(TimeUnit.MICROSECONDS),
-            variableOrder.mddGraph.uniqueTableSize,
-            unionProvider.cacheSize,
-            unionProvider.queryCount,
-            unionProvider.hitCount,
+            status.isSafe,
+            totalTimeMs,
+            stats.violatingSize,
+            stats.stateSpaceSize,
+            stats.hitCount,
+            stats.queryCount,
+            stats.cacheSize,
+            if (status.isUnsafe) writer.cell("${status.asUnsafe().cex!!.length()}") else "",
+            xsts.vars.size,
         ).forEach(writer::cell)
-        if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
-            listOf(
-                provider.cacheSize,
-                provider.queryCount,
-                provider.hitCount
-            ).forEach(writer::cell)
-        }
-        listOf(
-            provider.cacheSize,
-            provider.queryCount,
-            provider.hitCount
-        ).forEach(writer::cell)
-        if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
-            val collector: MutableSet<MddNode> = mutableSetOf()
-            provider.clear()
-            listOf(collector.size).forEach(writer::cell)
-        }
-    }
-
-    private fun createDepMatPng(system: PtNetSystem) {
-        if (dependencyOutput.depMatPng == null) return
-        if (system.placeCount > 10000 || system.transitionCount > 10000) {
-            logger.write(
-                Logger.Level.INFO, "[WARNING] Skipping image generation because the model size exceeds 10k places or " +
-                    "transitions."
-            )
-            return
-        }
-        ImageIO.write(system.dependencyMatrixImage(1), "PNG", dependencyOutput.depMatPng)
-    }
-
-    private fun createDepMat(system: PtNetSystem) {
-        val file = dependencyOutput.depMat ?: return
-        file.createNewFile()
-        with(PrintStream(file)) { print(system.printDependencyMatrixCsv()) }
-    }
-
-    private fun createDepGxlGSat(system: PtNetSystem) {
-        val file = dependencyOutput.depGxlGsat ?: return
-        file.createNewFile()
-        with(PrintStream(file)) { print(PtNetDependency2Gxl.toGxl(system, true)) }
-    }
-
-    private fun createDepGxl(system: PtNetSystem) {
-        val file = dependencyOutput.depGxl ?: return
-        file.createNewFile()
-        with(PrintStream(file)) { print(PtNetDependency2Gxl.toGxl(system, false)) }
+        writer.newRow()
     }
 
     override fun run() {
         try {
-            if (inputOptions.isPnml()) petrinetAnalysis()
+            doRun()
         } catch (e: Exception) {
             printError(e)
             exitProcess(1)
         }
     }
 
-    private fun numberOfNodes(root: MddHandle): Int {
-        val result: MutableSet<MddNode> = mutableSetOf()
-        val stack = Stack<MddNode>()
-        stack.push(root.node)
-
-        while (stack.isNotEmpty()) {
-            val current = stack.pop()
-            if (!result.add(current) || current.isTerminal) continue
-            val cursor = current.cursor()
-            while (cursor.moveNext()) {
-                stack.push(cursor.value())
-            }
+    private fun doRun() {
+        registerSolverManagers()
+        val solverFactory = SolverManager.resolveSolverFactory(solver)
+        val xsts = inputOptions.loadXsts()
+        val sw = Stopwatch.createStarted()
+        val result = SolverPool(solverFactory).use {
+            val checker = XstsMddChecker.create(xsts, it, logger, iterationStrategy)
+            checker.check(null)
         }
-
-        return result.size
+        sw.stop()
+        printResult(result, xsts, sw.elapsed(TimeUnit.MILLISECONDS))
     }
+
 }
