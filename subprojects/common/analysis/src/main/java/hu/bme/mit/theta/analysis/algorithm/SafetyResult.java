@@ -15,11 +15,8 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Cex;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
-import org.stringtemplate.v4.ST;
 
 import java.util.Optional;
 
