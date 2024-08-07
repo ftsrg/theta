@@ -20,29 +20,28 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
+import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.common.table.BasicTableWriter
 
 class XstsCliHeader : CliktCommand(name = "header") {
 
     private val writer = BasicTableWriter(System.out, ",", "\"", "\"")
 
-    enum class Algorithm { CEGAR, MDD, BOUNDED }
-    enum class IterationStrategy {
-        BFS, SAT, GSAT
-    }
+    enum class Algorithm { CEGAR, MDD, BOUNDED, PN_MDD }
 
     private val algorithm: Algorithm by option(
-        help = "Whether to print header for cegar or symbolic based algorithms"
+        help = "The algorithm to prtint the header for"
     ).enum<Algorithm>().default(Algorithm.CEGAR)
-    private val iterationStrategy: IterationStrategy by option(
-        "--iterationStrategy",
+    private val iterationStrategy: MddChecker.IterationStrategy by option(
         help = "The state space generation algorithm for symbolic checking"
-    ).enum<IterationStrategy>().default(IterationStrategy.GSAT)
+    ).enum<MddChecker.IterationStrategy>().default(MddChecker.IterationStrategy.GSAT)
 
     override fun run() {
         when (algorithm) {
-            Algorithm.CEGAR, Algorithm.BOUNDED -> printCegarHeader()
-            Algorithm.MDD -> printSymbolicHeader()
+            Algorithm.CEGAR -> printCegarHeader()
+            Algorithm.BOUNDED -> printBoundedHeader()
+            Algorithm.MDD -> printMddHeader()
+            Algorithm.PN_MDD -> printSymbolicHeader()
         }
     }
 
@@ -50,6 +49,20 @@ class XstsCliHeader : CliktCommand(name = "header") {
         listOf(
             "Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
             "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars"
+        ).forEach(writer::cell)
+        writer.newRow()
+    }
+
+    private fun printBoundedHeader() {
+        listOf(
+            "Result", "TimeMs", "Iterations", "CexLen", "Vars"
+        ).forEach(writer::cell)
+        writer.newRow()
+    }
+
+    private fun printMddHeader() {
+        listOf(
+            "Result", "TimeMs", "ViolatingSize", "StateSpaceSize", "HitCount", "QueryCount", "CacheSize", "CexLen", "Vars"
         ).forEach(writer::cell)
         writer.newRow()
     }
@@ -68,7 +81,7 @@ class XstsCliHeader : CliktCommand(name = "header") {
             "unionQueryCount",
             "unionHitCount",
         ).forEach(writer::cell)
-        if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
+        if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
             listOf(
                 "saturateCacheSize",
                 "saturateQueryCount",
@@ -80,7 +93,7 @@ class XstsCliHeader : CliktCommand(name = "header") {
             "relProdQueryCount",
             "relProdHitCount",
         ).forEach(writer::cell)
-        if (iterationStrategy in setOf(IterationStrategy.GSAT, IterationStrategy.SAT)) {
+        if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
             listOf("saturatedNodeCount").forEach(writer::cell)
         }
     }
