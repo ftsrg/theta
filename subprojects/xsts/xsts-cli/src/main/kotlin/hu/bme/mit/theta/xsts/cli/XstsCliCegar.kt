@@ -56,12 +56,11 @@ class XstsCliCegar : XstsCliBaseCommand(
     private val prunestrategy: PruneStrategy by option().enum<PruneStrategy>().default(PruneStrategy.LAZY)
     private val optimizestmts: OptimizeStmts by option().enum<OptimizeStmts>().default(OptimizeStmts.ON)
 
-    private fun printResult(status: SafetyResult<out ARG<*, *>?, out Trace<*, *>?>, sts: XSTS, totalTimeMs: Long) {
+    private fun printResult(status: SafetyResult<out ARG<*, *>?, out Trace<*, *>?>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return
+        printCommonResult(status, xsts, totalTimeMs)
         val stats = status.stats.orElse(CegarStatistics(0, 0, 0, 0)) as CegarStatistics
         listOf(
-            status.isSafe,
-            totalTimeMs,
             stats.algorithmTimeMs,
             stats.abstractorTimeMs,
             stats.refinerTimeMs,
@@ -69,8 +68,6 @@ class XstsCliCegar : XstsCliBaseCommand(
             status.witness!!.size(),
             status.witness!!.depth,
             status.witness!!.meanBranchingFactor,
-            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
-            sts.vars.size,
         ).forEach(writer::cell)
         writer.newRow()
     }

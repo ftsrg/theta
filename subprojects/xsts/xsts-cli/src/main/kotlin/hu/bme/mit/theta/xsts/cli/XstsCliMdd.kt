@@ -55,17 +55,14 @@ class XstsCliMdd : XstsCliBaseCommand(
 
     private fun printResult(status: SafetyResult<MddWitness, MddCex>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return
+        printCommonResult(status, xsts, totalTimeMs)
         val stats = status.stats.orElse(MddAnalysisStatistics(0, 0, 0, 0, 0)) as MddAnalysisStatistics
         listOf(
-            status.isSafe,
-            totalTimeMs,
             stats.violatingSize,
             stats.stateSpaceSize,
             stats.hitCount,
             stats.queryCount,
             stats.cacheSize,
-            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
-            xsts.vars.size,
         ).forEach(writer::cell)
         writer.newRow()
     }

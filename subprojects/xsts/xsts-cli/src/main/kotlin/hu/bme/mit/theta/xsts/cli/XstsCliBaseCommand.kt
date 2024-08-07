@@ -24,6 +24,8 @@ import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
 import hu.bme.mit.theta.common.logging.ConsoleLogger
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
@@ -70,6 +72,15 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
         } else {
             logger.write(Logger.Level.RESULT, "Use --stacktrace for stack trace%n")
         }
+    }
+
+    fun printCommonResult(status: SafetyResult<*,*>, xsts: XSTS, totalTimeMs: Long) {
+        listOf(
+            status.isSafe,
+            totalTimeMs,
+            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
+            xsts.vars.size,
+        ).forEach(writer::cell)
     }
 
     fun registerSolverManagers() {

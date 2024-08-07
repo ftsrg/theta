@@ -35,12 +35,7 @@ class XstsCliChc : XstsCliBaseCommand(
 
     private fun printResult(status: SafetyResult<Invariant, CexTree>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return
-        listOf(
-            status.isSafe,
-            totalTimeMs,
-            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
-            xsts.vars.size,
-        ).forEach(writer::cell)
+        printCommonResult(status, xsts, totalTimeMs)
         writer.newRow()
     }
 

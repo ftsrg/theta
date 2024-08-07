@@ -85,13 +85,10 @@ class XstsCliBounded : XstsCliBaseCommand(
 
     private fun printResult(status: SafetyResult<EmptyWitness, Trace<S, XstsAction>>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return
+        printCommonResult(status, xsts, totalTimeMs)
         val stats = status.stats.orElse(BoundedStatistics(0)) as BoundedStatistics
         listOf(
-            status.isSafe,
-            totalTimeMs,
             stats.iterations,
-            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
-            xsts.vars.size,
         ).forEach(writer::cell)
         writer.newRow()
     }

@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xsts.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker
 import hu.bme.mit.theta.common.table.BasicTableWriter
@@ -30,8 +31,8 @@ class XstsCliHeader : CliktCommand(name = "header") {
     enum class Algorithm { CEGAR, MDD, BOUNDED, PN_MDD, CHC }
 
     private val algorithm: Algorithm by option(
-        help = "The algorithm to prtint the header for"
-    ).enum<Algorithm>().default(Algorithm.CEGAR)
+        help = "The algorithm to print the header for"
+    ).enum<Algorithm>().required()
     private val iterationStrategy: MddChecker.IterationStrategy by option(
         help = "The state space generation algorithm for symbolic checking"
     ).enum<MddChecker.IterationStrategy>().default(MddChecker.IterationStrategy.GSAT)
@@ -46,32 +47,39 @@ class XstsCliHeader : CliktCommand(name = "header") {
         }
     }
 
-    private fun printCegarHeader() {
+    private fun printCommonHeader() {
         listOf(
-            "Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-            "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars"
+            "Result", "TimeMs", "CexLen", "Vars"
+        ).forEach(writer::cell)
+    }
+
+    private fun printCegarHeader() {
+        printCommonHeader()
+        listOf(
+            "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+            "ArgSize", "ArgDepth", "ArgMeanBranchFactor"
         ).forEach(writer::cell)
         writer.newRow()
     }
 
     private fun printBoundedHeader() {
+        printCommonHeader()
         listOf(
-            "Result", "TimeMs", "Iterations", "CexLen", "Vars"
+            "Iterations",
         ).forEach(writer::cell)
         writer.newRow()
     }
 
     private fun printMddHeader() {
+        printCommonHeader()
         listOf(
-            "Result", "TimeMs", "ViolatingSize", "StateSpaceSize", "HitCount", "QueryCount", "CacheSize", "CexLen", "Vars"
+             "ViolatingSize", "StateSpaceSize", "HitCount", "QueryCount", "CacheSize",
         ).forEach(writer::cell)
         writer.newRow()
     }
 
     private fun printChcHeader() {
-        listOf(
-            "Result", "TimeMs", "CexLen", "Vars"
-        ).forEach(writer::cell)
+        printCommonHeader()
         writer.newRow()
     }
 
