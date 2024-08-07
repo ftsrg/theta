@@ -38,5 +38,5 @@ class XstsCliMainCommand : CliktCommand() {
 }
 
 fun main(args: Array<String>) =
-    XstsCliMainCommand().subcommands(XstsCliCegar(), XstsCliMdd(), XstsCliBounded(), XstsCliHeader(), XstsCliMetrics())
+    XstsCliMainCommand().subcommands(XstsCliCegar(), XstsCliBounded(), XstsCliMdd(), XstsCliPetrinetMdd(), XstsCliHeader(), XstsCliMetrics())
         .main(args)
