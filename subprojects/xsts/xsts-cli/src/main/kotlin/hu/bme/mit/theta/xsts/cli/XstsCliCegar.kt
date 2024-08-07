@@ -40,7 +40,7 @@ import kotlin.system.exitProcess
 
 class XstsCliCegar : XstsCliBaseCommand(
     name = "CEGAR",
-    help = "Model checking using the CEGAR (CounterExample Guided Abstraction Refinement) loop algorithm"
+    help = "Model checking using the CEGAR (CounterExample Guided Abstraction Refinement) algorithm"
 ) {
 
     private val domain: Domain by option(help = "Abstraction domain to use").enum<Domain>().default(Domain.PRED_CART)
