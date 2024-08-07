@@ -27,7 +27,7 @@ class XstsCliHeader : CliktCommand(name = "header") {
 
     private val writer = BasicTableWriter(System.out, ",", "\"", "\"")
 
-    enum class Algorithm { CEGAR, MDD, BOUNDED, PN_MDD }
+    enum class Algorithm { CEGAR, MDD, BOUNDED, PN_MDD, CHC }
 
     private val algorithm: Algorithm by option(
         help = "The algorithm to prtint the header for"
@@ -42,6 +42,7 @@ class XstsCliHeader : CliktCommand(name = "header") {
             Algorithm.BOUNDED -> printBoundedHeader()
             Algorithm.MDD -> printMddHeader()
             Algorithm.PN_MDD -> printSymbolicHeader()
+            Algorithm.CHC -> printChcHeader()
         }
     }
 
@@ -63,6 +64,13 @@ class XstsCliHeader : CliktCommand(name = "header") {
     private fun printMddHeader() {
         listOf(
             "Result", "TimeMs", "ViolatingSize", "StateSpaceSize", "HitCount", "QueryCount", "CacheSize", "CexLen", "Vars"
+        ).forEach(writer::cell)
+        writer.newRow()
+    }
+
+    private fun printChcHeader() {
+        listOf(
+            "Result", "TimeMs", "CexLen", "Vars"
         ).forEach(writer::cell)
         writer.newRow()
     }
