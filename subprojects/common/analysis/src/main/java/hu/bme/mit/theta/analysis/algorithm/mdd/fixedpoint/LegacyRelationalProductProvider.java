@@ -17,6 +17,7 @@ package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
@@ -79,7 +80,7 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
 
         boolean lhsSkipped = !lhs.isOn(variable);
 
-        if ((lhsSkipped || !variable.isNullOrZero(lhs.defaultValue())) &&
+        if (((lhsSkipped && variable.getDomainSize() <= 0) || !variable.isNullOrZero(lhs.defaultValue())) &&
                 !(lhs.isTerminal() && nextState instanceof AbstractNextStateDescriptor.Postcondition)) {
             throw new UnsupportedOperationException("Default values are not yet supported in relational product.");
         }
@@ -113,7 +114,8 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
             // 	));
         } else {
             MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-            for (IntObjCursor<? extends MddNode> c = lhs.cursor(); c.moveNext(); ) {
+            RecursiveIntObjMapView<MddNode> lhsInterpreter = variable.getNodeInterpreter(lhs);
+            for (IntObjCursor<? extends MddNode> c = lhsInterpreter.cursor(); c.moveNext(); ) {
                 final MddNode res = recurse(c.value(), diagonal.get(c.key()), variable, cache);
                 final MddNode unioned = unionChildren(res, templateBuilder.get(c.key()), variable);
 
