@@ -43,7 +43,7 @@ typealias S = XstsState<ExplState>
 
 class XstsCliBounded : XstsCliBaseCommand(
     name = "BOUNDED",
-    help = "Bounded model checking algorithms"
+    help = "Bounded model checking algorithms (BMC, IMC, KINDUCTION). Use --algorithm to select the algorithm."
 ) {
 
     enum class Algorithm {
@@ -86,21 +86,15 @@ class XstsCliBounded : XstsCliBaseCommand(
 
     private val algorithm by option().enum<Algorithm>().required()
 
-    private fun printResult(status: SafetyResult<EmptyWitness, Trace<S, XstsAction>>, sts: XSTS, totalTimeMs: Long) {
+    private fun printResult(status: SafetyResult<EmptyWitness, Trace<S, XstsAction>>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return
-        val stats = status.stats.orElse(CegarStatistics(0, 0, 0, 0)) as CegarStatistics
+        val stats = status.stats.orElse(BoundedStatistics(0)) as BoundedStatistics
         listOf(
             status.isSafe,
             totalTimeMs,
-            stats.algorithmTimeMs,
-            stats.abstractorTimeMs,
-            stats.refinerTimeMs,
             stats.iterations,
-            "",
-            "",
-            "",
             if (status.isUnsafe) writer.cell("${status.asUnsafe().cex!!.length()}") else "",
-            sts.vars.size,
+            xsts.vars.size,
         ).forEach(writer::cell)
         writer.newRow()
     }
