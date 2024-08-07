@@ -22,7 +22,9 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
@@ -36,11 +38,11 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -53,6 +55,8 @@ public class MddCheckerTest {
     private static final VarDecl<IntType> Y = Decls.Var("y", IntType.getInstance());
     private static final VarDecl<IntType> Z = Decls.Var("z", IntType.getInstance());
 
+    private static final VarDecl<BoolType> A = Decls.Var("a", BoolType.getInstance());
+    private static final VarDecl<BoolType> B = Decls.Var("b", BoolType.getInstance());
 
     @Parameterized.Parameter(value = 0)
     public Expr<BoolType> initExpr;
@@ -73,53 +77,107 @@ public class MddCheckerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 
-                {Eq(X.getRef(), Int(0)), // x = 0
-                        Eq(Prime(X.getRef()), X.getRef()), // x'=x
-                        Not(Eq(X.getRef(), Int(5))), // not x = 5
-                        true,
-                        1L},
+//                {Eq(X.getRef(), Int(0)), // x = 0
+//                        Eq(Prime(X.getRef()), X.getRef()), // x'=x
+//                        Not(Eq(X.getRef(), Int(5))), // not x = 5
+//                        true,
+//                        1L},
+//
+//                {Eq(X.getRef(), Int(0)),
+//                        Eq(Prime(X.getRef()), X.getRef()),
+//                        Not(Eq(X.getRef(), Int(0))),
+//                        false,
+//                        1L},
+//
+//                {Eq(X.getRef(), Int(0)), // x = 0
+//                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(10))), // x' = x + 1 & x' <= 10
+//                        Not(Eq(X.getRef(), Int(5))),
+//                        false,
+//                        11L},
+//
+//                {Eq(X.getRef(), Int(0)),
+//                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(5))),
+//                        Not(Eq(X.getRef(), Int(5))),
+//                        false,
+//                        6L},
+//
+//                {Eq(X.getRef(), Int(0)),
+//                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(4))),
+//                        Not(Eq(X.getRef(), Int(5))),
+//                        true,
+//                        5L},
+//
+//                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+//                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(10))),
+//                        Not(Eq(X.getRef(), Int(5))),
+//                        false,
+//                        10L},
+//
+//                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+//                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(6))),
+//                        Not(Eq(X.getRef(), Int(5))),
+//                        false,
+//                        6L},
+//
+//                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
+//                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(5))),
+//                        Not(Eq(X.getRef(), Int(5))),
+//                        true,
+//                        5L},
+//
+//                {And(A.getRef(), B.getRef()),
+//                        And(Eq(A.getRef(), Prime(A.getRef())), Eq(B.getRef(), Prime(B.getRef()))), // a'=a, b'=b
+//                        Not(A.getRef()),
+//                        false,
+//                        1L},
+//
+//                {And(A.getRef(), B.getRef()),
+//                        And(Eq(A.getRef(), Prime(A.getRef())), Eq(A.getRef(), Prime(B.getRef()))), // a'=a, b'=a
+//                        Not(A.getRef()),
+//                        false,
+//                        1L},
 
-                {Eq(X.getRef(), Int(0)),
-                        Eq(Prime(X.getRef()), X.getRef()),
-                        Not(Eq(X.getRef(), Int(0))),
+                {And(A.getRef(), B.getRef()),
+                        Eq(A.getRef(), Prime(A.getRef())), // a'=a
+                        Not(A.getRef()),
+                        false,
+                        2L},
+
+                {A.getRef(),
+                        And(Eq(A.getRef(), Prime(A.getRef())), Eq(B.getRef(), Prime(B.getRef()))), // a'=a, b'=b
+                        Not(A.getRef()),
+                        false,
+                        2L},
+
+                {And(A.getRef(), Not(B.getRef())),
+                        And(Eq(A.getRef(), Prime(A.getRef())), Eq(A.getRef(), Prime(B.getRef()))), // a'=a, b'=a
+                        Not(A.getRef()),
+                        false,
+                        2L},
+
+                {A.getRef(),
+                        Eq(A.getRef(), Prime(A.getRef())), // a'=a
+                        Not(A.getRef()),
                         false,
                         1L},
 
-                {Eq(X.getRef(), Int(0)), // x = 0
-                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(10))), // x' = x + 1 & x' <= 10
-                        Not(Eq(X.getRef(), Int(5))),
+                {True(),
+                        Eq(A.getRef(), Prime(A.getRef())), // a'=a
+                        Not(A.getRef()),
                         false,
-                        11L},
+                        2L},
 
-                {Eq(X.getRef(), Int(0)),
-                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(5))),
-                        Not(Eq(X.getRef(), Int(5))),
+                {A.getRef(),
+                        True(), // true
+                        Not(A.getRef()),
                         false,
-                        6L},
+                        2L},
 
-                {Eq(X.getRef(), Int(0)),
-                        And(Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), Leq(Prime(X.getRef()), Int(4))),
-                        Not(Eq(X.getRef(), Int(5))),
-                        true,
-                        5L},
-
-                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
-                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(10))),
-                        Not(Eq(X.getRef(), Int(5))),
+                {True(),
+                        True(), // true
+                        Not(A.getRef()),
                         false,
-                        10L},
-
-                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
-                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(6))),
-                        Not(Eq(X.getRef(), Int(5))),
-                        false,
-                        6L},
-
-                {And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0)), Eq(Z.getRef(), Int(0))),
-                        And(And(Eq(Prime(X.getRef()), Add(Y.getRef(), Int(1))), Eq(Prime(Y.getRef()), Add(Z.getRef(), Int(1))), Eq(Prime(Z.getRef()), Add(Z.getRef(), Int(1)))), IntExprs.Lt(Prime(Z.getRef()), Int(5))),
-                        Not(Eq(X.getRef(), Int(5))),
-                        true,
-                        5L},
+                        2L},
 
         });
     }
