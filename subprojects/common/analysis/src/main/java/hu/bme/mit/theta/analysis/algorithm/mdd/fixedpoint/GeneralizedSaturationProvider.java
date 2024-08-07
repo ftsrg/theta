@@ -447,6 +447,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
 
         public long result = 0;
         private final ToLongFunction<SaturationCache> extractor;
+
         private Aggregator(final ToLongFunction<SaturationCache> extractor) {
             this.extractor = extractor;
         }
@@ -457,6 +458,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }
 
     }
+
     public Cache getSaturateCache() {
         class SaturateCache implements Cache {
             private final CacheManager<SaturationCache> cacheManager;
@@ -505,6 +507,7 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }));
         return ret;
     }
+
     public Cache getRelProdCache() {
         class RelProdCache implements Cache {
             private final CacheManager<SaturationCache> cacheManager;

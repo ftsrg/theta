@@ -40,6 +40,5 @@ class OutputOptions : OptionGroup(
     val cexfile: File? by option(help = "Write concrete counterexample to a file").file()
     val stacktrace: Boolean by option(help = "Print stack trace of exceptions").flag()
     val visualize: File? by option(help = "Write proof or counterexample to file in dot format").file()
-    val id: String by option(help = "ID of the input model. Used for symbolic output").default("")
 
 }

@@ -73,7 +73,7 @@ class XstsCliHeader : CliktCommand(name = "header") {
     private fun printMddHeader() {
         printCommonHeader()
         listOf(
-             "ViolatingSize", "StateSpaceSize", "HitCount", "QueryCount", "CacheSize",
+            "ViolatingSize", "StateSpaceSize", "HitCount", "QueryCount", "CacheSize",
         ).forEach(writer::cell)
         writer.newRow()
     }

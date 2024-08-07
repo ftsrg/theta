@@ -56,6 +56,7 @@ class XstsCliPetrinetMdd : XstsCliBaseCommand(
         help = "The state space generation algorithm to use"
     ).enum<MddChecker.IterationStrategy>().default(MddChecker.IterationStrategy.GSAT)
     private val dependencyOutput by PetrinetDependencyOutputOptions()
+    private val id: String by option(help = "ID of the input model. Used for symbolic output").default("")
 
     private fun loadOrdering(petriNet: PetriNet): List<Place> =
         if (ordering == null) petriNet.places.sortedWith { p1: Place, p2: Place ->
@@ -89,7 +90,7 @@ class XstsCliPetrinetMdd : XstsCliBaseCommand(
 
         val unionProvider = variableOrder.defaultUnionProvider
         listOf(
-            outputOptions.id,
+            id,
             inputOptions.model.path,
             system.name,
             MddInterpreter.calculateNonzeroCount(stateSpace),

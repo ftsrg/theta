@@ -74,7 +74,7 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
         }
     }
 
-    fun printCommonResult(status: SafetyResult<*,*>, xsts: XSTS, totalTimeMs: Long) {
+    fun printCommonResult(status: SafetyResult<*, *>, xsts: XSTS, totalTimeMs: Long) {
         listOf(
             status.isSafe,
             totalTimeMs,
