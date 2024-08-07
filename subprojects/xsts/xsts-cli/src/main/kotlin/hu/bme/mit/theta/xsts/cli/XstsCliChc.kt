@@ -38,7 +38,7 @@ class XstsCliChc : XstsCliBaseCommand(
         listOf(
             status.isSafe,
             totalTimeMs,
-            if (status.isUnsafe) writer.cell("${status.asUnsafe().cex!!.length()}") else "",
+            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
             xsts.vars.size,
         ).forEach(writer::cell)
         writer.newRow()

@@ -69,7 +69,7 @@ class XstsCliCegar : XstsCliBaseCommand(
             status.witness!!.size(),
             status.witness!!.depth,
             status.witness!!.meanBranchingFactor,
-            if (status.isUnsafe) writer.cell("${status.asUnsafe().cex!!.length()}") else "",
+            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
             sts.vars.size,
         ).forEach(writer::cell)
         writer.newRow()

@@ -64,7 +64,7 @@ class XstsCliMdd : XstsCliBaseCommand(
             stats.hitCount,
             stats.queryCount,
             stats.cacheSize,
-            if (status.isUnsafe) writer.cell("${status.asUnsafe().cex!!.length()}") else "",
+            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
             xsts.vars.size,
         ).forEach(writer::cell)
         writer.newRow()
