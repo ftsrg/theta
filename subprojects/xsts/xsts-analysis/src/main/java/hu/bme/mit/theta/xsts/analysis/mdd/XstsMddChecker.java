@@ -26,13 +26,9 @@ import hu.bme.mit.theta.analysis.algorithm.mdd.MddAnalysisStatistics;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddCex;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddChecker.IterationStrategy;
 import hu.bme.mit.theta.analysis.algorithm.mdd.MddWitness;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.CursorGeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.LegacyRelationalProductProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.*;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.OrNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.solver.SolverPool;
@@ -155,27 +151,21 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
 
         logger.write(Level.INFO, "Created next-state node, starting fixed point calculation");
 
-        final MddHandle stateSpace;
-        final Cache cache;
+        final StateSpaceEnumerationProvider stateSpaceProvider;
         switch (iterationStrategy) {
             case BFS -> {
-                final var bfs = new BfsProvider(stateSig.getVariableOrder());
-                stateSpace = bfs.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
-                cache = bfs.getRelProdCache();
+                stateSpaceProvider = new BfsProvider(stateSig.getVariableOrder());
             }
             case SAT -> {
-                final var sat = new SimpleSaturationProvider(stateSig.getVariableOrder());
-                stateSpace = sat.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
-                cache = sat.getSaturateCache();
+                stateSpaceProvider = new SimpleSaturationProvider(stateSig.getVariableOrder());
             }
             case GSAT -> {
-                final var gsat = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
-                stateSpace = gsat.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
-                cache = gsat.getSaturateCache();
-
+                stateSpaceProvider = new GeneralizedSaturationProvider(stateSig.getVariableOrder());
             }
             default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
         }
+        final MddHandle stateSpace = stateSpaceProvider.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+
         logger.write(Level.INFO, "Enumerated state-space");
 
         final Expr<BoolType> negatedPropExpr = PathUtils.unfold(Not(xsts.getProp()), 0);
@@ -191,7 +181,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
         final Long stateSpaceSize = MddInterpreter.calculateNonzeroCount(stateSpace);
         logger.write(Level.DETAIL, "State space size: " + stateSpaceSize);
 
-        final MddAnalysisStatistics statistics = new MddAnalysisStatistics(violatingSize, stateSpaceSize, cache.getHitCount(), cache.getQueryCount(), cache.getCacheSize());
+        final MddAnalysisStatistics statistics = new MddAnalysisStatistics(violatingSize, stateSpaceSize, stateSpaceProvider.getHitCount(), stateSpaceProvider.getQueryCount(), stateSpaceProvider.getCacheSize());
 
         final SafetyResult<MddWitness, MddCex> result;
         if (violatingSize != 0) {

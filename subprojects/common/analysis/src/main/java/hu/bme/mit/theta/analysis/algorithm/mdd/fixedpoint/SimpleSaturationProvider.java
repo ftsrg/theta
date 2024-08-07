@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class SimpleSaturationProvider implements FixedPointEnumerationProvider {
+public final class SimpleSaturationProvider implements StateSpaceEnumerationProvider {
     public static boolean verbose = false;
 
     private MddVariableOrder variableOrder;
@@ -548,12 +548,17 @@ public final class SimpleSaturationProvider implements FixedPointEnumerationProv
     }
 
     @Override
-    public Cache getCache() {
-        return getRelProdCache();
+    public long getCacheSize() {
+        return getSaturateCache().getCacheSize();
     }
 
     @Override
-    public CacheManager<?> getCacheManager() {
-        return cacheManager;
+    public long getQueryCount() {
+        return getSaturateCache().getQueryCount();
+    }
+
+    @Override
+    public long getHitCount() {
+        return getSaturateCache().getHitCount();
     }
 }

@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class GeneralizedSaturationProvider implements FixedPointEnumerationProvider {
+public final class GeneralizedSaturationProvider implements StateSpaceEnumerationProvider {
     public static boolean verbose = false;
 
     private MddVariableOrder variableOrder;
@@ -48,6 +48,7 @@ public final class GeneralizedSaturationProvider implements FixedPointEnumeratio
         this.terminalZeroNode = variableOrder.getMddGraph().getTerminalZeroNode();
     }
 
+    @Override
     public MddHandle compute(
             AbstractNextStateDescriptor.Postcondition initializer,
             AbstractNextStateDescriptor nextStateRelation,
@@ -443,9 +444,9 @@ public final class GeneralizedSaturationProvider implements FixedPointEnumeratio
     }
 
     private class Aggregator implements Consumer<SaturationCache> {
+
         public long result = 0;
         private final ToLongFunction<SaturationCache> extractor;
-
         private Aggregator(final ToLongFunction<SaturationCache> extractor) {
             this.extractor = extractor;
         }
@@ -454,8 +455,8 @@ public final class GeneralizedSaturationProvider implements FixedPointEnumeratio
         public void accept(final SaturationCache cache) {
             result += extractor.applyAsLong(cache);
         }
-    }
 
+    }
     public Cache getSaturateCache() {
         class SaturateCache implements Cache {
             private final CacheManager<SaturationCache> cacheManager;
@@ -495,6 +496,7 @@ public final class GeneralizedSaturationProvider implements FixedPointEnumeratio
     }
 
     // TODO: HAXXXX DON'T DO THIS EVER AGAIN
+
     public Set<MddNode> getSaturatedNodes() {
         final Set<MddNode> ret = HashObjSets.newUpdatableSet();
         cacheManager.forEachCache((c) -> c.getSaturateCache().clearSelectively((source, ns, result) -> {
@@ -503,7 +505,6 @@ public final class GeneralizedSaturationProvider implements FixedPointEnumeratio
         }));
         return ret;
     }
-
     public Cache getRelProdCache() {
         class RelProdCache implements Cache {
             private final CacheManager<SaturationCache> cacheManager;
@@ -543,12 +544,17 @@ public final class GeneralizedSaturationProvider implements FixedPointEnumeratio
     }
 
     @Override
-    public Cache getCache() {
-        return getRelProdCache();
+    public long getCacheSize() {
+        return getSaturateCache().getCacheSize();
     }
 
     @Override
-    public CacheManager<?> getCacheManager() {
-        return cacheManager;
+    public long getQueryCount() {
+        return getSaturateCache().getQueryCount();
+    }
+
+    @Override
+    public long getHitCount() {
+        return getSaturateCache().getHitCount();
     }
 }

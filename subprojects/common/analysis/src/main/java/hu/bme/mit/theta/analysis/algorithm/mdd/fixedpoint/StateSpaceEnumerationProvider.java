@@ -16,17 +16,8 @@
 
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
-import hu.bme.mit.delta.java.mdd.*;
+import hu.bme.mit.delta.java.mdd.MddTransformationProvider;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
 
-public interface FixedPointEnumerationProvider extends MddTransformationProvider<AbstractNextStateDescriptor> {
-    MddHandle compute(
-            AbstractNextStateDescriptor.Postcondition initializer,
-            AbstractNextStateDescriptor nextStateRelation,
-            MddVariableHandle highestAffectedVariable
-    );
-
-    Cache getCache();
-
-    CacheManager<?> getCacheManager();
+public interface StateSpaceEnumerationProvider extends MddTransformationProvider.Cached<AbstractNextStateDescriptor>, MddTransformationProvider.Initializable<AbstractNextStateDescriptor,AbstractNextStateDescriptor.Postcondition>{
 }

@@ -76,7 +76,7 @@ class XstsCliMdd : XstsCliBaseCommand(
         val variableOrder = JavaMddFactory.getDefault().createMddVariableOrder(LatticeDefinition.forSets())
         effectiveOrdering.forEach { variableOrder.createOnTop(MddVariableDescriptor.create(it)) }
         val ssgTimer = Stopwatch.createStarted()
-        val provider: FixedPointEnumerationProvider = when (iterationStrategy) {
+        val provider: StateSpaceEnumerationProvider = when (iterationStrategy) {
             MddChecker.IterationStrategy.BFS -> BfsProvider(variableOrder)
             MddChecker.IterationStrategy.SAT -> SimpleSaturationProvider(variableOrder)
             MddChecker.IterationStrategy.GSAT -> GeneralizedSaturationProvider(variableOrder)
@@ -103,25 +103,19 @@ class XstsCliMdd : XstsCliBaseCommand(
         ).forEach(writer::cell)
         if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
             listOf(
-                provider.cache.cacheSize,
-                provider.cache.queryCount,
-                provider.cache.hitCount
+                provider.cacheSize,
+                provider.queryCount,
+                provider.hitCount
             ).forEach(writer::cell)
         }
         listOf(
-            provider.cache.cacheSize,
-            provider.cache.queryCount,
-            provider.cache.hitCount
+            provider.cacheSize,
+            provider.queryCount,
+            provider.hitCount
         ).forEach(writer::cell)
         if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
             val collector: MutableSet<MddNode> = mutableSetOf()
-            provider.cacheManager.forEachCache {
-                (it as SaturationCache).saturateCache.clearSelectively { _, _, res ->
-                    collector.add(
-                        res
-                    ); false
-                }
-            }
+            provider.clear()
             listOf(collector.size).forEach(writer::cell)
         }
     }
