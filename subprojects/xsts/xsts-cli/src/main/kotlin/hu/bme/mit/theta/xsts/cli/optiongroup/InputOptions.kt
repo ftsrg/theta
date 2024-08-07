@@ -38,17 +38,17 @@ class InputOptions : OptionGroup(
     val model: File by option(
         help = "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input"
     ).file(mustExist = true, canBeDir = false).required()
-    private val propertyFile: InputStream? by option(
-        help = "Path of the property file (XSTS or Pnml). Has priority over --property"
+    private val property: InputStream? by option(
+        help = "Path of the property file. Has priority over --inlineProperty"
     ).inputStream()
-    private val property: String? by option(help = "Input property as a string. Ignored if --property-file is defined")
+    private val inlineProperty: String? by option(help = "Input property as a string. Ignored if --property is defined")
     private val initialmarking: String by option(help = "Initial marking of the pnml model").default("")
 
     fun isPnml() = model.path.endsWith("pnml")
 
     fun loadXsts(): XSTS {
-        val propertyStream = if (propertyFile != null) propertyFile else (if (property != null) ByteArrayInputStream(
-            "prop { $property }".toByteArray()
+        val propertyStream = if (property != null) property else (if (inlineProperty != null) ByteArrayInputStream(
+            "prop { $inlineProperty }".toByteArray()
         ) else null)
         if (isPnml()) {
             val petriNet = XMLPnmlToPetrinet.parse(model.absolutePath, initialmarking)
