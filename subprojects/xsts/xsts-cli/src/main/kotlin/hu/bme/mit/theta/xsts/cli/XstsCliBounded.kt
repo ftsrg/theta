@@ -16,15 +16,14 @@
 
 package hu.bme.mit.theta.xsts.cli
 
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.enum
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.bounded.*
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.model.Valuation
@@ -43,10 +42,10 @@ typealias S = XstsState<ExplState>
 
 class XstsCliBounded : XstsCliBaseCommand(
     name = "BOUNDED",
-    help = "Bounded model checking algorithms (BMC, IMC, KINDUCTION). Use --algorithm to select the algorithm."
+    help = "Bounded model checking algorithms (BMC, IMC, KINDUCTION). Use --variant to select the algorithm (by default BMC is selected)."
 ) {
 
-    enum class Algorithm {
+    enum class Variant {
         BMC {
 
             override fun buildChecker(
@@ -84,7 +83,7 @@ class XstsCliBounded : XstsCliBaseCommand(
         ): BoundedChecker<S, XstsAction>
     }
 
-    private val algorithm by option().enum<Algorithm>().required()
+    private val variant by option().enum<Variant>().default(Variant.BMC)
 
     private fun printResult(status: SafetyResult<EmptyWitness, Trace<S, XstsAction>>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return
@@ -113,7 +112,7 @@ class XstsCliBounded : XstsCliBaseCommand(
         val solverFactory = SolverManager.resolveSolverFactory(solver)
         val xsts = inputOptions.loadXsts()
         val sw = Stopwatch.createStarted()
-        val checker = algorithm.buildChecker(
+        val checker = variant.buildChecker(
             xsts.toMonolithicExpr(), solverFactory, xsts::valToState,
             xsts::valToAction,
             logger
