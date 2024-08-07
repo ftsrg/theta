@@ -164,7 +164,7 @@ public class XstsMddChecker implements SafetyChecker<MddWitness, MddCex, Void> {
             }
             default -> throw new IllegalStateException("Unexpected value: " + iterationStrategy);
         }
-        final MddHandle stateSpace = stateSpaceProvider.compute(MddNodeInitializer.of(initNode), nextStates, stateSig.getTopVariableHandle());
+        final MddHandle stateSpace = stateSpaceProvider.compute(MddNodeInitializer.of(initResult), nextStates, stateSig.getTopVariableHandle());
 
         logger.write(Level.INFO, "Enumerated state-space");
 
