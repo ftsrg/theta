@@ -52,11 +52,11 @@ class XstsCliPetrinetMdd : XstsCliBaseCommand(
     private val ordering: File? by option(help = "Path of the input variable ordering").file(
         mustExist = true, canBeDir = false, mustBeReadable = true
     )
+    private val id: String by option(help = "ID of the input model. Used for symbolic output").default("")
     private val iterationStrategy: MddChecker.IterationStrategy by option(
         help = "The state space generation algorithm to use"
     ).enum<MddChecker.IterationStrategy>().default(MddChecker.IterationStrategy.GSAT)
     private val dependencyOutput by PetrinetDependencyOutputOptions()
-    private val id: String by option(help = "ID of the input model. Used for symbolic output").default("")
 
     private fun loadOrdering(petriNet: PetriNet): List<Place> =
         if (ordering == null) petriNet.places.sortedWith { p1: Place, p2: Place ->
