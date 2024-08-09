@@ -1,0 +1,8 @@
+tool		Theta 5.0.4	Theta 5.0.4	Theta 5.0.4	Theta 5.0.4
+run set		SV-COMP24_unreach-call.ReachSafety-Sequentialized	SV-COMP24_unreach-call.ReachSafety-Sequentialized	SV-COMP24_unreach-call.ReachSafety-Sequentialized	SV-COMP24_unreach-call.ReachSafety-Sequentialized
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+systemc/transmitter.12.cil.yml	false	TIMEOUT (Parsing OK)	120.378533	92.65289277400001	1877.012480
+seq-mthreaded/pals_opt-floodmax.3.1.ufo.UNBOUNDED.pals.yml	false	Parsing OK	14.654892	5.215105014000017	656.412672
+systemc/pipeline.cil-1.yml	false	TIMEOUT (Parsing OK)	120.052783	99.12552654699999	1623.023616
+seq-mthreaded/pals_lcr-var-start-time.3.ufo.UNBOUNDED.pals.yml	true	Parsing OK	17.457705	6.401542049999989	584.962048
+seq-mthreaded/pals_floodmax.3.2.ufo.BOUNDED-6.pals.yml	false	Parsing OK	28.53261	10.850730707000025	707.657728

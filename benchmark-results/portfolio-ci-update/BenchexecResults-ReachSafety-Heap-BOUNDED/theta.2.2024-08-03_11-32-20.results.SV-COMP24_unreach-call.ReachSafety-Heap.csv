@@ -1,0 +1,14 @@
+tool		Theta 6.3.4	Theta 6.3.4	Theta 6.3.4	Theta 6.3.4
+run set		SV-COMP24_unreach-call.ReachSafety-Heap	SV-COMP24_unreach-call.ReachSafety-Heap	SV-COMP24_unreach-call.ReachSafety-Heap	SV-COMP24_unreach-call.ReachSafety-Heap
+../sv-benchmarks/c/ldv-regression/		status	cputime (s)	walltime (s)	memory (MB)
+test09.yml	true	Parsing OK	9.609772	5.537990225999977	344.997888
+test15.yml	true	Parsing OK	8.817424	5.35997736500002	344.829952
+just_assert.yml	true	true	4.985088	2.6001895450000347	392.572928
+volatile_alias.yml	true	Parsing OK	8.07895	5.058214248000013	333.570048
+mutex_lock_int.c_1.yml	true	Parsing OK	8.895016	5.33701369299996	340.434944
+oomInt.yml	true	true	5.21373	2.617732813000032	412.504064
+test16.yml	true	Parsing OK	9.447032	5.319104452999966	355.098624
+mutex_lock_int.yml	false	Parsing OK	8.744263	5.343683026000008	341.463040
+test18.yml	true	Parsing OK	3.503729	1.5899946620000378	230.498304
+volatile_alias.c_1.yml	true	Parsing OK	8.179222	5.079434504000005	327.475200
+callfpointer.yml	false	Parsing OK	7.689363	4.794585686999994	346.468352

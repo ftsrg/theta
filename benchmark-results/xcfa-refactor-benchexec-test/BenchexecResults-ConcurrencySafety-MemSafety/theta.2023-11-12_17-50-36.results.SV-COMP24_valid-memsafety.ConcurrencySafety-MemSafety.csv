@@ -1,0 +1,13 @@
+tool	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety	SV-COMP24_valid-memsafety.ConcurrencySafety-MemSafety
+../sv-benchmarks/c/	status	cputime (s)	walltime (s)	memory (MB)
+pthread-atomic/read_write_lock-1.yml	ERROR (server error)	4.10696	1.525479240999971	246.988800
+pthread-wmm/rfi003_tso.yml	ERROR (server error)	3.779929	1.3621680640000022	247.427072
+pthread/lazy01.yml	ERROR (server error)	3.891631	1.4485685869999543	263.618560
+pthread-wmm/mix000.oepc.yml	ERROR (server error)	4.398683	1.5823550669999804	265.146368
+pthread-wmm/safe032_tso.yml	ERROR (server error)	3.328471	1.2315741400000206	246.603776
+pthread-wmm/safe030_tso.yml	ERROR (server error)	4.128106	1.5115364649999492	240.832512
+pthread-wmm/safe018_power.opt.yml	ERROR (server error)	4.463395	1.6066658449999522	256.577536
+pthread-wmm/safe026_tso.yml	ERROR (server error)	4.057112	1.4982898959999602	254.660608
+pthread/fib_safe-11.yml	ERROR (server error)	4.136054	1.517930008999997	269.627392
+pthread-wmm/safe024_tso.yml	ERROR (server error)	4.189061	1.5356821719999516	264.880128

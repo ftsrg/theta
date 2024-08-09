@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Recursive	SV-COMP24_unreach-call.ReachSafety-Recursive	SV-COMP24_unreach-call.ReachSafety-Recursive	SV-COMP24_unreach-call.ReachSafety-Recursive
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+recursive-simple/id_o100.yml	false	TIMEOUT	120.212754	117.21291983700007	382.476288
+recursive-simple/id2_i5_o5-2.yml	true	true	2.220642	1.2926206629999797	142.516224
+recursive/recHanoi03-2.yml	true	TIMEOUT	121.105494	104.58496584699992	2001.985536
+recursive-simple/id_b3_o2-2.yml	false	false(unreach-call)	2.752502	1.608757751999974	156.606464
+recursive-simple/afterrec-2.yml	true	TIMEOUT	120.517706	113.03798050399996	427.814912
+recursive-simple/id_i10_o10-2.yml	true	true	2.270639	1.3121011169998837	143.921152
+recursive/EvenOdd03.yml	false	false(unreach-call)	2.507977	1.4491923970001608	147.427328
+recursive-simple/id_o200.yml	false	TIMEOUT	120.305837	114.25680574700004	1381.343232
+recursive/BallRajamani-SPIN2000-Fig1.yml	false	TIMEOUT	121.230696	101.68008421500008	3443.400704
+recursive-simple/id2_b3_o5.yml	true	ERROR (solver error)	5.374213	4.29023713100014	166.461440

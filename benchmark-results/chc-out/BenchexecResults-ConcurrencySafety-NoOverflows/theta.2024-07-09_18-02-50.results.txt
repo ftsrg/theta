@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call, SV-COMP24_no-data-race, SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows, SV-COMP24_valid-memsafety
+date:                    Tue, 2024-07-09 18:02:50 UTC
+tool:                    Theta 5.4.0
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1776-816
+os:                      Linux-6.5.0-1022-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         2418.31 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call
+Run set 1 of 4: skipped because it has no files
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow.ConcurrencySafety-NoOverflows
+Run set 3 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                     status                       cpu time   wall time        host
+-----------------------------------------------------------------------------------------------------------
+pthread-ext/18_read_write_lock-pthread.yml    Parsing OK                      10.68        5.11        None
+pthread-atomic/read_write_lock-1.yml          true                             9.33        3.68        None
+pthread-wmm/rfi003_tso.yml                    true                            15.67        6.32        None
+pthread/lazy01.yml                            true                             7.13        3.01        None
+pthread-wmm/mix000.oepc.yml                   true                            14.68        6.03        None
+-----------------------------------------------------------------------------------------------------------
+Run set 3                                     done                            57.46       24.67           -
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               4
+    correct true:        4
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               1
+  Score:                 8 (max: 10)
