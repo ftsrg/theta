@@ -18,13 +18,7 @@ package hu.bme.mit.theta.solver.smtlib;
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.solver.HornSolver;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverBase;
-import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.UCSolver;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.smtlib.impl.bitwuzla.BitwuzlaSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.boolector.BoolectorSmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.impl.cvc4.CVC4SmtLibSolverInstaller;
@@ -43,17 +37,11 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 public final class SmtLibSolverManager extends SolverManager {
 
@@ -77,14 +65,12 @@ public final class SmtLibSolverManager extends SolverManager {
     }
 
     private final Path home;
-    private final Logger logger;
     private final Map<String, SmtLibSolverInstaller> installers;
     private final Tuple2<String, GenericSmtLibSolverInstaller> genericInstaller;
     private final Set<SolverBase> instantiatedSolvers;
     private boolean closed = false;
 
     private SmtLibSolverManager(final Path home, final Logger logger) {
-        this.logger = logger;
         checkNotNull(home);
         checkArgument(Files.exists(home), "Home directory does not exist");
 
@@ -160,8 +146,7 @@ public final class SmtLibSolverManager extends SolverManager {
 
     public static SmtLibSolverManager create(final Path home, final Logger logger)
             throws IOException {
-        createIfNotExists(home);
-        return new SmtLibSolverManager(home, logger);
+        return new SmtLibSolverManager(createIfNotExists(home), logger);
     }
 
     private static Path createIfNotExists(final Path path) throws IOException {

@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class SimpleSaturationProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
+public final class SimpleSaturationProvider implements StateSpaceEnumerationProvider {
     public static boolean verbose = false;
 
     private MddVariableOrder variableOrder;
@@ -545,5 +545,20 @@ public final class SimpleSaturationProvider implements MddTransformationProvider
         }
 
         return new RelProdCache(cacheManager);
+    }
+
+    @Override
+    public long getCacheSize() {
+        return getSaturateCache().getCacheSize();
+    }
+
+    @Override
+    public long getQueryCount() {
+        return getSaturateCache().getQueryCount();
+    }
+
+    @Override
+    public long getHitCount() {
+        return getSaturateCache().getHitCount();
     }
 }

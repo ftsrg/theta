@@ -72,24 +72,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public class XstsConfigBuilder {
 
-
-    //////////// algorithm selection ////////////
-
-    public enum Algorithm {
-        CEGAR,
-        CHC,
-        BMC,
-        KINDUCTION,
-        IMC,
-        MDD
-    }
-
-    //////////// symbolic MDD analysis configuration ////////////
-
-    public enum IterationStrategy {
-        BFS, SAT, GSAT
-    }
-
     //////////// CEGAR configuration ////////////
 
     public enum Domain {

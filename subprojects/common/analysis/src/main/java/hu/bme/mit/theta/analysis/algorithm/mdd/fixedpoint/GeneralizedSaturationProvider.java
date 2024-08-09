@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.ToLongFunction;
 
-public final class GeneralizedSaturationProvider implements MddTransformationProvider<AbstractNextStateDescriptor> {
+public final class GeneralizedSaturationProvider implements StateSpaceEnumerationProvider {
     public static boolean verbose = false;
 
     private MddVariableOrder variableOrder;
@@ -48,6 +48,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
         this.terminalZeroNode = variableOrder.getMddGraph().getTerminalZeroNode();
     }
 
+    @Override
     public MddHandle compute(
             AbstractNextStateDescriptor.Postcondition initializer,
             AbstractNextStateDescriptor nextStateRelation,
@@ -443,6 +444,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
     }
 
     private class Aggregator implements Consumer<SaturationCache> {
+
         public long result = 0;
         private final ToLongFunction<SaturationCache> extractor;
 
@@ -454,6 +456,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
         public void accept(final SaturationCache cache) {
             result += extractor.applyAsLong(cache);
         }
+
     }
 
     public Cache getSaturateCache() {
@@ -495,6 +498,7 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
     }
 
     // TODO: HAXXXX DON'T DO THIS EVER AGAIN
+
     public Set<MddNode> getSaturatedNodes() {
         final Set<MddNode> ret = HashObjSets.newUpdatableSet();
         cacheManager.forEachCache((c) -> c.getSaturateCache().clearSelectively((source, ns, result) -> {
@@ -540,5 +544,20 @@ public final class GeneralizedSaturationProvider implements MddTransformationPro
         }
 
         return new RelProdCache(cacheManager);
+    }
+
+    @Override
+    public long getCacheSize() {
+        return getSaturateCache().getCacheSize();
+    }
+
+    @Override
+    public long getQueryCount() {
+        return getSaturateCache().getQueryCount();
+    }
+
+    @Override
+    public long getHitCount() {
+        return getSaturateCache().getHitCount();
     }
 }

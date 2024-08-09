@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Cex;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
 
 import java.util.Optional;
@@ -56,6 +54,10 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
         return new Unsafe<>(cex, witness, Optional.empty());
     }
 
+    public static <W extends Witness, C extends Cex> Unknown<W, C> unknown() {
+        return new Unknown<>();
+    }
+
     public static <W extends Witness, C extends Cex> Safe<W, C> safe(final W witness, final Statistics stats) {
         return new Safe<>(witness, Optional.of(stats));
     }
@@ -65,8 +67,8 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
         return new Unsafe<>(cex, witness, Optional.of(stats));
     }
 
-    public static <W extends Witness, C extends Cex> Unknown<W, C> unknown() {
-        return new Unknown<>();
+    public static <W extends Witness, C extends Cex> Unknown<W, C> unknown(final Statistics stats) {
+        return new Unknown<>(Optional.of(stats));
     }
 
     public abstract boolean isSafe();
@@ -153,6 +155,14 @@ public abstract class SafetyResult<W extends Witness, C extends Cex> implements 
     }
 
     public static final class Unknown<W extends Witness, C extends Cex> extends SafetyResult<W, C> {
+
+        public Unknown() {
+            super();
+        }
+
+        public Unknown(final Optional<Statistics> stats) {
+            super(null, stats);
+        }
 
         @Override
         public boolean isSafe() {
