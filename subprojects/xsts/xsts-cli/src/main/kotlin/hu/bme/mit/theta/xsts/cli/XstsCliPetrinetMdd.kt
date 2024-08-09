@@ -45,8 +45,7 @@ import javax.imageio.ImageIO
 import kotlin.system.exitProcess
 
 class XstsCliPetrinetMdd : XstsCliBaseCommand(
-    name = "PN_MDD",
-    help = "Model checking of Petri nets using MDDs (Multi-value Decision Diagrams)"
+    name = "PN_MDD", help = "Model checking of Petri nets using MDDs (Multi-value Decision Diagrams)"
 ) {
 
     private val ordering: File? by option(help = "Path of the input variable ordering").file(
@@ -104,15 +103,11 @@ class XstsCliPetrinetMdd : XstsCliBaseCommand(
         ).forEach(writer::cell)
         if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
             listOf(
-                provider.cacheSize,
-                provider.queryCount,
-                provider.hitCount
+                provider.cacheSize, provider.queryCount, provider.hitCount
             ).forEach(writer::cell)
         }
         listOf(
-            provider.cacheSize,
-            provider.queryCount,
-            provider.hitCount
+            provider.cacheSize, provider.queryCount, provider.hitCount
         ).forEach(writer::cell)
         if (iterationStrategy in setOf(MddChecker.IterationStrategy.GSAT, MddChecker.IterationStrategy.SAT)) {
             val collector: MutableSet<MddNode> = mutableSetOf()
@@ -125,8 +120,8 @@ class XstsCliPetrinetMdd : XstsCliBaseCommand(
         if (dependencyOutput.depMatPng == null) return
         if (system.placeCount > 10000 || system.transitionCount > 10000) {
             logger.write(
-                Logger.Level.INFO, "[WARNING] Skipping image generation because the model size exceeds 10k places or " +
-                    "transitions."
+                Logger.Level.INFO,
+                "[WARNING] Skipping image generation because the model size exceeds 10k places or " + "transitions."
             )
             return
         }
