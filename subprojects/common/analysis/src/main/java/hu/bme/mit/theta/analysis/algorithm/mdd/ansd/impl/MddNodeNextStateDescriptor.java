@@ -49,6 +49,11 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
         return Objects.hash(node, variableHandle);
     }
 
+    @Override
+    public String toString() {
+        return node +", " + variableHandle;
+    }
+
     private MddNodeNextStateDescriptor(MddNode node, MddVariableHandle variableHandle) {
         this.node = Preconditions.checkNotNull(node);
         this.variableHandle = Preconditions.checkNotNull(variableHandle);
