@@ -220,6 +220,11 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
             return n;
         }
 
+        boolean lhsSkipped = !n.isOn(variable);
+        if ((lhsSkipped || n.defaultValue() != null) && variable.getDomainSize() <= 0) {
+            throw new UnsupportedOperationException("Default values are not yet supported for unbounded domains");
+        }
+
         if (verbose) {
             printIndent();
             System.out.println("SatFire on level " +
@@ -242,7 +247,8 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
                 stateSpaceInfo);
 
-        for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
+        final var lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
             for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
                     cFrom.key()).cursor(); cTo.moveNext(); ) {
                 if (cFrom.key() == cTo.key()) {
@@ -303,6 +309,11 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
             return n;
         }
 
+        boolean lhsSkipped = !n.isOn(variable);
+        if ((lhsSkipped || n.defaultValue() != null) && variable.getDomainSize() <= 0) {
+            throw new UnsupportedOperationException("Default values are not yet supported for unbounded domains");
+        }
+
         final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
 
         MddNode ret = cache.getCache().getRelProdCache().getOrNull(n, dsat, dfire);
@@ -330,7 +341,8 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
                 stateSpaceInfo);
 
-        for (IntObjCursor<? extends MddNode> cFrom = n.cursor(); cFrom.moveNext(); ) {
+        final var lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
             // Identity step
             final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
             if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
