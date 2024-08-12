@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
 import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
@@ -80,11 +81,6 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
 
         boolean lhsSkipped = !lhs.isOn(variable);
 
-        if (((lhsSkipped && variable.getDomainSize() <= 0) || !variable.isNullOrZero(lhs.defaultValue())) &&
-                !(lhs.isTerminal() && nextState instanceof AbstractNextStateDescriptor.Postcondition)) {
-            throw new UnsupportedOperationException("Default values are not yet supported in relational product.");
-        }
-
         MddNode ret = cache.getCache().getOrNull(lhs, nextState);
         if (ret != null) {
             return ret;
@@ -112,9 +108,32 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
             // 		recurse(child, diagonal.defaultValue(), variable, cache),
             // 		variable.getMddGraph().getTerminalZeroNode()
             // 	));
+        } else if ((lhsSkipped || lhs.defaultValue() != null) && variable.getDomainSize() <= 0) {
+            MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
+            final MddNode childCandidate = lhsSkipped ? lhs : lhs.defaultValue();
+            // Lhs is level skip, so we iterate over the next state descriptor. This will only terminate if the next state descriptor is finite.
+            for (var cFrom = offDiagonal.cursor(); cFrom.moveNext(); ) {
+                final MddNode res = recurse(childCandidate, diagonal.get(cFrom.key()), variable, cache);
+                final MddNode unioned = unionChildren(res, templateBuilder.get(cFrom.key()), variable);
+
+                templateBuilder.set(cFrom.key(),
+                        terminalZeroToNull(unioned, variable.getMddGraph().getTerminalZeroNode())
+                );
+
+                for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = cFrom.value().cursor();
+                     cTo.moveNext(); ) {
+                    final MddNode res1 = recurse(childCandidate, cTo.value(), variable, cache);
+                    final MddNode unioned1 = unionChildren(res1, templateBuilder.get(cTo.key()), variable);
+
+                    templateBuilder.set(cTo.key(),
+                            terminalZeroToNull(unioned1, variable.getMddGraph().getTerminalZeroNode())
+                    );
+                }
+            }
+            template = templateBuilder.buildAndReset();
         } else {
             MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-            RecursiveIntObjMapView<MddNode> lhsInterpreter = variable.getNodeInterpreter(lhs);
+            RecursiveIntObjMapView<MddNode> lhsInterpreter = variable.getNodeInterpreter(lhs); // using the interpreter might cause a performance overhead
             for (IntObjCursor<? extends MddNode> c = lhsInterpreter.cursor(); c.moveNext(); ) {
                 final MddNode res = recurse(c.value(), diagonal.get(c.key()), variable, cache);
                 final MddNode unioned = unionChildren(res, templateBuilder.get(c.key()), variable);
@@ -134,6 +153,7 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
                 }
             }
             template = templateBuilder.buildAndReset();
+            if (!template.isEmpty()) Preconditions.checkArgument(lhs.defaultValue() == null, "Default value is not supported with explicit edges");
         }
 
         ret = variable.checkInNode(MddStructuralTemplate.of(template));
