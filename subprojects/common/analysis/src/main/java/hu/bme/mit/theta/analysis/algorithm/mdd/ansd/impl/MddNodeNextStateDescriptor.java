@@ -51,7 +51,7 @@ public class MddNodeNextStateDescriptor implements AbstractNextStateDescriptor {
 
     @Override
     public String toString() {
-        return node +", " + variableHandle;
+        return node + ", " + variableHandle;
     }
 
     private MddNodeNextStateDescriptor(MddNode node, MddVariableHandle variableHandle) {

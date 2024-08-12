@@ -153,7 +153,8 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
                 }
             }
             template = templateBuilder.buildAndReset();
-            if (!template.isEmpty()) Preconditions.checkArgument(lhs.defaultValue() == null, "Default value is not supported with explicit edges");
+            if (!template.isEmpty())
+                Preconditions.checkArgument(lhs.defaultValue() == null, "Default value is not supported with explicit edges");
         }
 
         ret = variable.checkInNode(MddStructuralTemplate.of(template));

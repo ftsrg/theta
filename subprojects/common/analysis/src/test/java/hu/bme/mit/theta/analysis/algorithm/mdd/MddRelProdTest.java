@@ -161,7 +161,7 @@ public class MddRelProdTest {
 
                 {List.of(A, B),
                         True(),
-                        And(Prime(A.getRef()),Prime(B.getRef())), // a', b'
+                        And(Prime(A.getRef()), Prime(B.getRef())), // a', b'
                         1L},
 
                 {List.of(A, B),
@@ -219,9 +219,9 @@ public class MddRelProdTest {
 
             varOrder.forEach(v -> {
                 final var domainSize = Math.max(v.getType().getDomainSize().getFiniteSize().intValue(), 0);
-                stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0),domainSize));
-                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1),domainSize));
-                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0),domainSize));
+                stateOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
+                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(1), domainSize));
+                transOrder.createOnTop(MddVariableDescriptor.create(v.getConstDecl(0), domainSize));
             });
 
             final var stateSig = stateOrder.getDefaultSetSignature();
