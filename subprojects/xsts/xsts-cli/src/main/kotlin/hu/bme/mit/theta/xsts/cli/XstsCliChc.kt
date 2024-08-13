@@ -16,6 +16,8 @@
 
 package hu.bme.mit.theta.xsts.cli
 
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.option
 import com.google.common.base.Stopwatch
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.chc.CexTree
@@ -32,6 +34,8 @@ class XstsCliChc : XstsCliBaseCommand(
     name = "CHC",
     help = "Model checking using the Horn solving backend"
 ) {
+
+    override val defaultSolver: String = "z3:4.13.0"
 
     private fun printResult(status: SafetyResult<Invariant, CexTree>, xsts: XSTS, totalTimeMs: Long) {
         if (!outputOptions.benchmarkMode) return

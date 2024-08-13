@@ -19,6 +19,7 @@ package hu.bme.mit.theta.xsts.cli
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.groups.provideDelegate
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.file
@@ -51,7 +52,8 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
 
     protected val inputOptions by InputOptions()
     protected val outputOptions by OutputOptions()
-    protected val solver: String by option(help = "The solver to use for the check").default("Z3")
+    protected open val defaultSolver: String = "Z3"
+    protected val solver: String by option(help = "The solver to use for the check").defaultLazy { defaultSolver }
     private val smtHome: File by option().file().default(SmtLibSolverManager.HOME.toFile())
     protected val logger: Logger by lazy {
         if (outputOptions.benchmarkMode) NullLogger.getInstance() else ConsoleLogger(outputOptions.logLevel)
@@ -78,7 +80,7 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
         listOf(
             status.isSafe,
             totalTimeMs,
-            if (status.isUnsafe) "${status.asUnsafe().cex!!.length()}" else "",
+            if (status.isUnsafe) "${status.asUnsafe().cex?.length() ?: "N/A"}" else "",
             xsts.vars.size,
         ).forEach(writer::cell)
     }
