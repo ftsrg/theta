@@ -174,17 +174,17 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
         if (mddVariable.getLower().isPresent() && !mddNodeConstraint.isTerminal()) {
             MddVariable variable = mddVariable.getLower().get();
-            MddNode mddNode = mddNodeConstraint.get(mddNodeConstraint.statistics().lowestValue());
+            MddNode mddNode = mddNodeConstraint.defaultValue() == null ? mddNodeConstraint.get(mddNodeConstraint.statistics().lowestValue()) : mddNodeConstraint.defaultValue();
             while (true) {
 
-                // This is needed because the constraint node might contain level-skips: of the domain is bounded, then default values are detected
+                // This is needed because the constraint node might contain level-skips: if the domain is bounded, then default values are detected
                 if (mddNode.isTerminal()) break;
 
                 final IntStatistics statistics = mddNode.statistics();
                 final Decl<?> decl = variable.getTraceInfo(Decl.class);
                 final LitExpr<?> lowerBound = LitExprConverter.toLitExpr(statistics.lowestValue(), decl.getType());
                 final LitExpr<?> upperBound = LitExprConverter.toLitExpr(statistics.highestValue(), decl.getType());
-                if (!decl.getType().equals(BoolType.getInstance()) && !(decl.getType() instanceof EnumType)) { // TODO delete
+                if (decl.getType().getDomainSize().isInfinite()) { // TODO delete
                     if (lowerBound.equals(upperBound)) {
                         exprs.add(Eq(decl.getRef(), lowerBound));
                     } else {
@@ -450,17 +450,20 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
 
                 } else {
 
-                    final Optional<? extends MddVariable> lower = representation.mddVariable.getLower();
-                    final LitExpr<?> literalToCache = determineLiteralToCache(representation, valuation);
-
-                    if (representation.explicitRepresentation.getCacheView().containsKey(LitExprConverter.toInt(literalToCache))) {
-
-                        childNode = representation.explicitRepresentation.getCacheView().get(LitExprConverter.toInt(literalToCache));
-                        assert lower.isEmpty() || childNode.isOn(lower.get());
-
+                    // Substitute literal if available
+                    final Optional<? extends LitExpr<?>> literal = valuation.eval(representation.getDecl());
+                    final Expr<BoolType> substitutedExpr;
+                    if (literal.isPresent()) {
+                        substitutedExpr = ExprUtils.simplify(representation.expr, ImmutableValuation.builder().put(representation.getDecl(), literal.get()).build());
                     } else {
+                        substitutedExpr = representation.expr;
+                    }
 
-                        final Expr<BoolType> substitutedExpr = ExprUtils.simplify(representation.expr, ImmutableValuation.builder().put(representation.getDecl(), literalToCache).build());
+                    if (literal.isPresent() && representation.explicitRepresentation.getCacheView().containsKey(LitExprConverter.toInt(literal.get()))) {
+                        // Return cached if available
+                        childNode = representation.explicitRepresentation.getCacheView().get(LitExprConverter.toInt(literal.get()));
+                    } else {
+                        final Optional<? extends MddVariable> lower = representation.mddVariable.getLower();
                         if (lower.isPresent()) {
                             final MddExpressionTemplate template = MddExpressionTemplate.of(substitutedExpr, o -> (Decl) o, representation.solverPool);
                             childNode = lower.get().checkInNode(template);
@@ -472,7 +475,7 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         }
 
                         assert !representation.mddVariable.isNullOrZero(childNode) : "This would mean the model returned by the solver is incorrect";
-                        representation.explicitRepresentation.cacheNode(LitExprConverter.toInt(literalToCache), childNode);
+                        if (literal.isPresent()) representation.explicitRepresentation.cacheNode(LitExprConverter.toInt(literal.get()), childNode);
                         // TODO update domainSize
                     }
                 }
@@ -483,38 +486,6 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                 // TODO assert
                 representation = (MddExpressionRepresentation) childNode.getRepresentation();
             }
-        }
-
-        private static LitExpr<?> determineLiteralToCache(MddExpressionRepresentation representation, Valuation valuation) {
-            final Decl<?> decl = representation.getDecl();
-            final Optional<? extends LitExpr<?>> literal = valuation.eval(decl);
-
-            if (literal.isPresent()) {
-                return literal.get();
-            } else {
-                return LitExprConverter.toLitExpr(generateMissingLiteral(representation), decl.getType());
-            }
-        }
-
-        private static int generateMissingLiteral(MddExpressionRepresentation representation) {
-            final int newValue;
-            if (representation.mddVariable.isBounded()) {
-                final IntSetView domain = IntSetView.range(0, representation.mddVariable.getDomainSize());
-                final IntSetView remaining = domain.minus(representation.explicitRepresentation.getCacheView().keySet());
-                if (remaining.isEmpty()) {
-                    representation.explicitRepresentation.setComplete();
-                    // Return the first element
-                    newValue = representation.explicitRepresentation.getCacheView().keySet().statistics().lowestValue();
-                } else {
-                    final var cur = remaining.cursor();
-                    Preconditions.checkState(cur.moveNext());
-                    newValue = cur.elem();
-                }
-            } else {
-                final IntSetView cachedKeys = representation.explicitRepresentation.getCacheView().keySet();
-                newValue = cachedKeys.isEmpty() ? 0 : cachedKeys.statistics().highestValue() + 1;
-            }
-            return newValue;
         }
 
         private void setCurrentRepresentation(MddExpressionRepresentation representation) {
