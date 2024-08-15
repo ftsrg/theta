@@ -158,7 +158,7 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
 //
 //    }
 
-    private class BoundsCollector {
+    private static class BoundsCollector {
 
         private final ObjIntMap<MddVariable> lowerBounds;
         private final ObjIntMap<MddVariable> upperBounds;
@@ -181,22 +181,22 @@ public final class MddStateSpaceInfo implements StateSpaceInfo {
             } else {
                 traversed.add(node);
             }
+            Preconditions.checkNotNull(variable);
 
             for (var c = node.cursor(); c.moveNext(); ) {
             } // TODO delete later
 
-            if (node.defaultValue() != null) {
-                final MddNode defaultValue = node.defaultValue();
+            final var nodeInterpreter = variable.getNodeInterpreter(node);
+            if (nodeInterpreter.defaultValue() != null) {
+                final MddNode defaultValue = nodeInterpreter.defaultValue();
                 traverse(defaultValue, variable.getLower().orElse(null), traversed);
                 hasDefaultValue.add(variable);
             } else {
-                final IntStatistics statistics = node.statistics();
-                if (variable != null) {
-                    lowerBounds.put(variable, Math.min(lowerBounds.getOrDefault(variable, Integer.MAX_VALUE), statistics.lowestValue()));
-                    upperBounds.put(variable, Math.max(upperBounds.getOrDefault(variable, Integer.MIN_VALUE), statistics.highestValue()));
-                }
+                final IntStatistics statistics = nodeInterpreter.statistics();
+                lowerBounds.put(variable, Math.min(lowerBounds.getOrDefault(variable, Integer.MAX_VALUE), statistics.lowestValue()));
+                upperBounds.put(variable, Math.max(upperBounds.getOrDefault(variable, Integer.MIN_VALUE), statistics.highestValue()));
 
-                for (var cur = node.cursor(); cur.moveNext(); ) {
+                for (var cur = nodeInterpreter.cursor(); cur.moveNext(); ) {
                     if (cur.value() != null) {
                         traverse(cur.value(), variable.getLower().orElse(null), traversed);
                     }
