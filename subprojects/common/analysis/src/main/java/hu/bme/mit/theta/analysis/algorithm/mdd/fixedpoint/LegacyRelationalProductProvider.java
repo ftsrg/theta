@@ -108,32 +108,16 @@ public final class LegacyRelationalProductProvider implements RelationalProductP
             // 		recurse(child, diagonal.defaultValue(), variable, cache),
             // 		variable.getMddGraph().getTerminalZeroNode()
             // 	));
-        } else if ((lhsSkipped || lhs.defaultValue() != null) && variable.getDomainSize() <= 0) {
-            MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-            final MddNode childCandidate = lhsSkipped ? lhs : lhs.defaultValue();
-            // Lhs is level skip, so we iterate over the next state descriptor. This will only terminate if the next state descriptor is finite.
-            for (var cFrom = offDiagonal.cursor(); cFrom.moveNext(); ) {
-                final MddNode res = recurse(childCandidate, diagonal.get(cFrom.key()), variable, cache);
-                final MddNode unioned = unionChildren(res, templateBuilder.get(cFrom.key()), variable);
-
-                templateBuilder.set(cFrom.key(),
-                        terminalZeroToNull(unioned, variable.getMddGraph().getTerminalZeroNode())
-                );
-
-                for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = cFrom.value().cursor();
-                     cTo.moveNext(); ) {
-                    final MddNode res1 = recurse(childCandidate, cTo.value(), variable, cache);
-                    final MddNode unioned1 = unionChildren(res1, templateBuilder.get(cTo.key()), variable);
-
-                    templateBuilder.set(cTo.key(),
-                            terminalZeroToNull(unioned1, variable.getMddGraph().getTerminalZeroNode())
-                    );
-                }
-            }
-            template = templateBuilder.buildAndReset();
         } else {
             MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
-            RecursiveIntObjMapView<MddNode> lhsInterpreter = variable.getNodeInterpreter(lhs); // using the interpreter might cause a performance overhead
+            RecursiveIntObjMapView<MddNode> lhsInterpreter;
+            if ((lhsSkipped || (lhs.defaultValue() != null && lhs.isEmpty())) && !variable.isBounded()) {
+                final MddNode childCandidate = lhsSkipped ? lhs : lhs.defaultValue();
+                // We use the keyset of the ANSD to trim
+                lhsInterpreter = RecursiveIntObjMapView.of(IntObjMapView.empty(childCandidate).trim(offDiagonal.keySet()));
+            } else {
+                lhsInterpreter = variable.getNodeInterpreter(lhs); // using the interpreter might cause a performance overhead
+            }
             for (IntObjCursor<? extends MddNode> c = lhsInterpreter.cursor(); c.moveNext(); ) {
                 final MddNode res = recurse(c.value(), diagonal.get(c.key()), variable, cache);
                 final MddNode unioned = unionChildren(res, templateBuilder.get(c.key()), variable);
