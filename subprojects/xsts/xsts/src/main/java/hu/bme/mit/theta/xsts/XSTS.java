@@ -31,7 +31,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XSTS {
 
-    private final Collection<VarDecl<?>> vars;
+    private final Set<VarDecl<?>> vars;
+    private final Set<VarDecl<?>> stateVars;
+    private final Set<VarDecl<?>> tempVars;
     private final Set<VarDecl<?>> ctrlVars;
 
     private final NonDetStmt tran;
@@ -41,29 +43,29 @@ public final class XSTS {
     private final Expr<BoolType> initFormula;
     private final Expr<BoolType> prop;
 
-    public NonDetStmt getInit() {
-        return init;
-    }
-
-    public Collection<VarDecl<?>> getVars() {
-        return vars;
-    }
-
-    public Expr<BoolType> getProp() {
-        return prop;
-    }
-
     public NonDetStmt getTran() {
         return tran;
+    }
+
+    public NonDetStmt getEnv() {
+        return env;
+    }
+
+    public NonDetStmt getInit() {
+        return init;
     }
 
     public Expr<BoolType> getInitFormula() {
         return initFormula;
     }
 
-    public NonDetStmt getEnv() {
-        return env;
-    }
+    public Expr<BoolType> getProp() { return prop;}
+
+    public Set<VarDecl<?>> getVars() { return vars;}
+
+    public Set<VarDecl<?>> getTempVars() { return tempVars; }
+
+    public Set<VarDecl<?>> getStateVars() { return stateVars; }
 
     public Set<VarDecl<?>> getCtrlVars() {
         return ctrlVars;
@@ -77,15 +79,35 @@ public final class XSTS {
         this.env = checkNotNull(env);
         this.initFormula = checkNotNull(initFormula);
         this.prop = checkNotNull(prop);
-        this.ctrlVars = ctrlVars;
+        this.ctrlVars = checkNotNull(ctrlVars);
 
-        final Set<VarDecl<?>> tmpVars = Containers.createSet();
-//        tmpVars.addAll(StmtUtils.getVars(tran));
-//        tmpVars.addAll(StmtUtils.getVars(env));
-//        tmpVars.addAll(StmtUtils.getVars(init));
-        tmpVars.addAll(ExprUtils.getVars(initFormula));
-        tmpVars.addAll(ExprUtils.getVars(prop));
-        this.vars = Collections.unmodifiableCollection(tmpVars);
+        this.vars = Containers.createSet();
+        vars.addAll(StmtUtils.getVars(tran));
+        vars.addAll(StmtUtils.getVars(env));
+        vars.addAll(StmtUtils.getVars(init));
+        vars.addAll(ExprUtils.getVars(initFormula));
+        vars.addAll(ExprUtils.getVars(prop));
+        this.stateVars = this.vars;
+        this.tempVars = Containers.createSet();
+    }
+
+    public XSTS(final Set<VarDecl<?>> stateVars,
+                final Set<VarDecl<?>> tempVars,
+                final Set<VarDecl<?>> ctrlVars,
+                final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env,
+                final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
+        this.tran = checkNotNull(tran);
+        this.init = checkNotNull(init);
+        this.env = checkNotNull(env);
+        this.initFormula = checkNotNull(initFormula);
+        this.prop = checkNotNull(prop);
+        this.ctrlVars = checkNotNull(ctrlVars);
+
+        this.vars = Containers.createSet();
+        this.vars.addAll(checkNotNull(stateVars));
+        this.vars.addAll(checkNotNull(tempVars));
+        this.stateVars = stateVars;
+        this.tempVars = tempVars;
     }
 
 }

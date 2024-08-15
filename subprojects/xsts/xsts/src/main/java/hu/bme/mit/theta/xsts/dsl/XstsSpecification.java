@@ -24,11 +24,13 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.XstsContext;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
@@ -88,46 +90,49 @@ public class XstsSpecification implements DynamicScope {
             env.define(typeDeclSymbol, enumType);
         }
 
-        for (var varDeclContext : context.variableDeclarations) {
-            final String varName = varDeclContext.name.getText();
-            if (tempVarPattern.matcher(varName).matches()) {
-                throw new ParseException(varDeclContext,
-                        "Variable name '" + varName + "' is reserved!");
-            }
-            if (customTypeShortNames.contains(varName))
-                throw new ParseException(varDeclContext,
-                        String.format("Variable name '%s' matches at least one declared enum literal", varName));
+        final Set<VarDecl<?>> stateVars = context.variableDeclarations.stream()
+                .map(varDeclContext -> {
+                    final String varName = varDeclContext.name.getText();
+                    if (tempVarPattern.matcher(varName).matches()) {
+                        throw new ParseException(varDeclContext,
+                                "Variable name '" + varName + "' is reserved!");
+                    }
+                    if (customTypeShortNames.contains(varName))
+                        throw new ParseException(varDeclContext,
+                                String.format("Variable name '%s' matches at least one declared enum literal", varName));
 
-            final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable, varDeclContext);
-            declare(symbol);
+                    final XstsVariableSymbol symbol = new XstsVariableSymbol(typeTable, varDeclContext);
+                    declare(symbol);
 
-            final VarDecl var = symbol.instantiate(env);
-            if (varDeclContext.CTRL() != null) {
-                ctrlVars.add(var);
-            }
-            if (varDeclContext.initValue != null) {
-                var scope = new BasicDynamicScope(this);
-                if (var.getType() instanceof EnumType enumType) {
-                    env.push();
-                    enumType.getValues().forEach(literal -> {
-                        Symbol fullNameSymbol = resolve(EnumType.makeLongName(enumType, literal)).orElseThrow();
-                        if (fullNameSymbol instanceof XstsCustomLiteralSymbol fNameCustLitSymbol) {
-                            var customSymbol = XstsCustomLiteralSymbol.copyWithName(fNameCustLitSymbol, literal);
-                            scope.declare(customSymbol);
-                            env.define(customSymbol, customSymbol.instantiate());
-                        } else {
-                            throw new IllegalArgumentException(String.format("%s is not a literal of type %s", literal, enumType.getName()));
+                    final VarDecl<?> var = symbol.instantiate(env);
+                    if (varDeclContext.CTRL() != null) {
+                        ctrlVars.add(var);
+                    }
+                    if (varDeclContext.initValue != null) {
+                        var scope = new BasicDynamicScope(this);
+                        if (var.getType() instanceof EnumType enumType) {
+                            env.push();
+                            enumType.getValues().forEach(literal -> {
+                                Symbol fullNameSymbol = resolve(EnumType.makeLongName(enumType, literal)).orElseThrow();
+                                if (fullNameSymbol instanceof XstsCustomLiteralSymbol fNameCustLitSymbol) {
+                                    var customSymbol = XstsCustomLiteralSymbol.copyWithName(fNameCustLitSymbol, literal);
+                                    scope.declare(customSymbol);
+                                    env.define(customSymbol, customSymbol.instantiate());
+                                } else {
+                                    throw new IllegalArgumentException(String.format("%s is not a literal of type %s", literal, enumType.getName()));
+                                }
+                            });
                         }
-                    });
-                }
-                initExprs.add(Eq(var.getRef(),
-                        new XstsExpression(scope, typeTable, varDeclContext.initValue).instantiate(
-                                env)));
-                if (var.getType() instanceof EnumType)
-                    env.pop();
-            }
-            env.define(symbol, var);
-        }
+                        initExprs.add(Eq(var.getRef(),
+                                new XstsExpression(scope, typeTable, varDeclContext.initValue).instantiate(
+                                        env)));
+                        if (var.getType() instanceof EnumType)
+                            env.pop();
+                    }
+                    env.define(symbol, var);
+                    return var;
+                })
+                .collect(Collectors.toUnmodifiableSet());
 
         final NonDetStmt tranSet = new XstsTransitionSet(this, typeTable,
                 context.tran.transitionSet()).instantiate(env);
@@ -141,7 +146,15 @@ public class XstsSpecification implements DynamicScope {
         final Expr<BoolType> prop = cast(
                 new XstsExpression(this, typeTable, context.prop).instantiate(env), Bool());
 
-        return new XSTS(ctrlVars, initSet, tranSet, envSet, initFormula, prop);
+        final Set<VarDecl<?>> tempVars = Containers.createSet();
+        tempVars.addAll(StmtUtils.getVars(tranSet));
+        tempVars.addAll(StmtUtils.getVars(envSet));
+        tempVars.addAll(StmtUtils.getVars(initSet));
+        tempVars.addAll(ExprUtils.getVars(initFormula));
+        tempVars.addAll(ExprUtils.getVars(prop));
+        tempVars.removeAll(stateVars);
+
+        return new XSTS(stateVars, tempVars, ctrlVars, initSet, tranSet, envSet, initFormula, prop);
     }
 
     @Override
