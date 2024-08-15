@@ -106,7 +106,7 @@ public class XstsMddCheckerTest {
 //
 //                { "src/test/resources/model/if2.xsts", "src/test/resources/property/if2.prop", false}
 
-                { "src/test/resources/model/localvars3.xsts", "src/test/resources/property/localvars3.prop", false},
+                {"src/test/resources/model/localvars3.xsts", "src/test/resources/property/localvars3.prop", false},
         });
     }
 

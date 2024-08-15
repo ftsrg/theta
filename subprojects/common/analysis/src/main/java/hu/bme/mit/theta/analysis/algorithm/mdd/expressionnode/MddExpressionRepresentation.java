@@ -475,7 +475,8 @@ public class MddExpressionRepresentation implements RecursiveIntObjMapView<MddNo
                         }
 
                         assert !representation.mddVariable.isNullOrZero(childNode) : "This would mean the model returned by the solver is incorrect";
-                        if (literal.isPresent()) representation.explicitRepresentation.cacheNode(LitExprConverter.toInt(literal.get()), childNode);
+                        if (literal.isPresent())
+                            representation.explicitRepresentation.cacheNode(LitExprConverter.toInt(literal.get()), childNode);
                         // TODO update domainSize
                     }
                 }

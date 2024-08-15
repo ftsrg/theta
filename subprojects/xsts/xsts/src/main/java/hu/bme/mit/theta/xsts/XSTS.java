@@ -59,13 +59,21 @@ public final class XSTS {
         return initFormula;
     }
 
-    public Expr<BoolType> getProp() { return prop;}
+    public Expr<BoolType> getProp() {
+        return prop;
+    }
 
-    public Set<VarDecl<?>> getVars() { return vars;}
+    public Set<VarDecl<?>> getVars() {
+        return vars;
+    }
 
-    public Set<VarDecl<?>> getTempVars() { return tempVars; }
+    public Set<VarDecl<?>> getTempVars() {
+        return tempVars;
+    }
 
-    public Set<VarDecl<?>> getStateVars() { return stateVars; }
+    public Set<VarDecl<?>> getStateVars() {
+        return stateVars;
+    }
 
     public Set<VarDecl<?>> getCtrlVars() {
         return ctrlVars;

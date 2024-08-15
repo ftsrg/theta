@@ -90,7 +90,7 @@ public class MddStateSpaceInfoTest {
                         2L},
 
                 {List.of(A, B),
-                         Eq(B.getRef(), False()), // y = 0
+                        Eq(B.getRef(), False()), // y = 0
                         2L},
 
                 {List.of(A, B),

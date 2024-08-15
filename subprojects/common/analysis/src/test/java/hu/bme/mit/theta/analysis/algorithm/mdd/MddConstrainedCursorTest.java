@@ -140,7 +140,7 @@ public class MddConstrainedCursorTest {
 //            final var structuralHandle = stateSig.getTopVariableHandle().getHandleFor(structuralRepresentation);
 
             Integer size = 0;
-            for(var cursor = transHandle.cursor(structuralRepresentation); cursor.moveNext(); ) {
+            for (var cursor = transHandle.cursor(structuralRepresentation); cursor.moveNext(); ) {
                 size++;
             }
 
