@@ -80,9 +80,9 @@ public final class XSTS {
         this.ctrlVars = ctrlVars;
 
         final Set<VarDecl<?>> tmpVars = Containers.createSet();
-        tmpVars.addAll(StmtUtils.getVars(tran));
-        tmpVars.addAll(StmtUtils.getVars(env));
-        tmpVars.addAll(StmtUtils.getVars(init));
+//        tmpVars.addAll(StmtUtils.getVars(tran));
+//        tmpVars.addAll(StmtUtils.getVars(env));
+//        tmpVars.addAll(StmtUtils.getVars(init));
         tmpVars.addAll(ExprUtils.getVars(initFormula));
         tmpVars.addAll(ExprUtils.getVars(prop));
         this.vars = Collections.unmodifiableCollection(tmpVars);
