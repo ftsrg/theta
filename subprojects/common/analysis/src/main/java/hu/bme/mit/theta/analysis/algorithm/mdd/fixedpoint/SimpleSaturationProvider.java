@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
+import com.google.common.base.Preconditions;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.collections.impl.IntObjMapViews;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
@@ -149,7 +151,7 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
                     if (dfire.isLocallyIdentity(stateSpaceInfo)) {
                         continue;
                     }
-                    MddNode nfire = satFire(nsat, d, dfire, variable, cache, stateSpaceInfo);
+                    MddNode nfire = satFire(nsat, d, dfire, variable, cache);
 
                     nfire = variable.union(nsat, nfire);
 
@@ -160,7 +162,7 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
                 }
             } else if (!d.isLocallyIdentity(stateSpaceInfo)) {
                 //System.out.println("Applying transition: " + d);
-                MddNode nfire = satFire(nsat, d, d, variable, cache, stateSpaceInfo);
+                MddNode nfire = satFire(nsat, d, d, variable, cache);
 
                 nfire = variable.union(nsat, nfire);
 
@@ -191,8 +193,7 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
             AbstractNextStateDescriptor dsat,
             AbstractNextStateDescriptor dfire,
             MddVariable variable,
-            CacheManager<SaturationCache>.CacheHolder cache,
-            final MddStateSpaceInfo stateSpaceInfo
+            CacheManager<SaturationCache>.CacheHolder cache
     ) {
         if (n == terminalZeroNode || dfire == AbstractNextStateDescriptor.terminalEmpty()) {
             return terminalZeroNode;
@@ -217,130 +218,82 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
 
         MddUnsafeTemplateBuilder templateBuilder = JavaMddFactory.getDefault().createUnsafeTemplateBuilder();
 
+        final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
+
         final IntObjMapView<AbstractNextStateDescriptor> diagonal = dfire.getDiagonal(stateSpaceInfo);
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
                 stateSpaceInfo);
 
-        if ((lhsSkipped || n.defaultValue() != null) && variable.getDomainSize() <= 0) {
-//            // Iterate over next state descriptor
-//            final var lhsContinuation = lhsSkipped ? n : n.defaultValue();
-//            for (var cFrom = offDiagonal.cursor(); cFrom.moveNext(); ) {
-//
-//                // Identity step
-//                final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
-//                if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
-//
-//                    if (verbose) {
-//                        System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
-//                    }
-//
-//                    MddNode s = relProd(lhsContinuation,
-//                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-//                            diagonalContinuation,
-//                            variable.getLower().orElse(null),
-//                            cache.getLower()
-//                    );
-//
-//                    if (s != terminalZeroNode) {
-//                        // confirm(variable, cFrom.key());
-//
-//                        templateBuilder.set(cFrom.key(),
-//                                terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
-//                        );
-//                    }
-//                }
-//
-//                for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = cFrom.value().cursor(); cTo.moveNext(); ) {
-//                    if (cFrom.key() == cTo.key()) {
-//                        continue;
-//                    }
-//
-//                    if (verbose) {
-//                        System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-//                    }
-//
-//                    assert lhsContinuation != terminalZeroNode;
-//                    assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-//
-//                    MddNode s = relProd(lhsContinuation,
-//                            // Level skip will be encoded as default value
-//                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-//                            cTo.value(),
-//                            variable.getLower().orElse(null),
-//                            cache.getLower()
-//                    );
-//
-//                    if (s != terminalZeroNode) {
-//                        confirm(variable, cTo.key());
-//
-//                        templateBuilder.set(cTo.key(),
-//                                terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
-//                        );
-//                    }
-//                }
-//            }
-            throw new UnsupportedOperationException("Default values are not yet supported for unbounded domains");
+        final RecursiveIntObjMapView<? extends MddNode> lhsInterpreter;
+        if ((lhsSkipped || (n.defaultValue() != null && n.isEmpty())) && !variable.isBounded()) {
+            final MddNode childCandidate = lhsSkipped ? n : n.defaultValue();
+            // We use the keyset of the ANSD to trim
+            lhsInterpreter = RecursiveIntObjMapView.of(IntObjMapView.empty(childCandidate).trim(offDiagonal.keySet()));
         } else {
-            final var lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
-            for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
+            lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        }
+        for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
 
-                // Identity step
-                final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
-                if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
+            // Identity step
+            final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
+            if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
 
-                    if (verbose) {
-                        System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
-                    }
-
-                    MddNode s = relProd(cFrom.value(),
-                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-                            diagonalContinuation,
-                            variable.getLower().orElse(null),
-                            cache.getLower()
-                    );
-
-                    if (s != terminalZeroNode) {
-                        // confirm(variable, cFrom.key());
-
-                        templateBuilder.set(cFrom.key(),
-                                terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
-                        );
-                    }
+                if (verbose) {
+                    System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
                 }
 
-                for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
-                        cFrom.key()).cursor(); cTo.moveNext(); ) {
-                    if (cFrom.key() == cTo.key()) {
-                        continue;
-                    }
+                MddNode s = relProd(cFrom.value(),
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
+                        diagonalContinuation,
+                        variable.getLower().orElse(null),
+                        cache.getLower()
+                );
 
-                    if (verbose) {
-                        System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-                    }
+                if (s != terminalZeroNode) {
+                    // confirm(variable, cFrom.key());
 
-                    assert cFrom.value() != terminalZeroNode;
-                    assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-
-                    MddNode s = relProd(cFrom.value(),
-                            // Level skip will be encoded as default value
-                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-                            cTo.value(),
-                            variable.getLower().orElse(null),
-                            cache.getLower()
+                    templateBuilder.set(cFrom.key(),
+                            terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
                     );
+                }
+            }
 
-                    if (s != terminalZeroNode) {
-                        confirm(variable, cTo.key());
+            for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
+                    cFrom.key()).cursor(); cTo.moveNext(); ) {
+                if (cFrom.key() == cTo.key()) {
+                    continue;
+                }
 
-                        templateBuilder.set(cTo.key(),
-                                terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
-                        );
-                    }
+                if (verbose) {
+                    System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
+                }
+
+                assert cFrom.value() != terminalZeroNode;
+                assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
+
+                MddNode s = relProd(cFrom.value(),
+                        // Level skip will be encoded as default value
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
+                        cTo.value(),
+                        variable.getLower().orElse(null),
+                        cache.getLower()
+                );
+
+                if (s != terminalZeroNode) {
+                    confirm(variable, cTo.key());
+
+                    templateBuilder.set(cTo.key(),
+                            terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
+                    );
                 }
             }
         }
 
-        MddNode ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
+
+        final var template = templateBuilder.buildAndReset();
+        if (!template.isEmpty())
+            Preconditions.checkArgument(n.defaultValue() == null, "Default value is not supported with explicit edges");
+        MddNode ret = variable.checkInNode(MddStructuralTemplate.of(template));
 
         if (verbose) {
             indent--;
@@ -399,123 +352,75 @@ public final class SimpleSaturationProvider implements StateSpaceEnumerationProv
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
                 stateSpaceInfo);
 
-        if ((lhsSkipped || n.defaultValue() != null) && variable.getDomainSize() <= 0) {
-//            final var lhsContinuation = lhsSkipped ? n : n.defaultValue();
-//            // Iterate over next state descriptor
-//            for (var cFrom = offDiagonal.cursor(); cFrom.moveNext(); ) {
-//                // Identity step
-//                final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
-//                if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
-//
-//                    if (verbose) {
-//                        System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
-//                    }
-//
-//                    MddNode s = relProd(lhsContinuation,
-//                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-//                            diagonalContinuation,
-//                            variable.getLower().orElse(null),
-//                            cache.getLower()
-//                    );
-//
-//                    if (s != terminalZeroNode) {
-//                        // confirm(variable, cFrom.key());
-//
-//                        templateBuilder.set(cFrom.key(),
-//                                terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
-//                        );
-//                    }
-//                }
-//
-//                for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = cFrom.value().cursor();
-//                     cTo.moveNext(); ) {
-//                    if (cFrom.key() == cTo.key()) {
-//                        continue;
-//                    }
-//
-//                    if (verbose) {
-//                        System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-//                    }
-//
-//                    assert lhsContinuation != terminalZeroNode;
-//                    assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-//
-//                    MddNode s = relProd(lhsContinuation,
-//                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-//                            cTo.value(),
-//                            variable.getLower().orElse(null),
-//                            cache.getLower()
-//                    );
-//
-//                    if (s != terminalZeroNode) {
-//                        confirm(variable, cTo.key());
-//
-//                        templateBuilder.set(cTo.key(),
-//                                terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
-//                        );
-//                    }
-//                }
-//            }
-            throw new UnsupportedOperationException("Default values are not yet supported for unbounded domains");
+
+        final RecursiveIntObjMapView<? extends MddNode> lhsInterpreter;
+        if ((lhsSkipped || (n.defaultValue() != null && n.isEmpty())) && !variable.isBounded()) {
+            final MddNode childCandidate = lhsSkipped ? n : n.defaultValue();
+            // We use the keyset of the ANSD to trim
+            lhsInterpreter = RecursiveIntObjMapView.of(IntObjMapView.empty(childCandidate).trim(offDiagonal.keySet()));
         } else {
-            final var lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
-            for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
-                // Identity step
-                final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
-                if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
+            lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        }
+        for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
+            // Identity step
+            final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
+            if (!AbstractNextStateDescriptor.isNullOrEmpty(diagonalContinuation)) {
 
-                    if (verbose) {
-                        System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
-                    }
-
-                    MddNode s = relProd(cFrom.value(),
-                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-                            diagonalContinuation,
-                            variable.getLower().orElse(null),
-                            cache.getLower()
-                    );
-
-                    if (s != terminalZeroNode) {
-                        // confirm(variable, cFrom.key());
-
-                        templateBuilder.set(cFrom.key(),
-                                terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
-                        );
-                    }
+                if (verbose) {
+                    System.out.println("Potential step: " + cFrom.key() + "->" + cFrom.key());
                 }
 
-                for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(cFrom.key()).cursor();
-                     cTo.moveNext(); ) {
-                    if (cFrom.key() == cTo.key()) {
-                        continue;
-                    }
+                MddNode s = relProd(cFrom.value(),
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
+                        diagonalContinuation,
+                        variable.getLower().orElse(null),
+                        cache.getLower()
+                );
 
-                    if (verbose) {
-                        System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
-                    }
+                if (s != terminalZeroNode) {
+                    // confirm(variable, cFrom.key());
 
-                    assert cFrom.value() != terminalZeroNode;
-                    assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
-
-                    MddNode s = relProd(cFrom.value(),
-                            dsat.getDiagonal(stateSpaceInfo).defaultValue(),
-                            cTo.value(),
-                            variable.getLower().orElse(null),
-                            cache.getLower()
+                    templateBuilder.set(cFrom.key(),
+                            terminalZeroToNull(unionChildren(templateBuilder.get(cFrom.key()), s, variable))
                     );
+                }
+            }
 
-                    if (s != terminalZeroNode) {
-                        confirm(variable, cTo.key());
+            for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(cFrom.key()).cursor();
+                 cTo.moveNext(); ) {
+                if (cFrom.key() == cTo.key()) {
+                    continue;
+                }
 
-                        templateBuilder.set(cTo.key(),
-                                terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
-                        );
-                    }
+                if (verbose) {
+                    System.out.println("Potential step: " + cFrom.key() + "->" + cTo.key());
+                }
+
+                assert cFrom.value() != terminalZeroNode;
+                assert cTo.value() != AbstractNextStateDescriptor.terminalEmpty();
+
+                MddNode s = relProd(cFrom.value(),
+                        dsat.getDiagonal(stateSpaceInfo).defaultValue(),
+                        cTo.value(),
+                        variable.getLower().orElse(null),
+                        cache.getLower()
+                );
+
+                if (s != terminalZeroNode) {
+                    confirm(variable, cTo.key());
+
+                    templateBuilder.set(cTo.key(),
+                            terminalZeroToNull(unionChildren(templateBuilder.get(cTo.key()), s, variable))
+                    );
                 }
             }
         }
 
-        ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
+
+        final var template = templateBuilder.buildAndReset();
+        if (!template.isEmpty())
+            Preconditions.checkArgument(n.defaultValue() == null, "Default value is not supported with explicit edges");
+        ret = variable.checkInNode(MddStructuralTemplate.of(template));
 
         ret = saturate(ret, dsat, variable, cache);
 

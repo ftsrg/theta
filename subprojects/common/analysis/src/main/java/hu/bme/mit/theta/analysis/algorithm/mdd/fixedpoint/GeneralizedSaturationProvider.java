@@ -15,9 +15,11 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint;
 
+import com.google.common.base.Preconditions;
 import com.koloboke.collect.set.hash.HashObjSets;
 import hu.bme.mit.delta.collections.IntObjCursor;
 import hu.bme.mit.delta.collections.IntObjMapView;
+import hu.bme.mit.delta.collections.RecursiveIntObjMapView;
 import hu.bme.mit.delta.java.mdd.*;
 import hu.bme.mit.delta.java.mdd.impl.MddStructuralTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
@@ -221,9 +223,6 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }
 
         boolean lhsSkipped = !n.isOn(variable);
-        if ((lhsSkipped || n.defaultValue() != null) && variable.getDomainSize() <= 0) {
-            throw new UnsupportedOperationException("Default values are not yet supported for unbounded domains");
-        }
 
         if (verbose) {
             printIndent();
@@ -247,7 +246,14 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
                 stateSpaceInfo);
 
-        final var lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        final RecursiveIntObjMapView<? extends MddNode> lhsInterpreter;
+        if ((lhsSkipped || (n.defaultValue() != null && n.isEmpty())) && !variable.isBounded()) {
+            final MddNode childCandidate = lhsSkipped ? n : n.defaultValue();
+            // We use the keyset of the ANSD to trim
+            lhsInterpreter = RecursiveIntObjMapView.of(IntObjMapView.empty(childCandidate).trim(offDiagonal.keySet()));
+        } else {
+            lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        }
         for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
             for (IntObjCursor<? extends AbstractNextStateDescriptor> cTo = offDiagonal.get(
                     cFrom.key()).cursor(); cTo.moveNext(); ) {
@@ -279,7 +285,10 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
             }
         }
 
-        MddNode ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
+        final var template = templateBuilder.buildAndReset();
+        if (!template.isEmpty())
+            Preconditions.checkArgument(n.defaultValue() == null, "Default value is not supported with explicit edges");
+        MddNode ret = variable.checkInNode(MddStructuralTemplate.of(template));
 
         if (verbose) {
             indent--;
@@ -310,9 +319,6 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         }
 
         boolean lhsSkipped = !n.isOn(variable);
-        if ((lhsSkipped || n.defaultValue() != null) && variable.getDomainSize() <= 0) {
-            throw new UnsupportedOperationException("Default values are not yet supported for unbounded domains");
-        }
 
         final MddStateSpaceInfo stateSpaceInfo = new MddStateSpaceInfo(variable, n);
 
@@ -341,7 +347,14 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
         final IntObjMapView<IntObjMapView<AbstractNextStateDescriptor>> offDiagonal = dfire.getOffDiagonal(
                 stateSpaceInfo);
 
-        final var lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        final RecursiveIntObjMapView<? extends MddNode> lhsInterpreter;
+        if ((lhsSkipped || (n.defaultValue() != null && n.isEmpty())) && !variable.isBounded()) {
+            final MddNode childCandidate = lhsSkipped ? n : n.defaultValue();
+            // We use the keyset of the ANSD to trim
+            lhsInterpreter = RecursiveIntObjMapView.of(IntObjMapView.empty(childCandidate).trim(offDiagonal.keySet()));
+        } else {
+            lhsInterpreter = variable.getNodeInterpreter(n); // using the interpreter might cause a performance overhead
+        }
         for (IntObjCursor<? extends MddNode> cFrom = lhsInterpreter.cursor(); cFrom.moveNext(); ) {
             // Identity step
             final AbstractNextStateDescriptor diagonalContinuation = diagonal.get(cFrom.key());
@@ -397,7 +410,10 @@ public final class GeneralizedSaturationProvider implements StateSpaceEnumeratio
             }
         }
 
-        ret = variable.checkInNode(MddStructuralTemplate.of(templateBuilder.buildAndReset()));
+        final var template = templateBuilder.buildAndReset();
+        if (!template.isEmpty())
+            Preconditions.checkArgument(n.defaultValue() == null, "Default value is not supported with explicit edges");
+        ret = variable.checkInNode(MddStructuralTemplate.of(template));
 
         ret = saturate(ret, dsat, variable, cache);
 
