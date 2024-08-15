@@ -57,11 +57,11 @@ public class MddNodeVisualizer {
     }
 
     private static class LazyHolderDefault {
-        static final MddNodeVisualizer INSTANCE = new MddNodeVisualizer(n -> n.toString());
+        static final MddNodeVisualizer INSTANCE = create();
     }
 
     private static class LazyHolderStructureOnly {
-        static final MddNodeVisualizer INSTANCE = new MddNodeVisualizer(n -> "");
+        static final MddNodeVisualizer INSTANCE = create(n -> "");
     }
 
     private MddNodeVisualizer(final Function<MddNode, String> nodeToString) {
