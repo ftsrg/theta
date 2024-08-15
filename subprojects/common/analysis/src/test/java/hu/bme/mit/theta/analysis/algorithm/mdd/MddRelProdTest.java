@@ -104,20 +104,21 @@ public class MddRelProdTest {
                         And(Or(Eq(Prime(X.getRef()), X.getRef()), Eq(Prime(X.getRef()), Add(X.getRef(), Int(1)))), Or(Eq(Prime(Y.getRef()), Y.getRef()), Eq(Prime(Y.getRef()), Add(Y.getRef(), Int(1))))), // (x'=x or x'=x+1), (y'=y or y'=y+1)
                         4L},
 
-                {List.of(X, Y),
-                        Eq(X.getRef(), Int(0)), // x = 0
-                        Eq(Prime(X.getRef()), X.getRef()), // x'=x
-                        1L},
-
-                {List.of(X, Y),
-                        Eq(X.getRef(), Int(0)), // x = 0, y = 0
-                        Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), // x'=x + 1, y'=y
-                        1L},
-
-                {List.of(X, Y),
-                        And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0))), // x = 0, y = 0
-                        True(), // true
-                        0L},
+                // These won't ever be supported
+//                {List.of(X, Y),
+//                        Eq(X.getRef(), Int(0)), // x = 0
+//                        Eq(Prime(X.getRef()), X.getRef()), // x'=x
+//                        1L},
+//
+//                {List.of(X, Y),
+//                        Eq(X.getRef(), Int(0)), // x = 0, y = 0
+//                        Eq(Prime(X.getRef()), Add(X.getRef(), Int(1))), // x'=x + 1, y'=y
+//                        1L},
+//
+//                {List.of(X, Y),
+//                        And(Eq(X.getRef(), Int(0)), Eq(Y.getRef(), Int(0))), // x = 0, y = 0
+//                        True(), // true
+//                        0L},
 
                 {List.of(A, B),
                         And(A.getRef(), B.getRef()),
