@@ -23,8 +23,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,7 +31,7 @@ public final class XSTS {
 
     private final Set<VarDecl<?>> vars;
     private final Set<VarDecl<?>> stateVars;
-    private final Set<VarDecl<?>> tempVars;
+    private final Set<VarDecl<?>> localVars;
     private final Set<VarDecl<?>> ctrlVars;
 
     private final NonDetStmt tran;
@@ -67,8 +65,8 @@ public final class XSTS {
         return vars;
     }
 
-    public Set<VarDecl<?>> getTempVars() {
-        return tempVars;
+    public Set<VarDecl<?>> getLocalVars() {
+        return localVars;
     }
 
     public Set<VarDecl<?>> getStateVars() {
@@ -96,11 +94,11 @@ public final class XSTS {
         vars.addAll(ExprUtils.getVars(initFormula));
         vars.addAll(ExprUtils.getVars(prop));
         this.stateVars = this.vars;
-        this.tempVars = Containers.createSet();
+        this.localVars = Containers.createSet();
     }
 
     public XSTS(final Set<VarDecl<?>> stateVars,
-                final Set<VarDecl<?>> tempVars,
+                final Set<VarDecl<?>> localVars,
                 final Set<VarDecl<?>> ctrlVars,
                 final NonDetStmt init, final NonDetStmt tran, final NonDetStmt env,
                 final Expr<BoolType> initFormula, final Expr<BoolType> prop) {
@@ -113,9 +111,9 @@ public final class XSTS {
 
         this.vars = Containers.createSet();
         this.vars.addAll(checkNotNull(stateVars));
-        this.vars.addAll(checkNotNull(tempVars));
+        this.vars.addAll(checkNotNull(localVars));
         this.stateVars = stateVars;
-        this.tempVars = tempVars;
+        this.localVars = localVars;
     }
 
 }

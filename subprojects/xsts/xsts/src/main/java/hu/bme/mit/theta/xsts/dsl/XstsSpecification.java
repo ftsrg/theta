@@ -146,15 +146,15 @@ public class XstsSpecification implements DynamicScope {
         final Expr<BoolType> prop = cast(
                 new XstsExpression(this, typeTable, context.prop).instantiate(env), Bool());
 
-        final Set<VarDecl<?>> tempVars = Containers.createSet();
-        tempVars.addAll(StmtUtils.getVars(tranSet));
-        tempVars.addAll(StmtUtils.getVars(envSet));
-        tempVars.addAll(StmtUtils.getVars(initSet));
-        tempVars.addAll(ExprUtils.getVars(initFormula));
-        tempVars.addAll(ExprUtils.getVars(prop));
-        tempVars.removeAll(stateVars);
+        final Set<VarDecl<?>> localVars = Containers.createSet();
+        localVars.addAll(StmtUtils.getVars(tranSet));
+        localVars.addAll(StmtUtils.getVars(envSet));
+        localVars.addAll(StmtUtils.getVars(initSet));
+        localVars.addAll(ExprUtils.getVars(initFormula));
+        localVars.addAll(ExprUtils.getVars(prop));
+        localVars.removeAll(stateVars);
 
-        return new XSTS(stateVars, tempVars, ctrlVars, initSet, tranSet, envSet, initFormula, prop);
+        return new XSTS(stateVars, localVars, ctrlVars, initSet, tranSet, envSet, initFormula, prop);
     }
 
     @Override
