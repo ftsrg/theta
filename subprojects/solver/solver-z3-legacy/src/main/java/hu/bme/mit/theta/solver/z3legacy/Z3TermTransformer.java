@@ -314,7 +314,7 @@ final class Z3TermTransformer {
     }
 
     private void addFunc(String name, Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> func) {
-        checkArgument(!environment.containsKey(Tuple2.of(name, func.get1())), "Duplicate key: " + Tuple2.of(name, func.get1()));
+        assert !environment.containsKey(Tuple2.of(name, func.get1()));
         environment.put(Tuple2.of(name, func.get1()), func.get2());
     }
 
