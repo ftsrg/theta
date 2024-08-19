@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 
@@ -128,7 +129,7 @@ public abstract class ExplState extends Valuation implements ExprState {
         @Override
         public String toString() {
             return Utils.lispStringBuilder(ExplState.class.getSimpleName()).aligned()
-                    .addAll(val.getDecls().stream()
+                    .addAll(val.getDecls().stream().sorted(Comparator.comparing((Decl<?> decl) -> decl.getName()))
                             .map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
                     .toString();
         }

@@ -27,6 +27,8 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -220,6 +222,14 @@ final class JavaSMTSolver implements UCSolver, Solver {
         unsatCore = null;
     }
 
+    public SolverContext getContext() {
+        return context;
+    }
+
+    public BasicProverEnvironment getSolver() {
+        return solver;
+    }
+
     @Override
     public void close() {
         context.close();
@@ -279,6 +289,8 @@ final class JavaSMTSolver implements UCSolver, Solver {
                 return extractArrayLiteral(formula);
             } else if (type instanceof BvType) {
                 return extractBvConstLiteral(formula);
+            } else if (type instanceof EnumType enumType) {
+                return extractEnumLiteral(formula, enumType);
             } else {
                 return extractConstLiteral(formula);
             }
@@ -301,6 +313,14 @@ final class JavaSMTSolver implements UCSolver, Solver {
             } else {
                 return (BvLitExpr) termTransformer.toExpr(term);
             }
+        }
+
+        private LitExpr<EnumType> extractEnumLiteral(Formula formula, EnumType enumType) {
+            final Formula term = model.eval(formula);
+            if (term == null) {
+                return null;
+            }
+            return enumType.litFromLongName(term.toString());
         }
 
         private LitExpr<?> extractConstLiteral(final Formula formula) {

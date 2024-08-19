@@ -24,6 +24,14 @@ public class Volatile extends CSimpleType {
     }
 
     @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new Volatile();
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+
+    @Override
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setVolatile(true);
     }

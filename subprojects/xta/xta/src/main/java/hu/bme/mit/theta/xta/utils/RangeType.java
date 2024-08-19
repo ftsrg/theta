@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xta.utils;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.DomainSize;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -87,6 +88,11 @@ public final class RangeType implements Type {
     @Override
     public String toString() {
         return Utils.lispStringBuilder("Range").add(lower).add(upper).toString();
+    }
+
+    @Override
+    public DomainSize getDomainSize() {
+        return DomainSize.of(upper - lower + 1);
     }
 
 }

@@ -43,8 +43,8 @@ class XcfaCliWitnessTest {
                     WitnessEdge(
                         startlineRange = Pair(5, 5),
                         endlineRange = Pair(5, 5),
-                        startoffsetRange = Pair(79, 95),
-                        endoffsetRange = Pair(110, 125),
+                        startoffsetRange = Pair(100, 130),
+                        endoffsetRange = Pair(100, 130),
                         assumption = Regex("i *== *-1"),
                     ),
                 )),
@@ -52,8 +52,8 @@ class XcfaCliWitnessTest {
                     WitnessEdge(
                         startlineRange = Pair(5, 5),
                         endlineRange = Pair(5, 5),
-                        startoffsetRange = Pair(79, 95),
-                        endoffsetRange = Pair(110, 125),
+                        startoffsetRange = Pair(100, 130),
+                        endoffsetRange = Pair(100, 130),
                         assumption = Regex("i *== *-1"),
                     ),
                 )),
@@ -67,6 +67,7 @@ class XcfaCliWitnessTest {
     fun testCWitness(filePath: String, extraArgs: String?, expectedWitnessEdges: List<WitnessEdge>) {
         val temp = createTempDirectory()
         val params = arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),

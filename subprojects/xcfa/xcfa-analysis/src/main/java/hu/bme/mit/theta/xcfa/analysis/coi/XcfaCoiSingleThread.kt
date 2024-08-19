@@ -51,7 +51,7 @@ class XcfaCoiSingleThread(xcfa: XCFA) : XcfaCoi(xcfa) {
 
     fun reinitialize(prec: Prec) {
         lastPrec = prec
-        directObservation.clear()
+        directObservers.clear()
         val realObservers = mutableSetOf<XcfaEdge>()
         xcfa.procedures.forEach { procedure ->
             procedure.edges.forEach { edge ->
@@ -64,10 +64,8 @@ class XcfaCoiSingleThread(xcfa: XCFA) : XcfaCoi(xcfa) {
         collectedObservedEdges(realObservers)
     }
 
-    override fun addToRelation(source: XcfaEdge, target: XcfaEdge,
-        relation: MutableMap<XcfaEdge, MutableSet<XcfaEdge>>) {
-        relation[target] = relation[target] ?: mutableSetOf()
-        relation[target]!!.add(source)
+    override fun addToRelation(source: XcfaEdge, target: XcfaEdge, relation: MutableMap<XcfaEdge, Set<XcfaEdge>>) {
+        relation[target] = relation.getOrDefault(target, setOf()) + source
     }
 
     private fun collectedObservedEdges(realObservers: Set<XcfaEdge>) {
@@ -76,7 +74,7 @@ class XcfaCoiSingleThread(xcfa: XCFA) : XcfaCoi(xcfa) {
         while (toVisit.isNotEmpty()) {
             val visiting = toVisit.removeFirst()
             visited.add(visiting)
-            val toAdd = directObservation[visiting] ?: emptySet()
+            val toAdd = directObservers[visiting] ?: emptySet()
             toVisit.addAll(toAdd.filter { it !in visited })
         }
         observed = visited.map { it.source to it.target }.toSet()

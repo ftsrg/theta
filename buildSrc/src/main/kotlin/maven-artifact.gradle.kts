@@ -45,6 +45,15 @@ val sourcesJar by tasks.creating(Jar::class) {
     from(sourceSets.main.get().allSource)
 }
 
+// Check if "antlr-common" plugin is applied and if the "generateGrammarSource" task is available
+// If yes, add a task dependency from "sourcesJar" to "generateGrammarSource"
+project.plugins.withType<AntlrPlugin> {
+    val generateGrammarTask = tasks.findByName("generateGrammarSource")
+    if (generateGrammarTask != null) {
+        project.tasks.named("sourcesJar") { dependsOn(generateGrammarTask) }
+    }
+}
+
 tasks {
     publishing {
         publications {

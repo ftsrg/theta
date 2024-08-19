@@ -71,10 +71,15 @@ final class JavaSMTDeclTransformer {
                     .toList();
 
 
-            if (paramSorts.isEmpty()) {
-                symbol = context.getFormulaManager().makeVariable(returnSort, symbolNameFor(decl));
-            } else {
+            if (!paramSorts.isEmpty()) {
                 throw new JavaSMTSolverException("Function consts not yet supported.");
+            }
+
+            // Enums can't be yet handled by formulamanager directly
+            if (returnSort.isEnumerationType()) {
+                symbol = context.getFormulaManager().getEnumerationFormulaManager().makeVariable(symbolNameFor(decl), (FormulaType.EnumerationFormulaType) returnSort);
+            } else {
+                symbol = context.getFormulaManager().makeVariable(returnSort, symbolNameFor(decl));
             }
 
             symbolTable.put(decl, symbol);

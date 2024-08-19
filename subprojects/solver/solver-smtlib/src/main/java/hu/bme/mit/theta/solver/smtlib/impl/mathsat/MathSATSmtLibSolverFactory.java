@@ -44,7 +44,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
     public Solver createSolver() {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new MathSATSmtLibTransformationManager(symbolTable);
-        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
@@ -55,7 +55,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
     public UCSolver createUCSolver() {
         final var symbolTable = new GenericSmtLibSymbolTable();
         final var transformationManager = new MathSATSmtLibTransformationManager(symbolTable);
-        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+        final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
         final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
         return new SmtLibSolver(symbolTable, transformationManager, termTransformer, solverBinary,
@@ -67,7 +67,7 @@ public class MathSATSmtLibSolverFactory extends GenericSmtLibSolverFactory {
         if (itpSupported) {
             final var symbolTable = new GenericSmtLibSymbolTable();
             final var transformationManager = new MathSATSmtLibTransformationManager(symbolTable);
-            final var termTransformer = new GenericSmtLibTermTransformer(symbolTable);
+            final var termTransformer = new GenericSmtLibTermTransformer(symbolTable, enumStrategy);
             final var solverBinary = new GenericSmtLibSolverBinary(solverPath, args);
 
             return new MathSATSmtLibItpSolver(symbolTable, transformationManager, termTransformer,

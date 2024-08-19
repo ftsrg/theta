@@ -18,16 +18,11 @@ package hu.bme.mit.theta.solver.smtlib.solver;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.ItpMarkerTree;
-import hu.bme.mit.theta.solver.ItpPattern;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.SolverStatus;
-import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.UnknownSolverStatusException;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
@@ -46,10 +41,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpSolver {
 
@@ -62,6 +56,8 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
     protected final Stack<Expr<BoolType>> assertions;
     protected final Stack<T> markers;
     protected final Stack<ConstDecl<?>> declarationStack;
+    protected final Stack<EnumType> typeStack;
+    protected final SmtLibEnumStrategy enumStrategy;
 
     private Valuation model;
     private SolverStatus status;
@@ -72,21 +68,30 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
             final SmtLibTransformationManager transformationManager,
             final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
     ) {
+        this(symbolTable, transformationManager, termTransformer, solverBinary, SmtLibEnumStrategy.getDefaultStrategy());
+    }
+
+    public SmtLibItpSolver(
+            final SmtLibSymbolTable symbolTable,
+            final SmtLibTransformationManager transformationManager,
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+            final SmtLibEnumStrategy enumStrategy
+    ) {
         this.symbolTable = symbolTable;
         this.transformationManager = transformationManager;
         this.termTransformer = termTransformer;
+        this.enumStrategy = enumStrategy;
 
         this.solverBinary = solverBinary;
 
         this.assertions = new StackImpl<>();
         this.markers = new StackImpl<>();
         this.declarationStack = new StackImpl<>();
+        typeStack = new StackImpl<>();
 
         init();
     }
 
-    @Override
-    public abstract ItpPattern createTreePattern(ItpMarkerTree<? extends ItpMarker> root);
 
     @Override
     public abstract T createMarker();
@@ -107,13 +112,15 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         final var consts = ExprUtils.getConstants(assertion);
         consts.removeAll(declarationStack.toCollection());
         declarationStack.add(consts);
+        enumStrategy.declareDatatypes((Collection<Type>) consts.stream().map(ConstDecl::getType).toList(), typeStack, this::issueGeneralCommand);
 
         final var itpMarker = (T) marker;
         final var term = transformationManager.toTerm(assertion);
-        itpMarker.add(assertion, term);
+
+        itpMarker.add(assertion, enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol))));
 
         assertions.add(assertion);
-        add(itpMarker, assertion, consts, term);
+        add(itpMarker, assertion, consts, enumStrategy.wrapAssertionExpression(term, ExprUtils.getConstants(assertion).stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol))));
 
         clearState();
     }
@@ -151,6 +158,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         }
         assertions.push();
         declarationStack.push();
+        typeStack.push();
         issueGeneralCommand("(push 1)");
     }
 
@@ -162,6 +170,7 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
         }
         assertions.pop(n);
         declarationStack.pop(n);
+        typeStack.pop(n);
         issueGeneralCommand(String.format("(pop %d)", n));
         clearState();
     }
@@ -206,9 +215,6 @@ public abstract class SmtLibItpSolver<T extends SmtLibItpMarker> implements ItpS
             throw new AssertionError();
         }
     }
-
-    @Override
-    public abstract Interpolant getInterpolant(ItpPattern pattern);
 
     @Override
     public Collection<Expr<BoolType>> getAssertions() {

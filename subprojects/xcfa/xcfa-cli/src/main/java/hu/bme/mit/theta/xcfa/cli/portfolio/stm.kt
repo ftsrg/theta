@@ -50,7 +50,7 @@ class ConfigNode(name: String, private val config: XcfaConfig<*, *>,
 
 data class Edge(val source: Node,
     val target: Node,
-    val trigger: (Exception) -> Boolean,
+    val trigger: (Throwable) -> Boolean,
     val guard: (Node, Edge) -> Boolean = { _, _ -> true }) {
 
     init {
@@ -65,15 +65,15 @@ data class Edge(val source: Node,
 
 // if the exceptions set is empty, it catches all exceptions
 class ExceptionTrigger(
-    val exceptions: Set<Exception> = emptySet(),
-    val fallthroughExceptions: Set<Exception> = emptySet(),
+    val exceptions: Set<Throwable> = emptySet(),
+    val fallthroughExceptions: Set<Throwable> = emptySet(),
     val label: String? = null
-) : (Exception) -> Boolean {
+) : (Throwable) -> Boolean {
 
-    constructor(vararg exceptions: Exception, label: String? = null) : this(exceptions.toSet(),
+    constructor(vararg exceptions: Throwable, label: String? = null) : this(exceptions.toSet(),
         label = label)
 
-    override fun invoke(e: Exception): Boolean =
+    override fun invoke(e: Throwable): Boolean =
         if (exceptions.isNotEmpty())
             exceptions.contains(e) && !fallthroughExceptions.contains(e)
         else
@@ -109,7 +109,7 @@ ${edges.map { it.visualize() }.reduce { a, b -> "$a\n$b" }}
         while (true) {
             try {
                 return currentNode.execute()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 println("Caught exception: $e")
                 val edge: Edge? = currentNode.outEdges.find { it.trigger(e) }
                 if (edge != null) {

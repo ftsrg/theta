@@ -6,15 +6,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
-      if: runner.os == 'Linux'
-      id: cache
-      with:
-        path: .
-        key: ${{ runner.os }}-${{github.sha}}
+#    - uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
+#      if: runner.os == 'Linux'
+#      id: cache
+#      with:
+#        path: .
+#        key: ${{ runner.os }}-${{github.sha}}
       
     - name: build gradle
       uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
       with:
-        arguments: ${{ inputs.arguments }} --info --stacktrace --max-workers 2 --no-daemon
+        arguments: ${{ inputs.arguments }} --info --stacktrace # --max-workers 2 --no-daemon
       

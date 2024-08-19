@@ -22,6 +22,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -45,14 +46,19 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
 
         typeToSmtLib = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
-        table = DispatchTable.<String>builder()
+        table = buildDispatchTable(DispatchTable.builder()).build();
+    }
+
+    protected DispatchTable.Builder<String> buildDispatchTable(DispatchTable.Builder<String> builder) {
+        builder
                 .addCase(BoolType.class, this::boolType)
                 .addCase(IntType.class, this::intType)
                 .addCase(RatType.class, this::ratType)
                 .addCase(BvType.class, this::bvType)
                 .addCase(FpType.class, this::fpType)
-                .addCase(ArrayType.class, this::arrayType)
-                .build();
+                .addCase(EnumType.class, this::enumType)
+                .addCase(ArrayType.class, this::arrayType);
+        return builder;
     }
 
     @Override
@@ -87,5 +93,9 @@ public class GenericSmtLibTypeTransformer implements SmtLibTypeTransformer {
     protected String arrayType(final ArrayType<?, ?> type) {
         return String.format("(Array %s %s)", toSort(type.getIndexType()),
                 toSort(type.getElemType()));
+    }
+
+    protected String enumType(final EnumType type) {
+        return type.getName();
     }
 }

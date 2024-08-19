@@ -28,6 +28,7 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
@@ -81,6 +82,10 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
@@ -108,6 +113,7 @@ import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -140,31 +146,41 @@ import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibExprTransformer;
+import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibSymbolTable;
 import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationManager;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     private static final int CACHE_SIZE = 1000;
 
     private final SmtLibTransformationManager transformer;
+    private final SmtLibSymbolTable symbolTable;
 
     private final Cache<Expr<?>, String> exprToTerm;
     private final DispatchTable<String> table;
     private final Env env;
 
-    public GenericSmtLibExprTransformer(final SmtLibTransformationManager transformer) {
+    public GenericSmtLibExprTransformer(final SmtLibTransformationManager transformer, final SmtLibSymbolTable symbolTable) {
         this.transformer = transformer;
+        this.symbolTable = symbolTable;
         this.env = new Env();
 
         this.exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
+        this.table = buildDispatchTable(DispatchTable.builder()).build();
+    }
 
-        this.table = DispatchTable.<String>builder()
-
+    protected DispatchTable.Builder<String> buildDispatchTable(DispatchTable.Builder<String> builder) {
+        builder
                 // General
 
                 .addCase(RefExpr.class, this::transformRef)
@@ -256,6 +272,14 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 .addCase(IntLtExpr.class, this::transformIntLt)
 
                 .addCase(IntToRatExpr.class, this::transformIntToRat)
+
+                // Enums
+
+                .addCase(EnumLitExpr.class, this::transformEnumLit)
+
+                .addCase(EnumNeqExpr.class, this::transformEnumNeq)
+
+                .addCase(EnumEqExpr.class, this::transformEnumEq)
 
                 // Bitvectors
 
@@ -399,7 +423,11 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
-                .build();
+                // References
+                .addCase(Dereference.class, this::transformDereference)
+
+        ;
+        return builder;
     }
 
     @Override
@@ -711,6 +739,25 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
     protected String transformIntToRat(final IntToRatExpr expr) {
         return String.format("(to_real %s)", toTerm(expr.getOp()));
+    }
+
+    /*
+     * Enums
+     */
+
+    protected String transformEnumEq(final EnumEqExpr expr) {
+        return String.format("(= %s %s)", toTerm(expr.getLeftOp()), toTerm(expr.getRightOp()));
+    }
+
+    protected String transformEnumNeq(final EnumNeqExpr expr) {
+        return String.format("(not (= %s %s))", toTerm(expr.getLeftOp()),
+                toTerm(expr.getRightOp()));
+    }
+
+    protected String transformEnumLit(final EnumLitExpr expr) {
+        String longName = EnumType.makeLongName(expr.getType(), expr.getValue());
+        symbolTable.putEnumLiteral(longName, expr);
+        return longName;
     }
 
     /*
@@ -1128,35 +1175,28 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
     protected String transformFuncApp(final FuncAppExpr<?, ?> expr) {
         final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
         final Expr<?> func = funcAndArgs.get1();
+        final List<Expr<?>> args = funcAndArgs.get2();
         if (func instanceof RefExpr) {
             final RefExpr<?> ref = (RefExpr<?>) func;
             final Decl<?> decl = ref.getDecl();
             final String funcDecl = transformer.toSymbol(decl);
-            final List<Expr<?>> args = funcAndArgs.get2();
             final String[] argTerms = args.stream()
                     .map(this::toTerm)
                     .toArray(String[]::new);
 
             return String.format("(%s %s)", funcDecl, String.join(" ", argTerms));
+        } else if (func instanceof FuncLitExpr<?, ?>) {
+            Expr<?> replaced = func;
+            int i = 0;
+            while (replaced instanceof FuncLitExpr<?, ?>) {
+                final ParamDecl<?> param = ((FuncLitExpr<?, ?>) replaced).getParam();
+                final Expr<?> funcExpr = ((FuncLitExpr<?, ?>) replaced).getResult();
+                replaced = ExprUtils.changeDecls(funcExpr, Map.of(param, ((RefExpr<?>) args.get(i++)).getDecl()));
+            }
+            return toTerm(replaced);
         } else {
             throw new UnsupportedOperationException(
                     "Higher order functions are not supported: " + func);
-        }
-    }
-
-    private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
-        final Expr<?> func = expr.getFunc();
-        final Expr<?> arg = expr.getParam();
-        if (func instanceof FuncAppExpr) {
-            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
-            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
-            final Expr<?> resFunc = funcAndArgs.get1();
-            final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
-                    .build();
-            return Tuple2.of(resFunc, resArgs);
-        } else {
-            return Tuple2.of(func, ImmutableList.of(arg));
         }
     }
 
@@ -1200,5 +1240,10 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                     toTerm(elem.get2()));
         }
         return running;
+    }
+
+    private String transformDereference(final Dereference<?, ?, ?> expr) {
+        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        return "(deref %s %s %s)".formatted(toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
     }
 }

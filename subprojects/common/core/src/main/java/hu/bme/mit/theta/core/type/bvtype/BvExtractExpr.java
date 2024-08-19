@@ -147,7 +147,7 @@ public final class BvExtractExpr implements Expr<BvType> {
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder(OPERATOR_LABEL).add(getBitvec()).add(getFrom())
+        return Utils.lispStringBuilder(OPERATOR_LABEL).body().add(getBitvec()).add(getFrom())
                 .add(getUntil()).toString();
     }
 }

@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.cli
 
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.frontend.chc.ChcFrontend
 import hu.bme.mit.theta.xcfa.cli.XcfaCli.Companion.main
 import org.junit.jupiter.params.ParameterizedTest
@@ -54,6 +55,7 @@ class XcfaCliParseTest {
                 Arguments.of("/c/litmustest/singlethread/21namecollision.c"),
                 Arguments.of("/c/litmustest/singlethread/22nondet.c"),
                 Arguments.of("/c/litmustest/singlethread/23overflow.c"),
+                Arguments.of("/c/litmustest/singlethread/25malloc.c"),
             )
         }
 
@@ -229,6 +231,7 @@ class XcfaCliParseTest {
     fun testJSONParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
         main(arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",
@@ -252,6 +255,7 @@ class XcfaCliParseTest {
     fun testCParseRoundTrip(filePath: String) {
         val temp = createTempDirectory()
         main(arrayOf(
+            "--enable-output",
             "--input-type", "C",
             "--input", javaClass.getResource(filePath)!!.path,
             "--backend", "NONE",
@@ -260,6 +264,7 @@ class XcfaCliParseTest {
             "--debug"
         ))
         val xcfaC = temp.resolve("xcfa.c").toFile()
+        checkState(xcfaC.exists(), "File does not exist: $xcfaC")
         main(arrayOf(
             "--input-type", "C",
             "--input", xcfaC.absolutePath.toString(),

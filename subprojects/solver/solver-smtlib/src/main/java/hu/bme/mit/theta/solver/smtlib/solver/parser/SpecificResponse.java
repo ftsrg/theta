@@ -17,6 +17,7 @@ package hu.bme.mit.theta.solver.smtlib.solver.parser;
 
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2BaseVisitor;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Proof_responseContext;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Specific_success_responseContext;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -42,6 +43,11 @@ public abstract class SpecificResponse {
                     SMTLIBv2Parser.Get_model_responseContext ctx) {
                 return GetModelResponse.fromContext(ctx);
             }
+
+            @Override
+            public SpecificResponse visitProof_response(Proof_responseContext ctx) {
+                return GetProofResponse.fromContext(ctx);
+            }
         });
     }
 
@@ -61,6 +67,10 @@ public abstract class SpecificResponse {
                 this instanceof GetModelResponse ||
                         this instanceof GetUnsatCoreResponse
                                 && ((GetUnsatCoreResponse) this).getLabels().size() == 0;
+    }
+
+    public boolean isGetProofResponse() {
+        return this instanceof GetProofResponse;
     }
 
     public CheckSatResponse asCheckSatResponse() {
@@ -88,5 +98,10 @@ public abstract class SpecificResponse {
         } else {
             throw new AssertionError();
         }
+    }
+
+    public GetProofResponse asGetProofResponse() {
+        checkState(isGetProofResponse());
+        return (GetProofResponse) this;
     }
 }

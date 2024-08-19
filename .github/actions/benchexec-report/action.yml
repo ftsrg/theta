@@ -21,6 +21,11 @@ runs:
         cd artifacts
         EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
         echo "Message<<$EOF" >> $GITHUB_OUTPUT
+        header1=$(printf '|task set|'; for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u | xargs printf '%s|')
+        header2=$(printf '|--|'; for ff in $(for f in BenchexecResults*; do echo "${f##*-}"; done | sort -u); do printf -- '--|'; done)
+        echo "$header1" >> $GITHUB_OUTPUT
+        printf "$header2" >> $GITHUB_OUTPUT
+        lasttask=""
         for i in *
         do 
           if (ls $i/*xml.bz2 >/dev/null 2>/dev/null)
@@ -36,21 +41,20 @@ runs:
             emoji=":white_check_mark:"
             [ $correct -eq 0 ] && emoji=":question:"
             [ $incorrect -eq 0 ] || emoji=":exclamation:"
-            echo "<details><summary> $emoji ${i#BenchexecResults-} ($correct / $incorrect / $all)</summary>" >> $GITHUB_OUTPUT
-            echo >> $GITHUB_OUTPUT
-            echo '`table-generator`'" output: [HTML](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.html))/[CSV](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.csv))" >> $GITHUB_OUTPUT
-            echo >> $GITHUB_OUTPUT
-            echo '```'  >> $GITHUB_OUTPUT
-            cat *.txt  >> $GITHUB_OUTPUT
-            echo '```'  >> $GITHUB_OUTPUT
-            echo "</details>" >> $GITHUB_OUTPUT
-            echo >> $GITHUB_OUTPUT
-            echo >> $GITHUB_OUTPUT
+            filename=${i#BenchexecResults-}
+            portfolio=${filename##*-}
+            task=${filename%-$portfolio}
+            if [ "$task" != "$lasttask" ]
+            then printf "\n| $task | " >> $GITHUB_OUTPUT
+            fi
+            lasttask="$task"
+            printf " $emoji ($correct / $incorrect / $all) [HTML](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.html))/[CSV](https://theta.mit.bme.hu/benchmark-results/${{ github.head_ref }}/$i/$(ls *.csv)) | " >> $GITHUB_OUTPUT
             popd
           else
             rm -rf $i
           fi
         done
+        echo >> $GITHUB_OUTPUT
         echo "$EOF" >> $GITHUB_OUTPUT
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
@@ -60,6 +64,7 @@ runs:
     - name: Deploy to GHPages
       if: github.event_name == 'pull_request'
       uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d # v4.4.2
+      continue-on-error: true # if we are in a fork, this will fail, but we don't care (tables will be missing)
       with:
         branch: gh-pages
         folder: artifacts
@@ -68,6 +73,7 @@ runs:
     - name: Comment on PR
       if: github.event_name == 'pull_request'
       uses: thollander/actions-comment-pull-request@dadb7667129e23f12ca3925c90dc5cd7121ab57e
+      continue-on-error: true # if we are in a fork, this will fail, but we don't care (tables will be missing)
       with: 
         comment_tag: 'diffcheck'
         mode: 'recreate'

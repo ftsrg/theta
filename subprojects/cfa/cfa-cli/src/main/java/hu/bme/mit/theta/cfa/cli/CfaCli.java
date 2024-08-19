@@ -21,13 +21,19 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.cfa.analysis.CfaToMonolithicExprKt;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
@@ -233,14 +239,17 @@ public class CfaCli {
                 refinementSolverFactory = SolverManager.resolveSolverFactory(solver);
             }
 
-            final SafetyResult<?, ?> status;
+            final SafetyResult<?, ? extends Trace<?, ?>> status;
             if (algorithm == Algorithm.CEGAR) {
                 final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
                 status = check(configuration);
-                sw.stop();
+            } else if (algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
+                final BoundedChecker<?, ?> checker = buildBoundedChecker(cfa, abstractionSolverFactory);
+                status = checker.check(null);
             } else {
                 throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
             }
+            sw.stop();
 
             printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
             if (status.isUnsafe() && cexfile != null) {
@@ -282,7 +291,40 @@ public class CfaCli {
         }
     }
 
-    private SafetyResult<?, ?> check(CfaConfig<?, ?, ?> configuration) throws Exception {
+    private BoundedChecker<?, ?> buildBoundedChecker(final CFA cfa, final SolverFactory abstractionSolverFactory) {
+        final MonolithicExpr monolithicExpr = CfaToMonolithicExprKt.toMonolithicExpr(cfa);
+        final BoundedChecker<?, ?> checker;
+        switch (algorithm) {
+            case BMC -> checker = BoundedCheckerBuilderKt.buildBMC(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
+                    (val1, val2) -> CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
+                    logger
+            );
+            case KINDUCTION -> checker = BoundedCheckerBuilderKt.buildKIND(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    abstractionSolverFactory.createSolver(),
+                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
+                    (val1, val2) -> CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
+                    logger
+            );
+            case IMC -> checker = BoundedCheckerBuilderKt.buildIMC(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    abstractionSolverFactory.createItpSolver(),
+                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
+                    (val1, val2) -> CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
+                    logger
+            );
+            default ->
+                    throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+        }
+        return checker;
+    }
+
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(CfaConfig<?, ?, ?> configuration) throws Exception {
         try {
             return configuration.check();
         } catch (final Exception ex) {
@@ -293,7 +335,7 @@ public class CfaCli {
         }
     }
 
-    private void printResult(final SafetyResult<?, ?> status, final long totalTimeMs) {
+    private void printResult(final SafetyResult<?, ? extends Trace<?, ?>> status, final long totalTimeMs) {
         final CegarStatistics stats = (CegarStatistics)
                 status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
@@ -303,11 +345,17 @@ public class CfaCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
+            if (status.getWitness() instanceof ARG<?, ?> arg) {
+                writer.cell(arg.size());
+                writer.cell(arg.getDepth());
+                writer.cell(arg.getMeanBranchingFactor());
+            } else {
+                writer.cell("");
+                writer.cell("");
+                writer.cell("");
+            }
             if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
+                writer.cell(status.asUnsafe().getCex().length() + "");
             } else {
                 writer.cell("");
             }
@@ -333,8 +381,8 @@ public class CfaCli {
         }
     }
 
-    private void writeCex(final Unsafe<?, ?> status) throws FileNotFoundException {
-        @SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+    private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
+        @SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getCex();
         final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(
                 trace, Z3LegacySolverFactory.getInstance());
         final File file = new File(cexfile);

@@ -24,6 +24,13 @@ public class Signed extends CSimpleType {
     }
 
     @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new Signed();
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+    @Override
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setSigned(true);
     }

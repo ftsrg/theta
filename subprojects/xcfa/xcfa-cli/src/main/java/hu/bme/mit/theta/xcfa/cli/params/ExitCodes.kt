@@ -53,45 +53,48 @@ private fun Throwable.printCauseAndTrace(stacktrace: Boolean) {
     System.err.println("Process failed! ($location, $this)")
 }
 
-fun <T> exitOnError(stacktrace: Boolean, debug: Boolean, body: () -> T): T {
+fun <T> exitOnError(stacktrace: Boolean, throwDontExit: Boolean, body: () -> T): T {
     try {
         return body()
+    } catch (e: ErrorCodeException) {
+        e.printStackTrace()
+        exitProcess(throwDontExit, e, e.code)
     } catch (e: SmtLibSolverException) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code)
+        exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
     } catch (e: JavaSMTSolverException) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code)
+        exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code)
     } catch (e: SolverValidationException) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
+        exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code);
     } catch (e: Z3Exception) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
+        exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code);
     } catch (e: ClassCastException) {
         e.printCauseAndTrace(stacktrace)
         if (e.message?.contains("com.microsoft.z3") == true)
-            exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
+            exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code);
         else
-            exitProcess(debug, e, ExitCodes.GENERIC_ERROR.code);
+            exitProcess(throwDontExit, e, ExitCodes.GENERIC_ERROR.code);
     } catch (e: NotSolvableException) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.VERIFICATION_STUCK.code);
+        exitProcess(throwDontExit, e, ExitCodes.VERIFICATION_STUCK.code);
     } catch (e: OutOfMemoryError) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.OUT_OF_MEMORY.code);
+        exitProcess(throwDontExit, e, ExitCodes.OUT_OF_MEMORY.code);
     } catch (e: UnknownSolverStatusException) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
+        exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code);
     } catch (e: RuntimeException) {
         e.printCauseAndTrace(stacktrace)
         if (e.message?.contains("Solver problem") == true || e.message?.contains("Z3") == true) {
-            exitProcess(debug, e, ExitCodes.SOLVER_ERROR.code);
+            exitProcess(throwDontExit, e, ExitCodes.SOLVER_ERROR.code);
         } else {
-            exitProcess(debug, e, ExitCodes.SERVER_ERROR.code);
+            exitProcess(throwDontExit, e, ExitCodes.SERVER_ERROR.code);
         }
     } catch (e: Exception) {
         e.printCauseAndTrace(stacktrace)
-        exitProcess(debug, e, ExitCodes.GENERIC_ERROR.code);
+        exitProcess(throwDontExit, e, ExitCodes.GENERIC_ERROR.code);
     }
 }

@@ -19,8 +19,8 @@ extensions.configure<JacocoPluginExtension> {
     toolVersion = Versions.jacoco
 }
 
-tasks.withType(JacocoReport::class.java).all {
+tasks.withType<JacocoReport>().configureEach {
     reports {
-        xml.isEnabled = true
+        xml.required.set(true)
     }
 }

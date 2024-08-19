@@ -15,9 +15,12 @@
  */
 package hu.bme.mit.theta.core.utils;
 
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
@@ -27,7 +30,10 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
+import hu.bme.mit.theta.core.type.booltype.ForallExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 
@@ -35,12 +41,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 /**
  * Utility functions related to expressions.
@@ -113,6 +122,69 @@ public final class ExprUtils {
     }
 
     /**
+     * Collect params of an expression into a given collection.
+     *
+     * @param expr      Expression
+     * @param collectTo Collection where the params should be put
+     */
+    public static void collectParams(final Expr<?> expr, final Collection<ParamDecl<?>> collectTo) {
+        if (expr instanceof RefExpr<?> refExpr) {
+            final Decl<?> decl = refExpr.getDecl();
+            if (decl instanceof ParamDecl<?> param) {
+                collectTo.add(param);
+                return;
+            }
+        }
+
+        if (expr instanceof ForallExpr forall) {
+            Set<ParamDecl<?>> params = new LinkedHashSet<>(getParams(forall.getOp()));
+            forall.getParamDecls().forEach(params::remove);
+            collectTo.addAll(params);
+        } else if (expr instanceof ExistsExpr exists) {
+            Set<ParamDecl<?>> params = new LinkedHashSet<>(getParams(exists.getOp()));
+            exists.getParamDecls().forEach(params::remove);
+            collectTo.addAll(params);
+        } else {
+            expr.getOps().forEach(op -> collectParams(op, collectTo));
+        }
+    }
+
+    /**
+     * Collect params from expressions into a given collection.
+     *
+     * @param exprs     Expressions
+     * @param collectTo Collection where the variables should be put
+     */
+    public static void collectParams(final Iterable<? extends Expr<?>> exprs, final Collection<ParamDecl<?>> collectTo) {
+        exprs.forEach(e -> collectParams(e, collectTo));
+    }
+
+    /**
+     * Get variables of an expression.
+     *
+     * @param expr Expression
+     * @return Set of variables appearing in the expression
+     */
+    public static Set<ParamDecl<?>> getParams(final Expr<?> expr) {
+        final Set<ParamDecl<?>> vars = Containers.createSet();
+        collectParams(expr, vars);
+        return vars;
+    }
+
+    /**
+     * Get variables of expressions.
+     *
+     * @param exprs Expressions
+     * @return Set of variables appearing in the expressions
+     */
+    public static Set<ParamDecl<?>> getParams(final Iterable<? extends Expr<?>> exprs) {
+        final Set<ParamDecl<?>> vars = Containers.createSet();
+        collectParams(exprs, vars);
+        return vars;
+    }
+
+
+    /**
      * Collect variables of an expression into a given collection.
      *
      * @param expr      Expression
@@ -163,6 +235,59 @@ public final class ExprUtils {
         final Set<VarDecl<?>> vars = Containers.createSet();
         collectVars(exprs, vars);
         return vars;
+    }
+
+    /**
+     * Collect indexed constants of an expression into a given collection.
+     *
+     * @param expr      Expression
+     * @param collectTo Collection where the constants should be put
+     */
+    public static void collectIndexedConstants(final Expr<?> expr, final Collection<IndexedConstDecl<?>> collectTo) {
+        if (expr instanceof RefExpr) {
+            final RefExpr<?> refExpr = (RefExpr<?>) expr;
+            final Decl<?> decl = refExpr.getDecl();
+            if (decl instanceof IndexedConstDecl<?>) {
+                final IndexedConstDecl<?> constDecl = (IndexedConstDecl<?>) decl;
+                collectTo.add(constDecl);
+                return;
+            }
+        }
+        expr.getOps().forEach(op -> collectIndexedConstants(op, collectTo));
+    }
+
+    /**
+     * Collect indexed constants from expressions into a given collection.
+     *
+     * @param exprs     Expressions
+     * @param collectTo Collection where the constants should be put
+     */
+    public static void collectIndexedConstants(final Iterable<? extends Expr<?>> exprs, final Collection<IndexedConstDecl<?>> collectTo) {
+        exprs.forEach(e -> collectIndexedConstants(e, collectTo));
+    }
+
+    /**
+     * Get indexed constants of an expression.
+     *
+     * @param expr Expression
+     * @return Set of constants appearing in the expression
+     */
+    public static Set<IndexedConstDecl<?>> getIndexedConstants(final Expr<?> expr) {
+        final Set<IndexedConstDecl<?>> consts = new HashSet<>();
+        collectIndexedConstants(expr, consts);
+        return consts;
+    }
+
+    /**
+     * Get indexed constants of expressions.
+     *
+     * @param exprs Expressions
+     * @return Set of constants appearing in the expressions
+     */
+    public static Set<IndexedConstDecl<?>> getIndexedConstants(final Iterable<? extends Expr<?>> exprs) {
+        final Set<IndexedConstDecl<?>> consts = new HashSet<>();
+        collectIndexedConstants(exprs, consts);
+        return consts;
     }
 
     /**
@@ -363,4 +488,41 @@ public final class ExprUtils {
         return 1 + expr.getOps().stream().map(ExprUtils::nodeCountSize).reduce(0, (x, y) -> x + y);
     }
 
+    /**
+     * Change fixed subexpressions using a lookup
+     *
+     * @param expr   the expr to change subexpressions in
+     * @param lookup the lookup mapping subexpression to replacements
+     * @return the changed expression
+     */
+    public static <T extends Type> Expr<T> changeSubexpr(Expr<T> expr, Map<Expr<?>, Expr<?>> lookup) {
+        if (lookup.containsKey(expr)) {
+            return cast(lookup.get(expr), expr.getType());
+        } else {
+            return expr.map(e -> changeSubexpr(e, lookup));
+        }
+    }
+
+    public static <T extends Type> Expr<T> changeDecls(Expr<T> expr, Map<? extends Decl<?>, ? extends Decl<?>> lookup) {
+        return changeSubexpr(expr, lookup.entrySet().stream().map(entry -> Map.entry(entry.getKey().getRef(), entry.getValue().getRef())).collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
+    }
+
+    /**
+     * Extracts function and its arguments from a nested expression
+     */
+    public static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
+        final Expr<?> func = expr.getFunc();
+        final Expr<?> arg = expr.getParam();
+        if (func instanceof FuncAppExpr) {
+            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
+            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
+            final Expr<?> resFunc = funcAndArgs.get1();
+            final List<Expr<?>> args = funcAndArgs.get2();
+            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
+                    .build();
+            return Tuple2.of(resFunc, resArgs);
+        } else {
+            return Tuple2.of(func, ImmutableList.of(arg));
+        }
+    }
 }

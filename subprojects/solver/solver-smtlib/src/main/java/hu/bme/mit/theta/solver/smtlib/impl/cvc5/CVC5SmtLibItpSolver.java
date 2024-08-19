@@ -17,11 +17,14 @@ package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.*;
+import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibItpSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
@@ -44,6 +47,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
 
@@ -52,9 +56,12 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
     public CVC5SmtLibItpSolver(final SmtLibSymbolTable symbolTable,
                                final SmtLibTransformationManager transformationManager,
                                final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
-                               final Supplier<? extends SmtLibSolverBinary> itpSolverBinaryFactory) {
-        super(symbolTable, transformationManager, termTransformer, solverBinary);
+                               final Supplier<? extends SmtLibSolverBinary> itpSolverBinaryFactory,
+                               final SmtLibEnumStrategy enumStrategy) {
+        super(symbolTable, transformationManager, termTransformer, solverBinary, enumStrategy);
         this.itpSolverBinaryFactory = itpSolverBinaryFactory;
+        final var tmp = Decls.Const("shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh", Int());
+//        symbolTable.put(tmp, "shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh", "(declare-fun shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh () Int)");
     }
 
     @Override
@@ -86,6 +93,7 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
         try (final var itpSolverBinary = itpSolverBinaryFactory.get()) {
             itpSolverBinary.issueCommand("(set-option :produce-interpolants true)");
             itpSolverBinary.issueCommand("(set-logic ALL)");
+            enumStrategy.declareDatatypes(typeStack.toCollection(), new StackImpl<>(), itpSolverBinary::issueCommand);
             declarationStack.forEach(
                     constDecl -> itpSolverBinary.issueCommand(symbolTable.getDeclaration(constDecl)));
 
@@ -106,14 +114,19 @@ public class CVC5SmtLibItpSolver extends SmtLibItpSolver<CVC5SmtLibItpMarker> {
                     final var bTerm = B.stream()
                             .flatMap(m -> m.getTerms().stream().map(Tuple2::get2));
 
+                    itpSolverBinary.issueCommand("(push)");
+                    itpSolverBinary.issueCommand("(declare-fun shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh () Int)");
+                    itpSolverBinary.issueCommand("(assert (= shevgcrjhsdfzgrjbms2dhrbcshdmrgcsh 0))");
                     itpSolverBinary.issueCommand(
                             String.format("(assert (and %s))", aTerm.collect(Collectors.joining(" "))));
                     itpSolverBinary.issueCommand(
                             String.format("(get-interpolant _cvc5_interpolant%d (not (and %s)))",
                                     interpolantCount++, bTerm.collect(Collectors.joining(" "))));
+                    itpSolverBinary.issueCommand("(pop)");
 
+                    final String solverResponse = itpSolverBinary.readResponse();
                     itpMap.put(marker,
-                            termTransformer.toExpr(parseItpResponse(itpSolverBinary.readResponse()),
+                            termTransformer.toExpr(parseItpResponse(solverResponse),
                                     Bool(), new SmtLibModel(Collections.emptyMap())));
                 } else {
                     itpMap.put(marker, False());

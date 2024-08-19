@@ -21,13 +21,15 @@ import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
 import hu.bme.mit.theta.frontend.transformation.grammar.type.DeclarationVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
+public class TypedefVisitor extends CBaseVisitor<Set<CDeclaration>> {
     private final DeclarationVisitor declarationVisitor;
 
     public TypedefVisitor(DeclarationVisitor declarationVisitor) {
@@ -38,62 +40,78 @@ public class TypedefVisitor extends CBaseVisitor<List<CDeclaration>> {
         declarations.clear();
     }
 
-    private final List<CDeclaration> declarations = new ArrayList<>();
+    private final Set<CDeclaration> declarations = new LinkedHashSet<>();
 
     public Optional<CComplexType> getType(String id) {
         return declarations.stream().filter(cDeclaration -> cDeclaration.getName().equals(id)).map(CDeclaration::getActualType).findFirst();
     }
 
+    public Optional<CSimpleType> getSimpleType(String id) {
+        return declarations.stream().filter(cDeclaration -> cDeclaration.getName().equals(id)).map(CDeclaration::getType).findFirst();
+    }
+
     @Override
-    public List<CDeclaration> visitDeclaration(CParser.DeclarationContext ctx) {
-        List<CDeclaration> ret = new ArrayList<>();
+    public Set<CDeclaration> visitDeclaration(CParser.DeclarationContext ctx) {
+        Set<CDeclaration> ret = new LinkedHashSet<>();
         if (ctx.declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
             List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declarationSpecifiers(), ctx.initDeclaratorList());
+            this.declarations.addAll(declarations);
             ret.addAll(declarations);
             return ret;
         } else return null;
     }
 
     @Override
-    public List<CDeclaration> visitBlockItemList(CParser.BlockItemListContext ctx) {
-        List<CDeclaration> ret = new ArrayList<>();
+    public Set<CDeclaration> visitBlockItemList(CParser.BlockItemListContext ctx) {
+        Set<CDeclaration> ret = new LinkedHashSet<>();
         for (ParseTree child : ctx.children) {
-            List<CDeclaration> list = child.accept(this);
-            if (list != null) ret.addAll(list);
+            Set<CDeclaration> list = child.accept(this);
+            if (list != null) {
+                this.declarations.addAll(list);
+                ret.addAll(list);
+            }
         }
         return ret;
     }
 
     @Override
-    public List<CDeclaration> visitCompoundStatement(CParser.CompoundStatementContext ctx) {
-        List<CDeclaration> ret = new ArrayList<>();
+    public Set<CDeclaration> visitCompoundStatement(CParser.CompoundStatementContext ctx) {
+        Set<CDeclaration> ret = new LinkedHashSet<>();
         for (ParseTree child : ctx.children) {
-            List<CDeclaration> list = child.accept(this);
-            if (list != null) ret.addAll(list);
+            Set<CDeclaration> list = child.accept(this);
+            if (list != null) {
+                this.declarations.addAll(list);
+                ret.addAll(list);
+            }
         }
         return ret;
     }
 
     @Override
-    public List<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
-        List<CDeclaration> ret = new ArrayList<>();
+    public Set<CDeclaration> visitGlobalDeclaration(CParser.GlobalDeclarationContext ctx) {
+        Set<CDeclaration> ret = new LinkedHashSet<>();
         if (ctx.declaration().declarationSpecifiers().declarationSpecifier(0).getText().equals("typedef")) {
             List<CDeclaration> declarations = declarationVisitor.getDeclarations(ctx.declaration().declarationSpecifiers(), ctx.declaration().initDeclaratorList());
             ret.addAll(declarations);
+            this.declarations.addAll(declarations);
             return ret;
         }
         return null;
     }
 
     @Override
-    public List<CDeclaration> visitCompilationUnit(CParser.CompilationUnitContext ctx) {
+    public Set<CDeclaration> visitCompilationUnit(CParser.CompilationUnitContext ctx) {
         declarations.clear();
         CParser.TranslationUnitContext translationUnitContext = ctx.translationUnit();
         if (translationUnitContext != null) {
             for (CParser.ExternalDeclarationContext externalDeclarationContext : translationUnitContext.externalDeclaration()) {
-                List<CDeclaration> declList = externalDeclarationContext.accept(this);
-                if (declList != null) {
-                    declarations.addAll(declList);
+                try {
+                    Set<CDeclaration> declList = externalDeclarationContext.accept(this);
+                    if (declList != null) {
+                        declarations.addAll(declList);
+                    }
+                } catch (Throwable e) {
+                    // we don't do anything, we'll throw an error later if something crucial is missing
                 }
             }
         }

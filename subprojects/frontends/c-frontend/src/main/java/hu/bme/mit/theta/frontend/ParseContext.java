@@ -28,7 +28,7 @@ public class ParseContext {
     private final FrontendMetadata metadata;
     private final CStmtCounter cStmtCounter;
     private Set<ArithmeticTrait> arithmeticTraits = new LinkedHashSet<>();
-    private ArchitectureType architecture = ArchitectureType.ILP32;
+    private ArchitectureType architecture = ArchitectureType.LP64;
     private Boolean multiThreading = false;
     private ArithmeticType arithmetic = ArithmeticType.efficient;
 

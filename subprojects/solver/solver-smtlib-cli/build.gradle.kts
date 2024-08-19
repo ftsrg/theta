@@ -25,5 +25,5 @@ dependencies {
 }
 
 application {
-    mainClassName = "hu.bme.mit.theta.solver.smtlib.cli.SmtLibCli"
+    mainClass.set("hu.bme.mit.theta.solver.smtlib.cli.SmtLibCli")
 }

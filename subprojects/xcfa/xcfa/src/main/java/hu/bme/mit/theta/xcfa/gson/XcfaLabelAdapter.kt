@@ -83,7 +83,8 @@ class XcfaLabelAdapter(val scope: Scope, val env: Env, val gsonSupplier: () -> G
                     constructor.call(clazz.companionObject!!.objectInstance, content, scope, env,
                         metadata)
                 } catch (e: Exception) {
-                    System.err.println("Could not parse $content\nscope: ${scope}\nenv: $env")
+                    System.err.println(
+                        "Could not parse $content\nscope: ${scope}\nenv: $env\ntype: ${clazz.simpleName}")
                     throw e
                 }
             check(obj is XcfaLabel)

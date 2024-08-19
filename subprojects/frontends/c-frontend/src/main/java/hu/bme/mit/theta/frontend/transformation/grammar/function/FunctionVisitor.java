@@ -22,8 +22,11 @@ import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.frontend.ParseContext;
@@ -58,7 +61,7 @@ import hu.bme.mit.theta.frontend.transformation.model.statements.CStatement;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CSwitch;
 import hu.bme.mit.theta.frontend.transformation.model.statements.CWhile;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -66,7 +69,6 @@ import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -78,6 +80,8 @@ import java.util.StringJoiner;
 
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static hu.bme.mit.theta.grammar.UtilsKt.textWithWS;
 
 /**
@@ -105,11 +109,9 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
     private final List<VarDecl<?>> flatVariables;
     private final Map<VarDecl<?>, CDeclaration> functions;
 
-    private Collection<VarDecl<?>> createVars(CDeclaration declaration) {
+    private void createVars(CDeclaration declaration) {
         String name = declaration.getName();
-        List<VarDecl<?>> vars = new ArrayList<>();
-        createVars(name, declaration, declaration.getActualType(), vars);
-        return vars;
+        createVars(name, declaration, declaration.getActualType());
     }
 
     private String getName(final String name) {
@@ -123,12 +125,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         return sj.toString();
     }
 
-    private void createVars(String name, CDeclaration declaration, CComplexType type, List<VarDecl<?>> vars) {
-        if (type instanceof CStruct) {
-            ((CStruct) type).getFields().forEach((s, type1) -> {
-                createVars(name + "." + s, declaration, type1, vars);
-            });
-        }
+    private void createVars(String name, CDeclaration declaration, CComplexType type) {
+//        checkState(declaration.getArrayDimensions().size() <= 1, "Currently, higher dimension arrays not supported");
         Tuple2<String, Map<String, VarDecl<?>>> peek = variables.peek();
         VarDecl<?> varDecl = Var(getName(name), type.getSmtType());
         if (peek.get2().containsKey(name)) {
@@ -162,8 +160,8 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
         flatVariables.clear();
         functions.clear();
 
-        ctx.accept(typedefVisitor);
         // ExpressionVisitor.setBitwise(ctx.accept(BitwiseChecker.instance));
+        ctx.accept(typedefVisitor);
 
         List<CParser.ExternalDeclarationContext> globalUsages = globalDeclUsageVisitor.getGlobalUsages(ctx);
 
@@ -173,6 +171,11 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
             parseContext.setArithmetic(
                     arithmeticTraits.contains(ArithmeticTrait.BITWISE) || arithmeticTraits.contains(ArithmeticTrait.FLOAT) ?
                             ArithmeticType.bitvector : ArithmeticType.integer);
+        }
+
+        Set<CDeclaration> typedefs = ctx.accept(typedefVisitor);
+        for (CDeclaration typedef : typedefs) {
+            parseContext.getMetadata().create(typedef.getName(), "cTypedefName", typedef.getActualType());
         }
 
         CProgram program = new CProgram(parseContext);
@@ -464,9 +467,24 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     }
                 } else {
                     checkState(declaration.getVarDecls().size() == 1, "non-struct declarations shall only have one variable!");
-                    CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=", parseContext);
-                    recordMetadata(ctx, cAssignment);
-                    compound.getcStatementList().add(cAssignment);
+                    if (declaration.getInitExpr() instanceof CInitializerList initializerList) {
+                        final var ptrType = CComplexType.getUnsignedLong(parseContext);
+                        LitExpr<?> currentValue = ptrType.getNullValue();
+                        LitExpr<?> unitValue = ptrType.getUnitValue();
+                        for (Tuple2<Optional<CStatement>, CStatement> statement : initializerList.getStatements()) {
+//                            checkState(false, "Code here seems to be buggy");
+                            final var expr = statement.get2().getExpression();
+                            final var deref = Exprs.Dereference(cast(declaration.getVarDecls().get(0).getRef(), currentValue.getType()), cast(currentValue, currentValue.getType()), expr.getType());
+                            CAssignment cAssignment = new CAssignment(deref, statement.get2(), "=", parseContext);
+                            recordMetadata(ctx, cAssignment);
+                            compound.getcStatementList().add(cAssignment);
+                            currentValue = Add(currentValue, unitValue).eval(ImmutableValuation.empty());
+                        }
+                    } else {
+                        CAssignment cAssignment = new CAssignment(declaration.getVarDecls().get(0).getRef(), declaration.getInitExpr(), "=", parseContext);
+                        recordMetadata(ctx, cAssignment);
+                        compound.getcStatementList().add(cAssignment);
+                    }
                 }
             } else {
                 createVars(declaration);
@@ -481,7 +499,7 @@ public class FunctionVisitor extends CBaseVisitor<CStatement> {
                     }
                 } else {
                     VarDecl<?> varDecl = declaration.getVarDecls().get(0);
-                    if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType)) {
+                    if (!(varDecl.getType() instanceof ArrayType) && !(varDecl.getType() instanceof BoolType) && !(CComplexType.getType(varDecl.getRef(), parseContext) instanceof CVoid)) {
                         AssumeStmt assumeStmt = CComplexType.getType(varDecl.getRef(), parseContext).limit(varDecl.getRef());
                         CAssume cAssume = new CAssume(assumeStmt, parseContext);
                         compound.getcStatementList().add(cAssume);

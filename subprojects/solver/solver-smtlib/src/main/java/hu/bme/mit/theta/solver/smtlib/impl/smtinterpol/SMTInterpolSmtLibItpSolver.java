@@ -19,13 +19,10 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
-import hu.bme.mit.theta.solver.ItpMarkerTree;
-import hu.bme.mit.theta.solver.ItpPattern;
-import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibItpSolver;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.binary.SmtLibSolverBinary;
@@ -41,19 +38,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpolSmtLibItpMarker> {
@@ -65,9 +53,10 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
     public SMTInterpolSmtLibItpSolver(
             final SmtLibSymbolTable symbolTable,
             final SmtLibTransformationManager transformationManager,
-            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary
+            final SmtLibTermTransformer termTransformer, final SmtLibSolverBinary solverBinary,
+            final SmtLibEnumStrategy enumStrategy
     ) {
-        super(symbolTable, transformationManager, termTransformer, solverBinary);
+        super(symbolTable, transformationManager, termTransformer, solverBinary, enumStrategy);
     }
 
     @Override
@@ -90,7 +79,7 @@ public final class SMTInterpolSmtLibItpSolver extends SmtLibItpSolver<SMTInterpo
 
         final var name = String.format(assertionNamePattern, assertionCount++);
         assertionNames.put(assertion, name);
-        issueGeneralCommand(String.format("(assert (! %s :named %s))", term, name));
+        issueGeneralCommand(String.format("(assert (! %s :named %s))", enumStrategy.wrapAssertionExpression(term, consts.stream().collect(Collectors.toMap(c -> c, symbolTable::getSymbol))), name));
     }
 
     @Override

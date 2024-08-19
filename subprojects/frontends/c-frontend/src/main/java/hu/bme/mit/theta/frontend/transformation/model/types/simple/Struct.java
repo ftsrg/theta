@@ -16,13 +16,16 @@
 
 package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Struct extends NamedType {
@@ -60,8 +63,8 @@ public class Struct extends NamedType {
             return CComplexType.getSignedInt(parseContext);
         }
         currentlyBeingBuilt = true;
-        Map<String, CComplexType> actualFields = new LinkedHashMap<>();
-        fields.forEach((s, cSimpleType) -> actualFields.put(s, cSimpleType.getActualType()));
+        List<Tuple2<String, CComplexType>> actualFields = new ArrayList<>();
+        fields.forEach((s, cSimpleType) -> actualFields.add(Tuple2.of(s, cSimpleType.getActualType())));
         currentlyBeingBuilt = false;
         return new CStruct(this, actualFields, parseContext);
     }
@@ -80,7 +83,9 @@ public class Struct extends NamedType {
     public CSimpleType copyOf() {
         Struct struct = new Struct(name, parseContext, uniqueWarningLogger);
         struct.fields.putAll(fields);
+        setUpCopy(struct);
         return struct;
     }
+
 }
 

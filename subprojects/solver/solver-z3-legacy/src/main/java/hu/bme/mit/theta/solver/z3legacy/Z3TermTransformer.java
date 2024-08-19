@@ -16,12 +16,9 @@
 package hu.bme.mit.theta.solver.z3legacy;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.z3legacy.ArrayExpr;
-import com.microsoft.z3legacy.ArraySort;
-import com.microsoft.z3legacy.FPNum;
-import com.microsoft.z3legacy.FuncDecl;
-import com.microsoft.z3legacy.Model;
-import com.microsoft.z3legacy.Z3Exception;
+import com.microsoft.z3legacy.*;
+import com.microsoft.z3legacy.enumerations.Z3_decl_kind;
+import com.microsoft.z3legacy.enumerations.Z3_sort_kind;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
@@ -30,32 +27,82 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
-import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
-import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
-import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
+import hu.bme.mit.theta.core.type.anytype.Exprs;
+import hu.bme.mit.theta.core.type.abstracttype.*;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.IffExpr;
-import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
-import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.type.booltype.OrExpr;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
+import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
+import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
+import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
+import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
+import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
+import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
+import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
+import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
+import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRemExpr;
+import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
+import hu.bme.mit.theta.core.type.booltype.*;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
+import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
+import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
+import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntModExpr;
+import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
 import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.FpUtils;
@@ -67,25 +114,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.BvType;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
@@ -98,35 +143,181 @@ final class Z3TermTransformer {
     private static final String PARAM_NAME_FORMAT = "_p%d";
 
     private final Z3SymbolTable symbolTable;
-    private final Map<String, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> environment;
+    private final Map<Tuple2<String, Integer>, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> environment;
 
     public Z3TermTransformer(final Z3SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
 
         environment = Containers.createMap();
-        environment.put("true", exprNullaryOperator(TrueExpr::getInstance));
-        environment.put("false", exprNullaryOperator(FalseExpr::getInstance));
-        environment.put("not", exprUnaryOperator(NotExpr::create));
-        environment.put("or", exprMultiaryOperator(OrExpr::create));
-        environment.put("and", exprMultiaryOperator(AndExpr::create));
-        environment.put("=>", exprBinaryOperator(ImplyExpr::create));
-        environment.put("iff", exprBinaryOperator(IffExpr::create));
-        environment.put("=", exprBinaryOperator(EqExpr::create2));
-        environment.put("<=", exprBinaryOperator(LeqExpr::create2));
-        environment.put("<", exprBinaryOperator(LtExpr::create2));
-        environment.put(">=", exprBinaryOperator(GeqExpr::create2));
-        environment.put(">", exprBinaryOperator(GtExpr::create2));
-        environment.put("+", exprMultiaryOperator(AddExpr::create2));
-        environment.put("*", exprMultiaryOperator(MulExpr::create2));
-        environment.put("div", exprBinaryOperator(IntDivExpr::create));
-        environment.put("/", exprBinaryOperator(RatDivExpr::create));
-        environment.put("if", exprTernaryOperator(IteExpr::create));
-        environment.put("select", exprBinaryOperator(ArrayReadExpr::create));
-        environment.put("store", exprTernaryOperator(ArrayWriteExpr::create));
-        environment.put("to_real", exprUnaryOperator(IntToRatExpr::create));
-        environment.put("to_int", exprUnaryOperator(RatToIntExpr::create));
-        environment.put("mod", exprBinaryOperator(IntModExpr::create));
+
+        this.addFunc("deref", dereference());
+        this.addFunc("ref", reference());
+        this.addFunc("and", this.exprMultiaryOperator(AndExpr::create));
+        this.addFunc("false", this.exprNullaryOperator(FalseExpr::getInstance));
+        this.addFunc("true", this.exprNullaryOperator(TrueExpr::getInstance));
+        this.addFunc("iff", this.exprBinaryOperator(IffExpr::create));
+        this.addFunc("not", this.exprUnaryOperator(NotExpr::create));
+        this.addFunc("=>", this.exprBinaryOperator(ImplyExpr::create));
+        this.addFunc("xor", this.exprBinaryOperator(XorExpr::create));
+        this.addFunc("or", this.exprMultiaryOperator(OrExpr::create));
+        this.addFunc("ite", this.exprTernaryOperator(IteExpr::create));
+        this.addFunc("if", this.exprTernaryOperator(IteExpr::create));
+        this.addFunc("prime", this.exprUnaryOperator(PrimeExpr::of));
+        this.addFunc("=", this.exprBinaryOperator(AbstractExprs::Eq));
+        this.addFunc(">=", this.exprBinaryOperator(AbstractExprs::Geq));
+        this.addFunc(">", this.exprBinaryOperator(AbstractExprs::Gt));
+        this.addFunc("<=", this.exprBinaryOperator(AbstractExprs::Leq));
+        this.addFunc("<", this.exprBinaryOperator(AbstractExprs::Lt));
+        this.addFunc("+", this.exprBinaryOperator(AbstractExprs::Add));
+        this.addFunc("+", this.exprMultiaryOperator(AbstractExprs::Add));
+        this.addFunc("-", this.exprBinaryOperator(AbstractExprs::Sub));
+        this.addFunc("+", this.exprUnaryOperator(AbstractExprs::Pos));
+        this.addFunc("-", this.exprUnaryOperator(AbstractExprs::Neg));
+        this.addFunc("*", this.exprBinaryOperator(AbstractExprs::Mul));
+        this.addFunc("*", this.exprMultiaryOperator(AbstractExprs::Mul));
+        this.addFunc("/", this.exprBinaryOperator(AbstractExprs::Div));
+        this.addFunc("to_real", this.exprUnaryOperator(IntToRatExpr::create));
+        this.addFunc("to_int", this.exprUnaryOperator(RatToIntExpr::create));
+        this.addFunc("div", this.exprBinaryOperator(IntDivExpr::create));
+        this.addFunc("to_rat", this.exprUnaryOperator(IntToRatExpr::create));
+        this.addFunc("mod", this.exprBinaryOperator(IntModExpr::create));
+        this.addFunc("rem", this.exprBinaryOperator(IntRemExpr::create));
+        this.addFunc("fp.add", this.exprFpMultiaryOperator(FpAddExpr::create));
+        this.addFunc("fp.sub", this.exprFpBinaryOperator(FpSubExpr::create));
+        this.addFunc("fp.pos", this.exprUnaryOperator(FpPosExpr::create));
+        this.addFunc("fp.neg", this.exprUnaryOperator(FpNegExpr::create));
+        this.addFunc("fp.mul", this.exprFpMultiaryOperator(FpMulExpr::create));
+        this.addFunc("fp.div", this.exprFpBinaryOperator(FpDivExpr::create));
+        this.addFunc("fp.rem", this.exprBinaryOperator(FpRemExpr::create));
+        this.addFunc("fprem", this.exprBinaryOperator(FpRemExpr::create));
+        this.addFunc("fp.abs", this.exprUnaryOperator(FpAbsExpr::create));
+        this.addFunc("fp.leq", this.exprBinaryOperator(FpLeqExpr::create));
+        this.addFunc("fp.lt", this.exprBinaryOperator(FpLtExpr::create));
+        this.addFunc("fp.geq", this.exprBinaryOperator(FpGeqExpr::create));
+        this.addFunc("fp.gt", this.exprBinaryOperator(FpGtExpr::create));
+        this.addFunc("fp.eq", this.exprBinaryOperator(FpEqExpr::create));
+        this.addFunc("fp.isnan", this.exprUnaryOperator(FpIsNanExpr::create));
+        this.addFunc("fp.isNaN", this.exprUnaryOperator(FpIsNanExpr::create));
+        this.addFunc("isinfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
+        this.addFunc("fp.isInfinite", this.exprUnaryOperator(FpIsInfiniteExpr::create));
+        this.addFunc("fp.roundtoint", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
+        this.addFunc("fp.roundToIntegral", this.exprFpUnaryOperator(FpRoundToIntegralExpr::create));
+        this.addFunc("fp.sqrt", this.exprFpUnaryOperator(FpSqrtExpr::create));
+        this.addFunc("fp.max", this.exprBinaryOperator(FpMaxExpr::create));
+        this.addFunc("fp.min", this.exprBinaryOperator(FpMinExpr::create));
+        this.addFunc("++", this.exprMultiaryOperator(BvConcatExpr::create));
+        this.addFunc("concat", this.exprMultiaryOperator(BvConcatExpr::create));
+        this.addFunc("bvadd", this.exprMultiaryOperator(BvAddExpr::create));
+        this.addFunc("bvsub", this.exprBinaryOperator(BvSubExpr::create));
+        this.addFunc("bvpos", this.exprUnaryOperator(BvPosExpr::create));
+        this.addFunc("bvneg", this.exprUnaryOperator(BvNegExpr::create));
+        this.addFunc("bvmul", this.exprMultiaryOperator(BvMulExpr::create));
+        this.addFunc("bvudiv", this.exprBinaryOperator(BvUDivExpr::create));
+        this.addFunc("bvsdiv", this.exprBinaryOperator(BvSDivExpr::create));
+        this.addFunc("bvsmod", this.exprBinaryOperator(BvSModExpr::create));
+        this.addFunc("bvurem", this.exprBinaryOperator(BvURemExpr::create));
+        this.addFunc("bvsrem", this.exprBinaryOperator(BvSRemExpr::create));
+        this.addFunc("bvor", this.exprMultiaryOperator(BvOrExpr::create));
+        this.addFunc("bvand", this.exprMultiaryOperator(BvAndExpr::create));
+        this.addFunc("bvxor", this.exprMultiaryOperator(BvXorExpr::create));
+        this.addFunc("bvnot", this.exprUnaryOperator(BvNotExpr::create));
+        this.addFunc("bvshl", this.exprBinaryOperator(BvShiftLeftExpr::create));
+        this.addFunc("bvashr", this.exprBinaryOperator(BvArithShiftRightExpr::create));
+        this.addFunc("bvlshr", this.exprBinaryOperator(BvLogicShiftRightExpr::create));
+        this.addFunc("bvrol", this.exprBinaryOperator(BvRotateLeftExpr::create));
+        this.addFunc("ext_rotate_left", this.exprBinaryOperator(BvRotateLeftExpr::create));
+        this.addFunc("bvror", this.exprBinaryOperator(BvRotateRightExpr::create));
+        this.addFunc("ext_rotate_right", this.exprBinaryOperator(BvRotateRightExpr::create));
+        this.addFunc("bvult", this.exprBinaryOperator(BvULtExpr::create));
+        this.addFunc("bvule", this.exprBinaryOperator(BvULeqExpr::create));
+        this.addFunc("bvugt", this.exprBinaryOperator(BvUGtExpr::create));
+        this.addFunc("bvuge", this.exprBinaryOperator(BvUGeqExpr::create));
+        this.addFunc("bvslt", this.exprBinaryOperator(BvSLtExpr::create));
+        this.addFunc("bvsle", this.exprBinaryOperator(BvSLeqExpr::create));
+        this.addFunc("bvsgt", this.exprBinaryOperator(BvSGtExpr::create));
+        this.addFunc("bvsge", this.exprBinaryOperator(BvSGeqExpr::create));
+        this.addFunc("read", this.exprBinaryOperator(ArrayReadExpr::create));
+        this.addFunc("write", this.exprTernaryOperator(ArrayWriteExpr::create));
+        this.addFunc("select", this.exprBinaryOperator(ArrayReadExpr::create));
+        this.addFunc("store", this.exprTernaryOperator(ArrayWriteExpr::create));
+        this.environment.put(Tuple2.of("fp.frombv", 1), (term, model, vars) -> {
+            FpType type = (FpType) transformSort(term.getSort());
+            FpRoundingMode roundingmode = this.getRoundingMode((term.getArgs()[0]).toString());
+            Expr<BvType> op = (Expr<BvType>) this.transform(term.getArgs()[1], model, vars);
+            return FpFromBvExpr.of(roundingmode, op, type, true);
+        });
+        this.environment.put(Tuple2.of("fp.to_sbv", 2), (term, model, vars) -> {
+            BvType type = (BvType) transformSort(term.getSort());
+            FpRoundingMode roundingmode = this.getRoundingMode((term.getArgs()[0]).toString());
+            Expr<FpType> op = (Expr<FpType>) this.transform(term.getArgs()[1], model, vars);
+            return FpToBvExpr.of(roundingmode, op, type.getSize(), true);
+        });
+        this.environment.put(Tuple2.of("fp.to_ubv", 2), (term, model, vars) -> {
+            BvType type = (BvType) transformSort(term.getSort());
+            FpRoundingMode roundingmode = this.getRoundingMode((term.getArgs()[0]).toString());
+            Expr<FpType> op = (Expr<FpType>) this.transform(term.getArgs()[1], model, vars);
+            return FpToBvExpr.of(roundingmode, op, type.getSize(), false);
+        });
+        this.environment.put(Tuple2.of("to_fp", 2), (term, model, vars) -> {
+            FpType type = (FpType) transformSort(term.getSort());
+            FpRoundingMode roundingmode = this.getRoundingMode((term.getArgs()[0]).toString());
+            Expr<?> op = this.transform(term.getArgs()[1], model, vars);
+            if (op.getType() instanceof FpType) {
+                return FpToFpExpr.of(roundingmode, (Expr<FpType>) op, type.getExponent(), type.getSignificand());
+            } else if (op.getType() instanceof BvType) {
+                return FpFromBvExpr.of(roundingmode, (Expr<BvType>) op, FpType.of(type.getExponent(), type.getSignificand()), false);
+            } else {
+                throw new Z3Exception("Unsupported:" + op.getType());
+            }
+        });
+        this.environment.put(Tuple2.of("to_fp", 1), (term, model, vars) -> {
+            FpType type = (FpType) transformSort(term.getSort());
+            Expr<BvType> op = (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+            return FpFromBvExpr.of(FpRoundingMode.getDefaultRoundingMode(), op, FpType.of(type.getExponent(), type.getSignificand()), true);
+        });
+        this.environment.put(Tuple2.of("extract", 1), (term, model, vars) -> {
+            Pattern pattern = Pattern.compile("extract ([0-9]+) ([0-9]+)");
+            String termStr = term.toString();
+            Matcher match = pattern.matcher(termStr);
+            if (match.find()) {
+                int to = Integer.parseInt(match.group(1)) + 1;
+                int from = Integer.parseInt(match.group(2));
+                Expr<BvType> op = (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+                return BvExtractExpr.of(op, IntExprs.Int(from), IntExprs.Int(to));
+            } else {
+                throw new Z3Exception("Not supported: " + term);
+            }
+        });
+        this.environment.put(Tuple2.of("zero_extend", 1), (term, model, vars) -> {
+            BvType type = (BvType) transformSort(term.getSort());
+            Expr<BvType> op = (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+            return BvZExtExpr.of(op, BvType.of(type.getSize()));
+        });
+        this.environment.put(Tuple2.of("sign_extend", 1), (term, model, vars) -> {
+            BvType type = (BvType) transformSort(term.getSort());
+            Expr<BvType> op = (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+            return BvSExtExpr.of(op, BvType.of(type.getSize()));
+        });
+        this.environment.put(Tuple2.of("EqZero", 1), (term, model, vars) -> {
+            Expr<?> op = this.transform(term.getArgs()[0], model, vars);
+            return AbstractExprs.Eq(op, TypeUtils.getDefaultValue(op.getType()));
+        });
+        this.environment.put(Tuple2.of("fp", 3), (term, model, vars) -> {
+            Expr<BvType> op1 = (Expr<BvType>) this.transform(term.getArgs()[0], model, vars);
+            Expr<BvType> op2 = (Expr<BvType>) this.transform(term.getArgs()[1], model, vars);
+            Expr<BvType> op3 = (Expr<BvType>) this.transform(term.getArgs()[2], model, vars);
+            return FpLitExpr.of(((BvLitExpr) op1).getValue()[0], (BvLitExpr) op2, (BvLitExpr) op3);
+        });
+        this.environment.put(Tuple2.of("const", 1), (term, model, vars) -> {
+            return this.transform(term.getArgs()[0], model, vars);
+        });
     }
+
+    private void addFunc(String name, Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> func) {
+        checkArgument(!environment.containsKey(Tuple2.of(name, func.get1())), "Duplicate key: " + Tuple2.of(name, func.get1()));
+        environment.put(Tuple2.of(name, func.get1()), func.get2());
+    }
+
 
     public Expr<?> toExpr(final com.microsoft.z3legacy.Expr term) {
         return transform(term, null, new ArrayList<>());
@@ -271,14 +462,24 @@ final class Z3TermTransformer {
         return FpUtils.bigFloatToFpLitExpr(bigFloat, type);
     }
 
+    private Expr<EnumType> transformEnumLit(final com.microsoft.z3legacy.Expr term, final EnumType enumType) {
+        String longName = term.getFuncDecl().getName().toString();
+        String literal = EnumType.getShortName(longName);
+        return EnumLitExpr.of(enumType, literal);
+    }
+
     private Expr<?> transformApp(final com.microsoft.z3legacy.Expr term, final Model model,
                                  final List<Decl<?>> vars) {
 
         final FuncDecl funcDecl = term.getFuncDecl();
         final String symbol = funcDecl.getName().toString();
 
-        if (environment.containsKey(symbol)) {
-            return environment.get(symbol).apply(term, model, vars);
+        final var key1 = Tuple2.of(symbol, term.getArgs().length);
+        final var key2 = Tuple2.of(symbol, -1);
+        if (environment.containsKey(key1)) {
+            return environment.get(key1).apply(term, model, vars);
+        } else if (environment.containsKey(key2)) {
+            return environment.get(key2).apply(term, model, vars);
         } else {
             final Expr<?> funcExpr;
             if (symbolTable.definesSymbol(funcDecl)) {
@@ -470,55 +671,142 @@ final class Z3TermTransformer {
 
     ////
 
-    private TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>> exprNullaryOperator(
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprFpUnaryOperator(
+            final BiFunction<FpRoundingMode, Expr<?>, Expr<?>> function) {
+        return Tuple2.of(2, (term, model, vars) -> {
+            checkArgument(term.getArgs().length == 2, "Number of arguments must be two");
+            final var roundingmode = getRoundingMode(term.getArgs()[0].toString());
+            final Expr<?> op2 = transform(term.getArgs()[1], model, vars);
+            return function.apply(roundingmode, op2);
+        });
+    }
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprFpBinaryOperator(
+            final TriFunction<FpRoundingMode, Expr<?>, Expr<?>, Expr<?>> function) {
+        return Tuple2.of(3, (term, model, vars) -> {
+            checkArgument(term.getArgs().length == 3, "Number of arguments must be three");
+            final var roundingmode = getRoundingMode(term.getArgs()[0].toString());
+            final Expr<?> op1 = transform(term.getArgs()[1], model, vars);
+            final Expr<?> op2 = transform(term.getArgs()[2], model, vars);
+            return function.apply(roundingmode, op1, op2);
+        });
+    }
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprFpMultiaryOperator(
+            final BiFunction<FpRoundingMode, List<Expr<?>>, Expr<?>> function) {
+        return Tuple2.of(-1, (term, model, vars) -> {
+            final var roundingmode = getRoundingMode(term.getArgs()[0].toString());
+            final List<Expr<?>> ops = Arrays.stream(term.getArgs()).skip(1).map(arg -> transform(arg, model, vars))
+                    .collect(toImmutableList());
+            return function.apply(roundingmode, ops);
+        });
+    }
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprFpLitUnaryOperator(
+            final BiFunction<BvLitExpr, FpType, Expr<?>> function) {
+        return Tuple2.of(3, (term, model, vars) -> {
+            final BvLitExpr op1 = (BvLitExpr) transform(term.getArgs()[0], model, vars);
+            final IntLitExpr op2 = (IntLitExpr) transform(term.getArgs()[1], model, vars);
+            final IntLitExpr op3 = (IntLitExpr) transform(term.getArgs()[2], model, vars);
+            return function.apply(op1, FpType.of(op2.getValue().intValue(), op3.getValue().intValue() + 1));
+        });
+    }
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprNullaryOperator(
             final Supplier<Expr<?>> function) {
-        return (term, model, vars) -> {
+        return Tuple2.of(0, (term, model, vars) -> {
             final com.microsoft.z3legacy.Expr[] args = term.getArgs();
             checkArgument(args.length == 0, "Number of arguments must be zero");
             return function.get();
-        };
+        });
     }
 
-    private TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>> exprUnaryOperator(
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprUnaryOperator(
             final UnaryOperator<Expr<?>> function) {
-        return (term, model, vars) -> {
+        return Tuple2.of(1, (term, model, vars) -> {
             final com.microsoft.z3legacy.Expr[] args = term.getArgs();
             checkArgument(args.length == 1, "Number of arguments must be one");
             final Expr<?> op = transform(args[0], model, vars);
             return function.apply(op);
-        };
+        });
     }
 
-    private TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>> exprBinaryOperator(
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprBinaryOperator(
             final BinaryOperator<Expr<?>> function) {
-        return (term, model, vars) -> {
+        return Tuple2.of(2, (term, model, vars) -> {
             final com.microsoft.z3legacy.Expr[] args = term.getArgs();
             checkArgument(args.length == 2, "Number of arguments must be two");
+            if (args[0].getSort().getSortKind().equals(Z3_sort_kind.Z3_DATATYPE_SORT)) {
+                // binary operator is on enum types
+                // if either arg is a literal, we need special handling to get its type
+                // (references' decl kind is Z3_OP_UNINTERPRETED, literals' decl kind is Z3_OP_DT_CONSTRUCTOR)
+                int litIndex = -1;
+                for (int i = 0; i < 2; i++) {
+                    if (args[i].getFuncDecl().getDeclKind().equals(Z3_decl_kind.Z3_OP_DT_CONSTRUCTOR))
+                        litIndex = i;
+                }
+                if (litIndex > -1) {
+                    int refIndex = Math.abs(litIndex - 1);
+                    final Expr<?> refOp = transform(args[refIndex], model, vars);
+                    final Expr<EnumType> litExpr = transformEnumLit(args[litIndex], (EnumType) refOp.getType());
+                    return function.apply(refOp, litExpr);
+                }
+            }
             final Expr<?> op1 = transform(args[0], model, vars);
             final Expr<?> op2 = transform(args[1], model, vars);
             return function.apply(op1, op2);
-        };
+        });
     }
 
-    private TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>> exprTernaryOperator(
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> reference() {
+        return Tuple2.of(1, (term, model, vars) -> {
+            final com.microsoft.z3legacy.Expr[] args = term.getArgs();
+            checkArgument(args.length == 1, "Number of arguments must be one");
+            final Expr<?> op = transform(args[0], model, vars);
+            return Exprs.Reference(op, transformSort(term.getSort()));
+        });
+    }
+
+    private <T extends Type> Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> dereference() {
+        return Tuple2.of(3, (term, model, vars) -> {
+            final com.microsoft.z3legacy.Expr[] args = term.getArgs();
+            checkArgument(args.length == 3, "Number of arguments must be three");
+            final Expr<T> op1 = (Expr<T>) transform(args[0], model, vars);
+            final Expr<T> op2 = (Expr<T>) transform(args[1], model, vars);
+            final Expr<IntType> op3 = (Expr<IntType>) transform(args[2], model, vars);
+            return Exprs.Dereference(op1, op2, transformSort(term.getSort())).withUniquenessExpr(op3);
+        });
+    }
+
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprTernaryOperator(
             final TernaryOperator<Expr<?>> function) {
-        return (term, model, vars) -> {
+        return Tuple2.of(3, (term, model, vars) -> {
             final com.microsoft.z3legacy.Expr[] args = term.getArgs();
             checkArgument(args.length == 3, "Number of arguments must be three");
             final Expr<?> op1 = transform(args[0], model, vars);
             final Expr<?> op2 = transform(args[1], model, vars);
             final Expr<?> op3 = transform(args[2], model, vars);
             return function.apply(op1, op2, op3);
-        };
+        });
     }
 
-    private TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>> exprMultiaryOperator(
+    private Tuple2<Integer, TriFunction<com.microsoft.z3legacy.Expr, Model, List<Decl<?>>, Expr<?>>> exprMultiaryOperator(
             final Function<List<Expr<?>>, Expr<?>> function) {
-        return (term, model, vars) -> {
+        return Tuple2.of(-1, (term, model, vars) -> {
             final com.microsoft.z3legacy.Expr[] args = term.getArgs();
             final List<Expr<?>> ops = Stream.of(args).map(arg -> transform(arg, model, vars))
                     .collect(toImmutableList());
             return function.apply(ops);
+        });
+    }
+
+    private FpRoundingMode getRoundingMode(String s) {
+        return switch (s) {
+            case "roundNearestTiesToAway" -> FpRoundingMode.RNA;
+            case "roundNearestTiesToEven" -> FpRoundingMode.RNE;
+            case "roundTowardZero" -> FpRoundingMode.RTZ;
+            default -> throw new Z3Exception("Unexpected value: " + s);
         };
     }
 

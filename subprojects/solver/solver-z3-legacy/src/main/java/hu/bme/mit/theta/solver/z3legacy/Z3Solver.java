@@ -29,20 +29,14 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.UnknownSolverStatusException;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -287,6 +281,8 @@ final class Z3Solver implements UCSolver, Solver {
                 return extractArrayLiteral(funcDecl);
             } else if (type instanceof BvType) {
                 return extractBvConstLiteral(funcDecl);
+            } else if (type instanceof EnumType) {
+                return extractEnumLiteral(decl, funcDecl);
             } else {
                 return extractConstLiteral(funcDecl);
             }
@@ -310,6 +306,15 @@ final class Z3Solver implements UCSolver, Solver {
                 return null;
             } else {
                 return (BvLitExpr) termTransformer.toExpr(term);
+            }
+        }
+
+        private LitExpr<?> extractEnumLiteral(final ConstDecl<?> constDecl, final FuncDecl funcDecl) {
+            final com.microsoft.z3legacy.Expr term = z3Model.getConstInterp(funcDecl);
+            if (term == null) {
+                return null;
+            } else {
+                return EnumLitExpr.of((EnumType) constDecl.getType(), term.toString());
             }
         }
 

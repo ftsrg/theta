@@ -26,8 +26,11 @@ dependencies {
     implementation(project(":theta-core"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-xsts"))
+    testImplementation(project(":theta-solver-z3"))
     testImplementation(project(":theta-solver-z3-legacy"))
     implementation(kotlin("stdlib-jdk8"))
+    testImplementation(project(":theta-solver-smtlib"))
+    testImplementation(project(":theta-solver-javasmt"))
 }
 repositories {
     mavenCentral()

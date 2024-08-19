@@ -17,7 +17,6 @@ package hu.bme.mit.theta.solver.javasmt;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -28,6 +27,7 @@ import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
@@ -81,6 +81,10 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
@@ -146,6 +150,8 @@ import org.sosy_lab.java_smt.api.BitvectorFormula;
 import org.sosy_lab.java_smt.api.BitvectorFormulaManager;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.BooleanFormulaManager;
+import org.sosy_lab.java_smt.api.EnumerationFormula;
+import org.sosy_lab.java_smt.api.EnumerationFormulaManager;
 import org.sosy_lab.java_smt.api.FloatingPointFormula;
 import org.sosy_lab.java_smt.api.FloatingPointFormulaManager;
 import org.sosy_lab.java_smt.api.FloatingPointRoundingMode;
@@ -168,6 +174,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.ExprUtils.extractFuncAndArgs;
+
 final class JavaSMTExprTransformer {
 
     private static final int CACHE_SIZE = 1000;
@@ -178,6 +188,7 @@ final class JavaSMTExprTransformer {
     private final FloatingPointFormulaManager floatingPointFormulaManager;
     private final QuantifiedFormulaManager quantifiedFormulaManager;
     private final ArrayFormulaManager arrayFormulaManager;
+    private final EnumerationFormulaManager enumFormulaManager;
 
     private final JavaSMTTransformationManager transformer;
     private final JavaSMTSymbolTable symbolTable;
@@ -200,6 +211,7 @@ final class JavaSMTExprTransformer {
         floatingPointFormulaManager = orElseNull(() -> context.getFormulaManager().getFloatingPointFormulaManager());
         quantifiedFormulaManager = orElseNull(() -> context.getFormulaManager().getQuantifiedFormulaManager());
         arrayFormulaManager = orElseNull(() -> context.getFormulaManager().getArrayFormulaManager());
+        enumFormulaManager = orElseNull(() -> context.getFormulaManager().getEnumerationFormulaManager());
 
         exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
@@ -439,6 +451,16 @@ final class JavaSMTExprTransformer {
 
                 .addCase(ArrayInitExpr.class, this::transformArrayInit)
 
+                .addCase(Dereference.class, this::transformDereference)
+
+                // Enums
+
+                .addCase(EnumLitExpr.class, this::transformEnumLit)
+
+                .addCase(EnumNeqExpr.class, this::transformEnumNeq)
+
+                .addCase(EnumEqExpr.class, this::transformEnumEq)
+
                 .build();
     }
 
@@ -448,6 +470,16 @@ final class JavaSMTExprTransformer {
         } catch (UnsupportedOperationException uoe) {
             return null;
         }
+    }
+
+    private static FloatingPointRoundingMode transformRoundingMode(final FpRoundingMode fpRoundingMode) {
+        return switch (fpRoundingMode) {
+            case RNE -> FloatingPointRoundingMode.NEAREST_TIES_TO_EVEN;
+            case RNA -> FloatingPointRoundingMode.NEAREST_TIES_AWAY;
+            case RTP -> FloatingPointRoundingMode.TOWARD_POSITIVE;
+            case RTN -> FloatingPointRoundingMode.TOWARD_NEGATIVE;
+            case RTZ -> FloatingPointRoundingMode.TOWARD_ZERO;
+        };
     }
 
     ////
@@ -551,6 +583,10 @@ final class JavaSMTExprTransformer {
         return result;
     }
 
+    /*
+     * Rationals
+     */
+
     private List<Formula> transformParamDecls(final List<ParamDecl<?>> paramDecls) {
         final List<Formula> paramTerms = new ArrayList<>(paramDecls.size());
         for (final ParamDecl<?> paramDecl : paramDecls) {
@@ -570,10 +606,6 @@ final class JavaSMTExprTransformer {
             return context.getFormulaManager().makeVariable(sort, paramDecl.getName());
         }
     }
-
-    /*
-     * Rationals
-     */
 
     private Formula transformRatLit(final RatLitExpr expr) {
         var num = rationalFormulaManager.makeNumber(expr.getNum().toString());
@@ -648,6 +680,10 @@ final class JavaSMTExprTransformer {
         return rationalFormulaManager.greaterThan(leftOpTerm, rightOpTerm);
     }
 
+    /*
+     * Integers
+     */
+
     private Formula transformRatLeq(final RatLeqExpr expr) {
         final RationalFormula leftOpTerm = (RationalFormula) toTerm(
                 expr.getLeftOp());
@@ -663,10 +699,6 @@ final class JavaSMTExprTransformer {
                 expr.getRightOp());
         return rationalFormulaManager.lessThan(leftOpTerm, rightOpTerm);
     }
-
-    /*
-     * Integers
-     */
 
     private Formula transformRatToInt(final RatToIntExpr expr) {
         return rationalFormulaManager.floor((NumeralFormula) toTerm(expr.getOp()));
@@ -771,6 +803,10 @@ final class JavaSMTExprTransformer {
         return integerFormulaManager.lessOrEquals(leftOpTerm, rightOpTerm);
     }
 
+    /*
+     * Bitvectors
+     */
+
     private Formula transformIntLt(final IntLtExpr expr) {
         final IntegerFormula leftOpTerm = (IntegerFormula) toTerm(
                 expr.getLeftOp());
@@ -782,10 +818,6 @@ final class JavaSMTExprTransformer {
     private Formula transformIntToRat(final IntToRatExpr expr) {
         return rationalFormulaManager.sum(List.of((IntegerFormula) toTerm(expr.getOp())));
     }
-
-    /*
-     * Bitvectors
-     */
 
     private Formula transformBvLit(final BvLitExpr expr) {
         return bitvectorFormulaManager.makeBitvector(
@@ -1012,6 +1044,10 @@ final class JavaSMTExprTransformer {
         return bitvectorFormulaManager.greaterThan(leftOpTerm, rightOpTerm, true);
     }
 
+    /*
+     * Floating points
+     */
+
     private Formula transformBvSLeq(final BvSLeqExpr expr) {
         final BitvectorFormula leftOpTerm = (BitvectorFormula) toTerm(expr.getLeftOp());
         final BitvectorFormula rightOpTerm = (BitvectorFormula) toTerm(expr.getRightOp());
@@ -1025,11 +1061,6 @@ final class JavaSMTExprTransformer {
 
         return bitvectorFormulaManager.lessThan(leftOpTerm, rightOpTerm, true);
     }
-
-    /*
-     * Floating points
-     */
-
 
     private Formula transformFpLit(final FpLitExpr expr) {
         return floatingPointFormulaManager.makeNumber(
@@ -1184,6 +1215,9 @@ final class JavaSMTExprTransformer {
                 expr.getFpType().getSignificand() - 1);
         return floatingPointFormulaManager.castFrom(val, expr.isSigned(), fpSort);
     }
+    /*
+     * Arrays
+     */
 
     private Formula transformFpToBv(final FpToBvExpr expr) {
         final FloatingPointFormula op = (FloatingPointFormula) toTerm(expr.getOp());
@@ -1191,19 +1225,6 @@ final class JavaSMTExprTransformer {
 
         return floatingPointFormulaManager.castTo(op, expr.getSgn(), FormulaType.getBitvectorTypeWithSize(expr.getSize()), roundingMode);
     }
-
-    private static FloatingPointRoundingMode transformRoundingMode(final FpRoundingMode fpRoundingMode) {
-        return switch (fpRoundingMode) {
-            case RNE -> FloatingPointRoundingMode.NEAREST_TIES_TO_EVEN;
-            case RNA -> FloatingPointRoundingMode.NEAREST_TIES_AWAY;
-            case RTP -> FloatingPointRoundingMode.TOWARD_POSITIVE;
-            case RTN -> FloatingPointRoundingMode.TOWARD_NEGATIVE;
-            case RTZ -> FloatingPointRoundingMode.TOWARD_ZERO;
-        };
-    }
-    /*
-     * Arrays
-     */
 
     private Formula transformFpToFp(final FpToFpExpr expr) {
         final FloatingPointFormula op = (FloatingPointFormula) toTerm(expr.getOp());
@@ -1258,6 +1279,11 @@ final class JavaSMTExprTransformer {
         return arr;
     }
 
+
+    /*
+     * Functions
+     */
+
     private <TI extends Formula, TE extends Formula> Formula transformArrayInit(final ArrayInitExpr<?, ?> expr) {
         final TE elseElem = (TE) toTerm(expr.getElseElem());
         final FormulaType<TE> elemType = (FormulaType<TE>) transformer.toSort(expr.getType().getElemType());
@@ -1273,11 +1299,6 @@ final class JavaSMTExprTransformer {
         }
         return arr;
     }
-
-
-    /*
-     * Functions
-     */
 
     private Formula transformFuncApp(final FuncAppExpr<?, ?> expr) {
         final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
@@ -1312,21 +1333,35 @@ final class JavaSMTExprTransformer {
         }
     }
 
-    private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
-        final Expr<?> func = expr.getFunc();
-        final Expr<?> arg = expr.getParam();
-        if (func instanceof FuncAppExpr) {
-            final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
-            final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
-            final Expr<?> resFunc = funcAndArgs.get1();
-            final List<Expr<?>> args = funcAndArgs.get2();
-            final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg)
-                    .build();
-            return Tuple2.of(resFunc, resArgs);
-        } else {
-            return Tuple2.of(func, ImmutableList.of(arg));
-        }
+    private Formula transformDereference(final Dereference<?, ?, ?> expr) {
+        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        final var sort = transformer.toSort(expr.getArray().getType());
+        final var sortName = expr.getArray().getType().toString() + "-" + expr.getType().toString();
+        final var constSort = transformer.toSort(Int());
+        final var funcDecl = context.getFormulaManager().getUFManager().declareUF(
+                "deref-" + sortName.replaceAll(" ", "_"),
+                transformer.toSort(expr.getType()),
+                List.of(sort, sort, constSort));
+
+        final var func = context.getFormulaManager().getUFManager()
+                .callUF(funcDecl, toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
+        return func;
     }
+
+    // Enums
+
+    private Formula transformEnumEq(EnumEqExpr enumEqExpr) {
+        return enumFormulaManager.equivalence((EnumerationFormula) toTerm(enumEqExpr.getLeftOp()), (EnumerationFormula) toTerm(enumEqExpr.getRightOp()));
+    }
+
+    private Formula transformEnumLit(EnumLitExpr enumLitExpr) {
+        return enumFormulaManager.makeConstant(EnumType.makeLongName(enumLitExpr.getType(), enumLitExpr.getValue()), (FormulaType.EnumerationFormulaType) transformer.toSort(enumLitExpr.getType()));
+    }
+
+    private Formula transformEnumNeq(EnumNeqExpr enumNeqExpr) {
+        return booleanFormulaManager.not(enumFormulaManager.equivalence((EnumerationFormula) toTerm(enumNeqExpr.getLeftOp()), (EnumerationFormula) toTerm(enumNeqExpr.getRightOp())));
+    }
+
 
     public void reset() {
         exprToTerm.invalidateAll();

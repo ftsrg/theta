@@ -42,4 +42,13 @@ public interface SolverFactory {
      */
     ItpSolver createItpSolver();
 
+    /**
+     * Create a solver that is capable of horn solving (CHC).
+     *
+     * @return Solver instance
+     */
+    default HornSolver createHornSolver() {
+        throw new UnsupportedOperationException();
+    }
+
 }

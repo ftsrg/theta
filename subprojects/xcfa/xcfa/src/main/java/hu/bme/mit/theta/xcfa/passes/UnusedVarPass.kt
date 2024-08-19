@@ -19,40 +19,74 @@ package hu.bme.mit.theta.xcfa.passes
 import com.google.common.collect.Sets
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.frontend.ParseContext
-import hu.bme.mit.theta.xcfa.collectVars
-import hu.bme.mit.theta.xcfa.model.XcfaProcedureBuilder
+import hu.bme.mit.theta.core.stmt.AssignStmt
+import hu.bme.mit.theta.core.stmt.HavocStmt
+import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
+import hu.bme.mit.theta.xcfa.isRead
+import hu.bme.mit.theta.xcfa.model.*
 
 /**
  * Remove unused variables from the program.
  * Requires the ProcedureBuilder to be `deterministic` (@see DeterministicPass)
  */
-class UnusedVarPass(val parseContext: ParseContext, val uniqueWarningLogger: Logger) : ProcedurePass {
+class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         checkNotNull(builder.metaData["deterministic"])
 
         val usedVars = LinkedHashSet<VarDecl<*>>()
-        builder.getEdges().forEach { usedVars.addAll(it.label.collectVars()) }
 
-        val allVars = Sets.union(builder.getVars(),
-            builder.parent.getVars().map { it.wrappedVar }.toSet())
+        var edges = LinkedHashSet(builder.parent.getProcedures().flatMap { it.getEdges() })
+        lateinit var lastEdges: Set<XcfaEdge>
+        do {
+            lastEdges = edges
+
+            usedVars.clear()
+            edges.forEach { edge ->
+                usedVars.addAll(edge.label.collectVarsWithAccessType().filter { it.value.isRead }.map { it.key })
+            }
+
+            builder.parent.getProcedures().forEach { b ->
+                b.getEdges().toList().forEach { edge ->
+                    val newLabel = edge.label.removeUnusedWrites(usedVars)
+                    if (newLabel != edge.label) {
+                        b.removeEdge(edge)
+                        b.addEdge(edge.withLabel(newLabel))
+                    }
+                }
+            }
+
+            edges = LinkedHashSet(builder.parent.getProcedures().flatMap { it.getEdges() })
+        } while (lastEdges != edges)
+
+        val allVars = Sets.union(builder.getVars(), builder.parent.getVars().map { it.wrappedVar }.toSet())
         val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
         if (!varsAndParams.containsAll(usedVars)) {
             uniqueWarningLogger.write(Logger.Level.INFO,
                 "WARNING: There are some used variables not present as declarations: " +
-                    "${
-                        usedVars.filter {
-                            !varsAndParams.contains(it)
-                        }
-                    }\n")
+                    "${usedVars.filter { it !in varsAndParams }}\n")
         }
 
-        val list = builder.getVars().filter { !usedVars.contains(it) }.toList()
-        list.forEach {
-            builder.removeVar(it)
-        }
+        builder.getVars().filter { it !in usedVars }.forEach { builder.removeVar(it) }
 
         return builder
+    }
+
+    private fun XcfaLabel.removeUnusedWrites(usedVars: Set<VarDecl<*>>): XcfaLabel {
+        return when (this) {
+            is SequenceLabel ->
+                SequenceLabel(labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel })
+
+            is NondetLabel ->
+                NondetLabel(labels.map { it.removeUnusedWrites(usedVars) }.filter { it !is NopLabel }.toSet())
+
+            is StmtLabel -> when (stmt) {
+                is AssignStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel
+                is HavocStmt<*> -> if (stmt.varDecl in usedVars) this else NopLabel
+                else -> this
+            }
+
+            else -> this
+        }
     }
 }
