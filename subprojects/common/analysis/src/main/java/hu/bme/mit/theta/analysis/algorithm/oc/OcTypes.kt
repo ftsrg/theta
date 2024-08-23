@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
 
 /**
  * Important! Empty collection is converted to true (not false).
@@ -94,3 +95,46 @@ data class Relation<E : Event>(
 
     fun interferesWith(w: E): Boolean = w.type == EventType.WRITE && w.sameMemory(from)
 }
+
+/**
+ * Reason(s) of an enabled relation.
+ */
+sealed class Reason {
+
+    open val reasons: List<Reason> get() = listOf(this)
+    val exprs: List<Expr<BoolType>> get() = toExprs()
+    val expr: Expr<BoolType> get() = exprs.toAnd()
+    infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
+    open fun toExprs(): List<Expr<BoolType>> = reasons.map { it.toExprs() }.flatten().filter { it !is TrueExpr }
+    override fun hashCode(): Int = exprs.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Reason) return false
+        if (exprs != other.exprs) return false
+        return true
+    }
+}
+
+class CombinedReason(override val reasons: List<Reason>) : Reason()
+
+object PoReason : Reason() {
+
+    override val reasons get() = emptyList<Reason>()
+    override fun toExprs(): List<Expr<BoolType>> = listOf()
+}
+
+class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
+
+    override fun toExprs(): List<Expr<BoolType>> = listOf(relation.declRef)
+}
+
+sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: E, private val wRfRelation: Reason) : Reason() {
+
+    override fun toExprs(): List<Expr<BoolType>> = listOf(rf.declRef, w.guardExpr) + wRfRelation.toExprs()
+}
+
+class WriteSerializationReason<E : Event>(rf: Relation<E>, w: E, wBeforeRf: Reason) :
+    DerivedReason<E>(rf, w, wBeforeRf)
+
+class FromReadReason<E : Event>(rf: Relation<E>, w: E, wAfterRf: Reason) :
+    DerivedReason<E>(rf, w, wAfterRf)
