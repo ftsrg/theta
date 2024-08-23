@@ -121,6 +121,7 @@ internal data class Thread(
     val startEvent: XcfaEvent? = null,
     val startHistory: List<String> = listOf(),
     val lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
+    val joinEvents: MutableSet<XcfaEvent> = mutableSetOf(),
     val pid: Int = uniqueId(),
 ) {
 
