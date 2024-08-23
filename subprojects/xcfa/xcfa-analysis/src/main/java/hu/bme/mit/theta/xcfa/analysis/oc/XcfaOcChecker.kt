@@ -16,7 +16,6 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
-import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
@@ -26,7 +25,10 @@ import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.core.decl.*
+import hu.bme.mit.theta.core.decl.ConstDecl
+import hu.bme.mit.theta.core.decl.Decls
+import hu.bme.mit.theta.core.decl.IndexedConstDecl
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.stmt.AssignStmt
 import hu.bme.mit.theta.core.stmt.AssumeStmt
 import hu.bme.mit.theta.core.stmt.HavocStmt
@@ -42,9 +44,9 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs.Int
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
-import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
+import hu.bme.mit.theta.xcfa.*
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
@@ -52,7 +54,6 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import hu.bme.mit.theta.xcfa.references
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -313,7 +314,6 @@ class XcfaOcChecker(
                                 thread.finalEvents.forEach { final -> po(final, joinEvent) }
                                 lastEvents.add(joinEvent)
                                 joinGuards.add(guard)
-                                thread.joinEvents.add(joinEvent)
                             } ?: error("Thread started in a different thread: not supported by OC checker")
                                 guard = joinGuards.toOrInSet()
                                 last = lastEvents
