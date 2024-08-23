@@ -97,6 +97,9 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--lbe"], description = "Level of LBE (NO_LBE, LBE_LOCAL, LBE_SEQ, LBE_FULL)")
     var lbeLevel: LbePass.LbeLevel = LbePass.LbeLevel.LBE_SEQ,
 
+    @Parameter(names = ["--static-coi"], description = "Enable static cone-of-influence")
+    var staticCoi: Boolean = false,
+
     @Parameter(names = ["--unroll"],
         description = "Max number of loop iterations to unroll (use -1 to unroll completely when possible)")
     var loopUnroll: Int = 1000,
@@ -104,6 +107,10 @@ data class FrontendConfig<T : SpecFrontendConfig>(
     @Parameter(names = ["--force-unroll"],
         description = "Number of loop iteration to unroll even if the number of iterations is unknown; in case of such a bounded loop unrolling, the safety result cannot be safe (use -1 to disable)")
     var forceUnroll: Int = -1,
+
+    @Parameter(names = ["--enable-few"],
+        description = "Enable the FetchExecuteWriteback pass, which introduces a local temp var for all memory accesses")
+    var enableFew: Boolean = false,
 
     @Parameter(names = ["--input-type"], description = "Format of the input")
     var inputType: InputType = InputType.C,
@@ -126,6 +133,9 @@ data class FrontendConfig<T : SpecFrontendConfig>(
 data class CFrontendConfig(
     @Parameter(names = ["--arithmetic"], description = "Arithmetic type (efficient, bitvector, integer)")
     var arithmetic: ArchitectureConfig.ArithmeticType = ArchitectureConfig.ArithmeticType.efficient,
+
+    @Parameter(names = ["--architecture"], description = "Architecture (see https://unix.org/whitepapers/64bit.html)")
+    var architecture: ArchitectureConfig.ArchitectureType = ArchitectureConfig.ArchitectureType.LP64,
 ) : SpecFrontendConfig
 
 data class CHCFrontendConfig(
@@ -176,8 +186,8 @@ data class CegarConfig(
     @Parameter(names = ["--coi"], description = "Enable ConeOfInfluence")
     var coi: ConeOfInfluenceMode = ConeOfInfluenceMode.NO_COI,
 
-    @Parameter(names = ["--cex-monitor"], description = "Option to enable CexMonitor")
-    var cexMonitor: CexMonitorOptions = CexMonitorOptions.DISABLE,
+    @Parameter(names = ["--cex-monitor"], description = "Option to enable(CHECK)/disable(DISABLE) the CexMonitor")
+    var cexMonitor: CexMonitorOptions = CexMonitorOptions.CHECK,
 
     val abstractorConfig: CegarAbstractorConfig = CegarAbstractorConfig(),
     val refinerConfig: CegarRefinerConfig = CegarRefinerConfig()
@@ -208,6 +218,10 @@ data class CegarAbstractorConfig(
 
     @Parameter(names = ["--search"], description = "Search strategy")
     var search: Search = Search.ERR,
+
+    @Parameter(names = ["--havoc-memory"],
+        description = "HAVOC memory model (do not track pointers in transition function)")
+    var havocMemory: Boolean = false
 ) : Config
 
 data class CegarRefinerConfig(

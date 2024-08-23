@@ -437,7 +437,7 @@ public final class ExprSimplifier {
         return expr.with(cond, then, elze);
     }
 
-    private Expr<?> simplifyDereference(final Dereference<?, ?> expr, final Valuation val) {
+    private Expr<?> simplifyDereference(final Dereference<?, ?, ?> expr, final Valuation val) {
         return expr.map(it -> simplify(it, val));
     }
 
@@ -1955,6 +1955,7 @@ public final class ExprSimplifier {
     }
 
     private Expr<FpType> simplifyFpMul(final FpMulExpr expr, final Valuation val) {
+        if (true) return expr; // Rationale: https://github.com/ftsrg/theta/issues/180
         final List<Expr<FpType>> ops = new ArrayList<>();
 
         for (final Expr<FpType> op : expr.getOps()) {
@@ -2005,12 +2006,6 @@ public final class ExprSimplifier {
             final FpLitExpr leftLit = (FpLitExpr) leftOp;
             final FpLitExpr rightLit = (FpLitExpr) rightOp;
             return leftLit.div(expr.getRoundingMode(), rightLit);
-        }
-
-        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
-            if (leftOp.equals(rightOp)) {
-                return FpUtils.bigFloatToFpLitExpr(new BigFloat(1.0f, FpUtils.getMathContext(expr.getType(), expr.getRoundingMode())), expr.getType());
-            }
         }
 
         return expr.with(leftOp, rightOp);

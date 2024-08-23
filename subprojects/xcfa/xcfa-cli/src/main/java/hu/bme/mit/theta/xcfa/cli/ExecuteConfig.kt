@@ -25,11 +25,13 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer
 import hu.bme.mit.theta.c2xcfa.CMetaData
 import hu.bme.mit.theta.cat.dsl.CatDslManager
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.logging.Logger.Level.INFO
 import hu.bme.mit.theta.common.logging.Logger.Level.RESULT
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
@@ -52,8 +54,10 @@ import hu.bme.mit.theta.xcfa.getFlatLabels
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.model.XcfaLabel
 import hu.bme.mit.theta.xcfa.model.toDot
+import hu.bme.mit.theta.xcfa.passes.FetchExecuteWriteback
 import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
+import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -84,6 +88,7 @@ fun runConfig(
 private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger) {
     config.inputConfig.property = determineProperty(config, logger)
     LbePass.level = config.frontendConfig.lbeLevel
+    StaticCoiPass.enabled = config.frontendConfig.staticCoi
     if (config.backendConfig.backend == Backend.CEGAR) {
         val cegarConfig = config.backendConfig.specConfig
         cegarConfig as CegarConfig
@@ -98,6 +103,7 @@ private fun propagateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniq
 
     LoopUnrollPass.UNROLL_LIMIT = config.frontendConfig.loopUnroll
     LoopUnrollPass.FORCE_UNROLL_LIMIT = config.frontendConfig.forceUnroll
+    FetchExecuteWriteback.enabled = config.frontendConfig.enableFew
     ARGWebDebugger.on = config.debugConfig.argdebug
 }
 
@@ -118,7 +124,9 @@ private fun validateInputOptions(config: XcfaConfig<*, *>, logger: Logger, uniqu
     rule("SensibleLoopUnrollLimits") {
         config.frontendConfig.loopUnroll != -1 && config.frontendConfig.loopUnroll < config.frontendConfig.forceUnroll
     }
-    // TODO add more validation options
+    rule("NoPredSplitUntilFixed(https://github.com/ftsrg/theta/issues/267)") {
+        (config.backendConfig.specConfig as? CegarConfig)?.abstractorConfig?.domain == Domain.PRED_SPLIT
+    }
 }
 
 fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Triple<XCFA, MCM, ParseContext> {
@@ -143,6 +151,7 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
         val cConfig = config.frontendConfig.specConfig
         cConfig as CFrontendConfig
         parseContext.arithmetic = cConfig.arithmetic
+        parseContext.architecture = cConfig.architecture
     }
 
     val xcfa = getXcfa(config, parseContext, logger, uniqueLogger)
@@ -155,13 +164,21 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
 
     ConeOfInfluence = if (parseContext.multiThreading) XcfaCoiMultiThread(xcfa) else XcfaCoiSingleThread(xcfa)
 
+    if (parseContext.multiThreading && (config.backendConfig.specConfig as? CegarConfig)?.let { it.abstractorConfig.search == Search.ERR } == true) {
+        val cConfig = config.backendConfig.specConfig as CegarConfig
+        cConfig.abstractorConfig.search = Search.DFS
+        uniqueLogger.write(INFO, "Multithreaded program found, using DFS instead of ERR.")
+    }
+
     logger.write(
         Logger.Level.INFO, "Frontend finished: ${xcfa.name}  (in ${
-            stopwatch.elapsed(TimeUnit.MILLISECONDS)
-        } ms)\n"
+        stopwatch.elapsed(TimeUnit.MILLISECONDS)
+    } ms)\n"
     )
 
     logger.write(RESULT, "ParsingResult Success\n")
+    logger.write(RESULT,
+        "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n")
 
     return Triple(xcfa, mcm, parseContext)
 }
@@ -205,8 +222,8 @@ private fun backend(
 
             logger.write(
                 Logger.Level.INFO, "Backend finished (in ${
-                    stopwatch.elapsed(TimeUnit.MILLISECONDS)
-                } ms)\n"
+                stopwatch.elapsed(TimeUnit.MILLISECONDS)
+            } ms)\n"
             )
 
             logger.write(RESULT, result.toString() + "\n")
@@ -285,7 +302,7 @@ private fun postVerificationLogging(
             if (!config.outputConfig.witnessConfig.disable) {
                 if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
                     val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                        safetyResult.asUnsafe().trace as Trace<XcfaState<*>, XcfaAction>?,
+                        safetyResult.asUnsafe().trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
                         getSolver(
                             config.outputConfig.witnessConfig.concretizerSolver,
                             config.outputConfig.witnessConfig.validateConcretizerSolver

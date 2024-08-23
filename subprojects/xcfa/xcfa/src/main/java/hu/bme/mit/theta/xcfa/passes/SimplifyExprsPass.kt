@@ -22,7 +22,9 @@ import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.stmt.Stmts.Assume
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.False
 import hu.bme.mit.theta.frontend.ParseContext
+import hu.bme.mit.theta.xcfa.collectVarsWithAccessType
 import hu.bme.mit.theta.xcfa.getFlatLabels
+import hu.bme.mit.theta.xcfa.isWritten
 import hu.bme.mit.theta.xcfa.model.SequenceLabel
 import hu.bme.mit.theta.xcfa.model.StmtLabel
 import hu.bme.mit.theta.xcfa.model.XcfaEdge
@@ -43,6 +45,25 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val unusedLocRemovalPass = UnusedLocRemovalPass()
         val valuations = LinkedHashMap<XcfaEdge, Valuation>()
         var edges = LinkedHashSet(builder.getEdges())
+        val constValuation = MutableValuation()
+        val modifiedGlobalVars = builder.parent.getVars().map { it.wrappedVar }.filter { v ->
+            var firstWrite: XcfaEdge? = null
+            (builder.parent.getProcedures().sumOf { p ->
+                p.getEdges().count { e ->
+                    e.getFlatLabels().any { l ->
+                        l.collectVarsWithAccessType().any { it.value.isWritten && it.key == v }
+                    }.also { written ->
+                        if (written && firstWrite == null) firstWrite = e
+                    }
+                }
+            } > 1).also { modified ->
+                if (!modified && firstWrite != null) {
+                    val valuation = MutableValuation()
+                    firstWrite!!.getFlatLabels().forEach { it.simplify(valuation, parseContext) }
+                    valuation.toMap()[v]?.let { constValuation.put(v, it) }
+                }
+            }
+        }
         lateinit var lastEdges: LinkedHashSet<XcfaEdge>
         do {
             lastEdges = edges
@@ -57,11 +78,12 @@ class SimplifyExprsPass(val parseContext: ParseContext) : ProcedurePass {
                     .filter { it.getFlatLabels().none { l -> l is StmtLabel && l.stmt == Assume(False()) } }
                     .map(valuations::get).reduceOrNull(this::intersect)
                 val localValuation = MutableValuation.copyOf(incomingValuations ?: ImmutableValuation.empty())
+                localValuation.putAll(constValuation)
                 val oldLabels = edge.getFlatLabels()
                 val newLabels = oldLabels.map { it.simplify(localValuation, parseContext) }
 
                 // note that global variable values are still propagated within an edge (XcfaEdge is considered atomic)
-                builder.parent.getVars().forEach { localValuation.remove(it.wrappedVar) }
+                modifiedGlobalVars.forEach { localValuation.remove(it) }
 
                 if (newLabels != oldLabels) {
                     builder.removeEdge(edge)

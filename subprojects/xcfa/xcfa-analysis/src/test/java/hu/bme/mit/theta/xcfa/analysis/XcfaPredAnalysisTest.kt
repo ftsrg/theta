@@ -24,6 +24,10 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
 import hu.bme.mit.theta.analysis.expr.refinement.*
 import hu.bme.mit.theta.analysis.pred.*
+import hu.bme.mit.theta.analysis.ptr.ItpRefToPtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.getPtrPartialOrd
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.c2xcfa.getXcfaFromC
 import hu.bme.mit.theta.common.logging.ConsoleLogger
@@ -74,7 +78,8 @@ class XcfaPredAnalysisTest {
             xcfa,
             solver,
             PredAbstractors.cartesianAbstractor(solver),
-            getPartialOrder(PredOrd.create(solver))
+            getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()),
+            false
         )
 
         val lts = getXcfaLts()
@@ -82,25 +87,25 @@ class XcfaPredAnalysisTest {
         val abstractor = getXcfaAbstractor(analysis,
             PriorityWaitlist.create(
                 ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
-            StopCriterions.firstCex<XcfaState<PredState>, XcfaAction>(),
+            StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(
-            ItpRefToPredPrec(ExprSplitters.whole()))
+        val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<PredState>>, PredPrec, ItpRefutation>(
+            ItpRefToPtrPrec(ItpRefToPredPrec(ExprSplitters.whole())))
 
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PredPrec.of()))
+        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
 
 
@@ -120,7 +125,7 @@ class XcfaPredAnalysisTest {
             xcfa,
             solver,
             PredAbstractors.cartesianAbstractor(solver),
-            getPartialOrder(PredOrd.create(solver))
+            getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()), false
         )
 
         val lts = XcfaSporLts(xcfa)
@@ -128,25 +133,25 @@ class XcfaPredAnalysisTest {
         val abstractor = getXcfaAbstractor(analysis,
             PriorityWaitlist.create(
                 ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
-            StopCriterions.firstCex<XcfaState<PredState>, XcfaAction>(),
+            StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(
-            ItpRefToPredPrec(ExprSplitters.whole()))
+        val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<PredState>>, PredPrec, ItpRefutation>(
+            ItpRefToPtrPrec(ItpRefToPredPrec(ExprSplitters.whole())))
 
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PredPrec.of()))
+        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
 
 
@@ -167,32 +172,33 @@ class XcfaPredAnalysisTest {
             xcfa,
             solver,
             PredAbstractors.cartesianAbstractor(solver),
-            XcfaDporLts.getPartialOrder(getPartialOrder(PredOrd.create(solver)))
+            XcfaDporLts.getPartialOrder(getPartialOrder(PredOrd.create(solver).getPtrPartialOrd())), false
         )
 
         val lts = XcfaDporLts(xcfa)
 
         val abstractor = getXcfaAbstractor(analysis,
             lts.waitlist,
-            StopCriterions.firstCex<XcfaState<PredState>, XcfaAction>(),
+            StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-        val precRefiner = XcfaPrecRefiner<XcfaState<PredState>, PredPrec, ItpRefutation>(
-            ItpRefToPredPrec(ExprSplitters.whole()))
+        val precRefiner = XcfaPrecRefiner<XcfaState<PtrState<PredState>>, PredPrec, ItpRefutation>(
+            ItpRefToPtrPrec(ItpRefToPredPrec(ExprSplitters.whole())))
 
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
-                ConsoleLogger(Logger.Level.DETAIL)) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+                ConsoleLogger(
+                    Logger.Level.DETAIL)) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PredPrec.of()))
+        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
 
 
@@ -212,7 +218,7 @@ class XcfaPredAnalysisTest {
             xcfa,
             solver,
             PredAbstractors.cartesianAbstractor(solver),
-            getPartialOrder(PredOrd.create(solver))
+            getPartialOrder(PredOrd.create(solver).getPtrPartialOrd()), false
         )
 
         val lts = XcfaAasporLts(xcfa, mutableMapOf())
@@ -220,25 +226,26 @@ class XcfaPredAnalysisTest {
         val abstractor = getXcfaAbstractor(analysis,
             PriorityWaitlist.create(
                 ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
-            StopCriterions.firstCex<XcfaState<PredState>, XcfaAction>(),
+            StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-        val precRefiner = XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(ExprSplitters.whole()))
-        val atomicNodePruner = AtomicNodePruner<XcfaState<PredState>, XcfaAction>()
+        val precRefiner = XcfaPrecRefiner<PtrState<PredState>, PredPrec, ItpRefutation>(
+            ItpRefToPtrPrec(ItpRefToPredPrec(ExprSplitters.whole())))
+        val atomicNodePruner = AtomicNodePruner<XcfaState<PtrState<PredState>>, XcfaAction>()
 
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL, NullLogger.getInstance(),
-                atomicNodePruner) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+                atomicNodePruner) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, AasporRefiner.create(refiner, PruneStrategy.FULL, mutableMapOf()))
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PredPrec.of()))
+        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
 
 
@@ -259,31 +266,32 @@ class XcfaPredAnalysisTest {
             xcfa,
             solver,
             PredAbstractors.cartesianAbstractor(solver),
-            XcfaDporLts.getPartialOrder(getPartialOrder(PredOrd.create(solver)))
+            XcfaDporLts.getPartialOrder(getPartialOrder(PredOrd.create(solver).getPtrPartialOrd())), false
         )
 
         val lts = XcfaAadporLts(xcfa)
 
         val abstractor = getXcfaAbstractor(analysis,
             lts.waitlist,
-            StopCriterions.firstCex<XcfaState<PredState>, XcfaAction>(),
+            StopCriterions.firstCex<XcfaState<PtrState<PredState>>, XcfaAction>(),
             ConsoleLogger(Logger.Level.DETAIL),
             lts,
-            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+            ErrorDetection.ERROR_LOCATION) as Abstractor<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
-        val precRefiner = XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(ItpRefToPredPrec(ExprSplitters.whole()))
+        val precRefiner = XcfaPrecRefiner<PredState, PredPrec, ItpRefutation>(
+            ItpRefToPtrPrec(ItpRefToPredPrec(ExprSplitters.whole())))
 
         val refiner =
             XcfaSingleExprTraceRefiner.create(
                 ExprTraceBwBinItpChecker.create(BoolExprs.True(), BoolExprs.True(),
                     Z3LegacySolverFactory.getInstance().createItpSolver()),
                 precRefiner, PruneStrategy.FULL,
-                NullLogger.getInstance()) as Refiner<XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>>
+                NullLogger.getInstance()) as Refiner<XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>>
 
         val cegarChecker =
             CegarChecker.create(abstractor, refiner)
 
-        val safetyResult = cegarChecker.check(XcfaPrec(PredPrec.of()))
+        val safetyResult = cegarChecker.check(XcfaPrec(PtrPrec(PredPrec.of(), emptySet())))
 
 
 

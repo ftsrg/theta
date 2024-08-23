@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -32,14 +33,14 @@ fun getOcChecker(
     xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
     logger: Logger
-): SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+): SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<*>> {
     val ocConfig = config.backendConfig.specConfig as OcConfig
     val ocChecker = XcfaOcChecker(
         xcfa, ocConfig.decisionProcedure, logger, ocConfig.inputConflictClauseFile, ocConfig.outputConflictClauseFile,
         ocConfig.nonPermissiveValidation
     )
-    return object : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
-        override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<*>, XcfaAction> = check()
-        override fun check(): SafetyResult<XcfaState<*>, XcfaAction> = ocChecker.check()
+    return object : SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<*>> {
+        override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<out PtrState<*>>, XcfaAction> = check()
+        override fun check(): SafetyResult<XcfaState<out PtrState<*>>, XcfaAction> = ocChecker.check()
     }
 }

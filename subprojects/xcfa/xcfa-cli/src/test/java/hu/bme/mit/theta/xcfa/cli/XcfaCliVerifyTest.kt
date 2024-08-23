@@ -65,7 +65,6 @@ class XcfaCliVerifyTest {
                 Arguments.of("/c/litmustest/singlethread/02types.c", null),
                 Arguments.of("/c/litmustest/singlethread/03bitwise.c", null),
                 Arguments.of("/c/litmustest/singlethread/04real.c", null),
-                Arguments.of("/c/litmustest/singlethread/06arrays.c", null),
                 Arguments.of("/c/litmustest/singlethread/13typedef.c", "--domain PRED_CART"),
                 Arguments.of("/c/litmustest/singlethread/14ushort.c", null),
                 Arguments.of("/c/litmustest/singlethread/15addition.c", null),

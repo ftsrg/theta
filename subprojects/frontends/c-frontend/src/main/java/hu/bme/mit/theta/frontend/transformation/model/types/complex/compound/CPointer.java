@@ -19,7 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.complex.compound;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cint.CUnsignedInt;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.clong.CUnsignedLong;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 
 public class CPointer extends CInteger {
@@ -51,6 +51,6 @@ public class CPointer extends CInteger {
 
     @Override
     public String getTypeName() {
-        return new CUnsignedInt(null, parseContext).getTypeName();
+        return new CUnsignedLong(null, parseContext).getTypeName();
     }
 }

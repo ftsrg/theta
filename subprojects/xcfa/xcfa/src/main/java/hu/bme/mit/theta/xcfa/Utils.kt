@@ -16,17 +16,21 @@
 
 package hu.bme.mit.theta.xcfa
 
+import com.google.common.base.Preconditions.checkState
+import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.dsl.Env
 import hu.bme.mit.theta.common.dsl.Symbol
 import hu.bme.mit.theta.common.dsl.SymbolTable
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.MutableValuation
-import hu.bme.mit.theta.core.stmt.AssignStmt
-import hu.bme.mit.theta.core.stmt.AssumeStmt
-import hu.bme.mit.theta.core.stmt.HavocStmt
-import hu.bme.mit.theta.core.stmt.MemoryAssignStmt
+import hu.bme.mit.theta.core.model.Valuation
+import hu.bme.mit.theta.core.stmt.*
+import hu.bme.mit.theta.core.stmt.Stmts.Assign
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.NullaryExpr
+import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.core.type.abstracttype.ModExpr
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr
 import hu.bme.mit.theta.core.type.anytype.Dereference
 import hu.bme.mit.theta.core.type.anytype.RefExpr
@@ -35,6 +39,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.StmtSimplifier
 import hu.bme.mit.theta.core.utils.StmtUtils
+import hu.bme.mit.theta.core.utils.TypeUtils.cast
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType
 import hu.bme.mit.theta.xcfa.model.*
@@ -107,7 +112,7 @@ fun XcfaLabel.collectVars(): Iterable<VarDecl<*>> = when (this) {
 // Complex var access requests
 
 typealias AccessType = Pair<Boolean, Boolean>
-private typealias VarAccessMap = Map<VarDecl<*>, AccessType>
+typealias VarAccessMap = Map<VarDecl<*>, AccessType>
 
 val AccessType?.isRead get() = this?.first == true
 val AccessType?.isWritten get() = this?.second == true
@@ -189,17 +194,15 @@ fun XcfaLabel.collectVarsWithAccessType(): VarAccessMap = when (this) {
         when (stmt) {
             is HavocStmt<*> -> mapOf(stmt.varDecl to WRITE)
             is AssignStmt<*> -> ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(stmt.varDecl to WRITE)
-            is MemoryAssignStmt<*, *> -> {
+            is MemoryAssignStmt<*, *, *> -> {
                 var expr: Expr<*> = stmt.deref
-                while (expr is Dereference<*, *>) {
+                while (expr is Dereference<*, *, *>) {
                     expr = expr.array
                 }
-                if (expr is RefExpr<*>) {
-                    ExprUtils.getVars(stmt.expr).associateWith { READ } + mapOf(expr.decl as VarDecl<*> to WRITE)
-                } else if (expr is LitExpr<*>) {
-                    ExprUtils.getVars(stmt.expr).associateWith { READ }
-                } else {
-                    error("MemoryAssignStmts's dereferences should only contain refs or lits")
+                ExprUtils.getVars(stmt.expr).associateWith { READ } + when (expr) {
+                    is RefExpr<*> -> mapOf(expr.decl as VarDecl<*> to READ) // the memory address is read, not written
+                    is LitExpr<*> -> mapOf()
+                    else -> error("MemoryAssignStmts's dereferences should only contain refs or lits")
                 }
             }
 
@@ -382,6 +385,7 @@ val XcfaLabel.references: List<Reference<*, *>>
         is StmtLabel -> when (stmt) {
             is AssumeStmt -> stmt.cond.references
             is AssignStmt<*> -> stmt.expr.references
+            is MemoryAssignStmt<*, *, *> -> stmt.deref.references + stmt.expr.references
             else -> emptyList()
         }
 
@@ -394,20 +398,14 @@ val XcfaLabel.references: List<Reference<*, *>>
 
 val Expr<*>.references: List<Reference<*, *>>
     get() = if (this is Reference<*, *>) {
-        listOf(this)
+        listOf(this) + this.ops.flatMap { it.references }
     } else {
         ops.flatMap { it.references }
     }
 
-val XcfaLabel.dereferences: List<Dereference<*, *>>
+val XcfaLabel.dereferences: List<Dereference<*, *, *>>
     get() = when (this) {
-        is StmtLabel -> when (stmt) {
-            is AssumeStmt -> stmt.cond.dereferences
-            is AssignStmt<*> -> stmt.expr.dereferences
-            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences + listOf(stmt.deref)
-            else -> emptyList()
-        }
-
+        is StmtLabel -> stmt.dereferences
         is InvokeLabel -> params.flatMap { it.dereferences }
         is NondetLabel -> labels.flatMap { it.dereferences }
         is SequenceLabel -> labels.flatMap { it.dereferences }
@@ -415,34 +413,45 @@ val XcfaLabel.dereferences: List<Dereference<*, *>>
         else -> emptyList()
     }
 
-val Expr<*>.dereferences: List<Dereference<*, *>>
-    get() = if (this is Dereference<*, *>) {
-        listOf(this)
+val Stmt.dereferences: List<Dereference<*, *, *>>
+    get() = when (this) {
+        is AssumeStmt -> cond.dereferences
+        is AssignStmt<*> -> expr.dereferences
+        is MemoryAssignStmt<*, *, *> -> expr.dereferences + listOf(deref)
+        else -> emptyList()
+    }
+
+val Expr<*>.dereferences: List<Dereference<*, *, *>>
+    get() = if (this is Dereference<*, *, *>) {
+        ops.flatMap { it.dereferences } + listOf(this)
     } else {
         ops.flatMap { it.dereferences }
     }
 
-val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *>, AccessType>>
+val XcfaLabel.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
     get() = when (this) {
         is NondetLabel -> error("NondetLabel is not well-defined for dereferences due to ordering")
         is SequenceLabel -> labels.flatMap(XcfaLabel::dereferencesWithAccessTypes)
         is InvokeLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
         is StartLabel -> params.flatMap { it.dereferences.map { Pair(it, READ) } }
-        is StmtLabel -> when (stmt) {
-            is MemoryAssignStmt<*, *> -> stmt.expr.dereferences.map { Pair(it, READ) } + listOf(Pair(stmt.deref, WRITE))
-            is AssignStmt<*> -> stmt.expr.dereferences.map { Pair(it, READ) }
-            is AssumeStmt -> stmt.cond.dereferences.map { Pair(it, READ) }
-            else -> listOf()
-        }
+        is StmtLabel -> stmt.dereferencesWithAccessTypes
 
+        else -> listOf()
+    }
+
+val Stmt.dereferencesWithAccessTypes: List<Pair<Dereference<*, *, *>, AccessType>>
+    get() = when (this) {
+        is MemoryAssignStmt<*, *, *> -> expr.dereferences.map { Pair(it, READ) } + listOf(Pair(deref, WRITE))
+        is AssignStmt<*> -> expr.dereferences.map { Pair(it, READ) }
+        is AssumeStmt -> cond.dereferences.map { Pair(it, READ) }
         else -> listOf()
     }
 
 fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext): XcfaLabel = if (this is StmtLabel) {
     val simplified = stmt.accept(StmtSimplifier.StmtSimplifierVisitor(), valuation).stmt
     when (stmt) {
-        is MemoryAssignStmt<*, *> -> {
-            simplified as MemoryAssignStmt<*, *>
+        is MemoryAssignStmt<*, *, *> -> {
+            simplified as MemoryAssignStmt<*, *, *>
             if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
                 parseContext.metadata.create(simplified.expr, "cType",
                     CComplexType.getType(stmt.expr, parseContext))
@@ -473,3 +482,113 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
         else -> this
     }
 } else this
+
+data class MallocLitExpr<T : Type>(val kType: T) : NullaryExpr<T>(), LitExpr<T> {
+
+    override fun getType(): T = kType
+    override fun eval(valuation: Valuation): LitExpr<T> = this
+}
+
+val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
+    get() = lazy {
+        val attempt = Try.attempt {
+            fun unboxMod(e: Expr<*>): Expr<*> = if (e is ModExpr<*>) unboxMod(e.ops[0]) else e
+
+            val bases = this.procedures.flatMap {
+                it.edges.flatMap {
+                    it.getFlatLabels().flatMap { it.dereferences.map { unboxMod(it.array) } }
+                }
+            }.filter { it !is LitExpr<*> && it !is Dereference<*, *, *> }.toSet()
+            checkState(bases.all { it is RefExpr<*> })
+
+            // value assignments are either assignments, or thread start statements, or procedure invoke statements
+            val assignments = this.procedures.flatMap {
+                it.edges.flatMap {
+                    it.getFlatLabels().filter { it is StmtLabel && it.stmt is AssignStmt<*> }
+                        .map { (it as StmtLabel).stmt as AssignStmt<*> }
+                }
+            }
+            val threadStart = this.procedures.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filterIsInstance<StartLabel>() }.flatMap {
+                    val calledProc = this.procedures.find { proc -> proc.name == it.name }
+                    calledProc?.let { proc ->
+                        proc.params.withIndex().filter { (_, it) -> it.second != ParamDirection.OUT }.map { (i, pair) ->
+                            val (param, _) = pair
+                            Assign(cast(param, param.type), cast(it.params[i], param.type))
+                        } +
+                            proc.params.withIndex()
+                                .filter { (i, pair) -> pair.second != ParamDirection.IN && it.params[i] is RefExpr<*> }
+                                .map { (i, pair) ->
+                                    val (param, _) = pair
+                                    Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                        cast(param.ref, param.type))
+                                }
+                    } ?: listOf()
+                }
+            }
+            val procInvoke = this.procedures.flatMap {
+                it.edges.flatMap { it.getFlatLabels().filterIsInstance<InvokeLabel>() }.flatMap {
+                    val calledProc = this.procedures.find { proc -> proc.name == it.name }
+                    calledProc?.let { proc ->
+                        proc.params.filter { it.second != ParamDirection.OUT }.mapIndexed { i, (param, _) ->
+                            Assign(cast(param, param.type), cast(it.params[i], param.type))
+                        } +
+                            proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, _) ->
+                                Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                    cast(param.ref, param.type))
+                            }
+                    } ?: listOf()
+                }
+            }
+
+            val allAssignments = (assignments + threadStart + procInvoke)
+
+            val ptrVars = LinkedHashSet<VarDecl<*>>(bases.map { (it as RefExpr<*>).decl as VarDecl<*> })
+            var lastPtrVars = emptySet<VarDecl<*>>()
+
+            while (ptrVars != lastPtrVars) {
+                lastPtrVars = ptrVars.toSet()
+
+                val rhs = allAssignments.filter { ptrVars.contains(it.varDecl) }.map { unboxMod(it.expr) }
+                allAssignments.filter {
+                    ptrVars.contains(it.varDecl) && (it.expr !is LitExpr<*>) && (it.expr !is RefExpr<*>)
+                }
+                ptrVars.addAll(rhs.filterIsInstance(RefExpr::class.java).map { it.decl as VarDecl<*> })
+            }
+
+            val lits = LinkedHashMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
+            val alias = LinkedHashMap<VarDecl<*>, MutableSet<VarDecl<*>>>()
+
+            val litAssignments = allAssignments.filter {
+                ptrVars.contains(it.varDecl) && unboxMod(it.expr) is LitExpr<*>
+            }.map { Pair(it.varDecl, unboxMod(it.expr) as LitExpr<*>) } + allAssignments.filter {
+                ptrVars.contains(it.varDecl) && (unboxMod(it.expr) !is LitExpr<*> && unboxMod(it.expr) !is RefExpr<*>)
+            }.map { Pair(it.varDecl, MallocLitExpr(it.varDecl.type)) }
+            litAssignments.forEach { lits.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
+            val varAssignments = allAssignments.filter {
+                ptrVars.contains(it.varDecl) && unboxMod(it.expr) is RefExpr<*>
+            }
+                .map { Pair(it.varDecl, (unboxMod(it.expr) as RefExpr<*>).decl as VarDecl<*>) }
+            varAssignments.forEach { alias.getOrPut(it.first) { LinkedHashSet() }.add(it.second) }
+            varAssignments.forEach { lits.putIfAbsent(it.first, LinkedHashSet()) }
+
+            var lastLits = emptyMap<VarDecl<*>, MutableSet<LitExpr<*>>>()
+            while (lastLits != lits) {
+                lastLits = lits.toMap()
+                alias.forEach {
+                    lits.getOrPut(it.key) { LinkedHashSet() }
+                        .addAll(it.value.flatMap { lits.getOrDefault(it, emptySet()) })
+                }
+            }
+
+            lits.filter { bases.contains(it.key.ref) }
+        }
+        if (attempt.isSuccess) {
+            attempt.asSuccess().value
+        } else {
+            emptyMap()
+        }
+    }
+
+fun Collection<VarDecl<*>>.pointsTo(xcfa: XCFA) = flatMap { xcfa.pointsToGraph[it] ?: emptyList() }.toSet()
+fun VarAccessMap.pointsTo(xcfa: XCFA) = keys.pointsTo(xcfa)

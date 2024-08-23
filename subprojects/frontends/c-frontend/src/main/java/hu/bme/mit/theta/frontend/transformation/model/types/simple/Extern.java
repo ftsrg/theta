@@ -24,6 +24,14 @@ public class Extern extends CSimpleType {
     }
 
     @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new Extern();
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+
+    @Override
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setExtern(true);
     }

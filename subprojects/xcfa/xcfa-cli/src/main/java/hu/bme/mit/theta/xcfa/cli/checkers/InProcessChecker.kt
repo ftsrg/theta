@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
@@ -45,13 +46,13 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
     val config: XcfaConfig<F, B>,
     val parseContext: ParseContext,
     val logger: Logger,
-) : SafetyChecker<XcfaState<*>, XcfaAction, XcfaPrec<*>> {
+) : SafetyChecker<XcfaState<PtrState<*>>, XcfaAction, XcfaPrec<*>> {
 
-    override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<*>, XcfaAction> {
+    override fun check(prec: XcfaPrec<*>?): SafetyResult<XcfaState<PtrState<*>>, XcfaAction> {
         return check()
     }
 
-    override fun check(): SafetyResult<XcfaState<*>, XcfaAction> {
+    override fun check(): SafetyResult<XcfaState<PtrState<*>>, XcfaAction> {
         val tempDir = createTempDirectory(config.outputConfig.resultFolder.toPath())
 
         val xcfaJson = CachingFileSerializer.serialize("xcfa.json", xcfa) { getGson(xcfa).toJson(xcfa) }
@@ -122,7 +123,7 @@ class InProcessChecker<F : SpecFrontendConfig, B : SpecBackendConfig>(
         }
         tempDir.toFile().deleteRecursively()
 
-        return booleanSafetyResult as SafetyResult<XcfaState<*>, XcfaAction>
+        return booleanSafetyResult as SafetyResult<XcfaState<PtrState<*>>, XcfaAction>
     }
 
     private class ProcessHandler : NuAbstractProcessHandler() {

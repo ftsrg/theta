@@ -25,9 +25,15 @@ import hu.bme.mit.theta.analysis.expl.ExplInitFunc
 import hu.bme.mit.theta.analysis.expl.ExplPrec
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc
+import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.expr.StmtAction
 import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor
+import hu.bme.mit.theta.analysis.ptr.PtrPrec
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.analysis.ptr.getPtrInitFunc
+import hu.bme.mit.theta.analysis.ptr.getPtrTransFunc
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.Try
 import hu.bme.mit.theta.common.logging.Logger
@@ -48,34 +54,34 @@ import java.util.*
 import java.util.function.Predicate
 
 open class XcfaAnalysis<S : ExprState, P : Prec>(
-    private val corePartialOrd: PartialOrd<XcfaState<S>>,
-    private val coreInitFunc: InitFunc<XcfaState<S>, XcfaPrec<P>>,
-    private var coreTransFunc: TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>,
-) : Analysis<XcfaState<S>, XcfaAction, XcfaPrec<P>> {
+    private val corePartialOrd: PartialOrd<XcfaState<PtrState<S>>>,
+    private val coreInitFunc: InitFunc<XcfaState<PtrState<S>>, XcfaPrec<P>>,
+    private var coreTransFunc: TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>,
+) : Analysis<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>> {
 
     init {
-        ConeOfInfluence.coreTransFunc = transFunc as TransFunc<XcfaState<out ExprState>, XcfaAction, XcfaPrec<out Prec>>
-        coreTransFunc = ConeOfInfluence.transFunc as TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>>
+        ConeOfInfluence.coreTransFunc = transFunc as TransFunc<XcfaState<out PtrState<out ExprState>>, XcfaAction, XcfaPrec<out Prec>>
+        coreTransFunc = ConeOfInfluence.transFunc as TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>>
     }
 
-    override fun getPartialOrd(): PartialOrd<XcfaState<S>> = corePartialOrd
-    override fun getInitFunc(): InitFunc<XcfaState<S>, XcfaPrec<P>> = coreInitFunc
-    override fun getTransFunc(): TransFunc<XcfaState<S>, XcfaAction, XcfaPrec<P>> = coreTransFunc
+    override fun getPartialOrd(): PartialOrd<XcfaState<PtrState<S>>> = corePartialOrd
+    override fun getInitFunc(): InitFunc<XcfaState<PtrState<S>>, XcfaPrec<P>> = coreInitFunc
+    override fun getTransFunc(): TransFunc<XcfaState<PtrState<S>>, XcfaAction, XcfaPrec<P>> = coreTransFunc
 }
 
 /// Common
 private var tempCnt: Int = 0
-fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
+fun getCoreXcfaLts() = LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
     s.processes.map { proc ->
         if (proc.value.locs.peek().final) {
             listOf(XcfaAction(proc.key,
                 XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(), SequenceLabel(listOf(
                     proc.value.paramStmts.peek().second,
                     ReturnLabel(proc.value.returnStmts.peek()),
-                )))))
+                ))), nextCnt = s.sGlobal.nextCnt))
         } else if (!proc.value.paramsInitialized) {
             listOf(XcfaAction(proc.key, XcfaEdge(proc.value.locs.peek(), proc.value.locs.peek(),
-                proc.value.paramStmts.peek().first)))
+                proc.value.paramStmts.peek().first), nextCnt = s.sGlobal.nextCnt))
         } else {
             proc.value.locs.peek().outgoingEdges.map { edge ->
                 val newLabel = edge.label.changeVars(proc.value.varLookup.peek())
@@ -110,9 +116,9 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                                     lookup[originalVar] = tempVar
                                     val trial = Try.attempt {
                                         StmtLabel(
-                                        Stmts.Assign(
-                                            TypeUtils.cast(tempVar, tempVar.type),
-                                            TypeUtils.cast(label.params[iVal.index], tempVar.type)),
+                                            Stmts.Assign(
+                                                TypeUtils.cast(tempVar, tempVar.type),
+                                                TypeUtils.cast(label.params[iVal.index], tempVar.type)),
                                             metadata = label.metadata)
                                     }
                                     if (trial.isSuccess) {
@@ -123,17 +129,17 @@ fun getCoreXcfaLts() = LTS<XcfaState<out ExprState>, XcfaAction> { s ->
                                 }, listOf(label.copy(tempLookup = lookup))).flatten())
                         } else label
                     })
-                    XcfaAction(proc.key, edge.withLabel(newNewLabel))
+                    XcfaAction(proc.key, edge.withLabel(newNewLabel), nextCnt = s.sGlobal.nextCnt)
                 } else
-                    XcfaAction(proc.key, edge.withLabel(newLabel))
+                    XcfaAction(proc.key, edge.withLabel(newLabel), nextCnt = s.sGlobal.nextCnt)
             }
         }
     }.flatten().toSet()
 }
 
-fun getXcfaLts(): LTS<XcfaState<out ExprState>, XcfaAction> {
+fun getXcfaLts(): LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> {
     val lts = getCoreXcfaLts()
-    return LTS<XcfaState<out ExprState>, XcfaAction> { s ->
+    return LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction> { s ->
         lts.getEnabledActionsFor(s).filter { !s.apply(it).first.bottom }.toSet()
     }
 }
@@ -146,12 +152,12 @@ enum class ErrorDetection {
 }
 
 fun getXcfaErrorPredicate(
-    errorDetection: ErrorDetection): Predicate<XcfaState<out ExprState>> = when (errorDetection) {
+    errorDetection: ErrorDetection): Predicate<XcfaState<out PtrState<out ExprState>>> = when (errorDetection) {
     ErrorDetection.ERROR_LOCATION ->
-        Predicate<XcfaState<out ExprState>> { s -> s.processes.any { it.value.locs.peek().error } }
+        Predicate<XcfaState<out PtrState<out ExprState>>> { s -> s.processes.any { it.value.locs.peek().error } }
 
     ErrorDetection.DATA_RACE -> {
-        Predicate<XcfaState<out ExprState>> { s ->
+        Predicate<XcfaState<out PtrState<out ExprState>>> { s ->
             val xcfa = s.xcfa!!
             for (process1 in s.processes)
                 for (process2 in s.processes)
@@ -173,32 +179,33 @@ fun getXcfaErrorPredicate(
         }
     }
 
-    ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out ExprState>> { false }
+    ErrorDetection.NO_ERROR, ErrorDetection.OVERFLOW -> Predicate<XcfaState<out PtrState<out ExprState>>> { false }
 }
 
-fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<S>) =
-    PartialOrd<XcfaState<S>> { s1, s2 ->
+fun <S : ExprState> getPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
+    PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
         s1.processes == s2.processes && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes && partialOrd.isLeq(
             s1.sGlobal, s2.sGlobal)
     }
 
-private fun <S : ExprState> stackIsLeq(s1: XcfaState<S>, s2: XcfaState<S>) = s2.processes.keys.all { pid ->
+private fun <S : ExprState> stackIsLeq(s1: XcfaState<PtrState<S>>,
+    s2: XcfaState<PtrState<S>>) = s2.processes.keys.all { pid ->
     s1.processes[pid]?.let { ps1 ->
         val ps2 = s2.processes.getValue(pid)
         ps1.locs.peek() == ps2.locs.peek() && ps1.paramsInitialized && ps2.paramsInitialized
     } ?: false
 }
 
-fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<S>) =
-    PartialOrd<XcfaState<S>> { s1, s2 ->
+fun <S : ExprState> getStackPartialOrder(partialOrd: PartialOrd<PtrState<S>>) =
+    PartialOrd<XcfaState<PtrState<S>>> { s1, s2 ->
         s1.processes.size == s2.processes.size && stackIsLeq(s1,
             s2) && s1.bottom == s2.bottom && s1.mutexes == s2.mutexes
             && partialOrd.isLeq(s1.withGeneralizedVars(), s2.withGeneralizedVars())
     }
 
-private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
+private fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfaArgBuilder(
     analysis: Analysis<S, XcfaAction, P>,
-    lts: LTS<XcfaState<out ExprState>, XcfaAction>,
+    lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
     errorDetection: ErrorDetection)
     : ArgBuilder<S, XcfaAction, P> =
     ArgBuilder.create(
@@ -207,14 +214,14 @@ private fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaArgBui
         getXcfaErrorPredicate(errorDetection)
     )
 
-fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
+fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
     analysis: Analysis<S, XcfaAction, P>,
     waitlist: Waitlist<*>,
     stopCriterion: StopCriterion<*, *>,
     logger: Logger,
-    lts: LTS<XcfaState<out ExprState>, XcfaAction>,
+    lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
     errorDetection: ErrorDetection
-): Abstractor<out XcfaState<out ExprState>, XcfaAction, out XcfaPrec<out Prec>> =
+): Abstractor<out XcfaState<out PtrState<out ExprState>>, XcfaAction, out XcfaPrec<out Prec>> =
     XcfaAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
@@ -227,7 +234,7 @@ fun <S : XcfaState<out ExprState>, P : XcfaPrec<out Prec>> getXcfaAbstractor(
 /// EXPL
 
 private fun getExplXcfaInitFunc(xcfa: XCFA,
-    solver: Solver): (XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
+    solver: Solver): (XcfaPrec<PtrPrec<ExplPrec>>) -> List<XcfaState<PtrState<ExplState>>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
@@ -235,14 +242,15 @@ private fun getExplXcfaInitFunc(xcfa: XCFA,
             varLookup = LinkedList(listOf(createLookup(it.first, "T$i", "")))))
     }.toMap()
     return { p ->
-        ExplInitFunc.create(solver, True()).getInitStates(p.p)
+        ExplInitFunc.create(solver, True()).getPtrInitFunc().getInitStates(p.p)
             .map { XcfaState(xcfa, processInitState, it) }
     }
 }
 
-private fun getExplXcfaTransFunc(solver: Solver,
-    maxEnum: Int): (XcfaState<ExplState>, XcfaAction, XcfaPrec<ExplPrec>) -> List<XcfaState<ExplState>> {
-    val explTransFunc = ExplStmtTransFunc.create(solver, maxEnum)
+private fun getExplXcfaTransFunc(solver: Solver, maxEnum: Int, isHavoc: Boolean):
+    (XcfaState<PtrState<ExplState>>, XcfaAction, XcfaPrec<PtrPrec<ExplPrec>>) -> List<XcfaState<PtrState<ExplState>>> {
+    val explTransFunc = (ExplStmtTransFunc.create(solver,
+        maxEnum) as TransFunc<ExplState, ExprAction, ExplPrec>).getPtrTransFunc(isHavoc)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         explTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
@@ -252,16 +260,17 @@ private fun getExplXcfaTransFunc(solver: Solver,
 }
 
 class ExplXcfaAnalysis(xcfa: XCFA, solver: Solver, maxEnum: Int,
-    partialOrd: PartialOrd<XcfaState<ExplState>>) : XcfaAnalysis<ExplState, ExplPrec>(
-    corePartialOrd = partialOrd,
-    coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
-    coreTransFunc = getExplXcfaTransFunc(solver, maxEnum)
-)
+    partialOrd: PartialOrd<XcfaState<PtrState<ExplState>>>, isHavoc: Boolean) :
+    XcfaAnalysis<ExplState, PtrPrec<ExplPrec>>(
+        corePartialOrd = partialOrd,
+        coreInitFunc = getExplXcfaInitFunc(xcfa, solver),
+        coreTransFunc = getExplXcfaTransFunc(solver, maxEnum, isHavoc)
+    )
 
 /// PRED
 
 private fun getPredXcfaInitFunc(xcfa: XCFA,
-    predAbstractor: PredAbstractor): (XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
+    predAbstractor: PredAbstractor): (XcfaPrec<PtrPrec<PredPrec>>) -> List<XcfaState<PtrState<PredState>>> {
     val processInitState = xcfa.initProcedures.mapIndexed { i, it ->
         val initLocStack: LinkedList<XcfaLocation> = LinkedList()
         initLocStack.add(it.first.initLoc)
@@ -269,14 +278,15 @@ private fun getPredXcfaInitFunc(xcfa: XCFA,
             varLookup = LinkedList(listOf(createLookup(it.first, "T$i", "")))))
     }.toMap()
     return { p ->
-        PredInitFunc.create(predAbstractor, True()).getInitStates(p.p)
+        PredInitFunc.create(predAbstractor, True()).getPtrInitFunc().getInitStates(p.p)
             .map { XcfaState(xcfa, processInitState, it) }
     }
 }
 
-private fun getPredXcfaTransFunc(
-    predAbstractor: PredAbstractors.PredAbstractor): (XcfaState<PredState>, XcfaAction, XcfaPrec<PredPrec>) -> List<XcfaState<PredState>> {
-    val predTransFunc = PredTransFunc.create<XcfaAction>(predAbstractor)
+private fun getPredXcfaTransFunc(predAbstractor: PredAbstractors.PredAbstractor, isHavoc: Boolean):
+    (XcfaState<PtrState<PredState>>, XcfaAction, XcfaPrec<PtrPrec<PredPrec>>) -> List<XcfaState<PtrState<PredState>>> {
+    val predTransFunc = (PredTransFunc.create<StmtAction>(
+        predAbstractor) as TransFunc<PredState, ExprAction, PredPrec>).getPtrTransFunc(isHavoc)
     return { s, a, p ->
         val (newSt, newAct) = s.apply(a)
         predTransFunc.getSuccStates(newSt.sGlobal, newAct, p.p.addVars(
@@ -286,8 +296,9 @@ private fun getPredXcfaTransFunc(
 }
 
 class PredXcfaAnalysis(xcfa: XCFA, solver: Solver, predAbstractor: PredAbstractor,
-    partialOrd: PartialOrd<XcfaState<PredState>>) : XcfaAnalysis<PredState, PredPrec>(
-    corePartialOrd = partialOrd,
-    coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
-    coreTransFunc = getPredXcfaTransFunc(predAbstractor)
-)
+    partialOrd: PartialOrd<XcfaState<PtrState<PredState>>>, isHavoc: Boolean) :
+    XcfaAnalysis<PredState, PtrPrec<PredPrec>>(
+        corePartialOrd = partialOrd,
+        coreInitFunc = getPredXcfaInitFunc(xcfa, predAbstractor),
+        coreTransFunc = getPredXcfaTransFunc(predAbstractor, isHavoc)
+    )

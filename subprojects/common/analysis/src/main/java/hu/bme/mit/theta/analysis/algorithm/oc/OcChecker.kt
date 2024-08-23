@@ -47,7 +47,7 @@ interface OcChecker<E : Event> {
     fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
-        rfs: Map<VarDecl<*>, List<Relation<E>>>
+        rfs: Map<VarDecl<*>, Set<Relation<E>>>
     ): SolverStatus?
 
     /**
@@ -75,6 +75,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
     protected abstract fun propagate(reason: Reason?): Boolean
 
     protected fun derive(rels: Array<Array<Reason?>>, rf: Relation<E>, w: E): Reason? = when {
+        !rf.interferesWith(w) -> null // different referenced memory locations
         rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
         w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null // w within an atomic block with one of the rf ends
 
@@ -133,17 +134,17 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
  * either a relation (being enabled) or an event (being enabled - having a guard that evaluates to true).
  * The fix (closed by theory axioms) relations and the solver decision stack level are also stored.
  */
-internal class OcAssignment<E : Event>(
+class OcAssignment<E : Event> internal constructor(
     val relation: Relation<E>? = null,
     val event: E? = null,
     val rels: Array<Array<Reason?>>,
     val solverLevel: Int = 0,
 ) {
 
-    constructor(rels: Array<Array<Reason?>>, e: E, solverLevel: Int = 0)
+    internal constructor(rels: Array<Array<Reason?>>, e: E, solverLevel: Int = 0)
         : this(event = e, rels = rels.copy(), solverLevel = solverLevel)
 
-    constructor(rels: Array<Array<Reason?>>, r: Relation<E>, solverLevel: Int = 0)
+    internal constructor(rels: Array<Array<Reason?>>, r: Relation<E>, solverLevel: Int = 0)
         : this(relation = r, rels = rels.copy(), solverLevel = solverLevel)
 
     override fun toString(): String {

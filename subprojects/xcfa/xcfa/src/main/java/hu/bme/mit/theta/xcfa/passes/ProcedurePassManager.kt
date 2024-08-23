@@ -38,6 +38,14 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         SvCompIntrinsicsPass(),
         FpFunctionsToExprsPass(parseContext),
         CLibraryFunctionsPass(),
+    ),
+    listOf(
+        // trying to inline procedures
+        InlineProceduresPass(parseContext),
+        RemoveDeadEnds(),
+        EliminateSelfLoops(),
+    ),
+    listOf(
         ReferenceElimination(parseContext),
         MallocFunctionPass(parseContext),
     ),
@@ -50,10 +58,7 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         UnusedLocRemovalPass(),
     ),
     listOf(
-        // trying to inline procedures
-        InlineProceduresPass(parseContext),
-        RemoveDeadEnds(),
-        EliminateSelfLoops(),
+        StaticCoiPass(),
     ),
     listOf(
         // handling remaining function calls
@@ -68,9 +73,9 @@ class CPasses(checkOverflow: Boolean, parseContext: ParseContext, uniqueWarningL
         EmptyEdgeRemovalPass(),
         UnusedLocRemovalPass(),
     ),
-//    listOf(
-//        LiteralDerefPass(parseContext)
-//    )
+    listOf(
+        FetchExecuteWriteback(parseContext)
+    )
 )
 
 class ChcPasses(parseContext: ParseContext, uniqueWarningLogger: Logger) : ProcedurePassManager(listOf(

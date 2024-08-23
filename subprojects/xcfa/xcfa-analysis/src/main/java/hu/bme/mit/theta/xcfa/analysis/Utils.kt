@@ -18,6 +18,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
@@ -42,13 +43,17 @@ internal fun <S : ExprState> XcfaState<S>.withGeneralizedVars(): S {
     val varLookup = processes.mapNotNull { (_, process) -> process.varLookup.peek()?.reverseMapping() }
         .reduceOrNull(Map<VarDecl<*>, VarDecl<*>>::plus) ?: mapOf()
     return if (sGlobal.isBottom) sGlobal
-    else when (sGlobal) {
-        is ExplState -> ExplState.of(sGlobal.getVal().changeVars(varLookup))
-        is PredState -> PredState.of(sGlobal.preds.map { p -> p.changeVars(varLookup) })
+    else sGlobal.getState(varLookup)
+}
+
+private fun <S : ExprState> S.getState(varLookup: Map<VarDecl<*>, VarDecl<*>>): S =
+    when (this) {
+        is ExplState -> ExplState.of(getVal().changeVars(varLookup))
+        is PredState -> PredState.of(preds.map { p -> p.changeVars(varLookup) })
+        is PtrState<*> -> PtrState(innerState.getState(varLookup))
         else -> throw NotImplementedError(
             "Generalizing variable instances is not implemented for data states that are not explicit or predicate.")
     } as S
-}
 
 class LazyDelegate<T, P : Any>(val getProperty: T.() -> P) {
 

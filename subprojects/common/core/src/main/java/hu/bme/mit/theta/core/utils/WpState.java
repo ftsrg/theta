@@ -154,7 +154,7 @@ public final class WpState {
         }
 
         @Override
-        public <PtrType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, DeclType> stmt, WpState param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, WpState param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 
@@ -228,7 +228,7 @@ public final class WpState {
         }
 
         @Override
-        public <PtrType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, DeclType> stmt, WpState param) {
+        public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> WpState visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, WpState param) {
             throw new UnsupportedOperationException("MemoryAssignStmt not supported (yet)");
         }
 

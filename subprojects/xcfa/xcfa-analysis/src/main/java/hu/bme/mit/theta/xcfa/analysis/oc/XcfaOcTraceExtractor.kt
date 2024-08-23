@@ -1,8 +1,26 @@
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprState
+import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
@@ -30,11 +48,11 @@ internal class XcfaOcTraceExtractor(
     private val pos: List<R>
 ) {
 
-    internal val trace: Trace<XcfaState<*>, XcfaAction>
+    internal val trace: Trace<XcfaState<out PtrState<out ExprState>>, XcfaAction>
         get() {
             check(ocChecker.solver.status.isSat)
             val model = ocChecker.solver.model ?: error("No model found for trace extraction.")
-            val stateList = mutableListOf<XcfaState<ExplState>>()
+            val stateList = mutableListOf<XcfaState<PtrState<ExplState>>>()
             val actionList = mutableListOf<XcfaAction>()
             val valuation = model.toMap()
             val (eventTrace, violation) = getEventTrace(model)
@@ -44,19 +62,21 @@ internal class XcfaOcTraceExtractor(
                     locs = LinkedList(listOf(t.procedure.initLoc)), varLookup = LinkedList(listOf())
                 )
             }
-            var explState = ExplState.of(ImmutableValuation.from(mapOf()))
+            var explState = PtrState(ExplState.of(ImmutableValuation.from(mapOf())))
             stateList.add(XcfaState(xcfa, processes, explState))
             var lastEdge: XcfaEdge = eventTrace[0].edge
 
             for ((index, event) in eventTrace.withIndex()) {
                 valuation[event.const]?.let {
-                    val newVal = explState.`val`.toMap().toMutableMap().apply { put(event.const.varDecl, it) }
-                    explState = ExplState.of(ImmutableValuation.from(newVal))
+                    val newVal = explState.innerState.`val`.toMap().toMutableMap()
+                        .apply { put(event.const.varDecl, it) }
+                    explState = PtrState(ExplState.of(ImmutableValuation.from(newVal)))
                 }
 
                 val nextEdge = eventTrace.getOrNull(index + 1)?.edge
                 if (nextEdge != lastEdge) {
-                    extend(stateList.last(), event.pid, lastEdge.source, explState)?.let { (midActions, midStates) ->
+                    extend(stateList.last(), event.pid, lastEdge.source,
+                        explState.innerState)?.let { (midActions, midStates) ->
                         actionList.addAll(midActions)
                         stateList.addAll(midStates)
                     }
@@ -66,9 +86,9 @@ internal class XcfaOcTraceExtractor(
                     stateList.add(state.copy(processes = state.processes.toMutableMap().apply {
                         put(
                             event.pid, XcfaProcessState(
-                                locs = LinkedList(listOf(lastEdge.target)),
-                                varLookup = LinkedList(emptyList())
-                            )
+                            locs = LinkedList(listOf(lastEdge.target)),
+                            varLookup = LinkedList(emptyList())
+                        )
                         )
                     }, sGlobal = explState, mutexes = state.mutexes.update(lastEdge, event.pid)))
                     lastEdge = nextEdge ?: break
@@ -76,7 +96,8 @@ internal class XcfaOcTraceExtractor(
             }
 
             if (!stateList.last().processes[violation.pid]!!.locs.peek().error) {
-                extend(stateList.last(), violation.pid, violation.errorLoc, explState)?.let { (midActions, midStates) ->
+                extend(stateList.last(), violation.pid, violation.errorLoc,
+                    explState.innerState)?.let { (midActions, midStates) ->
                     actionList.addAll(midActions)
                     stateList.addAll(midStates)
                 }
@@ -127,11 +148,11 @@ internal class XcfaOcTraceExtractor(
     }
 
     private fun extend(
-        state: XcfaState<ExplState>, pid: Int,
+        state: XcfaState<PtrState<ExplState>>, pid: Int,
         to: XcfaLocation, explState: ExplState
-    ): Pair<List<XcfaAction>, List<XcfaState<ExplState>>>? {
+    ): Pair<List<XcfaAction>, List<XcfaState<PtrState<ExplState>>>>? {
         val actions = mutableListOf<XcfaAction>()
-        val states = mutableListOf<XcfaState<ExplState>>()
+        val states = mutableListOf<XcfaState<PtrState<ExplState>>>()
         var currentState = state
 
         // extend the trace until the target location is reached
@@ -142,11 +163,11 @@ internal class XcfaOcTraceExtractor(
             currentState = currentState.copy(processes = currentState.processes.toMutableMap().apply {
                 put(
                     stepPid, XcfaProcessState(
-                        locs = LinkedList(listOf(edge.target)),
-                        varLookup = LinkedList(emptyList())
-                    )
+                    locs = LinkedList(listOf(edge.target)),
+                    varLookup = LinkedList(emptyList())
                 )
-            }, sGlobal = explState, mutexes = currentState.mutexes.update(edge, stepPid))
+                )
+            }, sGlobal = PtrState(explState), mutexes = currentState.mutexes.update(edge, stepPid))
             states.add(currentState)
         }
         return actions to states

@@ -36,7 +36,7 @@ class MutexToVarPass : ProcedurePass {
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
         builder.parent.getVars().forEach { (v) ->
-            if(v.type == BoolType.getInstance()) {
+            if (v.type == BoolType.getInstance()) {
                 mutexVars[v.name] = v as VarDecl<BoolType>
             }
         }
@@ -69,6 +69,11 @@ class MutexToVarPass : ProcedurePass {
                 val actions = mutableListOf<XcfaLabel>()
 
                 labels.forEach { l ->
+                    if (l == "pthread_exit") {
+                        actions.add(FenceLabel(setOf(l)))
+                        return@forEach
+                    }
+
                     if (l == "ATOMIC_BEGIN") {
                         actions.add(FenceLabel(setOf("ATOMIC_BEGIN")))
                         return@forEach

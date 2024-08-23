@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
-import hu.bme.mit.theta.core.type.anytype.Reference;
 import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayLitExpr;
@@ -148,6 +147,8 @@ import hu.bme.mit.theta.solver.smtlib.solver.transformer.SmtLibTransformationMan
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
 
@@ -406,9 +407,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
                 // References
                 .addCase(Dereference.class, this::transformDereference)
 
-                .addCase(Reference.class, this::transformReference)
-            ;
-            return builder;
+        ;
+        return builder;
     }
 
     @Override
@@ -1211,11 +1211,8 @@ public class GenericSmtLibExprTransformer implements SmtLibExprTransformer {
         return running;
     }
 
-    protected String transformDereference(final Dereference<?, ?> expr) {
-        return "(deref %s %s %s)".formatted(transformer.toTerm(expr.getArray()), transformer.toTerm(expr.getOffset()), transformer.toSort(expr.getType()));
-    }
-
-    protected String transformReference(final Reference<?, ?> expr) {
-        return "(ref %s)".formatted(transformer.toTerm(expr.getExpr()));
+    private String transformDereference(final Dereference<?, ?, ?> expr) {
+        checkState(expr.getUniquenessIdx().isPresent(), "Incomplete dereferences (missing uniquenessIdx) are not handled properly.");
+        return "(deref %s %s %s)".formatted(toTerm(expr.getArray()), toTerm(expr.getOffset()), toTerm(expr.getUniquenessIdx().get()));
     }
 }

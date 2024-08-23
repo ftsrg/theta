@@ -135,7 +135,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
     @Override
     public String toString() {
-        return Utils.lispStringBuilder().add(func).add(param).toString();
+        return Utils.lispStringBuilder().add(func).body().add(param).toString();
     }
 
 }

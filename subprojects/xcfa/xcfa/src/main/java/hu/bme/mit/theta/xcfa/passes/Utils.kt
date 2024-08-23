@@ -110,7 +110,7 @@ fun Stmt.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseContext: ParseCon
         is AssignStmt<*> -> AssignStmt.of(cast(varDecl.changeVars(varLut), varDecl.type),
             cast(expr.changeVars(varLut, parseContext), varDecl.type))
 
-        is MemoryAssignStmt<*, *> -> MemoryAssignStmt.create(deref.changeVars(varLut) as Dereference<out Type, *>,
+        is MemoryAssignStmt<*, *, *> -> MemoryAssignStmt.create(deref.changeVars(varLut) as Dereference<out Type, *, *>,
             expr.changeVars(varLut))
 
         is HavocStmt<*> -> HavocStmt.of(varDecl.changeVars(varLut))
@@ -136,8 +136,12 @@ fun <T : Type> Expr<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>, parseCon
         ret
     }
 
-fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
+fun <T : Type> Decl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): Decl<T> =
+    (varLut[this] as? Decl<T> ?: this)
+
+fun <T : Type> VarDecl<T>.changeVars(varLut: Map<out Decl<*>, VarDecl<*>>): VarDecl<T> =
     (varLut[this] ?: this) as VarDecl<T>
+
 
 fun XcfaProcedureBuilder.canInline(): Boolean = canInline(LinkedList())
 private fun XcfaProcedureBuilder.canInline(tally: LinkedList<String>): Boolean {

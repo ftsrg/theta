@@ -18,6 +18,9 @@ package hu.bme.mit.theta.frontend.transformation.grammar.type;
 
 import hu.bme.mit.theta.c.frontend.dsl.gen.CBaseVisitor;
 import hu.bme.mit.theta.c.frontend.dsl.gen.CParser;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.CastDeclarationSpecifierListContext;
+import hu.bme.mit.theta.c.frontend.dsl.gen.CParser.TypeSpecifierPointerContext;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
@@ -27,10 +30,12 @@ import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.DeclaredName;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.NamedType;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -60,7 +65,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     private static final List<String> standardTypes =
             List.of("int", "char", "long", "short", "void", "float", "double", "unsigned", "_Bool");
     private static final List<String> shorthandTypes =
-            List.of("long", "short", "unsigned", "_Bool");
+            List.of("long", "__int128", "short", "unsigned", "_Bool");
 
     public TypeVisitor(DeclarationVisitor declarationVisitor, TypedefVisitor typedefVisitor, ParseContext parseContext, Logger uniqueWarningLogger) {
         this.declarationVisitor = declarationVisitor;
@@ -80,6 +85,10 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
         return createCType(ctx.declarationSpecifier());
     }
 
+    @Override
+    public CSimpleType visitCastDeclarationSpecifierList(CastDeclarationSpecifierListContext ctx) {
+        return createCType(ctx.spec1, ctx.spec2);
+    }
 
     private CSimpleType mergeCTypes(List<CSimpleType> cSimpleTypes) {
         List<CSimpleType> enums = cSimpleTypes.stream().filter(cType -> cType instanceof Enum)
@@ -90,18 +99,23 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             cSimpleTypes.removeAll(enums);
         }
         List<CSimpleType> namedElements = cSimpleTypes.stream()
-                .filter(cType -> cType instanceof NamedType).collect(Collectors.toList());
-        if (namedElements.size() == 0) {
+                .map(o -> o instanceof DeclaredName declaredName ? typedefVisitor.getSimpleType(declaredName.getDeclaredName()).orElse(o) : o)
+                .filter(o -> o instanceof NamedType).collect(Collectors.toList());
+        if (namedElements.isEmpty()) {
             namedElements.add(NamedType("int", parseContext, uniqueWarningLogger));
         }
-        NamedType mainType = (NamedType) namedElements.get(namedElements.size() - 1);
-        if (shorthandTypes.contains(mainType.getNamedType())) {
+        CSimpleType mainType = namedElements.get(namedElements.size() - 1); // if typedef, then last element is the associated name
+        if (mainType instanceof DeclaredName declaredName) {
+            mainType = typedefVisitor.getSimpleType(declaredName.getDeclaredName()).orElse(mainType);
+        }
+
+        if (mainType instanceof NamedType namedType && shorthandTypes.contains(namedType.getNamedType())) {
             mainType = NamedType("int", parseContext, uniqueWarningLogger);
         } else {
             cSimpleTypes.remove(mainType);
         }
 
-        CSimpleType type = mainType.apply(cSimpleTypes);
+        CSimpleType type = mainType.copyOf().apply(cSimpleTypes);
         // we didn't get explicit signedness
         if (type.isSigned() == null) {
             if (type instanceof NamedType && ((NamedType) type).getNamedType().contains("char")) {
@@ -151,7 +165,32 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             List<CParser.DeclarationSpecifierContext> declarationSpecifierContexts) {
         List<CSimpleType> cSimpleTypes = new ArrayList<>();
         for (CParser.DeclarationSpecifierContext declarationSpecifierContext : declarationSpecifierContexts) {
-            CSimpleType ctype = declarationSpecifierContext.accept(this);
+            for (ParseTree child : declarationSpecifierContext.children) {
+                CSimpleType ctype = child.accept(this);
+                if (ctype != null) {
+                    cSimpleTypes.add(ctype);
+                }
+            }
+        }
+
+        return mergeCTypes(cSimpleTypes);
+    }
+
+    private CSimpleType createCType(
+            List<CastDeclarationSpecifierContext> spec1list,
+            TypeSpecifierPointerContext spec2
+    ) {
+        List<CSimpleType> cSimpleTypes = new ArrayList<>();
+        for (CastDeclarationSpecifierContext declarationSpecifierContext : spec1list) {
+            for (ParseTree child : declarationSpecifierContext.children) {
+                CSimpleType ctype = child.accept(this);
+                if (ctype != null) {
+                    cSimpleTypes.add(ctype);
+                }
+            }
+        }
+        if (spec2 != null) {
+            CSimpleType ctype = spec2.accept(this);
             if (ctype != null) {
                 cSimpleTypes.add(ctype);
             }
@@ -186,6 +225,11 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     @Override
     public CSimpleType visitTypeSpecifierCompound(CParser.TypeSpecifierCompoundContext ctx) {
         return ctx.structOrUnionSpecifier().accept(this);
+    }
+
+    @Override
+    public CSimpleType visitTypeSpecifierFunctionPointer(CParser.TypeSpecifierFunctionPointerContext ctx) {
+        throw new UnsupportedOperationException("Function pointers not yet implemented");
     }
 
     @Override
@@ -264,6 +308,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             return null;
         }
         for (Token star : ctx.pointer().stars) {
+            subtype = subtype.copyOf();
             subtype.incrementPointer();
         }
         return subtype;

@@ -17,19 +17,22 @@ package hu.bme.mit.theta.xcfa.analysis.por
 
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.core.decl.Decl
-import hu.bme.mit.theta.core.type.Type
+import hu.bme.mit.theta.analysis.ptr.PtrState
+import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.XCFA
 
 open class XcfaAasporLts(
     xcfa: XCFA,
-    private val ignoredVarRegistry: MutableMap<Decl<out Type>, MutableSet<ExprState>>
+    private val ignoredVarRegistry: MutableMap<VarDecl<*>, MutableSet<ExprState>>
 ) : XcfaSporLts(xcfa) {
 
-    override fun <P : Prec> getEnabledActionsFor(state: XcfaState<*>, exploredActions: Collection<XcfaAction>,
-        prec: P): Set<XcfaAction> {
+    override fun <P : Prec> getEnabledActionsFor(
+        state: XcfaState<out PtrState<*>>,
+        exploredActions: Collection<XcfaAction>,
+        prec: P
+    ): Set<XcfaAction> {
         // Collecting enabled actions
         val allEnabledActions = simpleXcfaLts.getEnabledActionsFor(state, exploredActions, prec)
 
@@ -41,20 +44,20 @@ open class XcfaAasporLts(
         } else {
             setOf(exploredActions)
         }
-        var finalIgnoredVars = setOf<Decl<out Type>>()
+        var finalIgnoredVars = setOf<VarDecl<*>>()
 
         // Calculate source sets from all possible starting action set
         for (firstActions in sourceSetFirstActions) {
             // Variables that have been ignored (if they would be in the precision, more actions have had to be added to the source set)
-            val ignoredVars = mutableSetOf<Decl<out Type>>()
-            val sourceSet = calculateSourceSet(allEnabledActions, firstActions, prec, ignoredVars)
+            val ignoredVars = mutableSetOf<VarDecl<*>>()
+            val sourceSet = calculateSourceSet(state, allEnabledActions, firstActions, prec, ignoredVars)
             if (minimalSourceSet.isEmpty() || sourceSet.size < minimalSourceSet.size) {
                 minimalSourceSet = sourceSet.toMutableSet()
                 finalIgnoredVars = ignoredVars
             }
         }
         finalIgnoredVars.forEach { ignoredVar ->
-            if (!ignoredVarRegistry.containsKey(ignoredVar)) {
+            if (ignoredVar !in ignoredVarRegistry) {
                 ignoredVarRegistry[ignoredVar] = mutableSetOf()
             }
             checkNotNull(ignoredVarRegistry[ignoredVar]).add(state)
@@ -72,16 +75,19 @@ open class XcfaAasporLts(
      * @param ignoredVars variables that have been ignored (if they would be in the precision, more actions have had to be added to the source set)
      * @return a source set of enabled actions in the current abstraction
      */
-    private fun calculateSourceSet(enabledActions: Collection<XcfaAction>, firstActions: Collection<XcfaAction>,
-        prec: Prec, ignoredVars: MutableSet<Decl<out Type>>): Set<XcfaAction> {
-        if (firstActions.any(this::isBackwardAction)) {
+    private fun calculateSourceSet(
+        state: XcfaState<out PtrState<out ExprState>>,
+        enabledActions: Collection<XcfaAction>, firstActions: Collection<XcfaAction>,
+        prec: Prec, ignoredVars: MutableSet<VarDecl<*>>
+    ): Set<XcfaAction> {
+        if (firstActions.any { it.isBackward }) {
             return enabledActions.toSet()
         }
 
         val sourceSet = firstActions.toMutableSet()
         val otherActions = enabledActions.toMutableSet() // actions not in the source set
         firstActions.forEach(otherActions::remove)
-        val ignoredVarsByAction = otherActions.associateWith { mutableSetOf<Decl<out Type>>() }
+        val ignoredVarsByAction = otherActions.associateWith { mutableSetOf<VarDecl<*>>() }
 
         var addedNewAction = true
         while (addedNewAction) {
@@ -90,10 +96,10 @@ open class XcfaAasporLts(
             for (action in otherActions) {
                 // for every action that is not in the source set it is checked whether it should be added to the source set
                 // (because it is dependent with an action already in the source set)
-                val potentialIgnoredVars = mutableSetOf<Decl<out Type>>()
-                if (sourceSet.any { areDependents(it, action, prec, potentialIgnoredVars) }) {
-                    if (isBackwardAction(action)) {
-                        return enabledActions.toSet() // see POR algorithm for the reason of removing backward transitions
+                val potentialIgnoredVars = mutableSetOf<VarDecl<*>>()
+                if (sourceSet.any { areDependents(state, it, action, prec, potentialIgnoredVars) }) {
+                    if (action.isBackward) {
+                        return enabledActions.toSet() // see POR algorithm for the reason of handling backward edges this way
                     }
                     sourceSet.add(action)
                     actionsToRemove.add(action)
@@ -109,16 +115,19 @@ open class XcfaAasporLts(
         return sourceSet
     }
 
-    private fun areDependents(sourceSetAction: XcfaAction, action: XcfaAction, prec: Prec,
-        ignoredVariables: MutableSet<Decl<out Type?>>): Boolean {
-        if (isSameProcess(sourceSetAction, action)) {
-            return true
-        }
-        val usedBySourceSetAction = getCachedUsedSharedObjects(getEdgeOf(sourceSetAction))
-        val influencedSharedObjects = getInfluencedSharedObjects(getEdgeOf(action))
-        for (varDecl in influencedSharedObjects) {
-            if (usedBySourceSetAction.contains(varDecl)) {
-                if (varDecl !in prec.usedVars && varDecl !in fenceVars.values) {
+    private fun areDependents(
+        state: XcfaState<out PtrState<out ExprState>>,
+        sourceSetAction: XcfaAction, action: XcfaAction, prec: Prec,
+        ignoredVariables: MutableSet<VarDecl<*>>
+    ): Boolean {
+        if (sourceSetAction.pid == action.pid) return true
+        val sourceSetActionVars = getCachedUsedVars(getEdge(sourceSetAction))
+        val influencedVars = getInfluencedVars(getEdge(action))
+
+        val precVars = prec.usedVars
+        for (varDecl in influencedVars) {
+            if (varDecl in sourceSetActionVars) {
+                if (varDecl !in precVars && varDecl !in fenceVars.values) {
                     // the actions would be dependent, but we may have a chance to ignore it in the current abstraction
                     ignoredVariables.add(varDecl)
                     continue
@@ -126,6 +135,6 @@ open class XcfaAasporLts(
                 return true
             }
         }
-        return false
+        return indirectlyDependent(state, sourceSetAction, sourceSetActionVars, influencedVars)
     }
 }

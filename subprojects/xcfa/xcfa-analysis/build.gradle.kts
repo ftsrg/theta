@@ -23,6 +23,7 @@ dependencies {
     implementation(project(":theta-analysis"))
     implementation(project(":theta-solver"))
     implementation(project(":theta-solver-javasmt"))
+    implementation(project(":theta-solver-z3"))
     implementation(project(":theta-xcfa"))
     implementation(project(":theta-c-frontend"))
     testImplementation(project(":theta-c2xcfa"))

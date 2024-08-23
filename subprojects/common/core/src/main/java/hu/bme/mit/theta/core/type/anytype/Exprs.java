@@ -41,8 +41,8 @@ public final class Exprs {
         return PrimeExpr.of(op);
     }
 
-    public static <ArrType extends Type, ExprType extends Type>
-    Dereference<ArrType, ExprType> Dereference(final Expr<ArrType> arr, final Expr<ArrType> offset, final ExprType type) {
+    public static <ArrType extends Type, OffsetType extends Type, ExprType extends Type>
+    Dereference<ArrType, OffsetType, ExprType> Dereference(final Expr<ArrType> arr, final Expr<OffsetType> offset, final ExprType type) {
         return Dereference.of(arr, offset, type);
     }
 

@@ -24,6 +24,14 @@ public class Typedef extends CSimpleType {
     }
 
     @Override
+    public CSimpleType copyOf() {
+        CSimpleType declaredNameRet = new Typedef();
+        setUpCopy(declaredNameRet);
+        return declaredNameRet;
+    }
+
+
+    @Override
     protected void patch(CSimpleType cSimpleType) {
         cSimpleType.setTypedef(true);
     }

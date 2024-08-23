@@ -59,7 +59,7 @@ public class StmtCounterVisitor implements StmtVisitor<Void, Integer> {
     }
 
     @Override
-    public <PtrType extends Type, DeclType extends Type> Integer visit(MemoryAssignStmt<PtrType, DeclType> stmt, Void param) {
+    public <PtrType extends Type, OffsetType extends Type, DeclType extends Type> Integer visit(MemoryAssignStmt<PtrType, OffsetType, DeclType> stmt, Void param) {
         return 1;
     }
 

@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.core.type;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.utils.TypeUtils;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements
         Expr<ExprType> {
@@ -72,7 +71,7 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 
     @Override
     public final String toString() {
-        return Utils.lispStringBuilder(getOperatorLabel()).add(op).toString();
+        return Utils.lispStringBuilder(getOperatorLabel()).body().add(op).toString();
     }
 
     public abstract UnaryExpr<OpType, ExprType> with(final Expr<OpType> op);

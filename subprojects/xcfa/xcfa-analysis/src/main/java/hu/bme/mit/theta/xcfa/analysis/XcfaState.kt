@@ -95,6 +95,10 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
                             state.exitMutex(label.substring("cond_signal".length + 1, label.length - 1), -1)
                         }
 
+                        "pthread_exit" -> {
+                            if(processState.locs.size > 1) error("pthread_exit not allowed in invoked function")
+                        }
+
                         else -> error("Unknown fence label $label")
                     }
                 }.let { false }

@@ -51,14 +51,21 @@ abstract class Event(
     var assignment: Expr<BoolType>? = null
     var enabled: Boolean? = null
 
-    fun enabled(valuation: Valuation): Boolean? {
-        val e = try {
-            (guardExpr.eval(valuation) as? BoolLitExpr)?.value
-        } catch (e: Exception) {
-            null
-        }
+    open fun enabled(valuation: Valuation): Boolean? {
+        val e = tryOrNull { (guardExpr.eval(valuation) as? BoolLitExpr)?.value }
         enabled = e
         return e
+    }
+
+    open fun sameMemory(other: Event): Boolean {
+        if (this === other) return true
+        return const.varDecl == other.const.varDecl
+    }
+
+    protected inline fun <T> tryOrNull(block: () -> T?): T? = try {
+        block()
+    } catch (e: Exception) {
+        null
     }
 
     override fun toString(): String {
@@ -66,7 +73,7 @@ abstract class Event(
     }
 }
 
-enum class RelationType { PO, RFI, RFE }
+enum class RelationType { PO, RF }
 data class Relation<E : Event>(
     val type: RelationType,
     val from: E,
@@ -85,6 +92,8 @@ data class Relation<E : Event>(
         enabled = if (type == RelationType.PO) true else valuation[decl]?.let { (it as BoolLitExpr).value }
         return enabled
     }
+
+    fun interferesWith(w: E): Boolean = w.type == EventType.WRITE && w.sameMemory(from)
 }
 
 /**
@@ -98,6 +107,13 @@ sealed class Reason {
     infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
     open fun toExprs(): List<Expr<BoolType>> = reasons.map { it.toExprs() }.flatten().filter { it !is TrueExpr }
     override fun toString(): String = "[${reasons.joinToString("; ")}]"
+    override fun hashCode(): Int = exprs.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Reason) return false
+        if (exprs != other.exprs) return false
+        return true
+    }
 }
 
 class CombinedReason(override val reasons: List<Reason>) : Reason()

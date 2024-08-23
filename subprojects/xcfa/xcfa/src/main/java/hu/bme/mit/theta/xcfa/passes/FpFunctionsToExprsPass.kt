@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.Type
 import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs
 import hu.bme.mit.theta.core.type.anytype.RefExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
 import hu.bme.mit.theta.core.type.fptype.*
 import hu.bme.mit.theta.core.utils.TypeUtils
 import hu.bme.mit.theta.frontend.ParseContext
@@ -174,7 +175,8 @@ class FpFunctionsToExprsPass(val parseContext: ParseContext) : ProcedurePass {
         val assign: AssignStmt<*> = Stmts.Assign(
             TypeUtils.cast((expr as RefExpr<*>).decl as VarDecl<*>, type.smtType),
             TypeUtils.cast(AbstractExprs.Ite<Type>(
-                FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>),
+                Or(FpIsInfiniteExpr.of(callStmt.params[1] as Expr<FpType?>),
+                    FpIsNanExpr.of(callStmt.params[1] as Expr<FpType?>)),
                 type.nullValue, type.unitValue),
                 type.smtType))
         parseContext.metadata.create(assign.expr, "cType", type)

@@ -31,7 +31,7 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
-        rfs: Map<VarDecl<*>, List<Relation<E>>>,
+        rfs: Map<VarDecl<*>, Set<Relation<E>>>,
     ): SolverStatus? {
         val modifiableRels = rfs.values.flatten() // modifiable relation vars
         val flatEvents = events.values.flatMap { it.values.flatten() }

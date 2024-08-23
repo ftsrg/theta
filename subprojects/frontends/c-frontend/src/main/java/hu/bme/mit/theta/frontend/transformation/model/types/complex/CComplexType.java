@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
@@ -32,6 +33,9 @@ import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPo
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.C128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CSigned128;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.CUnsigned128;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cbool.CBool;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CChar;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.cchar.CSignedChar;
@@ -185,6 +189,26 @@ public abstract class CComplexType {
             return new CArray(null, getType(aType.getElemType(), parseContext), parseContext);
         } else if (type instanceof BoolType) {
             return new CBool(null, parseContext);
+        } else if (type instanceof FpType) {
+            final var doubleType = FpType.of(
+                    parseContext.getArchitecture().getBitWidth("double_e"),
+                    parseContext.getArchitecture().getBitWidth("double_s"));
+            if (doubleType.equals(type)) {
+                return new CDouble(null, parseContext);
+            }
+            final var floatType = FpType.of(
+                    parseContext.getArchitecture().getBitWidth("float_e"),
+                    parseContext.getArchitecture().getBitWidth("float_s"));
+            if (floatType.equals(type)) {
+                return new CFloat(null, parseContext);
+            }
+            final var longDoubleType = FpType.of(
+                    parseContext.getArchitecture().getBitWidth("longdouble_e"),
+                    parseContext.getArchitecture().getBitWidth("longdouble_s"));
+            if (longDoubleType.equals(type)) {
+                return new CFloat(null, parseContext);
+            }
+            throw new RuntimeException("No suitable size found for type: " + type);
         } else if (type instanceof BvType) {
             for (Entry<String, Integer> entry : parseContext.getArchitecture().standardTypeSizes.entrySet()) {
                 String s = entry.getKey();
@@ -201,6 +225,8 @@ public abstract class CComplexType {
                             return ((BvType) type).getSigned() ? new CSignedLong(null, parseContext) : new CUnsignedLong(null, parseContext);
                         case "longlong":
                             return ((BvType) type).getSigned() ? new CSignedLongLong(null, parseContext) : new CUnsignedLongLong(null, parseContext);
+                        case "__int128":
+                            return ((BvType) type).getSigned() ? new CSigned128(null, parseContext) : new CUnsigned128(null, parseContext);
                     }
                 }
             }
@@ -231,6 +257,10 @@ public abstract class CComplexType {
         return new CSignedInt(null, parseContext);
     }
 
+    public static CComplexType getUnsigned128(ParseContext parseContext) {
+        return new CUnsigned128(null, parseContext);
+    }
+
     public static CComplexType getUnsignedLongLong(ParseContext parseContext) {
         return new CUnsignedLongLong(null, parseContext);
     }
@@ -241,6 +271,10 @@ public abstract class CComplexType {
 
     public static CComplexType getUnsignedInt(ParseContext parseContext) {
         return new CUnsignedInt(null, parseContext);
+    }
+
+    public static CComplexType getSigned128(ParseContext parseContext) {
+        return new CSigned128(null, parseContext);
     }
 
     public static CComplexType getSignedLongLong(ParseContext parseContext) {
@@ -312,6 +346,10 @@ public abstract class CComplexType {
             return visit(((CShort) type), param);
         }
 
+        public R visit(C128 type, T param) {
+            return visit(((CInteger) type), param);
+        }
+
         public R visit(CLongLong type, T param) {
             return visit(((CInteger) type), param);
         }
@@ -320,8 +358,16 @@ public abstract class CComplexType {
             return visit(((CLongLong) type), param);
         }
 
+        public R visit(CSigned128 type, T param) {
+            return visit(((C128) type), param);
+        }
+
         public R visit(Fitsall type, T param) {
             return visit(((CInteger) type), param);
+        }
+
+        public R visit(CUnsigned128 type, T param) {
+            return visit(((C128) type), param);
         }
 
         public R visit(CUnsignedLongLong type, T param) {
@@ -381,7 +427,7 @@ public abstract class CComplexType {
         }
 
         public R visit(CStruct type, T param) {
-            return visit(((CCompound) type), param);
+            return CComplexType.getUnsignedLong(type.getParseContext()).accept(this, param);
         }
 
         public R visit(CPointer type, T param) {
