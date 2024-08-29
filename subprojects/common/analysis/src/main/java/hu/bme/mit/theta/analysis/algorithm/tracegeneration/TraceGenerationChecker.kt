@@ -4,15 +4,12 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.*
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer
 import hu.bme.mit.theta.common.logging.Logger
-import hu.bme.mit.theta.common.visualization.Graph
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
-import java.io.FileWriter
-import java.io.IOException
 import java.util.function.Consumer
 
 
