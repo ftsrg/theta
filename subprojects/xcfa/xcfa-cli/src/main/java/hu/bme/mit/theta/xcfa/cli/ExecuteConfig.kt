@@ -316,7 +316,7 @@ private fun postVerificationLogging(
             }
 
             if (!config.outputConfig.witnessConfig.disable) {
-                if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null) {
+                if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null && !config.outputConfig.witnessConfig.svcomp) {
                     val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
                         safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
                         getSolver(
