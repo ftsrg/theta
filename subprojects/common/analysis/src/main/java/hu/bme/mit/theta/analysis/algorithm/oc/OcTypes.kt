@@ -122,7 +122,6 @@ object PoReason : Reason() {
 
     override val reasons get() = emptyList<Reason>()
     override fun toExprs(): List<Expr<BoolType>> = listOf()
-    override fun toString(): String = "PO()"
 }
 
 class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {

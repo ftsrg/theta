@@ -72,7 +72,9 @@ internal class XcfaEvent(
 
     companion object {
 
-        private var cnt: Int = 0
+        var cnt: Int = 0
+            private set
+
         private fun uniqueId(): Int = cnt++
     }
 

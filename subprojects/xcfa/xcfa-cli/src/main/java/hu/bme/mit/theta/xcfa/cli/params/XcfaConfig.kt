@@ -25,6 +25,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.oc.ManualConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -323,6 +324,9 @@ data class OcConfig(
 
     @Parameter(names = ["--non-permissive-validation"], description = "Output file to write conflict clauses")
     var nonPermissiveValidation: Boolean = false,
+
+    @Parameter(names = ["--manual-conflict"], description = "Level of manual conflict detection before verification")
+    var manualConflict: ManualConflictFinderConfig = ManualConflictFinderConfig.NONE
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
