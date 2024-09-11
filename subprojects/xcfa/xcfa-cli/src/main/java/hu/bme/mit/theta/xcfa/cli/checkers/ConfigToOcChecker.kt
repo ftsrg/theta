@@ -36,7 +36,7 @@ fun getOcChecker(
 ): SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<*>> {
     val ocConfig = config.backendConfig.specConfig as OcConfig
     val ocChecker = XcfaOcChecker(
-        xcfa, ocConfig.decisionProcedure, logger, ocConfig.inputConflictClauseFile, ocConfig.outputConflictClauseFile,
+        xcfa, ocConfig.decisionProcedure, logger, ocConfig.inputConflictClauseFile, ocConfig.outputConflictClauses,
         ocConfig.nonPermissiveValidation, ocConfig.manualConflict
     )
     return object : SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<*>> {

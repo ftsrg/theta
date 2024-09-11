@@ -316,8 +316,8 @@ data class OcConfig(
     @Parameter(names = ["--input-conflicts"], description = "Input file containing conflict clauses")
     var inputConflictClauseFile: String? = null,
 
-    @Parameter(names = ["--output-conflicts"], description = "Output file to write conflict clauses")
-    var outputConflictClauseFile: Boolean = false,
+    @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
+    var outputConflictClauses: Boolean = false,
 
     @Parameter(names = ["--input-conflict-decision-procedure"], description = "Output file to write conflict clauses")
     var inputConflictDecisionProcedure: String = "",
