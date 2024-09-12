@@ -65,17 +65,20 @@ internal class XcfaEvent(
     guard: Set<Expr<BoolType>>,
     pid: Int,
     val edge: XcfaEdge,
-    clkId: Int = uniqueId(),
+    clkId: Int = uniqueClkId(),
     val array: Expr<*>? = null,
-    val offset: Expr<*>? = null
+    val offset: Expr<*>? = null,
+    val id: Int = uniqueId(),
 ) : Event(const, type, guard, pid, clkId) {
 
     companion object {
 
-        var cnt: Int = 0
+        private var idCnt: Int = 0
+        var clkCnt: Int = 0
             private set
 
-        private fun uniqueId(): Int = cnt++
+        private fun uniqueId(): Int = idCnt++
+        private fun uniqueClkId(): Int = clkCnt++
     }
 
     private var arrayLit: LitExpr<*>? = null

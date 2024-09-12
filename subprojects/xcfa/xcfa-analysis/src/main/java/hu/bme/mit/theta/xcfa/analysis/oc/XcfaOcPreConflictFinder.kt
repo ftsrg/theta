@@ -2,7 +2,6 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 
 @Suppress("unused")
 enum class ManualConflictFinderConfig {
@@ -11,19 +10,20 @@ enum class ManualConflictFinderConfig {
 }
 
 internal fun findManualConflicts(
+    threads: Set<Thread>,
     events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
-    pos: List<Relation<XcfaEvent>>,
     rfs: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>,
     config: ManualConflictFinderConfig
 ): List<Reason> {
     if (config == ManualConflictFinderConfig.NONE) return emptyList()
-    val po = close(pos)
+    val exactPo = XcfaExactPo(threads)
+    val po = { from: E, to: E -> exactPo.isPo(from, to) }
     val flatRfs = rfs.values.flatten().toMutableList()
     val conflicts = mutableListOf<Reason>()
 
-    fun findSimplePath(from: Int, to: Int): Reason? {
-        if (po[from][to]) return PoReason
-        return flatRfs.find { po[from][it.from.clkId] && po[it.to.clkId][to] }?.let { RelationReason(it) }
+    fun findSimplePath(from: E, to: E): Reason? {
+        if (po(from, to)) return PoReason
+        return flatRfs.find { po(from, it.from) && po(it.to, to) }?.let { RelationReason(it) }
     }
 
     // Cycle of two RF edges (plus po edges)
@@ -31,7 +31,7 @@ internal fun findManualConflicts(
         for (j in i + 1 until flatRfs.size) {
             val rf1 = flatRfs[i]
             val rf2 = flatRfs[j]
-            if (po[rf1.to.clkId][rf2.from.clkId] && po[rf2.to.clkId][rf1.from.clkId]) {
+            if (po(rf1.to, rf2.from) && po(rf2.to, rf1.from)) {
                 conflicts.add(RelationReason(rf1) and RelationReason(rf2))
             }
         }
@@ -45,14 +45,14 @@ internal fun findManualConflicts(
         vRfs.forEach { rf ->
             writes.filter { rf.from != it }.forEach { w ->
                 // WS
-                findSimplePath(w.clkId, rf.to.clkId)?.let { wBeforeRf ->
-                    findSimplePath(rf.from.clkId, w.clkId)?.let {
+                findSimplePath(w, rf.to)?.let { wBeforeRf ->
+                    findSimplePath(rf.from, w)?.let {
                         conflicts.add(WriteSerializationReason(rf, w, wBeforeRf) and it)
                     }
                 }
                 // FR
-                findSimplePath(rf.from.clkId, w.clkId)?.let { wAfterRf ->
-                    findSimplePath(w.clkId, rf.to.clkId)?.let {
+                findSimplePath(rf.from, w)?.let { wAfterRf ->
+                    findSimplePath(w, rf.to)?.let {
                         conflicts.add(FromReadReason(rf, w, wAfterRf) and it)
                     }
                 }
@@ -61,20 +61,4 @@ internal fun findManualConflicts(
     }
 
     return conflicts
-}
-
-private fun close(pos: List<Relation<XcfaEvent>>): Array<Array<Boolean>> {
-    val array = Array(XcfaEvent.cnt) { i -> Array(XcfaEvent.cnt) { j -> i == j } }
-    val waitlist = pos.map { it.from.clkId to it.to.clkId }.filter { it.first != it.second }.toMutableList()
-    while (waitlist.isNotEmpty()) {
-        val (f, t) = waitlist.removeAt(0)
-        check(f != t) { "Self-loop is not allowed in program order." }
-        if (array[f][t]) continue
-        array[f][t] = true
-        for (i in array.indices) {
-            if (array[i][f] && !array[i][t]) waitlist.add(i to t)
-            if (array[t][i] && !array[f][i]) waitlist.add(f to i)
-        }
-    }
-    return array
 }

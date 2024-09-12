@@ -5,6 +5,7 @@ import hu.bme.mit.theta.xcfa.model.XcfaLocation
 import hu.bme.mit.theta.xcfa.model.XcfaProcedure
 
 internal class XcfaExactPo(private val threads: Set<Thread>) {
+
     private val reachableEdges = threads.associate { it.pid to ReachableEdges(it.procedure) }
 
     private data class Edge(val source: XcfaLocation?, val target: XcfaLocation, val pid: Int) {
@@ -16,7 +17,7 @@ internal class XcfaExactPo(private val threads: Set<Thread>) {
 
     fun isPo(from: E?, to: E): Boolean {
         from ?: return true
-        if (from.clkId == to.clkId) return true
+        if (Edge(from) == Edge(to)) return from.id < to.id
         val possiblePathPoints = mutableListOf(Edge(from))
         val visited = mutableSetOf<Edge>()
         while (possiblePathPoints.isNotEmpty()) {
