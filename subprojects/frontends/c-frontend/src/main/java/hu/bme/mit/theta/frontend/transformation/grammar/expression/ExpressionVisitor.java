@@ -693,6 +693,8 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
                 bigInteger = new BigInteger(text.substring(3, text.length() - 1), 8);
             } else if (text.startsWith("'\\")) { // char c = '\0'
                 bigInteger = new BigInteger(text.substring(2, text.length() - 1), 10);
+            } else if (text.startsWith("'") && text.endsWith("'") && text.length() == 3) { // char c = 'X'
+                bigInteger = BigInteger.valueOf((int) text.charAt(1));
             } else {
                 bigInteger = new BigInteger(text, 10);
             }
