@@ -63,7 +63,7 @@ private val Expr<*>.vars get() = ExprUtils.getVars(this)
 class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
     inputConflictClauseFile: String?, private val outputConflictClauses: Boolean, nonPermissiveValidation: Boolean,
-    private val manualConflictConfig: ManualConflictFinderConfig
+    private val autoConflictConfig: AutoConflictFinderConfig
 ) : SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
@@ -93,7 +93,7 @@ class XcfaOcChecker(
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe() // no violations in the model
 
         // "Manually" add some conflicts
-        val conflicts = findManualConflicts(threads ,events, rfs, manualConflictConfig)
+        val conflicts = findAutoConflicts(threads ,events, rfs, autoConflictConfig)
         System.err.println("Manual conflicts: ${conflicts.size}")
 //        conflicts.forEach { System.err.println(it) }
         ocChecker.solver.add(conflicts.map { Not(it.expr) })

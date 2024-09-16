@@ -4,18 +4,18 @@ import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.VarDecl
 
 @Suppress("unused")
-enum class ManualConflictFinderConfig {
+enum class AutoConflictFinderConfig {
 
     NONE, RF, RF_WS_FR
 }
 
-internal fun findManualConflicts(
+internal fun findAutoConflicts(
     threads: Set<Thread>,
     events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
     rfs: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>,
-    config: ManualConflictFinderConfig
+    config: AutoConflictFinderConfig
 ): List<Reason> {
-    if (config == ManualConflictFinderConfig.NONE) return emptyList()
+    if (config == AutoConflictFinderConfig.NONE) return emptyList()
     val exactPo = XcfaExactPo(threads)
     val po = { from: E, to: E -> exactPo.isPo(from, to) }
     val flatRfs = rfs.values.flatten().toMutableList()
@@ -37,7 +37,7 @@ internal fun findManualConflicts(
         }
     }
 
-    if (config == ManualConflictFinderConfig.RF) return conflicts
+    if (config == AutoConflictFinderConfig.RF) return conflicts
 
     // Find WS and FR conflicts
     rfs.forEach { (v, vRfs) ->
