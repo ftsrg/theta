@@ -38,7 +38,8 @@ class CLibraryFunctionsPass : ProcedurePass {
         "pthread_cond_wait",
         "pthread_cond_signal",
         "pthread_mutex_init",
-        "pthread_cond_init"
+        "pthread_cond_init",
+        "pthread_exit"
     )
 
     override fun run(builder: XcfaProcedureBuilder): XcfaProcedureBuilder {
@@ -51,6 +52,7 @@ class CLibraryFunctionsPass : ProcedurePass {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
                         val metadata = invokeLabel.metadata
+                        var target = it.target
                         val labels: List<XcfaLabel> = when (invokeLabel.name) {
                             "printf" -> listOf(NopLabel)
                             "pthread_join" -> {
@@ -71,9 +73,13 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                                 val param = invokeLabel.params[4]
 
-                                listOf(StartLabel((funcptr as RefExpr<out Type>).decl.name,
-                                    listOf(Int(0), param), // int(0) to solve StartLabel not handling return params
-                                    (handle as RefExpr<out Type>).decl as VarDecl<*>, metadata))
+                                listOf(
+                                    StartLabel(
+                                        (funcptr as RefExpr<out Type>).decl.name,
+                                        listOf(Int(0), param), // int(0) to solve StartLabel not handling return params
+                                        (handle as RefExpr<out Type>).decl as VarDecl<*>, metadata
+                                    )
+                                )
                             }
 
                             "pthread_mutex_lock" -> {
@@ -101,8 +107,9 @@ class CLibraryFunctionsPass : ProcedurePass {
                                 check(handle is RefExpr && (handle as RefExpr<out Type>).decl is VarDecl)
 
                                 listOf(
-                                    FenceLabel(setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"),
-                                        metadata),
+                                    FenceLabel(
+                                        setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"), metadata
+                                    ),
                                     FenceLabel(setOf("cond_wait(${cond.decl.name},${handle.decl.name})"), metadata)
                                 )
                             }
@@ -117,13 +124,18 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                             "pthread_mutex_init", "pthread_cond_init" -> listOf(NopLabel)
 
+                            "pthread_exit" -> {
+                                target = builder.finalLoc.get()
+                                listOf(FenceLabel(setOf("pthread_exit"), metadata))
+                            }
+
                             else -> error("Unsupported library function ${invokeLabel.name}")
                         }
-                        edge.withLabel(SequenceLabel(labels)).splitIf { label ->
+                        XcfaEdge(it.source, target, SequenceLabel(labels)).splitIf { label ->
                             label is FenceLabel && label.labels.any { l -> l.startsWith("start_cond_wait") }
                         }.forEach(builder::addEdge)
                     } else {
-                        builder.addEdge(edge.withLabel(SequenceLabel(it.label.labels)))
+                        builder.addEdge(it.withLabel(SequenceLabel(it.label.labels)))
                     }
                 }
             }
