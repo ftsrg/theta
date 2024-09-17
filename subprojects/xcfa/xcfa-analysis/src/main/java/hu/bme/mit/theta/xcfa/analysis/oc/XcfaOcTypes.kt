@@ -19,9 +19,11 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
@@ -71,18 +73,27 @@ internal class XcfaEvent(
     val id: Int = uniqueId(),
 ) : Event(const, type, guard, pid, clkId) {
 
+    private var arrayStatic: LitExpr<*>? = null
+    private var offsetStatic: LitExpr<*>? = null
+    private var arrayLit: LitExpr<*>? = null
+    private var offsetLit: LitExpr<*>? = null
+
+    init {
+        check((array == null && offset == null) || (array != null && offset != null)) {
+            "Array and offset expressions must be both null or both non-null."
+        }
+        arrayStatic = tryOrNull { array?.eval(ImmutableValuation.empty()) }
+        offsetStatic = tryOrNull { offset?.eval(ImmutableValuation.empty()) }
+    }
+
     companion object {
 
         private var idCnt: Int = 0
-        var clkCnt: Int = 0
-            private set
+        private var clkCnt: Int = 0
 
         private fun uniqueId(): Int = idCnt++
         private fun uniqueClkId(): Int = clkCnt++
     }
-
-    private var arrayLit: LitExpr<*>? = null
-    private var offsetLit: LitExpr<*>? = null
 
     // A (memory) event is only considered enabled if the array and offset expressions are also known values
     override fun enabled(valuation: Valuation): Boolean? {
@@ -104,11 +115,21 @@ internal class XcfaEvent(
 
     override fun sameMemory(other: Event): Boolean {
         if (!super.sameMemory(other)) return false
-        if (javaClass != other.javaClass) return true // should not happen anyway
         other as XcfaEvent
         if (arrayLit != other.arrayLit) return false
         if (offsetLit != other.offsetLit) return false
+        if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic) return false
+        if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic) return false
         return true
+    }
+
+    override fun interferenceCond(other: Event): Expr<BoolType>? {
+        other as XcfaEvent
+        array ?: return null
+        other.array ?: return null
+        if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic) return null
+        if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic) return null
+        return And(Eq(array, other.array), Eq(offset, other.offset))
     }
 }
 
