@@ -135,7 +135,7 @@ sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: E, private val
     override val exprs: List<Expr<BoolType>>
         get() = (listOf(rf.declRef, w.guardExpr) + wRfRelation.exprs).let { basicExpr ->
             rf.from.interferenceCond(w)?.let { interferenceCond ->
-                listOf(Imply(interferenceCond, basicExpr.toAnd()))
+                basicExpr + interferenceCond
             } ?: basicExpr
         }
 }
