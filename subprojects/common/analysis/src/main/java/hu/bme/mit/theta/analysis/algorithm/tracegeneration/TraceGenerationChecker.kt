@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.*
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
@@ -17,7 +18,7 @@ class TraceGenerationChecker<S : ExprState?, A : ExprAction?, P : Prec?>(
     private val logger: Logger,
     private val abstractor: Abstractor<S, A, P>,
     private val getFullTraces : Boolean,
-) : SafetyChecker<S, A, P> {
+) : SafetyChecker<ARG<S, A>, Trace<S, A>, P> { // TODO refactor templates?
     private var traces: List<Trace<S, A>> = ArrayList()
 
     companion object {
@@ -30,7 +31,7 @@ class TraceGenerationChecker<S : ExprState?, A : ExprAction?, P : Prec?>(
         }
     }
 
-    override fun check(prec: P): SafetyResult<S, A> {
+    override fun check(prec: P): SafetyResult<ARG<S, A>, Trace<S, A>> {
         logger.write(Logger.Level.SUBSTEP, "Printing prec for trace generation...\n" + System.lineSeparator())
         logger.write(Logger.Level.SUBSTEP, prec.toString())
 
