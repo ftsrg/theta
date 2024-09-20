@@ -34,7 +34,6 @@ class InputOptions : OptionGroup(
     name = "Input options",
     help = "Options related to model and property input"
 ) {
-
     val model: File by option(
         help = "Path of the input model (XSTS or Pnml). Extension should be .pnml to be handled as petri-net input"
     ).file(mustExist = true, canBeDir = false).required()

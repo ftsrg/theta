@@ -58,7 +58,7 @@ abstract class XstsCliBaseCommand(name: String? = null, help: String = "") :
     protected val logger: Logger by lazy {
         if (outputOptions.benchmarkMode) NullLogger.getInstance() else ConsoleLogger(outputOptions.logLevel)
     }
-    protected val writer = BasicTableWriter(System.out, ",", "\"", "\"")
+    protected val writer = BasicTableWriter(System.out, ",", "\"", "\"") // TODO shouldn't this be done through logger??
 
     fun printError(exception: Exception) {
         val message = exception.message ?: ""

@@ -4,6 +4,7 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
+import kotlin.jvm.optionals.getOrNull
 
 class TraceGenerationMetadataBuilder<S : State, A : Action> {
 
@@ -50,13 +51,13 @@ class TraceGenerationMetadataBuilder<S : State, A : Action> {
                 metadataTraces.keys.forEach { trace ->
                     metadataStates[Pair(trace, coveredNode)]?.let { coveredMetaState ->
                         if (coveredMetaState != state) {
-                            coveredMetaState.coveringState.add(state)
+                            coveredMetaState.coveredState.add(state)
                         }
                     }
                 }
             }
 
-            node.coveringNode.get().let { coveringNode ->
+            node.coveringNode.getOrNull()?.let { coveringNode ->
                 metadataTraces.keys.forEach { trace ->
                     metadataStates[Pair(trace, coveringNode)]?.let { coveredMetaState ->
                         if (coveredMetaState != state) {
@@ -66,6 +67,15 @@ class TraceGenerationMetadataBuilder<S : State, A : Action> {
                 }
             }
         }
+
+        var missingCover = false
+        for (stateMetadata in metadataStates.values) {
+            stateMetadata.coveringState.forEach { coveringState -> if(!coveringState.coveredState.contains(stateMetadata)) missingCover = true  }
+            stateMetadata.coveredState.forEach { coveredState -> if(!coveredState.coveringState.contains(stateMetadata)) missingCover = true  }
+        }
+
+        assert(!missingCover
+        ) { "Some coverages are only stored in one direction (covering not stored in covered or vica versa)" }
     }
 }
 
@@ -107,7 +117,18 @@ class StateMetadata<S : State, A: Action> (val state: State, val id : Long = cou
     }
 
     override fun toString(): String {
-        return "S$id"
+        val sb = StringBuilder()
+        sb.append("S$id{")
+        if(coveredState.isNotEmpty()) {
+            sb.append("covering: ")
+            coveredState.forEach { coveringState -> sb.append("S${coveringState.id} ") }
+        }
+        if(coveringState.isNotEmpty()) {
+            sb.append("covered by: ")
+            coveringState.forEach { coveredState -> sb.append("S${coveredState.id} ") }
+        }
+        sb.append("}")
+        return sb.toString()
     }
 }
 

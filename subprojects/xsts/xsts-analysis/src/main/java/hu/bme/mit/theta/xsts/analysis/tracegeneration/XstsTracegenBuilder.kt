@@ -1,8 +1,10 @@
 package hu.bme.mit.theta.xsts.analysis.tracegeneration
 
 import com.google.common.base.Preconditions
+import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
+import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
@@ -10,8 +12,6 @@ import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecke
 import hu.bme.mit.theta.analysis.expl.*
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.expr.ExprStatePredicate
-import hu.bme.mit.theta.analysis.pred.*
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.logging.NullLogger
@@ -24,7 +24,6 @@ import hu.bme.mit.theta.xsts.XSTS
 import hu.bme.mit.theta.xsts.analysis.*
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsAllVarsInitPrec
-import hu.bme.mit.theta.xsts.analysis.initprec.XstsTracegenPredInitPrec
 import hu.bme.mit.theta.xsts.analysis.initprec.XstsVarListInitPrec
 import java.io.File
 import java.io.IOException
@@ -57,7 +56,7 @@ class XstsTracegenBuilder(
         return this
     }
 
-    private fun buildExpl(xsts: XSTS) : XstsTracegenConfig<out ExprState?, out ExprAction?, out ExplPrec?> {
+    private fun buildExpl(xsts: XSTS) : XstsTracegenConfig<out ExprState, out ExprAction, out ExplPrec> {
         val solver2 =
             solverFactory.createSolver() // abstraction // TODO handle separate solvers in a nicer way
 
@@ -70,7 +69,7 @@ class XstsTracegenBuilder(
         val argBuilder = ArgBuilder.create(lts, analysis, target, true)
 
         if (abstraction==TracegenerationAbstraction.VARLIST) {
-            val abstractor: Abstractor<XstsState<ExplState>?, XstsAction?, ExplPrec?> =
+            val abstractor: Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> =
                 BasicAbstractor.builder(argBuilder)
                     .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
                     .stopCriterion(StopCriterions.fullExploration())
@@ -106,7 +105,7 @@ class XstsTracegenBuilder(
             }
         } else {
             assert(abstraction==TracegenerationAbstraction.NONE)
-            val abstractor: Abstractor<XstsState<ExplState>?, XstsAction?, ExplPrec?> =
+            val abstractor: Abstractor<XstsState<ExplState>, XstsAction, ExplPrec> =
                 BasicAbstractor.builder(argBuilder)
                     .waitlist(PriorityWaitlist.create(XstsConfigBuilder.Search.DFS.comparator))
                     .stopCriterion(StopCriterions.fullExploration())
@@ -154,7 +153,7 @@ class XstsTracegenBuilder(
     }
     */
 
-    fun build(xsts: XSTS): XstsTracegenConfig<out ExprState?, out ExprAction?, out Prec?> {
+    fun build(xsts: XSTS): XstsTracegenConfig<out State, out Action, out Prec> {
         val solver2 =
             solverFactory.createSolver() // abstraction // TODO handle separate solvers in a nicer way
 

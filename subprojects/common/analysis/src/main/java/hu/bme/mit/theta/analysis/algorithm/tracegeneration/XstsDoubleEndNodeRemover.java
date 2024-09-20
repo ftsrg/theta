@@ -1,10 +1,10 @@
 package hu.bme.mit.theta.analysis.algorithm.tracegeneration;
 
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 
 import java.io.BufferedReader;
@@ -13,8 +13,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class XstsDoubleEndNodeRemover<S extends ExprState, A extends ExprAction> {
-    static <S extends ExprState, A extends ExprAction> List<ArgNode<S,A>> collectBadLeaves(ARG<S,A> arg) {
+public class XstsDoubleEndNodeRemover<S extends State, A extends Action> {
+    static <S extends State, A extends Action> List<ArgNode<S,A>> collectBadLeaves(ARG<S,A> arg) {
         // TODO XSTS SPECIFIC for now! collecting nodes that look like there should be traces to it, but shouldn't ("not firing anything" nodes)
         XstsDoubleEndNodeRemover<S, A> instance = new XstsDoubleEndNodeRemover<S, A>();
         List<ArgNode<S, A>> badNodes = new ArrayList<>();
@@ -63,7 +63,7 @@ public class XstsDoubleEndNodeRemover<S extends ExprState, A extends ExprAction>
         }
     }
 
-    static <S extends ExprState, A extends StmtAction> Trace<S, A> filterSuperfluousEndNode(Trace<S, A> trace) {
+    static <S extends State, A extends StmtAction> Trace<S, A> filterSuperfluousEndNode(Trace<S, A> trace) {
         if(trace.getStates().size()>3) {
             boolean transitionFired = false;
             int size = trace.getStates().size();

@@ -1,28 +1,27 @@
 package hu.bme.mit.theta.analysis.algorithm.tracegeneration
 
 import com.google.common.base.Preconditions
-import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.*
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.common.logging.Logger
+import java.util.*
 import java.util.function.Consumer
+import kotlin.collections.ArrayList
 
 
-class TraceGenerationChecker<S : ExprState?, A : ExprAction?, P : Prec?>(
+class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
     private val logger: Logger,
     private val abstractor: Abstractor<S, A, P>,
     private val getFullTraces : Boolean,
-) : SafetyChecker<ARG<S, A>, Trace<S, A>, P> { // TODO refactor templates?
+) : SafetyChecker<TraceGenerationResult<S, A>, EmptyCex, P> { // TODO refactor templates?
     private var traces: List<Trace<S, A>> = ArrayList()
 
     companion object {
-        fun <S : ExprState?, A : ExprAction?, P : Prec?> create(
+        fun <S : State, A : Action, P : Prec?> create(
             logger: Logger,
             abstractor: Abstractor<S, A, P>,
             getFullTraces: Boolean
@@ -31,7 +30,7 @@ class TraceGenerationChecker<S : ExprState?, A : ExprAction?, P : Prec?>(
         }
     }
 
-    override fun check(prec: P): SafetyResult<ARG<S, A>, Trace<S, A>> {
+    override fun check(prec: P): SafetyResult<TraceGenerationResult<S, A>, EmptyCex> {
         logger.write(Logger.Level.SUBSTEP, "Printing prec for trace generation...\n" + System.lineSeparator())
         logger.write(Logger.Level.SUBSTEP, prec.toString())
 
@@ -70,6 +69,12 @@ class TraceGenerationChecker<S : ExprState?, A : ExprAction?, P : Prec?>(
                 )
             }.toList())
 
+        // TODO does not work with full traces (see below - modification should be done to arg traces?)
+        assert(!getFullTraces)
+        val metadataBuilder = TraceGenerationMetadataBuilder<S, A>()
+        argTraces.forEach { trace -> metadataBuilder.addTrace(trace) }
+        val traceMetadata = metadataBuilder.build()
+
         // filter 2, optional, to get full traces even where there is coverage
         // why?: otherwise we stop at the leaf, which is covered in many traces by other nodes
         traces = if (getFullTraces) {
@@ -87,8 +92,8 @@ class TraceGenerationChecker<S : ExprState?, A : ExprAction?, P : Prec?>(
         )
         logger.write(Logger.Level.SUBSTEP, "-- Trace generation done --\n")
 
-        return SafetyResult.traces(traces)
-
+        // TODO return unsafe if coverage not full? (is that known here? not yet)
+        return SafetyResult.safe(TraceGenerationResult(traceMetadata, traces))
     }
 
     private fun filterEndNodes(
