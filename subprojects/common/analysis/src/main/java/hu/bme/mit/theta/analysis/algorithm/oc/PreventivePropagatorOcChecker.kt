@@ -18,7 +18,6 @@ package hu.bme.mit.theta.analysis.algorithm.oc
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.solver.SolverStatus
 
@@ -82,5 +81,5 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
     }
 
     private fun propagateUnit(reason: Reason, consequence: Expr<BoolType>) =
-        userPropagator.propagateConsequence(reason.exprs.filter { it != True() }, consequence)
+        userPropagator.propagateConsequence(reason.exprs, consequence)
 }

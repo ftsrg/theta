@@ -134,20 +134,15 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
  * either a relation (being enabled) or an event (being enabled - having a guard that evaluates to true).
  * The fix (closed by theory axioms) relations and the solver decision stack level are also stored.
  */
-class OcAssignment<E : Event> internal constructor(
+open class OcAssignment<E : Event> internal constructor(
+    val rels: Array<Array<Reason?>>,
     val relation: Relation<E>? = null,
     val event: E? = null,
-    val rels: Array<Array<Reason?>>,
-    val solverLevel: Int = 0,
 ) {
 
-    internal constructor(rels: Array<Array<Reason?>>, e: E, solverLevel: Int = 0)
-        : this(event = e, rels = rels.copy(), solverLevel = solverLevel)
+    internal constructor(rels: Array<Array<Reason?>>, e: E)
+        : this(rels.copy(), event = e)
 
-    internal constructor(rels: Array<Array<Reason?>>, r: Relation<E>, solverLevel: Int = 0)
-        : this(relation = r, rels = rels.copy(), solverLevel = solverLevel)
-
-    override fun toString(): String {
-        return "OcAssignment(relation=$relation, event=$event, solverLevel=$solverLevel)"
-    }
+    internal constructor(rels: Array<Array<Reason?>>, r: Relation<E>)
+        : this(rels.copy(), relation = r)
 }

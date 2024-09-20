@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.LitExpr
 import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
-import hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.TrueExpr
@@ -103,8 +102,11 @@ data class Relation<E : Event>(
 sealed class Reason {
 
     open val reasons: List<Reason> get() = listOf(this)
-    open val exprs: List<Expr<BoolType>> get() = reasons.map { it.exprs }.flatten().filter { it !is TrueExpr }
+    protected open val expressions: List<Expr<BoolType>> get() = reasons.map { it.expressions }.flatten()
+
+    val exprs: List<Expr<BoolType>> get() = expressions.filter { it !is TrueExpr }
     val expr: Expr<BoolType> get() = exprs.toAnd()
+
     infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
     override fun toString(): String = "[${reasons.joinToString("; ")}]"
     override fun hashCode(): Int = exprs.hashCode()
@@ -120,34 +122,28 @@ class CombinedReason(override val reasons: List<Reason>) : Reason()
 
 object PoReason : Reason() {
 
-    override val reasons get() = emptyList<Reason>()
-    override val exprs: List<Expr<BoolType>> get() = listOf()
+    override val reasons = emptyList<Reason>()
+    override val expressions: List<Expr<BoolType>> = listOf()
 }
 
 class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
 
-    override val exprs: List<Expr<BoolType>> get() = listOf(relation.declRef)
+    override val expressions: List<Expr<BoolType>> = listOf(relation.declRef)
     override fun toString(): String = "REL(${relation.decl.name})"
 }
 
-sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: E, private val wRfRelation: Reason) : Reason() {
+sealed class DerivedReason<E : Event>(
+    val rf: Relation<E>, val w: E, private val wRfRelation: Reason, private val name: String
+) : Reason() {
 
-    override val exprs: List<Expr<BoolType>>
-        get() = (listOf(rf.declRef, w.guardExpr) + wRfRelation.exprs).let { basicExpr ->
-            rf.from.interferenceCond(w)?.let { interferenceCond ->
-                basicExpr + interferenceCond
-            } ?: basicExpr
-        }
+    override val expressions: List<Expr<BoolType>> =
+        listOfNotNull(rf.declRef, w.guardExpr, rf.from.interferenceCond(w)) + wRfRelation.exprs
+
+    override fun toString(): String = "$name(${rf.decl.name}, ${w.const.name}, $wRfRelation)"
 }
 
 class WriteSerializationReason<E : Event>(rf: Relation<E>, w: E, val wBeforeRf: Reason) :
-    DerivedReason<E>(rf, w, wBeforeRf) {
-
-    override fun toString(): String = "WS(${rf.decl.name}, ${w.const.name}, $wBeforeRf)"
-}
+    DerivedReason<E>(rf, w, wBeforeRf, "WS")
 
 class FromReadReason<E : Event>(rf: Relation<E>, w: E, val wAfterRf: Reason) :
-    DerivedReason<E>(rf, w, wAfterRf) {
-
-    override fun toString(): String = "FR(${rf.decl.name}, ${w.const.name}, $wAfterRf)"
-}
+    DerivedReason<E>(rf, w, wAfterRf, "FR")

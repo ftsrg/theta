@@ -43,7 +43,7 @@ internal fun findAutoConflicts(
     rfs.forEach { (v, vRfs) ->
         val writes = events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
         vRfs.forEach { rf ->
-            writes.filter { rf.from != it && rf.from.sameMemory(it) }.forEach { w ->
+            writes.filter { rf.from != it && rf.from.potentialSameMemory(it) }.forEach { w ->
                 // WS
                 findSimplePath(w, rf.to)?.let { wBeforeRf ->
                     findSimplePath(rf.from, w)?.let {

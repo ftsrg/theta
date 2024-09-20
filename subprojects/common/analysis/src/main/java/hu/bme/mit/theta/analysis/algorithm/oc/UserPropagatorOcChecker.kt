@@ -25,15 +25,15 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
 import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.util.*
-import kotlin.time.ExperimentalTime
 
 open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
-    protected val partialAssignment = Stack<OcAssignment<E>>()
     protected lateinit var writes: Map<VarDecl<*>, List<E>>
-    protected lateinit var flatWrites: List<E>
     protected lateinit var rfs: Map<VarDecl<*>, Set<Relation<E>>>
+    private lateinit var flatWrites: List<E>
     private lateinit var flatRfs: List<Relation<E>>
+    private lateinit var interferenceCondToEvents: Map<Expr<BoolType>, List<Pair<E, E>>>
+    protected val partialAssignment = Stack<PropagatorOcAssignment<E>>()
 
     protected val userPropagator: JavaSMTUserPropagator = object : JavaSMTUserPropagator() {
         override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
@@ -52,6 +52,32 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         override fun onPop(levels: Int) = pop(levels)
     }
 
+    protected class PropagatorOcAssignment<E : Event> private constructor(
+        stack: Stack<PropagatorOcAssignment<E>>,
+        val solverLevel: Int,
+        rels: Array<Array<Reason?>> = stack.peek().rels.copy(),
+        relation: Relation<E>? = null,
+        event: E? = null,
+        val interference: Pair<E, E>? = null,
+    ) : OcAssignment<E>(rels, relation, event) {
+
+        init {
+            stack.push(this)
+        }
+
+        constructor(stack: Stack<PropagatorOcAssignment<E>>, rels: Array<Array<Reason?>>)
+            : this(stack, 0, rels)
+
+        constructor(stack: Stack<PropagatorOcAssignment<E>>, e: E, solverLevel: Int)
+            : this(stack, solverLevel, event = e)
+
+        constructor(stack: Stack<PropagatorOcAssignment<E>>, r: Relation<E>, solverLevel: Int)
+            : this(stack, solverLevel, relation = r)
+
+        constructor(stack: Stack<PropagatorOcAssignment<E>>, i: Pair<E, E>, solverLevel: Int)
+            : this(stack, solverLevel, interference = i)
+    }
+
     override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(userPropagator)
     protected var solverLevel: Int = 0
 
@@ -68,30 +94,49 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         val clkSize = events.values.flatMap { it.values.flatten() }.maxOf { it.clkId } + 1
         val initialRels = Array(clkSize) { Array<Reason?>(clkSize) { null } }
         pos.forEach { setAndClose(initialRels, it) }
-        partialAssignment.push(OcAssignment(rels = initialRels))
-
-        flatRfs.forEach { rf -> userPropagator.registerExpression(rf.declRef) }
-        flatWrites.forEach { w -> if (w.guard.isNotEmpty()) userPropagator.registerExpression(w.guardExpr) }
+        PropagatorOcAssignment(partialAssignment, initialRels)
+        registerExpressions()
         return solver.check()
     }
 
     override fun getRelations(): Array<Array<Reason?>>? = partialAssignment.lastOrNull()?.rels?.copy()
 
+    private fun registerExpressions() {
+        flatRfs.forEach { rf -> userPropagator.registerExpression(rf.declRef) }
+        flatWrites.forEach { w -> if (w.guard.isNotEmpty()) userPropagator.registerExpression(w.guardExpr) }
+
+        val interferenceToEvents = mutableMapOf<Expr<BoolType>, MutableList<Pair<E, E>>>()
+        flatWrites.forEach { w1 ->
+            flatWrites.forEach { w2 ->
+                if (w1 != w2) {
+                    w1.interferenceCond(w2)?.let {
+                        userPropagator.registerExpression(it)
+                        interferenceToEvents.getOrPut(it) { mutableListOf() }.add(w1 to w2)
+                    }
+                }
+            }
+        }
+        interferenceCondToEvents = interferenceToEvents
+    }
+
+    private fun interferenceKnown(w1: E, w2: E) =
+        w1.interferenceCond(w2) == null || partialAssignment.any { it.interference == w1 to w2 }
+
     protected open fun propagate(expr: Expr<BoolType>) {
-        flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf) }
-            ?: flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
+        flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf); return }
+        flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
+        interferenceCondToEvents[expr]?.forEach { (w1, w2) -> propagate(w1, w2) }
     }
 
     private fun propagate(rf: Relation<E>) {
         check(rf.type == RelationType.RF)
-        val assignment = OcAssignment(partialAssignment.peek().rels, rf, solverLevel)
-        partialAssignment.push(assignment)
+        val assignment = PropagatorOcAssignment(partialAssignment, rf, solverLevel)
         val reason0 = setAndClose(assignment.rels, rf)
         propagate(reason0)
 
-        val writes = writes[rf.from.const.varDecl]!!
-            .filter { w -> w.guard.isEmpty() || partialAssignment.any { it.event == w } }
-        for (w in writes) {
+        writes[rf.from.const.varDecl]!!.filter { w ->
+            (w.guard.isEmpty() || partialAssignment.any { it.event == w }) && interferenceKnown(rf.from, w)
+        }.forEach { w ->
             val reason = derive(assignment.rels, rf, w)
             propagate(reason)
         }
@@ -99,13 +144,26 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
     private fun propagate(w: E) {
         check(w.type == EventType.WRITE)
-        rfs[w.const.varDecl]?.filter { r -> partialAssignment.any { it.relation == r } }?.let { rfs ->
-            val assignment = OcAssignment(partialAssignment.peek().rels, w, solverLevel)
-            partialAssignment.push(assignment)
-            for (rf in rfs) {
-                val reason = derive(assignment.rels, rf, w)
-                propagate(reason)
-            }
+        val assignment = PropagatorOcAssignment(partialAssignment, w, solverLevel)
+
+        rfs[w.const.varDecl]?.filter { rf ->
+            partialAssignment.any { it.relation == rf } && interferenceKnown(rf.from, w)
+        }?.forEach { rf ->
+            val reason = derive(assignment.rels, rf, w)
+            propagate(reason)
+        }
+    }
+
+    private fun propagate(w1: E, w2: E) {
+        check(w1.type == EventType.WRITE && w2.type == EventType.WRITE)
+        val assignment = PropagatorOcAssignment(partialAssignment, w1 to w2, solverLevel)
+        if (partialAssignment.none { it.event == w1 } || partialAssignment.none { it.event == w2 }) return
+
+        rfs[w1.const.varDecl]?.filter { rf ->
+            rf.from == w1 && partialAssignment.any { it.relation == rf }
+        }?.forEach { rf ->
+            val reason = derive(assignment.rels, rf, w2)
+            propagate(reason)
         }
     }
 

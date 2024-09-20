@@ -114,10 +114,14 @@ internal class XcfaEvent(
     }
 
     override fun sameMemory(other: Event): Boolean {
-        if (!super.sameMemory(other)) return false
         other as XcfaEvent
         if (arrayLit != other.arrayLit) return false
         if (offsetLit != other.offsetLit) return false
+        return potentialSameMemory(other)
+    }
+
+    fun potentialSameMemory(other: XcfaEvent): Boolean {
+        if (!super.sameMemory(other)) return false
         if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic) return false
         if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic) return false
         return true
@@ -127,9 +131,20 @@ internal class XcfaEvent(
         other as XcfaEvent
         array ?: return null
         other.array ?: return null
-        if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic) return null
-        if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic) return null
-        return And(Eq(array, other.array), Eq(offset, other.offset))
+
+        var arrayEq: Expr<BoolType>? = Eq(array, other.array)
+        if (arrayStatic != null && other.arrayStatic != null) {
+            if (arrayStatic != other.arrayStatic) return null
+            arrayEq = null
+        }
+
+        var offsetEq: Expr<BoolType>? = Eq(offset, other.offset)
+        if (offsetStatic != null && other.offsetStatic != null) {
+            if (offsetStatic != other.offsetStatic) return null
+            offsetEq = null
+        }
+
+        return listOfNotNull(arrayEq, offsetEq).toAnd()
     }
 }
 

@@ -38,7 +38,7 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
         val initialRels = Array(flatEvents.size) { Array<Reason?>(flatEvents.size) { null } }
         pos.forEach { setAndClose(initialRels, it) }
         val decisionStack = Stack<OcAssignment<E>>()
-        decisionStack.push(OcAssignment(rels = initialRels)) // not really a decision point (initial)
+        decisionStack.push(OcAssignment(initialRels)) // not really a decision point (initial)
 
         dpllLoop@
         while (solver.check().isSat) { // DPLL loop
