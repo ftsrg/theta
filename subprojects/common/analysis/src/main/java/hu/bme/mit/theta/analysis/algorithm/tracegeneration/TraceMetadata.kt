@@ -2,21 +2,21 @@ package hu.bme.mit.theta.analysis.algorithm.tracegeneration
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import kotlin.jvm.optionals.getOrNull
 
 class TraceGenerationMetadataBuilder<S : State, A : Action> {
-
     val argTraces: MutableList<ArgTrace<S, A>> = mutableListOf()
 
     fun addTrace(trace: ArgTrace<S, A>) {
         argTraces.add(trace)
     }
 
-    fun build(): Collection<TraceMetadata<S, A>> {
+    fun build(): Map<Trace<S, A>, TraceMetadata<S, A>> {
         // first create the meta traces and states
-        val metadataTraces = mutableMapOf<ArgTrace<S, A>, TraceMetadata<S, A>>()
+        val metadataArgTraces = mutableMapOf<ArgTrace<S, A>, TraceMetadata<S, A>>()
         val metadataStates = mutableMapOf<Pair<ArgTrace<S, A>, ArgNode<S, A>>, StateMetadata<S, A>>()
 
         for (argTrace in argTraces) {
@@ -27,13 +27,15 @@ class TraceGenerationMetadataBuilder<S : State, A : Action> {
                 states.add(state)
             }
             val traceMetadata = TraceMetadata.create(states)
-            metadataTraces[argTrace] = traceMetadata
+            metadataArgTraces[argTrace] = traceMetadata
         }
 
-        collectCoverStates(metadataTraces, metadataStates)
+        collectCoverStates(metadataArgTraces, metadataStates)
 
-        print(metadataTraces.values)
-        return metadataTraces.values
+        val metadataTraces = mutableMapOf<Trace<S, A>, TraceMetadata<S, A>>()
+        metadataArgTraces.forEach { entry -> metadataTraces[entry.key.toTrace()] = entry.value }
+
+        return metadataTraces
     }
 
     private fun collectCoverStates(

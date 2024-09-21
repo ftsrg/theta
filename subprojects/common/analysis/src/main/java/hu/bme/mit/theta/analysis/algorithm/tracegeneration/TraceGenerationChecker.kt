@@ -7,11 +7,10 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationResult
 import hu.bme.mit.theta.common.logging.Logger
-import java.util.*
 import java.util.function.Consumer
 import kotlin.collections.ArrayList
-
 
 class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
     private val logger: Logger,
@@ -93,7 +92,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         logger.write(Logger.Level.SUBSTEP, "-- Trace generation done --\n")
 
         // TODO return unsafe if coverage not full? (is that known here? not yet)
-        return SafetyResult.safe(TraceGenerationResult(traceMetadata, traces))
+        return SafetyResult.safe(TraceGenerationResult(traceMetadata))
     }
 
     private fun filterEndNodes(
