@@ -93,10 +93,10 @@ class XcfaOcChecker(
         if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe() // no violations in the model
 
         // "Manually" add some conflicts
+        logger.write(Logger.Level.SUBSTEP, "Automatically finding conflicts...\n")
         val conflicts = findAutoConflicts(threads ,events, rfs, autoConflictConfig)
-        System.err.println("Manual conflicts: ${conflicts.size}")
-//        conflicts.forEach { System.err.println(it) }
         ocChecker.solver.add(conflicts.map { Not(it.expr) })
+        logger.write(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}\n")
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status: SolverStatus?
@@ -104,10 +104,9 @@ class XcfaOcChecker(
             status = ocChecker.check(events, pos, rfs)
         }
         if (ocChecker !is XcfaOcCorrectnessValidator) {
-            System.err.println("Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+            logger.write(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}\n")
         }
-        System.err.println("Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
-//        ocChecker.getPropagatedClauses().forEach { System.err.println("CC: $it") }
+        logger.write(Logger.Level.INFO, "Propagated clauses: ${ocChecker.getPropagatedClauses().size}\n")
 
         when {
             status?.isUnsat == true -> {
@@ -460,12 +459,5 @@ class XcfaOcChecker(
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
         return constDecl
-    }
-
-    fun printXcfa() = xcfa.toDot { edge ->
-        "(${
-            events.values.flatMap { it.flatMap { it.value } }.filter { it.edge == edge }
-                .joinToString(",") { it.const.name }
-        })"
     }
 }
