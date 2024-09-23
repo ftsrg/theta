@@ -15,7 +15,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
     private val logger: Logger,
     private val abstractor: Abstractor<S, A, P>,
     private val getFullTraces : Boolean,
-) : SafetyChecker<TraceGenerationResult<S, A>, EmptyCex, P> { // TODO refactor templates?
+) : SafetyChecker<TraceSetSummary<S, A>, EmptyCex, P> { // TODO refactor templates?
     private var traces: List<Trace<S, A>> = ArrayList()
 
     companion object {
@@ -28,7 +28,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         }
     }
 
-    override fun check(prec: P): SafetyResult<TraceGenerationResult<S, A>, EmptyCex> {
+    override fun check(prec: P): SafetyResult<TraceSetSummary<S, A>, EmptyCex> {
         logger.write(Logger.Level.SUBSTEP, "Printing prec for trace generation...\n" + System.lineSeparator())
         logger.write(Logger.Level.SUBSTEP, prec.toString())
 
@@ -71,7 +71,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         assert(!getFullTraces)
         val metadataBuilder = TraceGenerationSummaryBuilder<S, A>()
         argTraces.forEach { trace -> metadataBuilder.addTrace(trace) }
-        val traceMetadata = metadataBuilder.build()
+        val traceSetSummary = metadataBuilder.build()
 
         // filter 2, optional, to get full traces even where there is coverage
         // why?: otherwise we stop at the leaf, which is covered in many traces by other nodes
@@ -91,7 +91,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         logger.write(Logger.Level.SUBSTEP, "-- Trace generation done --\n")
 
         // TODO return unsafe if coverage not full? (is that known here? not yet)
-        return SafetyResult.safe(TraceGenerationResult(traceMetadata))
+        return SafetyResult.safe(traceSetSummary)
     }
 
     private fun filterEndNodes(

@@ -16,6 +16,7 @@
 
 package hu.bme.mit.theta.xsts.cli
 
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Stopwatch
@@ -26,8 +27,10 @@ import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationResult
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceSetSummary
+import hu.bme.mit.theta.analysis.utils.TraceSummaryVisualizer
 import hu.bme.mit.theta.common.logging.Logger
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
 import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenBuilder
@@ -43,14 +46,16 @@ class XstsCliTracegen : XstsCliBaseCommand(
     help = "Trace generation (instead of verification). Property and input options will be ignored"
 ) {
     val traceDir: File? by option(
-        help = "Directory the traces should be written into. If not specified, traces are written into model directory."
-    ).file(mustExist = true, canBeFile = false)
+        help = "Directory the traces should be written into. If not specified, output is written into model-directory/traces."
+    ).file(mustExist = true, canBeFile = false) // use the non-null value in traceDirPath!
 
-    private fun printResult(status: SafetyResult<out TraceGenerationResult<out State, out Action>, EmptyCex>, totalTimeMs: Long) {
-        logger.write(Logger.Level.RESULT, "Successfully generated ${status.asSafe().witness.traces.size} traces in ${totalTimeMs}ms")
+    private fun printResult(status: SafetyResult<out TraceSetSummary<out State, out Action>, EmptyCex>, totalTimeMs: Long, traceDirPath : File) {
+        logger.write(Logger.Level.RESULT, "Successfully generated ${status.asSafe().witness.sourceTraces.size} traces in ${totalTimeMs}ms")
         // TODO print coverage (full or not)?
-        logger.write(Logger.Level.VERBOSE, "Trace Metadata:")
-        logger.write(Logger.Level.VERBOSE, status.asSafe().witness.metadata.toString())
+        val graph = TraceSummaryVisualizer.visualize(status.asSafe().witness)
+        val visFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".trace-summary.png"
+        GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
+        logger.write(Logger.Level.VERBOSE, "Trace Summary was visualized in ${visFile}:")
     }
 
     override fun run() {
@@ -63,16 +68,18 @@ class XstsCliTracegen : XstsCliBaseCommand(
     }
 
     private fun doRun() {
+        val traceDirPath : File = if(traceDir == null) {
+            File(inputOptions.model.parent+File.separator+"traces")
+        } else { traceDir!! }
+
         registerSolverManagers()
         val solverFactory = SolverManager.resolveSolverFactory(solver)
 
         val modelFile = inputOptions.model
-        val tracePath = modelFile.parent + File.separator + "traces"
-        val traceDir = File(tracePath)
-        if (traceDir.exists()) {
-            MoreFiles.deleteRecursively(traceDir.toPath(), RecursiveDeleteOption.ALLOW_INSECURE)
+        if (traceDirPath.exists()) {
+            MoreFiles.deleteRecursively(traceDirPath.toPath(), RecursiveDeleteOption.ALLOW_INSECURE)
         }
-        traceDir.mkdir()
+        traceDirPath.mkdir()
 
         val propStream = ByteArrayInputStream(
             ("prop {\n" +
@@ -89,7 +96,7 @@ class XstsCliTracegen : XstsCliBaseCommand(
 
         // TODO concretization, writing into file
         sw.stop()
-        printResult(result, sw.elapsed(TimeUnit.MILLISECONDS))
+        printResult(result, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath)
     }
 
 }

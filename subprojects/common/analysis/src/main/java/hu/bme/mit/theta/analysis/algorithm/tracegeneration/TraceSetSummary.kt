@@ -3,10 +3,13 @@ package hu.bme.mit.theta.analysis.algorithm.tracegeneration
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
+import hu.bme.mit.theta.analysis.algorithm.Witness
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
+import hu.bme.mit.theta.analysis.utils.TraceSummaryVisualizer
 
-sealed class TraceGenerationSummaryBuilder<S : State, A : Action> {
+class TraceGenerationSummaryBuilder<S : State, A : Action> {
     val argTraces: MutableList<ArgTrace<S, A>> = mutableListOf()
 
     fun addTrace(trace: ArgTrace<S, A>) {
@@ -37,40 +40,64 @@ sealed class TraceGenerationSummaryBuilder<S : State, A : Action> {
                     }
                 ).toList()
 
-                checkState(nodeGroup.size == 1)
-
-                nodeGroup[0].add(node)
+                checkState(nodeGroup.size <= 1) // either found one where node would fit OR found none and will create new one
+                if(nodeGroup.size>0) {
+                    nodeGroup[0].add(node)
+                } else {
+                    nodeGroups.add(mutableSetOf(node))
+                }
             }
         }
 
         // create state summaries
-        val nodeSummaries = mutableSetOf<NodeSummary<S, A>>()
+        val summaryNodes = mutableSetOf<SummaryNode<S, A>>()
         for (nodeGroup in nodeGroups) {
-            nodeSummaries.add(NodeSummary.create(nodeGroup))
+            summaryNodes.add(SummaryNode.create(nodeGroup))
         }
 
-        return TraceSetSummary<S, A>(argTraces, nodeSummaries)
+        // save edges as well, so we can easily connect edge sources and targets
+        val summaryEdges = mutableSetOf<SummaryEdge<S, A>>()
+
+        val inEdgeMap = mutableMapOf<ArgEdge<S, A>, SummaryNode<S, A>>()
+        for(summaryNode in summaryNodes) {
+            for(edge in summaryNode.getInEdges()) {
+                checkState(!inEdgeMap.containsKey(edge))
+                inEdgeMap[edge] = summaryNode
+            }
+        }
+        for(summaryNode in summaryNodes) {
+            val nodeOutEdges = summaryNode.getOutEdges()
+            for(nodeOutEdge in nodeOutEdges) {
+                if(inEdgeMap.containsKey(nodeOutEdge)) {
+                    val targetSummaryNode = inEdgeMap[nodeOutEdge]!!
+                    summaryEdges.add(SummaryEdge(nodeOutEdge, summaryNode, targetSummaryNode))
+                }
+            }
+        }
+        return TraceSetSummary(argTraces, summaryNodes, summaryEdges)
     }
 }
 
-data class TraceSetSummary<S : State, A : Action> constructor(
+/**
+ * This class represents an automata, similar to an ARG, where covered and covering nodes
+ * are merged into a single node (which we thus call a summary node).
+ * In some sense this class represents a wrapper level over a set of arg traces.
+ */
+data class TraceSetSummary<S : State, A : Action> (
     val sourceTraces : Collection<ArgTrace<S, A>>,
-    val stateSummaries : Collection<NodeSummary<S, A>>,
-    ) {
-
-    override fun toString(): String {
-        TODO()
-    }
+    val summaryNodes : Collection<SummaryNode<S, A>>,
+    val summaryEdges : Collection<SummaryEdge<S, A>>
+    ) : Witness {
 }
 
 /**
  * Groups arg nodes based on coverages, but also stores the traces they appear in, coverage relations and arg nodes
  */
-class NodeSummary<S : State, A: Action> private constructor (val nodeSummaryId: Long, val argNodes: Set<ArgNode<S, A>>) {
+class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: Long, val argNodes: Set<ArgNode<S, A>>) {
     companion object {
         var counter : Long = 0
 
-        fun <S : State, A : Action> create(argNodes: MutableSet<ArgNode<S, A>>) : NodeSummary<S, A> {
+        fun <S : State, A : Action> create(argNodes: MutableSet<ArgNode<S, A>>) : SummaryNode<S, A> {
             // all of the nodes should be in some kind of coverage relationship with each other
             for(node in argNodes) {
                 for (node2 in argNodes) {
@@ -82,16 +109,18 @@ class NodeSummary<S : State, A: Action> private constructor (val nodeSummaryId: 
                 }
             }
 
-            return NodeSummary(counter++, argNodes)
+            return SummaryNode(counter++, argNodes)
         }
     }
 
-    fun getOutEdges() {
-        TODO()
+    fun getOutEdges(): Set<ArgEdge<S, A>> {
+        return argNodes.map { node -> node.outEdges.toList() }.flatten().toSet()
     }
 
-    fun getInEdges() {
-        TODO()
+    fun getInEdges() : Set<ArgEdge<S, A>> {
+        return argNodes
+            .filter { node -> node.inEdge.isPresent }
+            .map { node -> node.inEdge.get() }.toSet()
     }
 
     fun getLabel() : String {
@@ -109,5 +138,15 @@ class NodeSummary<S : State, A: Action> private constructor (val nodeSummaryId: 
 
     override fun toString(): String {
         return getLabel()
+    }
+}
+
+data class SummaryEdge<S : State, A: Action>(
+    val argEdge: ArgEdge<S, A>,
+    val source: SummaryNode<S, A>,
+    val target: SummaryNode<S, A>
+) {
+    fun getLabel() : String {
+        return argEdge.action.toString()
     }
 }
