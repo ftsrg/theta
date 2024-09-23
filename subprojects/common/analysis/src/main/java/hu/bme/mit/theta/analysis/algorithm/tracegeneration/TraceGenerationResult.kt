@@ -22,5 +22,5 @@ import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.Witness
 
 data class TraceGenerationResult<S : State, A : Action> (
-    val traces: Map<Trace<S, A>, TraceMetadata<S, A>>
+    val traces: Map<Trace<S, A>, TraceSetSummary<S, A>>
 ) : Witness

@@ -7,7 +7,6 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationResult
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
 import kotlin.collections.ArrayList
@@ -70,7 +69,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
 
         // TODO does not work with full traces (see below - modification should be done to arg traces?)
         assert(!getFullTraces)
-        val metadataBuilder = TraceGenerationMetadataBuilder<S, A>()
+        val metadataBuilder = TraceGenerationSummaryBuilder<S, A>()
         argTraces.forEach { trace -> metadataBuilder.addTrace(trace) }
         val traceMetadata = metadataBuilder.build()
 
@@ -125,6 +124,8 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
                 filteredEndNodes.add(endNode)
             }
         })
+
+
         return filteredEndNodes
     }
 
