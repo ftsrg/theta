@@ -16,17 +16,15 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import hu.bme.mit.theta.analysis.Cex
 import hu.bme.mit.theta.analysis.EmptyCex
-import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
 import hu.bme.mit.theta.analysis.algorithm.oc.RelationType
-import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.unit.UnitPrec
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.ConstDecl
@@ -51,24 +49,20 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 import hu.bme.mit.theta.xcfa.*
-import hu.bme.mit.theta.xcfa.analysis.XcfaAction
 import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
-import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
-@OptIn(ExperimentalTime::class)
 class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
     inputConflictClauseFile: String?, private val outputConflictClauses: Boolean, nonPermissiveValidation: Boolean,
     private val autoConflictConfig: AutoConflictFinderConfig
-) : SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<UnitPrec>> {
+) : SafetyChecker<EmptyWitness, Cex, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
@@ -88,14 +82,17 @@ class XcfaOcChecker(
         if (inputConflictClauseFile == null) decisionProcedure.checker()
         else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads, !nonPermissiveValidation)
 
-    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = let {
-        if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
+    override fun check(
+        prec: XcfaPrec<UnitPrec>?
+    ): SafetyResult<EmptyWitness, Cex> = let {
+        if (xcfa.initProcedures.size > 1)
+            error("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(it.first)).process() }
         addCrossThreadRelations()
-        if (!addToSolver(ocChecker.solver))
-            return@let SafetyResult.safe<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(EmptyWitness.getInstance()) // no violations in the model
+        if (!addToSolver(ocChecker.solver)) // no violations in the model
+            return@let SafetyResult.safe<EmptyWitness, Cex>(EmptyWitness.getInstance())
 
         // "Manually" add some conflicts
         logger.write(Logger.Level.SUBSTEP, "Automatically finding conflicts...\n")
@@ -108,29 +105,27 @@ class XcfaOcChecker(
         val checkerTime = measureTime {
             status = ocChecker.check(events, pos, rfs)
         }
-        if (ocChecker !is XcfaOcCorrectnessValidator) {
+        if (ocChecker !is XcfaOcCorrectnessValidator)
             logger.write(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}\n")
-        }
         logger.write(Logger.Level.INFO, "Propagated clauses: ${ocChecker.getPropagatedClauses().size}\n")
 
         when {
             status?.isUnsat == true -> {
-                if (outputConflictClauses) {
-                    System.err.println(
-                        "Conflict clause output time (ms): ${
-                            measureTime {
-                                ocChecker.getPropagatedClauses().forEach { System.err.println("CC: $it") }
-                            }.inWholeMilliseconds
-                        }"
-                    )
-                }
+                if (outputConflictClauses) System.err.println(
+                    "Conflict clause output time (ms): ${
+                        measureTime {
+                            ocChecker.getPropagatedClauses().forEach { System.err.println("CC: $it") }
+                        }.inWholeMilliseconds
+                    }"
+                )
                 SafetyResult.safe(EmptyWitness.getInstance())
             }
 
             status?.isSat == true -> {
-                if (ocChecker is XcfaOcCorrectnessValidator) return SafetyResult.unsafe()
+                if (ocChecker is XcfaOcCorrectnessValidator)
+                    return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyWitness.getInstance())
                 val trace = XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-                SafetyResult.unsafe(trace, EmptyWitness.getInstance())
+                SafetyResult.unsafe<EmptyWitness, Cex>(trace, EmptyWitness.getInstance())
             }
 
             else -> SafetyResult.unknown()
