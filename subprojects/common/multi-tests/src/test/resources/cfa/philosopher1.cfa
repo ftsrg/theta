@@ -1,0 +1,67 @@
+main process cfa {
+
+    var fork1 : bool
+    var fork2 : bool
+    var fork3 : bool
+    var fork4 : bool
+
+    var think1 : bool
+    var think2 : bool
+    var think3 : bool
+    var think4 : bool
+
+    var inited : bool
+
+    init loc I
+    loc Think
+    loc LFork
+    loc RFork
+    loc Eat
+
+    I -> Think {
+        think1 := true
+        think2 := true
+        think3 := true
+        think4 := true
+        fork1 := false
+        fork2 := false
+        fork3 := false
+        fork4 := false
+        inited := true
+    }
+
+
+    Think -> Think
+    LFork -> LFork
+    RFork -> RFork
+    Eat -> Eat
+
+    Think -> LFork {
+        assume not fork1
+        fork1 := true
+    }
+
+    Think -> RFork {
+        assume not fork2
+        fork2 := true
+    }
+
+    RFork -> Eat {
+        assume not fork1
+        think1 := false
+        fork1 := true
+    }
+
+    LFork -> Eat {
+        assume not fork2
+        think1 := false
+        fork2 := true
+    }
+
+    Eat -> Think {
+        fork1 := false
+        fork2 := false
+        think1 := true
+    }
+
+}

@@ -15,17 +15,17 @@
  */
 package hu.bme.mit.theta.cfa.analysis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 
-final class CfaInitFunc<S extends ExprState, P extends Prec> implements
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public final class CfaInitFunc<S extends ExprState, P extends Prec> implements
         InitFunc<CfaState<S>, CfaPrec<P>> {
 
     private final Loc initLoc;

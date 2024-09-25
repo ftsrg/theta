@@ -20,8 +20,12 @@ include(
     "common/common",
     "common/core",
     "common/grammar",
+    "common/multi-tests",
 
     "frontends/c-frontend",
+    "frontends/petrinet-frontend/petrinet-model",
+    "frontends/petrinet-frontend/petrinet-analysis",
+    "frontends/petrinet-frontend/petrinet-xsts",
     "frontends/chc-frontend",
     "frontends/llvm",
 
@@ -38,6 +42,7 @@ include(
     "xcfa/c2xcfa",
     "xcfa/litmus2xcfa",
     "xcfa/llvm2xcfa",
+    "xcfa/xcfa2chc",
     "xcfa/xcfa-analysis",
     "xcfa/xcfa-cli",
 

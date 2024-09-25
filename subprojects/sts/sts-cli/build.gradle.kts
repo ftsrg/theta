@@ -29,5 +29,5 @@ dependencies {
 }
 
 application {
-    mainClassName = "hu.bme.mit.theta.sts.cli.StsCli"
+    mainClass.set("hu.bme.mit.theta.sts.cli.StsCli")
 }

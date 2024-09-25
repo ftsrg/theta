@@ -18,8 +18,10 @@ package hu.bme.mit.theta.solver.smtlib.impl.cvc5;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstaller;
 import hu.bme.mit.theta.solver.smtlib.solver.installer.SmtLibSolverInstallerException;
+import hu.bme.mit.theta.solver.smtlib.utils.Compress;
 import hu.bme.mit.theta.solver.smtlib.utils.SemVer;
 
 import java.io.FileOutputStream;
@@ -39,16 +41,25 @@ import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.MAC;
 import static hu.bme.mit.theta.common.OsHelper.OperatingSystem.WINDOWS;
 
 public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
+
+    private static final SmtLibEnumStrategy ENUM_STRATEGY = SmtLibEnumStrategy.DATATYPES;
+
     private final List<SemVer.VersionDecoder> versions;
 
     public CVC5SmtLibSolverInstaller(final Logger logger) {
         super(logger);
 
         versions = new ArrayList<>();
+        versions.add(SemVer.VersionDecoder.create(SemVer.of("1.1.1"))
+                .addString(LINUX, X64, "Linux-static.zip")
+                .addString(MAC, X64, "macOS-arm64-static.zip")
+                .addString(WINDOWS, X64, "Win64-static.zip")
+                .build()
+        );
         versions.add(SemVer.VersionDecoder.create(SemVer.of("1.0.0"))
                 .addString(LINUX, X64, "Linux")
                 .addString(MAC, X64, "macOS")
-                .addString(WINDOWS, X64, "Win64")
+                .addString(WINDOWS, X64, "Win64.exe")
                 .build()
         );
     }
@@ -60,13 +71,21 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     protected void installSolver(final Path installDir, final String version) throws SmtLibSolverInstallerException {
-        try (
-                final var inputChannel = Channels.newChannel(getDownloadUrl(version).openStream());
-                final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
-        ) {
+        try (final var inputStream = getDownloadUrl(version).openStream()) {
             logger.write(Logger.Level.MAINSTEP, "Starting download (%s)...\n", getDownloadUrl(version).toString());
-            outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
-            installDir.resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
+            if (SemVer.of(version).compareTo(SemVer.of("1.1.1")) < 0) {
+                try (
+                        final var inputChannel = Channels.newChannel(inputStream);
+                        final var outputChannel = new FileOutputStream(installDir.resolve(getSolverBinaryName(version)).toAbsolutePath().toString()).getChannel()
+                ) {
+                    outputChannel.transferFrom(inputChannel, 0, Long.MAX_VALUE);
+                    installDir.resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
+                }
+            } else {
+                Compress.extract(inputStream, installDir, Compress.CompressionType.ZIP);
+                installDir.resolve("bin").resolve(getSolverBinaryName(version)).toFile().setExecutable(true, true);
+            }
+
         } catch (IOException e) {
             throw new SmtLibSolverInstallerException(e);
         }
@@ -101,14 +120,19 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
 
     @Override
     public SolverFactory getSolverFactory(final Path installDir, final String version, final Path solverPath, final String[] solverArgs) throws SmtLibSolverInstallerException {
-        final var solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
-        return CVC5SmtLibSolverFactory.create(solverFilePath, solverArgs);
+        final Path solverFilePath;
+        if (SemVer.of(version).compareTo(SemVer.of("1.1.1")) < 0) {
+            solverFilePath = solverPath != null ? solverPath : installDir.resolve(getSolverBinaryName(version));
+        } else {
+            solverFilePath = solverPath != null ? solverPath : installDir.resolve("bin").resolve(getSolverBinaryName(version));
+        }
+        return CVC5SmtLibSolverFactory.create(solverFilePath, solverArgs, ENUM_STRATEGY);
     }
 
     @Override
     public List<String> getSupportedVersions() {
         return Arrays.asList(
-                "1.0.8", "1.0.7", "1.0.6", "1.0.5", "1.0.4", "1.0.3", "1.0.2", "1.0.1", "1.0.0"
+                "1.1.2", "1.1.1", "1.1.0", "1.0.9", "1.0.8", "1.0.7", "1.0.6", "1.0.5", "1.0.4", "1.0.3", "1.0.2", "1.0.1", "1.0.0"
         );
     }
 
@@ -134,13 +158,18 @@ public class CVC5SmtLibSolverInstaller extends SmtLibSolverInstaller.Default {
             }
         }
         if (archStr == null) {
-            throw new SmtLibSolverInstallerException(String.format("MathSAT on operating system %s and architecture %s is not supported", OsHelper.getOs(), OsHelper.getArch()));
+            throw new SmtLibSolverInstallerException(String.format("CVC5 on operating system %s and architecture %s is not supported", OsHelper.getOs(), OsHelper.getArch()));
         }
 
         return archStr;
     }
 
     private String getSolverBinaryName(final String version) throws SmtLibSolverInstallerException {
-        return String.format("cvc5-%s", getArchString(version));
+        if (SemVer.of(version).compareTo(SemVer.of("1.1.1")) < 0) {
+            return String.format("cvc5-%s", getArchString(version));
+        } else {
+            return OsHelper.getOs() == WINDOWS ? "cvc5.exe" : "cvc5";
+        }
+
     }
 }

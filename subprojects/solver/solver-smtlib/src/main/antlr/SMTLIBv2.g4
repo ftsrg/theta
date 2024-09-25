@@ -54,6 +54,7 @@ specific_success_response
     : check_sat_response
     | get_unsat_core_response
     | get_model_response
+    | proof_response
     | get_interpolants_response_smtinterpol
     ;
 
@@ -100,6 +101,23 @@ function_def
 
 function_dec
     : ParOpen symbol ParOpen sorted_var* ParClose sort ParClose
+    ;
+
+proof_response
+    : ParOpen proof_logic? proof_funs* proof_term ParClose
+    | proof_logic? proof_funs* proof_term
+    ;
+
+proof_term
+    : ParOpen PROOF term ParClose
+    ;
+
+proof_logic
+    : ParOpen CMD_SetLogic 'HORN' ParClose
+    ;
+
+proof_funs
+    : ParOpen CMD_DeclareFun symbol ParOpen in+=sort* ParClose out=sort ParClose
     ;
 
 get_interpolants_response_smtinterpol
@@ -504,6 +522,11 @@ CMD_SetOption
     ;
 
 
+// proof
+
+PROOF
+    : 'proof'
+    ;
 
 
 // General reserved words
@@ -550,7 +573,7 @@ GRW_String
 
 Numeral
     : '0'
-    | [1-9] Digit*
+    | '-'? [1-9] Digit*
     ;
 
 Binary

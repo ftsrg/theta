@@ -17,8 +17,8 @@
 package hu.bme.mit.theta.xcfa.analysis
 
 import hu.bme.mit.theta.analysis.*
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
-import hu.bme.mit.theta.analysis.algorithm.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc

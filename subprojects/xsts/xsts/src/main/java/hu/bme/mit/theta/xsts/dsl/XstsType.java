@@ -19,10 +19,9 @@ import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.dsl.ParseException;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslBaseVisitor;
 import hu.bme.mit.theta.xsts.dsl.gen.XstsDslParser.*;
-import hu.bme.mit.theta.xsts.type.XstsArrayType;
-import hu.bme.mit.theta.xsts.type.XstsPrimitiveType;
 
 import java.util.Optional;
 
@@ -41,9 +40,9 @@ final class XstsType {
         this.context = checkNotNull(context);
     }
 
-    public hu.bme.mit.theta.xsts.type.XstsType instantiate(final Env env) {
+    public Type instantiate(final Env env) {
         final TypeCreatorVisitor typeCreatorVisitor = new TypeCreatorVisitor(typeTable, env);
-        final hu.bme.mit.theta.xsts.type.XstsType result = context.accept(typeCreatorVisitor);
+        final Type result = context.accept(typeCreatorVisitor);
         if (result == null) {
             throw new AssertionError();
         } else {
@@ -52,7 +51,7 @@ final class XstsType {
     }
 
     private static class TypeCreatorVisitor extends
-            XstsDslBaseVisitor<hu.bme.mit.theta.xsts.type.XstsType> {
+            XstsDslBaseVisitor<Type> {
 
         private final SymbolTable typeTable;
         private final Env env;
@@ -63,33 +62,31 @@ final class XstsType {
         }
 
         @Override
-        public hu.bme.mit.theta.xsts.type.XstsType visitCustomType(final CustomTypeContext ctx) {
+        public Type visitCustomType(final CustomTypeContext ctx) {
             Optional<? extends Symbol> optSymbol = typeTable.get(ctx.name.getText());
             if (optSymbol.isEmpty()) {
                 throw new ParseException(ctx,
                         "Type '" + ctx.name.getText() + "' cannot be resolved");
             }
             final Symbol symbol = optSymbol.get();
-            final hu.bme.mit.theta.xsts.type.XstsType xstsType = (hu.bme.mit.theta.xsts.type.XstsType) env.eval(
-                    symbol);
-            return xstsType;
+            return (Type) env.eval(symbol);
         }
 
         @Override
-        public hu.bme.mit.theta.xsts.type.XstsType visitBoolType(final BoolTypeContext ctx) {
-            return XstsPrimitiveType.of(Bool());
+        public Type visitBoolType(final BoolTypeContext ctx) {
+            return Bool();
         }
 
         @Override
-        public hu.bme.mit.theta.xsts.type.XstsType visitIntType(final IntTypeContext ctx) {
-            return XstsPrimitiveType.of(Int());
+        public Type visitIntType(final IntTypeContext ctx) {
+            return Int();
         }
 
         @Override
-        public hu.bme.mit.theta.xsts.type.XstsType visitArrayType(final ArrayTypeContext ctx) {
-            final hu.bme.mit.theta.xsts.type.XstsType indexType = ctx.indexType.accept(this);
-            final hu.bme.mit.theta.xsts.type.XstsType elemType = ctx.elemType.accept(this);
-            return XstsArrayType.of(indexType, elemType);
+        public Type visitArrayType(final ArrayTypeContext ctx) {
+            final Type indexType = ctx.indexType.accept(this);
+            final Type elemType = ctx.elemType.accept(this);
+            return Array(indexType, elemType);
         }
 
     }

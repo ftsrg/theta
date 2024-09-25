@@ -18,6 +18,8 @@ package hu.bme.mit.theta.core.utils.indexings;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 
+import java.util.Map;
+
 public interface VarIndexingBuilder {
 
     VarIndexingBuilder inc(VarDecl<?> varDecl);
@@ -31,6 +33,8 @@ public interface VarIndexingBuilder {
     VarIndexingBuilder join(VarIndexingBuilder that);
 
     int get(VarDecl<?> varDecl);
+
+    VarIndexingBuilder copyVars(Map<VarDecl<?>, VarDecl<?>> decls);
 
     VarIndexing build();
 }

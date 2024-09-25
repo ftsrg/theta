@@ -20,9 +20,9 @@ import com.google.gson.reflect.TypeToken
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.algorithm.ArgNode
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeComparator
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions
@@ -66,6 +66,7 @@ enum class InputType {
 enum class Backend {
     CEGAR,
     BOUNDED,
+    CHC,
     OC,
     LAZY,
     PORTFOLIO,

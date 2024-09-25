@@ -23,7 +23,7 @@ import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import java.lang.reflect.Type
 
 class ArgAdapter(val gsonSupplier: () -> Gson,

@@ -1,0 +1,11 @@
+type alphabet : { A, B, C, D }
+type second_alphabet : { A, B, C, D }
+
+var f : alphabet = A
+var g : second_alphabet = A
+
+trans {}
+
+init {}
+
+env {}

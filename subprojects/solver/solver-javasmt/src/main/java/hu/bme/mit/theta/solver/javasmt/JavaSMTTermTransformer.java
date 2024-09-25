@@ -35,6 +35,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
 import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
@@ -57,6 +59,7 @@ import org.sosy_lab.java_smt.api.FormulaType.ArrayFormulaType;
 import org.sosy_lab.java_smt.api.FormulaType.BitvectorType;
 import org.sosy_lab.java_smt.api.FormulaType.FloatingPointType;
 import org.sosy_lab.java_smt.api.FunctionDeclaration;
+import org.sosy_lab.java_smt.api.FunctionDeclarationKind;
 import org.sosy_lab.java_smt.api.Model;
 import org.sosy_lab.java_smt.api.QuantifiedFormulaManager.Quantifier;
 import org.sosy_lab.java_smt.api.SolverContext;
@@ -97,118 +100,121 @@ final class JavaSMTTermTransformer {
 
     private final JavaSMTSymbolTable symbolTable;
     private final SolverContext context;
-    private final Map<Tuple2<String, Integer>, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> environment;
+    private final Map<Tuple2<FunctionDeclarationKind, Integer>, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> environment;
+    private final Map<Tuple2<String, Integer>, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> otherFuncs;
 
     public JavaSMTTermTransformer(final JavaSMTSymbolTable symbolTable, SolverContext context) {
         this.symbolTable = symbolTable;
         this.context = context;
 
         environment = Containers.createMap();
-        addFunc("and", exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.AndExpr::create));
-        addFunc("false", exprNullaryOperator(hu.bme.mit.theta.core.type.booltype.FalseExpr::getInstance));
-        addFunc("true", exprNullaryOperator(hu.bme.mit.theta.core.type.booltype.TrueExpr::getInstance));
-        addFunc("iff", exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.IffExpr::create));
-        addFunc("not", exprUnaryOperator(hu.bme.mit.theta.core.type.booltype.NotExpr::create));
-        addFunc("=>", exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.ImplyExpr::create));
-        addFunc("xor", exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.XorExpr::create));
-        addFunc("or", exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.OrExpr::create));
-        addFunc("ite", exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
-        addFunc("if", exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
-        addFunc("prime", exprUnaryOperator(hu.bme.mit.theta.core.type.anytype.PrimeExpr::of));
-        addFunc("=", exprBinaryOperator((expr, expr2) -> expr.getType() instanceof FpType ? FpAssign((Expr<FpType>) expr, (Expr<FpType>) expr2) : Eq(expr, expr2)));
-        addFunc(">=", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Geq));
-        addFunc(">", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Gt));
-        addFunc("<=", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Leq));
-        addFunc("<", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Lt));
-        addFunc("+", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Add));
-        addFunc("-", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Sub));
-        addFunc("+", exprUnaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Pos));
-        addFunc("-", exprUnaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Neg));
-        addFunc("*", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Mul));
-        addFunc("/", exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Div));
-        addFunc("to_int", exprUnaryOperator(hu.bme.mit.theta.core.type.rattype.RatToIntExpr::create));
-        addFunc("div", exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntDivExpr::create));
-        addFunc("to_rat", exprUnaryOperator(hu.bme.mit.theta.core.type.inttype.IntToRatExpr::create));
-        addFunc("mod", exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntModExpr::create));
-        addFunc("rem", exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntRemExpr::create));
-        addFunc("fp.add", exprFpMultiaryOperator(hu.bme.mit.theta.core.type.fptype.FpAddExpr::create));
-        addFunc("fp.sub", exprFpBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpSubExpr::create));
-        addFunc("fp.pos", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpPosExpr::create));
-        addFunc("fp.neg", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpNegExpr::create));
-        addFunc("fp.mul", exprFpMultiaryOperator(hu.bme.mit.theta.core.type.fptype.FpMulExpr::create));
-        addFunc("fp.div", exprFpBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpDivExpr::create));
-        addFunc("fp.rem", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpRemExpr::create));
-        addFunc("fprem", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpRemExpr::create));
-        addFunc("fp.abs", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpAbsExpr::create));
-        addFunc("fp.leq", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpLeqExpr::create));
-        addFunc("fp.lt", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpLtExpr::create));
-        addFunc("fp.geq", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGeqExpr::create));
-        addFunc("fp.gt", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGtExpr::create));
-        addFunc("fp.eq", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpEqExpr::create));
-        addFunc("fp.isnan", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
-        addFunc("fp.isNaN", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
-        addFunc("isinfinite", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
-        addFunc("fp.isInfinite", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
-        addFunc("fp.roundtoint", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
-        addFunc("fp.roundToIntegral", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
-        addFunc("fp.sqrt", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpSqrtExpr::create));
-        addFunc("fp.max", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMaxExpr::create));
-        addFunc("fp.min", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMinExpr::create));
-        addFunc("++", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
-        addFunc("concat", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
-        addFunc("bvadd", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvAddExpr::create));
-        addFunc("bvsub", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSubExpr::create));
-        addFunc("bvpos", exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvPosExpr::create));
-        addFunc("bvneg", exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNegExpr::create));
-        addFunc("bvmul", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvMulExpr::create));
-        addFunc("bvudiv", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUDivExpr::create));
-        addFunc("bvsdiv", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSDivExpr::create));
-        addFunc("bvsmod", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSModExpr::create));
-        addFunc("bvurem", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvURemExpr::create));
-        addFunc("bvsrem", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSRemExpr::create));
-        addFunc("bvor", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvOrExpr::create));
-        addFunc("bvand", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvAndExpr::create));
-        addFunc("bvxor", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvXorExpr::create));
-        addFunc("bvnot", exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNotExpr::create));
-        addFunc("bvshl", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr::create));
-        addFunc("bvashr", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr::create));
-        addFunc("bvlshr", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr::create));
-        addFunc("bvrol", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
-        addFunc("ext_rotate_left", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
-        addFunc("bvror", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
-        addFunc("ext_rotate_right", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
-        addFunc("bvult", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULtExpr::create));
-        addFunc("bvule", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULeqExpr::create));
-        addFunc("bvugt", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUGtExpr::create));
-        addFunc("bvuge", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr::create));
-        addFunc("bvslt", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSLtExpr::create));
-        addFunc("bvsle", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr::create));
-        addFunc("bvsgt", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGtExpr::create));
-        addFunc("bvsge", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr::create));
-        addFunc("read", exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
-        addFunc("write", exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
-        addFunc("select", exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
-        addFunc("store", exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
+        otherFuncs = Containers.createMap();
+        addEnvFunc(FunctionDeclarationKind.AND, exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.AndExpr::create));
+//        addEnvFunc("false", exprNullaryOperator(hu.bme.mit.theta.core.type.booltype.FalseExpr::getInstance));
+//        addEnvFunc("true", exprNullaryOperator(hu.bme.mit.theta.core.type.booltype.TrueExpr::getInstance));
+        addEnvFunc(FunctionDeclarationKind.IFF, exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.IffExpr::create));
+        addEnvFunc(FunctionDeclarationKind.NOT, exprUnaryOperator(hu.bme.mit.theta.core.type.booltype.NotExpr::create));
+        addEnvFunc(FunctionDeclarationKind.IMPLIES, exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.ImplyExpr::create));
+        addEnvFunc(FunctionDeclarationKind.XOR, exprBinaryOperator(hu.bme.mit.theta.core.type.booltype.XorExpr::create));
+        addEnvFunc(FunctionDeclarationKind.OR, exprMultiaryOperator(hu.bme.mit.theta.core.type.booltype.OrExpr::create));
+        addEnvFunc(FunctionDeclarationKind.ITE, exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
+//        addEnvFunc("if", exprTernaryOperator(hu.bme.mit.theta.core.type.anytype.IteExpr::create));
+//        addEnvFunc("prime", exprUnaryOperator(hu.bme.mit.theta.core.type.anytype.PrimeExpr::of));
+        addEnvFunc(FunctionDeclarationKind.EQ, exprBinaryOperator((expr, expr2) -> expr.getType() instanceof FpType ? FpAssign((Expr<FpType>) expr, (Expr<FpType>) expr2) : Eq(expr, expr2)));
+        addEnvFunc(FunctionDeclarationKind.GTE, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Geq));
+        addEnvFunc(FunctionDeclarationKind.GT, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Gt));
+        addEnvFunc(FunctionDeclarationKind.LTE, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Leq));
+        addEnvFunc(FunctionDeclarationKind.LT, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Lt));
+        addEnvFunc(FunctionDeclarationKind.ADD, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Add));
+        addEnvFunc(FunctionDeclarationKind.SUB, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Sub));
+        addEnvFunc(FunctionDeclarationKind.ADD, exprUnaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Pos));
+        addEnvFunc(FunctionDeclarationKind.UMINUS, exprUnaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Neg));
+        addEnvFunc(FunctionDeclarationKind.MUL, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Mul));
+        addEnvFunc(FunctionDeclarationKind.DIV, exprBinaryOperator(hu.bme.mit.theta.core.type.abstracttype.AbstractExprs::Div));
+        addEnvFunc(FunctionDeclarationKind.FLOOR, exprUnaryOperator(hu.bme.mit.theta.core.type.rattype.RatToIntExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_ROUND_TO_INTEGRAL, exprUnaryOperator(hu.bme.mit.theta.core.type.rattype.RatToIntExpr::create));
+//        addEnvFunc("div", exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntDivExpr::create));
+        addEnvFunc(FunctionDeclarationKind.TO_REAL, exprUnaryOperator(hu.bme.mit.theta.core.type.inttype.IntToRatExpr::create));
+        addEnvFunc(FunctionDeclarationKind.MODULO, exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntModExpr::create));
+//        addEnvFunc("rem", exprBinaryOperator(hu.bme.mit.theta.core.type.inttype.IntRemExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_ADD, exprFpMultiaryOperator(hu.bme.mit.theta.core.type.fptype.FpAddExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_SUB, exprFpBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpSubExpr::create));
+//        addEnvFunc("fp.pos", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpPosExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_NEG, exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpNegExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_MUL, exprFpMultiaryOperator(hu.bme.mit.theta.core.type.fptype.FpMulExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_DIV, exprFpBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpDivExpr::create));
+        addOtherFunc("fp.rem", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpRemExpr::create));
+        addOtherFunc("fprem", exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpRemExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_ABS, exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpAbsExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_LE, exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpLeqExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_LT, exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpLtExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_GE, exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGeqExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_GT, exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpGtExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_EQ, exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpEqExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_IS_NAN, exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
+//        addEnvFunc("fp.isNaN", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsNanExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_IS_INF, exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+//        addEnvFunc("fp.isInfinite", exprUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_ROUND_TO_INTEGRAL, exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
+//        addEnvFunc("fp.roundToIntegral", exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_SQRT, exprFpUnaryOperator(hu.bme.mit.theta.core.type.fptype.FpSqrtExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_MAX, exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMaxExpr::create));
+        addEnvFunc(FunctionDeclarationKind.FP_MIN, exprBinaryOperator(hu.bme.mit.theta.core.type.fptype.FpMinExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_CONCAT, exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
+//        addEnvFunc("concat", exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvConcatExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_ADD, exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvAddExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SUB, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSubExpr::create));
+//        addEnvFunc("bvpos", exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvPosExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_NEG, exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNegExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_MUL, exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvMulExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_UDIV, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUDivExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SDIV, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSDivExpr::create));
+        addOtherFunc("bvsmod", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSModExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_UREM, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvURemExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SREM, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSRemExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_OR, exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvOrExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_AND, exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvAndExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_XOR, exprMultiaryOperator(hu.bme.mit.theta.core.type.bvtype.BvXorExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_NOT, exprUnaryOperator(hu.bme.mit.theta.core.type.bvtype.BvNotExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SHL, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_ASHR, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_LSHR, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr::create));
+//        addEnvFunc("bvrol", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
+        addOtherFunc("ext_rotate_left", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr::create));
+//        addEnvFunc("bvror", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
+        addOtherFunc("ext_rotate_right", exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_ULT, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULtExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_ULE, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvULeqExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_UGT, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUGtExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_UGE, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SLT, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSLtExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SLE, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SGT, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGtExpr::create));
+        addEnvFunc(FunctionDeclarationKind.BV_SGE, exprBinaryOperator(hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr::create));
+//        addEnvFunc("read", exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
+//        addEnvFunc("write", exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
+        addEnvFunc(FunctionDeclarationKind.SELECT, exprBinaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr::create));
+        addEnvFunc(FunctionDeclarationKind.STORE, exprTernaryOperator(hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr::create));
 
-        environment.put(Tuple2.of("fp.frombv", 1), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.FP_FROM_IEEEBV, 1), (term, args, model, vars) -> {
             FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final Expr<BvType> op = (Expr<BvType>) transform(args.get(1), model, vars);
             return FpFromBvExpr.of(roundingmode, op, FpType.of(type.getExponentSize(), type.getMantissaSize() + 1), true);
         });
-        environment.put(Tuple2.of("fp.to_sbv", 2), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.FP_CASTTO_SBV, 2), (term, args, model, vars) -> {
             BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final Expr<FpType> op = (Expr<FpType>) transform(args.get(1), model, vars);
             return FpToBvExpr.of(roundingmode, op, type.getSize(), true);
         });
-        environment.put(Tuple2.of("fp.to_ubv", 2), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.FP_CASTTO_UBV, 2), (term, args, model, vars) -> {
             BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final Expr<FpType> op = (Expr<FpType>) transform(args.get(1), model, vars);
             return FpToBvExpr.of(roundingmode, op, type.getSize(), false);
         });
-        environment.put(Tuple2.of("to_fp", 2), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.BV_SCASTTO_FP, 2), (term, args, model, vars) -> {
             FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
             final var roundingmode = getRoundingMode(args.get(0).toString());
             final Expr<?> op = transform(args.get(1), model, vars);
@@ -220,13 +226,25 @@ final class JavaSMTTermTransformer {
                 throw new JavaSMTSolverException("Unsupported:" + op.getType());
             }
         });
-        environment.put(Tuple2.of("to_fp", 1), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.FP_CASTTO_FP, 2), (term, args, model, vars) -> {
+            FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
+            final var roundingmode = getRoundingMode(args.get(0).toString());
+            final Expr<?> op = transform(args.get(1), model, vars);
+            if (op.getType() instanceof FpType) {
+                return FpToFpExpr.of(roundingmode, (Expr<FpType>) op, type.getExponentSize(), type.getMantissaSize() + 1);
+            } else if (op.getType() instanceof BvType) {
+                return FpFromBvExpr.of(roundingmode, (Expr<BvType>) op, FpType.of(type.getExponentSize(), type.getMantissaSize() + 1), false);
+            } else {
+                throw new JavaSMTSolverException("Unsupported:" + op.getType());
+            }
+        });
+        otherFuncs.put(Tuple2.of("to_fp", 1), (term, args, model, vars) -> {
             FloatingPointType type = (FloatingPointType) context.getFormulaManager().getFormulaType((FloatingPointFormula) term);
             final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
             return FpFromBvExpr.of(FpRoundingMode.getDefaultRoundingMode(), op, FpType.of(type.getExponentSize(), type.getMantissaSize() + 1), true);
         });
 
-        environment.put(Tuple2.of("extract", 1), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.BV_EXTRACT, 1), (term, args, model, vars) -> {
             final Pattern pattern = Pattern.compile("extract ([0-9]+) ([0-9]+)");
             final String termStr = term.toString();
             final Matcher match = pattern.matcher(termStr);
@@ -238,34 +256,37 @@ final class JavaSMTTermTransformer {
             }
             throw new JavaSMTSolverException("Not supported: " + term);
         });
-        environment.put(Tuple2.of("zero_extend", 1), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.BV_ZERO_EXTENSION, 1), (term, args, model, vars) -> {
             BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
             final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
             return BvZExtExpr.of(op, BvType.of(type.getSize()));
         });
-        environment.put(Tuple2.of("sign_extend", 1), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.BV_SIGN_EXTENSION, 1), (term, args, model, vars) -> {
             BitvectorType type = (BitvectorType) context.getFormulaManager().getFormulaType((BitvectorFormula) term);
             final Expr<BvType> op = (Expr<BvType>) transform(args.get(0), model, vars);
             return BvSExtExpr.of(op, BvType.of(type.getSize()));
         });
-        environment.put(Tuple2.of("EqZero", 1), (term, args, model, vars) -> {
+        environment.put(Tuple2.of(FunctionDeclarationKind.EQ_ZERO, 1), (term, args, model, vars) -> {
             final Expr<?> op = transform(args.get(0), model, vars);
             return Eq(op, TypeUtils.getDefaultValue(op.getType()));
         });
-        environment.put(Tuple2.of("fp", 3), (term, args, model, vars) -> {
+        otherFuncs.put(Tuple2.of("const", 1), (term, args, model, vars) -> transformLit(term, transform(args.get(0), model, vars)));
+        otherFuncs.put(Tuple2.of("fp", 3), (term, args, model, vars) -> {
             final Expr<BvType> op1 = (Expr<BvType>) transform(args.get(0), model, vars);
             final Expr<BvType> op2 = (Expr<BvType>) transform(args.get(1), model, vars);
             final Expr<BvType> op3 = (Expr<BvType>) transform(args.get(2), model, vars);
             return FpLitExpr.of((BvLitExpr) op1, (BvLitExpr) op2, (BvLitExpr) op3);
         });
-        environment.put(Tuple2.of("const", 1), (term, args, model, vars) -> {
-            return transformLit(term, transform(args.get(0), model, vars));
-        });
     }
 
-    private void addFunc(String name, Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> func) {
-        checkArgument(!environment.containsKey(Tuple2.of(name, func.get1())), "Duplicate key: " + Tuple2.of(name, func.get1()));
-        environment.put(Tuple2.of(name, func.get1()), func.get2());
+    private void addEnvFunc(FunctionDeclarationKind declarationKind, Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> func) {
+        checkArgument(!environment.containsKey(Tuple2.of(declarationKind, func.get1())), "Duplicate key: " + Tuple2.of(declarationKind, func.get1()));
+        environment.put(Tuple2.of(declarationKind, func.get1()), func.get2());
+    }
+
+    private void addOtherFunc(String name, Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> func) {
+        checkArgument(!otherFuncs.containsKey(Tuple2.of(name, func.get1())), "Duplicate key: " + Tuple2.of(name, func.get1()));
+        otherFuncs.put(Tuple2.of(name, func.get1()), func.get2());
     }
 
     public Expr<?> toExpr(final Formula term) {
@@ -278,7 +299,7 @@ final class JavaSMTTermTransformer {
                               final List<Decl<?>> vars) {
 
         try {
-            return context.getFormulaManager().visit(term, new FormulaVisitor<Expr<?>>() {
+            return context.getFormulaManager().visit(term, new FormulaVisitor<>() {
                 @Override
                 public Expr<?> visitFreeVariable(Formula f, String name) {
                     return transformVar(f, name, vars);
@@ -382,12 +403,18 @@ final class JavaSMTTermTransformer {
                                  final Model model,
                                  final List<Decl<?>> vars) {
 
-        final var key1 = Tuple2.of(funcDecl.getName(), args.size());
-        final var key2 = Tuple2.of(funcDecl.getName(), -1);
+        final var key1 = Tuple2.of(funcDecl.getKind(), args.size());
+        final var key2 = Tuple2.of(funcDecl.getKind(), -1);
+        final var key3 = Tuple2.of(funcDecl.getName(), args.size());
+        final var key4 = Tuple2.of(funcDecl.getName(), -1);
         if (environment.containsKey(key1)) {
             return environment.get(key1).apply(f, args, model, vars);
         } else if (environment.containsKey(key2)) {
             return environment.get(key2).apply(f, args, model, vars);
+        } else if (otherFuncs.containsKey(key3)) {
+            return otherFuncs.get(key3).apply(f, args, model, vars);
+        } else if (otherFuncs.containsKey(key4)) {
+            return otherFuncs.get(key4).apply(f, args, model, vars);
         } else {
             final var paramExprs = args.stream().map((Formula term) -> (Expr) toExpr(term)).toList();
 
@@ -477,6 +504,8 @@ final class JavaSMTTermTransformer {
             return ArrayType.of(transformType(indexType), transformType(elemType));
         } else if (type.isBooleanType()) {
             return Bool();
+        } else if (type.isEnumerationType()) {
+            return null;
         }
         throw new JavaSMTSolverException("Type not supported: " + type);
     }
@@ -504,10 +533,31 @@ final class JavaSMTTermTransformer {
             final BinaryOperator<Expr<?>> function) {
         return Tuple2.of(2, (term, args, model, vars) -> {
             checkArgument(args.size() == 2, "Number of arguments must be two");
+            if (context.getFormulaManager().getFormulaType(args.get(0)).isEnumerationType()) {
+                // binary operator is on enum types
+                // if either arg is a literal, we need special handling to get its type
+                int litIndex = -1;
+                for (int i = 0; i < 2; i++) {
+                    if (context.getFormulaManager().extractVariables(args.get(i)).isEmpty()) {
+                        litIndex = i;
+                    }
+                }
+                if (litIndex > -1) {
+                    // one is a literal
+                    int refIndex = Math.abs(litIndex - 1);
+                    final Expr<?> refOp = transform(args.get(refIndex), model, vars);
+                    final Expr<EnumType> litExpr = transformEnumLit(args.get(litIndex), (EnumType) refOp.getType());
+                    return function.apply(refOp, litExpr);
+                }
+            }
             final Expr<?> op1 = transform(args.get(0), model, vars);
             final Expr<?> op2 = transform(args.get(1), model, vars);
             return function.apply(op1, op2);
         });
+    }
+
+    private Expr<EnumType> transformEnumLit(Formula formula, EnumType type) {
+        return EnumLitExpr.of(type, EnumType.getShortName(formula.toString()));
     }
 
     private Tuple2<Integer, QuadFunction<Formula, List<Formula>, Model, List<Decl<?>>, Expr<?>>> exprTernaryOperator(

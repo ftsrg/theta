@@ -16,8 +16,12 @@
 
 package hu.bme.mit.theta.xcfa.analysis.oc
 
+import hu.bme.mit.theta.analysis.EmptyCex
+import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.oc.EventType
 import hu.bme.mit.theta.analysis.algorithm.oc.OcChecker
 import hu.bme.mit.theta.analysis.algorithm.oc.Relation
@@ -64,7 +68,7 @@ class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
     inputConflictClauseFile: String?, private val outputConflictClauses: Boolean, nonPermissiveValidation: Boolean,
     private val autoConflictConfig: AutoConflictFinderConfig
-) : SafetyChecker<XcfaState<out PtrState<*>>, XcfaAction, XcfaPrec<UnitPrec>> {
+) : SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<UnitPrec>> {
 
     private val xcfa: XCFA = xcfa.optimizeFurther(
         listOf(AssumeFalseRemovalPass(), MutexToVarPass(), AtomicReadsOneWritePass())
@@ -84,13 +88,14 @@ class XcfaOcChecker(
         if (inputConflictClauseFile == null) decisionProcedure.checker()
         else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads, !nonPermissiveValidation)
 
-    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<XcfaState<out PtrState<*>>, XcfaAction> = let {
+    override fun check(prec: XcfaPrec<UnitPrec>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = let {
         if (xcfa.initProcedures.size > 1) error("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(it.first)).process() }
         addCrossThreadRelations()
-        if (!addToSolver(ocChecker.solver)) return@let SafetyResult.safe() // no violations in the model
+        if (!addToSolver(ocChecker.solver))
+            return@let SafetyResult.safe<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>>(EmptyWitness.getInstance()) // no violations in the model
 
         // "Manually" add some conflicts
         logger.write(Logger.Level.SUBSTEP, "Automatically finding conflicts...\n")
@@ -119,13 +124,13 @@ class XcfaOcChecker(
                         }"
                     )
                 }
-                SafetyResult.safe()
+                SafetyResult.safe(EmptyWitness.getInstance())
             }
 
             status?.isSat == true -> {
                 if (ocChecker is XcfaOcCorrectnessValidator) return SafetyResult.unsafe()
                 val trace = XcfaOcTraceExtractor(xcfa, ocChecker, threads, events, violations, pos).trace
-                SafetyResult.unsafe(trace)
+                SafetyResult.unsafe(trace, EmptyWitness.getInstance())
             }
 
             else -> SafetyResult.unknown()

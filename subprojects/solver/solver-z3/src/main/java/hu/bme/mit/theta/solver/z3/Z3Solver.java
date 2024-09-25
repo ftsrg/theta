@@ -29,14 +29,16 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvType;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.UCSolver;
-import hu.bme.mit.theta.solver.UnknownSolverStatusException;
+import hu.bme.mit.theta.solver.*;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,14 +49,14 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-final class Z3Solver implements UCSolver, Solver {
+class Z3Solver implements UCSolver, Solver {
 
-    private final Z3SymbolTable symbolTable;
-    private final Z3TransformationManager transformationManager;
-    private final Z3TermTransformer termTransformer;
+    protected final Z3SymbolTable symbolTable;
+    protected final Z3TransformationManager transformationManager;
+    protected final Z3TermTransformer termTransformer;
 
-    private final com.microsoft.z3.Context z3Context;
-    private final com.microsoft.z3.Solver z3Solver;
+    protected final com.microsoft.z3.Context z3Context;
+    protected final com.microsoft.z3.Solver z3Solver;
 
     private final Stack<Expr<BoolType>> assertions;
     private final Map<String, Expr<BoolType>> assumptions;
@@ -62,9 +64,9 @@ final class Z3Solver implements UCSolver, Solver {
     private static final String ASSUMPTION_LABEL = "_LABEL_%d";
     private int labelNum = 0;
 
-    private Valuation model;
-    private Collection<Expr<BoolType>> unsatCore;
-    private SolverStatus status;
+    protected Valuation model;
+    protected Collection<Expr<BoolType>> unsatCore;
+    protected SolverStatus status;
 
     public Z3Solver(final Z3SymbolTable symbolTable,
                     final Z3TransformationManager transformationManager,
@@ -287,6 +289,8 @@ final class Z3Solver implements UCSolver, Solver {
                 return extractArrayLiteral(funcDecl);
             } else if (type instanceof BvType) {
                 return extractBvConstLiteral(funcDecl);
+            } else if (type instanceof EnumType) {
+                return extractEnumLiteral(decl, funcDecl);
             } else {
                 return extractConstLiteral(funcDecl);
             }
@@ -310,6 +314,15 @@ final class Z3Solver implements UCSolver, Solver {
                 return null;
             } else {
                 return (BvLitExpr) termTransformer.toExpr(term);
+            }
+        }
+
+        private LitExpr<?> extractEnumLiteral(final ConstDecl<?> constDecl, final FuncDecl funcDecl) {
+            final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+            if (term == null) {
+                return null;
+            } else {
+                return EnumLitExpr.of((EnumType) constDecl.getType(), term.toString());
             }
         }
 

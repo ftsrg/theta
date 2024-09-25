@@ -22,7 +22,7 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.stream.Stream;
 
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
 import hu.bme.mit.theta.common.Utils;
 
 /**

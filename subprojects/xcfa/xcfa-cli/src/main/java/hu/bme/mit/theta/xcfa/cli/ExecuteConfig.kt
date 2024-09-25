@@ -20,10 +20,13 @@ import com.google.common.base.Stopwatch
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
+import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.debug.ARGWebDebugger
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger
 import hu.bme.mit.theta.analysis.expl.ExplState
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer
@@ -59,6 +62,7 @@ import hu.bme.mit.theta.xcfa.passes.LbePass
 import hu.bme.mit.theta.xcfa.passes.LoopUnrollPass
 import hu.bme.mit.theta.xcfa.passes.StaticCoiPass
 import hu.bme.mit.theta.xcfa.toC
+import hu.bme.mit.theta.xcfa2chc.toSMT2CHC
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -190,10 +194,10 @@ private fun backend(
     throwDontExit: Boolean
 ): SafetyResult<*, *> =
     if (config.backendConfig.backend == Backend.NONE) {
-        SafetyResult.unknown<State, Action>()
+        SafetyResult.unknown<EmptyWitness, EmptyCex>()
     } else {
         if (xcfa.procedures.all { it.errorLoc.isEmpty && config.inputConfig.property == ErrorDetection.ERROR_LOCATION }) {
-            val result = SafetyResult.safe<State, Action>()
+            val result = SafetyResult.safe<EmptyWitness, EmptyCex>(EmptyWitness.getInstance())
             logger.write(Logger.Level.INFO, "Input is trivially safe\n")
 
             logger.write(RESULT, result.toString() + "\n")
@@ -213,7 +217,7 @@ private fun backend(
                 when {
                     result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
                         logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
-                        SafetyResult.unknown<State, Action>()
+                        SafetyResult.unknown<EmptyWitness, EmptyCex>()
                     }
 
                     else -> result
@@ -244,6 +248,17 @@ private fun preVerificationLogging(
                 Logger.Level.INFO,
                 "Writing pre-verification artifacts to directory ${resultFolder.absolutePath}\n"
             )
+
+            if (!config.outputConfig.chcOutputConfig.disable) {
+                xcfa.procedures.forEach {
+                    try {
+                        val chcFile = File(resultFolder, "xcfa-${it.name}.smt2")
+                        chcFile.writeText(it.toSMT2CHC())
+                    } catch (e: Exception) {
+                        logger.write(INFO, "Could not write CHC file: " + e.stackTraceToString())
+                    }
+                }
+            }
 
             if (!config.outputConfig.xcfaOutputConfig.disable) {
                 val xcfaDotFile = File(resultFolder, "xcfa.dot")
@@ -293,16 +308,17 @@ private fun postVerificationLogging(
                 "Writing post-verification artifacts to directory ${resultFolder.absolutePath}\n"
             )
 
-            if (!config.outputConfig.argConfig.disable && safetyResult.hasArg()) {
+            // TODO eliminate the need for the instanceof check
+            if (!config.outputConfig.argConfig.disable && safetyResult.witness is ARG<out State, out Action>?) {
                 val argFile = File(resultFolder, "arg-${safetyResult.isSafe}.dot")
-                val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.arg)
+                val g: Graph = ArgVisualizer.getDefault().visualize(safetyResult.witness as ARG<out State, out Action>?)
                 argFile.writeText(GraphvizWriter.getInstance().writeString(g))
             }
 
             if (!config.outputConfig.witnessConfig.disable) {
-                if (safetyResult.isUnsafe && safetyResult.asUnsafe().trace != null) {
+                if (safetyResult.isUnsafe && safetyResult.asUnsafe().cex != null && !config.outputConfig.witnessConfig.svcomp) {
                     val concrTrace: Trace<XcfaState<ExplState>, XcfaAction> = XcfaTraceConcretizer.concretize(
-                        safetyResult.asUnsafe().trace as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
+                        safetyResult.asUnsafe().cex as Trace<XcfaState<PtrState<*>>, XcfaAction>?,
                         getSolver(
                             config.outputConfig.witnessConfig.concretizerSolver,
                             config.outputConfig.witnessConfig.validateConcretizerSolver
@@ -316,7 +332,7 @@ private fun postVerificationLogging(
 
                     val sequenceFile = File(resultFolder, "trace.plantuml")
                     writeSequenceTrace(sequenceFile,
-                        safetyResult.asUnsafe().trace as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
+                        safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>) { (_, act) ->
                         act.label.getFlatLabels().map(XcfaLabel::toString)
                     }
 

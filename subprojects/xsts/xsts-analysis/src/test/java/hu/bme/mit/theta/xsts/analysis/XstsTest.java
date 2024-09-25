@@ -19,19 +19,24 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverManager;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.xsts.XSTS;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfig;
 import hu.bme.mit.theta.xsts.analysis.config.XstsConfigBuilder;
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -39,6 +44,9 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(value = Parameterized.class)
 public class XstsTest {
+
+    private static final String SOLVER_STRING = "Z3";
+    private static final Path SMTLIB_HOME = SmtLibSolverManager.HOME;
 
     @Parameterized.Parameter(value = 0)
     public String filePath;
@@ -132,13 +140,13 @@ public class XstsTest {
                         false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
                 {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.PRED_CART},
+                        false, XstsConfigBuilder.Domain.PRED_CART},
 
                 {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.EXPL},
+                        false, XstsConfigBuilder.Domain.EXPL},
 
                 {"src/test/resources/model/literals.xsts", "src/test/resources/property/literals.prop",
-                        true, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
+                        false, XstsConfigBuilder.Domain.EXPL_PRED_COMBINED},
 
                 {"src/test/resources/model/cross3.xsts", "src/test/resources/property/cross.prop",
                         false, XstsConfigBuilder.Domain.PRED_CART},
@@ -344,10 +352,37 @@ public class XstsTest {
         });
     }
 
-    @Test
-    public void test() throws IOException {
+    @BeforeClass
+    public static void installSolver() {
+        if (SOLVER_STRING.contains("Z3") || SOLVER_STRING.contains("JavaSMT")) {
+            return;
+        }
+        try (final var solverManager = SmtLibSolverManager.create(SMTLIB_HOME, new ConsoleLogger(Level.DETAIL))) {
+            String solverVersion = SmtLibSolverManager.getSolverVersion(SOLVER_STRING);
+            String solverName = SmtLibSolverManager.getSolverName(SOLVER_STRING);
+            if (solverManager.managesSolver(SOLVER_STRING) && !solverManager.getInstalledVersions(solverName).contains(solverManager.getVersionString(solverName, solverVersion, false))) {
+                solverManager.install(solverName, solverVersion, solverVersion, null, false);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    @Test
+    public void test() throws Exception {
         final Logger logger = new ConsoleLogger(Level.SUBSTEP);
+        SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3legacy.Z3SolverManager.create());
+        SolverManager.registerSolverManager(hu.bme.mit.theta.solver.z3.Z3SolverManager.create());
+        SolverManager.registerSolverManager(SmtLibSolverManager.create(SMTLIB_HOME, logger));
+        SolverManager.registerSolverManager(JavaSMTSolverManager.create());
+
+        final SolverFactory solverFactory;
+        try {
+            solverFactory = SolverManager.resolveSolverFactory(SOLVER_STRING);
+        } catch (Exception e) {
+            Assume.assumeNoException(e);
+            return;
+        }
 
         XSTS xsts;
         try (InputStream inputStream = new SequenceInputStream(new FileInputStream(filePath),
@@ -355,17 +390,22 @@ public class XstsTest {
             xsts = XstsDslManager.createXsts(inputStream);
         }
 
-        final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain,
-                XstsConfigBuilder.Refinement.SEQ_ITP, Z3LegacySolverFactory.getInstance(),
-                Z3LegacySolverFactory.getInstance()).initPrec(XstsConfigBuilder.InitPrec.CTRL)
-                .optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON)
-                .predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250)
-                .autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS).logger(logger).build(xsts);
-        final SafetyResult<?, ?> status = configuration.check();
-        if (safe) {
-            assertTrue(status.isSafe());
-        } else {
-            assertTrue(status.isUnsafe());
+        try {
+            final XstsConfig<?, ?, ?> configuration = new XstsConfigBuilder(domain,
+                    XstsConfigBuilder.Refinement.SEQ_ITP, solverFactory,
+                    solverFactory).initPrec(XstsConfigBuilder.InitPrec.CTRL)
+                    .optimizeStmts(XstsConfigBuilder.OptimizeStmts.ON)
+                    .predSplit(XstsConfigBuilder.PredSplit.CONJUNCTS).maxEnum(250)
+                    .autoExpl(XstsConfigBuilder.AutoExpl.NEWOPERANDS).logger(logger).build(xsts);
+            final SafetyResult<?, ?> status = configuration.check();
+
+            if (safe) {
+                assertTrue(status.isSafe());
+            } else {
+                assertTrue(status.isUnsafe());
+            }
+        } finally {
+            SolverManager.closeAll();
         }
     }
 

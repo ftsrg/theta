@@ -166,6 +166,7 @@ data class BackendConfig<T : SpecBackendConfig>(
         specConfig = when (backend) {
             Backend.CEGAR -> CegarConfig() as T
             Backend.BOUNDED -> BoundedConfig() as T
+            Backend.CHC -> HornConfig() as T
             Backend.OC -> OcConfig() as T
             Backend.LAZY -> null
             Backend.PORTFOLIO -> PortfolioConfig() as T
@@ -242,6 +243,16 @@ data class CegarRefinerConfig(
     @Parameter(names = ["--prunestrategy"], description = "Strategy for pruning the ARG after refinement")
     var pruneStrategy: PruneStrategy = PruneStrategy.LAZY,
 ) : Config
+
+data class HornConfig(
+    @Parameter(names = ["--solver"], description = "Solver to use.")
+    var solver: String = "Z3:4.13",
+    @Parameter(
+        names = ["--validate-solver"],
+        description = "Activates a wrapper, which validates the assertions in the solver in each (SAT) check. Filters some solver issues."
+    )
+    var validateSolver: Boolean = false,
+) : SpecBackendConfig
 
 data class BoundedConfig(
     @Parameter(names = ["--max-bound"], description = "Maximum bound to check. Use 0 for no limit.")
@@ -346,20 +357,27 @@ data class OutputConfig(
 
     val cOutputConfig: COutputConfig = COutputConfig(),
     val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
+    val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),
     val witnessConfig: WitnessConfig = WitnessConfig(),
     val argConfig: ArgConfig = ArgConfig(),
 ) : Config {
 
     override fun getObjects(): Set<Config> {
-        return super.getObjects() union cOutputConfig.getObjects() union xcfaOutputConfig.getObjects() union witnessConfig.getObjects() union argConfig.getObjects()
+        return super.getObjects() union cOutputConfig.getObjects() union xcfaOutputConfig.getObjects() union chcOutputConfig.getObjects() union witnessConfig.getObjects() union argConfig.getObjects()
     }
 
     override fun update(): Boolean =
-        listOf(cOutputConfig, xcfaOutputConfig, witnessConfig, argConfig).map { it.update() }.any { it }
+        listOf(cOutputConfig, xcfaOutputConfig, chcOutputConfig, witnessConfig, argConfig).map { it.update() }
+            .any { it }
 }
 
 data class XcfaOutputConfig(
     @Parameter(names = ["--disable-xcfa-serialization"])
+    var disable: Boolean = false,
+) : Config
+
+data class ChcOutputConfig(
+    @Parameter(names = ["--disable-chc-serialization"])
     var disable: Boolean = false,
 ) : Config
 
@@ -380,6 +398,9 @@ data class COutputConfig(
 data class WitnessConfig(
     @Parameter(names = ["--disable-witness-generation"])
     var disable: Boolean = false,
+
+    @Parameter(names = ["--only-svcomp-witness"])
+    var svcomp: Boolean = false,
 
     @Parameter(names = ["--cex-solver"], description = "Concretizer solver name")
     var concretizerSolver: String = "Z3",

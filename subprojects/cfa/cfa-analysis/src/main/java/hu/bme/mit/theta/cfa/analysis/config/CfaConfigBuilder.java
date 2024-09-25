@@ -15,55 +15,31 @@
  */
 package hu.bme.mit.theta.cfa.analysis.config;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
+import hu.bme.mit.theta.analysis.*;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
-import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
-import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
-import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
+import hu.bme.mit.theta.analysis.expl.*;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceNewtonChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUCBChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
-import hu.bme.mit.theta.analysis.expr.refinement.MultiExprTraceRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
-import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
-import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
-import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
-import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
-import hu.bme.mit.theta.analysis.pred.ExprSplitters;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.analysis.expr.refinement.*;
+import hu.bme.mit.theta.analysis.multi.MultiAnalysisSide;
+import hu.bme.mit.theta.analysis.pred.*;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
-import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
-import hu.bme.mit.theta.analysis.pred.PredAbstractors;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
-import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
-import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.analysis.unit.UnitState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaAnalysis;
-import hu.bme.mit.theta.cfa.analysis.CfaInitPrecs;
-import hu.bme.mit.theta.cfa.analysis.CfaPrec;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.cfa.analysis.DistToErrComparator;
+import hu.bme.mit.theta.cfa.analysis.*;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaCachedLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.cfa.analysis.lts.CfaLts;
@@ -74,142 +50,23 @@ import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.cfa.analysis.prec.LocalCfaPrecRefiner;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 
-import java.util.LinkedHashSet;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 public class CfaConfigBuilder {
 
-    public enum Algorithm {
-        CEGAR,
-        KINDUCTION,
-        IMC
-    }
-
-    public enum Domain {
-        EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
-    }
-
-    public enum Refinement {
-        FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, MULTI_SEQ, UNSAT_CORE, UCB,
-        NWT_WP, NWT_SP, NWT_WP_LV, NWT_SP_LV, NWT_IT_WP, NWT_IT_SP, NWT_IT_WP_LV, NWT_IT_SP_LV
-    }
-
-    public enum Search {
-        BFS {
-            @Override
-            public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
-                return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
-                        ArgNodeComparators.bfs());
-            }
-        },
-
-        DFS {
-            @Override
-            public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
-                return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
-                        ArgNodeComparators.dfs());
-            }
-        },
-
-        ERR {
-            @Override
-            public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
-                return new DistToErrComparator(cfa, errLoc);
-            }
-        };
-
-        public abstract ArgNodeComparator getComp(CFA cfa, CFA.Loc errLoc);
-
-    }
-
-    public enum PredSplit {
-        WHOLE(ExprSplitters.whole()),
-
-        CONJUNCTS(ExprSplitters.conjuncts()),
-
-        ATOMS(ExprSplitters.atoms());
-
-        public final ExprSplitter splitter;
-
-        PredSplit(final ExprSplitter splitter) {
-            this.splitter = splitter;
-        }
-    }
-
-    public enum PrecGranularity {
-        GLOBAL {
-            @Override
-            public <P extends Prec> CfaPrec<P> createPrec(final P innerPrec) {
-                return GlobalCfaPrec.create(innerPrec);
-            }
-
-            @Override
-            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
-                    final RefutationToPrec<P, R> refToPrec) {
-                return GlobalCfaPrecRefiner.create(refToPrec);
-            }
-        },
-
-        LOCAL {
-            @Override
-            public <P extends Prec> CfaPrec<P> createPrec(final P innerPrec) {
-                return LocalCfaPrec.create(innerPrec);
-            }
-
-            @Override
-            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
-                    final RefutationToPrec<P, R> refToPrec) {
-                return LocalCfaPrecRefiner.create(refToPrec);
-            }
-        };
-
-        public abstract <P extends Prec> CfaPrec<P> createPrec(P innerPrec);
-
-        public abstract <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
-                RefutationToPrec<P, R> refToPrec);
-    }
-
-    public enum Encoding {
-        SBE {
-            @Override
-            public CfaLts getLts(CFA.Loc errorLoc) {
-                return new CfaCachedLts(CfaSbeLts.getInstance());
-            }
-        },
-
-        LBE {
-            @Override
-            public CfaLts getLts(CFA.Loc errorLoc) {
-                return new CfaCachedLts(CfaLbeLts.of(errorLoc));
-            }
-        };
-
-        public abstract CfaLts getLts(CFA.Loc errorLoc);
-    }
-
-    public enum InitPrec {
-        EMPTY, ALLVARS, ALLASSUMES
-    }
-
-    private Logger logger = NullLogger.getInstance();
     private final SolverFactory abstractionSolverFactory;
     private final SolverFactory refinementSolverFactory;
     private final Domain domain;
     private final Refinement refinement;
+    private Logger logger = NullLogger.getInstance();
     private Search search = Search.BFS;
     private PredSplit predSplit = PredSplit.WHOLE;
     private PrecGranularity precGranularity = PrecGranularity.GLOBAL;
@@ -276,393 +133,421 @@ public class CfaConfigBuilder {
 
     public CfaConfig<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa,
                                                                               final CFA.Loc errLoc) {
-        final CfaLts lts = encoding.getLts(errLoc);
-
         if (domain == Domain.EXPL) {
-            final Analysis<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> analysis = CfaAnalysis
-                    .create(cfa.getInitLoc(),
-                            ExplStmtAnalysis.create(abstractionSolverFactory.createSolver(), True(),
-                                    maxEnum));
-            final ArgBuilder<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> argBuilder = ArgBuilder.create(
-                    lts,
-                    analysis, s -> s.getLoc().equals(errLoc), true);
-            final Abstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor = BasicAbstractor
-                    .builder(argBuilder).projection(CfaState::getLoc)
-                    .waitlist(PriorityWaitlist.create(search.getComp(cfa, errLoc)))
-                    .stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
-                            : StopCriterions.firstCex()).logger(logger).build();
-
-            Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner;
-
-            switch (refinement) {
-                case FW_BIN_ITP:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceFwBinItpChecker.create(True(), True(),
-                                    refinementSolverFactory.createItpSolver()),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy,
-                            logger);
-                    break;
-                case BW_BIN_ITP:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceBwBinItpChecker.create(True(), True(),
-                                    refinementSolverFactory.createItpSolver()),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy,
-                            logger);
-                    break;
-                case SEQ_ITP:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceSeqItpChecker.create(True(), True(),
-                                    refinementSolverFactory.createItpSolver()),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy,
-                            logger);
-                    break;
-                case MULTI_SEQ:
-                    refiner = MultiExprTraceRefiner.create(
-                            ExprTraceSeqItpChecker.create(True(), True(),
-                                    refinementSolverFactory.createItpSolver()),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy,
-                            logger);
-                    break;
-                case UNSAT_CORE:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceUnsatCoreChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()),
-                            precGranularity.createRefiner(new VarsRefToExplPrec()), pruneStrategy,
-                            logger);
-                    break;
-                case UCB:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceUCBChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()), pruneStrategy,
-                            logger);
-                    break;
-                case NWT_SP:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                            refinementSolverFactory.createUCSolver()).withoutIT().withSP()
-                                    .withoutLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                case NWT_WP:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                            refinementSolverFactory.createUCSolver()).withoutIT().withWP()
-                                    .withoutLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                case NWT_SP_LV:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()).withoutIT().withSP().withLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                case NWT_WP_LV:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()).withoutIT().withWP().withLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                case NWT_IT_SP:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()).withIT().withSP().withoutLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                case NWT_IT_WP:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()).withIT().withWP().withoutLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                case NWT_IT_SP_LV:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()).withIT().withSP().withLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                case NWT_IT_WP_LV:
-                    refiner = SingleExprTraceRefiner.create(
-                            ExprTraceNewtonChecker.create(True(), True(),
-                                    refinementSolverFactory.createUCSolver()).withIT().withWP().withLV(),
-                            precGranularity.createRefiner(new ItpRefToExplPrec()),
-                            pruneStrategy,
-                            logger
-                    );
-                    break;
-                default:
-                    throw new UnsupportedOperationException(
-                            domain + " domain does not support " + refinement + " refinement.");
-            }
-
-            final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
-                    .create(abstractor, refiner, logger);
-
-            CfaPrec<ExplPrec> prec;
-
-            switch (initPrec) {
-                case EMPTY:
-                    prec = precGranularity.createPrec(ExplPrec.empty());
-                    break;
-                case ALLVARS:
-                    prec = precGranularity.createPrec(ExplPrec.of(cfa.getVars()));
-                    break;
-                default:
-                    throw new UnsupportedOperationException(
-                            initPrec + " initial precision is not supported with " +
-                                    domain + " domain");
-            }
-
-            return CfaConfig.create(checker, prec);
-
-        } else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART
+            return (new ExplStrategy(cfa)).buildConfig(errLoc);
+        }
+        if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART
                 || domain == Domain.PRED_SPLIT) {
-            final Solver analysisSolver = abstractionSolverFactory.createSolver();
-            PredAbstractor predAbstractor;
-            switch (domain) {
-                case PRED_BOOL:
-                    predAbstractor = PredAbstractors.booleanAbstractor(analysisSolver);
-                    break;
-                case PRED_SPLIT:
-                    predAbstractor = PredAbstractors.booleanSplitAbstractor(analysisSolver);
-                    break;
-                case PRED_CART:
-                    predAbstractor = PredAbstractors.cartesianAbstractor(analysisSolver);
-                    break;
-                default:
-                    throw new UnsupportedOperationException(domain + " domain is not supported.");
+            return (new PredStrategy(cfa)).buildConfig(errLoc);
+        }
+        throw new UnsupportedOperationException(domain + " domain is not supported.");
+    }
+
+    public enum Algorithm {
+        CEGAR,
+        BMC,
+        KINDUCTION,
+        IMC
+    }
+
+    public enum Domain {
+        EXPL(null),
+        PRED_BOOL(PredAbstractors::booleanAbstractor),
+        PRED_CART(PredAbstractors::cartesianAbstractor),
+        PRED_SPLIT(PredAbstractors::booleanSplitAbstractor);
+
+        public final Function<Solver, PredAbstractor> predAbstractorFunction;
+
+        Domain(final Function<Solver, PredAbstractor> predAbstractorFunction) {
+            this.predAbstractorFunction = predAbstractorFunction;
+        }
+    }
+
+    public enum Refinement {
+        FW_BIN_ITP {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createItpSolver()), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
             }
-            final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> analysis = CfaAnalysis
-                    .create(cfa.getInitLoc(),
-                            PredAnalysis.create(analysisSolver, predAbstractor, True()));
-            final ArgBuilder<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> argBuilder = ArgBuilder.create(
-                    lts,
-                    analysis, s -> s.getLoc().equals(errLoc), true);
-            final Abstractor<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> abstractor = BasicAbstractor
-                    .builder(argBuilder).projection(CfaState::getLoc)
+        }, BW_BIN_ITP {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createItpSolver()), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, SEQ_ITP {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createItpSolver()), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        },
+        MULTI_SEQ {
+            @Override
+            public <S extends ExprState> StopCriterion<S, CfaAction> getStopCriterion() {
+                return StopCriterions.fullExploration();
+            }
+
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createItpSolver()), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        },
+        UNSAT_CORE {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getVarsRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, UCB {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceUCBChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        },
+        NWT_WP {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withoutIT().withSP().withoutLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, NWT_SP {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withoutIT().withWP().withoutLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, NWT_WP_LV {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withoutIT().withWP().withLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, NWT_SP_LV {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withoutIT().withSP().withLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, NWT_IT_WP {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withIT().withWP().withoutLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, NWT_IT_SP {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withIT().withSP().withoutLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, NWT_IT_WP_LV {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withIT().withWP().withLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        }, NWT_IT_SP_LV {
+            @Override
+            public <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy) {
+                return SingleExprTraceRefiner.create(ExprTraceNewtonChecker.create(True(), True(), builderStrategy.getRefinementSolverFactory().createUCSolver()).withIT().withSP().withLV(), builderStrategy.getPrecGranularity().createRefiner(builderStrategy.getItpRefToPrec()), builderStrategy.getPruneStrategy(), builderStrategy.getLogger());
+            }
+        };
+
+        public <S extends ExprState> StopCriterion<S, CfaAction> getStopCriterion() {
+            return StopCriterions.firstCex();
+        }
+
+        public abstract <S extends ExprState, P extends Prec> Refiner<CfaState<S>, CfaAction, CfaPrec<P>> getRefiner(BuilderStrategy<S, P> builderStrategy);
+
+    }
+
+    public enum Search {
+        BFS {
+            @Override
+            public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
+                return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
+                        ArgNodeComparators.bfs());
+            }
+        },
+
+        DFS {
+            @Override
+            public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
+                return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(),
+                        ArgNodeComparators.dfs());
+            }
+        },
+
+        ERR {
+            @Override
+            public ArgNodeComparator getComp(final CFA cfa, final CFA.Loc errLoc) {
+                return new DistToErrComparator(cfa, errLoc);
+            }
+        };
+
+        public abstract ArgNodeComparator getComp(CFA cfa, CFA.Loc errLoc);
+
+    }
+
+    public enum PredSplit {
+        WHOLE(ExprSplitters.whole()),
+
+        CONJUNCTS(ExprSplitters.conjuncts()),
+
+        ATOMS(ExprSplitters.atoms());
+
+        public final ExprSplitter splitter;
+
+        PredSplit(final ExprSplitter splitter) {
+            this.splitter = splitter;
+        }
+    }
+
+    public enum PrecGranularity {
+        GLOBAL {
+            @Override
+            public <P extends Prec> CfaPrec<P> createPrec(final P innerPrec) {
+                return GlobalCfaPrec.create(innerPrec);
+            }
+
+            @Override
+            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
+                    final RefutationToPrec<P, R> refToPrec) {
+                return GlobalCfaPrecRefiner.create(refToPrec);
+            }
+
+            @Override
+            public CfaPrec<PredPrec> assumePrecs(CFA cfa) {
+                return CfaInitPrecs.collectAssumesGlobal(cfa);
+            }
+        },
+
+        LOCAL {
+            @Override
+            public <P extends Prec> CfaPrec<P> createPrec(final P innerPrec) {
+                return LocalCfaPrec.create(innerPrec);
+            }
+
+            @Override
+            public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
+                    final RefutationToPrec<P, R> refToPrec) {
+                return LocalCfaPrecRefiner.create(refToPrec);
+            }
+
+            @Override
+            public CfaPrec<PredPrec> assumePrecs(CFA cfa) {
+                return CfaInitPrecs.collectAssumesLocal(cfa);
+            }
+        };
+
+        public abstract <P extends Prec> CfaPrec<P> createPrec(P innerPrec);
+
+        public abstract <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
+                RefutationToPrec<P, R> refToPrec);
+
+        public abstract CfaPrec<PredPrec> assumePrecs(CFA cfa);
+    }
+
+    public enum Encoding {
+        SBE {
+            @Override
+            public CfaLts getLts(CFA.Loc errorLoc) {
+                return new CfaCachedLts(CfaSbeLts.getInstance());
+            }
+        },
+
+        LBE {
+            @Override
+            public CfaLts getLts(CFA.Loc errorLoc) {
+                return new CfaCachedLts(CfaLbeLts.of(errorLoc));
+            }
+        };
+
+        public abstract CfaLts getLts(CFA.Loc errorLoc);
+    }
+
+    public enum InitPrec {
+        EMPTY, ALLVARS, ALLASSUMES
+    }
+
+    public abstract class BuilderStrategy<S extends ExprState, P extends Prec> {
+
+        protected static final String UNSUPPORTED_CONFIG_VALUE = "Builder strategy %s does not support configuration value %s as %s";
+        protected final CFA cfa;
+
+        @SuppressWarnings("java:S1699")
+        protected BuilderStrategy(CFA cfa) {
+            checkState(getSupportedDomains().contains(domain), UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), domain, "domain");
+            checkState(getSupportedRefinements().contains(refinement), UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), refinement, "refinement");
+            checkState(getSupportedInitPrecs().contains(initPrec), UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), initPrec, "initial precision");
+            this.cfa = cfa;
+        }
+
+        public abstract Set<Domain> getSupportedDomains();
+
+        public abstract Set<Refinement> getSupportedRefinements();
+
+        public abstract Set<InitPrec> getSupportedInitPrecs();
+
+        public abstract Analysis<S, StmtAction, ? super P> getDataAnalysis();
+
+        public CfaAnalysis<S, P> getAnalysis() {
+            return CfaAnalysis.create(cfa.getInitLoc(), getDataAnalysis());
+        }
+
+        public abstract RefutationToPrec<P, ItpRefutation> getItpRefToPrec();
+
+        public RefutationToPrec<P, VarsRefutation> getVarsRefToPrec() {
+            throw new UnsupportedOperationException(String.format("Builder strategy %s can not provide Vars refutation to precision", getClass().getSimpleName()));
+        }
+
+        protected SolverFactory getRefinementSolverFactory() {
+            return refinementSolverFactory;
+        }
+
+        protected PrecGranularity getPrecGranularity() {
+            return precGranularity;
+        }
+
+        protected PruneStrategy getPruneStrategy() {
+            return pruneStrategy;
+        }
+
+        protected Logger getLogger() {
+            return logger;
+        }
+
+        public abstract CfaPrec<P> createInitPrec();
+
+        public CfaLts getLts(CFA.Loc errLoc) {
+            return encoding.getLts(errLoc);
+        }
+
+        public CfaLts getLts() {
+            return getLts(cfa.getErrorLoc().orElse(CFA.builder().createLoc()));
+        }
+
+        public CfaConfig<CfaState<S>, CfaAction, CfaPrec<P>> buildConfig(CFA.Loc errLoc) {
+            final Predicate<CfaState<S>> target = new CfaErrorlocPredicate<>(errLoc);
+            final Analysis<CfaState<S>, CfaAction, CfaPrec<P>> analysis = getAnalysis();
+            final ArgBuilder<CfaState<S>, CfaAction, CfaPrec<P>> argBuilder = ArgBuilder.create(
+                    getLts(errLoc), analysis, target,
+                    true);
+            final Abstractor<CfaState<S>, CfaAction, CfaPrec<P>> abstractor = BasicAbstractor.builder(
+                            argBuilder)
                     .waitlist(PriorityWaitlist.create(search.getComp(cfa, errLoc)))
-                    .stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
-                            : StopCriterions.firstCex()).logger(logger).build();
+                    .stopCriterion(refinement.getStopCriterion())
+                    .logger(logger).build();
+            final Refiner<CfaState<S>, CfaAction, CfaPrec<P>> refiner = refinement.getRefiner(this);
+            final SafetyChecker<ARG<CfaState<S>, CfaAction>, Trace<CfaState<S>, CfaAction>, CfaPrec<P>> checker = CegarChecker.create(
+                    abstractor, refiner,
+                    logger);
+            return CfaConfig.create(checker, createInitPrec());
+        }
 
-            ExprTraceChecker<ItpRefutation> exprTraceChecker;
-            switch (refinement) {
-                case FW_BIN_ITP:
-                    exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(),
-                            refinementSolverFactory.createItpSolver());
-                    break;
-                case BW_BIN_ITP:
-                    exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(),
-                            refinementSolverFactory.createItpSolver());
-                    break;
-                case SEQ_ITP:
-                    exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(),
-                            refinementSolverFactory.createItpSolver());
-                    break;
-                case MULTI_SEQ:
-                    exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(),
-                            refinementSolverFactory.createItpSolver());
-                    break;
-                case UCB:
-                    exprTraceChecker = ExprTraceUCBChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver());
-                    break;
-                case NWT_SP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withoutIT().withSP().withoutLV();
-                    break;
-                case NWT_WP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withoutIT().withWP().withoutLV();
-                    break;
-                case NWT_SP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withoutIT().withSP().withLV();
-                    break;
-                case NWT_WP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withoutIT().withWP().withLV();
-                    break;
-                case NWT_IT_SP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withIT().withSP().withoutLV();
-                    break;
-                case NWT_IT_WP:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withIT().withWP().withoutLV();
-                    break;
-                case NWT_IT_SP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withIT().withSP().withLV();
-                    break;
-                case NWT_IT_WP_LV:
-                    exprTraceChecker = ExprTraceNewtonChecker.create(True(), True(),
-                            refinementSolverFactory.createUCSolver()).withIT().withWP().withLV();
-                    break;
-                default:
-                    throw new UnsupportedOperationException(
-                            domain + " domain does not support " + refinement + " refinement.");
-            }
-            final ItpRefToPredPrec refToPrec = new ItpRefToPredPrec(predSplit.splitter);
-            Refiner<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> refiner;
-
-            if (refinement == Refinement.MULTI_SEQ) {
-                refiner = MultiExprTraceRefiner.create(exprTraceChecker,
-                        precGranularity.createRefiner(refToPrec), pruneStrategy, logger);
-            } else {
-                refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-                        precGranularity.createRefiner(refToPrec), pruneStrategy, logger);
-            }
-
-            final SafetyChecker<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> checker = CegarChecker
-                    .create(abstractor, refiner, logger);
-
-            CfaPrec<PredPrec> prec;
-
-            switch (initPrec) {
-                case EMPTY:
-                    prec = precGranularity.createPrec(PredPrec.of());
-                    break;
-                case ALLASSUMES:
-                    switch (precGranularity) {
-                        case LOCAL:
-                            prec = CfaInitPrecs.collectAssumesLocal(cfa);
-                            break;
-                        case GLOBAL:
-                            prec = CfaInitPrecs.collectAssumesGlobal(cfa);
-                            break;
-                        default:
-                            throw new UnsupportedOperationException(precGranularity +
-                                    " precision granularity is not supported with " + domain
-                                    + " domain");
-                    }
-                    break;
-                default:
-                    throw new UnsupportedOperationException(
-                            initPrec + " initial precision is not supported with " +
-                                    domain + " domain");
-            }
-
-            return CfaConfig.create(checker, prec);
-
-        } else {
-            throw new UnsupportedOperationException(domain + " domain is not supported.");
+        public MultiAnalysisSide<CfaState<S>, S, CfaState<UnitState>, CfaAction, CfaPrec<P>, CfaPrec<UnitPrec>> getMultiSide() {
+            return new MultiAnalysisSide<>(
+                    getAnalysis(),
+                    CfaControlInitFuncKt.cfaControlInitFunc(cfa.getInitLoc()),
+                    CfaCombineExtractUtilsKt::cfaCombineStates,
+                    CfaCombineExtractUtilsKt::cfaExtractControlState,
+                    CfaCombineExtractUtilsKt::cfaExtractDataState,
+                    CfaCombineExtractUtilsKt::cfaExtractControlPrec);
         }
     }
 
-    /////////////// TODO put these somewhere more appropriate
+    public final class ExplStrategy extends BuilderStrategy<ExplState, ExplPrec> {
 
-    // TODO won't work well, if an assume is removed in the XCFA passes when it goes directly into the final location
-    private Iterable<? extends VarDecl<?>> countVariablesInAssumptions(CFA cfa) {
-        Set<VarDecl<?>> vars = new LinkedHashSet<>();
-        Set<CFA.Edge> edgesOnErrorPaths = collectEdgesOnErrorPaths(cfa);
-
-        // get the variables out of each edge that has a source location with at least 2 outgoing assume edges
-        for (CFA.Loc loc : cfa.getLocs().stream().filter(loc ->
-                loc.getOutEdges().stream().filter(edge -> edge.getStmt() instanceof AssumeStmt).count()
-                        >= 2).collect(Collectors.toList())) {
-            loc.getOutEdges().stream().filter(
-                            edge -> edgesOnErrorPaths.contains(edge) && edge.getStmt() instanceof AssumeStmt)
-                    .map(edge -> StmtUtils.getVars(edge.getStmt())).forEach(vars::addAll);
+        public ExplStrategy(CFA cfa) {
+            super(cfa);
         }
 
-        Set<VarDecl> havocedVars = cfa.getEdges().stream()
-                .filter(edge -> edge.getStmt() instanceof HavocStmt)
-                .map(edge -> ((HavocStmt) edge.getStmt()).getVarDecl()).collect(Collectors.toSet());
-        vars.removeAll(havocedVars);
-        return vars;
-    }
-
-    private Iterable<Expr<BoolType>> collectErrorPathAssumes(CFA cfa) {
-        Set<CFA.Edge> edgesOnErrorPaths = collectEdgesOnErrorPaths(cfa);
-        LinkedHashSet<Expr<BoolType>> preds = new LinkedHashSet<>();
-
-        Set<VarDecl> havocedVars = cfa.getEdges().stream()
-                .filter(edge -> edge.getStmt() instanceof HavocStmt)
-                .map(edge -> ((HavocStmt) edge.getStmt()).getVarDecl()).collect(Collectors.toSet());
-        // collect assume edges on the error paths
-        for (CFA.Edge edge : edgesOnErrorPaths.stream()
-                .filter(edge -> edge.getStmt() instanceof AssumeStmt).collect(Collectors.toSet())) {
-            // if the edge is not an overflow guard assume
-            if (edge.getSource().getOutEdges().stream()
-                    .filter(e -> e.getStmt() instanceof AssumeStmt).count() >= 2) {
-                AssumeStmt assume = (AssumeStmt) edge.getStmt();
-                boolean havocedAssume = false;
-                // check if the condition has any havoced variables in it
-                for (VarDecl var : StmtUtils.getVars(assume)) {
-                    if (havocedVars.contains(var)) {
-                        havocedAssume = true;
-                        break;
-                    }
-                }
-                if (!havocedAssume) {
-                    preds.add(ExprUtils.ponate(assume.getCond()));
-                    System.err.println(ExprUtils.ponate(assume.getCond()));
-                }
-            }
+        @Override
+        public Set<Domain> getSupportedDomains() {
+            return Set.of(Domain.EXPL);
         }
-        return preds;
-    }
 
-    private Set<CFA.Edge> collectEdgesOnErrorPaths(CFA cfa) {
-        Set<CFA.Edge> reachableEdges = new LinkedHashSet<>();
-        Set<CFA.Edge> nonDeadEndEdges = new LinkedHashSet<>();
-        filterReachableEdges(cfa.getInitLoc(), reachableEdges);
+        @Override
+        public Set<Refinement> getSupportedRefinements() {
+            return Set.of(Refinement.values());
+        }
 
-        if (cfa.getErrorLoc().isPresent()) {
-            collectNonDeadEndEdges(cfa.getErrorLoc().get(), nonDeadEndEdges);
-            reachableEdges.retainAll(nonDeadEndEdges);
-            return reachableEdges;
-        } else {
-            return new LinkedHashSet<CFA.Edge>();
+        @Override
+        public Set<InitPrec> getSupportedInitPrecs() {
+            return Set.of(InitPrec.EMPTY, InitPrec.ALLVARS);
+        }
+
+        @Override
+        public Analysis<ExplState, StmtAction, ? super ExplPrec> getDataAnalysis() {
+            return ExplStmtAnalysis.create(abstractionSolverFactory.createSolver(), True(), maxEnum);
+        }
+
+        @Override
+        public RefutationToPrec<ExplPrec, ItpRefutation> getItpRefToPrec() {
+            return new ItpRefToExplPrec();
+        }
+
+        @Override
+        public RefutationToPrec<ExplPrec, VarsRefutation> getVarsRefToPrec() {
+            return new VarsRefToExplPrec();
+        }
+
+        @Override
+        public CfaPrec<ExplPrec> createInitPrec() {
+            return switch (initPrec) {
+                case EMPTY -> precGranularity.createPrec(ExplPrec.empty());
+                case ALLVARS -> precGranularity.createPrec(ExplPrec.of(cfa.getVars()));
+                default ->
+                        throw new UnsupportedOperationException(String.format(UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), initPrec, "initial precision"));
+            };
         }
     }
 
-    // same as in the remove dead ends pass
-    private void filterReachableEdges(CFA.Loc loc, Set<CFA.Edge> reachableEdges) {
-        Set<CFA.Edge> outgoingEdges = new LinkedHashSet<>(loc.getOutEdges());
-        while (!outgoingEdges.isEmpty()) {
-            Optional<CFA.Edge> any = outgoingEdges.stream().findAny();
-            CFA.Edge outgoingEdge = any.get();
-            outgoingEdges.remove(outgoingEdge);
-            if (!reachableEdges.contains(outgoingEdge)) {
-                reachableEdges.add(outgoingEdge);
-                outgoingEdges.addAll(outgoingEdge.getTarget().getOutEdges());
-            }
-        }
-    }
+    public final class PredStrategy extends BuilderStrategy<PredState, PredPrec> {
 
-    // same as in the remove dead ends pass
-    private void collectNonDeadEndEdges(CFA.Loc loc, Set<CFA.Edge> nonDeadEndEdges) {
-        Set<CFA.Edge> incomingEdges = new LinkedHashSet<>(loc.getInEdges());
-        while (!incomingEdges.isEmpty()) {
-            Optional<CFA.Edge> any = incomingEdges.stream().findAny();
-            CFA.Edge incomingEdge = any.get();
-            incomingEdges.remove(incomingEdge);
-            if (!nonDeadEndEdges.contains(incomingEdge)) {
-                nonDeadEndEdges.add(incomingEdge);
-                incomingEdges.addAll(incomingEdge.getSource().getInEdges());
-            }
+        public PredStrategy(CFA cfa) {
+            super(cfa);
+        }
+
+        @Override
+        public Set<Domain> getSupportedDomains() {
+            return Set.of(Domain.PRED_BOOL, Domain.PRED_CART, Domain.PRED_SPLIT);
+        }
+
+        @Override
+        public Set<Refinement> getSupportedRefinements() {
+            return Set.of(
+                    Refinement.FW_BIN_ITP,
+                    Refinement.BW_BIN_ITP,
+                    Refinement.SEQ_ITP,
+                    Refinement.MULTI_SEQ,
+                    Refinement.UCB,
+                    Refinement.NWT_SP,
+                    Refinement.NWT_WP,
+                    Refinement.NWT_SP_LV,
+                    Refinement.NWT_WP_LV,
+                    Refinement.NWT_IT_SP,
+                    Refinement.NWT_IT_WP,
+                    Refinement.NWT_IT_SP_LV,
+                    Refinement.NWT_IT_WP_LV
+            );
+        }
+
+        @Override
+        public Set<InitPrec> getSupportedInitPrecs() {
+            return Set.of(InitPrec.EMPTY, InitPrec.ALLASSUMES);
+        }
+
+        @Override
+        public Analysis<PredState, StmtAction, ? super PredPrec> getDataAnalysis() {
+            Solver solver = abstractionSolverFactory.createSolver();
+            return PredAnalysis.create(solver, domain.predAbstractorFunction.apply(solver), True());
+        }
+
+        @Override
+        public RefutationToPrec<PredPrec, ItpRefutation> getItpRefToPrec() {
+            return new ItpRefToPredPrec(predSplit.splitter);
+        }
+
+        @Override
+        public CfaPrec<PredPrec> createInitPrec() {
+            return switch (initPrec) {
+                case EMPTY -> precGranularity.createPrec(PredPrec.of());
+                case ALLASSUMES -> precGranularity.assumePrecs(cfa);
+                default ->
+                        throw new UnsupportedOperationException(String.format(UNSUPPORTED_CONFIG_VALUE, getClass().getSimpleName(), initPrec, "initial precision"));
+            };
         }
     }
 

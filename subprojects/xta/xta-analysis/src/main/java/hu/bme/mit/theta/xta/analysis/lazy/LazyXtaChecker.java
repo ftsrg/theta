@@ -23,11 +23,12 @@ import java.util.Collection;
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.arg.SearchStrategy;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -37,7 +38,7 @@ import hu.bme.mit.theta.xta.analysis.XtaLts;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
 final class LazyXtaChecker<S extends State> implements
-        SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
+        SafetyChecker<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>, UnitPrec> {
 
     private final XtaLts lts;
     private final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy;
@@ -59,7 +60,7 @@ final class LazyXtaChecker<S extends State> implements
     }
 
     @Override
-    public SafetyResult<XtaState<S>, XtaAction> check(final UnitPrec prec) {
+    public SafetyResult<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>> check(final UnitPrec prec) {
         return new CheckMethod().run();
     }
 
@@ -77,7 +78,7 @@ final class LazyXtaChecker<S extends State> implements
             waiting = searchStrategy.createWaitlist();
         }
 
-        public SafetyResult<XtaState<S>, XtaAction> run() {
+        public SafetyResult<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>> run() {
             stats.startAlgorithm();
 
             init();
@@ -94,7 +95,7 @@ final class LazyXtaChecker<S extends State> implements
 
             stats.stopAlgorithm();
             final LazyXtaStatistics statistics = stats.build();
-            final SafetyResult<XtaState<S>, XtaAction> result = SafetyResult.safe(arg, statistics);
+            final SafetyResult<ARG<XtaState<S>, XtaAction>, Trace<XtaState<S>, XtaAction>> result = SafetyResult.safe(arg, statistics);
             return result;
         }
 

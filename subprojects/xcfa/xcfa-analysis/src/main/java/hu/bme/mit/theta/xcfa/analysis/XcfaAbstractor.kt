@@ -19,9 +19,9 @@ import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.ARG
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder
-import hu.bme.mit.theta.analysis.algorithm.ArgNode
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion

@@ -14,21 +14,26 @@
  *  limitations under the License.
  */
 plugins {
-    id("java-common")
+    id("kotlin-common")
     id("cli-tool")
 }
 
 dependencies {
+    implementation(project(":theta-petrinet-model"))
+    implementation(project(":theta-petrinet-analysis"))
+    implementation(project(":theta-petrinet-xsts"))
     implementation(project(":theta-xsts"))
     implementation(project(":theta-xsts-analysis"))
     implementation(project(":theta-analysis"))
     implementation(project(":theta-core"))
     implementation(project(":theta-common"))
-    implementation(project(":theta-solver-z3-legacy"))
-    implementation(project(":theta-solver-smtlib"))
     implementation(project(":theta-solver"))
+    implementation(project(":theta-solver-z3-legacy"))
+    implementation(project(":theta-solver-z3"))
+    implementation(project(":theta-solver-smtlib"))
+    implementation(project(":theta-solver-javasmt"))
 }
 
 application {
-    mainClassName = "hu.bme.mit.theta.xsts.cli.XstsCli"
+    mainClass.set("hu.bme.mit.theta.xsts.cli.XstsCliMainKt")
 }

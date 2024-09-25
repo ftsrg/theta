@@ -13,15 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformJvmPlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 apply(plugin = "java-common")
-apply<KotlinPlatformJvmPlugin>()
+plugins {
+    kotlin("jvm")
+}
 dependencies {
     val implementation: Configuration by configurations
     implementation(Deps.Kotlin.stdlib)
     implementation(Deps.Kotlin.reflect)
+    implementation(Deps.Mockito.kotlin)
 }
 tasks {
     withType<KotlinCompile>() {

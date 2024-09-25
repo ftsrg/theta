@@ -70,8 +70,8 @@ class StatementWrapper(val content: String, scope: Scope) {
         private val env: Env
 
         init {
-            this.scope = Preconditions.checkNotNull(scope)
-            this.env = Preconditions.checkNotNull(env)
+            this.scope = scope!! // TODO replaced a checkNotNull with !! here
+            this.env = env!! // TODO replaced a checkNotNull with !! here
         }
 
         override fun visitSkipStmt(ctx: SkipStmtContext): Stmt {

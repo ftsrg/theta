@@ -24,18 +24,18 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public final class ImpactChecker<S extends State, A extends Action, P extends Prec> implements
-        SafetyChecker<S, A, P> {
+        SafetyChecker<ARG<S, A>, Trace<S, A>, P> {
 
     private final ArgBuilder<S, A, P> argBuilder;
     private final ImpactRefiner<S, A> refiner;
@@ -57,7 +57,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
     ////
 
     @Override
-    public SafetyResult<S, A> check(final P prec) {
+    public SafetyResult<ARG<S, A>, Trace<S, A>> check(final P prec) {
         return new CheckMethod(prec).run();
     }
 
@@ -76,7 +76,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
             reachedSet = ImpactReachedSet.create(partitioning);
         }
 
-        private SafetyResult<S, A> run() {
+        private SafetyResult<ARG<S, A>, Trace<S, A>> run() {
             final Optional<ArgNode<S, A>> unsafeNode = unwind();
 
             if (unsafeNode.isPresent()) {

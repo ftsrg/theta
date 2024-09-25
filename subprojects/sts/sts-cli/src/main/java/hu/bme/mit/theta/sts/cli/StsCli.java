@@ -21,6 +21,10 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
@@ -35,6 +39,7 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.StsUtils;
@@ -43,6 +48,7 @@ import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.sts.aiger.utils.AigerCoi;
 import hu.bme.mit.theta.sts.analysis.StsAction;
+import hu.bme.mit.theta.sts.analysis.StsToMonolithicExprKt;
 import hu.bme.mit.theta.sts.analysis.StsTraceConcretizer;
 import hu.bme.mit.theta.sts.analysis.config.StsConfig;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
@@ -74,6 +80,7 @@ public class StsCli {
 
     enum Algorithm {
         CEGAR,
+        BMC,
         KINDUCTION,
         IMC
     }
@@ -158,10 +165,13 @@ public class StsCli {
             final Stopwatch sw = Stopwatch.createStarted();
             final STS sts = loadModel();
 
-            SafetyResult<?, ?> status = null;
+            SafetyResult<?, ? extends Trace<?, ?>> status = null;
             if (algorithm.equals(Algorithm.CEGAR)) {
                 final StsConfig<?, ?, ?> configuration = buildConfiguration(sts);
                 status = check(configuration);
+            } else if (algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
+                final BoundedChecker<?, ?> checker = buildBoundedChecker(sts, Z3LegacySolverFactory.getInstance());
+                status = checker.check(null);
             } else {
                 throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
             }
@@ -176,7 +186,7 @@ public class StsCli {
         }
     }
 
-    private SafetyResult<?, ?> check(StsConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(StsConfig<?, ?, ?> configuration) throws Exception {
         try {
             return configuration.check();
         } catch (final Exception ex) {
@@ -225,9 +235,42 @@ public class StsCli {
         }
     }
 
-    private void printResult(final SafetyResult<?, ?> status, final STS sts,
+    private BoundedChecker<?, ?> buildBoundedChecker(final STS sts, final SolverFactory abstractionSolverFactory) {
+        final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+        final BoundedChecker<?, ?> checker;
+        switch (algorithm) {
+            case BMC -> checker = BoundedCheckerBuilderKt.buildBMC(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    val -> StsToMonolithicExprKt.valToState(sts, val),
+                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
+                    logger
+            );
+            case KINDUCTION -> checker = BoundedCheckerBuilderKt.buildKIND(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    abstractionSolverFactory.createSolver(),
+                    val -> StsToMonolithicExprKt.valToState(sts, val),
+                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
+                    logger
+            );
+            case IMC -> checker = BoundedCheckerBuilderKt.buildIMC(
+                    monolithicExpr,
+                    abstractionSolverFactory.createSolver(),
+                    abstractionSolverFactory.createItpSolver(),
+                    val -> StsToMonolithicExprKt.valToState(sts, val),
+                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
+                    logger
+            );
+            default ->
+                    throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+        }
+        return checker;
+    }
+
+    private void printResult(final SafetyResult<?, ? extends Trace<?, ?>> status, final STS sts,
                              final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+        final CegarStatistics stats = (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
@@ -235,11 +278,17 @@ public class StsCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            writer.cell(status.getArg().size());
-            writer.cell(status.getArg().getDepth());
-            writer.cell(status.getArg().getMeanBranchingFactor());
+            if (status.getWitness() instanceof ARG<?, ?> arg) {
+                writer.cell(arg.size());
+                writer.cell(arg.getDepth());
+                writer.cell(arg.getMeanBranchingFactor());
+            } else {
+                writer.cell("");
+                writer.cell("");
+                writer.cell("");
+            }
             if (status.isUnsafe()) {
-                writer.cell(status.asUnsafe().getTrace().length() + "");
+                writer.cell(status.asUnsafe().getCex().length() + "");
             } else {
                 writer.cell("");
             }
@@ -267,9 +316,9 @@ public class StsCli {
         }
     }
 
-    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ?> status)
+    private void writeCex(final STS sts, final SafetyResult.Unsafe<?, ? extends Trace<?, ?>> status)
             throws FileNotFoundException {
-        @SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getTrace();
+        @SuppressWarnings("unchecked") final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) status.getCex();
         final Trace<Valuation, StsAction> concrTrace = StsTraceConcretizer.concretize(sts, trace,
                 Z3LegacySolverFactory.getInstance());
         final File file = new File(cexfile);

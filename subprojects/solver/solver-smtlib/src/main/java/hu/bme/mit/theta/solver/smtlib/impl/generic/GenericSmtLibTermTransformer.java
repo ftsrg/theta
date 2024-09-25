@@ -15,14 +15,12 @@
  */
 package hu.bme.mit.theta.solver.smtlib.impl.generic;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import hu.bme.mit.theta.common.QuadFunction;
 import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.type.Expr;
@@ -80,6 +78,7 @@ import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
 import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
 import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
 import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
 import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
@@ -99,7 +98,6 @@ import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
 import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
-import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -108,9 +106,11 @@ import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
 import hu.bme.mit.theta.core.utils.BvUtils;
 import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.solver.Stack;
+import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Lexer;
 import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser;
-import hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Let_termContext;
+import hu.bme.mit.theta.solver.smtlib.solver.SmtLibEnumStrategy;
 import hu.bme.mit.theta.solver.smtlib.solver.SmtLibSolverException;
 import hu.bme.mit.theta.solver.smtlib.solver.model.SmtLibModel;
 import hu.bme.mit.theta.solver.smtlib.solver.parser.ThrowExceptionErrorListener;
@@ -135,12 +135,14 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.UnsafeApp;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
@@ -153,6 +155,7 @@ import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Generic_term
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.HexadecimalContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.IdentifierContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.IndexContext;
+import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Let_termContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.NumeralContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.Qual_identifierContext;
 import static hu.bme.mit.theta.solver.smtlib.dsl.gen.SMTLIBv2Parser.SortContext;
@@ -165,9 +168,15 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
 
     protected final SmtLibSymbolTable symbolTable;
     protected final Map<String, OperatorCreatorFunction> funAppTransformer;
+    protected final SmtLibEnumStrategy enumStrategy;
 
     public GenericSmtLibTermTransformer(final SmtLibSymbolTable symbolTable) {
+        this(symbolTable, SmtLibEnumStrategy.getDefaultStrategy());
+    }
+
+    public GenericSmtLibTermTransformer(final SmtLibSymbolTable symbolTable, final SmtLibEnumStrategy enumStrategy) {
         this.symbolTable = symbolTable;
+        this.enumStrategy = enumStrategy;
         this.funAppTransformer = new HashMap<>() {{
             // Generic
             put("ite", exprIteOperator());
@@ -254,6 +263,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             // Array
             put("select", exprArrayReadOperator());
             put("store", exprArrayWriteOperator());
+
+            // Proof
+            put("hyper-res", expectedFunc("hyper-res"));
+            put("asserted", expectedFunc("asserted"));
+            put("mp", expectedFunc("mp"));
         }};
     }
 
@@ -280,7 +294,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         parser.removeErrorListeners();
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
-        return transformFuncDef(parser.function_def(), model, HashBiMap.create());
+        return transformFuncDef(parser.function_def(), model, new StackImpl<>());
     }
 
     @Override
@@ -298,12 +312,14 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         parser.removeErrorListeners();
         parser.addErrorListener(new ThrowExceptionErrorListener());
 
-        return transformTerm(parser.term(), model, HashBiMap.create());
+        return transformTerm(parser.term(), model, new StackImpl<>());
     }
 
     @Override
     public <T extends Type> LitExpr<T> toLitExpr(final String litImpl, final T type,
                                                  final SmtLibModel model) {
+        if (type instanceof EnumType enumType)
+            return (LitExpr<T>) cast(toEnumLitExpr(litImpl, enumType, model), type);
         final var litExpr = toLitExpr(litImpl, model);
 
         if (litExpr == null) {
@@ -328,12 +344,24 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
                 .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
                 .collect(toList());
 
-        final var vars = HashBiMap.<ParamDecl<?>, String>create();
+        final var vars = new StackImpl<ParamDecl<?>>();
         pushParams(paramDecls, vars);
         final var expr = transformTerm(funcDef.term(), model, vars);
         popParams(paramDecls, vars);
 
         return expr;
+    }
+
+    private LitExpr<EnumType> toEnumLitExpr(final String litImpl, final EnumType type, final SmtLibModel model) {
+        final var lexer = new SMTLIBv2Lexer(CharStreams.fromString(litImpl));
+        final var parser = new SMTLIBv2Parser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new ThrowExceptionErrorListener());
+        parser.removeErrorListeners();
+        parser.addErrorListener(new ThrowExceptionErrorListener());
+
+        final var funcDef = parser.function_def();
+        return enumStrategy.transformEnumTerm(funcDef, type, model);
     }
 
     @Override
@@ -380,24 +408,25 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     /* Visitor implementation */
 
     protected Expr<?> transformFuncDef(final SMTLIBv2Parser.Function_defContext ctx,
-                                       final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
+                                       final SmtLibModel model, final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
         final List<ParamDecl<? extends Type>> paramDecls = ctx.sorted_var().stream()
                 .map(sv -> Param(sv.symbol().getText(), transformSort(sv.sort())))
                 .collect(toList());
-        checkArgument(paramDecls.size() == 1, "Only unary functions are supported");
 
         pushParams(paramDecls, vars);
-        final var op = transformTerm(ctx.term(), model, vars);
+        var op = transformTerm(ctx.term(), model, vars);
         popParams(paramDecls, vars);
-
-        return Func(paramDecls.get(0), op);
+        for (ParamDecl<?> param : Lists.reverse(paramDecls)) {
+            op = Func(param, op);
+        }
+        return op;
     }
 
     protected Expr<?> transformTerm(final TermContext ctx, final SmtLibModel model,
-                                    final BiMap<ParamDecl<?>, String> vars) {
+                                    final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -423,7 +452,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformSpecConstant(final Spec_constantContext ctx, final SmtLibModel model,
-                                            final BiMap<ParamDecl<?>, String> vars) {
+                                            final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -443,7 +472,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformQualIdentifier(final Qual_identifierContext ctx,
-                                              final SmtLibModel model, final BiMap<ParamDecl<?>, String> vars) {
+                                              final SmtLibModel model, final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -451,7 +480,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformGenericTerm(final Generic_termContext ctx, final SmtLibModel model,
-                                           final BiMap<ParamDecl<?>, String> vars) {
+                                           final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -474,11 +503,11 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
         } else if (funAppTransformer.containsKey(funName)) { // known function application
             return funAppTransformer.get(funName).apply(funParams, funAppParams, model, vars);
         } else { // custom function application
-            checkArgument(funParams.size() == 0,
-                    "Custom unary function application cannot have parameter");
-            checkArgument(funAppParams.size() == 1, "Only unary functions are supported");
+//            checkArgument(funParams.size() == 0,
+//                    "Custom unary function application cannot have parameter");
+//            checkArgument(funAppParams.size() == 1, "Only unary functions are supported");
 
-            return createFuncAppExpr(funName, funAppParams.get(0), model, vars);
+            return createFuncAppExpr(funName, funAppParams, model, vars);
         }
     }
 
@@ -489,8 +518,8 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     private <P extends Type, R extends Type> Expr<?> createFuncAppExpr(final String funName,
-                                                                       final TermContext funAppParam, final SmtLibModel model,
-                                                                       final BiMap<ParamDecl<?>, String> vars) {
+                                                                       final List<TermContext> funAppParams, final SmtLibModel model,
+                                                                       final Stack<ParamDecl<?>> vars) {
         final Expr<?> funcExpr;
         if (symbolTable.definesSymbol(funName)) {
             funcExpr = checkNotNull(symbolTable.getConst(funName).getRef());
@@ -502,15 +531,12 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             funcExpr = toFuncLitExpr(funDefImpl, model);
         }
 
-        assert funcExpr.getType() instanceof FuncType;
-        @SuppressWarnings("unchecked") final var funType = (FuncType<P, R>) funcExpr.getType();
-        final var paramExpr = transformTerm(funAppParam, model, vars);
-
-        return FuncExprs.App(cast(funcExpr, funType), cast(paramExpr, funType.getParamType()));
+        final List<Expr<?>> params = funAppParams.stream().map(it -> (Expr<?>) transformTerm(it, model, vars)).collect(Collectors.toUnmodifiableList());
+        return UnsafeApp(funcExpr, params);
     }
 
     protected Expr<?> transformLetTerm(final Let_termContext ctx, final SmtLibModel model,
-                                       final BiMap<ParamDecl<?>, String> vars) {
+                                       final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -537,7 +563,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformForallTerm(final Forall_termContext ctx, final SmtLibModel model,
-                                          final BiMap<ParamDecl<?>, String> vars) {
+                                          final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -554,7 +580,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformExistsTerm(final Exists_termContext ctx, final SmtLibModel model,
-                                          final BiMap<ParamDecl<?>, String> vars) {
+                                          final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -571,7 +597,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformIdentifier(final IdentifierContext ctx, final SmtLibModel model,
-                                          final BiMap<ParamDecl<?>, String> vars) {
+                                          final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -605,7 +631,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformSymbol(final SymbolContext ctx, final SmtLibModel model,
-                                      final BiMap<ParamDecl<?>, String> vars) {
+                                      final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -616,19 +642,22 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             case "false":
                 return BoolExprs.False();
             default:
-                if (vars.containsValue(value)) {
-                    final var decl = vars.inverse().get(value);
+                final var filter = vars.toCollection().stream().filter(it -> it.getName().equals(value)).toList();
+                if (!filter.isEmpty()) {
+                    final var decl = filter.get(filter.size() - 1);
                     return decl.getRef();
                 } else if (symbolTable.definesSymbol(value)) {
                     return symbolTable.getConst(value).getRef();
+                } else if (symbolTable.definesEnumLiteral(value)) {
+                    return symbolTable.getEnumLiteral(value);
                 } else {
-                    throw new SmtLibSolverException("Transforation of symbol not supported: " + value);
+                    throw new SmtLibSolverException("Transformation of symbol not supported: " + value);
                 }
         }
     }
 
     protected Expr<?> transformNumeral(final NumeralContext ctx, final SmtLibModel model,
-                                       final BiMap<ParamDecl<?>, String> vars) {
+                                       final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -636,7 +665,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformDecimal(final DecimalContext ctx, final SmtLibModel model,
-                                       final BiMap<ParamDecl<?>, String> vars) {
+                                       final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -649,7 +678,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformHexadecimal(final HexadecimalContext ctx, final SmtLibModel model,
-                                           final BiMap<ParamDecl<?>, String> vars) {
+                                           final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -659,7 +688,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     }
 
     protected Expr<?> transformBinary(final BinaryContext ctx, final SmtLibModel model,
-                                      final BiMap<ParamDecl<?>, String> vars) {
+                                      final Stack<ParamDecl<?>> vars) {
         assert model != null;
         assert vars != null;
 
@@ -693,19 +722,44 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
     /* Variable scope handling */
 
     protected void pushParams(final List<ParamDecl<? extends Type>> paramDecls,
-                              BiMap<ParamDecl<?>, String> vars) {
-        vars.putAll(paramDecls.stream()
-                .collect(Collectors.toUnmodifiableMap(Function.identity(), Decl::getName)));
+                              Stack<ParamDecl<?>> vars) {
+        vars.push();
+        vars.add(paramDecls);
     }
 
     protected void popParams(final List<ParamDecl<? extends Type>> paramDecls,
-                             BiMap<ParamDecl<?>, String> vars) {
-        for (final var paramDecl : paramDecls) {
-            vars.remove(paramDecl, paramDecl.getName());
-        }
+                             Stack<ParamDecl<?>> vars) {
+        vars.pop();
     }
 
     /* Utilities */
+
+    /**
+     * We don't want to provide a separate Expr class for these, but we need to parse them.
+     *
+     * @param funcName: the name of the function to use in backtransformation
+     */
+    private OperatorCreatorFunction expectedFunc(String funcName) {
+        return (params, ops, model, vars) -> {
+            var opCnt = ops.size();
+            var name = funcName + opCnt;
+            if (!symbolTable.definesSymbol(name)) {
+                Type type = Bool();
+                var prefix = "(declare-fun " + name + " (";
+                var suffix = ") Bool)";
+                for (int i = 0; i < opCnt; i++) {
+                    type = FuncType.of(Bool(), type);
+                    suffix = " Bool" + suffix;
+                }
+                symbolTable.put(Const(name, type), name, prefix + suffix);
+            }
+            Expr<?> expr = symbolTable.getConst(name).getRef();
+            for (TermContext op : ops) {
+                expr = UnsafeApp(expr, transformTerm(op, model, vars));
+            }
+            return expr;
+        };
+    }
 
     @SuppressWarnings("unused")
     private OperatorCreatorFunction exprNullaryOperator(final Supplier<Expr<?>> function) {
@@ -914,7 +968,7 @@ public class GenericSmtLibTermTransformer implements SmtLibTermTransformer {
             List<IndexContext>,             // Parameters
             List<TermContext>,              // Operands
             SmtLibModel,                    // The model
-            BiMap<ParamDecl<?>, String>,    // The variable (param) store
+            Stack<ParamDecl<?>>,            // The variable (param) store
             Expr<?>                         // Return type
             > {
 

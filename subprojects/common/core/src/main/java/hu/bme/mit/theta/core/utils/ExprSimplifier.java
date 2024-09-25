@@ -23,115 +23,22 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Dereference;
+import hu.bme.mit.theta.core.type.anytype.InvalidLitExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayInitExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
-import hu.bme.mit.theta.core.type.booltype.AndExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.type.booltype.IffExpr;
-import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
-import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.type.booltype.OrExpr;
-import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.booltype.XorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAddExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvAndExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvArithShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvConcatExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvEqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvExtractExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLitExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvLogicShiftRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvMulExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNegExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvNotExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvOrExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvPosExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvRotateRightExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSExtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSLtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSModExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSRemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvShiftLeftExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSignChangeExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvSubExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvType;
-import hu.bme.mit.theta.core.type.bvtype.BvUDivExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvUGtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULeqExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvULtExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvURemExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvXorExpr;
-import hu.bme.mit.theta.core.type.bvtype.BvZExtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAbsExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAddExpr;
-import hu.bme.mit.theta.core.type.fptype.FpAssignExpr;
-import hu.bme.mit.theta.core.type.fptype.FpDivExpr;
-import hu.bme.mit.theta.core.type.fptype.FpEqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpFromBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpGtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsInfiniteExpr;
-import hu.bme.mit.theta.core.type.fptype.FpIsNanExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLitExpr;
-import hu.bme.mit.theta.core.type.fptype.FpLtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMaxExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMinExpr;
-import hu.bme.mit.theta.core.type.fptype.FpMulExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNegExpr;
-import hu.bme.mit.theta.core.type.fptype.FpNeqExpr;
-import hu.bme.mit.theta.core.type.fptype.FpPosExpr;
-import hu.bme.mit.theta.core.type.fptype.FpRoundToIntegralExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSqrtExpr;
-import hu.bme.mit.theta.core.type.fptype.FpSubExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToBvExpr;
-import hu.bme.mit.theta.core.type.fptype.FpToFpExpr;
-import hu.bme.mit.theta.core.type.fptype.FpType;
-import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
-import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
-import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntGtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLtExpr;
-import hu.bme.mit.theta.core.type.inttype.IntModExpr;
-import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
-import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
-import hu.bme.mit.theta.core.type.inttype.IntPosExpr;
-import hu.bme.mit.theta.core.type.inttype.IntRemExpr;
-import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
-import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
-import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
-import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
-import hu.bme.mit.theta.core.type.rattype.RatMulExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
-import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
-import hu.bme.mit.theta.core.type.rattype.RatPosExpr;
-import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
-import hu.bme.mit.theta.core.type.rattype.RatToIntExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.booltype.*;
+import hu.bme.mit.theta.core.type.bvtype.*;
+import hu.bme.mit.theta.core.type.enumtype.EnumEqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumLitExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumNeqExpr;
+import hu.bme.mit.theta.core.type.enumtype.EnumType;
+import hu.bme.mit.theta.core.type.fptype.*;
+import hu.bme.mit.theta.core.type.inttype.*;
+import hu.bme.mit.theta.core.type.rattype.*;
 import org.kframework.mpfr.BigFloat;
 
 import java.math.BigInteger;
@@ -140,10 +47,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
 import static hu.bme.mit.theta.core.type.bvtype.BvExprs.Bv;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
@@ -163,6 +67,14 @@ public final class ExprSimplifier {
 
     public static ExprSimplifier create(final SimplifierLevel level) {
         return new ExprSimplifier(level);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Type> Expr<T> simplify(final Expr<T> expr, final Valuation valuation) {
+        if (expr.isInvalid()) {
+            return new InvalidLitExpr<>(expr.getType());
+        }
+        return (Expr<T>) TABLE.dispatch(expr, valuation);
     }
 
     private final DispatchTable2<Valuation, Expr<?>> TABLE = DispatchTable2.<Valuation, Expr<?>>builder()
@@ -240,6 +152,12 @@ public final class ExprSimplifier {
             .addCase(IntLeqExpr.class, this::simplifyIntLeq)
 
             .addCase(IntLtExpr.class, this::simplifyIntLt)
+
+            // Enum
+
+            .addCase(EnumEqExpr.class, this::simplifyEnumEqExpr)
+
+            .addCase(EnumNeqExpr.class, this::simplifyEnumNeqExpr)
 
             // Array
 
@@ -387,18 +305,13 @@ public final class ExprSimplifier {
 
             .build();
 
-    @SuppressWarnings("unchecked")
-    public <T extends Type> Expr<T> simplify(final Expr<T> expr, final Valuation valuation) {
-        return (Expr<T>) TABLE.dispatch(expr, valuation);
+    private Expr<?> simplifyRef(final RefExpr<?> expr, final Valuation val) {
+        return simplifyGenericRef(expr, val);
     }
 
     /*
      * General
      */
-
-    private Expr<?> simplifyRef(final RefExpr<?> expr, final Valuation val) {
-        return simplifyGenericRef(expr, val);
-    }
 
     // TODO Eliminate helper method once the Java compiler is able to handle
     // this kind of type inference
@@ -487,10 +400,6 @@ public final class ExprSimplifier {
         else return t.eval(val);
     }
 
-    /*
-     * Booleans
-     */
-
     private Expr<BoolType> simplifyNot(final NotExpr expr, final Valuation val) {
         final Expr<BoolType> op = simplify(expr.getOp(), val);
         if (op instanceof NotExpr) {
@@ -503,6 +412,10 @@ public final class ExprSimplifier {
 
         return expr.with(op);
     }
+
+    /*
+     * Booleans
+     */
 
     private Expr<BoolType> simplifyImply(final ImplyExpr expr, final Valuation val) {
         final Expr<BoolType> leftOp = simplify(expr.getLeftOp(), val);
@@ -643,10 +556,6 @@ public final class ExprSimplifier {
         return expr.with(ops);
     }
 
-    /*
-     * Rationals
-     */
-
     private Expr<RatType> simplifyRatAdd(final RatAddExpr expr, final Valuation val) {
         final List<Expr<RatType>> ops = new ArrayList<>();
 
@@ -686,6 +595,10 @@ public final class ExprSimplifier {
 
         return expr.with(ops);
     }
+
+    /*
+     * Rationals
+     */
 
     private Expr<RatType> simplifyRatSub(final RatSubExpr expr, final Valuation val) {
         final Expr<RatType> leftOp = simplify(expr.getLeftOp(), val);
@@ -897,10 +810,6 @@ public final class ExprSimplifier {
         return expr.with(op);
     }
 
-    /*
-     * Integers
-     */
-
     private Expr<RatType> simplifyIntToRat(final IntToRatExpr expr, final Valuation val) {
         final Expr<IntType> op = simplify(expr.getOp(), val);
 
@@ -911,6 +820,10 @@ public final class ExprSimplifier {
 
         return expr.with(op);
     }
+
+    /*
+     * Integers
+     */
 
     private Expr<IntType> simplifyIntAdd(final IntAddExpr expr, final Valuation val) {
         final List<Expr<IntType>> ops = new ArrayList<>();
@@ -1175,9 +1088,41 @@ public final class ExprSimplifier {
         return expr.with(leftOp, rightOp);
     }
 
+    private Expr<BoolType> simplifyEnumEqExpr(final EnumEqExpr expr, final Valuation val) {
+        final Expr<EnumType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<EnumType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof EnumLitExpr leftLit && rightOp instanceof EnumLitExpr rightLit) {
+            return Bool(leftLit.equals(rightLit));
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr && level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+            return True();
+        }
+
+
+        return expr.with(leftOp, rightOp);
+    }
+
     /*
-     * Bitvectors
+     * Enums
      */
+
+    private Expr<BoolType> simplifyEnumNeqExpr(final EnumNeqExpr expr, final Valuation val) {
+        final Expr<EnumType> leftOp = simplify(expr.getLeftOp(), val);
+        final Expr<EnumType> rightOp = simplify(expr.getRightOp(), val);
+
+        if (leftOp instanceof EnumLitExpr leftLit && rightOp instanceof EnumLitExpr rightLit) {
+            return Bool(!leftLit.equals(rightLit));
+        }
+
+        if (leftOp instanceof RefExpr && rightOp instanceof RefExpr && level != LITERAL_ONLY && leftOp.equals(rightOp)) {
+            return False();
+        }
+
+
+        return expr.with(leftOp, rightOp);
+    }
 
     private Expr<BvType> simplifyBvConcat(final BvConcatExpr expr, final Valuation val) {
         final List<Expr<BvType>> ops = new ArrayList<>();
@@ -1210,6 +1155,10 @@ public final class ExprSimplifier {
 
         return value;
     }
+
+    /*
+     * Bitvectors
+     */
 
     private Expr<BvType> simplifyBvExtract(final BvExtractExpr expr, final Valuation val) {
         final Expr<BvType> bitvec = simplify(expr.getBitvec(), val);
@@ -2015,8 +1964,8 @@ public final class ExprSimplifier {
         final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
-        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return Bool(leftOp.equals(rightOp));
+        if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
+            return lLit.eq(rLit);
         }
 
         return expr.with(leftOp, rightOp);
@@ -2077,13 +2026,12 @@ public final class ExprSimplifier {
         return expr.with(leftOp, rightOp);
     }
 
-
     private Expr<BoolType> simplifyFpNeq(final FpNeqExpr expr, final Valuation val) {
         final Expr<FpType> leftOp = simplify(expr.getLeftOp(), val);
         final Expr<FpType> rightOp = simplify(expr.getRightOp(), val);
 
-        if (leftOp instanceof FpLitExpr && rightOp instanceof FpLitExpr) {
-            return Bool(!leftOp.equals(rightOp));
+        if (leftOp instanceof FpLitExpr lLit && rightOp instanceof FpLitExpr rLit) {
+            return lLit.neq(rLit);
         } else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
             if (level != LITERAL_ONLY && leftOp.equals(rightOp)) {
                 return False();
@@ -2155,4 +2103,6 @@ public final class ExprSimplifier {
 
         return expr.with(op);
     }
+
+
 }

@@ -17,8 +17,10 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import com.google.common.base.Stopwatch
+import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.ptr.PtrState
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.frontend.ParseContext
@@ -28,9 +30,7 @@ import hu.bme.mit.theta.xcfa.analysis.XcfaPrec
 import hu.bme.mit.theta.xcfa.analysis.XcfaState
 import hu.bme.mit.theta.xcfa.cli.params.PortfolioConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
-import hu.bme.mit.theta.xcfa.cli.portfolio.STM
-import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio23
-import hu.bme.mit.theta.xcfa.cli.portfolio.complexPortfolio24
+import hu.bme.mit.theta.xcfa.cli.portfolio.*
 import hu.bme.mit.theta.xcfa.model.XCFA
 import java.io.File
 import java.io.FileReader
@@ -42,16 +42,26 @@ import javax.script.SimpleBindings
 
 fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
     parseContext: ParseContext, logger: Logger,
-    uniqueLogger: Logger): SafetyChecker<XcfaState<PtrState<*>>, XcfaAction, XcfaPrec<*>> = SafetyChecker { _ ->
+    uniqueLogger: Logger): SafetyChecker<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>, XcfaPrec<*>> = SafetyChecker { _ ->
 
     val sw = Stopwatch.createStarted()
     val portfolioName = (config.backendConfig.specConfig as PortfolioConfig).portfolio
 
     val portfolioStm = when (portfolioName) {
+        "STABLE",
+        "CEGAR",
         "COMPLEX",
         "COMPLEX24" -> complexPortfolio24(xcfa, mcm, parseContext, config, logger, uniqueLogger)
 
         "COMPLEX23" -> complexPortfolio23(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+        "EMERGENT",
+        "BOUNDED" -> boundedPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
+        "TESTING",
+        "CHC",
+        "HORN" -> hornPortfolio(xcfa, mcm, parseContext, config, logger, uniqueLogger)
+
         else -> {
             if (File(portfolioName).exists()) {
                 val kotlinEngine: ScriptEngine = ScriptEngineManager().getEngineByExtension("kts")
@@ -72,5 +82,5 @@ fun getPortfolioChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>,
     val result = portfolioStm.execute() as Pair<XcfaConfig<*, *>, SafetyResult<*, *>>
 
     logger.write(Logger.Level.RESULT, "Config ${result.first} succeeded in ${sw.elapsed(TimeUnit.MILLISECONDS)} ms\n")
-    result.second as SafetyResult<XcfaState<PtrState<*>>, XcfaAction>?
+    result.second as SafetyResult<ARG<XcfaState<PtrState<*>>, XcfaAction>, Trace<XcfaState<PtrState<*>>, XcfaAction>>?
 }
