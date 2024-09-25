@@ -55,16 +55,16 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
                 rels[r.clkId][w.clkId]?.let { reason -> // r -> w
                     rfs[v]?.find { it.from == w && it.to == r }?.let { rf -> // rf{w->r}
                         if (!rf.declRef.prevented) {
-                            propagateUnit(reason, Not(rf.declRef))
+                            propagateUnit(reason.exprs, Not(rf.declRef))
                             preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(rf.declRef)
                         }
                     }
                 }
                 rels[w.clkId][r.clkId]?.let { wrReason ->
-                    for (w0 in ws)
+                    for (w0 in ws) if (interferenceKnown(w0, w))
                         rels[w0.clkId][w.clkId]?.let { w0wReason -> // w0 -> w -> r
                             rfs[v]?.find { it.from == w0 && it.to == r }?.let { rf -> // rf{w0->r}
-                                val reason = wrReason and w0wReason
+                                val reason = ((wrReason and w0wReason).exprs + w0.interferenceCond(w)).filterNotNull()
                                 if (partialAssignment.any { it.relation == rf } && !w.guardExpr.prevented) {
                                     propagateUnit(reason, Not(w.guardExpr))
                                     preventedClauses.getOrPut(solverLevel) { mutableSetOf() }.add(w.guardExpr)
@@ -80,6 +80,6 @@ class PreventivePropagatorOcChecker<E : Event> : UserPropagatorOcChecker<E>() {
         }
     }
 
-    private fun propagateUnit(reason: Reason, consequence: Expr<BoolType>) =
-        userPropagator.propagateConsequence(reason.exprs, consequence)
+    private fun propagateUnit(reason: List<Expr<BoolType>>, consequence: Expr<BoolType>) =
+        userPropagator.propagateConsequence(reason, consequence)
 }

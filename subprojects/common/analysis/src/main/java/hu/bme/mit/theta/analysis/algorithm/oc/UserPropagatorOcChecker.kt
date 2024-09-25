@@ -119,7 +119,7 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         interferenceCondToEvents = interferenceToEvents
     }
 
-    private fun interferenceKnown(w1: E, w2: E) =
+    protected fun interferenceKnown(w1: E, w2: E) =
         w1.interferenceCond(w2) == null || partialAssignment.any { it.interference == w1 to w2 }
 
     protected open fun propagate(expr: Expr<BoolType>) {
