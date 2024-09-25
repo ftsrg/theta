@@ -94,7 +94,7 @@ class XcfaOcChecker(
 
         // "Manually" add some conflicts
         logger.write(Logger.Level.SUBSTEP, "Automatically finding conflicts...\n")
-        val conflicts = findAutoConflicts(threads ,events, rfs, autoConflictConfig)
+        val conflicts = findAutoConflicts(threads, events, rfs, autoConflictConfig)
         ocChecker.solver.add(conflicts.map { Not(it.expr) })
         logger.write(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}\n")
 
