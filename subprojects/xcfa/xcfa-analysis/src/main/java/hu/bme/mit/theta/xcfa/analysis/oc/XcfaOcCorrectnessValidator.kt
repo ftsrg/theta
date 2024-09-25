@@ -22,16 +22,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
-import hu.bme.mit.theta.solver.javasmt.JavaSMTSolverFactory
-import hu.bme.mit.theta.xcfa.model.XcfaEdge
-import hu.bme.mit.theta.xcfa.model.XcfaLocation
-import hu.bme.mit.theta.xcfa.model.XcfaProcedure
-import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.io.File
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-@OptIn(ExperimentalTime::class)
 internal class XcfaOcCorrectnessValidator(
     decisionProcedure: OcDecisionProcedureType,
     private val inputConflictClauseFile: String,
