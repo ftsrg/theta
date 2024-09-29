@@ -15,7 +15,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
     private val logger: Logger,
     private val abstractor: Abstractor<S, A, P>,
     private val getFullTraces : Boolean,
-) : SafetyChecker<TraceSetSummary<S, A>, EmptyCex, P> { // TODO refactor templates?
+) : Checker<TraceSetSummary<S, A>, P> {
     private var traces: List<Trace<S, A>> = ArrayList()
 
     companion object {
