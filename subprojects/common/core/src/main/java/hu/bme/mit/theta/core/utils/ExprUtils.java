@@ -36,6 +36,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
+import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -437,6 +438,26 @@ public final class ExprUtils {
             canonizedArgs.add(canonizedArg);
         }
         return canonizedArgs;
+    }
+
+    /**
+     * Reverses the given expression (swaps primed variables with unprimed variables and vice-versa). Also works if variables can have multiple primes.
+     *
+     * @param expr Original expression
+     * @return Reversed form
+     */
+    public static <ExprType extends Type> Expr<ExprType> reverse(final Expr<ExprType> expr, final VarIndexing indexing) {
+        return new ExprReverser(indexing).reverse(expr);
+    }
+
+    /**
+     * Reverses the given expression (swaps primed variables with unprimed variables and vice-versa).
+     *
+     * @param expr Original expression
+     * @return Reversed form
+     */
+    public static <ExprType extends Type> Expr<ExprType> reverse(final Expr<ExprType> expr) {
+        return new ExprReverser(VarIndexingFactory.indexing(1)).reverse(expr);
     }
 
     /**

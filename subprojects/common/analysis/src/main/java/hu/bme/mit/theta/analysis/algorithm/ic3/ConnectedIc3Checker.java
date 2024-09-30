@@ -1,15 +1,17 @@
 package hu.bme.mit.theta.analysis.algorithm.ic3;
 
-import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.EmptyWitness;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.ReversedMonolithicExprKt;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.utils.ExprReverser;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
@@ -73,9 +75,7 @@ public class ConnectedIc3Checker<S extends ExprState, A extends ExprAction> impl
 
         StepIc3Checker forward = new StepIc3Checker(monolithicExpr, solverFactory,formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
 
-        ExprReverser exprReverser = new ExprReverser();
-
-        MonolithicExpr reverseMonolithicExpr = new MonolithicExpr(Not(monolithicExpr.getPropExpr()), exprReverser.reverse(monolithicExpr.getTransExpr()), Not(monolithicExpr.getInitExpr()), monolithicExpr.getTransOffsetIndex());
+        MonolithicExpr reverseMonolithicExpr = ReversedMonolithicExprKt.createReversed(monolithicExpr);
 
         StepIc3Checker backward = new StepIc3Checker(reverseMonolithicExpr, solverFactory,formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
 

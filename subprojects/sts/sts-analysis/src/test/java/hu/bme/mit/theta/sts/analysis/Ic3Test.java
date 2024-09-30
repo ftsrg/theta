@@ -109,7 +109,7 @@ public class Ic3Test {
     @Test
     public void testConnected() throws IOException {
         assertTimeoutPreemptively(Duration.ofMillis(10000000), () -> {
-            STS sts = null;
+            final STS sts;
             if (filePath.endsWith("aag")) {
                 sts = AigerToSts.createSts(AigerParser.parse(filePath));
             } else {
@@ -123,12 +123,11 @@ public class Ic3Test {
             //var reverseChecker = new ReverseIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             //var checker = new ConnectedIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             //var checker = new ReverseIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
-            STS finalSts = sts;
             var checker = new Ic3Checker<>(
                     monolithicExpr,
                     Z3LegacySolverFactory.getInstance(),
-                    ExplState::of,
-                    (Valuation v1, Valuation v2) -> new StsAction(finalSts));
+                    valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                    (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2));
             Assert.assertEquals(isSafe, checker.check(null).isSafe());
         });
     }

@@ -96,7 +96,7 @@ public class Ic3AbstractTest {
 
     @Test
     public void test() throws IOException {
-        STS sts = null;
+        final STS sts;
         if (filePath.endsWith("aag")) {
             sts = AigerToSts.createSts(AigerParser.parse(filePath));
         } else {
@@ -111,8 +111,8 @@ public class Ic3AbstractTest {
                 mE -> new Ic3Checker<>(
                         mE,
                         Z3LegacySolverFactory.getInstance(),
-                        ExplState::of,
-                        (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.getInitExpr(), mE.getTransExpr(), mE.getPropExpr()))
+                        valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                        (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2)
                 ),
                 new ConsoleLogger(Logger.Level.INFO),
                 Z3LegacySolverFactory.getInstance());
