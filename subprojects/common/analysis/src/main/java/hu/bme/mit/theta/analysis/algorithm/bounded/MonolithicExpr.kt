@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils.getVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 
-data class MonolithicExpr(
+data class MonolithicExpr @JvmOverloads constructor(
     val initExpr: Expr<BoolType>,
     val transExpr: Expr<BoolType>,
     val propExpr: Expr<BoolType>,

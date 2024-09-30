@@ -15,7 +15,13 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
+
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
@@ -96,10 +102,82 @@ public class StsTest {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-        //StsConfig<? extends State, ? extends Action, ? extends Prec> config
-         //       = new StsConfigBuilder(domain, refinement, Z3LegacySolverFactory.getInstance()).build(sts);
-        Ic3Checker ic3Checker=new Ic3Checker(sts, Z3SolverFactory.getInstance());
-        Assert.assertEquals(isSafe, ic3Checker.check());
+
+//        final MonolithicExpr monolithicExpr = new ConcreteMonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp(), VarIndexingFactory.indexing(1));
+//        MonolithicExprCegarChecker<ExplState, StsAction, PredPrec> monolithicExprCegarChecker = new MonolithicExprCegarChecker<>(monolithicExpr,
+//                mE -> new BoundedChecker<>(
+//                        mE,
+//                        (Integer i) -> false,
+//                        Z3SolverFactory.getInstance().createSolver(),
+//                        () -> true,
+//                        () -> true,
+//                        null,
+//                        (Integer i) -> false,
+//                        Z3SolverFactory.getInstance().createSolver(),
+//                        (Integer i) -> true,
+//                        (Valuation v) -> ExplState.of(v),
+//                        (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.init(), mE.trans(), mE.prop())),
+//                        new ConsoleLogger(Logger.Level.INFO)
+//                ));
+//        Assert.assertEquals(isSafe, monolithicExprCegarChecker.check().isSafe());
+//        var abstractionResult = StsAbstractor.makePred(sts, PredPrec.of(List.of(sts.getInit(), sts.getProp())));
+//        var abstractSts = abstractionResult.get1();
+//        var indexingBuilder = VarIndexingFactory.indexingBuilder(1);
+//        for(var decl : sts.getVars()){
+//            indexingBuilder = indexingBuilder.inc(decl);
+//        }
+//        var indexing = indexingBuilder.build();
+//        var checker = new BoundedChecker<ExplState, StsAction>(
+//                new AME(abstractSts.getInit(), abstractSts.getTrans(), abstractSts.getProp(), indexing, abstractionResult.get2()),
+//                (Integer i) -> false,
+//                Z3SolverFactory.getInstance().createSolver(),
+//                () -> true,
+//                () -> true,
+//                null,
+//                (Integer i) -> false,
+//                null,
+//                (Integer i) -> false,
+//                (Valuation v) -> ExplState.of(v),
+//                (Valuation v1, Valuation v2) -> new StsAction(abstractSts),
+//                new ConsoleLogger(Logger.Level.INFO)
+//        );
+        final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp());
+        MonolithicExprCegarChecker<ExplState, StsAction, PredPrec> checker = new MonolithicExprCegarChecker<>(monolithicExpr,
+                mE -> new Ic3Checker(mE, Z3LegacySolverFactory.getInstance()),
+//                mE ->
+//                    new BoundedChecker<>(
+//                            mE,
+//                            Z3SolverFactory.getInstance().createSolver(),
+//                            Z3SolverFactory.getInstance().createItpSolver(),
+//                            Z3SolverFactory.getInstance().createSolver(),
+//                            ExplState::of,
+//                            (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.init(), mE.trans(), mE.prop())),
+//                            new ConsoleLogger(Logger.Level.INFO)
+//                            )
+//                ,
+                new ConsoleLogger(Logger.Level.INFO));
+//        final var checker = new Ic3Checker(monolithicExpr, Z3SolverFactory.getInstance());
+        Assert.assertEquals(isSafe, checker.check().isSafe());
+//        Ic3Checker ic3Checker=new Ic3Checker(monolithicExpr, Z3SolverFactory.getInstance());
+//        var result = ic3Checker.check(null);
+//        Assert.assertEquals(isSafe, result.isSafe());
+//        if(isSafe) {
+//            Assert.assertEquals(true, result.isSafe());
+//        } else {
+//            Assert.assertEquals(false, result.isSafe());
+//            Trace<ExplState, StsAction> trace = result.asUnsafe().getTrace();
+//
+//            ExprTraceFwBinItpChecker exprTraceFwBinItpChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),Not(sts.getProp()),Z3SolverFactory.getInstance().createItpSolver());
+//
+//            if(trace != null){
+//                ExprTraceStatus<ItpRefutation> concretizationResult = exprTraceFwBinItpChecker.check(trace);
+//                var ref = concretizationResult.asInfeasible().getRefutation();
+//                var newPred = ref.get(ref.getPruneIndex());
+//                var newPrec = PredPrec.of(newPred);
+//                // join old and new
+//                Assert.assertEquals("Trace should be concretizable", true, concretizationResult.isFeasible());
+//            }
+//        }
     }
 
 }
