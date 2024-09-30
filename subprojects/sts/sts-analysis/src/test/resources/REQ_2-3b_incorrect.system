@@ -1,0 +1,776 @@
+// false
+specification instance {
+	
+	property s : {
+		// Variables (variable declaration + range def. + initial value)
+		var HLD : bool
+		initial HLD = false
+		
+		var Manreg01_1_ : bool
+		initial Manreg01_1_ = false
+		
+		var Manreg01_7_ : bool
+		initial Manreg01_7_ = false
+		
+		var Manreg01_8_ : bool
+		initial Manreg01_8_ = false
+		
+		var Manreg01_9_ : bool
+		initial Manreg01_9_ = false
+		
+		var Manreg01_10_ : bool
+		initial Manreg01_10_ = false
+		
+		var Manreg01_11_ : bool
+		initial Manreg01_11_ = false
+		
+		var Manreg01_12_ : bool
+		initial Manreg01_12_ = false
+		
+		var Manreg01_13_ : bool
+		initial Manreg01_13_ = false
+		
+		var HOnR : bool
+		initial HOnR = false
+		
+		var HOffR : bool
+		initial HOffR = false
+		
+		var StartI : bool
+		initial StartI = false
+		
+		var TStopI : bool
+		initial TStopI = false
+		
+		var FuStopI : bool
+		initial FuStopI = false
+		
+		var AuOnR : bool
+		initial AuOnR = false
+		
+		var AuOffR : bool
+		initial AuOffR = false
+		
+		var AuAuMoR : bool
+		initial AuAuMoR = false
+		
+		var AuIhMMo : bool
+		initial AuIhMMo = false
+		
+		var AuIhFoMo : bool
+		initial AuIhFoMo = false
+		
+		var AuAlAck : bool
+		initial AuAlAck = false
+		
+		var AuRstart : bool
+		initial AuRstart = false
+		
+		var POnOff__ParReg_0_ : bool
+		
+		var POnOff__ParReg_1_ : bool
+		
+		var POnOff__ParReg_2_ : bool
+		
+		var POnOff__ParReg_8_ : bool
+		
+		var POnOff__ParReg_12_ : bool
+		
+		var POnOff__ParReg_13_ : bool
+		
+		var POnOff__ParReg_15_ : bool
+		
+		var OutOnOV : bool
+		initial OutOnOV = false
+		
+		var AuMoSt : bool
+		initial AuMoSt = false
+		
+		var MMoSt : bool
+		initial MMoSt = false
+		
+		var LDSt : bool
+		initial LDSt = false
+		
+		var SoftLDSt : bool
+		initial SoftLDSt = false
+		
+		var FoMoSt : bool
+		initial FoMoSt = false
+		
+		var AuOnRSt : bool
+		initial AuOnRSt = false
+		
+		var MOnRSt : bool
+		initial MOnRSt = false
+		
+		var HOnRSt : bool
+		initial HOnRSt = false
+		
+		var HOffRSt : bool
+		initial HOffRSt = false
+		
+		var EnRstartSt : bool
+		initial EnRstartSt = true
+		
+		var E_MAuMoR : bool
+		initial E_MAuMoR = false
+		
+		var E_MMMoR : bool
+		initial E_MMMoR = false
+		
+		var E_MFoMoR : bool
+		initial E_MFoMoR = false
+		
+		var E_MOnR : bool
+		initial E_MOnR = false
+		
+		var E_MOffR : bool
+		initial E_MOffR = false
+		
+		var E_MAlAckR : bool
+		initial E_MAlAckR = false
+		
+		var E_FuStopI : bool
+		initial E_FuStopI = false
+		
+		var E_AuAuMoR : bool
+		initial E_AuAuMoR = false
+		
+		var E_AuAlAck : bool
+		initial E_AuAlAck = false
+		
+		var E_MSoftLDR : bool
+		initial E_MSoftLDR = false
+		
+		var E_MEnRstartR : bool
+		initial E_MEnRstartR = false
+		
+		var MAuMoR_old : bool
+		initial MAuMoR_old = false
+		
+		var MMMoR_old : bool
+		initial MMMoR_old = false
+		
+		var MFoMoR_old : bool
+		initial MFoMoR_old = false
+		
+		var MOnR_old : bool
+		initial MOnR_old = false
+		
+		var MOffR_old : bool
+		initial MOffR_old = false
+		
+		var MAlAckR_old : bool
+		initial MAlAckR_old = false
+		
+		var AuAuMoR_old : bool
+		initial AuAuMoR_old = false
+		
+		var AuAlAck_old : bool
+		initial AuAlAck_old = false
+		
+		var FuStopI_old : bool
+		initial FuStopI_old = false
+		
+		var MSoftLDR_old : bool
+		initial MSoftLDR_old = false
+		
+		var MEnRstartR_old : bool
+		initial MEnRstartR_old = false
+		
+		var PFsPosOn : bool
+		initial PFsPosOn = false
+		
+		var OutOnOVSt : bool
+		initial OutOnOVSt = false
+		
+		var OutOffOVSt : bool
+		initial OutOffOVSt = false
+		
+		var AuMoSt_aux : bool
+		initial AuMoSt_aux = false
+		
+		var MMoSt_aux : bool
+		initial MMoSt_aux = false
+		
+		var FoMoSt_aux : bool
+		initial FoMoSt_aux = false
+		
+		var SoftLDSt_aux : bool
+		initial SoftLDSt_aux = false
+		
+		var OutOVSt_aux : bool
+		initial OutOVSt_aux = false
+		
+		var fullNotAcknowledged : bool
+		initial fullNotAcknowledged = false
+		
+		var InterlockR : bool
+		initial InterlockR = false
+		
+		var inlined_R_EDGE_1__old : bool
+		initial inlined_R_EDGE_1__old = false
+		
+		var inlined_R_EDGE_2__old : bool
+		initial inlined_R_EDGE_2__old = false
+		
+		var inlined_R_EDGE_3__old : bool
+		initial inlined_R_EDGE_3__old = false
+		
+		var inlined_R_EDGE_4__old : bool
+		initial inlined_R_EDGE_4__old = false
+		
+		var inlined_R_EDGE_5__old : bool
+		initial inlined_R_EDGE_5__old = false
+		
+		var inlined_R_EDGE_6__old : bool
+		initial inlined_R_EDGE_6__old = false
+		
+		var inlined_R_EDGE_7__old : bool
+		initial inlined_R_EDGE_7__old = false
+		
+		var inlined_R_EDGE_8__old : bool
+		initial inlined_R_EDGE_8__old = false
+		
+		var inlined_R_EDGE_9__old : bool
+		initial inlined_R_EDGE_9__old = false
+		
+		var inlined_R_EDGE_10__old : bool
+		initial inlined_R_EDGE_10__old = false
+		
+		var inlined_R_EDGE_13__old : bool
+		initial inlined_R_EDGE_13__old = false
+		
+		
+		// Location variable definition
+		var loc : int
+		invariant loc >= 0 and loc <= 42
+		initial loc = 1
+		// Automaton state - TTMC loc mapping
+		// s7 = 3
+		// end = 0
+		// s31 = 9
+		// s78 = 18
+		// s110 = 22
+		// s192 = 37
+		// s23 = 7
+		// s123 = 24
+		// s55 = 15
+		// s325 = 40
+		// s336 = 41
+		// s18 = 6
+		// s86 = 20
+		// s183 = 35
+		// s47 = 13
+		// s2 = 2
+		// s131 = 25
+		// s34 = 10
+		// s177 = 34
+		// initial = 1
+		// s145 = 29
+		// s39 = 11
+		// s15 = 5
+		// s167 = 33
+		// s83 = 19
+		// s91 = 21
+		// s157 = 31
+		// s162 = 32
+		// s313 = 39
+		// s338 = 42
+		// s58 = 16
+		// s115 = 23
+		// s311 = 38
+		// s42 = 12
+		// s152 = 30
+		// s50 = 14
+		// s10 = 4
+		// s63 = 17
+		// s133 = 26
+		// s135 = 27
+		// s137 = 28
+		// s26 = 8
+		// s187 = 36
+		
+		
+		// Structure
+		transition loc' = (
+			if loc = 0  then 1 else 
+			if loc = 1  then 2 else 
+			if loc = 2 and ((Manreg01_8_  =  true)  and  (MAuMoR_old  =  false)) then 3 else 
+			if loc = 2 and (not ((Manreg01_8_  =  true)  and  (MAuMoR_old  =  false))) then 3 else 
+			if loc = 3  then 4 else 
+			if loc = 4 and ((Manreg01_9_  =  true)  and  (MMMoR_old  =  false)) then 5 else 
+			if loc = 4 and (not ((Manreg01_9_  =  true)  and  (MMMoR_old  =  false))) then 5 else 
+			if loc = 5  then 6 else 
+			if loc = 6 and ((Manreg01_10_  =  true)  and  (MFoMoR_old  =  false)) then 7 else 
+			if loc = 6 and (not ((Manreg01_10_  =  true)  and  (MFoMoR_old  =  false))) then 7 else 
+			if loc = 7  then 8 else 
+			if loc = 8 and ((Manreg01_11_  =  true)  and  (MSoftLDR_old  =  false)) then 9 else 
+			if loc = 8 and (not ((Manreg01_11_  =  true)  and  (MSoftLDR_old  =  false))) then 9 else 
+			if loc = 9  then 10 else 
+			if loc = 10 and ((Manreg01_12_  =  true)  and  (MOnR_old  =  false)) then 11 else 
+			if loc = 10 and (not ((Manreg01_12_  =  true)  and  (MOnR_old  =  false))) then 11 else 
+			if loc = 11  then 12 else 
+			if loc = 12 and ((Manreg01_13_  =  true)  and  (MOffR_old  =  false)) then 13 else 
+			if loc = 12 and (not ((Manreg01_13_  =  true)  and  (MOffR_old  =  false))) then 13 else 
+			if loc = 13  then 14 else 
+			if loc = 14 and ((Manreg01_1_  =  true)  and  (MEnRstartR_old  =  false)) then 15 else 
+			if loc = 14 and (not ((Manreg01_1_  =  true)  and  (MEnRstartR_old  =  false))) then 15 else 
+			if loc = 15  then 16 else 
+			if loc = 16 and ((Manreg01_7_  =  true)  and  (MAlAckR_old  =  false)) then 17 else 
+			if loc = 16 and (not ((Manreg01_7_  =  true)  and  (MAlAckR_old  =  false))) then 17 else 
+			if loc = 17  then 18 else 
+			if loc = 18 and ((AuAuMoR  =  true)  and  (AuAuMoR_old  =  false)) then 19 else 
+			if loc = 18 and (not ((AuAuMoR  =  true)  and  (AuAuMoR_old  =  false))) then 19 else 
+			if loc = 19  then 20 else 
+			if loc = 20 and ((AuAlAck  =  true)  and  (AuAlAck_old  =  false)) then 21 else 
+			if loc = 20 and (not ((AuAlAck  =  true)  and  (AuAlAck_old  =  false))) then 21 else 
+			if loc = 21  then 22 else 
+			if loc = 22 and ((FuStopI  =  true)  and  (FuStopI_old  =  false)) then 23 else 
+			if loc = 22 and (not ((FuStopI  =  true)  and  (FuStopI_old  =  false))) then 23 else 
+			if loc = 23  then 24 else 
+			if loc = 24 and (E_MAlAckR  or  E_AuAlAck) then 25 else 
+			if loc = 24 and (not (E_MAlAckR  or  E_AuAlAck)) then 25 else 
+			if loc = 25 and ((((not FuStopI)  and  POnOff__ParReg_0_  and  (E_MEnRstartR  or  AuRstart))  or  ((E_MEnRstartR  or  AuRstart)  and  POnOff__ParReg_0_  and  POnOff__ParReg_1_))  and  (not fullNotAcknowledged)) then 26 else 
+			if loc = 25 and (not (((POnOff__ParReg_0_  and  (E_MEnRstartR  or  AuRstart)  and  (not FuStopI))  or  (POnOff__ParReg_0_  and  POnOff__ParReg_1_  and  (E_MEnRstartR  or  AuRstart)))  and  (not fullNotAcknowledged))) then 26 else 
+			if loc = 26 and E_FuStopI then 27 else 
+			if loc = 26 and (not E_FuStopI) then 28 else 
+			if loc = 27 and POnOff__ParReg_0_ then 28 else 
+			if loc = 27 and (not POnOff__ParReg_0_) then 28 else 
+			if loc = 28  then 29 else 
+			if loc = 29 and (not (not (HLD  and  POnOff__ParReg_12_))) then 34 else 
+			if loc = 29 and ((not (HLD  and  POnOff__ParReg_12_))  and  (not AuIhFoMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  MMoSt_aux)  and  E_MFoMoR) then 30 else 
+			if loc = 29 and ((not (HLD  and  POnOff__ParReg_12_))  and  (not ((AuMoSt_aux  or  MMoSt_aux  or  SoftLDSt_aux)  and  E_MFoMoR  and  (not AuIhFoMo)))) then 30 else 
+			if loc = 30 and ((not AuIhMMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  FoMoSt_aux)  and  E_MMMoR) then 31 else 
+			if loc = 30 and (not ((AuMoSt_aux  or  FoMoSt_aux  or  SoftLDSt_aux)  and  E_MMMoR  and  (not AuIhMMo))) then 31 else 
+			if loc = 31 and ((not (SoftLDSt_aux  or  FoMoSt_aux  or  AuMoSt_aux  or  MMoSt_aux))  or  (SoftLDSt_aux  and  AuIhFoMo)  or  (FoMoSt_aux  and  AuIhFoMo)  or  (MMoSt_aux  and  AuIhMMo)  or  (SoftLDSt_aux  and  E_MAuMoR)  or  (MMoSt_aux  and  (E_MAuMoR  or  E_AuAuMoR))  or  (FoMoSt_aux  and  E_MAuMoR)) then 32 else 
+			if loc = 31 and (not ((MMoSt_aux  and  (E_MAuMoR  or  E_AuAuMoR))  or  (FoMoSt_aux  and  E_MAuMoR)  or  (SoftLDSt_aux  and  E_MAuMoR)  or  (MMoSt_aux  and  AuIhMMo)  or  (FoMoSt_aux  and  AuIhFoMo)  or  (SoftLDSt_aux  and  AuIhFoMo)  or  (not (AuMoSt_aux  or  MMoSt_aux  or  FoMoSt_aux  or  SoftLDSt_aux)))) then 32 else 
+			if loc = 32 and ((not AuIhFoMo)  and  (AuMoSt_aux  or  MMoSt_aux)  and  E_MSoftLDR) then 33 else 
+			if loc = 32 and (not ((AuMoSt_aux  or  MMoSt_aux)  and  E_MSoftLDR  and  (not AuIhFoMo))) then 33 else 
+			if loc = 33  then 34 else 
+			if loc = 34 and AuOnR then 35 else 
+			if loc = 34 and ((not AuOnR)  and  AuOffR) then 35 else 
+			if loc = 34 and (((not EnRstartSt)  or  fullNotAcknowledged  or  FuStopI)  and  (not AuOnR)  and  (not AuOffR)) then 35 else 
+			if loc = 34 and ((not (fullNotAcknowledged  or  FuStopI  or  (not EnRstartSt)))  and  (not AuOnR)  and  (not AuOffR)) then 35 else 
+			if loc = 35 and ((E_FuStopI  and  (not POnOff__ParReg_8_))  or  (HOffRSt  and  LDSt  and  POnOff__ParReg_13_)  or  (E_MOffR  and  (SoftLDSt  or  MMoSt  or  FoMoSt))  or  ((not AuOnRSt)  and  AuMoSt)) then 36 else 
+			if loc = 35 and ((not ((E_MOffR  and  (MMoSt  or  FoMoSt  or  SoftLDSt))  or  ((not AuOnRSt)  and  AuMoSt)  or  (LDSt  and  POnOff__ParReg_13_  and  HOffRSt)  or  (E_FuStopI  and  (not POnOff__ParReg_8_))))  and  ((E_FuStopI  and  POnOff__ParReg_8_)  or  (EnRstartSt  and  HOnRSt  and  LDSt  and  POnOff__ParReg_13_)  or  (E_MOnR  and  (SoftLDSt  or  MMoSt  or  FoMoSt))  or  (AuOnRSt  and  AuMoSt))) then 36 else 
+			if loc = 35 and ((not ((E_MOffR  and  (MMoSt  or  FoMoSt  or  SoftLDSt))  or  ((not AuOnRSt)  and  AuMoSt)  or  (LDSt  and  POnOff__ParReg_13_  and  HOffRSt)  or  (E_FuStopI  and  (not POnOff__ParReg_8_))))  and  (not ((E_MOnR  and  (MMoSt  or  FoMoSt  or  SoftLDSt))  or  (AuOnRSt  and  AuMoSt)  or  (LDSt  and  POnOff__ParReg_13_  and  HOnRSt  and  EnRstartSt)  or  (E_FuStopI  and  POnOff__ParReg_8_)))) then 36 else 
+			if loc = 36 and HOffR then 37 else 
+			if loc = 36 and ((not HOffR)  and  HOnR) then 37 else 
+			if loc = 36 and ((not HOffR)  and  (not HOnR)) then 37 else 
+			if loc = 37  then 38 else 
+			if loc = 38 and POnOff__ParReg_15_ then 39 else 
+			if loc = 38 and (not POnOff__ParReg_15_) then 39 else 
+			if loc = 39 and ((POnOff__ParReg_15_  and  (not InterlockR))  or  ((not POnOff__ParReg_15_)  and  (not InterlockR))) then 40 else 
+			if loc = 39 and (POnOff__ParReg_15_  and  InterlockR) then 40 else 
+			if loc = 39 and ((not POnOff__ParReg_15_)  and  InterlockR) then 40 else 
+			if loc = 40 and ((not (not POnOff__ParReg_15_))  or  ((not POnOff__ParReg_15_)  and  POnOff__ParReg_8_)) then 41 else 
+			if loc = 40 and ((not POnOff__ParReg_15_)  and  (not POnOff__ParReg_8_)) then 41 else 
+			if loc = 41 and OutOnOVSt then 42 else 
+			if loc = 41 and (not OutOnOVSt) then 42 else 
+			if loc = 42 and ((OutOffOVSt  and  POnOff__ParReg_15_)  or  ((not OutOnOVSt)  and  (not POnOff__ParReg_15_))) then 0 else 
+			if loc = 42 and (not ((OutOffOVSt  and  POnOff__ParReg_15_)  or  ((not OutOnOVSt)  and  (not POnOff__ParReg_15_)))) then 0 
+ else			loc // stay in the same location if no IM transitions are allowed
+		)
+						
+		// Transitions
+		transition (
+			if loc = 1  then true 
+ else			HLD' = HLD // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_1_' = Manreg01_1_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_7_' = Manreg01_7_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_8_' = Manreg01_8_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_9_' = Manreg01_9_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_10_' = Manreg01_10_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_11_' = Manreg01_11_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_12_' = Manreg01_12_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			Manreg01_13_' = Manreg01_13_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			HOnR' = HOnR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			HOffR' = HOffR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			StartI' = StartI // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			TStopI' = TStopI // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			FuStopI' = FuStopI // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			AuOnR' = AuOnR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			AuOffR' = AuOffR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			AuAuMoR' = AuAuMoR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			AuIhMMo' = AuIhMMo // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			AuIhFoMo' = AuIhFoMo // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			AuAlAck' = AuAlAck // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 1  then true 
+ else			AuRstart' = AuRstart // keep the old value if it is not assigned
+		)
+		transition (
+			POnOff__ParReg_0_' = POnOff__ParReg_0_ // keep the old value if it is not assigned
+		)
+		transition (
+			POnOff__ParReg_1_' = POnOff__ParReg_1_ // keep the old value if it is not assigned
+		)
+		transition (
+			POnOff__ParReg_2_' = POnOff__ParReg_2_ // keep the old value if it is not assigned
+		)
+		transition (
+			POnOff__ParReg_8_' = POnOff__ParReg_8_ // keep the old value if it is not assigned
+		)
+		transition (
+			POnOff__ParReg_12_' = POnOff__ParReg_12_ // keep the old value if it is not assigned
+		)
+		transition (
+			POnOff__ParReg_13_' = POnOff__ParReg_13_ // keep the old value if it is not assigned
+		)
+		transition (
+			POnOff__ParReg_15_' = POnOff__ParReg_15_ // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 40 and ((not POnOff__ParReg_15_)  and  (not POnOff__ParReg_8_)) then OutOnOV' = OutOnOVSt else 
+			if loc = 40 and ((not (not POnOff__ParReg_15_))  or  ((not POnOff__ParReg_15_)  and  POnOff__ParReg_8_)) then OutOnOV' = (not OutOnOVSt) 
+ else			OutOnOV' = OutOnOV // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 33  then AuMoSt' = AuMoSt_aux else 
+			if loc = 29 and (not (not (HLD  and  POnOff__ParReg_12_))) then AuMoSt' = false 
+ else			AuMoSt' = AuMoSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 33  then MMoSt' = MMoSt_aux else 
+			if loc = 29 and (not (not (HLD  and  POnOff__ParReg_12_))) then MMoSt' = false 
+ else			MMoSt' = MMoSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 33  then LDSt' = false else 
+			if loc = 29 and (not (not (HLD  and  POnOff__ParReg_12_))) then LDSt' = true 
+ else			LDSt' = LDSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 33  then SoftLDSt' = SoftLDSt_aux else 
+			if loc = 29 and (not (not (HLD  and  POnOff__ParReg_12_))) then SoftLDSt' = false 
+ else			SoftLDSt' = SoftLDSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 33  then FoMoSt' = FoMoSt_aux else 
+			if loc = 29 and (not (not (HLD  and  POnOff__ParReg_12_))) then FoMoSt' = false 
+ else			FoMoSt' = FoMoSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 34 and AuOnR then AuOnRSt' = true else 
+			if loc = 34 and ((not AuOnR)  and  AuOffR) then AuOnRSt' = false else 
+			if loc = 34 and (((not EnRstartSt)  or  fullNotAcknowledged  or  FuStopI)  and  (not AuOnR)  and  (not AuOffR)) then AuOnRSt' = POnOff__ParReg_8_ 
+ else			AuOnRSt' = AuOnRSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 35 and ((E_FuStopI  and  (not POnOff__ParReg_8_))  or  (HOffRSt  and  LDSt  and  POnOff__ParReg_13_)  or  (E_MOffR  and  (SoftLDSt  or  MMoSt  or  FoMoSt))  or  ((not AuOnRSt)  and  AuMoSt)) then MOnRSt' = false else 
+			if loc = 35 and ((not ((E_MOffR  and  (MMoSt  or  FoMoSt  or  SoftLDSt))  or  ((not AuOnRSt)  and  AuMoSt)  or  (LDSt  and  POnOff__ParReg_13_  and  HOffRSt)  or  (E_FuStopI  and  (not POnOff__ParReg_8_))))  and  ((E_FuStopI  and  POnOff__ParReg_8_)  or  (EnRstartSt  and  HOnRSt  and  LDSt  and  POnOff__ParReg_13_)  or  (E_MOnR  and  (SoftLDSt  or  MMoSt  or  FoMoSt))  or  (AuOnRSt  and  AuMoSt))) then MOnRSt' = true 
+ else			MOnRSt' = MOnRSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 36 and HOffR then HOnRSt' = false else 
+			if loc = 36 and ((not HOffR)  and  HOnR) then HOnRSt' = true 
+ else			HOnRSt' = HOnRSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 37  then HOffRSt' = (not HOnRSt) 
+ else			HOffRSt' = HOffRSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 25 and ((((not FuStopI)  and  POnOff__ParReg_0_  and  (E_MEnRstartR  or  AuRstart))  or  ((E_MEnRstartR  or  AuRstart)  and  POnOff__ParReg_0_  and  POnOff__ParReg_1_))  and  (not fullNotAcknowledged)) then EnRstartSt' = true else 
+			if loc = 27 and POnOff__ParReg_0_ then EnRstartSt' = false 
+ else			EnRstartSt' = EnRstartSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 2 and ((Manreg01_8_  =  true)  and  (MAuMoR_old  =  false)) then E_MAuMoR' = true else 
+			if loc = 2 and (not ((Manreg01_8_  =  true)  and  (MAuMoR_old  =  false))) then E_MAuMoR' = false 
+ else			E_MAuMoR' = E_MAuMoR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 4 and ((Manreg01_9_  =  true)  and  (MMMoR_old  =  false)) then E_MMMoR' = true else 
+			if loc = 4 and (not ((Manreg01_9_  =  true)  and  (MMMoR_old  =  false))) then E_MMMoR' = false 
+ else			E_MMMoR' = E_MMMoR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 6 and ((Manreg01_10_  =  true)  and  (MFoMoR_old  =  false)) then E_MFoMoR' = true else 
+			if loc = 6 and (not ((Manreg01_10_  =  true)  and  (MFoMoR_old  =  false))) then E_MFoMoR' = false 
+ else			E_MFoMoR' = E_MFoMoR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 10 and ((Manreg01_12_  =  true)  and  (MOnR_old  =  false)) then E_MOnR' = true else 
+			if loc = 10 and (not ((Manreg01_12_  =  true)  and  (MOnR_old  =  false))) then E_MOnR' = false 
+ else			E_MOnR' = E_MOnR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 12 and ((Manreg01_13_  =  true)  and  (MOffR_old  =  false)) then E_MOffR' = true else 
+			if loc = 12 and (not ((Manreg01_13_  =  true)  and  (MOffR_old  =  false))) then E_MOffR' = false 
+ else			E_MOffR' = E_MOffR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 16 and ((Manreg01_7_  =  true)  and  (MAlAckR_old  =  false)) then E_MAlAckR' = true else 
+			if loc = 16 and (not ((Manreg01_7_  =  true)  and  (MAlAckR_old  =  false))) then E_MAlAckR' = false 
+ else			E_MAlAckR' = E_MAlAckR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 22 and ((FuStopI  =  true)  and  (FuStopI_old  =  false)) then E_FuStopI' = true else 
+			if loc = 22 and (not ((FuStopI  =  true)  and  (FuStopI_old  =  false))) then E_FuStopI' = false 
+ else			E_FuStopI' = E_FuStopI // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 18 and ((AuAuMoR  =  true)  and  (AuAuMoR_old  =  false)) then E_AuAuMoR' = true else 
+			if loc = 18 and (not ((AuAuMoR  =  true)  and  (AuAuMoR_old  =  false))) then E_AuAuMoR' = false 
+ else			E_AuAuMoR' = E_AuAuMoR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 20 and ((AuAlAck  =  true)  and  (AuAlAck_old  =  false)) then E_AuAlAck' = true else 
+			if loc = 20 and (not ((AuAlAck  =  true)  and  (AuAlAck_old  =  false))) then E_AuAlAck' = false 
+ else			E_AuAlAck' = E_AuAlAck // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 8 and ((Manreg01_11_  =  true)  and  (MSoftLDR_old  =  false)) then E_MSoftLDR' = true else 
+			if loc = 8 and (not ((Manreg01_11_  =  true)  and  (MSoftLDR_old  =  false))) then E_MSoftLDR' = false 
+ else			E_MSoftLDR' = E_MSoftLDR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 14 and ((Manreg01_1_  =  true)  and  (MEnRstartR_old  =  false)) then E_MEnRstartR' = true else 
+			if loc = 14 and (not ((Manreg01_1_  =  true)  and  (MEnRstartR_old  =  false))) then E_MEnRstartR' = false 
+ else			E_MEnRstartR' = E_MEnRstartR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 3  then MAuMoR_old' = inlined_R_EDGE_1__old 
+ else			MAuMoR_old' = MAuMoR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 5  then MMMoR_old' = inlined_R_EDGE_2__old 
+ else			MMMoR_old' = MMMoR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 7  then MFoMoR_old' = inlined_R_EDGE_3__old 
+ else			MFoMoR_old' = MFoMoR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 11  then MOnR_old' = inlined_R_EDGE_5__old 
+ else			MOnR_old' = MOnR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 13  then MOffR_old' = inlined_R_EDGE_6__old 
+ else			MOffR_old' = MOffR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 17  then MAlAckR_old' = inlined_R_EDGE_8__old 
+ else			MAlAckR_old' = MAlAckR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 19  then AuAuMoR_old' = inlined_R_EDGE_9__old 
+ else			AuAuMoR_old' = AuAuMoR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 21  then AuAlAck_old' = inlined_R_EDGE_10__old 
+ else			AuAlAck_old' = AuAlAck_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 23  then FuStopI_old' = inlined_R_EDGE_13__old 
+ else			FuStopI_old' = FuStopI_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 9  then MSoftLDR_old' = inlined_R_EDGE_4__old 
+ else			MSoftLDR_old' = MSoftLDR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 15  then MEnRstartR_old' = inlined_R_EDGE_7__old 
+ else			MEnRstartR_old' = MEnRstartR_old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 17  then PFsPosOn' = POnOff__ParReg_8_ 
+ else			PFsPosOn' = PFsPosOn // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 37  then OutOnOVSt' = ((POnOff__ParReg_13_  and  HOnRSt  and  LDSt)  or  (MOnRSt  and  (SoftLDSt  or  MMoSt  or  FoMoSt))  or  (AuOnRSt  and  AuMoSt)) else 
+			if loc = 39 and (POnOff__ParReg_15_  and  InterlockR) then OutOnOVSt' = ((POnOff__ParReg_8_  and  (not POnOff__ParReg_2_))  or  (POnOff__ParReg_8_  and  POnOff__ParReg_2_)) else 
+			if loc = 39 and ((not POnOff__ParReg_15_)  and  InterlockR) then OutOnOVSt' = POnOff__ParReg_8_ 
+ else			OutOnOVSt' = OutOnOVSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 38 and POnOff__ParReg_15_ then OutOffOVSt' = ((POnOff__ParReg_13_  and  (not HOnRSt)  and  LDSt)  or  ((not MOnRSt)  and  (SoftLDSt  or  MMoSt  or  FoMoSt))  or  ((not AuOnRSt)  and  AuMoSt)) else 
+			if loc = 39 and (POnOff__ParReg_15_  and  InterlockR) then OutOffOVSt' = (((not POnOff__ParReg_8_)  and  (not POnOff__ParReg_2_))  or  (POnOff__ParReg_8_  and  POnOff__ParReg_2_)) 
+ else			OutOffOVSt' = OutOffOVSt // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 29 and ((not (HLD  and  POnOff__ParReg_12_))  and  (not AuIhFoMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  MMoSt_aux)  and  E_MFoMoR) then AuMoSt_aux' = false else 
+			if loc = 30 and ((not AuIhMMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  FoMoSt_aux)  and  E_MMMoR) then AuMoSt_aux' = false else 
+			if loc = 31 and ((not (SoftLDSt_aux  or  FoMoSt_aux  or  AuMoSt_aux  or  MMoSt_aux))  or  (SoftLDSt_aux  and  AuIhFoMo)  or  (FoMoSt_aux  and  AuIhFoMo)  or  (MMoSt_aux  and  AuIhMMo)  or  (SoftLDSt_aux  and  E_MAuMoR)  or  (MMoSt_aux  and  (E_MAuMoR  or  E_AuAuMoR))  or  (FoMoSt_aux  and  E_MAuMoR)) then AuMoSt_aux' = true else 
+			if loc = 32 and ((not AuIhFoMo)  and  (AuMoSt_aux  or  MMoSt_aux)  and  E_MSoftLDR) then AuMoSt_aux' = false 
+ else			AuMoSt_aux' = AuMoSt_aux // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 29 and ((not (HLD  and  POnOff__ParReg_12_))  and  (not AuIhFoMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  MMoSt_aux)  and  E_MFoMoR) then MMoSt_aux' = false else 
+			if loc = 30 and ((not AuIhMMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  FoMoSt_aux)  and  E_MMMoR) then MMoSt_aux' = true else 
+			if loc = 31 and ((not (SoftLDSt_aux  or  FoMoSt_aux  or  AuMoSt_aux  or  MMoSt_aux))  or  (SoftLDSt_aux  and  AuIhFoMo)  or  (FoMoSt_aux  and  AuIhFoMo)  or  (MMoSt_aux  and  AuIhMMo)  or  (SoftLDSt_aux  and  E_MAuMoR)  or  (MMoSt_aux  and  (E_MAuMoR  or  E_AuAuMoR))  or  (FoMoSt_aux  and  E_MAuMoR)) then MMoSt_aux' = false else 
+			if loc = 32 and ((not AuIhFoMo)  and  (AuMoSt_aux  or  MMoSt_aux)  and  E_MSoftLDR) then MMoSt_aux' = false 
+ else			MMoSt_aux' = MMoSt_aux // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 29 and ((not (HLD  and  POnOff__ParReg_12_))  and  (not AuIhFoMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  MMoSt_aux)  and  E_MFoMoR) then FoMoSt_aux' = true else 
+			if loc = 30 and ((not AuIhMMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  FoMoSt_aux)  and  E_MMMoR) then FoMoSt_aux' = false else 
+			if loc = 31 and ((not (SoftLDSt_aux  or  FoMoSt_aux  or  AuMoSt_aux  or  MMoSt_aux))  or  (SoftLDSt_aux  and  AuIhFoMo)  or  (FoMoSt_aux  and  AuIhFoMo)  or  (MMoSt_aux  and  AuIhMMo)  or  (SoftLDSt_aux  and  E_MAuMoR)  or  (MMoSt_aux  and  (E_MAuMoR  or  E_AuAuMoR))  or  (FoMoSt_aux  and  E_MAuMoR)) then FoMoSt_aux' = false else 
+			if loc = 32 and ((not AuIhFoMo)  and  (AuMoSt_aux  or  MMoSt_aux)  and  E_MSoftLDR) then FoMoSt_aux' = false 
+ else			FoMoSt_aux' = FoMoSt_aux // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 29 and ((not (HLD  and  POnOff__ParReg_12_))  and  (not AuIhFoMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  MMoSt_aux)  and  E_MFoMoR) then SoftLDSt_aux' = false else 
+			if loc = 30 and ((not AuIhMMo)  and  (SoftLDSt_aux  or  AuMoSt_aux  or  FoMoSt_aux)  and  E_MMMoR) then SoftLDSt_aux' = false else 
+			if loc = 31 and ((not (SoftLDSt_aux  or  FoMoSt_aux  or  AuMoSt_aux  or  MMoSt_aux))  or  (SoftLDSt_aux  and  AuIhFoMo)  or  (FoMoSt_aux  and  AuIhFoMo)  or  (MMoSt_aux  and  AuIhMMo)  or  (SoftLDSt_aux  and  E_MAuMoR)  or  (MMoSt_aux  and  (E_MAuMoR  or  E_AuAuMoR))  or  (FoMoSt_aux  and  E_MAuMoR)) then SoftLDSt_aux' = false else 
+			if loc = 32 and ((not AuIhFoMo)  and  (AuMoSt_aux  or  MMoSt_aux)  and  E_MSoftLDR) then SoftLDSt_aux' = true 
+ else			SoftLDSt_aux' = SoftLDSt_aux // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 41 and OutOnOVSt then OutOVSt_aux' = true else 
+			if loc = 42 and ((OutOffOVSt  and  POnOff__ParReg_15_)  or  ((not OutOnOVSt)  and  (not POnOff__ParReg_15_))) then OutOVSt_aux' = false 
+ else			OutOVSt_aux' = OutOVSt_aux // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 24 and (E_MAlAckR  or  E_AuAlAck) then fullNotAcknowledged' = false else 
+			if loc = 26 and E_FuStopI then fullNotAcknowledged' = true 
+ else			fullNotAcknowledged' = fullNotAcknowledged // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 28  then InterlockR' = ((((POnOff__ParReg_8_  and  OutOVSt_aux)  or  ((not POnOff__ParReg_8_)  and  (not OutOVSt_aux)))  and  StartI  and  POnOff__ParReg_15_)  or  ((not OutOnOV)  and  StartI  and  (not POnOff__ParReg_15_))  or  (not EnRstartSt)  or  fullNotAcknowledged  or  TStopI  or  FuStopI) 
+ else			InterlockR' = InterlockR // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_1__old' = false else 
+			if loc = 1  then inlined_R_EDGE_1__old' = MAuMoR_old else 
+			if loc = 2 and ((Manreg01_8_  =  true)  and  (MAuMoR_old  =  false)) then inlined_R_EDGE_1__old' = true else 
+			if loc = 2 and (not ((Manreg01_8_  =  true)  and  (MAuMoR_old  =  false))) then inlined_R_EDGE_1__old' = Manreg01_8_ 
+ else			inlined_R_EDGE_1__old' = inlined_R_EDGE_1__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_2__old' = false else 
+			if loc = 3  then inlined_R_EDGE_2__old' = MMMoR_old else 
+			if loc = 4 and ((Manreg01_9_  =  true)  and  (MMMoR_old  =  false)) then inlined_R_EDGE_2__old' = true else 
+			if loc = 4 and (not ((Manreg01_9_  =  true)  and  (MMMoR_old  =  false))) then inlined_R_EDGE_2__old' = Manreg01_9_ 
+ else			inlined_R_EDGE_2__old' = inlined_R_EDGE_2__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_3__old' = false else 
+			if loc = 5  then inlined_R_EDGE_3__old' = MFoMoR_old else 
+			if loc = 6 and ((Manreg01_10_  =  true)  and  (MFoMoR_old  =  false)) then inlined_R_EDGE_3__old' = true else 
+			if loc = 6 and (not ((Manreg01_10_  =  true)  and  (MFoMoR_old  =  false))) then inlined_R_EDGE_3__old' = Manreg01_10_ 
+ else			inlined_R_EDGE_3__old' = inlined_R_EDGE_3__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_4__old' = false else 
+			if loc = 7  then inlined_R_EDGE_4__old' = MSoftLDR_old else 
+			if loc = 8 and ((Manreg01_11_  =  true)  and  (MSoftLDR_old  =  false)) then inlined_R_EDGE_4__old' = true else 
+			if loc = 8 and (not ((Manreg01_11_  =  true)  and  (MSoftLDR_old  =  false))) then inlined_R_EDGE_4__old' = Manreg01_11_ 
+ else			inlined_R_EDGE_4__old' = inlined_R_EDGE_4__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_5__old' = false else 
+			if loc = 9  then inlined_R_EDGE_5__old' = MOnR_old else 
+			if loc = 10 and ((Manreg01_12_  =  true)  and  (MOnR_old  =  false)) then inlined_R_EDGE_5__old' = true else 
+			if loc = 10 and (not ((Manreg01_12_  =  true)  and  (MOnR_old  =  false))) then inlined_R_EDGE_5__old' = Manreg01_12_ 
+ else			inlined_R_EDGE_5__old' = inlined_R_EDGE_5__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_6__old' = false else 
+			if loc = 11  then inlined_R_EDGE_6__old' = MOffR_old else 
+			if loc = 12 and ((Manreg01_13_  =  true)  and  (MOffR_old  =  false)) then inlined_R_EDGE_6__old' = true else 
+			if loc = 12 and (not ((Manreg01_13_  =  true)  and  (MOffR_old  =  false))) then inlined_R_EDGE_6__old' = Manreg01_13_ 
+ else			inlined_R_EDGE_6__old' = inlined_R_EDGE_6__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_7__old' = false else 
+			if loc = 13  then inlined_R_EDGE_7__old' = MEnRstartR_old else 
+			if loc = 14 and ((Manreg01_1_  =  true)  and  (MEnRstartR_old  =  false)) then inlined_R_EDGE_7__old' = true else 
+			if loc = 14 and (not ((Manreg01_1_  =  true)  and  (MEnRstartR_old  =  false))) then inlined_R_EDGE_7__old' = Manreg01_1_ 
+ else			inlined_R_EDGE_7__old' = inlined_R_EDGE_7__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_8__old' = false else 
+			if loc = 15  then inlined_R_EDGE_8__old' = MAlAckR_old else 
+			if loc = 16 and ((Manreg01_7_  =  true)  and  (MAlAckR_old  =  false)) then inlined_R_EDGE_8__old' = true else 
+			if loc = 16 and (not ((Manreg01_7_  =  true)  and  (MAlAckR_old  =  false))) then inlined_R_EDGE_8__old' = Manreg01_7_ 
+ else			inlined_R_EDGE_8__old' = inlined_R_EDGE_8__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_9__old' = false else 
+			if loc = 17  then inlined_R_EDGE_9__old' = AuAuMoR_old else 
+			if loc = 18 and ((AuAuMoR  =  true)  and  (AuAuMoR_old  =  false)) then inlined_R_EDGE_9__old' = true else 
+			if loc = 18 and (not ((AuAuMoR  =  true)  and  (AuAuMoR_old  =  false))) then inlined_R_EDGE_9__old' = AuAuMoR 
+ else			inlined_R_EDGE_9__old' = inlined_R_EDGE_9__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_10__old' = false else 
+			if loc = 19  then inlined_R_EDGE_10__old' = AuAlAck_old else 
+			if loc = 20 and ((AuAlAck  =  true)  and  (AuAlAck_old  =  false)) then inlined_R_EDGE_10__old' = true else 
+			if loc = 20 and (not ((AuAlAck  =  true)  and  (AuAlAck_old  =  false))) then inlined_R_EDGE_10__old' = AuAlAck 
+ else			inlined_R_EDGE_10__old' = inlined_R_EDGE_10__old // keep the old value if it is not assigned
+		)
+		transition (
+			if loc = 0  then inlined_R_EDGE_13__old' = false else 
+			if loc = 21  then inlined_R_EDGE_13__old' = FuStopI_old else 
+			if loc = 22 and ((FuStopI  =  true)  and  (FuStopI_old  =  false)) then inlined_R_EDGE_13__old' = true else 
+			if loc = 22 and (not ((FuStopI  =  true)  and  (FuStopI_old  =  false))) then inlined_R_EDGE_13__old' = FuStopI 
+ else			inlined_R_EDGE_13__old' = inlined_R_EDGE_13__old // keep the old value if it is not assigned
+		)
+
+	}
+models
+
+G((loc = 0 and ( AuOnR  =   true   and  AuOffR  =   false   and  AuMoSt  =   true   and  InterlockR  =   false   and  PFsPosOn  =   false  )) imply ( OutOnOV  =   true  ))
+}

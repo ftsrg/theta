@@ -15,18 +15,19 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
-
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
+import hu.bme.mit.theta.analysis.algorithm.ic3.Ic3Checker;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import org.junit.Assert;
@@ -142,20 +143,15 @@ public class StsTest {
 //                new ConsoleLogger(Logger.Level.INFO)
 //        );
         final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp());
-        MonolithicExprCegarChecker<ExplState, StsAction, PredPrec> checker = new MonolithicExprCegarChecker<>(monolithicExpr,
-                mE -> new Ic3Checker(mE, Z3LegacySolverFactory.getInstance()),
-//                mE ->
-//                    new BoundedChecker<>(
-//                            mE,
-//                            Z3SolverFactory.getInstance().createSolver(),
-//                            Z3SolverFactory.getInstance().createItpSolver(),
-//                            Z3SolverFactory.getInstance().createSolver(),
-//                            ExplState::of,
-//                            (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.init(), mE.trans(), mE.prop())),
-//                            new ConsoleLogger(Logger.Level.INFO)
-//                            )
-//                ,
-                new ConsoleLogger(Logger.Level.INFO));
+        var checker = new MonolithicExprCegarChecker<>(monolithicExpr,
+                mE -> new Ic3Checker<>(
+                        mE,
+                        Z3LegacySolverFactory.getInstance(),
+                        ExplState::of,
+                        (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.getInitExpr(), mE.getPropExpr(), mE.getPropExpr()))
+                ),
+                new ConsoleLogger(Logger.Level.INFO),
+                Z3LegacySolverFactory.getInstance());
 //        final var checker = new Ic3Checker(monolithicExpr, Z3SolverFactory.getInstance());
         Assert.assertEquals(isSafe, checker.check().isSafe());
 //        Ic3Checker ic3Checker=new Ic3Checker(monolithicExpr, Z3SolverFactory.getInstance());

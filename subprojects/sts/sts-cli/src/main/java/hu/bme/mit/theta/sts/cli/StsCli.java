@@ -57,6 +57,7 @@ import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.InitPrec;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Refinement;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder.Search;
+import hu.bme.mit.theta.analysis.algorithm.ic3.ConnectedIc3Checker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 
@@ -82,7 +83,8 @@ public class StsCli {
         CEGAR,
         BMC,
         KINDUCTION,
-        IMC
+        IMC,
+        IC3
     }
 
     @Parameter(names = {"--domain"}, description = "Abstract domain")
@@ -172,14 +174,19 @@ public class StsCli {
             } else if (algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
                 final BoundedChecker<?, ?> checker = buildBoundedChecker(sts, Z3LegacySolverFactory.getInstance());
                 status = checker.check(null);
+            } else if(algorithm.equals(Algorithm.IC3)){
+                final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp());
+                var checker = new ConnectedIc3Checker(monolithicExpr, Z3LegacySolverFactory.getInstance());
+                status = checker.check();
+
             } else {
                 throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
             }
             sw.stop();
-            printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
-            if (status.isUnsafe() && cexfile != null) {
-                writeCex(sts, status.asUnsafe());
-            }
+            printIC3Result(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
+//            if (status.isUnsafe() && cexfile != null) {
+//                writeCex(sts, status.asUnsafe());
+//            }
         } catch (final Throwable ex) {
             printError(ex);
             System.exit(1);
@@ -198,8 +205,7 @@ public class StsCli {
     }
 
     private void printHeader() {
-        Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                        "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size")
+        Stream.of("Result", "TimeMs", "Vars", "Size")
                 .forEach(writer::cell);
         writer.newRow();
     }
@@ -292,6 +298,17 @@ public class StsCli {
             } else {
                 writer.cell("");
             }
+            writer.cell(sts.getVars().size());
+            writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+            writer.newRow();
+        }
+    }
+
+    private void printIC3Result(final SafetyResult<?, ?> status, final STS sts,
+                             final long totalTimeMs) {
+        if (benchmarkMode) {
+            writer.cell(status.isSafe());
+            writer.cell(totalTimeMs);
             writer.cell(sts.getVars().size());
             writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
             writer.newRow();

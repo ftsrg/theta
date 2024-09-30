@@ -17,21 +17,20 @@ package hu.bme.mit.theta.sts.analysis;
  */
 
 
-import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedChecker;
-import hu.bme.mit.theta.analysis.algorithm.bounded.ConcreteMonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
+import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExprCegarChecker;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
 import org.junit.Assert;
@@ -108,19 +107,18 @@ public class IMCAbstractTest {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-        final MonolithicExpr monolithicExpr = new ConcreteMonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp(), VarIndexingFactory.indexing(1));
-        MonolithicExprCegarChecker<ExplState, StsAction, PredPrec> checker = new MonolithicExprCegarChecker<>(monolithicExpr,
-                mE ->
-                    new BoundedChecker<>(
-                            mE,
-                            Z3SolverFactory.getInstance().createSolver(),
-                            Z3SolverFactory.getInstance().createItpSolver(),
-                            ExplState::of,
-                            (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.init(), mE.trans(), mE.prop())),
-                            new ConsoleLogger(Logger.Level.INFO)
-                            )
-                ,
-                new ConsoleLogger(Logger.Level.INFO));
+        final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp(), VarIndexingFactory.indexing(1));
+        var checker = new MonolithicExprCegarChecker<>(monolithicExpr,
+                mE -> BoundedCheckerBuilderKt.buildIMC(
+                        mE,
+                        Z3LegacySolverFactory.getInstance().createSolver(),
+                        Z3LegacySolverFactory.getInstance().createItpSolver(),
+                        ExplState::of,
+                        (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.getInitExpr(), mE.getTransExpr(), mE.getPropExpr())),
+                        new ConsoleLogger(Logger.Level.INFO)
+                ),
+                new ConsoleLogger(Logger.Level.INFO),
+                Z3LegacySolverFactory.getInstance());
         Assert.assertEquals(isSafe, checker.check().isSafe());
     }
 
