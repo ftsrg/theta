@@ -73,7 +73,7 @@ class BoundedChecker<S : ExprState, A : ExprAction> @JvmOverloads constructor(
     private val logger: Logger,
 ) : SafetyChecker<EmptyWitness, Trace<S, A>, UnitPrec> {
 
-    private val vars = monolithicExpr.vars()
+    private val vars = monolithicExpr.vars
     private val unfoldedInitExpr = PathUtils.unfold(monolithicExpr.initExpr, VarIndexingFactory.indexing(0))
     private val unfoldedPropExpr = { i: VarIndexing -> PathUtils.unfold(monolithicExpr.propExpr, i) }
     private val indices = mutableListOf(monolithicExpr.initOffsetIndex)
