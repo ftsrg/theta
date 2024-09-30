@@ -107,7 +107,7 @@ public class IMCAbstractTest {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-        final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp(), VarIndexingFactory.indexing(1));
+        final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
         var checker = new MonolithicExprCegarChecker<>(monolithicExpr,
                 mE -> BoundedCheckerBuilderKt.buildIMC(
                         mE,

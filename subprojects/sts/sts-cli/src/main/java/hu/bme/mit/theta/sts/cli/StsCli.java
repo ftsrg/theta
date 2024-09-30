@@ -206,7 +206,7 @@ public class StsCli {
                 status = checker.check(null);
             } else if(algorithm.equals(Algorithm.IC3)){
                 final SafetyChecker checker;
-                final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp());
+                final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
                 if(direction.equals(Direction.Connected)){
                     checker = new ConnectedIc3Checker<>(
                             monolithicExpr,

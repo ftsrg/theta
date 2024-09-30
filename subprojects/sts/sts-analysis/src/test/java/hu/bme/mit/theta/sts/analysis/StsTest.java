@@ -142,7 +142,7 @@ public class StsTest {
 //                (Valuation v1, Valuation v2) -> new StsAction(abstractSts),
 //                new ConsoleLogger(Logger.Level.INFO)
 //        );
-        final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp());
+        final MonolithicExpr monolithicExpr =StsToMonolithicExprKt.toMonolithicExpr(sts);
         var checker = new MonolithicExprCegarChecker<>(monolithicExpr,
                 mE -> new Ic3Checker<>(
                         mE,

@@ -119,7 +119,7 @@ public class Ic3Test {
                 }
                 sts = Utils.singleElementOf(spec.getAllSts());
             }
-            final MonolithicExpr monolithicExpr = new MonolithicExpr(sts.getInit(), sts.getTrans(), sts.getProp(), VarIndexingFactory.indexing(1));
+            final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
             //var reverseChecker = new ReverseIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             //var checker = new ConnectedIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             //var checker = new ReverseIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
