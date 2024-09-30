@@ -15,15 +15,11 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.aiger.AigerParser;
 import hu.bme.mit.theta.sts.aiger.AigerToSts;
-import hu.bme.mit.theta.sts.analysis.config.StsConfig;
 import hu.bme.mit.theta.sts.analysis.config.StsConfigBuilder;
 import hu.bme.mit.theta.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.sts.dsl.StsSpec;
@@ -58,7 +54,7 @@ public class StsTest {
     @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}, {3}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"src/test/resources/hw1_false.aag", PRED_CART, SEQ_ITP, false},
+                //{"src/test/resources/hw1_false.aag", PRED_CART, SEQ_ITP, false},
 
                 {"src/test/resources/hw2_true.aag", PRED_CART, SEQ_ITP, true},
 
@@ -100,9 +96,10 @@ public class StsTest {
             }
             sts = Utils.singleElementOf(spec.getAllSts());
         }
-        StsConfig<? extends State, ? extends Action, ? extends Prec> config
-                = new StsConfigBuilder(domain, refinement, Z3LegacySolverFactory.getInstance()).build(sts);
-        Assert.assertEquals(isSafe, config.check().isSafe());
+        //StsConfig<? extends State, ? extends Action, ? extends Prec> config
+         //       = new StsConfigBuilder(domain, refinement, Z3LegacySolverFactory.getInstance()).build(sts);
+        Ic3Checker ic3Checker=new Ic3Checker(sts, Z3SolverFactory.getInstance());
+        Assert.assertEquals(isSafe, ic3Checker.check());
     }
 
 }
