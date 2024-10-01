@@ -56,6 +56,7 @@ public class ExprReverser {
     }
 
     private Expr<?> reverse(final VarDecl<?> decl, int primeDepth) {
+        checkArgument(primeDepth > 0 && primeDepth <= indexing.get(decl));
         return Prime(decl.getRef(), indexing.get(decl) - primeDepth);
     }
 
