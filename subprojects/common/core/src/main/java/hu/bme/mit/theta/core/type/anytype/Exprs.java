@@ -55,9 +55,12 @@ public final class Exprs {
      * Convenience methods
      */
 
-    public static <ExprType extends Type> PrimeExpr<ExprType> Prime(final Expr<ExprType> op,
+    public static <ExprType extends Type> Expr<ExprType> Prime(final Expr<ExprType> op,
                                                                     final int i) {
-        checkArgument(i > 0);
+        checkArgument(i >= 0);
+        if (i == 0) {
+            return op;
+        } else
         if (i == 1) {
             return Prime(op);
         } else {
