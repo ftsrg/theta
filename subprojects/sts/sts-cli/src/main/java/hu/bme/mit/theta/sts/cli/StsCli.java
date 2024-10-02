@@ -96,23 +96,28 @@ public class StsCli {
         Connected
     }
 
+    enum Flag {
+        Enabled,
+        Disabled
+    }
+
 
 
 
     @Parameter(names = {"--notB"}, description = "Enables the not B optimalization")
-    Boolean notBOpt = false;
+    Flag notB = Flag.Enabled;
 
     @Parameter(names = {"--former"}, description = "Enables the former frames optimalization")
-    Boolean formerFramesOpt = false;
+    Flag former = Flag.Enabled;
 
     @Parameter(names = {"--unSatOpt"}, description = "Enables the unSat core optimalization")
-    Boolean unSatOpt = false;
+    Flag unSat = Flag.Enabled;
 
     @Parameter(names = {"--propagate"}, description = "Enables the propagation optimalization")
-    Boolean propagateOpt = false;
+    Flag propagate = Flag.Enabled;
 
     @Parameter(names = {"--filter"}, description = "Enables the filter optimalization")
-    Boolean filterOpt = false;
+    Flag filter = Flag.Enabled;
 
     @Parameter(names = {"--direction"}, description = "IC3 Direction")
     Direction direction = Direction.Forward;
@@ -207,6 +212,36 @@ public class StsCli {
             } else if(algorithm.equals(Algorithm.IC3)){
                 final SafetyChecker checker;
                 final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+                final boolean unSatOpt;
+                final boolean notBOpt;
+                final boolean propagateOpt;
+                final boolean filterOpt;
+                final boolean formerFramesOpt;
+                if(former.equals(Flag.Enabled)){
+                    formerFramesOpt = true;
+                }else{
+                    formerFramesOpt = false;
+                }
+                if(unSat.equals(Flag.Enabled)){
+                    unSatOpt = true;
+                }else{
+                    unSatOpt = false;
+                }
+                if(notB.equals(Flag.Enabled)){
+                    notBOpt = true;
+                }else{
+                    notBOpt = false;
+                }
+                if(propagate.equals(Flag.Enabled)){
+                    propagateOpt = true;
+                }else{
+                    propagateOpt = false;
+                }
+                if(filter.equals(Flag.Enabled)){
+                    filterOpt = true;
+                }else{
+                    filterOpt = false;
+                }
                 if(direction.equals(Direction.Connected)){
                     checker = new ConnectedIc3Checker<>(
                             monolithicExpr,
@@ -294,36 +329,37 @@ public class StsCli {
     }
 
     private BoundedChecker<?, ?> buildBoundedChecker(final STS sts, final SolverFactory abstractionSolverFactory) {
-        final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
-        final BoundedChecker<?, ?> checker;
-        switch (algorithm) {
-            case BMC -> checker = BoundedCheckerBuilderKt.buildBMC(
-                    monolithicExpr,
-                    abstractionSolverFactory.createSolver(),
-                    val -> StsToMonolithicExprKt.valToState(sts, val),
-                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
-                    logger
-            );
-            case KINDUCTION -> checker = BoundedCheckerBuilderKt.buildKIND(
-                    monolithicExpr,
-                    abstractionSolverFactory.createSolver(),
-                    abstractionSolverFactory.createSolver(),
-                    val -> StsToMonolithicExprKt.valToState(sts, val),
-                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
-                    logger
-            );
-            case IMC -> checker = BoundedCheckerBuilderKt.buildIMC(
-                    monolithicExpr,
-                    abstractionSolverFactory.createSolver(),
-                    abstractionSolverFactory.createItpSolver(),
-                    val -> StsToMonolithicExprKt.valToState(sts, val),
-                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
-                    logger
-            );
-            default ->
-                    throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
-        }
-        return checker;
+//        final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+//        final BoundedChecker<?, ?> checker;
+//        switch (algorithm) {
+//            case BMC -> checker = BoundedCheckerBuilderKt.buildBMC(
+//                    monolithicExpr,
+//                    abstractionSolverFactory.createSolver(),
+//                    val -> StsToMonolithicExprKt.valToState(sts, val),
+//                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
+//                    logger
+//            );
+//            case KINDUCTION -> checker = BoundedCheckerBuilderKt.buildKIND(
+//                    monolithicExpr,
+//                    abstractionSolverFactory.createSolver(),
+//                    abstractionSolverFactory.createSolver(),
+//                    val -> StsToMonolithicExprKt.valToState(sts, val),
+//                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
+//                    logger
+//            );
+//            case IMC -> checker = BoundedCheckerBuilderKt.buildIMC(
+//                    monolithicExpr,
+//                    abstractionSolverFactory.createSolver(),
+//                    abstractionSolverFactory.createItpSolver(),
+//                    val -> StsToMonolithicExprKt.valToState(sts, val),
+//                    (val1, val2) -> StsToMonolithicExprKt.valToAction(sts, val1, val2),
+//                    logger
+//            );
+//            default ->
+//                    throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+//        }
+//        return checker;
+        return null;
     }
 
     private void printResult(final SafetyResult<?, ? extends Trace<?, ?>> status, final STS sts,
