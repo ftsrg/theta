@@ -17,6 +17,7 @@ package hu.bme.mit.theta.sts.analysis;
  */
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.ic3.ConnectedIc3Checker;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -123,7 +124,7 @@ public class Ic3Test {
             //var reverseChecker = new ReverseIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             //var checker = new ConnectedIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
             //var checker = new ReverseIc3Checker(monolithicExpr, Z3SolverFactory.getInstance());
-            var checker = new Ic3Checker<>(
+            var checker = new ConnectedIc3Checker<>(
                     monolithicExpr,
                     Z3LegacySolverFactory.getInstance(),
                     valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
