@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 fun MonolithicExpr.createReversed(): MonolithicExpr {
     return MonolithicExpr(
         initExpr = Not(propExpr),
-        transExpr = ExprUtils.reverse(transExpr),
+        transExpr = ExprUtils.reverse(transExpr, transOffsetIndex),
         propExpr = Not(initExpr),
         transOffsetIndex = transOffsetIndex,
         initOffsetIndex = VarIndexingFactory.indexing(0),
