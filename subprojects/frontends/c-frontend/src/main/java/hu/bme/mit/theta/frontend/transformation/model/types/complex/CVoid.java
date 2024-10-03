@@ -30,6 +30,11 @@ public class CVoid extends CComplexType {
     }
 
     @Override
+    public CComplexType getSmallestCommonType(CComplexType type) {
+        return type;
+    }
+
+    @Override
     public String getTypeName() {
         return "void";
     }
