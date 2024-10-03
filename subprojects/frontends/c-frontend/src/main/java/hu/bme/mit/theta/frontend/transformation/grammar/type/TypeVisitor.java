@@ -28,32 +28,15 @@ import hu.bme.mit.theta.frontend.ParseContext;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.DeclaredName;
 import hu.bme.mit.theta.frontend.transformation.model.types.simple.Enum;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.NamedType;
-import hu.bme.mit.theta.frontend.transformation.model.types.simple.Struct;
+import hu.bme.mit.theta.frontend.transformation.model.types.simple.*;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Atomic;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.DeclaredName;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Enum;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Extern;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.NamedType;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Signed;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.ThreadLocal;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Typedef;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Unsigned;
-import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.Volatile;
+import static hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleTypeFactory.*;
 
 public class TypeVisitor extends CBaseVisitor<CSimpleType> {
     private final DeclarationVisitor declarationVisitor;
@@ -245,13 +228,17 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
                 CParser.SpecifierQualifierListContext specifierQualifierListContext = structDeclarationContext.specifierQualifierList();
                 CSimpleType cSimpleType = specifierQualifierListContext.accept(this);
                 if (structDeclarationContext.structDeclaratorList() == null) {
-                    struct.addField(cSimpleType.getAssociatedName(), cSimpleType);
+                    final var decl = new CDeclaration(cSimpleType);
+                    struct.addField(decl);
                 } else {
                     for (CParser.StructDeclaratorContext structDeclaratorContext : structDeclarationContext.structDeclaratorList()
                             .structDeclarator()) {
                         CDeclaration declaration = structDeclaratorContext.accept(
                                 declarationVisitor);
-                        struct.addField(declaration.getName(), cSimpleType);
+                        if (declaration.getType() == null) {
+                            declaration.setType(cSimpleType);
+                        }
+                        struct.addField(declaration);
                     }
                 }
             }

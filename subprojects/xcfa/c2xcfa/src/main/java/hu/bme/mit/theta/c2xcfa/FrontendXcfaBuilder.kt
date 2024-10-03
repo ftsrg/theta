@@ -94,7 +94,9 @@ class FrontendXcfaBuilder(val parseContext: ParseContext, val checkOverflow: Boo
                 continue
             }
             if (type is CStruct) {
-                error("Not handling init expression of struct array ${globalDeclaration.get1()}")
+                uniqueWarningLogger.write(
+                    Logger.Level.INFO, "Not handling init expression of struct array ${globalDeclaration.get1()}"
+                )
             }
             builder.addVar(XcfaGlobalVar(globalDeclaration.get2(), type.nullValue))
             if (type is CArray) {
