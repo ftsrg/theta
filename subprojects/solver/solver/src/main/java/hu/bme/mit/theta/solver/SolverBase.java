@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver;
 
+import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -77,4 +78,11 @@ public interface SolverBase extends AutoCloseable {
      * @return Expressions
      */
     Collection<Expr<BoolType>> getAssertions();
+
+    /**
+     * Get the statistics of the solver.
+     *
+     * @return Statistics
+     */
+    default ImmutableMap<String, String> getStatistics() { return ImmutableMap.of(); }
 }

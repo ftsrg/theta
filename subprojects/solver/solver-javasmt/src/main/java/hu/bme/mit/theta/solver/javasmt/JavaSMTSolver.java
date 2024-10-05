@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.solver.javasmt;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -233,6 +234,11 @@ final class JavaSMTSolver implements UCSolver, Solver {
     @Override
     public void close() {
         context.close();
+    }
+
+    @Override
+    public ImmutableMap<String, String> getStatistics() {
+        return solver.getStatistics();
     }
 
     ////

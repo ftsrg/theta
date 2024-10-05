@@ -109,6 +109,10 @@ class XcfaOcChecker(
             logger.write(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}\n")
         logger.write(Logger.Level.INFO, "Propagated clauses: ${ocChecker.getPropagatedClauses().size}\n")
 
+        ocChecker.solver.statistics.let {
+            logger.write(Logger.Level.INFO, "Solver statistics:\n")
+            it.forEach { (k, v) -> System.err.println("$k: $v") }
+        }
         when {
             status?.isUnsat == true -> {
                 if (outputConflictClauses) System.err.println(
@@ -215,7 +219,10 @@ class XcfaOcChecker(
                 check(current.incoming == current.lastWrites.size || current.loc.initial)
                 check(current.incoming == current.threadLookups.size)
                 check(current.incoming == current.atomics.size)
-                check(current.atomics.all { it == current.atomics.first() }) // bad pattern otherwise
+                check(current.atomics.all { it == current.atomics.first() } ||
+                    current.loc.error || (current.loc.outgoingEdges.let {
+                    it.size == 1 && it.first().let { e -> e.label.getFlatLabels().isEmpty() && e.target.error }
+                }))
 
                 if (current.loc.error) {
                     val errorGuard = Or(current.lastEvents.map { it.guard.toAnd() })

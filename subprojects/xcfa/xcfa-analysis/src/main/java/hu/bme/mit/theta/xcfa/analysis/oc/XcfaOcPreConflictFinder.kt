@@ -53,6 +53,8 @@ internal fun findAutoConflicts(
         }
     }
 
+    val rfCnt = conflicts.size
+    System.err.println("RF conflicts: $rfCnt")
     if (config == AutoConflictFinderConfig.RF) return conflicts
 
     // Find WS and FR conflicts
@@ -60,21 +62,17 @@ internal fun findAutoConflicts(
         val writes = events[v]?.flatMap { it.value }?.filter { it.type == EventType.WRITE } ?: listOf()
         vRfs.forEach { rf ->
             writes.filter { rf.from != it && rf.from.potentialSameMemory(it) }.forEach { w ->
-                // WS
-                findSimplePath(w, rf.to)?.let { wBeforeRf ->
-                    findSimplePath(rf.from, w)?.let {
-                        conflicts.add(WriteSerializationReason(rf, w, wBeforeRf) and it)
-                    }
-                }
-                // FR
-                findSimplePath(rf.from, w)?.let { wAfterRf ->
-                    findSimplePath(w, rf.to)?.let {
-                        conflicts.add(FromReadReason(rf, w, wAfterRf) and it)
+                findSimplePath(w, rf.to)?.let { wRfTo ->
+                    findSimplePath(rf.from, w)?.let { rfFromW ->
+                        conflicts.add(WriteSerializationReason(rf, w, wRfTo) and rfFromW)
+                        conflicts.add(FromReadReason(rf, w, rfFromW) and wRfTo)
                     }
                 }
             }
         }
     }
+
+    System.err.println("WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
 
     return conflicts
 }
