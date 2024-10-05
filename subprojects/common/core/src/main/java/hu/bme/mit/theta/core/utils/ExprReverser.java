@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.common.DispatchTable;
+import hu.bme.mit.theta.common.DispatchTable2;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,7 +27,7 @@ public class ExprReverser {
 
             .addDefault((o) -> {
                 final Expr<?> expr = (Expr<?>) o;
-                return expr.map(e -> reverse(e));
+                return expr.map(e -> reverseInner(e));
             })
 
             .build();
@@ -35,8 +36,13 @@ public class ExprReverser {
         this.indexing = indexing;
     }
 
-    @SuppressWarnings("unchecked")
     public <T extends Type> Expr<T> reverse(final Expr<T> expr) {
+        final var transformed = PrimeToLeaves.transform(expr);
+        return (Expr<T>) TABLE.dispatch(transformed);
+    }
+
+    @SuppressWarnings("unchecked")
+    private  <T extends Type> Expr<T> reverseInner(final Expr<T> expr) {
         return (Expr<T>) TABLE.dispatch(expr);
     }
 
@@ -77,5 +83,41 @@ public class ExprReverser {
         } else {
             throw new IllegalArgumentException("Cannot extract variable declaration from expression: " + expr);
         }
+    }
+
+    private static class PrimeToLeaves {
+
+        private static final DispatchTable2<Integer, Expr<?>> TABLE = DispatchTable2.<Integer, Expr<?>>builder()
+
+                .addCase(RefExpr.class, PrimeToLeaves::transformRef)
+
+                .addCase(PrimeExpr.class, PrimeToLeaves::transformPrime)
+
+                // Default
+
+                .addDefault((o, primeDepth) -> {
+                    final Expr<?> expr = (Expr<?>) o;
+                    return expr.map(e -> transform(e, primeDepth));
+                })
+
+                .build();
+
+        public static <T extends Type> Expr<T> transform(final Expr<T> expr) {
+            return transform(expr, 0);
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <T extends Type> Expr<T> transform(final Expr<T> expr, int primeDepth) {
+            return (Expr<T>) TABLE.dispatch(expr, primeDepth);
+        }
+
+        private static Expr<?> transformRef(final Expr<?> expr, Integer primeDepth) {
+            return Prime(expr, primeDepth);
+        }
+
+        private static Expr<?> transformPrime(final Expr<?> expr, Integer primeDepth) {
+            return transform(((PrimeExpr<?>) expr).getOp(), primeDepth + 1);
+        }
+
     }
 }
