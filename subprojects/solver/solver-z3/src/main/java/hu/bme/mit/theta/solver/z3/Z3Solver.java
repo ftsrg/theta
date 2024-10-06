@@ -15,8 +15,12 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.microsoft.z3.FuncDecl;
+import com.microsoft.z3.Native;
+import com.microsoft.z3.Statistics;
 import com.microsoft.z3.Status;
 import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -233,6 +237,16 @@ class Z3Solver implements UCSolver, Solver {
     @Override
     public void close() {
         z3Context.interrupt();
+    }
+
+    @Override
+    public ImmutableMap<String, String> getStatistics() {
+        Statistics stats = z3Solver.getStatistics();
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        for (String key : stats.getKeys()) {
+            builder.put(key, stats.get(key).getValueString());
+        }
+        return builder.buildOrThrow();
     }
 
     ////
