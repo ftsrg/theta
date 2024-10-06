@@ -54,6 +54,7 @@ import hu.bme.mit.theta.xcfa.model.*
 import hu.bme.mit.theta.xcfa.passes.AssumeFalseRemovalPass
 import hu.bme.mit.theta.xcfa.passes.AtomicReadsOneWritePass
 import hu.bme.mit.theta.xcfa.passes.MutexToVarPass
+import kotlin.system.exitProcess
 import kotlin.time.measureTime
 
 private val Expr<*>.vars get() = ExprUtils.getVars(this)
@@ -86,7 +87,7 @@ class XcfaOcChecker(
         prec: XcfaPrec<UnitPrec>?
     ): SafetyResult<EmptyWitness, Cex> = let {
         if (xcfa.initProcedures.size > 1)
-            error("Multiple entry points are not supported by OC checker.")
+            exit("Multiple entry points are not supported by OC checker.")
 
         logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(it.first)).process() }
@@ -251,7 +252,7 @@ class XcfaOcChecker(
                     atomicEntered = current.atomics.firstOrNull()
 
                     edge.getFlatLabels().forEach { label ->
-                        if (label.references.isNotEmpty()) error("References: not supported by OC checker")
+                        if (label.references.isNotEmpty()) exit("References: not supported by OC checker")
                         when (label) {
                             is StmtLabel -> {
                                 when (val stmt = label.stmt) {
@@ -295,21 +296,21 @@ class XcfaOcChecker(
                                         last.first().assignment = Eq(last.first().const.ref, stmt.expr.with(exprConsts))
                                     }
 
-                                    else -> error("Unsupported statement type: $stmt")
+                                    else -> exit("Unsupported statement type: $stmt")
                                 }
                             }
 
                             is StartLabel -> {
                                 // TODO StartLabel params
                                 if (label.name in thread.startHistory) {
-                                    error("Recursive thread start not supported by OC checker.")
+                                    exit("Recursive thread start not supported by OC checker.")
                                 }
                                 val procedure = xcfa.procedures.find { it.name == label.name }
-                                    ?: error("Procedure not found: ${label.name}")
+                                    ?: exit("Procedure not found: ${label.name}")
                                 last = event(label.pidVar, EventType.WRITE)
                                 val pidVar = label.pidVar.threadVar(pid)
                                 if (threads.any { it.pidVar == pidVar }) {
-                                    error("Using a pthread_t variable in multiple threads: not supported by OC checker")
+                                    exit("Using a pthread_t variable in multiple threads: not supported by OC checker")
                                 }
                                 val newHistory = thread.startHistory + thread.procedure.name
                                 val newThread = Thread(procedure, guard, pidVar, last.first(), newHistory, lastWrites)
@@ -329,7 +330,7 @@ class XcfaOcChecker(
                                     lastEvents.add(joinEvent)
                                     joinGuards.add(guard)
                                     thread.joinEvents.add(joinEvent)
-                                } ?: error("Thread started in a different thread: not supported by OC checker")
+                                } ?: exit("Thread started in a different thread: not supported by OC checker")
                                 guard = joinGuards.toOrInSet()
                                 last = lastEvents
                             }
@@ -337,7 +338,7 @@ class XcfaOcChecker(
                             is FenceLabel -> {
                                 if (label.labels.size > 1 || label.labels.firstOrNull()?.contains("ATOMIC") != true) {
                                     if (label.labels.size != 1 || label.labels.first() != "pthread_exit" || !edge.target.final) {
-                                        error("Untransformed fence label: $label")
+                                        exit("Untransformed fence label: $label")
                                     }
                                 }
                                 if (label.isAtomicBegin) atomicEntered = false
@@ -345,7 +346,7 @@ class XcfaOcChecker(
                             }
 
                             is NopLabel -> {}
-                            else -> error("Unsupported label type by OC checker: $label")
+                            else -> exit("Unsupported label type by OC checker: $label")
                         }
                         firstLabel = false
                     }
@@ -368,7 +369,7 @@ class XcfaOcChecker(
                     for (e in current.loc.outgoingEdges) {
                         val first = e.getFlatLabels().first()
                         if (first !is StmtLabel || first.stmt !is AssumeStmt) {
-                            error("Branching with non-assume labels: not supported by OC checker")
+                            exit("Branching with non-assume labels: not supported by OC checker")
                         }
                     }
                     assumeConsts.forEach { (_, set) ->
@@ -381,7 +382,7 @@ class XcfaOcChecker(
                 }
             }
 
-            if (waitList.isNotEmpty()) error("Loops and dangling edges: not supported by OC checker")
+            if (waitList.isNotEmpty()) exit("Loops and dangling edges: not supported by OC checker")
         }
     }
 
@@ -466,5 +467,10 @@ class XcfaOcChecker(
         val constDecl = getConstDecl(indexing.get(this))
         if (increment) indexing = indexing.inc(this)
         return constDecl
+    }
+
+    private fun exit(msg: String): Nothing {
+        System.err.println(msg)
+        exitProcess(203)
     }
 }

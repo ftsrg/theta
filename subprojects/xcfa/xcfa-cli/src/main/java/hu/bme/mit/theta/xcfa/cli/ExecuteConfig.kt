@@ -180,7 +180,7 @@ fun frontend(config: XcfaConfig<*, *>, logger: Logger, uniqueLogger: Logger): Tr
     } ms)\n"
     )
 
-    logger.write(RESULT, "ParsingResult Success\n")
+//    logger.write(RESULT, "ParsingResult Success\n")
     logger.write(RESULT,
         "Alias graph size: ${xcfa.pointsToGraph.size} -> ${xcfa.pointsToGraph.values.map { it.size }.toList()}\n")
 
@@ -217,7 +217,8 @@ private fun backend(
                 when {
                     result.isSafe && LoopUnrollPass.FORCE_UNROLL_USED -> { // cannot report safe if force unroll was used
                         logger.write(RESULT, "Incomplete loop unroll used: safe result is unreliable.\n")
-                        SafetyResult.unknown<EmptyWitness, EmptyCex>()
+                        //SafetyResult.unknown<EmptyWitness, EmptyCex>() // for comparison with BMC tools
+                        result
                     }
 
                     else -> result
