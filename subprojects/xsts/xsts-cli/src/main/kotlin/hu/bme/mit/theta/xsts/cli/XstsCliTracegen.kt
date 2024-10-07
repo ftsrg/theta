@@ -21,17 +21,16 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.google.common.base.Stopwatch
 import com.google.common.io.MoreFiles
 import com.google.common.io.RecursiveDeleteOption
-import hu.bme.mit.theta.analysis.Action
-import hu.bme.mit.theta.analysis.EmptyCex
-import hu.bme.mit.theta.analysis.Prec
-import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceSetSummary
+import hu.bme.mit.theta.analysis.*
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
 import hu.bme.mit.theta.analysis.utils.TraceSummaryVisualizer
 import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory
+import hu.bme.mit.theta.xsts.analysis.concretizer.TraceGenerationXstsTraceConcretizerUtil
 import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenBuilder
 import hu.bme.mit.theta.xsts.analysis.tracegeneration.XstsTracegenConfig
 import hu.bme.mit.theta.xsts.dsl.XstsDslManager
@@ -48,10 +47,11 @@ class XstsCliTracegen : XstsCliBaseCommand(
         help = "Directory the traces should be written into. If not specified, output is written into model-directory/traces."
     ).file(mustExist = true, canBeFile = false) // use the non-null value in traceDirPath!
 
-    private fun printResult(status: SafetyResult<out TraceSetSummary<out State, out Action>, EmptyCex>, totalTimeMs: Long, traceDirPath : File) {
-        logger.write(Logger.Level.RESULT, "Successfully generated ${status.asSafe().witness.sourceTraces.size} traces in ${totalTimeMs}ms")
+    private fun printResult(
+        status: TraceGenerationResult<out AbstractTraceSummary<out State, out Action>, out State, out Action>, totalTimeMs: Long, traceDirPath: File) {
+        logger.write(Logger.Level.RESULT, "Successfully generated ${status.getWitness().sourceTraces.size} traces in ${totalTimeMs}ms")
         // TODO print coverage (full or not)?
-        val graph = TraceSummaryVisualizer.visualize(status.asSafe().witness)
+        val graph = TraceSummaryVisualizer.visualize(status.getWitness())
         val visFile = traceDirPath.absolutePath + File.separator + inputOptions.model.name + ".trace-summary.png"
         GraphvizWriter.getInstance().writeFileAutoConvert(graph, visFile)
         logger.write(Logger.Level.VERBOSE, "Trace Summary was visualized in ${visFile}:")
@@ -94,6 +94,10 @@ class XstsCliTracegen : XstsCliBaseCommand(
         val result = checker.check()
 
         // TODO concretization, writing into file
+        val concretizedTraces = TraceGenerationXstsTraceConcretizerUtil.concretizeTraceSet(
+            result.summary, Z3LegacySolverFactory.getInstance(), xsts
+        )
+
         sw.stop()
         printResult(result, sw.elapsed(TimeUnit.MILLISECONDS), traceDirPath)
     }

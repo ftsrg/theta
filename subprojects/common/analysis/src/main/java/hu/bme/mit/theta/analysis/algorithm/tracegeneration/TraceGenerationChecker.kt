@@ -3,10 +3,12 @@ package hu.bme.mit.theta.analysis.algorithm.tracegeneration
 import com.google.common.base.Preconditions
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.*
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationSummaryBuilder
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Consumer
 import kotlin.collections.ArrayList
@@ -15,7 +17,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
     private val logger: Logger,
     private val abstractor: Abstractor<S, A, P>,
     private val getFullTraces : Boolean,
-) : Checker<TraceSetSummary<S, A>, P> {
+) : Checker<AbstractTraceSummary<S, A>, P> {
     private var traces: List<Trace<S, A>> = ArrayList()
 
     companion object {
@@ -28,7 +30,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         }
     }
 
-    override fun check(prec: P): SafetyResult<TraceSetSummary<S, A>, EmptyCex> {
+    override fun check(prec: P): TraceGenerationResult<AbstractTraceSummary<S, A>, S, A> {
         logger.write(Logger.Level.SUBSTEP, "Printing prec for trace generation...\n" + System.lineSeparator())
         logger.write(Logger.Level.SUBSTEP, prec.toString())
 
@@ -37,17 +39,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
 
         logger.write(Logger.Level.SUBSTEP, "ARG done, fetching traces...\n")
 
-        /*
-        logger.write(Logger.Level.SUBSTEP, "Printing ARG to file..." + System.lineSeparator())
-        val g: Graph = ArgVisualizer.getDefault().visualize(arg)
-        try {
-            FileWriter("arg.txt").use { fw ->
-                fw.write(GraphvizWriter.getInstance().writeString(g))
-            }
-        } catch (e: IOException) {
-            throw java.lang.RuntimeException(e)
-        }
-        */
+        // TODO remove xsts specific parts
 
         // bad node: XSTS specific thing, that the last state (last_env nodes) doubles up and the leaf is covered by the
         // last_env before which is superfluous.
@@ -67,22 +59,15 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
                 )
             }.toList())
 
-        // TODO does not work with full traces (see below - modification should be done to arg traces?)
         assert(!getFullTraces)
-        val metadataBuilder = TraceGenerationSummaryBuilder<S, A>()
-        argTraces.forEach { trace -> metadataBuilder.addTrace(trace) }
-        val traceSetSummary = metadataBuilder.build()
+        val summaryBuilder = TraceGenerationSummaryBuilder<S, A>()
+        argTraces.forEach { trace -> summaryBuilder.addTrace(trace) }
+        val traceSetSummary = summaryBuilder.build()
 
         // filter 2, optional, to get full traces even where there is coverage
         // why?: otherwise we stop at the leaf, which is covered in many traces by other nodes
-        traces = if (getFullTraces) {
-            // TODO might get stuck on an infinite loop!!
-            logger.write(Logger.Level.SUBSTEP, "Generating full traces....\n")
-            modifyToFullTraces(filteredEndNodes, argTraces)
-        } else {
-            ArrayList(argTraces.stream().map { obj: ArgTrace<S, A> -> obj.toTrace() }
+        traces = ArrayList(argTraces.stream().map { obj: ArgTrace<S, A> -> obj.toTrace() }
                 .toList())
-        }
 
         Preconditions.checkState(
             traces.isNotEmpty(),
@@ -90,8 +75,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         )
         logger.write(Logger.Level.SUBSTEP, "-- Trace generation done --\n")
 
-        // TODO return unsafe if coverage not full? (is that known here? not yet)
-        return SafetyResult.safe(traceSetSummary)
+        return TraceGenerationResult(traceSetSummary)
     }
 
     private fun filterEndNodes(
@@ -154,6 +138,7 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         return coveredEndNodes
     }
 
+/*
     private fun modifyToFullTraces(
         filteredEndNodes: List<ArgNode<S, A>>,
         argTraces: List<ArgTrace<S, A>>
@@ -220,15 +205,18 @@ class TraceGenerationChecker<S : State, A : Action, P : Prec?>(
         }
 
         // adding traces that did not have to be lengthened to the resulting state-action trace list
-        /*
+        */
+/*
         for (ArgTrace<S, A> argTrace : argTraces) {
             if(!crossCoveredEndNodes.contains(argTrace.node(argTrace.nodes().size()-1))) {
                 result.add(argTrace.toTrace());
             }
         }
-        */
+        *//*
+
         return result
     }
+*/
 
     // created for traces that are stored as a list (they are not concatenated yet)
     private fun getLastNode(traceList: List<AdvancedArgTrace<S, A>>): ArgNode<S, A> {

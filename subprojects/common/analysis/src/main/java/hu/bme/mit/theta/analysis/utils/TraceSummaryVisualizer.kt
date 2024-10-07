@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.utils
 
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceSetSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 import hu.bme.mit.theta.common.visualization.EdgeAttributes
 import hu.bme.mit.theta.common.visualization.Graph
 import hu.bme.mit.theta.common.visualization.LineStyle
@@ -39,14 +39,14 @@ object TraceSummaryVisualizer {
     // it does not use metadata, but visualizes a collection of traces
     // (ie, it is not completely the same as TraceSummaryVisualizer::visualize)
     fun <S: State, A: Action> visualize(
-        traceSetSummary: TraceSetSummary<S, A>,
+        abstractTraceSummary: AbstractTraceSummary<S, A>,
         traceSummaryId: String = "trace_summary",
         traceSummaryLabel: String = "Trace Summary",
     ) : Graph {
         val graph : Graph = Graph(traceSummaryId, traceSummaryLabel)
 
         // add nodes
-        val stateNodeSummaries = traceSetSummary.summaryNodes
+        val stateNodeSummaries = abstractTraceSummary.summaryNodes
         for(stateNodeSummary in stateNodeSummaries) {
             val nAttribute = NodeAttributes.builder()
                 .label(stateNodeSummary.getLabel())
@@ -56,7 +56,7 @@ object TraceSummaryVisualizer {
             graph.addNode(stateNodeSummary.nodeSummaryId.toString(), nAttribute)
         }
 
-        for(summaryEdge in traceSetSummary.summaryEdges) {
+        for(summaryEdge in abstractTraceSummary.summaryEdges) {
             val eAttribute = EdgeAttributes.builder()
                 .label(summaryEdge.getLabel())
                 .color(lineColor)

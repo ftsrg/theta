@@ -1,21 +1,17 @@
 package hu.bme.mit.theta.xsts.analysis.tracegeneration
 
 import hu.bme.mit.theta.analysis.Action
-import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.State
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceGenerationChecker
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.TraceSetSummary
-import hu.bme.mit.theta.analysis.expr.ExprAction
-import hu.bme.mit.theta.analysis.expr.ExprState
-import hu.bme.mit.theta.analysis.expr.StmtAction
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.TraceGenerationResult
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
 
 class XstsTracegenConfig<S : State, A : Action, P : Prec?> private constructor(
     private val checker: TraceGenerationChecker<S, A, P>,
     private val prec: P
 ) {
-    fun check(): SafetyResult<TraceSetSummary<S, A>, EmptyCex> {
+    fun check(): TraceGenerationResult<AbstractTraceSummary<S, A>, S, A> {
         return checker.check(prec)
     }
 

@@ -1,4 +1,20 @@
-package hu.bme.mit.theta.analysis.algorithm.tracegeneration
+/*
+ *  Copyright 2024 Budapest University of Technology and Economics
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Action
@@ -7,16 +23,20 @@ import hu.bme.mit.theta.analysis.algorithm.Witness
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace
-import hu.bme.mit.theta.analysis.utils.TraceSummaryVisualizer
 
 class TraceGenerationSummaryBuilder<S : State, A : Action> {
     val argTraces: MutableList<ArgTrace<S, A>> = mutableListOf()
 
     fun addTrace(trace: ArgTrace<S, A>) {
+        if(argTraces.isNotEmpty()) {
+            checkState(argTraces.get(0).node(0)==trace.node(0), "All traces in summary must start with the same node!")
+        }
         argTraces.add(trace)
     }
 
-    fun build(): TraceSetSummary<S, A> {
+    fun build(): AbstractTraceSummary<S, A> {
+        checkState(argTraces.isNotEmpty(), "Summary must have at least one trace in it!")
+
         val argNodes: Set<ArgNode<S, A>> = argTraces.map { trace -> trace.nodes() }.flatten().toSet()
 
         // grouping nodes covering each other for state summaries
@@ -49,11 +69,14 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
             }
         }
 
-        // create state summaries
+        // create summary nodes
         val summaryNodes = mutableSetOf<SummaryNode<S, A>>()
         for (nodeGroup in nodeGroups) {
             summaryNodes.add(SummaryNode.create(nodeGroup))
         }
+        val initSummaryNodes = summaryNodes.filter { summaryNode -> argTraces.get(0).node(0) in summaryNode.argNodes }
+        checkState(initSummaryNodes.size==1, "Initial arg node must be in exactly 1 summary node!")
+        val initNode = initSummaryNodes.get(0)
 
         // save edges as well, so we can easily connect edge sources and targets
         val summaryEdges = mutableSetOf<SummaryEdge<S, A>>()
@@ -74,7 +97,7 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
                 }
             }
         }
-        return TraceSetSummary(argTraces, summaryNodes, summaryEdges)
+        return AbstractTraceSummary(argTraces, summaryNodes, summaryEdges, initNode)
     }
 }
 
@@ -83,10 +106,11 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
  * are merged into a single node (which we thus call a summary node).
  * In some sense this class represents a wrapper level over a set of arg traces.
  */
-data class TraceSetSummary<S : State, A : Action> (
+data class AbstractTraceSummary<S : State, A : Action> (
     val sourceTraces : Collection<ArgTrace<S, A>>,
     val summaryNodes : Collection<SummaryNode<S, A>>,
-    val summaryEdges : Collection<SummaryEdge<S, A>>
+    val summaryEdges : Collection<SummaryEdge<S, A>>,
+    val initNode : SummaryNode<S, A>
     ) : Witness {
 }
 
@@ -99,15 +123,34 @@ class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: 
 
         fun <S : State, A : Action> create(argNodes: MutableSet<ArgNode<S, A>>) : SummaryNode<S, A> {
             // all of the nodes should be in some kind of coverage relationship with each other
-            for(node in argNodes) {
-                for (node2 in argNodes) {
-                    checkState(
-                        (node == node2) ||
-                        (node.coveringNode.isPresent() && node.coveringNode.get() == node2) ||
-                        (node.coveredNodes.anyMatch { n -> n==node2 })
-                    )
+            var leastOverApproximatedNode : ArgNode<S, A>
+            var mostOverApproximatedNode : ArgNode<S, A>
+
+            val notCoveringNodes = argNodes.filter { argNode -> argNode.coveredNodes.count() == 0L }
+            for(node in notCoveringNodes) {
+                for(node2 in notCoveringNodes) {
+                    TODO() // see comment below - we want to find least over-approximated node
                 }
             }
+
+            /*
+            public boolean mayCover(final ArgNode<S, A> node) {
+                if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
+                    return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
+                } else {
+                    return false;
+                }
+            }
+
+            public boolean mayCoverStandard(final ArgNode<S, A> node) {
+                if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
+                    return !(this.equals(node) || this.isSubsumed()); // no need to check ancestors in CEGAR
+                } else {
+                    return false;
+                }
+            }
+
+            * */
 
             return SummaryNode(counter++, argNodes)
         }
@@ -121,6 +164,10 @@ class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: 
         return argNodes
             .filter { node -> node.inEdge.isPresent }
             .map { node -> node.inEdge.get() }.toSet()
+    }
+
+    fun getStates() : Set<S> {
+        return argNodes.map { argNode -> argNode.state }.toSet()
     }
 
     fun getLabel() : String {
