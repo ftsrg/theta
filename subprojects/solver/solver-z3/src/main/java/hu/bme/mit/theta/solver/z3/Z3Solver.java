@@ -243,8 +243,11 @@ class Z3Solver implements UCSolver, Solver {
     public ImmutableMap<String, String> getStatistics() {
         Statistics stats = z3Solver.getStatistics();
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        Set<String> keys = new HashSet<>();
         for (String key : stats.getKeys()) {
+            if (keys.contains(key)) continue;
             builder.put(key, stats.get(key).getValueString());
+            keys.add(key);
         }
         return builder.buildOrThrow();
     }
