@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgTrace;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * ExprActions) using an ExprTraceChecker and a PrecRefiner.
  */
 public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
-        implements Refiner<S, A, P> {
+        implements ArgRefiner<S, A, P> {
     protected final ExprTraceChecker<R> exprTraceChecker;
     protected final PrecRefiner<S, A, P, R> precRefiner;
     protected final PruneStrategy pruneStrategy;
@@ -78,7 +78,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
     }
 
     @Override
-    public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
+    public RefinerResult<S, A, P, Trace<S, A>> refine(final ARG<S, A> arg, final P prec) {
         checkNotNull(arg);
         checkNotNull(prec);
         assert !arg.isSafe() : "ARG must be unsafe";

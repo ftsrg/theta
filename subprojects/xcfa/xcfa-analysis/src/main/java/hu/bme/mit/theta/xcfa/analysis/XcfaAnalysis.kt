@@ -19,7 +19,7 @@ package hu.bme.mit.theta.xcfa.analysis
 import hu.bme.mit.theta.analysis.*
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.expl.ExplInitFunc
 import hu.bme.mit.theta.analysis.expl.ExplPrec
@@ -221,8 +221,8 @@ fun <S : XcfaState<out PtrState<out ExprState>>, P : XcfaPrec<out Prec>> getXcfa
     logger: Logger,
     lts: LTS<XcfaState<out PtrState<out ExprState>>, XcfaAction>,
     errorDetection: ErrorDetection
-): Abstractor<out XcfaState<out PtrState<out ExprState>>, XcfaAction, out XcfaPrec<out Prec>> =
-    XcfaAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
+): ArgAbstractor<out XcfaState<out PtrState<out ExprState>>, XcfaAction, out XcfaPrec<out Prec>> =
+    XcfaArgAbstractor.builder(getXcfaArgBuilder(analysis, lts, errorDetection))
         .waitlist(waitlist as Waitlist<ArgNode<S, XcfaAction>>) // TODO: can we do this nicely?
         .stopCriterion(stopCriterion as StopCriterion<S, XcfaAction>).logger(logger)
         .projection {

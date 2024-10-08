@@ -24,9 +24,9 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -110,7 +110,7 @@ public class StsExplTest {
         final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts,
                 analysis, target);
 
-        final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(
+        final ArgAbstractor<ExplState, StsAction, ExplPrec> abstractor = BasicArgAbstractor.builder(
                         argBuilder)
                 .waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs())).logger(logger).build();
 
@@ -122,7 +122,7 @@ public class StsExplTest {
                 .create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()),
                         PruneStrategy.LAZY, logger);
 
-        final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec> checker = CegarChecker.create(
+        final SafetyChecker<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>, ExplPrec> checker = ArgCegarChecker.create(
                 abstractor, refiner, logger);
 
         final SafetyResult<ARG<ExplState, StsAction>, Trace<ExplState, StsAction>> safetyStatus = checker.check(prec);

@@ -44,9 +44,9 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
@@ -104,7 +104,7 @@ public class StsPredTest {
         final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts,
                 analysis, target);
 
-        final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(
+        final ArgAbstractor<PredState, StsAction, PredPrec> abstractor = BasicArgAbstractor.builder(
                         argBuilder).logger(logger)
                 .build();
 
@@ -117,7 +117,7 @@ public class StsPredTest {
                         JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
                         PruneStrategy.LAZY, logger);
 
-        final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec> checker = CegarChecker.create(
+        final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec> checker = ArgCegarChecker.create(
                 abstractor, refiner, logger);
 
         final SafetyResult<ARG<PredState, StsAction>, Trace<PredState, StsAction>> safetyStatus = checker.check(prec);
