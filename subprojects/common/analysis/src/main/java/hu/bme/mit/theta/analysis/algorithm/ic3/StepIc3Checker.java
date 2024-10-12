@@ -14,7 +14,7 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 import java.util.*;
 
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
 
@@ -139,14 +139,38 @@ public class StepIc3Checker{
         return false;
     }
 
-    public Boolean tryBlock(ProofObligation mainProofObligation) {
+    LinkedList<ProofObligation> tryBlock(ProofObligation mainProofObligation) {
         final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<ProofObligation>();
         proofObligationsQueue.add(mainProofObligation);
         while (!proofObligationsQueue.isEmpty()) {
             final ProofObligation proofObligation = proofObligationsQueue.getLast();
 
             if (proofObligation.getTime() == 0) {
-                return false;
+                return proofObligationsQueue;
+//                var stateList= new ArrayList<S>();
+//                var actionList = new ArrayList<A>();
+//                Valuation lastValuation = null;
+//                while(!proofObligationsQueue.isEmpty()) {
+//                    final ProofObligation currentProofObligation = proofObligationsQueue.getLast();
+//                    proofObligationsQueue.removeLast();
+////                    final ProofObligation currentProofObligation = proofObligationsQueue.getFirst();
+////                    proofObligationsQueue.removeFirst();
+//                    MutableValuation mutableValuation = new MutableValuation();
+//                    for (Expr<BoolType> ex : currentProofObligation.getExpressions()) {
+//
+//                        RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
+//                        LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
+//                        mutableValuation.put(refExpr.getDecl(), litExpr);
+//
+//                    }
+//                    stateList.add(valToState.apply(mutableValuation));
+//                    if (lastValuation != null) {
+//                        actionList.add(biValToAction.apply(lastValuation,mutableValuation));
+//                    }
+//                    lastValuation=mutableValuation;
+//
+//                }
+//                return Trace.of(stateList,actionList);
             }
 
             final Collection<Expr<BoolType>> b;
@@ -155,11 +179,11 @@ public class StepIc3Checker{
             try (var wpp = new WithPushPop(solver)) {
 
                 frames.get(proofObligation.getTime() - 1).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                if (notBOpt) {
-                    solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())), 0));
+                if(notBOpt){
+                    solver.track(PathUtils.unfold(Not(And(proofObligation.getExpressions())),0));
                 }
-                if (proofObligation.getTime() > 2 && formerFramesOpt) { //lehet, hogy 1, vagy 2??
-                    solver.track(PathUtils.unfold(Not(And(frames.get(proofObligation.getTime() - 2).getExprs())), 0)); //2 vel korábbi frame-ban levő dolgok
+                if (proofObligation.getTime() > 2 && formerFramesOpt){ //lehet, hogy 1, vagy 2??
+                    solver.track(PathUtils.unfold(Not(And(frames.get(proofObligation.getTime() - 2).getExprs())),0)); //2 vel korábbi frame-ban levő dolgok
                 }
 
                 getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
@@ -168,12 +192,12 @@ public class StepIc3Checker{
                 if (solver.check().isSat()) {
                     final Valuation model = solver.getModel();
 
-                    if (filterOpt) {
+                    if(filterOpt){
                         final MutableValuation filteredModel = new MutableValuation();
                         monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(0)).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
                         monolithicExpr.getVars().stream().map(varDecl -> varDecl.getConstDecl(monolithicExpr.getTransOffsetIndex().get(varDecl))).filter(model.toMap()::containsKey).forEach(decl -> filteredModel.put(decl, model.eval(decl).get()));
                         b = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(filteredModel, 0).toExpr(), 0));
-                    } else {
+                    }else{
                         b = getConjuncts(PathUtils.foldin(PathUtils.extractValuation(model, 0).toExpr(), 0));
                     }
 
@@ -187,7 +211,7 @@ public class StepIc3Checker{
 
                 final Collection<Expr<BoolType>> newCore = new ArrayList<Expr<BoolType>>();
                 newCore.addAll(proofObligation.getExpressions());
-                if (unSatOpt) {
+                if(unSatOpt){
                     for (Expr<BoolType> i : proofObligation.getExpressions()) {
                         if (!unSatCore.contains(PathUtils.unfold(i, monolithicExpr.getTransOffsetIndex()))) {
                             newCore.remove(i);
@@ -206,7 +230,7 @@ public class StepIc3Checker{
                     }
                 }
 
-                for (int i = 1; i <= proofObligation.getTime(); ++i) {
+                for(int i = 1; i<=proofObligation.getTime(); ++i){
                     frames.get(i).refine(SmartBoolExprs.Not(And(newCore))); //mindegyik framehez hozzáadjuk a formulát
                 }
                 proofObligationsQueue.removeLast();
@@ -214,7 +238,8 @@ public class StepIc3Checker{
                 proofObligationsQueue.add(new ProofObligation(new HashSet<>(b), proofObligation.getTime() - 1));
             }
         }
-        return true;
+        return null;
+
     }
 }
 

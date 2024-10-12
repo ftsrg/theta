@@ -43,12 +43,26 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
     private final boolean notBOpt;
     private final boolean propagateOpt;
     private final boolean filterOpt;
+    private int currentFrameNumber;
 
-    public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction) {
-        this(monolithicExpr, solverFactory, valToState, biValToAction, true, true, true, true, true);
+    private final boolean forwardTrace;
+
+    public Set<Expr<BoolType>> getcurrentFrame() {
+        if(currentFrameNumber == 0){
+            return frames.get(currentFrameNumber).getExprs();
+        }
+        return frames.get(currentFrameNumber-1).getExprs();
     }
 
-    public Ic3Checker(MonolithicExpr monolithicExpr, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction, boolean formerFramesOpt, boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt) {
+    public int getCurrentFrameNumber() {
+        return currentFrameNumber;
+    }
+
+    public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction) {
+        this(monolithicExpr, forwardTrace,solverFactory, valToState, biValToAction, true, true, true, true, true);
+    }
+
+    public Ic3Checker(MonolithicExpr monolithicExpr, boolean forwardTrace, SolverFactory solverFactory, Function<Valuation, S> valToState, BiFunction<Valuation, Valuation, A> biValToAction, boolean formerFramesOpt, boolean unSatOpt, boolean notBOpt, boolean propagateOpt, boolean filterOpt) {
         this.monolithicExpr = monolithicExpr;
         this.valToState = valToState;
         this.biValToAction = biValToAction;
@@ -57,8 +71,12 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
         this.notBOpt = notBOpt;
         this.propagateOpt = propagateOpt;
         this.filterOpt = filterOpt;
+        this.forwardTrace = forwardTrace;
         frames = new ArrayList<>();
         solver = solverFactory.createUCSolver();
+        frames.add(new Frame(null, solver, monolithicExpr));
+        frames.get(0).refine(monolithicExpr.getInitExpr());
+        currentFrameNumber = 0;
     }
 
 
@@ -66,81 +84,69 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
     @Override
     public SafetyResult<EmptyWitness, Trace<S, A>> check(UnitPrec prec) {
         //check if init violates prop
-        try (var wpp = new WithPushPop(solver)) {
-            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
-            solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0));
-            if (solver.check().isSat()) {
-                return SafetyResult.unsafe(Trace.of(List.of(valToState.apply(solver.getModel())), List.of()), EmptyWitness.getInstance());
-               // return null; //todo mutablevaluation itt is létrehoz
-            }
+        var firstTrace = checkFirst();
+       if (firstTrace != null) {
+           return SafetyResult.unsafe(firstTrace, EmptyWitness.getInstance());
         }
-
         //create 0. frame
-        frames.add(new Frame(null, solver, monolithicExpr));
-        frames.get(0).refine(monolithicExpr.getInitExpr());
 
-        frames.add(new Frame(frames.get(0), solver, monolithicExpr));
-        int i = 1;
+
+        //frames.add(new Frame(frames.get(0), solver, monolithicExpr));
+
         while (true) {
 
-            final Frame currentFrame = frames.get(i);
-            final Collection<Expr<BoolType>> counterExample = currentFrame.check(Not(monolithicExpr.getPropExpr()));
+            final Frame currentFrame = frames.get(currentFrameNumber);
+            final Collection<Expr<BoolType>> counterExample =  checkCurrentFrame(Not(monolithicExpr.getPropExpr()));
+            //final Collection<Expr<BoolType>> counterExample = currentFrame.check(Not(monolithicExpr.getPropExpr()));
 
 
             if (counterExample != null) {
-                Trace<S, A> trace = tryBlock(new ProofObligation(new HashSet<>(counterExample), i));
-                if (trace != null) {
+                //Trace<S, A> trace = tryBlock(new ProofObligation(new HashSet<>(counterExample), currentFrameNumber));
+                var proofObligationLinkedList = tryBlock(new ProofObligation(new HashSet<>(counterExample), currentFrameNumber));
+                if (proofObligationLinkedList != null) {
+                    var trace = traceMaker(new LinkedList<ProofObligation>(),proofObligationLinkedList);
                     return SafetyResult.unsafe(trace, EmptyWitness.getInstance());
                 }
             } else {
-                frames.add(new Frame(frames.get(i), solver, monolithicExpr));
-                i++;
-                if(propagateOpt){
-                    for(int j=1;j<i;j++){
-                        for(var c : frames.get(j).getExprs()){
-                            try (var wpp = new WithPushPop(solver)) {
-                                frames.get(j).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                                getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
-                                solver.track(PathUtils.unfold(Not(c), monolithicExpr.getTransOffsetIndex()));
-                                if(solver.check().isUnsat()){
-                                    frames.get(j+1).refine(c);
-                                }
-                            }
-                        }
-                        if(frames.get(j+1).equalsParent()){
-                            return SafetyResult.safe(EmptyWitness.getInstance());
-                        }
-                    }
-                } else if(frames.get(i-1).equalsParent()){
+                if(propagate()){
                     return SafetyResult.safe(EmptyWitness.getInstance());
                 }
-
             }
         }
     }
 
-    Trace<S, A> tryBlock(ProofObligation mainProofObligation) {
+    LinkedList<ProofObligation> tryBlock(ProofObligation mainProofObligation) {
         final LinkedList<ProofObligation> proofObligationsQueue = new LinkedList<ProofObligation>();
         proofObligationsQueue.add(mainProofObligation);
         while (!proofObligationsQueue.isEmpty()) {
             final ProofObligation proofObligation = proofObligationsQueue.getLast();
 
             if (proofObligation.getTime() == 0) {
-                var stateList= new ArrayList<S>();
-                var actionList = new ArrayList<A>();
-
-                MutableValuation mutableValuation=new MutableValuation();
-                for(Expr<BoolType> ex : proofObligation.getExpressions()){
-
-                    RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
-                    LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
-                    mutableValuation.put(refExpr.getDecl(), litExpr);
-
-                }
-
-                stateList.add(valToState.apply(mutableValuation));
-
-                return Trace.of(stateList,actionList);
+                return proofObligationsQueue;
+//                var stateList= new ArrayList<S>();
+//                var actionList = new ArrayList<A>();
+//                Valuation lastValuation = null;
+//                while(!proofObligationsQueue.isEmpty()) {
+//                    final ProofObligation currentProofObligation = proofObligationsQueue.getLast();
+//                    proofObligationsQueue.removeLast();
+////                    final ProofObligation currentProofObligation = proofObligationsQueue.getFirst();
+////                    proofObligationsQueue.removeFirst();
+//                    MutableValuation mutableValuation = new MutableValuation();
+//                    for (Expr<BoolType> ex : currentProofObligation.getExpressions()) {
+//
+//                        RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
+//                        LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
+//                        mutableValuation.put(refExpr.getDecl(), litExpr);
+//
+//                    }
+//                    stateList.add(valToState.apply(mutableValuation));
+//                    if (lastValuation != null) {
+//                        actionList.add(biValToAction.apply(lastValuation,mutableValuation));
+//                    }
+//                    lastValuation=mutableValuation;
+//
+//                }
+//                return Trace.of(stateList,actionList);
             }
 
             final Collection<Expr<BoolType>> b;
@@ -212,26 +218,97 @@ public class Ic3Checker<S extends ExprState, A extends ExprAction> implements Sa
 
     }
 
-    /*private boolean tryblock(Expr<BoolType> b,int n){
-        if(n<=0){
-            return false;
-        }
-        Solver solver = F.get(n-1);
-
-        final SolverStatus status;
-        final boolean couldBlock;
+    public Trace<S, A> checkFirst(){
         try (var wpp = new WithPushPop(solver)) {
-            solver.add(PathUtils.unfold(sts.getTrans(), n - 1));
-            solver.add(PathUtils.unfold(b, n));
-            status = solver.check();
-            couldBlock = status.isUnsat() || tryblock(solver.getModel().toExpr(), n - 1);
+            solver.track(PathUtils.unfold(monolithicExpr.getInitExpr(), 0));
+            solver.track(PathUtils.unfold(Not(monolithicExpr.getPropExpr()), 0));
+            if (solver.check().isSat()) {
+                return Trace.of(List.of(valToState.apply(solver.getModel())), List.of());
+            }else{
+                return null;
+            }
         }
+    }
 
-        if(couldBlock){
-            F.get(n).add(Not(b));
+    public Collection<Expr<BoolType>> checkCurrentFrame(Expr<BoolType> target){
+        return frames.get(currentFrameNumber).check(target);
+    }
+
+    public boolean propagate(){
+        frames.add(new Frame(frames.get(currentFrameNumber), solver, monolithicExpr));
+        currentFrameNumber++;
+        //frames.get(currentFrameNumber).refine(prop); //todo korábbiakhot hozzáadni esetleg?
+        if(propagateOpt){
+            for(int j=1;j<currentFrameNumber;j++){
+                for(var c : frames.get(j).getExprs()){
+                    try (var wpp = new WithPushPop(solver)) {
+                        frames.get(j).getExprs().forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                        getConjuncts(monolithicExpr.getTransExpr()).forEach(ex -> solver.track(PathUtils.unfold(ex, 0)));
+                        solver.track(PathUtils.unfold(Not(c), monolithicExpr.getTransOffsetIndex()));
+                        if(solver.check().isUnsat()){
+                            frames.get(j+1).refine(c);
+                        }
+                    }
+                }
+                if(frames.get(j+1).equalsParent()){
+                    return true;
+                }
+            }
+        } else if(frames.get(currentFrameNumber-1).equalsParent()){
             return true;
-        } else {
-            return false;
         }
-    }*/
+        return false;
+    }
+
+    public Trace<S, A> traceMaker(LinkedList<ProofObligation> backwardProofObligations, LinkedList<ProofObligation> forwardProofObligations){
+        var stateList= new ArrayList<S>();
+        var actionList = new ArrayList<A>();
+        Valuation lastValuation = null;
+        while(!forwardProofObligations.isEmpty()) {
+            final ProofObligation currentProofObligation;
+            if(forwardTrace){
+                currentProofObligation = forwardProofObligations.getLast();
+                forwardProofObligations.removeLast();
+            }else{
+                currentProofObligation = forwardProofObligations.getFirst();
+                forwardProofObligations.removeFirst();
+            }
+
+
+            MutableValuation mutableValuation = new MutableValuation();
+            for (Expr<BoolType> ex : currentProofObligation.getExpressions()) {
+
+                RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
+                LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
+                mutableValuation.put(refExpr.getDecl(), litExpr);
+
+            }
+            stateList.add(valToState.apply(mutableValuation));
+            if (lastValuation != null) {
+                actionList.add(biValToAction.apply(lastValuation,mutableValuation));
+            }
+            lastValuation=mutableValuation;
+
+        }
+//        backwardProofObligations.removeFirst();
+//        while(!backwardProofObligations.isEmpty()) {
+//            ProofObligation currentProofObligation = backwardProofObligations.getFirst();
+//            backwardProofObligations.removeFirst();
+//            MutableValuation mutableValuation = new MutableValuation();
+//            for (Expr<BoolType> ex : currentProofObligation.getExpressions()) {
+//
+//                RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
+//                LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
+//                mutableValuation.put(refExpr.getDecl(), litExpr);
+//
+//            }
+//            stateList.add(valToState.apply(mutableValuation));
+//            if (lastValuation != null) {
+//                actionList.add(biValToAction.apply(lastValuation,mutableValuation));
+//            }
+//            lastValuation=mutableValuation;
+//
+//        }
+        return Trace.of(stateList,actionList);
+    }
 }

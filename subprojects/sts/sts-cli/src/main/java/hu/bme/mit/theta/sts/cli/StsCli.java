@@ -252,6 +252,7 @@ public class StsCli {
                 }else if(direction.equals(Direction.Reverse)){
                     checker = new Ic3Checker<>(
                             ReversedMonolithicExprKt.createReversed(monolithicExpr),
+                            false,
                             Z3LegacySolverFactory.getInstance(),
                             valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
                             (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),
@@ -259,6 +260,7 @@ public class StsCli {
                 }else{
                     checker = new Ic3Checker<>(
                             monolithicExpr,
+                            true,
                             Z3LegacySolverFactory.getInstance(),
                             valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
                             (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2),

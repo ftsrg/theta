@@ -21,20 +21,20 @@ import java.util.function.Function;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
-public class MonolithicExprCegarChecker<W extends Witness, S extends ExprState, A extends ExprAction, P extends Prec> implements SafetyChecker<W, Trace<S, A>, PredPrec> {
+public class MonolithicExprCegarChecker<W extends Witness, P extends Prec> implements SafetyChecker<W, Trace<? extends ExprState, ? extends ExprAction>, PredPrec> {
     private final MonolithicExpr model;
-    private final Function<MonolithicExpr, SafetyChecker<W, Trace<S, A>, P>> checkerFactory;
+    private final Function<MonolithicExpr, SafetyChecker<W, Trace<? extends ExprState, ? extends ExprAction>, P>> checkerFactory;
 
     private final SolverFactory solverFactory;
 
     private final Logger logger;
-    public MonolithicExprCegarChecker(MonolithicExpr model, Function<MonolithicExpr, SafetyChecker<W, Trace<S, A>, P>> checkerFactory, Logger logger, SolverFactory solverFactory) {
+    public MonolithicExprCegarChecker(MonolithicExpr model, Function<MonolithicExpr, SafetyChecker<W, Trace<? extends ExprState, ? extends ExprAction>, P>> checkerFactory, Logger logger, SolverFactory solverFactory) {
         this.model=model;
         this.checkerFactory=checkerFactory;
         this.logger=logger;
         this.solverFactory = solverFactory;
     }
-    public SafetyResult<W ,Trace<S, A>> check(PredPrec initPrec){
+    public SafetyResult<W ,Trace<? extends ExprState, ? extends ExprAction>> check(PredPrec initPrec){
         var predPrec = initPrec == null ? PredPrec.of(List.of(model.getInitExpr(), model.getPropExpr())) : initPrec;
 
         while(true){
@@ -47,7 +47,7 @@ public class MonolithicExprCegarChecker<W extends Witness, S extends ExprState, 
                 return SafetyResult.safe(result.getWitness());
             } else {
                 Preconditions.checkState(result.isUnsafe());
-                final Trace<S, A> trace = result.asUnsafe().getCex();
+                final Trace<? extends ExprState, ? extends ExprAction> trace = result.asUnsafe().getCex();
 
                 final ExprTraceChecker<ItpRefutation> exprTraceFwBinItpChecker = ExprTraceFwBinItpChecker.create(model.getInitExpr(), Not(model.getPropExpr()), solverFactory.createItpSolver());
 

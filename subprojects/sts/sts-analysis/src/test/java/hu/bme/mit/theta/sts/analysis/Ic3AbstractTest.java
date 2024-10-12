@@ -18,7 +18,10 @@ package hu.bme.mit.theta.sts.analysis;
 
 
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
+import hu.bme.mit.theta.analysis.algorithm.bounded.ReversedMonolithicExprKt;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -65,18 +68,18 @@ public class Ic3AbstractTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
 //                {"src/test/resources/hw1_false.aag", PRED_CART, SEQ_ITP, false},
-//
+////
 //                {"src/test/resources/hw2_true.aag", PRED_CART, SEQ_ITP, true},
 //
 //                {"src/test/resources/boolean1.system", PRED_CART, SEQ_ITP, false},
-//
-//                {"src/test/resources/boolean2.system", PRED_CART, SEQ_ITP, false},
-//
-//                {"src/test/resources/counter.system", PRED_CART, SEQ_ITP, true},
-//
-//                {"src/test/resources/counter_bad.system", PRED_CART, SEQ_ITP, false},
-//
-//                {"src/test/resources/counter_parametric.system", PRED_CART, SEQ_ITP, true},
+
+                {"src/test/resources/boolean2.system", PRED_CART, SEQ_ITP, false},
+
+                {"src/test/resources/counter.system", PRED_CART, SEQ_ITP, true},
+
+                {"src/test/resources/counter_bad.system", PRED_CART, SEQ_ITP, false},
+
+                {"src/test/resources/counter_parametric.system", PRED_CART, SEQ_ITP, true},
 
                 {"src/test/resources/loop.system", EXPL, SEQ_ITP, true},
 
@@ -107,11 +110,14 @@ public class Ic3AbstractTest {
             sts = Utils.singleElementOf(spec.getAllSts());
         }
         final MonolithicExpr monolithicExpr = StsToMonolithicExprKt.toMonolithicExpr(sts);
+        MonolithicExpr reverseMonolithicExpr = ReversedMonolithicExprKt.createReversed(monolithicExpr);
+
         var checker = new MonolithicExprCegarChecker<>(monolithicExpr,
                 mE -> new Ic3Checker<>(
                         mE,
+                        true,
                         Z3LegacySolverFactory.getInstance(),
-                        valuation -> StsToMonolithicExprKt.valToState(sts, valuation),
+                        mE::getValToState,
                         (Valuation v1, Valuation v2) -> StsToMonolithicExprKt.valToAction(sts, v1, v2)
                 ),
                 new ConsoleLogger(Logger.Level.INFO),

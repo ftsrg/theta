@@ -16,12 +16,19 @@
 
 package hu.bme.mit.theta.analysis.algorithm.bounded
 
+import hu.bme.mit.theta.analysis.expl.ExplState
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.analysis.pred.PredPrec
+import hu.bme.mit.theta.analysis.pred.PredState
+import hu.bme.mit.theta.core.decl.Decl
 import hu.bme.mit.theta.core.decl.Decls
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.anytype.Exprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.True
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.type.booltype.IffExpr
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And
@@ -30,6 +37,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils
 import hu.bme.mit.theta.core.utils.ExprUtils.getVars
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import java.util.HashMap
 
 data class MonolithicExpr @JvmOverloads constructor(
     val initExpr: Expr<BoolType>,
@@ -37,5 +45,16 @@ data class MonolithicExpr @JvmOverloads constructor(
     val propExpr: Expr<BoolType>,
     val transOffsetIndex: VarIndexing = VarIndexingFactory.indexing(1),
     val initOffsetIndex: VarIndexing = VarIndexingFactory.indexing(0),
-    val vars: Collection<VarDecl<*>> = getVars(initExpr) union getVars(transExpr) union getVars(propExpr)
-)
+    val vars: Collection<VarDecl<*>> = getVars(initExpr) union getVars(transExpr) union getVars(propExpr),
+    val valToState: (Valuation) -> ExprState = ExplState::of
+) {
+//    fun getAction(): ExprAction = MonolithicExprAction()
+//
+//    inner class MonolithicExprAction: ExprAction {
+//
+//        override fun toExpr(): Expr<BoolType> = transExpr
+//
+//        override fun nextIndexing(): VarIndexing = transOffsetIndex
+//
+//    }
+}

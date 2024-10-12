@@ -146,6 +146,7 @@ public class StsTest {
         var checker = new MonolithicExprCegarChecker<>(monolithicExpr,
                 mE -> new Ic3Checker<>(
                         mE,
+                        true,
                         Z3LegacySolverFactory.getInstance(),
                         ExplState::of,
                         (Valuation v1, Valuation v2) -> new StsAction(new STS(mE.getInitExpr(), mE.getPropExpr(), mE.getPropExpr()))

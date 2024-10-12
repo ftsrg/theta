@@ -9,13 +9,19 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.ReversedMonolithicExprKt;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprReverser;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -73,15 +79,26 @@ public class ConnectedIc3Checker<S extends ExprState, A extends ExprAction> impl
             }
         }
 
-        StepIc3Checker forward = new StepIc3Checker(monolithicExpr, solverFactory,formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
-
+        //StepIc3Checker forward = new StepIc3Checker(monolithicExpr, solverFactory,formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
+        Ic3Checker forward = new Ic3Checker<>(
+                monolithicExpr,
+                true,
+                Z3LegacySolverFactory.getInstance(),
+                valToState,
+                biValToAction);
         MonolithicExpr reverseMonolithicExpr = ReversedMonolithicExprKt.createReversed(monolithicExpr);
 
-        StepIc3Checker backward = new StepIc3Checker(reverseMonolithicExpr, solverFactory,formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
+        Ic3Checker backward = new Ic3Checker<>(
+                reverseMonolithicExpr,
+                false,
+                Z3LegacySolverFactory.getInstance(),
+                valToState,
+                biValToAction);
+        //StepIc3Checker backward = new StepIc3Checker(reverseMonolithicExpr, solverFactory,formerFramesOpt,unSatOpt,notBOpt,propagateOpt,filterOpt);
 
-        if(!forward.checkFirst() || !backward.checkFirst()){
-            return SafetyResult.unsafe(null, EmptyWitness.getInstance());
-        }
+//        if(!forward.checkFirst() || !backward.checkFirst()){
+//            return SafetyResult.unsafe(null, EmptyWitness.getInstance());
+//        } todo add checkFirst
         while (true) {
            var counterExample = forward.checkCurrentFrame(And(backward.getcurrentFrame()));
            if(counterExample==null){
@@ -89,10 +106,11 @@ public class ConnectedIc3Checker<S extends ExprState, A extends ExprAction> impl
                    return SafetyResult.safe(EmptyWitness.getInstance());
                }
            }else{
-               Boolean isBlocked = forward.tryBlock(new ProofObligation(new HashSet<>(counterExample), forward.getCurrentFrameNumber()));
-               if(!isBlocked){
-                   if(!backward.tryBlock(new ProofObligation(new HashSet<>(counterExample), backward.getCurrentFrameNumber()))){
-                       return SafetyResult.unsafe(null, EmptyWitness.getInstance());
+               var forwardProofObligations = forward.tryBlock(new ProofObligation(new HashSet<>(counterExample), forward.getCurrentFrameNumber()));
+               if(forwardProofObligations != null){
+                   var backwardProofObligations = backward.tryBlock(new ProofObligation(new HashSet<>(counterExample), backward.getCurrentFrameNumber()));
+                   if(null != backwardProofObligations){
+                       return SafetyResult.unsafe(traceMaker(backwardProofObligations,forwardProofObligations), EmptyWitness.getInstance());
                    }
                }
            }
@@ -102,44 +120,61 @@ public class ConnectedIc3Checker<S extends ExprState, A extends ExprAction> impl
                    return SafetyResult.safe(EmptyWitness.getInstance());
                }
            }else{
-               Boolean isBlocked = backward.tryBlock(new ProofObligation(new HashSet<>(counterExample), backward.getCurrentFrameNumber()));
-               if(!isBlocked){
-                   if(!forward.tryBlock(new ProofObligation(new HashSet<>(counterExample), forward.getCurrentFrameNumber()))){
-                       return SafetyResult.unsafe(null, EmptyWitness.getInstance());
+               var backwardProofObligations = backward.tryBlock(new ProofObligation(new HashSet<>(counterExample), backward.getCurrentFrameNumber()));
+               if(backwardProofObligations != null){
+                   var forwardProofobligations= forward.tryBlock(new ProofObligation(new HashSet<>(counterExample), forward.getCurrentFrameNumber()));
+                   if(null != forwardProofobligations){
+                       return SafetyResult.unsafe(traceMaker(backwardProofObligations,forwardProofobligations), EmptyWitness.getInstance());
                    }
                }
            }
 
-
-//            if(forward.getCounterExample() == null){
-//                forward.setProp(Not(And(backward.getcurrentFrame())));
-//            }
-
-//            Set<Expr<BoolType>> counterExample = forward.step(prec);
-//            if(counterExample != null){
-//                backward.setCounterExample(counterExample);
-//                if(forward.isFaulty()){
-//                    return SafetyResult.unsafe();
-//                }
-//            }else if(forward.isSafe()) {
-//                return SafetyResult.safe();
-//            }
-//
-//            if(backward.getCounterExample() == null) {
-//                backward.setProp(Not(And(forward.getcurrentFrame())));
-//            }
-//
-//
-//            counterExample = backward.step(prec);
-//            if(counterExample != null){
-//                forward.setCounterExample(counterExample);
-//                if(backward.isFaulty()){
-//                    return SafetyResult.unsafe();
-//                }
-//            }else if(backward.isSafe()) {
-//                return SafetyResult.safe();
-//            }
-
         }
     }
+
+    public Trace<S, A> traceMaker(LinkedList<ProofObligation> backwardProofObligations, LinkedList<ProofObligation> forwardProofObligations){
+        var stateList= new ArrayList<S>();
+        var actionList = new ArrayList<A>();
+        Valuation lastValuation = null;
+        while(!forwardProofObligations.isEmpty()) {
+            final ProofObligation currentProofObligation = forwardProofObligations.getLast();
+            forwardProofObligations.removeLast();
+            MutableValuation mutableValuation = new MutableValuation();
+            for (Expr<BoolType> ex : currentProofObligation.getExpressions()) {
+
+                RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
+                LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
+                mutableValuation.put(refExpr.getDecl(), litExpr);
+
+            }
+            stateList.add(valToState.apply(mutableValuation));
+            if (lastValuation != null) {
+                actionList.add(biValToAction.apply(lastValuation,mutableValuation));
+            }
+            lastValuation=mutableValuation;
+
+        }
+        backwardProofObligations.removeFirst();
+        while(!backwardProofObligations.isEmpty()) {
+            ProofObligation currentProofObligation = backwardProofObligations.getFirst();
+            backwardProofObligations.removeFirst();
+            MutableValuation mutableValuation = new MutableValuation();
+            for (Expr<BoolType> ex : currentProofObligation.getExpressions()) {
+
+                RefExpr<BoolType> refExpr = (RefExpr<BoolType>) ex.getOps().get(0);
+                LitExpr<BoolType> litExpr = (LitExpr<BoolType>) ex.getOps().get(1);
+                mutableValuation.put(refExpr.getDecl(), litExpr);
+
+            }
+            stateList.add(valToState.apply(mutableValuation));
+            if (lastValuation != null) {
+                actionList.add(biValToAction.apply(lastValuation,mutableValuation));
+            }
+            lastValuation=mutableValuation;
+
+        }
+        return Trace.of(stateList,actionList);
+    }
 }
+
+
