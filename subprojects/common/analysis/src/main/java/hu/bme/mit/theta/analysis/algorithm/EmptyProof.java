@@ -15,5 +15,15 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-public interface Witness {
+public class EmptyProof implements Proof {
+
+    private final static EmptyProof empty = new EmptyProof();
+
+    private EmptyProof() {
+    }
+
+    public static EmptyProof getInstance() {
+        return empty;
+    }
+
 }

@@ -17,7 +17,7 @@
 package hu.bme.mit.theta.xcfa.cli.checkers
 
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.chc.HornChecker
@@ -37,7 +37,7 @@ import hu.bme.mit.theta.xcfa2chc.toCHC
 import org.abego.treelayout.internal.util.Contract.checkState
 
 fun getHornChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, logger: Logger):
-    SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+    SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
 
     checkState(xcfa.isInlined, "Only inlined XCFAs work right now")
     checkState(xcfa.initProcedures.size == 1, "Only one-procedure XCFAs work right now")
@@ -50,15 +50,15 @@ fun getHornChecker(xcfa: XCFA, mcm: MCM, config: XcfaConfig<*, *>, logger: Logge
         logger = logger,
     )
 
-    return SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+    return SafetyChecker<EmptyProof, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
         val result = checker.check(null)
 
         if (result.isSafe) {
-            SafetyResult.safe(EmptyWitness.getInstance())
+            SafetyResult.safe(EmptyProof.getInstance())
         } else if (result.isUnsafe) {
             val proof = result.asUnsafe().cex
             val state = XcfaState<PtrState<PredState>>(xcfa, mapOf(), PtrState(PredState.of(proof.proofNode.expr)))
-            SafetyResult.unsafe(Trace.of(listOf(state), listOf()), EmptyWitness.getInstance())
+            SafetyResult.unsafe(Trace.of(listOf(state), listOf()), EmptyProof.getInstance())
         } else {
             SafetyResult.unknown()
         }

@@ -19,10 +19,10 @@ package hu.bme.mit.theta.xcfa.cli.checkers
 import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.Prec
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker
 import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner
@@ -131,7 +131,7 @@ fun getCegarChecker(
     // initialize monitors
     MonitorCheckpoint.reset()
     if (cegarConfig.cexMonitor == CexMonitorOptions.CHECK) {
-        val cm = CexMonitor(logger, cegarChecker.witness)
+        val cm = CexMonitor(logger, cegarChecker.proof)
         MonitorCheckpoint.register(cm, "CegarChecker.unsafeARG")
     }
 

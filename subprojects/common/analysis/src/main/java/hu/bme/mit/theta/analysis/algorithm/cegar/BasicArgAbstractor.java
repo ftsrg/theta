@@ -64,7 +64,7 @@ public class BasicArgAbstractor<S extends State, A extends Action, P extends Pre
     }
 
     @Override
-    public ARG<S, A> createWitness() {
+    public ARG<S, A> createProof() {
         return argBuilder.createArg();
     }
 

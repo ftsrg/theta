@@ -16,11 +16,11 @@
 
 package hu.bme.mit.theta.analysis.utils;
 
-import hu.bme.mit.theta.analysis.algorithm.Witness;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.common.visualization.Graph;
 
-public interface WitnessVisualizer<W extends Witness> {
+public interface ProofVisualizer<Pr extends Proof> {
 
-    Graph visualize(W witness);
+    Graph visualize(Pr proof);
 
 }

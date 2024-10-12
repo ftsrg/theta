@@ -15,28 +15,26 @@
  */
 package hu.bme.mit.theta.analysis.utils;
 
-import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
-import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
-
-import java.awt.Color;
-
-import hu.bme.mit.theta.common.container.Containers;
-
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode;
+import hu.bme.mit.theta.common.container.Containers;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 
-public final class ArgVisualizer<S extends State, A extends Action> implements WitnessVisualizer<ARG<? extends S, ? extends A>> {
+import java.awt.*;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
+import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
+
+public final class ArgVisualizer<S extends State, A extends Action> implements ProofVisualizer<ARG<? extends S, ? extends A>> {
 
     private static final LineStyle COVER_EDGE_STYLE = LineStyle.DASHED;
     private static final LineStyle SUCC_EDGE_STYLE = LineStyle.NORMAL;

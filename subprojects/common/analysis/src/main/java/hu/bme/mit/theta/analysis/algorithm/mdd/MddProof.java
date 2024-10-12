@@ -13,17 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.mdd;
 
-public class EmptyWitness implements Witness {
+import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.mdd.MddInterpreter;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 
-    private final static EmptyWitness empty = new EmptyWitness();
+public class MddProof implements Proof {
 
-    private EmptyWitness() {
+    private final MddHandle stateSpace;
+
+    private MddProof(MddHandle stateSpace) {
+        this.stateSpace = stateSpace;
     }
 
-    public static EmptyWitness getInstance() {
-        return empty;
+    public static MddProof of(MddHandle stateSpace) {
+        return new MddProof(stateSpace);
     }
 
+    public Long size() {
+        return MddInterpreter.calculateNonzeroCount(stateSpace);
+    }
+
+    public MddHandle getMdd() {
+        return stateSpace;
+    }
 }
