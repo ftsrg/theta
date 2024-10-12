@@ -13,14 +13,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package hu.bme.mit.theta.analysis.algorithm.mdd;
 
-package hu.bme.mit.theta.analysis.utils;
+import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.mdd.MddInterpreter;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 
-import hu.bme.mit.theta.analysis.algorithm.Witness;
-import hu.bme.mit.theta.common.visualization.Graph;
+public class MddProof implements Proof {
 
-public interface WitnessVisualizer<W extends Witness> {
+    private final MddHandle stateSpace;
 
-    Graph visualize(W witness);
+    private MddProof(MddHandle stateSpace) {
+        this.stateSpace = stateSpace;
+    }
 
+    public static MddProof of(MddHandle stateSpace) {
+        return new MddProof(stateSpace);
+    }
+
+    public Long size() {
+        return MddInterpreter.calculateNonzeroCount(stateSpace);
+    }
+
+    public MddHandle getMdd() {
+        return stateSpace;
+    }
 }

@@ -15,8 +15,7 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-public interface Checker<W extends Witness, I> {
+public interface Checker<Pr extends Proof, I> {
 
-    Result<W> check(I input);
-
+    Result<Pr> check(I input);
 }

@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.cfa.cli;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -27,8 +29,6 @@ import hu.bme.mit.theta.analysis.algorithm.bounded.BoundedCheckerBuilderKt;
 import hu.bme.mit.theta.analysis.algorithm.bounded.MonolithicExpr;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.cfa.analysis.CfaAction;
@@ -37,14 +37,7 @@ import hu.bme.mit.theta.cfa.analysis.CfaToMonolithicExprKt;
 import hu.bme.mit.theta.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfig;
 import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Algorithm;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Domain;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Encoding;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.InitPrec;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PrecGranularity;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.PredSplit;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Refinement;
-import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.Search;
+import hu.bme.mit.theta.cfa.analysis.config.CfaConfigBuilder.*;
 import hu.bme.mit.theta.cfa.analysis.utils.CfaVisualizer;
 import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.common.CliUtils;
@@ -62,28 +55,21 @@ import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.solver.z3legacy.Z3SolverManager;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * A command line interface for running a CEGAR configuration on a CFA.
- */
+/** A command line interface for running a CEGAR configuration on a CFA. */
 public class CfaCli {
 
     private static final String JAR_NAME = "theta-cfa-cli.jar";
     private final String[] args;
     private final TableWriter writer;
-    @Parameter(names = {"--algorithm"}, description = "Algorithm")
+
+    @Parameter(
+            names = {"--algorithm"},
+            description = "Algorithm")
     Algorithm algorithm = Algorithm.CEGAR;
 
     @Parameter(names = "--domain", description = "Abstract domain")
@@ -95,16 +81,34 @@ public class CfaCli {
     @Parameter(names = "--search", description = "Search strategy")
     Search search = Search.BFS;
 
-    @Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
+    @Parameter(
+            names = "--predsplit",
+            description = "Predicate splitting (for predicate abstraction)")
     PredSplit predSplit = PredSplit.WHOLE;
 
-    @Parameter(names = "--solver", description = "Sets the underlying SMT solver to use for both the abstraction and the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+    @Parameter(
+            names = "--solver",
+            description =
+                    "Sets the underlying SMT solver to use for both the abstraction and the"
+                        + " refinement process. Enter in format <solver_name>:<solver_version>, see"
+                        + " theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy"
+                        + " z3 solver.")
     String solver = "Z3";
 
-    @Parameter(names = "--abstraction-solver", description = "Sets the underlying SMT solver to use for the abstraction process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+    @Parameter(
+            names = "--abstraction-solver",
+            description =
+                    "Sets the underlying SMT solver to use for the abstraction process. Enter in"
+                            + " format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for"
+                            + " more details. Enter \"Z3\" to use the legacy z3 solver.")
     String abstractionSolver;
 
-    @Parameter(names = "--refinement-solver", description = "Sets the underlying SMT solver to use for the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+    @Parameter(
+            names = "--refinement-solver",
+            description =
+                    "Sets the underlying SMT solver to use for the refinement process. Enter in"
+                            + " format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for"
+                            + " more details. Enter \"Z3\" to use the legacy z3 solver.")
     String refinementSolver;
 
     @Parameter(names = "--home", description = "The path of the solver registry")
@@ -122,13 +126,17 @@ public class CfaCli {
     @Parameter(names = "--encoding", description = "Block encoding")
     Encoding encoding = Encoding.LBE;
 
-    @Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+    @Parameter(
+            names = "--maxenum",
+            description = "Maximal number of explicitly enumerated successors (0: unlimited)")
     Integer maxEnum = 10;
 
     @Parameter(names = "--initprec", description = "Initial precision of abstraction")
     InitPrec initPrec = InitPrec.EMPTY;
 
-    @Parameter(names = "--prunestrategy", description = "Strategy for pruning the ARG after refinement")
+    @Parameter(
+            names = "--prunestrategy",
+            description = "Strategy for pruning the ARG after refinement")
     PruneStrategy pruneStrategy = PruneStrategy.LAZY;
 
     @Parameter(names = "--loglevel", description = "Detailedness of logging")
@@ -140,13 +148,20 @@ public class CfaCli {
     @Parameter(names = "--cex", description = "Write concrete counterexample to a file")
     String cexfile = null;
 
-    @Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
+    @Parameter(
+            names = "--header",
+            description = "Print only a header (for benchmarks)",
+            help = true)
     boolean headerOnly = false;
 
-    @Parameter(names = "--visualize", description = "Visualize CFA to this file without running the algorithm")
+    @Parameter(
+            names = "--visualize",
+            description = "Visualize CFA to this file without running the algorithm")
     String visualize = null;
 
-    @Parameter(names = "--metrics", description = "Print metrics about the CFA without running the algorithm")
+    @Parameter(
+            names = "--metrics",
+            description = "Print metrics about the CFA without running the algorithm")
     boolean metrics = false;
 
     @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
@@ -241,13 +256,19 @@ public class CfaCli {
 
             final SafetyResult<?, ? extends Trace<?, ?>> status;
             if (algorithm == Algorithm.CEGAR) {
-                final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
+                final CfaConfig<?, ?, ?> configuration =
+                        buildConfiguration(
+                                cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
                 status = check(configuration);
-            } else if (algorithm == Algorithm.BMC || algorithm == Algorithm.KINDUCTION || algorithm == Algorithm.IMC) {
-                final BoundedChecker<?, ?> checker = buildBoundedChecker(cfa, abstractionSolverFactory);
+            } else if (algorithm == Algorithm.BMC
+                    || algorithm == Algorithm.KINDUCTION
+                    || algorithm == Algorithm.IMC) {
+                final BoundedChecker<?, ?> checker =
+                        buildBoundedChecker(cfa, abstractionSolverFactory);
                 status = checker.check(null);
             } else {
-                throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+                throw new UnsupportedOperationException(
+                        "Algorithm " + algorithm + " not supported");
             }
             sw.stop();
 
@@ -262,8 +283,18 @@ public class CfaCli {
     }
 
     private void printHeader() {
-        Stream.of("Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-                "ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen").forEach(writer::cell);
+        Stream.of(
+                        "Result",
+                        "TimeMs",
+                        "AlgoTimeMs",
+                        "AbsTimeMs",
+                        "RefTimeMs",
+                        "Iterations",
+                        "ArgSize",
+                        "ArgDepth",
+                        "ArgMeanBranchFactor",
+                        "CexLen")
+                .forEach(writer::cell);
         writer.newRow();
     }
 
@@ -277,67 +308,89 @@ public class CfaCli {
         }
     }
 
-    private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc,
-                                                  final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory)
+    private CfaConfig<?, ?, ?> buildConfiguration(
+            final CFA cfa,
+            final CFA.Loc errLoc,
+            final SolverFactory abstractionSolverFactory,
+            final SolverFactory refinementSolverFactory)
             throws Exception {
         try {
-            return new CfaConfigBuilder(domain, refinement, abstractionSolverFactory,
-                    refinementSolverFactory)
-                    .precGranularity(precGranularity).search(search)
-                    .predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
-                    .pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);
+            return new CfaConfigBuilder(
+                            domain, refinement, abstractionSolverFactory, refinementSolverFactory)
+                    .precGranularity(precGranularity)
+                    .search(search)
+                    .predSplit(predSplit)
+                    .encoding(encoding)
+                    .maxEnum(maxEnum)
+                    .initPrec(initPrec)
+                    .pruneStrategy(pruneStrategy)
+                    .logger(logger)
+                    .build(cfa, errLoc);
         } catch (final Exception ex) {
             throw new Exception("Could not create configuration: " + ex.getMessage(), ex);
         }
     }
 
-    private BoundedChecker<?, ?> buildBoundedChecker(final CFA cfa, final SolverFactory abstractionSolverFactory) {
+    private BoundedChecker<?, ?> buildBoundedChecker(
+            final CFA cfa, final SolverFactory abstractionSolverFactory) {
         final MonolithicExpr monolithicExpr = CfaToMonolithicExprKt.toMonolithicExpr(cfa);
         final BoundedChecker<?, ?> checker;
         switch (algorithm) {
-            case BMC -> checker = BoundedCheckerBuilderKt.buildBMC(
-                    monolithicExpr,
-                    abstractionSolverFactory.createSolver(),
-                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                    (val1, val2) -> CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
-                    logger
-            );
-            case KINDUCTION -> checker = BoundedCheckerBuilderKt.buildKIND(
-                    monolithicExpr,
-                    abstractionSolverFactory.createSolver(),
-                    abstractionSolverFactory.createSolver(),
-                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                    (val1, val2) -> CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
-                    logger
-            );
-            case IMC -> checker = BoundedCheckerBuilderKt.buildIMC(
-                    monolithicExpr,
-                    abstractionSolverFactory.createSolver(),
-                    abstractionSolverFactory.createItpSolver(),
-                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
-                    (val1, val2) -> CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
-                    logger
-            );
+            case BMC ->
+                    checker =
+                            BoundedCheckerBuilderKt.buildBMC(
+                                    monolithicExpr,
+                                    abstractionSolverFactory.createSolver(),
+                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
+                                    (val1, val2) ->
+                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
+                                    logger);
+            case KINDUCTION ->
+                    checker =
+                            BoundedCheckerBuilderKt.buildKIND(
+                                    monolithicExpr,
+                                    abstractionSolverFactory.createSolver(),
+                                    abstractionSolverFactory.createSolver(),
+                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
+                                    (val1, val2) ->
+                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
+                                    logger);
+            case IMC ->
+                    checker =
+                            BoundedCheckerBuilderKt.buildIMC(
+                                    monolithicExpr,
+                                    abstractionSolverFactory.createSolver(),
+                                    abstractionSolverFactory.createItpSolver(),
+                                    val -> CfaToMonolithicExprKt.valToState(cfa, val),
+                                    (val1, val2) ->
+                                            CfaToMonolithicExprKt.valToAction(cfa, val1, val2),
+                                    logger);
             default ->
-                    throw new UnsupportedOperationException("Algorithm " + algorithm + " not supported");
+                    throw new UnsupportedOperationException(
+                            "Algorithm " + algorithm + " not supported");
         }
         return checker;
     }
 
-    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(CfaConfig<?, ?, ?> configuration) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> check(
+            CfaConfig<?, ?, ?> configuration) throws Exception {
         try {
             return configuration.check();
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(
-                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    "Error while running algorithm: "
+                            + ex.getClass().getSimpleName()
+                            + " "
+                            + message,
                     ex);
         }
     }
 
-    private void printResult(final SafetyResult<?, ? extends Trace<?, ?>> status, final long totalTimeMs) {
-        final CegarStatistics stats = (CegarStatistics)
-                status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
+    private void printResult(
+            final SafetyResult<?, ? extends Trace<?, ?>> status, final long totalTimeMs) {
+        final CegarStatistics stats =
+                (CegarStatistics) status.getStats().orElse(new CegarStatistics(0, 0, 0, 0));
         if (benchmarkMode) {
             writer.cell(status.isSafe());
             writer.cell(totalTimeMs);
@@ -345,7 +398,7 @@ public class CfaCli {
             writer.cell(stats.getAbstractorTimeMs());
             writer.cell(stats.getRefinerTimeMs());
             writer.cell(stats.getIterations());
-            if (status.getWitness() instanceof ARG<?, ?> arg) {
+            if (status.getProof() instanceof ARG<?, ?> arg) {
                 writer.cell(arg.size());
                 writer.cell(arg.getDepth());
                 writer.cell(arg.getMeanBranchingFactor());
@@ -369,7 +422,10 @@ public class CfaCli {
             writer.cell("[EX] " + ex.getClass().getSimpleName() + ": " + message);
             writer.newRow();
         } else {
-            logger.write(Level.RESULT, "%s occurred, message: %s%n", ex.getClass().getSimpleName(),
+            logger.write(
+                    Level.RESULT,
+                    "%s occurred, message: %s%n",
+                    ex.getClass().getSimpleName(),
                     message);
             if (stacktrace) {
                 final StringWriter errors = new StringWriter();
@@ -382,9 +438,10 @@ public class CfaCli {
     }
 
     private void writeCex(final SafetyResult.Unsafe<?, ?> status) throws FileNotFoundException {
-        @SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getCex();
-        final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(
-                trace, Z3LegacySolverFactory.getInstance());
+        @SuppressWarnings("unchecked")
+        final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getCex();
+        final Trace<CfaState<ExplState>, CfaAction> concrTrace =
+                CfaTraceConcretizer.concretize(trace, Z3LegacySolverFactory.getInstance());
         final File file = new File(cexfile);
         PrintWriter printWriter = null;
         try {

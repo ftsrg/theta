@@ -15,19 +15,6 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
@@ -46,25 +33,31 @@ import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public final class XtaZoneAnalysisTest {
 
     @Parameters(name = "{0}")
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-
-                {"/csma-2.xta"},
-
-                {"/fddi-2.xta"},
-
-                {"/fischer-2-32-64.xta"},
-
-                {"/lynch-2-16.xta"},
-
-                {"/broadcast.xta"},
-
-        });
+        return Arrays.asList(
+                new Object[][] {
+                    {"/csma-2.xta"},
+                    {"/fddi-2.xta"},
+                    {"/fischer-2-32-64.xta"},
+                    {"/lynch-2-16.xta"},
+                    {"/broadcast.xta"},
+                });
     }
 
     @Parameter(0)
@@ -76,30 +69,32 @@ public final class XtaZoneAnalysisTest {
         final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
         final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
-        final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis = XtaExplAnalysis.create(
-                system);
+        final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis =
+                XtaExplAnalysis.create(system);
         final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.getInstance();
-        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>> prodAnalysis = Prod2Analysis
-                .create(explAnalysis, zoneAnalysis);
-        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis
-                .create(prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
-        final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis = XtaAnalysis
-                .create(system, mappedAnalysis);
+        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>>
+                prodAnalysis = Prod2Analysis.create(explAnalysis, zoneAnalysis);
+        final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis =
+                PrecMappingAnalysis.create(
+                        prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
+        final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis =
+                XtaAnalysis.create(system, mappedAnalysis);
 
         final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
-        final ArgBuilder<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> argBuilder = ArgBuilder
-                .create(lts, analysis, s -> false);
+        final ArgBuilder<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec>
+                argBuilder = ArgBuilder.create(lts, analysis, s -> false);
 
-        final ArgAbstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> abstractor = BasicArgAbstractor
-                .builder(argBuilder).projection(s -> s.getLocs()).build();
+        final ArgAbstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec>
+                abstractor =
+                        BasicArgAbstractor.builder(argBuilder).projection(s -> s.getLocs()).build();
 
-        final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg = abstractor.createWitness();
+        final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg =
+                abstractor.createProof();
         abstractor.check(arg, prec);
 
         System.out.println(arg.getNodes().collect(Collectors.toSet()));
 
         System.out.println(arg.getNodes().count());
     }
-
 }

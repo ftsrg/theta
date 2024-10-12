@@ -17,10 +17,9 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import java.util.Optional;
 
-public interface Result<W extends Witness> {
+public interface Result<Pr extends Proof> {
 
-    W getWitness();
+    Pr getProof();
 
     Optional<Statistics> getStats();
-
 }

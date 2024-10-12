@@ -16,22 +16,17 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.algorithm.Witness;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 
 /**
- * Common interface for the abstractor component. It can create an initial witness and check a witness with
- * a given precision.
+ * Common interface for the abstractor component. It can create an initial witness and check a
+ * witness with a given precision.
  */
-public interface Abstractor<P extends Prec, W extends Witness> {
+public interface Abstractor<P extends Prec, Pr extends Proof> {
 
-    /**
-     * Create initial witness
-     */
-    W createWitness();
+    /** Create initial witness */
+    Pr createProof();
 
-    /**
-     * Check witness with given precision
-     */
-    AbstractorResult check(W witness, P prec);
-
+    /** Check witness with given precision */
+    AbstractorResult check(Pr witness, P prec);
 }

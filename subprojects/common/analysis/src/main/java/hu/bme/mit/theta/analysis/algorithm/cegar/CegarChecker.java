@@ -20,11 +20,11 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.Witness;
 import hu.bme.mit.theta.analysis.runtimemonitor.MonitorCheckpoint;
-import hu.bme.mit.theta.analysis.utils.WitnessVisualizer;
+import hu.bme.mit.theta.analysis.utils.ProofVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
@@ -42,38 +42,38 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * check counterexamples and refine them if needed. It also provides certain
  * statistics about its execution.
  */
-public final class CegarChecker<S extends State, A extends Action, P extends Prec, W extends Witness, C extends Cex> implements SafetyChecker<W, C, P> {
+public final class CegarChecker<S extends State, A extends Action, P extends Prec, Pr extends Proof, C extends Cex> implements SafetyChecker<Pr, C, P> {
 
-    private final Abstractor<P, W> abstractor;
-    private final Refiner<S, A, P, W, C> refiner;
+    private final Abstractor<P, Pr> abstractor;
+    private final Refiner<S, A, P, Pr, C> refiner;
     private final Logger logger;
-    private final W witness;
-    private final WitnessVisualizer<? super W> witnessVisualizer;
+    private final Pr proof;
+    private final ProofVisualizer<? super Pr> proofVisualizer;
 
-    private CegarChecker(final Abstractor<P, W> abstractor, final Refiner<S, A, P, W, C> refiner, final Logger logger, final WitnessVisualizer<? super W> witnessVisualizer) {
+    private CegarChecker(final Abstractor<P, Pr> abstractor, final Refiner<S, A, P, Pr, C> refiner, final Logger logger, final ProofVisualizer<? super Pr> proofVisualizer) {
         this.abstractor = checkNotNull(abstractor);
         this.refiner = checkNotNull(refiner);
         this.logger = checkNotNull(logger);
-        witness = abstractor.createWitness();
-        this.witnessVisualizer = checkNotNull(witnessVisualizer);
+        proof = abstractor.createProof();
+        this.proofVisualizer = checkNotNull(proofVisualizer);
     }
 
-    public static <S extends State, A extends Action, P extends Prec, W extends Witness, C extends Cex> CegarChecker<S, A, P, W, C> create(
-            final Abstractor<P, W> abstractor, final Refiner<S, A, P, W, C> refiner, final WitnessVisualizer<W> witnessVisualizer) {
-        return create(abstractor, refiner, NullLogger.getInstance(), witnessVisualizer);
+    public static <S extends State, A extends Action, P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<S, A, P, Pr, C> create(
+            final Abstractor<P, Pr> abstractor, final Refiner<S, A, P, Pr, C> refiner, final ProofVisualizer<Pr> proofVisualizer) {
+        return create(abstractor, refiner, NullLogger.getInstance(), proofVisualizer);
     }
 
-    public static <S extends State, A extends Action, P extends Prec, W extends Witness, C extends Cex> CegarChecker<S, A, P, W, C> create(
-            final Abstractor<P, W> abstractor, final Refiner<S, A, P, W, C> refiner, final Logger logger, final WitnessVisualizer<? super W> witnessVisualizer) {
-        return new CegarChecker<>(abstractor, refiner, logger, witnessVisualizer);
+    public static <S extends State, A extends Action, P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<S, A, P, Pr, C> create(
+            final Abstractor<P, Pr> abstractor, final Refiner<S, A, P, Pr, C> refiner, final Logger logger, final ProofVisualizer<? super Pr> proofVisualizer) {
+        return new CegarChecker<>(abstractor, refiner, logger, proofVisualizer);
     }
 
-    public W getWitness() {
-        return witness;
+    public Pr getProof() {
+        return proof;
     }
 
     @Override
-    public SafetyResult<W, C> check(final P initPrec) {
+    public SafetyResult<Pr, C> check(final P initPrec) {
         logger.write(Level.INFO, "Configuration: %s%n", this);
         final Stopwatch stopwatch = Stopwatch.createStarted();
         long abstractorTime = 0;
@@ -89,12 +89,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
             logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
             logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
             final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-            abstractorResult = abstractor.check(witness, prec);
+            abstractorResult = abstractor.check(proof, prec);
             abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
             logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
             if (WebDebuggerLogger.enabled()) {
-                String argGraph = JSONWriter.getInstance().writeString(witnessVisualizer.visualize(witness));
+                String argGraph = JSONWriter.getInstance().writeString(proofVisualizer.visualize(proof));
                 String precString = prec.toString();
                 wdl.addIteration(iteration, argGraph, precString);
             }
@@ -105,7 +105,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
                 P lastPrec = prec;
                 logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
                 final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-                refinerResult = refiner.refine(witness, prec);
+                refinerResult = refiner.refine(proof, prec);
                 refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
                 logger.write(Level.MAINSTEP, "Refining abstraction done, result: %s%n", refinerResult);
 
@@ -124,16 +124,16 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         } while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
         stopwatch.stop();
-        SafetyResult<W, C> cegarResult = null;
+        SafetyResult<Pr, C> cegarResult = null;
         final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
                 refinerTime, iteration);
 
         assert abstractorResult.isSafe() || refinerResult.isUnsafe();
 
         if (abstractorResult.isSafe()) {
-            cegarResult = SafetyResult.safe(witness, stats);
+            cegarResult = SafetyResult.safe(proof, stats);
         } else if (refinerResult.isUnsafe()) {
-            cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), witness, stats);
+            cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), proof, stats);
         }
 
         assert cegarResult != null;

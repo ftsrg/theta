@@ -13,7 +13,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.utils;
 
-public interface Witness {
+import hu.bme.mit.theta.analysis.algorithm.Proof;
+import hu.bme.mit.theta.common.visualization.Graph;
+
+public interface ProofVisualizer<Pr extends Proof> {
+
+    Graph visualize(Pr proof);
 }

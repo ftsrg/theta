@@ -15,12 +15,9 @@
  */
 package hu.bme.mit.theta.xta.cli;
 
-import java.io.*;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
@@ -42,6 +39,7 @@ import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import java.io.*;
 
 public final class XtaCli {
 
@@ -49,29 +47,44 @@ public final class XtaCli {
     private final String[] args;
     private final TableWriter writer;
 
-    @Parameter(names = {"--model", "-m"}, description = "Path of the input model", required = true)
+    @Parameter(
+            names = {"--model", "-m"},
+            description = "Path of the input model",
+            required = true)
     String model;
 
-    @Parameter(names = {"--discrete",
-            "-d"}, description = "Refinement strategy for discrete variables", required = false)
+    @Parameter(
+            names = {"--discrete", "-d"},
+            description = "Refinement strategy for discrete variables",
+            required = false)
     DataStrategy dataStrategy = DataStrategy.NONE;
 
-    @Parameter(names = {"--clock",
-            "-c"}, description = "Refinement strategy for clock variables", required = true)
+    @Parameter(
+            names = {"--clock", "-c"},
+            description = "Refinement strategy for clock variables",
+            required = true)
     ClockStrategy clockStrategy;
 
-    @Parameter(names = {"--search", "-s"}, description = "Search strategy", required = true)
+    @Parameter(
+            names = {"--search", "-s"},
+            description = "Search strategy",
+            required = true)
     SearchStrategy searchStrategy;
 
-    @Parameter(names = {"--benchmark", "-b"}, description = "Benchmark mode (only print metrics)")
+    @Parameter(
+            names = {"--benchmark", "-b"},
+            description = "Benchmark mode (only print metrics)")
     Boolean benchmarkMode = false;
 
-    @Parameter(names = {"--visualize",
-            "-v"}, description = "Write proof or counterexample to file in dot format")
+    @Parameter(
+            names = {"--visualize", "-v"},
+            description = "Write proof or counterexample to file in dot format")
     String dotfile = null;
 
-    @Parameter(names = {"--header",
-            "-h"}, description = "Print only a header (for benchmarks)", help = true)
+    @Parameter(
+            names = {"--header", "-h"},
+            description = "Print only a header (for benchmarks)",
+            help = true)
     boolean headerOnly = false;
 
     @Parameter(names = "--stacktrace", description = "Print full stack trace in case of exception")
@@ -112,10 +125,12 @@ public final class XtaCli {
 
         try {
             final XtaSystem system = loadModel();
-            final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system,
-                    dataStrategy,
-                    clockStrategy, searchStrategy);
-            final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> result = check(checker);
+            final SafetyChecker<?, ?, UnitPrec> checker =
+                    LazyXtaCheckerFactory.create(
+                            system, dataStrategy, clockStrategy, searchStrategy);
+            final SafetyResult<
+                            ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+                    result = check(checker);
             printResult(result);
             if (dotfile != null) {
                 writeVisualStatus(result, dotfile);
@@ -126,13 +141,20 @@ public final class XtaCli {
         }
     }
 
-    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
+    private SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+            check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
         try {
-            return (SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>) checker.check(UnitPrec.getInstance());
+            return (SafetyResult<
+                            ? extends ARG<?, ?>,
+                            ? extends Trace<? extends State, ? extends Action>>)
+                    checker.check(UnitPrec.getInstance());
         } catch (final Exception ex) {
             String message = ex.getMessage() == null ? "(no message)" : ex.getMessage();
             throw new Exception(
-                    "Error while running algorithm: " + ex.getClass().getSimpleName() + " " + message,
+                    "Error while running algorithm: "
+                            + ex.getClass().getSimpleName()
+                            + " "
+                            + message,
                     ex);
         }
     }
@@ -147,7 +169,8 @@ public final class XtaCli {
         }
     }
 
-    private void printResult(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> result) {
+    private void printResult(
+            final SafetyResult<? extends ARG<?, ?>, ? extends Trace<?, ?>> result) {
         final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
         if (benchmarkMode) {
             stats.writeData(writer);
@@ -173,12 +196,16 @@ public final class XtaCli {
         }
     }
 
-    private void writeVisualStatus(final SafetyResult<? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>> status, final String filename)
+    private void writeVisualStatus(
+            final SafetyResult<
+                            ? extends ARG<?, ?>, ? extends Trace<? extends State, ? extends Action>>
+                    status,
+            final String filename)
             throws FileNotFoundException {
         final Graph graph =
-                status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getWitness())
+                status.isSafe()
+                        ? ArgVisualizer.getDefault().visualize(status.asSafe().getProof())
                         : TraceVisualizer.getDefault().visualize(status.asUnsafe().getCex());
         GraphvizWriter.getInstance().writeFile(graph, filename);
     }
-
 }
