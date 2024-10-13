@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary
 
 import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.Action
+import hu.bme.mit.theta.analysis.PartialOrd
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.Witness
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgEdge
@@ -70,34 +71,30 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
         }
 
         // create summary nodes
-        val summaryNodes = mutableSetOf<SummaryNode<S, A>>()
+
+        val argNodeSummaryNodeMap = mutableMapOf<ArgNode<S, A>, SummaryNode<S, A>>()
         for (nodeGroup in nodeGroups) {
-            summaryNodes.add(SummaryNode.create(nodeGroup))
+            val summaryNode = SummaryNode.create(nodeGroup)
+            for(node in nodeGroup) {
+                argNodeSummaryNodeMap[node] = summaryNode
+            }
         }
+        val summaryNodes = argNodeSummaryNodeMap.values.toSet()
         val initSummaryNodes = summaryNodes.filter { summaryNode -> argTraces.get(0).node(0) in summaryNode.argNodes }
         checkState(initSummaryNodes.size==1, "Initial arg node must be in exactly 1 summary node!")
         val initNode = initSummaryNodes.get(0)
 
         // save edges as well, so we can easily connect edge sources and targets
-        val summaryEdges = mutableSetOf<SummaryEdge<S, A>>()
-
-        val inEdgeMap = mutableMapOf<ArgEdge<S, A>, SummaryNode<S, A>>()
         for(summaryNode in summaryNodes) {
-            for(edge in summaryNode.getInEdges()) {
-                checkState(!inEdgeMap.containsKey(edge))
-                inEdgeMap[edge] = summaryNode
-            }
-        }
-        for(summaryNode in summaryNodes) {
-            val nodeOutEdges = summaryNode.getOutEdges()
-            for(nodeOutEdge in nodeOutEdges) {
-                if(inEdgeMap.containsKey(nodeOutEdge)) {
-                    val targetSummaryNode = inEdgeMap[nodeOutEdge]!!
-                    summaryEdges.add(SummaryEdge(nodeOutEdge, summaryNode, targetSummaryNode))
+            for(argNode in summaryNode.argNodes) {
+                for(edge in argNode.outEdges) {
+                    // adds itself to source and target as well
+                    SummaryEdge.create(edge, summaryNode, argNodeSummaryNodeMap[edge.target]!!)
                 }
             }
         }
-        return AbstractTraceSummary(argTraces, summaryNodes, summaryEdges, initNode)
+
+        return AbstractTraceSummary(argTraces, summaryNodes, initNode)
     }
 }
 
@@ -109,7 +106,6 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
 data class AbstractTraceSummary<S : State, A : Action> (
     val sourceTraces : Collection<ArgTrace<S, A>>,
     val summaryNodes : Collection<SummaryNode<S, A>>,
-    val summaryEdges : Collection<SummaryEdge<S, A>>,
     val initNode : SummaryNode<S, A>
     ) : Witness {
 }
@@ -117,53 +113,71 @@ data class AbstractTraceSummary<S : State, A : Action> (
 /**
  * Groups arg nodes based on coverages, but also stores the traces they appear in, coverage relations and arg nodes
  */
-class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: Long, val argNodes: Set<ArgNode<S, A>>) {
+class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: Long,
+                                                             val argNodes: Set<ArgNode<S, A>>,
+                                                             val leastOverApproximatedNode : ArgNode<S, A>,
+                                                             val mostOverApproximatedNode : ArgNode<S, A>,
+                                                            ) {
+    // not immutable for edges, as both source and target has to exist when creating edge :c
+    var inEdges : MutableSet<SummaryEdge<S, A>> = mutableSetOf()
+    var outEdges : MutableSet<SummaryEdge<S, A>> = mutableSetOf()
+
     companion object {
         var counter : Long = 0
 
         fun <S : State, A : Action> create(argNodes: MutableSet<ArgNode<S, A>>) : SummaryNode<S, A> {
-            // all of the nodes should be in some kind of coverage relationship with each other
-            var leastOverApproximatedNode : ArgNode<S, A>
-            var mostOverApproximatedNode : ArgNode<S, A>
+            // all of the nodes should be in some kind of coverage relationship with each other, otherwise, split this summary node
+            for(node in argNodes) {
+                for(node2 in argNodes) {
+                    if(node!=node2) {
+                        // ancestors & subsumed irrelevant here
+                        if(!node.inPartialOrder(node2) && !node2.inPartialOrder(node)) {
+                            TODO("split summary node")
+                        }
+                    }
+                }
+            }
+
+            val notCoveredNodes = argNodes.filter { argNode -> argNode.coveringNode.isEmpty }
+            var leastOverApproximatedNode = notCoveredNodes[0] // just get one of them, does not matter, which
+
+            for(node in notCoveredNodes) {
+                if (leastOverApproximatedNode != node) {
+                    // ancestors irrelevant here, subsumed should not be checked
+                    if (node.inPartialOrder(leastOverApproximatedNode)) {
+                        // node can cover the so far "least over approximated" node - node is more "abstract"
+                        leastOverApproximatedNode = node
+                    } else if (!leastOverApproximatedNode.inPartialOrder(node)) {
+                        throw RuntimeException("All nodes in summary node should be in some partial ordering!")
+                    }
+                }
+            }
 
             val notCoveringNodes = argNodes.filter { argNode -> argNode.coveredNodes.count() == 0L }
+            var mostOverApproximatedNode = notCoveringNodes[0]
+
             for(node in notCoveringNodes) {
-                for(node2 in notCoveringNodes) {
-                    TODO() // see comment below - we want to find least over-approximated node
+                if (mostOverApproximatedNode != node) {
+                    // ancestors irrelevant here, subsumed should not be checked
+                    if (mostOverApproximatedNode.inPartialOrder(node)) {
+                        // so far "most over approximated" node can cover this node - this node is more abstract
+                        mostOverApproximatedNode = node
+                    } else if (!node.inPartialOrder(mostOverApproximatedNode)) {
+                        throw RuntimeException("All nodes in summary node should be in some partial ordering!")
+                    }
                 }
             }
 
-            /*
-            public boolean mayCover(final ArgNode<S, A> node) {
-                if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
-                    return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
-                } else {
-                    return false;
-                }
-            }
-
-            public boolean mayCoverStandard(final ArgNode<S, A> node) {
-                if (arg.getPartialOrd().isLeq(node.getState(), this.getState())) {
-                    return !(this.equals(node) || this.isSubsumed()); // no need to check ancestors in CEGAR
-                } else {
-                    return false;
-                }
-            }
-
-            * */
-
-            return SummaryNode(counter++, argNodes)
+            return SummaryNode(counter++, argNodes, leastOverApproximatedNode, mostOverApproximatedNode)
         }
     }
 
-    fun getOutEdges(): Set<ArgEdge<S, A>> {
-        return argNodes.map { node -> node.outEdges.toList() }.flatten().toSet()
+    fun getOutEdges(): Set<SummaryEdge<S, A>> {
+        return outEdges
     }
 
-    fun getInEdges() : Set<ArgEdge<S, A>> {
-        return argNodes
-            .filter { node -> node.inEdge.isPresent }
-            .map { node -> node.inEdge.get() }.toSet()
+    fun getInEdges() : Set<SummaryEdge<S, A>> {
+        return inEdges
     }
 
     fun getStates() : Set<S> {
@@ -186,13 +200,31 @@ class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: 
     override fun toString(): String {
         return getLabel()
     }
+
+    fun addOutEdge(summaryEdge: SummaryEdge<S, A>) {
+        outEdges.add(summaryEdge)
+    }
+
+    fun addInEdge(summaryEdge: SummaryEdge<S, A>) {
+        inEdges.add(summaryEdge)
+    }
 }
 
-data class SummaryEdge<S : State, A: Action>(
+class SummaryEdge<S: State, A: Action> private constructor (
     val argEdge: ArgEdge<S, A>,
     val source: SummaryNode<S, A>,
-    val target: SummaryNode<S, A>
+    val target: SummaryNode<S, A>,
+    val action: A = argEdge.action,
 ) {
+    companion object {
+        fun <S: State, A: Action> create(argEdge: ArgEdge<S, A>, source : SummaryNode<S, A>, target : SummaryNode<S, A>) : SummaryEdge<S, A> {
+            val summaryEdge = SummaryEdge(argEdge, source, target)
+            source.addOutEdge(summaryEdge)
+            target.addInEdge(summaryEdge)
+            return summaryEdge
+        }
+    }
+
     fun getLabel() : String {
         return argEdge.action.toString()
     }

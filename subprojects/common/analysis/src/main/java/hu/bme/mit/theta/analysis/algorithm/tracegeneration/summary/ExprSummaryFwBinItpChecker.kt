@@ -17,16 +17,18 @@ package hu.bme.mit.theta.analysis.expr.refinement
 
 import com.google.common.base.Preconditions
 import com.google.common.collect.ImmutableList
-import hu.bme.mit.theta.analysis.Action
-import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.SummaryNode
+import hu.bme.mit.theta.analysis.expr.ExprAction
+import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
 import hu.bme.mit.theta.core.type.booltype.BoolType
 import hu.bme.mit.theta.core.utils.PathUtils
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
+import hu.bme.mit.theta.solver.ItpMarker
 import hu.bme.mit.theta.solver.ItpSolver
 
 /**
@@ -40,55 +42,90 @@ class ExprSummaryFwBinItpChecker private constructor(
     private val solver: ItpSolver = Preconditions.checkNotNull(solver)
     private val init: Expr<BoolType> = Preconditions.checkNotNull(init)
     private val target: Expr<BoolType> = Preconditions.checkNotNull(target)
+    private var nPush: Long = 0
+
+    // TODO what presumptions do we have about state and trace feasibility? Does it matter?
+    // TODO will binitp work? see notes
+    /**
+     * @return a pair, boolean is "reachedUnsat", map is the updated indexings
+     */
+    fun addNodeToSolver(currentNode: SummaryNode<out ExprState, out ExprAction>,
+                        A: ItpMarker,
+                        indexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>,
+                    ) : Pair<Boolean, MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>> {
+        var currentIndexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing> = indexingMap
+
+        for (edge in currentNode.getOutEdges()) {
+            solver.push()
+            nPush++
+
+            currentIndexingMap[edge.target] = currentIndexingMap[edge.source]!!.add(edge.action.nextIndexing())
+            solver.add(
+                A, PathUtils.unfold(
+                    edge.source.leastOverApproximatedNode.state.toExpr(),
+                    currentIndexingMap[edge.source]
+                )
+            )
+            solver.add(
+                A, PathUtils.unfold(
+                    edge.target.leastOverApproximatedNode.state.toExpr(),
+                    currentIndexingMap[edge.target]
+                )
+            )
+            if (solver.check().isSat) {
+                val result = addNodeToSolver(edge.target, A, currentIndexingMap)
+                currentIndexingMap = result.second
+
+                if (result.first) { // reached unsat?
+                    // in one of the recursive calls, reached unsat step (see else branch below)
+                    return Pair(result.first, currentIndexingMap)
+                }
+            } else {
+                solver.pop()
+                nPush--
+                return Pair(true, currentIndexingMap)
+            }
+        }
+
+        // we recursively went down on this branch, time to go one up
+        return Pair(false, currentIndexingMap)
+    }
 
     fun check(
-        summary: AbstractTraceSummary<out State, out Action>
+        summary: AbstractTraceSummary<out ExprState, out ExprAction>
     ): ExprTraceStatus<ItpRefutation?> {
         Preconditions.checkNotNull(summary)
         val summaryNodeCount = summary.summaryNodes.size
 
-        val indexings: MutableList<VarIndexing> = ArrayList(summaryNodeCount)
-        indexings.add(VarIndexingFactory.indexing(0))
+        val indexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing> = mutableMapOf()
+        indexingMap[summary.initNode] = VarIndexingFactory.indexing(0)
 
         solver.push()
+        nPush++
 
         val A = solver.createMarker()
         val B = solver.createMarker()
         val pattern = solver.createBinPattern(A, B)
 
-        var nPush = 1
-        solver.add(A, PathUtils.unfold(init, indexings[0]))
-        solver.add(A, PathUtils.unfold(summary.initNode.findCovered .getState(0)!!.toExpr(), indexings[0]))
+        solver.add(A, PathUtils.unfold(init, indexingMap[summary.initNode]))
+        solver.add(A, PathUtils.unfold(summary.initNode.leastOverApproximatedNode.getState()!!.toExpr(), indexingMap[summary.initNode]))
         assert(solver.check().isSat) { "Initial state of the trace is not feasible" }
         var satPrefix = 0
 
-        for (i in 1 until summaryNodeCount) {
-            solver.push()
-            ++nPush
-            indexings.add(indexings[i - 1].add(summary.getAction(i - 1)!!.nextIndexing()))
-            solver.add(
-                A, PathUtils.unfold(
-                    summary.getState(i)!!.toExpr(),
-                    indexings[i]
-                )
-            )
-            solver.add(
-                A, PathUtils.unfold(
-                    summary.getAction(i - 1)!!.toExpr(),
-                    indexings[i - 1]
-                )
-            )
+        // iterate through summary - take care of branchings
+        val result = addNodeToSolver(summary.initNode, A, indexingMap)
+        val updatedIndexingMap = result.second
+        val reachedUnsat = result.first
 
-            if (solver.check().isSat) {
-                satPrefix = i
-            } else {
-                solver.pop()
-                --nPush
-                break
-            }
+        if(!reachedUnsat) {
+            // TODO why does it originally only add B and target here??
+            // solver.add(B, PathUtils.unfold(target, indexings[summaryNodeCount - 1]))
+            // concretizable = solver.check().isSat
+        } else {
+
         }
 
-        val concretizable: Boolean
+        /////////////
 
         if (satPrefix == summaryNodeCount - 1) {
             solver.add(B, PathUtils.unfold(target, indexings[summaryNodeCount - 1]))
