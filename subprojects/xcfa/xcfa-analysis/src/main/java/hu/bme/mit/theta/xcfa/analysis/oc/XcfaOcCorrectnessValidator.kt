@@ -51,7 +51,8 @@ internal class XcfaOcCorrectnessValidator(
     override fun getPropagatedClauses(): List<Reason> = if (permissive) ocChecker.getPropagatedClauses() else listOf()
 
     override fun check(
-        events: Map<VarDecl<*>, Map<Int, List<E>>>, pos: List<Relation<E>>, rfs: Map<VarDecl<*>, Set<Relation<E>>>
+        events: Map<VarDecl<*>, Map<Int, List<E>>>, pos: List<Relation<E>>, rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+        wss: Map<VarDecl<*>, Set<Relation<E>>>
     ): SolverStatus? {
         val flatRfs = rfs.values.flatten()
         val flatEvents = events.values.flatMap { it.values.flatten() }
@@ -90,7 +91,7 @@ internal class XcfaOcCorrectnessValidator(
         val result: SolverStatus?
         System.err.println("Solver time (ms): " + measureTime {
             result = if (permissive) {
-                ocChecker.check(events, pos, rfs)
+                ocChecker.check(events, pos, rfs, wss)
             } else {
                 nonOcSolver.check()
             }

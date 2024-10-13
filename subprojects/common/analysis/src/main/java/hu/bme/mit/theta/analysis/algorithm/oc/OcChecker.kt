@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.oc
 
 
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 
@@ -47,7 +48,8 @@ interface OcChecker<E : Event> {
     fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
-        rfs: Map<VarDecl<*>, Set<Relation<E>>>
+        rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+        wss: Map<VarDecl<*>, Set<Relation<E>>>,
     ): SolverStatus?
 
     /**
@@ -126,6 +128,38 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
             }
         }
         return null
+    }
+
+    protected fun finalWsCheck(rels: Array<Array<Reason?>>, wss: Map<VarDecl<*>, Set<Relation<E>>>): List<Relation<E>> {
+        val unassignedWss = mutableListOf<Relation<E>>()
+        wss.forEach { (_, wsRels) ->
+            unassignedWss.addAll(wsRels.filter { ws ->
+                rels[ws.from.clkId][ws.to.clkId] == null && rels[ws.to.clkId][ws.from.clkId] == null
+            })
+        }
+        if (unassignedWss.isEmpty()) return emptyList()
+        System.err.println("Unordered write pairs: ${unassignedWss.size / 2}")
+
+        val unassignedCopy = unassignedWss.toMutableList()
+        val pairs = mutableListOf<Pair<Relation<E>, Relation<E>>>()
+        while (unassignedCopy.isNotEmpty()) {
+            val ws = unassignedCopy.removeFirst()
+            val pair = unassignedCopy.find { it.from == ws.to || it.to == ws.from }
+            if (pair != null) {
+                pairs.add(ws to pair)
+                unassignedCopy.remove(pair)
+            }
+        }
+
+        pairs.forEach { (ws1, ws2) ->
+            val wsGuard = And(ws1.from.guardExpr, ws1.to.guardExpr)
+            val wsCond = { ws: Relation<E> -> Imply(ws.declRef, wsGuard) }
+            solver.add(wsCond(ws1))
+            solver.add(wsCond(ws2))
+            solver.add(Imply(wsGuard, Or(ws1.declRef, ws2.declRef)))
+        }
+
+        return unassignedWss
     }
 }
 

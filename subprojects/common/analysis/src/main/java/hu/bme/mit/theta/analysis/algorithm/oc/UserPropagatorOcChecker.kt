@@ -26,16 +26,18 @@ import hu.bme.mit.theta.solver.javasmt.JavaSMTUserPropagator
 import org.sosy_lab.java_smt.SolverContextFactory.Solvers.Z3
 import java.util.*
 
-open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
+class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
 
-    protected lateinit var writes: Map<VarDecl<*>, List<E>>
-    protected lateinit var rfs: Map<VarDecl<*>, Set<Relation<E>>>
+    private lateinit var writes: Map<VarDecl<*>, List<E>>
+    private lateinit var rfs: Map<VarDecl<*>, Set<Relation<E>>>
+    private lateinit var wss: Map<VarDecl<*>, Set<Relation<E>>>
     private lateinit var flatWrites: List<E>
     private lateinit var flatRfs: List<Relation<E>>
+    private lateinit var flatWss: List<Relation<E>>
     private lateinit var interferenceCondToEvents: Map<Expr<BoolType>, List<Pair<E, E>>>
-    protected val partialAssignment = Stack<PropagatorOcAssignment<E>>()
+    private val partialAssignment = Stack<PropagatorOcAssignment<E>>()
 
-    protected val userPropagator: JavaSMTUserPropagator = object : JavaSMTUserPropagator() {
+    private val userPropagator: JavaSMTUserPropagator = object : JavaSMTUserPropagator() {
         override fun onKnownValue(expr: Expr<BoolType>, value: Boolean) {
             if (value) propagate(expr)
         }
@@ -52,7 +54,7 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         override fun onPop(levels: Int) = pop(levels)
     }
 
-    protected class PropagatorOcAssignment<E : Event> private constructor(
+    private class PropagatorOcAssignment<E : Event> private constructor(
         stack: Stack<PropagatorOcAssignment<E>>,
         val solverLevel: Int,
         rels: Array<Array<Reason?>> = stack.peek().rels.copy(),
@@ -79,24 +81,30 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
     }
 
     override val solver: Solver = JavaSMTSolverFactory.create(Z3, arrayOf()).createSolverWithPropagators(userPropagator)
-    protected var solverLevel: Int = 0
+    private var solverLevel: Int = 0
 
     override fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
         rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+        wss: Map<VarDecl<*>, Set<Relation<E>>>,
     ): SolverStatus? {
         writes = events.keys.associateWith { v -> events[v]!!.values.flatten().filter { it.type == EventType.WRITE } }
         flatWrites = this.writes.values.flatten()
         this.rfs = rfs
         flatRfs = rfs.values.flatten()
+        this.wss = wss
+        flatWss = wss.values.flatten()
 
         val clkSize = events.values.flatMap { it.values.flatten() }.maxOf { it.clkId } + 1
         val initialRels = Array(clkSize) { Array<Reason?>(clkSize) { null } }
         pos.forEach { setAndClose(initialRels, it) }
         PropagatorOcAssignment(partialAssignment, initialRels)
         registerExpressions()
-        return solver.check()
+
+        val result = solver.check()
+        if (result.isUnsat) return result
+        return finalWsCheck() ?: return result
     }
 
     override fun getRelations(): Array<Array<Reason?>>? = partialAssignment.lastOrNull()?.rels?.copy()
@@ -119,26 +127,41 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         interferenceCondToEvents = interferenceToEvents
     }
 
-    protected fun interferenceKnown(w1: E, w2: E) =
+    private fun interferenceKnown(w1: E, w2: E) =
         w1.interferenceCond(w2) == null || partialAssignment.any { it.interference == w1 to w2 }
 
-    protected open fun propagate(expr: Expr<BoolType>) {
+    private fun propagate(expr: Expr<BoolType>) {
         flatRfs.find { it.declRef == expr }?.let { rf -> propagate(rf); return }
+        flatWss.find { it.declRef == expr }?.let { ws -> propagate(ws); return }
         flatWrites.filter { it.guardExpr == expr }.forEach { w -> propagate(w) }
         interferenceCondToEvents[expr]?.forEach { (w1, w2) -> propagate(w1, w2) }
     }
 
-    private fun propagate(rf: Relation<E>) {
-        check(rf.type == RelationType.RF)
-        val assignment = PropagatorOcAssignment(partialAssignment, rf, solverLevel)
-        val reason0 = setAndClose(assignment.rels, rf)
+    private fun propagate(rel: Relation<E>) {
+        val assignment = PropagatorOcAssignment(partialAssignment, rel, solverLevel)
+        val reason0 = setAndClose(assignment.rels, rel)
         propagate(reason0)
 
-        writes[rf.from.const.varDecl]!!.filter { w ->
-            (w.guard.isEmpty() || partialAssignment.any { it.event == w }) && interferenceKnown(rf.from, w)
-        }.forEach { w ->
-            val reason = derive(assignment.rels, rf, w)
-            propagate(reason)
+        when (rel.type) {
+            RelationType.RF -> {
+                writes[rel.from.const.varDecl]!!.filter { w ->
+                    (w.guard.isEmpty() || partialAssignment.any { it.event == w }) && interferenceKnown(rel.from, w)
+                }.forEach { w ->
+                    val reason = derive(assignment.rels, rel, w)
+                    propagate(reason)
+                }
+            }
+
+            RelationType.WS -> {
+                rfs[rel.from.const.varDecl]?.filter { rf ->
+                    rf.from == rel.from && partialAssignment.any { it.relation == rf }
+                }?.forEach { rf ->
+                    val reason = derive(assignment.rels, rf, rel.to)
+                    propagate(reason)
+                }
+            }
+
+            else -> {}
         }
     }
 
@@ -174,10 +197,17 @@ open class UserPropagatorOcChecker<E : Event> : OcCheckerBase<E>() {
         return true
     }
 
-    protected open fun pop(levels: Int) {
+    private fun pop(levels: Int) {
         solverLevel -= levels
         while (partialAssignment.isNotEmpty() && partialAssignment.peek().solverLevel > solverLevel) {
             partialAssignment.pop()
         }
+    }
+
+    private fun finalWsCheck(): SolverStatus? {
+        val rels = partialAssignment.peek().rels
+        val unassignedWss = finalWsCheck(rels, wss)
+        unassignedWss.forEach { ws -> userPropagator.registerExpression(ws.declRef) }
+        return solver.check()
     }
 }

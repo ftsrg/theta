@@ -32,18 +32,20 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
         rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+        wss: Map<VarDecl<*>, Set<Relation<E>>>,
     ): SolverStatus? {
-        val modifiableRels = rfs.values.flatten() // modifiable relation vars
+        var modifiableRels = rfs.values.flatten() // modifiable relation vars
         val flatEvents = events.values.flatMap { it.values.flatten() }
         val initialRels = Array(flatEvents.size) { Array<Reason?>(flatEvents.size) { null } }
         pos.forEach { setAndClose(initialRels, it) }
         val decisionStack = Stack<OcAssignment<E>>()
         decisionStack.push(OcAssignment(initialRels)) // not really a decision point (initial)
+        var finalWsCheck = false
 
         dpllLoop@
         while (solver.check().isSat) { // DPLL loop
             val valuation = solver.model.toMap()
-            val changedRfs = modifiableRels.filter { rel ->
+            val changedRels = modifiableRels.filter { rel ->
                 val value = rel.enabled(valuation)
                 decisionStack.popUntil({ it.relation == rel }, value) && value == true
             }
@@ -54,17 +56,33 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
             }
 
             // propagate
-            for (rf in changedRfs) {
-                val decision = OcAssignment(decisionStack.peek().rels, rf)
-                decisionStack.push(decision)
-                val reason0 = setAndClose(decision.rels, rf)
+            for (rel in changedRels) {
+                val assignment = OcAssignment(decisionStack.peek().rels, rel)
+                decisionStack.push(assignment)
+                val reason0 = setAndClose(assignment.rels, rel)
                 if (propagate(reason0)) continue@dpllLoop
 
-                val writes = events[rf.from.const.varDecl]!!.values.flatten()
-                    .filter { it.type == EventType.WRITE && it.enabled == true }
-                for (w in writes) {
-                    val reason = derive(decision.rels, rf, w)
-                    if (propagate(reason)) continue@dpllLoop
+                when (rel.type) {
+                    RelationType.RF -> {
+                        val writes = events[rel.from.const.varDecl]!!.values.flatten()
+                            .filter { it.type == EventType.WRITE && it.enabled == true }
+                        for (w in writes) {
+                            val reason = derive(assignment.rels, rel, w)
+                            if (propagate(reason)) continue@dpllLoop
+                        }
+                    }
+
+                    RelationType.WS -> {
+                        val matchingRfs = rfs[rel.from.const.varDecl]?.filter { rf ->
+                            rf.from == rel.from && decisionStack.any { it.relation == rf }
+                        } ?: emptyList()
+                        for (rf in matchingRfs) {
+                            val reason = derive(assignment.rels, rf, rel.to)
+                            if (propagate(reason)) continue@dpllLoop
+                        }
+                    }
+
+                    else -> {}
                 }
             }
 
@@ -75,6 +93,14 @@ class BasicOcChecker<E : Event> : OcCheckerBase<E>() {
                     val reason = derive(decision.rels, rf, w)
                     if (propagate(reason)) continue@dpllLoop
                 }
+            }
+
+            if (!finalWsCheck) {
+                // no conflict found at this point, checking counterexample for SC
+                val unassignedWss = finalWsCheck(decisionStack.peek().rels, wss)
+                modifiableRels = modifiableRels + unassignedWss
+                finalWsCheck = true
+                continue@dpllLoop
             }
 
             relations = decisionStack.peek().rels

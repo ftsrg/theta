@@ -78,6 +78,7 @@ class XcfaOcChecker(
     private val branchingConditions = mutableListOf<Expr<BoolType>>()
     private val pos = mutableListOf<R>()
     private val rfs = mutableMapOf<VarDecl<*>, MutableSet<R>>()
+    private val wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
     private val ocChecker: OcChecker<E> =
         if (inputConflictClauseFile == null) decisionProcedure.checker()
@@ -96,17 +97,20 @@ class XcfaOcChecker(
             return@let SafetyResult.safe<EmptyWitness, Cex>(EmptyWitness.getInstance())
 
         // "Manually" add some conflicts
-        logger.write(Logger.Level.SUBSTEP, "Automatically finding conflicts...\n")
-        logger.write(Logger.Level.INFO, "Auto conflict time (ms): ${measureTime {
-            val conflicts = findAutoConflicts(threads, events, rfs, autoConflictConfig)
-            ocChecker.solver.add(conflicts.map { Not(it.expr) })
-            logger.write(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}\n")
-        }.inWholeMilliseconds}\n")
+        logger.write(
+            Logger.Level.INFO, "Auto conflict time (ms): ${
+                measureTime {
+                    val conflicts = findAutoConflicts(threads, events, rfs, autoConflictConfig)
+                    ocChecker.solver.add(conflicts.map { Not(it.expr) })
+                    logger.write(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}\n")
+                }.inWholeMilliseconds
+            }\n"
+        )
 
         logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
         val status: SolverStatus?
         val checkerTime = measureTime {
-            status = ocChecker.check(events, pos, rfs)
+            status = ocChecker.check(events, pos, rfs, wss)
         }
         if (ocChecker !is XcfaOcCorrectnessValidator)
             logger.write(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}\n")
@@ -394,8 +398,12 @@ class XcfaOcChecker(
                 for ((pid2, list2) in map)
                     if (pid1 != pid2)
                         for (e1 in list1.filter { it.type == EventType.WRITE })
-                            for (e2 in list2.filter { it.type == EventType.READ })
-                                rfs.add(RelationType.RF, e1, e2)
+                            for (e2 in list2) {
+                                if (e2.type == EventType.READ)
+                                    rfs.add(RelationType.RF, e1, e2)
+                                if (e2.type == EventType.WRITE)
+                                    wss.add(RelationType.WS, e1, e2)
+                            }
     }
 
     private fun addToSolver(solver: Solver): Boolean {
