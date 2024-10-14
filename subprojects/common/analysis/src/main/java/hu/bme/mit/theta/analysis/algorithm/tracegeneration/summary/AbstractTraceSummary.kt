@@ -84,17 +84,18 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
         checkState(initSummaryNodes.size==1, "Initial arg node must be in exactly 1 summary node!")
         val initNode = initSummaryNodes.get(0)
 
+        val summaryEdges = mutableSetOf<SummaryEdge<S, A>>()
         // save edges as well, so we can easily connect edge sources and targets
         for(summaryNode in summaryNodes) {
             for(argNode in summaryNode.argNodes) {
                 for(edge in argNode.outEdges) {
                     // adds itself to source and target as well
-                    SummaryEdge.create(edge, summaryNode, argNodeSummaryNodeMap[edge.target]!!)
+                    summaryEdges.add(SummaryEdge.create(edge, summaryNode, argNodeSummaryNodeMap[edge.target]!!))
                 }
             }
         }
 
-        return AbstractTraceSummary(argTraces, summaryNodes, initNode)
+        return AbstractTraceSummary(argTraces, summaryEdges, summaryNodes, initNode)
     }
 }
 
@@ -105,6 +106,7 @@ class TraceGenerationSummaryBuilder<S : State, A : Action> {
  */
 data class AbstractTraceSummary<S : State, A : Action> (
     val sourceTraces : Collection<ArgTrace<S, A>>,
+    val summaryEdges : Collection<SummaryEdge<S, A>>,
     val summaryNodes : Collection<SummaryNode<S, A>>,
     val initNode : SummaryNode<S, A>
     ) : Witness {
@@ -170,14 +172,6 @@ class SummaryNode<S : State, A: Action> private constructor (val nodeSummaryId: 
 
             return SummaryNode(counter++, argNodes, leastOverApproximatedNode, mostOverApproximatedNode)
         }
-    }
-
-    fun getOutEdges(): Set<SummaryEdge<S, A>> {
-        return outEdges
-    }
-
-    fun getInEdges() : Set<SummaryEdge<S, A>> {
-        return inEdges
     }
 
     fun getStates() : Set<S> {

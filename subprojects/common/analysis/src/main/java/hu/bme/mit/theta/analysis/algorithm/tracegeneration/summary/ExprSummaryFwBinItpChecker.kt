@@ -16,9 +16,10 @@
 package hu.bme.mit.theta.analysis.expr.refinement
 
 import com.google.common.base.Preconditions
-import com.google.common.collect.ImmutableList
-import hu.bme.mit.theta.analysis.Trace
+import com.google.common.base.Preconditions.checkState
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.ConcreteSummaryBuilder
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.SummaryEdge
 import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.SummaryNode
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
@@ -30,65 +31,67 @@ import hu.bme.mit.theta.core.utils.indexings.VarIndexing
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory
 import hu.bme.mit.theta.solver.ItpMarker
 import hu.bme.mit.theta.solver.ItpSolver
+import java.util.*
 
 /**
  * ExprTraceChecker modified to concretize summaries (interconnected traces) instead of a single trace.
  * It generates a binary interpolant by incrementally checking the traces forward.
  */
 class ExprSummaryFwBinItpChecker private constructor(
-    init: Expr<BoolType>, target: Expr<BoolType>,
+    init: Expr<BoolType>,
     solver: ItpSolver
 ) {
     private val solver: ItpSolver = Preconditions.checkNotNull(solver)
     private val init: Expr<BoolType> = Preconditions.checkNotNull(init)
-    private val target: Expr<BoolType> = Preconditions.checkNotNull(target)
     private var nPush: Long = 0
 
     // TODO what presumptions do we have about state and trace feasibility? Does it matter?
     // TODO will binitp work? see notes
     /**
-     * @return a pair, boolean is "reachedUnsat", map is the updated indexings
+     * @return a summary edge, which, if present, represents the step where we start to have infeasibility,
+     * and map of the updated indexings
      */
-    fun addNodeToSolver(currentNode: SummaryNode<out ExprState, out ExprAction>,
-                        A: ItpMarker,
-                        indexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>,
-                    ) : Pair<Boolean, MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>> {
+    fun addNodeToSolver(
+        currentNode: SummaryNode<out ExprState, out ExprAction>,
+        A: ItpMarker,
+        indexingMap: MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>,
+    ) : Pair<Optional<SummaryEdge<out ExprState, out ExprAction>>, MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>> {
         var currentIndexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing> = indexingMap
 
-        for (edge in currentNode.getOutEdges()) {
+        for (edge in currentNode.outEdges) {
             solver.push()
             nPush++
 
             currentIndexingMap[edge.target] = currentIndexingMap[edge.source]!!.add(edge.action.nextIndexing())
             solver.add(
                 A, PathUtils.unfold(
-                    edge.source.leastOverApproximatedNode.state.toExpr(),
-                    currentIndexingMap[edge.source]
+                    edge.target.leastOverApproximatedNode.state.toExpr(),
+                    currentIndexingMap[edge.target]
                 )
             )
             solver.add(
                 A, PathUtils.unfold(
-                    edge.target.leastOverApproximatedNode.state.toExpr(),
-                    currentIndexingMap[edge.target]
+                    edge.action.toExpr(),
+                    currentIndexingMap[edge.source]
                 )
             )
             if (solver.check().isSat) {
                 val result = addNodeToSolver(edge.target, A, currentIndexingMap)
                 currentIndexingMap = result.second
 
-                if (result.first) { // reached unsat?
+                if (result.first.isPresent) { // reached unsat?
                     // in one of the recursive calls, reached unsat step (see else branch below)
                     return Pair(result.first, currentIndexingMap)
                 }
             } else {
                 solver.pop()
                 nPush--
-                return Pair(true, currentIndexingMap)
+                return Pair(Optional.of(edge), currentIndexingMap)
             }
         }
 
         // we recursively went down on this branch, time to go one up
-        return Pair(false, currentIndexingMap)
+        return Pair(Optional.empty(), currentIndexingMap)
     }
 
     fun check(
@@ -108,66 +111,59 @@ class ExprSummaryFwBinItpChecker private constructor(
         val pattern = solver.createBinPattern(A, B)
 
         solver.add(A, PathUtils.unfold(init, indexingMap[summary.initNode]))
-        solver.add(A, PathUtils.unfold(summary.initNode.leastOverApproximatedNode.getState()!!.toExpr(), indexingMap[summary.initNode]))
+        solver.add(A, PathUtils.unfold(summary.initNode.leastOverApproximatedNode.state!!.toExpr(), indexingMap[summary.initNode]))
         assert(solver.check().isSat) { "Initial state of the trace is not feasible" }
-        var satPrefix = 0
 
         // iterate through summary - take care of branchings
         val result = addNodeToSolver(summary.initNode, A, indexingMap)
         val updatedIndexingMap = result.second
-        val reachedUnsat = result.first
+        val concretizable = result.first.isEmpty
 
-        if(!reachedUnsat) {
-            // TODO why does it originally only add B and target here??
-            // solver.add(B, PathUtils.unfold(target, indexings[summaryNodeCount - 1]))
-            // concretizable = solver.check().isSat
-        } else {
+        // concretizable case: we don't have a target, thus we don't even need B in this case
+        if(!concretizable) {
+            checkState(result.first.isPresent, "If summary not concretizable, border edge must be present!")
+            val borderEdge = result.first.get()
 
-        }
-
-        /////////////
-
-        if (satPrefix == summaryNodeCount - 1) {
-            solver.add(B, PathUtils.unfold(target, indexings[summaryNodeCount - 1]))
-            concretizable = solver.check().isSat
-        } else {
             solver.add(
-                B, PathUtils.unfold(
-                    summary.getState(satPrefix + 1)!!.toExpr(),
-                    indexings[satPrefix + 1]
+                    B, PathUtils.unfold(
+                        borderEdge.target.leastOverApproximatedNode.state.toExpr(),
+                        updatedIndexingMap[borderEdge.target]
+                    )
                 )
-            )
             solver.add(
                 B,
-                PathUtils.unfold(
-                    summary.getAction(satPrefix)!!.toExpr(),
-                    indexings[satPrefix]
-                )
+                PathUtils.unfold(borderEdge.action.toExpr(), updatedIndexingMap[borderEdge.source])
             )
             solver.check()
-            assert(solver.status.isUnsat) { "Trying to interpolate a feasible formula" }
-            concretizable = false
+            checkState(solver.status.isUnsat, "Trying to interpolate a feasible formula")
         }
 
-        var status: ExprTraceStatus<ItpRefutation>? = null
+        var status: ExprTraceStatus<ItpRefutation>
         if (concretizable) {
             val model = solver.model
-            val builder = ImmutableList.builder<Valuation>()
-            for (indexing in indexings) {
-                builder.add(PathUtils.extractValuation(model, indexing))
+            val valuations = mutableMapOf<SummaryNode<out ExprState, out ExprAction>, Valuation>()
+            for ((node, indexing) in updatedIndexingMap.entries) {
+                valuations[node] = PathUtils.extractValuation(model, indexing)
             }
-            status = ExprTraceStatus.feasible(Trace.of(builder.build(), summary.actions))
+
+            val builder = ConcreteSummaryBuilder<ExprState, ExprAction>()
+            builder.build(valuations, summary)
+
+            TODO()
+            // Trace.of(builder.build(), trace.getActions())
+            // status = ExprTraceStatus.feasible<ItpRefutation?>()
         } else {
             val interpolant = solver.getInterpolant(pattern)
-            val itpFolded = PathUtils.foldin(
+            val itpFolded: Expr<BoolType> = PathUtils.foldin<BoolType>(
                 interpolant.eval(A),
-                indexings[satPrefix]
+                indexings.get(satPrefix)
             )
-            status = ExprTraceStatus.infeasible(
-                ItpRefutation.binary(itpFolded, satPrefix, summaryNodeCount)
+            status = ExprTraceStatus.infeasible<ItpRefutation?>(
+                ItpRefutation.binary(itpFolded, satPrefix, stateCount)
             )
         }
         checkNotNull(status)
+
         solver.pop(nPush)
 
         return status
@@ -181,10 +177,9 @@ class ExprSummaryFwBinItpChecker private constructor(
 
         fun create(
             init: Expr<BoolType>,
-            target: Expr<BoolType>,
             solver: ItpSolver
         ): ExprSummaryFwBinItpChecker {
-            return ExprSummaryFwBinItpChecker(init, target, solver)
+            return ExprSummaryFwBinItpChecker(init, solver)
         }
     }
 }
