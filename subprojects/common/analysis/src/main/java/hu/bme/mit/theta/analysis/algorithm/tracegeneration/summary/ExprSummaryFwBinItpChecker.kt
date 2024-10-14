@@ -52,11 +52,11 @@ class ExprSummaryFwBinItpChecker private constructor(
      * and map of the updated indexings
      */
     fun addNodeToSolver(
-        currentNode: SummaryNode<out ExprState, out ExprAction>,
+        currentNode: SummaryNode<ExprState, ExprAction>,
         A: ItpMarker,
-        indexingMap: MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>,
-    ) : Pair<Optional<SummaryEdge<out ExprState, out ExprAction>>, MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing>> {
-        var currentIndexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing> = indexingMap
+        indexingMap: MutableMap<SummaryNode<ExprState, ExprAction>, VarIndexing>,
+    ) : Pair<Optional<SummaryEdge<ExprState, ExprAction>>, MutableMap<SummaryNode<ExprState, ExprAction>, VarIndexing>> {
+        var currentIndexingMap : MutableMap<SummaryNode<ExprState, ExprAction>, VarIndexing> = indexingMap
 
         for (edge in currentNode.outEdges) {
             solver.push()
@@ -95,12 +95,12 @@ class ExprSummaryFwBinItpChecker private constructor(
     }
 
     fun check(
-        summary: AbstractTraceSummary<out ExprState, out ExprAction>
+        summary: AbstractTraceSummary<ExprState, ExprAction>
     ): ExprTraceStatus<ItpRefutation?> {
         Preconditions.checkNotNull(summary)
         val summaryNodeCount = summary.summaryNodes.size
 
-        val indexingMap : MutableMap<SummaryNode<out ExprState, out ExprAction>, VarIndexing> = mutableMapOf()
+        val indexingMap : MutableMap<SummaryNode<ExprState, ExprAction>, VarIndexing> = mutableMapOf()
         indexingMap[summary.initNode] = VarIndexingFactory.indexing(0)
 
         solver.push()
@@ -138,21 +138,17 @@ class ExprSummaryFwBinItpChecker private constructor(
             checkState(solver.status.isUnsat, "Trying to interpolate a feasible formula")
         }
 
-        var status: ExprTraceStatus<ItpRefutation>
         if (concretizable) {
             val model = solver.model
-            val valuations = mutableMapOf<SummaryNode<out ExprState, out ExprAction>, Valuation>()
+            val valuations = mutableMapOf<SummaryNode<ExprState, ExprAction>, Valuation>()
             for ((node, indexing) in updatedIndexingMap.entries) {
                 valuations[node] = PathUtils.extractValuation(model, indexing)
             }
 
-            val builder = ConcreteSummaryBuilder<ExprState, ExprAction>()
-            builder.build(valuations, summary)
-
-            TODO()
-            // Trace.of(builder.build(), trace.getActions())
-            // status = ExprTraceStatus.feasible<ItpRefutation?>()
+            val builder = ConcreteSummaryBuilder<ExprAction>()
+            val concreteSummary = builder.build<ExprState>(valuations, summary)
         } else {
+            
             val interpolant = solver.getInterpolant(pattern)
             val itpFolded: Expr<BoolType> = PathUtils.foldin<BoolType>(
                 interpolant.eval(A),

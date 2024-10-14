@@ -20,7 +20,6 @@ import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.core.model.Valuation
 
-// TODO S: ??
 class ConcreteSummaryBuilder<A: Action> {
     fun <S: State> build(
         valuations: MutableMap<SummaryNode<S, A>, Valuation>,
