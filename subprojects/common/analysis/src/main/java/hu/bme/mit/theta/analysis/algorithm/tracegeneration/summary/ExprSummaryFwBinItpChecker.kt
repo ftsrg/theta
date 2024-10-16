@@ -17,10 +17,7 @@ package hu.bme.mit.theta.analysis.expr.refinement
 
 import com.google.common.base.Preconditions
 import com.google.common.base.Preconditions.checkState
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.AbstractTraceSummary
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.ConcreteSummaryBuilder
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.SummaryEdge
-import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.SummaryNode
+import hu.bme.mit.theta.analysis.algorithm.tracegeneration.summary.*
 import hu.bme.mit.theta.analysis.expr.ExprAction
 import hu.bme.mit.theta.analysis.expr.ExprState
 import hu.bme.mit.theta.core.model.Valuation
@@ -43,7 +40,7 @@ class ExprSummaryFwBinItpChecker private constructor(
 ) {
     private val solver: ItpSolver = Preconditions.checkNotNull(solver)
     private val init: Expr<BoolType> = Preconditions.checkNotNull(init)
-    private var nPush: Long = 0
+    private var nPush: Int = 0
 
     // TODO what presumptions do we have about state and trace feasibility? Does it matter?
     // TODO will binitp work? see notes
@@ -96,7 +93,7 @@ class ExprSummaryFwBinItpChecker private constructor(
 
     fun check(
         summary: AbstractTraceSummary<ExprState, ExprAction>
-    ): ExprTraceStatus<ItpRefutation?> {
+    ): SummaryStatus<out Any> {
         Preconditions.checkNotNull(summary)
         val summaryNodeCount = summary.summaryNodes.size
 
@@ -120,25 +117,7 @@ class ExprSummaryFwBinItpChecker private constructor(
         val concretizable = result.first.isEmpty
 
         // concretizable case: we don't have a target, thus we don't even need B in this case
-        if(!concretizable) {
-            checkState(result.first.isPresent, "If summary not concretizable, border edge must be present!")
-            val borderEdge = result.first.get()
-
-            solver.add(
-                    B, PathUtils.unfold(
-                        borderEdge.target.leastOverApproximatedNode.state.toExpr(),
-                        updatedIndexingMap[borderEdge.target]
-                    )
-                )
-            solver.add(
-                B,
-                PathUtils.unfold(borderEdge.action.toExpr(), updatedIndexingMap[borderEdge.source])
-            )
-            solver.check()
-            checkState(solver.status.isUnsat, "Trying to interpolate a feasible formula")
-        }
-
-        if (concretizable) {
+        val status = if (concretizable) {
             val model = solver.model
             val valuations = mutableMapOf<SummaryNode<ExprState, ExprAction>, Valuation>()
             for ((node, indexing) in updatedIndexingMap.entries) {
@@ -147,18 +126,32 @@ class ExprSummaryFwBinItpChecker private constructor(
 
             val builder = ConcreteSummaryBuilder<ExprAction>()
             val concreteSummary = builder.build<ExprState>(valuations, summary)
+            FeasibleExprSummaryStatus(concreteSummary)
         } else {
-            
+            checkState(result.first.isPresent, "If summary not concretizable, border edge must be present!")
+            val borderEdge = result.first.get()
+
+            solver.add(
+                B, PathUtils.unfold(
+                    borderEdge.target.leastOverApproximatedNode.state.toExpr(),
+                    updatedIndexingMap[borderEdge.target]
+                )
+            )
+            solver.add(
+                B,
+                PathUtils.unfold(borderEdge.action.toExpr(), updatedIndexingMap[borderEdge.source])
+            )
+            solver.check()
+            checkState(solver.status.isUnsat, "Trying to interpolate a feasible formula")
+
             val interpolant = solver.getInterpolant(pattern)
             val itpFolded: Expr<BoolType> = PathUtils.foldin<BoolType>(
                 interpolant.eval(A),
-                indexings.get(satPrefix)
+                updatedIndexingMap[borderEdge.source]
             )
-            status = ExprTraceStatus.infeasible<ItpRefutation?>(
-                ItpRefutation.binary(itpFolded, satPrefix, stateCount)
-            )
+
+            InfeasibleSummaryStatus(ItpRefutation.binary(itpFolded, TODO(), TODO()))
         }
-        checkNotNull(status)
 
         solver.pop(nPush)
 
