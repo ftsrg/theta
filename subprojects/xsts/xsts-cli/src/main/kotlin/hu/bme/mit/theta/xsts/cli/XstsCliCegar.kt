@@ -65,9 +65,9 @@ class XstsCliCegar : XstsCliBaseCommand(
             stats.abstractorTimeMs,
             stats.refinerTimeMs,
             stats.iterations,
-            status.witness!!.size(),
-            status.witness!!.depth,
-            status.witness!!.meanBranchingFactor,
+            status.proof!!.size(),
+            status.proof!!.depth,
+            status.proof!!.meanBranchingFactor,
         ).forEach(writer::cell)
         writer.newRow()
     }
@@ -76,7 +76,7 @@ class XstsCliCegar : XstsCliBaseCommand(
         status: SafetyResult<out ARG<*, *>?, out Trace<out State?, out Action?>?>
     ) {
         if (outputOptions.visualize == null) return
-        val graph = if (status.isSafe) ArgVisualizer.getDefault().visualize(status.asSafe().witness)
+        val graph = if (status.isSafe) ArgVisualizer.getDefault().visualize(status.asSafe().proof)
         else TraceVisualizer.getDefault().visualize(status.asUnsafe().cex)
         GraphvizWriter.getInstance().writeFile(graph, outputOptions.visualize!!)
     }

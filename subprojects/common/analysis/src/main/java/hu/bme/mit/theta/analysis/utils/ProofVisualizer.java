@@ -13,25 +13,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import hu.bme.mit.theta.analysis.Prec;
+package hu.bme.mit.theta.analysis.utils;
+
 import hu.bme.mit.theta.analysis.algorithm.Proof;
+import hu.bme.mit.theta.common.visualization.Graph;
 
-/**
- * Common interface for the abstractor component. It can create an initial witness and check a witness with
- * a given precision.
- */
-public interface Abstractor<P extends Prec, Pr extends Proof> {
+public interface ProofVisualizer<Pr extends Proof> {
 
-    /**
-     * Create initial witness
-     */
-    Pr createProof();
-
-    /**
-     * Check witness with given precision
-     */
-    AbstractorResult check(Pr witness, P prec);
+    Graph visualize(Pr proof);
 
 }

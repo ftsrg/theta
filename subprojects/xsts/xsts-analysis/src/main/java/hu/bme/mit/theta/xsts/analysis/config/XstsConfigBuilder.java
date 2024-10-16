@@ -21,10 +21,10 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.expl.*;
@@ -120,7 +120,7 @@ public class XstsConfigBuilder {
             }
 
             @Override
-            public <S extends ExprState, P extends Prec, R extends Refutation> Refiner<XstsState<S>, XstsAction, P>
+            public <S extends ExprState, P extends Prec, R extends Refutation> ArgRefiner<XstsState<S>, XstsAction, P>
             createRefiner(
                     ExprTraceChecker<R> traceChecker,
                     RefutationToPrec<P, R> refToPrec,
@@ -143,7 +143,7 @@ public class XstsConfigBuilder {
             throw new UnsupportedOperationException(String.format("%s domain can't provide trace checker of ItpRefutation", this.getClass().getSimpleName()));
         }
 
-        public <S extends ExprState, P extends Prec, R extends Refutation> Refiner<XstsState<S>, XstsAction, P>
+        public <S extends ExprState, P extends Prec, R extends Refutation> ArgRefiner<XstsState<S>, XstsAction, P>
         createRefiner(
                 ExprTraceChecker<R> traceChecker,
                 RefutationToPrec<P, R> refToPrec,
@@ -336,7 +336,7 @@ public class XstsConfigBuilder {
 
         public abstract RefutationToPrec<P, ItpRefutation> getItpRefToPrec();
 
-        public Refiner<XstsState<S>, XstsAction, P> getRefiner() {
+        public ArgRefiner<XstsState<S>, XstsAction, P> getRefiner() {
             return refinement.createRefiner(
                     refinement.getItpExprTraceChecker(
                             xsts.getInitFormula(),
@@ -356,13 +356,13 @@ public class XstsConfigBuilder {
             final ArgBuilder<XstsState<S>, XstsAction, P> argBuilder = ArgBuilder.create(
                     lts, analysis, target,
                     true);
-            final Abstractor<XstsState<S>, XstsAction, P> abstractor = BasicAbstractor.builder(
+            final ArgAbstractor<XstsState<S>, XstsAction, P> abstractor = BasicArgAbstractor.builder(
                             argBuilder)
                     .waitlist(PriorityWaitlist.create(search.comparator))
                     .stopCriterion(refinement.getStopCriterion())
                     .logger(logger).build();
-            final Refiner<XstsState<S>, XstsAction, P> refiner = getRefiner();
-            final SafetyChecker<ARG<XstsState<S>, XstsAction>, Trace<XstsState<S>, XstsAction>, P> checker = CegarChecker.create(
+            final ArgRefiner<XstsState<S>, XstsAction, P> refiner = getRefiner();
+            final SafetyChecker<ARG<XstsState<S>, XstsAction>, Trace<XstsState<S>, XstsAction>, P> checker = ArgCegarChecker.create(
                     abstractor, refiner,
                     logger);
             return XstsConfig.create(checker, getInitPrec());
@@ -419,7 +419,7 @@ public class XstsConfigBuilder {
         }
 
         @Override
-        public Refiner<XstsState<ExplState>, XstsAction, ExplPrec> getRefiner() {
+        public ArgRefiner<XstsState<ExplState>, XstsAction, ExplPrec> getRefiner() {
             if (refinement == Refinement.UNSAT_CORE) {
                 return SingleExprTraceRefiner.create(
                         ExprTraceUnsatCoreChecker.create(xsts.getInitFormula(), negProp,

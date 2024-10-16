@@ -13,25 +13,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.algorithm.cegar;
+package hu.bme.mit.theta.analysis.algorithm;
 
-import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.algorithm.Proof;
+public class EmptyProof implements Proof {
 
-/**
- * Common interface for the abstractor component. It can create an initial witness and check a witness with
- * a given precision.
- */
-public interface Abstractor<P extends Prec, Pr extends Proof> {
+    private final static EmptyProof empty = new EmptyProof();
 
-    /**
-     * Create initial witness
-     */
-    Pr createProof();
+    private EmptyProof() {
+    }
 
-    /**
-     * Check witness with given precision
-     */
-    AbstractorResult check(Pr witness, P prec);
+    public static EmptyProof getInstance() {
+        return empty;
+    }
 
 }

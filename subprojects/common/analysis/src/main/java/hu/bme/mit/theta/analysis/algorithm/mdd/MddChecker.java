@@ -15,28 +15,26 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.mdd;
 
-import hu.bme.mit.delta.collections.impl.RecursiveIntObjMapViews;
-import hu.bme.mit.delta.java.mdd.*;
+import hu.bme.mit.delta.java.mdd.JavaMddFactory;
+import hu.bme.mit.delta.java.mdd.MddGraph;
+import hu.bme.mit.delta.java.mdd.MddHandle;
+import hu.bme.mit.delta.java.mdd.MddVariableOrder;
 import hu.bme.mit.delta.mdd.MddInterpreter;
 import hu.bme.mit.delta.mdd.MddVariableDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.AbstractNextStateDescriptor;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
-import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider;
-import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.solver.SolverPool;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
-import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeInitializer;
 import hu.bme.mit.theta.analysis.algorithm.mdd.ansd.impl.MddNodeNextStateDescriptor;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.ExprLatticeDefinition;
+import hu.bme.mit.theta.analysis.algorithm.mdd.expressionnode.MddExpressionTemplate;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.BfsProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.GeneralizedSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.SimpleSaturationProvider;
+import hu.bme.mit.theta.analysis.algorithm.mdd.fixedpoint.StateSpaceEnumerationProvider;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.utils.MddNodeVisualizer;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -45,15 +43,14 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexing;
 import hu.bme.mit.theta.core.utils.indexings.VarIndexingFactory;
-import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.SolverPool;
 
-import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Set;
 
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 
-public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitness, MddCex, Void> {
+public class MddChecker<A extends ExprAction> implements SafetyChecker<MddProof, MddCex, Void> {
 
     private final Expr<BoolType> initRel;
     private final VarIndexing initIndexing;
@@ -103,7 +100,7 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
     }
 
     @Override
-    public SafetyResult<MddWitness, MddCex> check(Void input) {
+    public SafetyResult<MddProof, MddCex> check(Void input) {
 
         final MddGraph<Expr> mddGraph = JavaMddFactory.getDefault().createMddGraph(ExprLatticeDefinition.forExpr());
 
@@ -166,11 +163,11 @@ public class MddChecker<A extends ExprAction> implements SafetyChecker<MddWitnes
 
         final MddAnalysisStatistics statistics = new MddAnalysisStatistics(violatingSize, stateSpaceSize, stateSpaceProvider.getHitCount(), stateSpaceProvider.getQueryCount(), stateSpaceProvider.getCacheSize());
 
-        final SafetyResult<MddWitness, MddCex> result;
+        final SafetyResult<MddProof, MddCex> result;
         if (violatingSize != 0) {
-            result = SafetyResult.unsafe(MddCex.of(propViolating), MddWitness.of(stateSpace), statistics);
+            result = SafetyResult.unsafe(MddCex.of(propViolating), MddProof.of(stateSpace), statistics);
         } else {
-            result = SafetyResult.safe(MddWitness.of(stateSpace), statistics);
+            result = SafetyResult.safe(MddProof.of(stateSpace), statistics);
         }
         logger.write(Level.RESULT, "%s%n", result);
         return result;

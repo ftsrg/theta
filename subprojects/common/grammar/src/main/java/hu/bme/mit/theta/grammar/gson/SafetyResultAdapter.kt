@@ -24,9 +24,9 @@ import com.google.gson.stream.JsonWriter
 import hu.bme.mit.theta.analysis.Action
 import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.Trace
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.Statistics
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import java.lang.reflect.Type
 import java.util.*
 
@@ -45,7 +45,7 @@ class SafetyResultAdapter(
         initGson()
         writer.beginObject()
         writer.name("arg")
-        gson.toJson(gson.toJsonTree(value.witness), writer)
+        gson.toJson(gson.toJsonTree(value.proof), writer)
         writer.name("stats")
 //        gson.toJson(gson.toJsonTree(value.stats), writer)
         gson.toJson(gson.toJsonTree(Optional.empty<Statistics>()), writer)

@@ -15,32 +15,31 @@
  */
 package hu.bme.mit.theta.cfa.analysis.impact;
 
-import static org.junit.Assert.assertTrue;
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
+import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.cfa.CFA;
+import hu.bme.mit.theta.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.cfa.analysis.CfaState;
+import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
+import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import org.junit.Test;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.cfa.analysis.CfaAction;
-import hu.bme.mit.theta.cfa.analysis.CfaState;
-import hu.bme.mit.theta.solver.Solver;
-import org.junit.Test;
-
-import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
-import hu.bme.mit.theta.analysis.algorithm.arg.ArgChecker;
-import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.cfa.CFA;
-import hu.bme.mit.theta.cfa.analysis.lts.CfaLbeLts;
-import hu.bme.mit.theta.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
+import static org.junit.Assert.assertTrue;
 
 public final class CfaPredImpactCheckerTest {
 
@@ -64,7 +63,7 @@ public final class CfaPredImpactCheckerTest {
         // Assert
         assertTrue(status.isSafe());
 
-        final ARG<? extends ExprState, ? extends ExprAction> arg = status.getWitness();
+        final ARG<? extends ExprState, ? extends ExprAction> arg = status.getProof();
         arg.minimize();
 
         final ArgChecker argChecker = ArgChecker.create(abstractionSolver);

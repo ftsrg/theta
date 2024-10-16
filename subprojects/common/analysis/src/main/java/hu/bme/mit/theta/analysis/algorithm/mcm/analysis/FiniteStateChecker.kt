@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.EmptyCex
 import hu.bme.mit.theta.analysis.InitFunc
 import hu.bme.mit.theta.analysis.LTS
 import hu.bme.mit.theta.analysis.TransFunc
-import hu.bme.mit.theta.analysis.algorithm.EmptyWitness
+import hu.bme.mit.theta.analysis.algorithm.EmptyProof
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult
 import hu.bme.mit.theta.analysis.algorithm.mcm.interpreter.MemoryEventProvider
@@ -46,9 +46,9 @@ class FiniteStateChecker<S : ExplState, A : StmtAction, T>(
     private val memoryEventProvider: MemoryEventProvider<A, ExplPrec>,
     private val graphPatternCompiler: GraphPatternCompiler<T, *>,
     private val graphPatternSolver: GraphSolver<T>
-) : SafetyChecker<EmptyWitness, EmptyCex, ExplPrec> {
+) : SafetyChecker<EmptyProof, EmptyCex, ExplPrec> {
 
-    override fun check(prec: ExplPrec): SafetyResult<EmptyWitness, EmptyCex> {
+    override fun check(prec: ExplPrec): SafetyResult<EmptyProof, EmptyCex> {
         val eventIds = LinkedList<Int>()
         val rels = LinkedList<Pair<String, Tuple>>()
         val lastIds = LinkedHashMap<S, Int>()
@@ -74,7 +74,7 @@ class FiniteStateChecker<S : ExplState, A : StmtAction, T>(
             initStates.addAll(nextStates)
         }
 //        PartialSolver(mcm, CandidateExecutionGraph(eventIds, rels))
-        return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyWitness.getInstance())
+        return SafetyResult.unsafe(EmptyCex.getInstance(), EmptyProof.getInstance())
 
     }
 

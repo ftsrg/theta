@@ -23,20 +23,20 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgNode
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorResult
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor
 import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion
 import hu.bme.mit.theta.analysis.reachedset.Partition
 import hu.bme.mit.theta.analysis.waitlist.Waitlist
 import hu.bme.mit.theta.common.logging.Logger
 import java.util.function.Function
 
-class XcfaAbstractor<S : State, A : Action, P : Prec>(
+class XcfaArgAbstractor<S : State, A : Action, P : Prec>(
     argBuilder: ArgBuilder<S, A, P>,
     projection: Function<in S?, *>?,
     waitlist: Waitlist<ArgNode<S, A>>,
     stopCriterion: StopCriterion<S, A>,
     logger: Logger,
-) : BasicAbstractor<S, A, P>(argBuilder, projection, waitlist, stopCriterion, logger) {
+) : BasicArgAbstractor<S, A, P>(argBuilder, projection, waitlist, stopCriterion, logger) {
 
     override fun check(arg: ARG<S, A>, prec: P): AbstractorResult {
         logger.write(Logger.Level.DETAIL, "|  |  Precision: %s%n", prec)
@@ -122,16 +122,16 @@ class XcfaAbstractor<S : State, A : Action, P : Prec>(
     companion object {
 
         fun <S : State, A : Action, P : Prec> builder(
-            argBuilder: ArgBuilder<S, A, P>): BasicAbstractor.Builder<S, A, P> {
+            argBuilder: ArgBuilder<S, A, P>): BasicArgAbstractor.Builder<S, A, P> {
             return Builder(argBuilder)
         }
     }
 
     class Builder<S : State, A : Action, P : Prec>(argBuilder: ArgBuilder<S, A, P>)
-        : BasicAbstractor.Builder<S, A, P>(argBuilder) {
+        : BasicArgAbstractor.Builder<S, A, P>(argBuilder) {
 
-        override fun build(): BasicAbstractor<S, A, P> {
-            return XcfaAbstractor(argBuilder, projection, waitlist, stopCriterion, logger)
+        override fun build(): BasicArgAbstractor<S, A, P> {
+            return XcfaArgAbstractor(argBuilder, projection, waitlist, stopCriterion, logger)
         }
     }
 }

@@ -15,56 +15,44 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
-import static hu.bme.mit.theta.analysis.algorithm.arg.ArgUtils.isWellLabeled;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static org.junit.Assert.assertTrue;
-
-import java.util.function.Predicate;
-
-import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.expr.refinement.*;
-import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
-import org.junit.Before;
-import org.junit.Test;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
 import hu.bme.mit.theta.analysis.algorithm.arg.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ArgCegarChecker;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicArgAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.pred.ExprSplitters;
-import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
-import hu.bme.mit.theta.analysis.pred.PredAbstractors;
-import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
-import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.expr.refinement.*;
+import hu.bme.mit.theta.analysis.pred.*;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3legacy.Z3LegacySolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.function.Predicate;
+
+import static hu.bme.mit.theta.analysis.algorithm.arg.ArgUtils.isWellLabeled;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static org.junit.Assert.assertTrue;
 
 public class StsPredTest {
 
@@ -104,7 +92,7 @@ public class StsPredTest {
         final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts,
                 analysis, target);
 
-        final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(
+        final ArgAbstractor<PredState, StsAction, PredPrec> abstractor = BasicArgAbstractor.builder(
                         argBuilder).logger(logger)
                 .build();
 
@@ -117,13 +105,13 @@ public class StsPredTest {
                         JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
                         PruneStrategy.LAZY, logger);
 
-        final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec> checker = CegarChecker.create(
+        final SafetyChecker<ARG<PredState, StsAction>, Trace<PredState, StsAction>, PredPrec> checker = ArgCegarChecker.create(
                 abstractor, refiner, logger);
 
         final SafetyResult<ARG<PredState, StsAction>, Trace<PredState, StsAction>> safetyStatus = checker.check(prec);
         System.out.println(safetyStatus);
 
-        final ARG<PredState, StsAction> arg = safetyStatus.getWitness();
+        final ARG<PredState, StsAction> arg = safetyStatus.getProof();
         assertTrue(isWellLabeled(arg, abstractionSolver));
 
         // System.out.println(new

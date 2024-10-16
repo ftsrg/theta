@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.arg;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.Witness;
+import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.arg.debug.ARGWebDebugger;
 import hu.bme.mit.theta.common.container.Containers;
 
@@ -27,16 +27,14 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 import static java.util.stream.Collectors.toList;
 
 /**
  * Represents an abstract reachability graph (ARG). See the related class
  * ArgBuilder.
  */
-public final class ARG<S extends State, A extends Action> implements Witness {
+public final class ARG<S extends State, A extends Action> implements Proof {
 
     private final Collection<ArgNode<S, A>> initNodes;
     public boolean initialized; // Set by ArgBuilder
