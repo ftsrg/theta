@@ -25,5 +25,5 @@ import hu.bme.mit.theta.analysis.algorithm.arg.ARG;
  * Common interface for refiners. It takes an ARG and a precision, checks if the counterexample in
  * the ARG is feasible and if not, it refines the precision and may also prune the ARG.
  */
-public interface ArgRefiner<S extends State, A extends Action, P extends Prec> extends Refiner<S, A, P, ARG<S, A>, Trace<S, A>> {
-}
+public interface ArgRefiner<S extends State, A extends Action, P extends Prec>
+        extends Refiner<P, ARG<S, A>, Trace<S, A>> {}

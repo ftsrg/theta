@@ -15,30 +15,26 @@
  */
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import hu.bme.mit.theta.analysis.Action;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.Utils;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Represents the result of the Refiner class that can be either spurious or unsafe. In the former
  * case it also contains the refined precision and in the latter case the feasible counterexample.
  */
-public abstract class RefinerResult<S extends State, A extends Action, P extends Prec, C extends Cex> {
+public abstract class RefinerResult<P extends Prec, C extends Cex> {
 
-    protected RefinerResult() {
-    }
+    protected RefinerResult() {}
 
     /**
      * Create a new spurious result.
      *
      * @param refinedPrec Refined precision
      */
-    public static <S extends State, A extends Action, P extends Prec, C extends Cex> Spurious<S, A, P, C> spurious(
-            final P refinedPrec) {
+    public static <P extends Prec, C extends Cex> Spurious<P, C> spurious(final P refinedPrec) {
         return new Spurious<>(refinedPrec);
     }
 
@@ -47,8 +43,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
      *
      * @param cex Feasible counterexample
      */
-    public static <S extends State, A extends Action, P extends Prec, C extends Cex> Unsafe<S, A, P, C> unsafe(
-            final C cex) {
+    public static <P extends Prec, C extends Cex> Unsafe<P, C> unsafe(final C cex) {
         return new Unsafe<>(cex);
     }
 
@@ -56,15 +51,12 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
     public abstract boolean isUnsafe();
 
-    public abstract Spurious<S, A, P, C> asSpurious();
+    public abstract Spurious<P, C> asSpurious();
 
-    public abstract Unsafe<S, A, P, C> asUnsafe();
+    public abstract Unsafe<P, C> asUnsafe();
 
-    /**
-     * Represents the spurious result with a refined precision.
-     */
-    public static final class Spurious<S extends State, A extends Action, P extends Prec, C extends Cex>
-            extends RefinerResult<S, A, P, C> {
+    /** Represents the spurious result with a refined precision. */
+    public static final class Spurious<P extends Prec, C extends Cex> extends RefinerResult<P, C> {
 
         private final P refinedPrec;
 
@@ -87,14 +79,16 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
         }
 
         @Override
-        public Spurious<S, A, P, C> asSpurious() {
+        public Spurious<P, C> asSpurious() {
             return this;
         }
 
         @Override
-        public Unsafe<S, A, P, C> asUnsafe() {
+        public Unsafe<P, C> asUnsafe() {
             throw new ClassCastException(
-                    "Cannot cast " + Spurious.class.getSimpleName() + " to "
+                    "Cannot cast "
+                            + Spurious.class.getSimpleName()
+                            + " to "
                             + Unsafe.class.getSimpleName());
         }
 
@@ -106,11 +100,8 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
         }
     }
 
-    /**
-     * Represents the unsafe result with a feasible counterexample.
-     */
-    public static final class Unsafe<S extends State, A extends Action, P extends Prec, C extends Cex> extends
-            RefinerResult<S, A, P, C> {
+    /** Represents the unsafe result with a feasible counterexample. */
+    public static final class Unsafe<P extends Prec, C extends Cex> extends RefinerResult<P, C> {
 
         private final C cex;
 
@@ -133,14 +124,16 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
         }
 
         @Override
-        public Spurious<S, A, P, C> asSpurious() {
+        public Spurious<P, C> asSpurious() {
             throw new ClassCastException(
-                    "Cannot cast " + Unsafe.class.getSimpleName() + " to "
+                    "Cannot cast "
+                            + Unsafe.class.getSimpleName()
+                            + " to "
                             + Spurious.class.getSimpleName());
         }
 
         @Override
-        public Unsafe<S, A, P, C> asUnsafe() {
+        public Unsafe<P, C> asUnsafe() {
             return this;
         }
 

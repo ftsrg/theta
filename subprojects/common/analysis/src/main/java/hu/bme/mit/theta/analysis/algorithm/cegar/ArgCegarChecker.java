@@ -25,24 +25,25 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 
 /**
- * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation,
- * that uses an Abstractor to explore the abstract state space and a Refiner to
- * check counterexamples and refine them if needed. It also provides certain
- * statistics about its execution.
+ * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation, that uses an Abstractor
+ * to explore the abstract state space and a Refiner to check counterexamples and refine them if
+ * needed. It also provides certain statistics about its execution.
  */
 public final class ArgCegarChecker {
 
-    private ArgCegarChecker() {
-    }
+    private ArgCegarChecker() {}
 
-    public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P, ARG<S, A>, Trace<S, A>> create(
-            final ArgAbstractor<S, A, P> abstractor, final ArgRefiner<S, A, P> refiner) {
+    public static <S extends State, A extends Action, P extends Prec>
+            CegarChecker<P, ARG<S, A>, Trace<S, A>> create(
+                    final ArgAbstractor<S, A, P> abstractor, final ArgRefiner<S, A, P> refiner) {
         return create(abstractor, refiner, NullLogger.getInstance());
     }
 
-    public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P, ARG<S, A>, Trace<S, A>> create(
-            final ArgAbstractor<S, A, P> abstractor, final ArgRefiner<S, A, P> refiner, final Logger logger) {
+    public static <S extends State, A extends Action, P extends Prec>
+            CegarChecker<P, ARG<S, A>, Trace<S, A>> create(
+                    final ArgAbstractor<S, A, P> abstractor,
+                    final ArgRefiner<S, A, P> refiner,
+                    final Logger logger) {
         return CegarChecker.create(abstractor, refiner, logger, ArgVisualizer.getDefault());
     }
-
 }
