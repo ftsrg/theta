@@ -78,7 +78,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
     }
 
     @Override
-    public RefinerResult<S, A, P, Trace<S, A>> refine(final ARG<S, A> arg, final P prec) {
+    public RefinerResult<P, Trace<S, A>> refine(final ARG<S, A> arg, final P prec) {
         checkNotNull(arg);
         checkNotNull(prec);
         assert !arg.isSafe() : "ARG must be unsafe";

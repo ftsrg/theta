@@ -16,10 +16,8 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import com.google.common.base.Stopwatch;
-import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Cex;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.Proof;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
@@ -42,15 +40,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * check counterexamples and refine them if needed. It also provides certain
  * statistics about its execution.
  */
-public final class CegarChecker<S extends State, A extends Action, P extends Prec, Pr extends Proof, C extends Cex> implements SafetyChecker<Pr, C, P> {
+public final class CegarChecker<P extends Prec, Pr extends Proof, C extends Cex> implements SafetyChecker<Pr, C, P> {
 
     private final Abstractor<P, Pr> abstractor;
-    private final Refiner<S, A, P, Pr, C> refiner;
+    private final Refiner<P, Pr, C> refiner;
     private final Logger logger;
     private final Pr proof;
     private final ProofVisualizer<? super Pr> proofVisualizer;
 
-    private CegarChecker(final Abstractor<P, Pr> abstractor, final Refiner<S, A, P, Pr, C> refiner, final Logger logger, final ProofVisualizer<? super Pr> proofVisualizer) {
+    private CegarChecker(final Abstractor<P, Pr> abstractor, final Refiner<P, Pr, C> refiner, final Logger logger, final ProofVisualizer<? super Pr> proofVisualizer) {
         this.abstractor = checkNotNull(abstractor);
         this.refiner = checkNotNull(refiner);
         this.logger = checkNotNull(logger);
@@ -58,13 +56,13 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         this.proofVisualizer = checkNotNull(proofVisualizer);
     }
 
-    public static <S extends State, A extends Action, P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<S, A, P, Pr, C> create(
-            final Abstractor<P, Pr> abstractor, final Refiner<S, A, P, Pr, C> refiner, final ProofVisualizer<Pr> proofVisualizer) {
+    public static <P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<P, Pr, C> create(
+            final Abstractor<P, Pr> abstractor, final Refiner<P, Pr, C> refiner, final ProofVisualizer<Pr> proofVisualizer) {
         return create(abstractor, refiner, NullLogger.getInstance(), proofVisualizer);
     }
 
-    public static <S extends State, A extends Action, P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<S, A, P, Pr, C> create(
-            final Abstractor<P, Pr> abstractor, final Refiner<S, A, P, Pr, C> refiner, final Logger logger, final ProofVisualizer<? super Pr> proofVisualizer) {
+    public static <P extends Prec, Pr extends Proof, C extends Cex> CegarChecker<P, Pr, C> create(
+            final Abstractor<P, Pr> abstractor, final Refiner<P, Pr, C> refiner, final Logger logger, final ProofVisualizer<? super Pr> proofVisualizer) {
         return new CegarChecker<>(abstractor, refiner, logger, proofVisualizer);
     }
 
@@ -78,7 +76,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
         final Stopwatch stopwatch = Stopwatch.createStarted();
         long abstractorTime = 0;
         long refinerTime = 0;
-        RefinerResult<S, A, P, C> refinerResult = null;
+        RefinerResult<P, C> refinerResult = null;
         AbstractorResult abstractorResult;
         P prec = initPrec;
         int iteration = 0;

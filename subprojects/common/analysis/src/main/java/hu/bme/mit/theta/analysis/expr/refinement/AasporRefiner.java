@@ -53,8 +53,8 @@ public final class AasporRefiner<S extends ExprState, A extends ExprAction, P ex
     }
 
     @Override
-    public RefinerResult<S, A, P, Trace<S, A>> refine(final ARG<S, A> arg, final P prec) {
-        final RefinerResult<S, A, P, Trace<S, A>> result = refiner.refine(arg, prec);
+    public RefinerResult<P, Trace<S, A>> refine(final ARG<S, A> arg, final P prec) {
+        final RefinerResult<P, Trace<S, A>> result = refiner.refine(arg, prec);
         if (result.isUnsafe() || pruneStrategy != PruneStrategy.LAZY) return result;
 
         final P newPrec = result.asSpurious().getRefinedPrec();
