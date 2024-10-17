@@ -25,6 +25,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.grammar.preprocess.TypedefVisitor;
 import hu.bme.mit.theta.frontend.transformation.model.declaration.CDeclaration;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
@@ -194,15 +195,15 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             case "auto":
             case "register":
             case "_Thread_local":
-                throw new UnsupportedOperationException("Not yet implemented");
+                throw new UnsupportedFrontendElementException("Not yet implemented (" + ctx.getText() + ")");
         }
-        throw new UnsupportedOperationException(
+        throw new UnsupportedFrontendElementException(
                 "Storage class specifier not expected: " + ctx.getText());
     }
 
     @Override
     public CSimpleType visitTypeSpecifierAtomic(CParser.TypeSpecifierAtomicContext ctx) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        throw new UnsupportedFrontendElementException("Not yet implemented");
     }
 
     @Override
@@ -212,7 +213,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitTypeSpecifierFunctionPointer(CParser.TypeSpecifierFunctionPointerContext ctx) {
-        throw new UnsupportedOperationException("Function pointers not yet implemented");
+        throw new UnsupportedFrontendElementException("Function pointers not yet implemented");
     }
 
     @Override
@@ -285,7 +286,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitTypeSpecifierExtension(CParser.TypeSpecifierExtensionContext ctx) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        throw new UnsupportedFrontendElementException("Not yet implemented typeSpecifierExtension");
     }
 
     @Override
@@ -348,7 +349,7 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
 
     @Override
     public CSimpleType visitTypeSpecifierTypeof(CParser.TypeSpecifierTypeofContext ctx) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        throw new UnsupportedFrontendElementException("Not yet implemented typeSpecifierTypeof");
     }
 
     @Override
@@ -357,13 +358,13 @@ public class TypeVisitor extends CBaseVisitor<CSimpleType> {
             case "const":
                 return null;
             case "restrict":
-                throw new UnsupportedOperationException("Not yet implemented!");
+                throw new UnsupportedFrontendElementException("Not yet implemented 'restrict'!");
             case "volatile":
                 return Volatile();
             case "_Atomic":
                 return Atomic();
         }
-        throw new UnsupportedOperationException(
+        throw new UnsupportedFrontendElementException(
                 "Type qualifier " + ctx.getText() + " not expected!");
     }
 

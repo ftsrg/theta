@@ -19,6 +19,7 @@ package hu.bme.mit.theta.frontend.transformation.model.types.simple;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -169,7 +170,7 @@ public class NamedType extends CSimpleType {
                 break;
             default:
                 if (!cSimpleType.isTypedef()) {
-                    throw new RuntimeException(
+                    throw new UnsupportedFrontendElementException(
                             "namedType should be short or long or type specifier, instead it is "
                                     + namedType);
                 }
