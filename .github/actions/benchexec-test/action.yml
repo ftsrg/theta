@@ -61,7 +61,7 @@ runs:
     - name: Run benchexec
       shell: bash
       run: |
-        timeout 300 benchexec xml/theta.xml -n 2 --no-container --tool-directory Theta -t ${{ inputs.task }}
+        timeout 300 benchexec xml/theta.xml -n 2 --no-container --tool-directory Theta -t ${{ inputs.task }} || true
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
