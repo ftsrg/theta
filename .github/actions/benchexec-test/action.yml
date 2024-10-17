@@ -60,12 +60,10 @@ runs:
 #        cat ${{ inputs.task }}.set
     - name: Run benchexec
       shell: bash
-      if: steps.setfile.outputs.length != '0'
       run: |
         timeout 300 benchexec xml/theta.xml -n 2 --no-container --tool-directory Theta -t ${{ inputs.task }}
     - name: Upload results
       uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-      if: steps.setfile.outputs.length != '0'
       with:
         name: BenchexecResults-${{ inputs.task }}-${{ inputs.portfolio }}
         path: results
