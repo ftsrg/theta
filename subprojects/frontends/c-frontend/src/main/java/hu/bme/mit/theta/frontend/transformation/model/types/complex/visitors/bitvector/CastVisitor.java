@@ -25,6 +25,7 @@ import hu.bme.mit.theta.core.type.fptype.FpExprs;
 import hu.bme.mit.theta.core.type.fptype.FpRoundingMode;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.frontend.ParseContext;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CComplexType;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.CVoid;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
@@ -89,7 +90,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                 }
             }
         } else {
-            throw new IllegalStateException("Compound types are not directly supported!");
+            throw new UnsupportedFrontendElementException("Compound types are not directly supported!");
         }
     }
 
@@ -119,7 +120,7 @@ public class CastVisitor extends CComplexType.CComplexTypeVisitor<Expr<?>, Expr<
                 }
             }
         } else {
-            throw new IllegalStateException("Compound types are not directly supported!");
+            throw new UnsupportedFrontendElementException("Compound types are not directly supported!");
         }
     }
 

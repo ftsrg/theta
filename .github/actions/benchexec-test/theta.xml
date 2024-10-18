@@ -11,90 +11,90 @@
     <option name="--loglevel">INFO</option>
 
     <rundefinition name="SV-COMP24_unreach-call">
-        <tasks name="ReachSafety-Arrays">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+        <tasks name="Arrays">
+            <includesfile>../sv-benchmarks/c/Arrays.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-BitVectors">
-            <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+        <tasks name="BitVectors">
+            <includesfile>../sv-benchmarks/c/BitVectors.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-ControlFlow">
-            <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+        <tasks name="ControlFlow">
+            <includesfile>../sv-benchmarks/c/ControlFlow.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-ECA">
-            <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+        <tasks name="ECA">
+            <includesfile>../sv-benchmarks/c/ECA.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Floats">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+        <tasks name="Floats">
+            <includesfile>../sv-benchmarks/c/Floats.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Heap">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+        <tasks name="Heap">
+            <includesfile>../sv-benchmarks/c/Heap.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Loops">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+        <tasks name="Loops">
+            <includesfile>../sv-benchmarks/c/Loops.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-ProductLines">
-            <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+        <tasks name="ProductLines">
+            <includesfile>../sv-benchmarks/c/ProductLines.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Recursive">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+        <tasks name="Recursive">
+            <includesfile>../sv-benchmarks/c/Recursive.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Sequentialized">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+        <tasks name="Sequentialized">
+            <includesfile>../sv-benchmarks/c/Sequentialized.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-XCSP">
-            <includesfile>../sv-benchmarks/c/ReachSafety-XCSP.set</includesfile>
+        <tasks name="XCSP">
+            <includesfile>../sv-benchmarks/c/XCSP.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Combinations">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Combinations.set</includesfile>
+        <tasks name="Combinations">
+            <includesfile>../sv-benchmarks/c/Combinations.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Hardware">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Hardware.set</includesfile>
+        <tasks name="Hardware">
+            <includesfile>../sv-benchmarks/c/Hardware.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Hardness">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Hardness.set</includesfile>
+        <tasks name="Hardness">
+            <includesfile>../sv-benchmarks/c/Hardness.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
-        <tasks name="ReachSafety-Fuzzle">
-            <includesfile>../sv-benchmarks/c/ReachSafety-Fuzzle.set</includesfile>
+        <tasks name="Fuzzle">
+            <includesfile>../sv-benchmarks/c/Fuzzle.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
 
-        <tasks name="ConcurrencySafety-Main">
-            <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+        <tasks name="Concurrency">
+            <includesfile>../sv-benchmarks/c/Concurrency.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
         </tasks>
     </rundefinition>
 
     <rundefinition name="SV-COMP24_no-data-race">
-        <tasks name="NoDataRace-Main">
-            <includesfile>../sv-benchmarks/c/NoDataRace-Main.set</includesfile>
+        <tasks name="NoDataRace">
+            <includesfile>../sv-benchmarks/c/Concurrency.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/no-data-race.prp</propertyfile>
         </tasks>
     </rundefinition>
 
     <rundefinition name="SV-COMP24_no-overflow">
         <tasks name="ConcurrencySafety-NoOverflows">
-            <includesfile>../sv-benchmarks/c/ConcurrencySafety-NoOverflows.set</includesfile>
+            <includesfile>../sv-benchmarks/c/Concurrency.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile>
         </tasks>
     </rundefinition>
 
     <rundefinition name="SV-COMP24_valid-memsafety">
         <tasks name="ConcurrencySafety-MemSafety">
-            <includesfile>../sv-benchmarks/c/ConcurrencySafety-MemSafety.set</includesfile>
+            <includesfile>../sv-benchmarks/c/ConcurrencySafety.set</includesfile>
             <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
         </tasks>
     </rundefinition>

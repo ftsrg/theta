@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.anytype.RefExpr
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr
 import hu.bme.mit.theta.core.type.booltype.BoolType
+import hu.bme.mit.theta.core.type.booltype.TrueExpr
 
 /**
  * Important! Empty collection is converted to true (not false).
@@ -50,14 +51,23 @@ abstract class Event(
     var assignment: Expr<BoolType>? = null
     var enabled: Boolean? = null
 
-    fun enabled(valuation: Valuation): Boolean? {
-        val e = try {
-            (guardExpr.eval(valuation) as? BoolLitExpr)?.value
-        } catch (e: Exception) {
-            null
-        }
+    open fun enabled(valuation: Valuation): Boolean? {
+        val e = tryOrNull { (guardExpr.eval(valuation) as? BoolLitExpr)?.value }
         enabled = e
         return e
+    }
+
+    open fun sameMemory(other: Event): Boolean {
+        if (this === other) return true
+        return const.varDecl == other.const.varDecl
+    }
+
+    open fun interferenceCond(other: Event): Expr<BoolType>? = null
+
+    protected inline fun <T> tryOrNull(block: () -> T?): T? = try {
+        block()
+    } catch (e: Exception) {
+        null
     }
 
     override fun toString(): String {
@@ -65,7 +75,7 @@ abstract class Event(
     }
 }
 
-enum class RelationType { PO, RF }
+enum class RelationType { PO, RF, WS }
 data class Relation<E : Event>(
     val type: RelationType,
     val from: E,
@@ -85,3 +95,55 @@ data class Relation<E : Event>(
         return enabled
     }
 }
+
+/**
+ * Reason(s) of an enabled relation.
+ */
+sealed class Reason {
+
+    open val reasons: List<Reason> get() = listOf(this)
+    protected open val expressions: List<Expr<BoolType>> get() = reasons.map { it.expressions }.flatten()
+
+    val exprs: List<Expr<BoolType>> get() = expressions.filter { it !is TrueExpr }
+    val expr: Expr<BoolType> get() = exprs.toAnd()
+
+    infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
+    override fun toString(): String = "[${reasons.joinToString("; ")}]"
+    override fun hashCode(): Int = exprs.hashCode()
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Reason) return false
+        if (exprs != other.exprs) return false
+        return true
+    }
+}
+
+class CombinedReason(override val reasons: List<Reason>) : Reason()
+
+object PoReason : Reason() {
+
+    override val reasons = emptyList<Reason>()
+    override val expressions: List<Expr<BoolType>> = listOf()
+}
+
+class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
+
+    override val expressions: List<Expr<BoolType>> = listOf(relation.declRef)
+    override fun toString(): String = "REL(${relation.decl.name})"
+}
+
+sealed class DerivedReason<E : Event>(
+    val rf: Relation<E>, val w: E, private val wRfRelation: Reason, private val name: String
+) : Reason() {
+
+    override val expressions: List<Expr<BoolType>> =
+        listOfNotNull(rf.declRef, w.guardExpr, rf.from.interferenceCond(w)) + wRfRelation.exprs
+
+    override fun toString(): String = "$name(${rf.decl.name}, ${w.const.name}, $wRfRelation)"
+}
+
+class WriteSerializationReason<E : Event>(rf: Relation<E>, w: E, val wBeforeRf: Reason) :
+    DerivedReason<E>(rf, w, wBeforeRf, "WS")
+
+class FromReadReason<E : Event>(rf: Relation<E>, w: E, val wAfterRf: Reason) :
+    DerivedReason<E>(rf, w, wAfterRf, "FR")

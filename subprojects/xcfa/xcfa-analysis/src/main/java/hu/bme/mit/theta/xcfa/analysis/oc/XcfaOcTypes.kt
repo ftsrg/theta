@@ -19,7 +19,11 @@ package hu.bme.mit.theta.xcfa.analysis.oc
 import hu.bme.mit.theta.analysis.algorithm.oc.*
 import hu.bme.mit.theta.core.decl.IndexedConstDecl
 import hu.bme.mit.theta.core.decl.VarDecl
+import hu.bme.mit.theta.core.model.ImmutableValuation
+import hu.bme.mit.theta.core.model.Valuation
 import hu.bme.mit.theta.core.type.Expr
+import hu.bme.mit.theta.core.type.LitExpr
+import hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq
 import hu.bme.mit.theta.core.type.booltype.BoolExprs
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.And
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Or
@@ -36,7 +40,6 @@ enum class OcDecisionProcedureType(internal val checker: () -> OcChecker<E>) {
 
     BASIC({ BasicOcChecker() }),
     PROPAGATOR({ UserPropagatorOcChecker() }),
-    PREVENTIVE({ PreventivePropagatorOcChecker() }),
 }
 
 /**
@@ -63,13 +66,84 @@ internal class XcfaEvent(
     guard: Set<Expr<BoolType>>,
     pid: Int,
     val edge: XcfaEdge,
-    clkId: Int = uniqueId()
+    clkId: Int = uniqueClkId(),
+    val array: Expr<*>? = null,
+    val offset: Expr<*>? = null,
+    val id: Int = uniqueId(),
 ) : Event(const, type, guard, pid, clkId) {
+
+    private var arrayStatic: LitExpr<*>? = null
+    private var offsetStatic: LitExpr<*>? = null
+    private var arrayLit: LitExpr<*>? = null
+    private var offsetLit: LitExpr<*>? = null
+
+    init {
+        check((array == null && offset == null) || (array != null && offset != null)) {
+            "Array and offset expressions must be both null or both non-null."
+        }
+        arrayStatic = tryOrNull { array?.eval(ImmutableValuation.empty()) }
+        offsetStatic = tryOrNull { offset?.eval(ImmutableValuation.empty()) }
+    }
 
     companion object {
 
-        private var cnt: Int = 0
-        private fun uniqueId(): Int = cnt++
+        private var idCnt: Int = 0
+        private var clkCnt: Int = 0
+
+        private fun uniqueId(): Int = idCnt++
+        private fun uniqueClkId(): Int = clkCnt++
+    }
+
+    // A (memory) event is only considered enabled if the array and offset expressions are also known values
+    override fun enabled(valuation: Valuation): Boolean? {
+        when (val e = super.enabled(valuation)) {
+            null, false -> return e
+            true -> {
+                if (array != null) {
+                    arrayLit = tryOrNull { array.eval(valuation) }
+                    if (arrayLit == null) enabled = null
+                }
+                if (offset != null) {
+                    offsetLit = tryOrNull { offset.eval(valuation) }
+                    if (offsetLit == null) enabled = null
+                }
+                return enabled
+            }
+        }
+    }
+
+    override fun sameMemory(other: Event): Boolean {
+        other as XcfaEvent
+        if (arrayLit != other.arrayLit) return false
+        if (offsetLit != other.offsetLit) return false
+        return potentialSameMemory(other)
+    }
+
+    fun potentialSameMemory(other: XcfaEvent): Boolean {
+        if (!super.sameMemory(other)) return false
+        if (arrayStatic != null && other.arrayStatic != null && arrayStatic != other.arrayStatic) return false
+        if (offsetStatic != null && other.offsetStatic != null && offsetStatic != other.offsetStatic) return false
+        return true
+    }
+
+    override fun interferenceCond(other: Event): Expr<BoolType>? {
+        other as XcfaEvent
+        array ?: return null
+        other.array ?: return null
+
+        var arrayEq: Expr<BoolType>? = Eq(array, other.array)
+        if (arrayStatic != null && other.arrayStatic != null) {
+            if (arrayStatic != other.arrayStatic) return null
+            arrayEq = null
+        }
+
+        var offsetEq: Expr<BoolType>? = Eq(offset, other.offset)
+        if (offsetStatic != null && other.offsetStatic != null) {
+            if (offsetStatic != other.offsetStatic) return null
+            offsetEq = null
+        }
+
+        return listOfNotNull(arrayEq, offsetEq).toAnd()
     }
 }
 
@@ -87,6 +161,7 @@ internal data class Thread(
     val startEvent: XcfaEvent? = null,
     val startHistory: List<String> = listOf(),
     val lastWrites: Map<VarDecl<*>, Set<E>> = mapOf(),
+    val joinEvents: MutableSet<XcfaEvent> = mutableSetOf(),
     val pid: Int = uniqueId(),
 ) {
 

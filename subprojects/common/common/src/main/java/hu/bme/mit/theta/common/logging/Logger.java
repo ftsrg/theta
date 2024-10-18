@@ -37,4 +37,8 @@ public interface Logger {
      */
     Logger write(Level level, String pattern, Object... objects);
 
+    default Logger writeln(Level level, String pattern, Object... objects) {
+        return write(level, pattern + "%n", objects);
+    }
+
 }

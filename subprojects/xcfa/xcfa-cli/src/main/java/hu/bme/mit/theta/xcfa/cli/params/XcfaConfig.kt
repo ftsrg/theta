@@ -25,6 +25,7 @@ import hu.bme.mit.theta.frontend.transformation.ArchitectureConfig
 import hu.bme.mit.theta.graphsolver.patterns.constraints.MCM
 import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager
 import hu.bme.mit.theta.xcfa.analysis.ErrorDetection
+import hu.bme.mit.theta.xcfa.analysis.oc.AutoConflictFinderConfig
 import hu.bme.mit.theta.xcfa.analysis.oc.OcDecisionProcedureType
 import hu.bme.mit.theta.xcfa.model.XCFA
 import hu.bme.mit.theta.xcfa.passes.LbePass
@@ -322,6 +323,21 @@ data class InterpolationConfig(
 data class OcConfig(
     @Parameter(names = ["--oc-decision-procedure"], description = "Decision procedure for ordering-consistency check")
     var decisionProcedure: OcDecisionProcedureType = OcDecisionProcedureType.PROPAGATOR,
+
+    @Parameter(names = ["--input-conflicts"], description = "Input file containing conflict clauses")
+    var inputConflictClauseFile: String? = null,
+
+    @Parameter(names = ["--output-conflicts"], description = "Enables conflict clause logging")
+    var outputConflictClauses: Boolean = false,
+
+    @Parameter(names = ["--input-conflict-decision-procedure"], description = "Output file to write conflict clauses")
+    var inputConflictDecisionProcedure: String = "",
+
+    @Parameter(names = ["--non-permissive-validation"], description = "Output file to write conflict clauses")
+    var nonPermissiveValidation: Boolean = false,
+
+    @Parameter(names = ["--auto-conflict"], description = "Level of manual conflict detection before verification")
+    var autoConflict: AutoConflictFinderConfig = AutoConflictFinderConfig.NONE
 ) : SpecBackendConfig
 
 data class PortfolioConfig(
@@ -338,6 +354,9 @@ data class OutputConfig(
 
     @Parameter(names = ["--output-directory"], description = "Specify the directory where the result files are stored")
     var resultFolder: File = Paths.get("./").toFile(),
+
+    @Parameter(names = ["--accept-unreliable-safe"], description = "Accept safe results even with unsafe loop unroll")
+    var acceptUnreliableSafe: Boolean = false,
 
     val cOutputConfig: COutputConfig = COutputConfig(),
     val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),

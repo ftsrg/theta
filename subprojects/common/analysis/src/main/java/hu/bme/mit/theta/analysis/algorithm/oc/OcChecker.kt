@@ -18,9 +18,7 @@ package hu.bme.mit.theta.analysis.algorithm.oc
 
 
 import hu.bme.mit.theta.core.decl.VarDecl
-import hu.bme.mit.theta.core.type.Expr
-import hu.bme.mit.theta.core.type.booltype.BoolType
-import hu.bme.mit.theta.core.type.booltype.TrueExpr
+import hu.bme.mit.theta.core.type.booltype.BoolExprs.*
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverStatus
 
@@ -50,7 +48,8 @@ interface OcChecker<E : Event> {
     fun check(
         events: Map<VarDecl<*>, Map<Int, List<E>>>,
         pos: List<Relation<E>>,
-        rfs: Map<VarDecl<*>, Set<Relation<E>>>
+        rfs: Map<VarDecl<*>, Set<Relation<E>>>,
+        wss: Map<VarDecl<*>, Set<Relation<E>>>,
     ): SolverStatus?
 
     /**
@@ -78,6 +77,7 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
     protected abstract fun propagate(reason: Reason?): Boolean
 
     protected fun derive(rels: Array<Array<Reason?>>, rf: Relation<E>, w: E): Reason? = when {
+        !rf.from.sameMemory(w) -> null // different referenced memory locations
         rf.from.clkId == rf.to.clkId -> null // rf within an atomic block
         w.clkId == rf.from.clkId || w.clkId == rf.to.clkId -> null // w within an atomic block with one of the rf ends
 
@@ -129,70 +129,53 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
         }
         return null
     }
-}
 
-/**
- * Reason(s) of an enabled relation.
- */
-sealed class Reason {
+    protected fun finalWsCheck(rels: Array<Array<Reason?>>, wss: Map<VarDecl<*>, Set<Relation<E>>>): List<Relation<E>> {
+        val unassignedWss = mutableListOf<Relation<E>>()
+        wss.forEach { (_, wsRels) ->
+            unassignedWss.addAll(wsRels.filter { ws ->
+                rels[ws.from.clkId][ws.to.clkId] == null && rels[ws.to.clkId][ws.from.clkId] == null
+            })
+        }
+        if (unassignedWss.isEmpty()) return emptyList()
 
-    open val reasons: List<Reason> get() = listOf(this)
-    val exprs: List<Expr<BoolType>> get() = toExprs()
-    val expr: Expr<BoolType> get() = exprs.toAnd()
-    infix fun and(other: Reason): Reason = CombinedReason(reasons + other.reasons)
-    open fun toExprs(): List<Expr<BoolType>> = reasons.map { it.toExprs() }.flatten().filter { it !is TrueExpr }
-    override fun hashCode(): Int = exprs.hashCode()
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Reason) return false
-        if (exprs != other.exprs) return false
-        return true
+        val unassignedCopy = unassignedWss.toMutableList()
+        val pairs = mutableListOf<Pair<Relation<E>, Relation<E>>>()
+        while (unassignedCopy.isNotEmpty()) {
+            val ws = unassignedCopy.removeFirst()
+            val pair = unassignedCopy.find { it.from == ws.to || it.to == ws.from }
+            if (pair != null) {
+                pairs.add(ws to pair)
+                unassignedCopy.remove(pair)
+            }
+        }
+
+        pairs.forEach { (ws1, ws2) ->
+            val wsGuard = And(ws1.from.guardExpr, ws1.to.guardExpr)
+            val wsCond = { ws: Relation<E> -> Imply(ws.declRef, wsGuard) }
+            solver.add(wsCond(ws1))
+            solver.add(wsCond(ws2))
+            solver.add(Imply(wsGuard, Or(ws1.declRef, ws2.declRef)))
+        }
+
+        return unassignedWss
     }
 }
-
-class CombinedReason(override val reasons: List<Reason>) : Reason()
-
-object PoReason : Reason() {
-
-    override val reasons get() = emptyList<Reason>()
-    override fun toExprs(): List<Expr<BoolType>> = listOf()
-}
-
-class RelationReason<E : Event>(val relation: Relation<E>) : Reason() {
-
-    override fun toExprs(): List<Expr<BoolType>> = listOf(relation.declRef)
-}
-
-sealed class DerivedReason<E : Event>(val rf: Relation<E>, val w: Event, private val wRfRelation: Reason) : Reason() {
-
-    override fun toExprs(): List<Expr<BoolType>> = listOf(rf.declRef, w.guardExpr) + wRfRelation.toExprs()
-}
-
-class WriteSerializationReason<E : Event>(rf: Relation<E>, w: Event, wBeforeRf: Reason) :
-    DerivedReason<E>(rf, w, wBeforeRf)
-
-class FromReadReason<E : Event>(rf: Relation<E>, w: Event, wAfterRf: Reason) :
-    DerivedReason<E>(rf, w, wAfterRf)
 
 /**
  * Represents the known value of an important element for ordering consistency checking. Such an important element is
  * either a relation (being enabled) or an event (being enabled - having a guard that evaluates to true).
  * The fix (closed by theory axioms) relations and the solver decision stack level are also stored.
  */
-class OcAssignment<E : Event> internal constructor(
+open class OcAssignment<E : Event> internal constructor(
+    val rels: Array<Array<Reason?>>,
     val relation: Relation<E>? = null,
     val event: E? = null,
-    val rels: Array<Array<Reason?>>,
-    val solverLevel: Int = 0,
 ) {
 
-    internal constructor(rels: Array<Array<Reason?>>, e: E, solverLevel: Int = 0)
-        : this(event = e, rels = rels.copy(), solverLevel = solverLevel)
+    internal constructor(rels: Array<Array<Reason?>>, e: E)
+        : this(rels.copy(), event = e)
 
-    internal constructor(rels: Array<Array<Reason?>>, r: Relation<E>, solverLevel: Int = 0)
-        : this(relation = r, rels = rels.copy(), solverLevel = solverLevel)
-
-    override fun toString(): String {
-        return "OcAssignment(relation=$relation, event=$event, solverLevel=$solverLevel)"
-    }
+    internal constructor(rels: Array<Array<Reason?>>, r: Relation<E>)
+        : this(rels.copy(), relation = r)
 }
