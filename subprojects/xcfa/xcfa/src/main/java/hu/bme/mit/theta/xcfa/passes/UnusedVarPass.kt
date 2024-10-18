@@ -62,7 +62,8 @@ class UnusedVarPass(private val uniqueWarningLogger: Logger) : ProcedurePass {
         val allVars = Sets.union(builder.getVars(), builder.parent.getVars().map { it.wrappedVar }.toSet())
         val varsAndParams = Sets.union(allVars, builder.getParams().map { it.first }.toSet())
         if (!varsAndParams.containsAll(usedVars)) {
-            uniqueWarningLogger.write(Logger.Level.INFO,
+            uniqueWarningLogger.write(
+                Logger.Level.INFO,
                 "WARNING: There are some used variables not present as declarations: " +
                     "${usedVars.filter { it !in varsAndParams }}\n"
             )

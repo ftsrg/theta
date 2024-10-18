@@ -51,7 +51,8 @@ class GsonTest {
             StringTypeAdapter(xcfaLocationAdapter)
         )
         gsonBuilder.registerTypeHierarchyAdapter(XCFA::class.java, XcfaAdapter { gson })
-        gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java,
+        gsonBuilder.registerTypeHierarchyAdapter(
+            VarDecl::class.java,
             VarDeclAdapter({ gson }, scope, env, !newScope)
         )
         gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java,
@@ -62,7 +63,8 @@ class GsonTest {
             StringTypeAdapter { TypeWrapper(it).instantiate() })
         gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java,
             StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
-        gsonBuilder.registerTypeHierarchyAdapter(XcfaLabel::class.java,
+        gsonBuilder.registerTypeHierarchyAdapter(
+            XcfaLabel::class.java,
             XcfaLabelAdapter(scope, env, { gson })
         )
         gsonBuilder.registerTypeHierarchyAdapter(MetaData::class.java, MetaDataAdapter())

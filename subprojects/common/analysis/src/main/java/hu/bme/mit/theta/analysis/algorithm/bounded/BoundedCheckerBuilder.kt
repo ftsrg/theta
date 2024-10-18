@@ -34,7 +34,8 @@ fun <S : ExprState, A : ExprAction> buildBMC(
     bmcEnabled: () -> Boolean = { true },
     lfPathOnly: () -> Boolean = { true },
 ): BoundedChecker<S, A> {
-    return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, null, { false }, null,
+    return BoundedChecker(
+        monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, null, { false }, null,
         { false }, valToState, biValToAction, logger
     )
 }
@@ -71,7 +72,8 @@ fun <S : ExprState, A : ExprAction> buildIMC(
     lfPathOnly: () -> Boolean = { true },
     imcEnabled: (Int) -> Boolean = { true },
 ): BoundedChecker<S, A> {
-    return BoundedChecker(monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, itpSolver, imcEnabled, null,
+    return BoundedChecker(
+        monolithicExpr, shouldGiveUp, bmcSolver, bmcEnabled, lfPathOnly, itpSolver, imcEnabled, null,
         { false }, valToState, biValToAction, logger
     )
 }
