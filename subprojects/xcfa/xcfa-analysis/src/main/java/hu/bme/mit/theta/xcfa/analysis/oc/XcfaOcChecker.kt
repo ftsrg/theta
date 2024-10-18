@@ -477,6 +477,6 @@ class XcfaOcChecker(
 
     private fun exit(msg: String): Nothing {
         System.err.println(msg)
-        exitProcess(203)
+        error(203)
     }
 }

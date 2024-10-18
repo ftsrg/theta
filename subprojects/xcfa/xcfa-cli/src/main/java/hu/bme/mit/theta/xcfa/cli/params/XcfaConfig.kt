@@ -355,6 +355,9 @@ data class OutputConfig(
     @Parameter(names = ["--output-directory"], description = "Specify the directory where the result files are stored")
     var resultFolder: File = Paths.get("./").toFile(),
 
+    @Parameter(names = ["--accept-unreliable-safe"], description = "Accept safe results even with unsafe loop unroll")
+    var acceptUnreliableSafe: Boolean = false,
+
     val cOutputConfig: COutputConfig = COutputConfig(),
     val xcfaOutputConfig: XcfaOutputConfig = XcfaOutputConfig(),
     val chcOutputConfig: ChcOutputConfig = ChcOutputConfig(),
