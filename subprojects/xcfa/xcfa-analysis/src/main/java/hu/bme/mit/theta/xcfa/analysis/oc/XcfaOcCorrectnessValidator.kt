@@ -17,20 +17,21 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.oc.*
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 import hu.bme.mit.theta.core.type.booltype.BoolExprs.Not
 import hu.bme.mit.theta.solver.Solver
 import hu.bme.mit.theta.solver.SolverManager
 import hu.bme.mit.theta.solver.SolverStatus
 import java.io.File
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 internal class XcfaOcCorrectnessValidator(
     decisionProcedure: OcDecisionProcedureType,
     private val inputConflictClauseFile: String,
     private val threads: Set<Thread>,
-    private val permissive: Boolean = true
+    private val permissive: Boolean = true,
+    private val logger: Logger
 ) : OcChecker<E> {
 
     private var clauseValidationTime = 0L
@@ -59,7 +60,7 @@ internal class XcfaOcCorrectnessValidator(
         val parser = XcfaOcReasonParser(flatRfs.toSet(), flatEvents.toSet())
         var parseFailure = 0
         val propagatedClauses: List<Reason>
-        System.err.println("Parse time (ms): " + measureTime {
+        logger.writeln(Logger.Level.INFO, "Parse time (ms): " + measureTime {
             propagatedClauses = File(inputConflictClauseFile).readLines().mapNotNull { line ->
                 try {
                     parser.parse(line)
@@ -78,10 +79,10 @@ internal class XcfaOcCorrectnessValidator(
         clauseValidationTime += measureTime {
             validConflicts = propagatedClauses.filter { clause -> checkPath(clause) }
         }.inWholeMilliseconds
-        System.err.println("Conflict clause parse failures: $parseFailure")
-        System.err.println("Parsed conflict clauses: ${propagatedClauses.size}")
-        System.err.println("Validated conflict clauses: ${validConflicts.size}")
-        System.err.println("Clause validation time (ms): $clauseValidationTime")
+        logger.writeln(Logger.Level.INFO, "Conflict clause parse failures: $parseFailure")
+        logger.writeln(Logger.Level.INFO, "Parsed conflict clauses: ${propagatedClauses.size}")
+        logger.writeln(Logger.Level.INFO, "Validated conflict clauses: ${validConflicts.size}")
+        logger.writeln(Logger.Level.INFO, "Clause validation time (ms): $clauseValidationTime")
 
         if (permissive) {
             ocChecker.solver.add(validConflicts.map { Not(it.expr) })
@@ -89,7 +90,7 @@ internal class XcfaOcCorrectnessValidator(
             nonOcSolver.add(validConflicts.map { Not(it.expr) })
         }
         val result: SolverStatus?
-        System.err.println("Solver time (ms): " + measureTime {
+        logger.writeln(Logger.Level.INFO, "Solver time (ms): " + measureTime {
             result = if (permissive) {
                 ocChecker.check(events, pos, rfs, wss)
             } else {

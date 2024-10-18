@@ -17,6 +17,7 @@
 package hu.bme.mit.theta.xcfa.analysis.oc
 
 import hu.bme.mit.theta.analysis.algorithm.oc.*
+import hu.bme.mit.theta.common.logging.Logger
 import hu.bme.mit.theta.core.decl.VarDecl
 
 @Suppress("unused")
@@ -29,7 +30,8 @@ internal fun findAutoConflicts(
     threads: Set<Thread>,
     events: Map<VarDecl<*>, Map<Int, List<XcfaEvent>>>,
     rfs: Map<VarDecl<*>, Set<Relation<XcfaEvent>>>,
-    config: AutoConflictFinderConfig
+    config: AutoConflictFinderConfig,
+    logger: Logger
 ): List<Reason> {
     if (config == AutoConflictFinderConfig.NONE) return emptyList()
     val exactPo = XcfaExactPo(threads)
@@ -54,7 +56,7 @@ internal fun findAutoConflicts(
     }
 
     val rfCnt = conflicts.size
-    System.err.println("RF conflicts: $rfCnt")
+    logger.writeln(Logger.Level.INFO, "RF conflicts: $rfCnt")
     if (config == AutoConflictFinderConfig.RF) return conflicts
 
     // Find WS and FR conflicts
@@ -72,7 +74,7 @@ internal fun findAutoConflicts(
         }
     }
 
-    System.err.println("WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
+    logger.writeln(Logger.Level.INFO, "WS, FR conflicts (2x): ${conflicts.size - rfCnt}")
 
     return conflicts
 }

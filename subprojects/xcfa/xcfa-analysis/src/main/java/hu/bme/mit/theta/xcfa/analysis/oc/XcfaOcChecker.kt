@@ -61,7 +61,7 @@ private val Expr<*>.vars get() = ExprUtils.getVars(this)
 
 class XcfaOcChecker(
     xcfa: XCFA, decisionProcedure: OcDecisionProcedureType, private val logger: Logger,
-    inputConflictClauseFile: String?, private val outputConflictClauses: Boolean, nonPermissiveValidation: Boolean,
+    conflictInput: String?, private val outputConflictClauses: Boolean, nonPermissiveValidation: Boolean,
     private val autoConflictConfig: AutoConflictFinderConfig
 ) : SafetyChecker<EmptyWitness, Cex, XcfaPrec<UnitPrec>> {
 
@@ -81,8 +81,8 @@ class XcfaOcChecker(
     private val wss = mutableMapOf<VarDecl<*>, MutableSet<R>>()
 
     private val ocChecker: OcChecker<E> =
-        if (inputConflictClauseFile == null) decisionProcedure.checker()
-        else XcfaOcCorrectnessValidator(decisionProcedure, inputConflictClauseFile, threads, !nonPermissiveValidation)
+        if (conflictInput == null) decisionProcedure.checker()
+        else XcfaOcCorrectnessValidator(decisionProcedure, conflictInput, threads, !nonPermissiveValidation, logger)
 
     override fun check(
         prec: XcfaPrec<UnitPrec>?
@@ -90,35 +90,31 @@ class XcfaOcChecker(
         if (xcfa.initProcedures.size > 1)
             exit("Multiple entry points are not supported by OC checker.")
 
-        logger.write(Logger.Level.MAINSTEP, "Adding constraints...\n")
+        logger.writeln(Logger.Level.MAINSTEP, "Adding constraints...")
         xcfa.initProcedures.forEach { ThreadProcessor(Thread(it.first)).process() }
         addCrossThreadRelations()
         if (!addToSolver(ocChecker.solver)) // no violations in the model
             return@let SafetyResult.safe<EmptyWitness, Cex>(EmptyWitness.getInstance())
 
         // "Manually" add some conflicts
-        logger.write(
-            Logger.Level.INFO, "Auto conflict time (ms): ${
-                measureTime {
-                    val conflicts = findAutoConflicts(threads, events, rfs, autoConflictConfig)
-                    ocChecker.solver.add(conflicts.map { Not(it.expr) })
-                    logger.write(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}\n")
-                }.inWholeMilliseconds
-            }\n"
-        )
+        logger.writeln(Logger.Level.INFO, "Auto conflict time (ms): " + measureTime {
+            val conflicts = findAutoConflicts(threads, events, rfs, autoConflictConfig, logger)
+            ocChecker.solver.add(conflicts.map { Not(it.expr) })
+            logger.writeln(Logger.Level.INFO, "Auto conflicts: ${conflicts.size}")
+        }.inWholeMilliseconds)
 
-        logger.write(Logger.Level.MAINSTEP, "Start checking...\n")
+        logger.writeln(Logger.Level.MAINSTEP, "Start checking...")
         val status: SolverStatus?
         val checkerTime = measureTime {
             status = ocChecker.check(events, pos, rfs, wss)
         }
         if (ocChecker !is XcfaOcCorrectnessValidator)
-            logger.write(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}\n")
-        logger.write(Logger.Level.INFO, "Propagated clauses: ${ocChecker.getPropagatedClauses().size}\n")
+            logger.writeln(Logger.Level.INFO, "Solver time (ms): ${checkerTime.inWholeMilliseconds}")
+        logger.writeln(Logger.Level.INFO, "Propagated clauses: ${ocChecker.getPropagatedClauses().size}")
 
         ocChecker.solver.statistics.let {
-            logger.write(Logger.Level.INFO, "Solver statistics:\n")
-            it.forEach { (k, v) -> System.err.println("$k: $v") }
+            logger.writeln(Logger.Level.INFO, "Solver statistics:")
+            it.forEach { (k, v) -> logger.writeln(Logger.Level.INFO, "$k: $v") }
         }
         when {
             status?.isUnsat == true -> {
@@ -141,7 +137,7 @@ class XcfaOcChecker(
 
             else -> SafetyResult.unknown()
         }
-    }.also { logger.write(Logger.Level.MAINSTEP, "OC checker result: $it\n") }
+    }.also { logger.writeln(Logger.Level.MAINSTEP, "OC checker result: $it") }
 
     private inner class ThreadProcessor(private val thread: Thread) {
 

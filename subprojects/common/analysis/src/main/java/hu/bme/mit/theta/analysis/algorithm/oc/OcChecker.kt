@@ -138,7 +138,6 @@ abstract class OcCheckerBase<E : Event> : OcChecker<E> {
             })
         }
         if (unassignedWss.isEmpty()) return emptyList()
-        System.err.println("Unordered write pairs: ${unassignedWss.size / 2}")
 
         val unassignedCopy = unassignedWss.toMutableList()
         val pairs = mutableListOf<Pair<Relation<E>, Relation<E>>>()
