@@ -45,7 +45,9 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
         for (edge in ArrayList(builder.getEdges())) {
             val edges = edge.splitIf(this::predicate)
             if (edges.size > 1 || (edges.size == 1 && predicate(
-                    (edges[0].label as SequenceLabel).labels[0]))) {
+                    (edges[0].label as SequenceLabel).labels[0]
+                ))
+            ) {
                 builder.removeEdge(edge)
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
@@ -54,15 +56,21 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                         val mallocVar = builder.parent.malloc
                         if (builder.parent.getVars().none { it.wrappedVar == mallocVar }) { // initial creation
                             builder.parent.addVar(
-                                XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue))
+                                XcfaGlobalVar(mallocVar, CComplexType.getType(ret, parseContext).nullValue)
+                            )
                             val initProc = builder.parent.getInitProcedures().map { it.first }
                             checkState(initProc.size == 1, "Multiple start procedure are not handled well")
                             initProc.forEach {
-                                val initAssign = StmtLabel(Assign(cast(mallocVar, mallocVar.type),
-                                    cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type)))
+                                val initAssign = StmtLabel(
+                                    Assign(
+                                        cast(mallocVar, mallocVar.type),
+                                        cast(CComplexType.getType(ret, parseContext).nullValue, mallocVar.type)
+                                    )
+                                )
                                 val newEdges = it.initLoc.outgoingEdges.map {
                                     it.withLabel(
-                                        SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata))
+                                        SequenceLabel(listOf(initAssign) + it.label.getFlatLabels(), it.label.metadata)
+                                    )
                                 }
                                 it.initLoc.outgoingEdges.forEach(it::removeEdge)
                                 newEdges.forEach(it::addEdge)
@@ -70,14 +78,24 @@ class MallocFunctionPass(val parseContext: ParseContext) : ProcedurePass {
                         }
                         val assign1 = AssignStmt.of(
                             cast(mallocVar, ret.type),
-                            cast(Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
-                                ret.type))
+                            cast(
+                                Add(mallocVar.ref, CComplexType.getType(ret, parseContext).getValue("3")),
+                                ret.type
+                            )
+                        )
                         val assign2 = AssignStmt.of(
-                            cast(ret.decl as VarDecl<*>, ret.type), cast(mallocVar.ref, ret.type))
-                        builder.addEdge(XcfaEdge(it.source, it.target, SequenceLabel(
-                            listOf(
-                                StmtLabel(assign1, metadata = invokeLabel.metadata),
-                                StmtLabel(assign2, metadata = invokeLabel.metadata)))))
+                            cast(ret.decl as VarDecl<*>, ret.type), cast(mallocVar.ref, ret.type)
+                        )
+                        builder.addEdge(
+                            XcfaEdge(
+                                it.source, it.target, SequenceLabel(
+                                    listOf(
+                                        StmtLabel(assign1, metadata = invokeLabel.metadata),
+                                        StmtLabel(assign2, metadata = invokeLabel.metadata)
+                                    )
+                                )
+                            )
+                        )
                     } else {
                         builder.addEdge(it)
                     }

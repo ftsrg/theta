@@ -101,12 +101,18 @@ class TestGson {
         private fun getExplBuilder(gsonSuppl: () -> Gson): GsonBuilder {
             val gsonBuilder = GsonBuilder()
 
-            gsonBuilder.registerTypeHierarchyAdapter(ARG::class.java,
-                ArgAdapter(gsonSuppl, { ExplOrd.getInstance() }, { explArgAdapterHelper() }))
-            gsonBuilder.registerTypeHierarchyAdapter(Trace::class.java,
-                TraceAdapter(gsonSuppl, { ExplState::class.java }, SimpleStmtAction::class.java))
-            gsonBuilder.registerTypeHierarchyAdapter(SafetyResult::class.java,
-                SafetyResultAdapter(gsonSuppl, { explArgHelper() }, { explTraceHelper() }))
+            gsonBuilder.registerTypeHierarchyAdapter(
+                ARG::class.java,
+                ArgAdapter(gsonSuppl, { ExplOrd.getInstance() }, { explArgAdapterHelper() })
+            )
+            gsonBuilder.registerTypeHierarchyAdapter(
+                Trace::class.java,
+                TraceAdapter(gsonSuppl, { ExplState::class.java }, SimpleStmtAction::class.java)
+            )
+            gsonBuilder.registerTypeHierarchyAdapter(
+                SafetyResult::class.java,
+                SafetyResultAdapter(gsonSuppl, { explArgHelper() }, { explTraceHelper() })
+            )
 
             return gsonBuilder
         }
@@ -114,12 +120,18 @@ class TestGson {
         private fun getPredBuilder(gsonSuppl: () -> Gson): GsonBuilder {
             val gsonBuilder = GsonBuilder()
 
-            gsonBuilder.registerTypeHierarchyAdapter(ARG::class.java,
-                ArgAdapter(gsonSuppl, { PartialOrd<PredState> { a, b -> true } }, { predArgAdapterHelper() }))
-            gsonBuilder.registerTypeHierarchyAdapter(Trace::class.java,
-                TraceAdapter(gsonSuppl, { PredState::class.java }, SimpleStmtAction::class.java))
-            gsonBuilder.registerTypeHierarchyAdapter(SafetyResult::class.java,
-                SafetyResultAdapter(gsonSuppl, { predArgHelper() }, { predTraceHelper() }))
+            gsonBuilder.registerTypeHierarchyAdapter(
+                ARG::class.java,
+                ArgAdapter(gsonSuppl, { PartialOrd<PredState> { a, b -> true } }, { predArgAdapterHelper() })
+            )
+            gsonBuilder.registerTypeHierarchyAdapter(
+                Trace::class.java,
+                TraceAdapter(gsonSuppl, { PredState::class.java }, SimpleStmtAction::class.java)
+            )
+            gsonBuilder.registerTypeHierarchyAdapter(
+                SafetyResult::class.java,
+                SafetyResultAdapter(gsonSuppl, { predArgHelper() }, { predTraceHelper() })
+            )
 
             return gsonBuilder
         }
@@ -133,8 +145,10 @@ class TestGson {
             val env = Env()
             env.define(symbol, x)
 
-            gsonBuilder.registerTypeHierarchyAdapter(VarDecl::class.java,
-                VarDeclAdapter(gsonSuppl, scope, env, false))
+            gsonBuilder.registerTypeHierarchyAdapter(
+                VarDecl::class.java,
+                VarDeclAdapter(gsonSuppl, scope, env, false)
+            )
             gsonBuilder.registerTypeHierarchyAdapter(Stmt::class.java,
                 StringTypeAdapter { StatementWrapper(it, scope).instantiate(env) })
             gsonBuilder.registerTypeHierarchyAdapter(Expr::class.java,
@@ -144,8 +158,10 @@ class TestGson {
             gsonBuilder.registerTypeHierarchyAdapter(VarIndexing::class.java,
                 StringTypeAdapter { BasicVarIndexing.fromString(it, scope, env) })
             gsonBuilder.registerTypeHierarchyAdapter(ExplState::class.java, ExplStateAdapter(scope, env))
-            gsonBuilder.registerTypeHierarchyAdapter(PredState::class.java,
-                PredStateAdapter(gsonSuppl, scope, env))
+            gsonBuilder.registerTypeHierarchyAdapter(
+                PredState::class.java,
+                PredStateAdapter(gsonSuppl, scope, env)
+            )
             gsonBuilder.registerTypeHierarchyAdapter(Pair::class.java, PairAdapter<Any, Any>(gsonSuppl))
             gsonBuilder.registerTypeHierarchyAdapter(Triple::class.java, TripleAdapter<Any, Any, Any>(gsonSuppl))
             gsonBuilder.registerTypeHierarchyAdapter(Optional::class.java, OptionalAdapter<Any>(gsonSuppl))
@@ -194,8 +210,10 @@ class TestGson {
         gson = getGson(getExplBuilder { gson }) { gson }
 
         val trace = Trace.of(
-            listOf(ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()),
-                ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build())),
+            listOf(
+                ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()),
+                ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build())
+            ),
             listOf(SimpleStmtAction(SkipStmt.getInstance()))
         )
 

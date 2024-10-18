@@ -46,8 +46,10 @@ fun traceToWitness(
     val newStates = ArrayList<WitnessNode>()
     val newActions = ArrayList<WitnessEdge>()
 
-    var lastNode = WitnessNode(id = "N${newStates.size}", entry = true, sink = false,
-        violation = false)
+    var lastNode = WitnessNode(
+        id = "N${newStates.size}", entry = true, sink = false,
+        violation = false
+    )
     newStates.add(lastNode)
 
     for (i in 0 until trace.length()) {
@@ -67,8 +69,10 @@ fun traceToWitness(
         )
         if (node != WitnessNode(id = "N${newStates.size}")) {
             newStates.add(node)
-            val edge = WitnessEdge(sourceId = lastNode.id, targetId = node.id,
-                threadId = trace.actions[i].pid.toString())
+            val edge = WitnessEdge(
+                sourceId = lastNode.id, targetId = node.id,
+                threadId = trace.actions[i].pid.toString()
+            )
             newActions.add(edge)
             lastNode = node
         }
@@ -76,10 +80,14 @@ fun traceToWitness(
         val action = trace.actions[i]
         val flattenedSequence = flattenSequence(action.edge.label)
         for (xcfaLabel in flattenedSequence) {
-            val node = WitnessNode(id = "N${newStates.size}", entry = false, sink = false,
-                violation = false)
-            var edge = labelToEdge(lastNode, node, xcfaLabel, action.pid,
-                nextState.sGlobal.getVal(), parseContext)
+            val node = WitnessNode(
+                id = "N${newStates.size}", entry = false, sink = false,
+                violation = false
+            )
+            var edge = labelToEdge(
+                lastNode, node, xcfaLabel, action.pid,
+                nextState.sGlobal.getVal(), parseContext
+            )
             if (newThreads.isNotEmpty() && xcfaLabel is StartLabel) {
                 edge = edge.copy(createThread = newThreads.joinToString(","))
             }
@@ -120,8 +128,10 @@ fun shouldInclude(edge: WitnessEdge, verbosity: Verbosity): Boolean =
     }
 
 
-private fun labelToEdge(lastNode: WitnessNode, node: WitnessNode, xcfaLabel: XcfaLabel, pid: Int,
-    valuation: Valuation, parseContext: ParseContext): WitnessEdge =
+private fun labelToEdge(
+    lastNode: WitnessNode, node: WitnessNode, xcfaLabel: XcfaLabel, pid: Int,
+    valuation: Valuation, parseContext: ParseContext
+): WitnessEdge =
     WitnessEdge(
         sourceId = lastNode.id,
         targetId = node.id,
@@ -190,14 +200,17 @@ private fun printLit(litExpr: LitExpr<*>): String? {
         for (i in boolList.indices) {
             if (i % 4 == 0 && i > 0) {
                 if (aggregate < 10) hexDigits.add(
-                    ('0'.code + aggregate).toChar()) else hexDigits.add(
-                    ('A'.code - 10 + aggregate).toChar())
+                    ('0'.code + aggregate).toChar()
+                ) else hexDigits.add(
+                    ('A'.code - 10 + aggregate).toChar()
+                )
                 aggregate = 0
             }
             if (boolList[i]) aggregate += 1 shl i % 4
         }
         if (aggregate < 10) hexDigits.add(('0'.code + aggregate).toChar()) else hexDigits.add(
-            ('A'.code - 10 + aggregate).toChar())
+            ('A'.code - 10 + aggregate).toChar()
+        )
         val stringBuilder = StringBuilder("0x")
         for (character in Lists.reverse(hexDigits)) {
             stringBuilder.append(character)

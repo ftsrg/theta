@@ -108,7 +108,8 @@ class CLibraryFunctionsPass : ProcedurePass {
 
                                 listOf(
                                     FenceLabel(
-                                        setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"), metadata
+                                        setOf("start_cond_wait(${cond.decl.name},${handle.decl.name})"),
+                                        metadata
                                     ),
                                     FenceLabel(setOf("cond_wait(${cond.decl.name},${handle.decl.name})"), metadata)
                                 )

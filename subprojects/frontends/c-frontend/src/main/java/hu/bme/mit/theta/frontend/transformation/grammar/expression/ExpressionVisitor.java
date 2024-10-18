@@ -113,42 +113,6 @@ public class ExpressionVisitor extends CBaseVisitor<Expr<?>> {
         return preStatements;
     }
 
-//    @Override
-//    public Expr<?> visitConditionalExpression(CParser.ConditionalExpressionContext ctx) {
-//        if (ctx.expression() != null) {
-//            CStatement cond = ctx.logicalOrExpression().accept(functionVisitor);
-//            CStatement ifTrue = ctx.expression().accept(functionVisitor);
-//            CStatement ifFalse = ctx.conditionalExpression().accept(functionVisitor);
-//
-//            Expr<?> expr = ctx.logicalOrExpression().accept(this);
-//            Expr<?> lhs = ifTrue.getExpression();
-//            Expr<?> rhs = ctx.conditionalExpression().accept(this);
-//
-//            preStatements.add(new CIf(cond, ifTrue, ifFalse, parseContext));
-//
-//            CComplexType smallestCommonType = CComplexType.getSmallestCommonType(List.of(CComplexType.getType(lhs, parseContext), CComplexType.getType(rhs, parseContext)), parseContext);
-//            IteExpr<?> ite = Ite(
-//                    AbstractExprs.Neq(CComplexType.getType(expr, parseContext).getNullValue(), expr),
-//                    smallestCommonType.castTo(lhs),
-//                    smallestCommonType.castTo(rhs)
-//            );
-//            parseContext.getMetadata().create(ite, "cType", smallestCommonType);
-//            return ite;
-//        } else return ctx.logicalOrExpression().accept(this);
-//    }
-
-//    private void addPrePostStatementsForConditional(CStatement statement) {
-//        if (statement instanceof CCompound) {
-//            if (statement.getPreStatements() != null) preStatements.add(statement.getPreStatements());
-//            if (statement.getPostStatements() != null) postStatements.add(statement.getPostStatements());
-//            for (CStatement cStatement : ((CCompound) statement).getcStatementList()) {
-//                addPrePostStatementsForConditional(cStatement);
-//            }
-//        } else {
-//            preStatements.add(statement);
-//        }
-//    }
-
     @Override
     public Expr<?> visitLogicalOrExpression(CParser.LogicalOrExpressionContext ctx) {
         if (ctx.logicalAndExpression().size() > 1) {

@@ -219,11 +219,11 @@ private fun backend(
             }
         }
 
-        logger.write(
-            Logger.Level.INFO, "Backend finished (in ${
-                stopwatch.elapsed(TimeUnit.MILLISECONDS)
-            } ms)\n"
-        )
+            logger.write(
+                Logger.Level.INFO, "Backend finished (in ${
+                    stopwatch.elapsed(TimeUnit.MILLISECONDS)
+                } ms)\n"
+            )
 
         logger.write(RESULT, result.toString() + "\n")
         result
@@ -322,7 +322,8 @@ private fun postVerificationLogging(
 
                     val sequenceFile = File(resultFolder, "trace.plantuml")
                     writeSequenceTrace(
-                        sequenceFile, safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>
+                        sequenceFile,
+                        safetyResult.asUnsafe().cex as Trace<XcfaState<ExplState>, XcfaAction>
                     ) { (_, act) ->
                         act.label.getFlatLabels().map(XcfaLabel::toString)
                     }

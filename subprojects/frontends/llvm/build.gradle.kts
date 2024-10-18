@@ -104,8 +104,10 @@ fun llvmConfigFlags(vararg args: String): Array<String> {
 
 fun jniConfigFlags(): Array<String> {
     if (!taskEnabled) return arrayOf()
-    val jdkHomeArr = runCommandForOutput("bash", "-c",
-        "dirname \$(cd \$(dirname \$(readlink -f \$(which javac) || which javac)); pwd -P)")
+    val jdkHomeArr = runCommandForOutput(
+        "bash", "-c",
+        "dirname \$(cd \$(dirname \$(readlink -f \$(which javac) || which javac)); pwd -P)"
+    )
     check(jdkHomeArr.size == 1)
     val jdkHome = File(jdkHomeArr[0])
     check(jdkHome.exists())
@@ -120,11 +122,14 @@ fun jniConfigFlags(): Array<String> {
 library {
     targetMachines.add(machines.linux.x86_64)
     tasks.withType(CppCompile::class) {
-        compilerArgs.addAll(listOf(
-            "-Wall",
-            "-fpic",
-            *jniConfigFlags(),
-            *llvmConfigFlags("--cxxflags")))
+        compilerArgs.addAll(
+            listOf(
+                "-Wall",
+                "-fpic",
+                *jniConfigFlags(),
+                *llvmConfigFlags("--cxxflags")
+            )
+        )
         if (!taskEnabled) {
             println("CppCompile is enabled: $taskEnabled")
             enabled = false
@@ -132,10 +137,13 @@ library {
     }
 
     tasks.withType(LinkSharedLibrary::class) {
-        linkerArgs.addAll(listOf(
-            "-rdynamic",
-            *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
-            "-ldl"))
+        linkerArgs.addAll(
+            listOf(
+                "-rdynamic",
+                *llvmConfigFlags("--cxxflags", "--ldflags", "--libs", "core", "bitreader"),
+                "-ldl"
+            )
+        )
         if (!taskEnabled) {
             println("LinkSharedLibrary is enabled: $taskEnabled")
             enabled = false

@@ -34,7 +34,8 @@ fun portfolio(
     parseContext: ParseContext,
     portfolioConfig: XcfaConfig<*, *>,
     logger: Logger,
-    uniqueLogger: Logger): STM {
+    uniqueLogger: Logger
+): STM {
 
     val checker = { config: XcfaConfig<*, *> -> runConfig(config, logger, uniqueLogger, true) }
 
@@ -43,12 +44,14 @@ fun portfolio(
             input = null,
             xcfaWCtx = Triple(xcfa, mcm, parseContext),
             propertyFile = null,
-            property = portfolioConfig.inputConfig.property),
+            property = portfolioConfig.inputConfig.property
+        ),
         frontendConfig = FrontendConfig(
             lbeLevel = LbePass.LbeLevel.LBE_SEQ,
             loopUnroll = 50,
             inputType = InputType.C,
-            specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient)),
+            specConfig = CFrontendConfig(arithmetic = ArchitectureConfig.ArithmeticType.efficient)
+        ),
         backendConfig = BackendConfig(
             backend = Backend.CEGAR,
             solverHome = portfolioConfig.backendConfig.solverHome,
@@ -72,7 +75,9 @@ fun portfolio(
                     refinement = Refinement.SEQ_ITP,
                     exprSplitter = ExprSplitterOptions.WHOLE,
                     pruneStrategy = PruneStrategy.FULL
-                ))),
+                )
+            )
+        ),
         outputConfig = OutputConfig(
             versionInfo = false,
             resultFolder = Paths.get("./").toFile(), // cwd
@@ -91,7 +96,8 @@ fun portfolio(
             abstractorConfig = baseCegarConfig.abstractorConfig.copy(search = Search.DFS),
         )
         baseConfig = baseConfig.copy(
-            backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig))
+            backendConfig = baseConfig.backendConfig.copy(specConfig = multiThreadedCegarConfig)
+        )
     }
 
     if (!xcfa.isInlined) {

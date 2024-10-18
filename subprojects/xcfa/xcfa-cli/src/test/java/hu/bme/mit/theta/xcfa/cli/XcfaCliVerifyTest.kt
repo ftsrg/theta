@@ -144,8 +144,10 @@ class XcfaCliVerifyTest {
         fun chcFiles(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of("/chc/chc-LIA-Lin_000.smt2", ChcFrontend.ChcTransformation.FORWARD, "--domain PRED_CART"),
-                Arguments.of("/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD,
-                    "--domain PRED_CART --search BFS"),
+                Arguments.of(
+                    "/chc/chc-LIA-Arrays_000.smt2", ChcFrontend.ChcTransformation.BACKWARD,
+                    "--domain PRED_CART --search BFS"
+                ),
             )
         }
     }
@@ -243,14 +245,16 @@ class XcfaCliVerifyTest {
     @ParameterizedTest
     @MethodSource("chcFiles")
     fun testCHCVerify(filePath: String, chcTransformation: ChcFrontend.ChcTransformation, extraArgs: String?) {
-        main(arrayOf(
-            "--input-type", "CHC",
-            "--chc-transformation", chcTransformation.toString(),
-            "--input", javaClass.getResource(filePath)!!.path,
-            "--stacktrace",
-            *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
-            "--debug"
-        ))
+        main(
+            arrayOf(
+                "--input-type", "CHC",
+                "--chc-transformation", chcTransformation.toString(),
+                "--input", javaClass.getResource(filePath)!!.path,
+                "--stacktrace",
+                *(extraArgs?.split(" ")?.toTypedArray() ?: emptyArray()),
+                "--debug"
+            )
+        )
     }
 
     @ParameterizedTest

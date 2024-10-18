@@ -55,7 +55,8 @@ fun XSTS.toRelations(): List<Relation> {
                 is EnumLitExpr -> {
                     val value =
                         enumValueLut.computeIfAbsent(this.type) { LinkedHashMap() }.computeIfAbsent(
-                            this.value) { cnt++ }
+                            this.value
+                        ) { cnt++ }
                     return IntLitExpr.of(BigInteger.valueOf(value.toLong()))
                 }
 

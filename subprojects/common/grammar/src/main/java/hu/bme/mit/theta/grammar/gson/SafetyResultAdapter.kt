@@ -40,8 +40,10 @@ class SafetyResultAdapter(
     private lateinit var argType: Type
     private lateinit var traceType: Type
 
-    override fun write(writer: JsonWriter,
-        value: SafetyResult<ARG<out State, out Action>, Trace<out State, out Action>>) {
+    override fun write(
+        writer: JsonWriter,
+        value: SafetyResult<ARG<out State, out Action>, Trace<out State, out Action>>
+    ) {
         initGson()
         writer.beginObject()
         writer.name("arg")
@@ -80,8 +82,10 @@ class SafetyResultAdapter(
         return if (stats.isEmpty)
             if (safe == true) SafetyResult.safe(arg) else SafetyResult.unsafe(trace, arg)
         else
-            if (safe == false) SafetyResult.safe(arg, stats.get()) else SafetyResult.unsafe(trace,
-                arg, stats.get())
+            if (safe == false) SafetyResult.safe(arg, stats.get()) else SafetyResult.unsafe(
+                trace,
+                arg, stats.get()
+            )
     }
 
     private fun initGson() {

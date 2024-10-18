@@ -24,7 +24,7 @@ class MultiTransFunc<LState : State, RState : State, DataState : State, LControl
     LAction : Action, RAction : Action,
     LPrec : Prec, RPrec : Prec, DataPrec : Prec,
     MState : MultiState<LControl, RControl, DataState>, MAction : MultiAction<LAction, RAction>>
-(
+    (
     private val defineNextSide: (MState) -> MultiSide,
     private val createState: (LControl, RControl, DataState, MultiSide) -> MState,
     private val leftTransFunc: TransFunc<LState, in LAction, in LPrec>,
