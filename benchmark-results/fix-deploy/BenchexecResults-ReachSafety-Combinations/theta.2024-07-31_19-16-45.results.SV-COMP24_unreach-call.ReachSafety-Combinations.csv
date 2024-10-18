@@ -1,0 +1,8 @@
+tool	Theta 6.3.0	Theta 6.3.0	Theta 6.3.0	Theta 6.3.0
+run set	SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations
+../sv-benchmarks/c/combinations/	status	cputime (s)	walltime (s)	memory (MB)
+pc_sfifo_3.cil+token_ring.02.cil-2.yml	TIMEOUT	120.545939	73.63759976	2748.403712
+Problem05_label47+token_ring.02.cil-1.yml	TIMEOUT	120.536407	93.42403334099998	4387.934208
+pc_sfifo_3.cil+token_ring.11.cil-1.yml	TIMEOUT	120.089279	108.52959123699998	3246.284800
+Problem05_label45+token_ring.01.cil-2.yml	TIMEOUT	120.320339	96.88237678500002	3611.955200
+pals_lcr.3.1.ufo.UNBOUNDED.pals+Problem12_label04.yml	TIMEOUT	120.279083	68.10844863099999	9021.759488

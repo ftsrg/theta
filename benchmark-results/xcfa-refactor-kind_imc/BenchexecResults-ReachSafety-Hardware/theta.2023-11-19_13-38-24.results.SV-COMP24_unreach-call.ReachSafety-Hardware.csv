@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware	SV-COMP24_unreach-call.ReachSafety-Hardware
+../sv-benchmarks/c/hardware-verification-bv/		status	cputime (s)	walltime (s)	memory (MB)
+btor2c-lazyMod.arbitrated_top_n4_w16_d32_e0.yml	false	TIMEOUT	120.315209	115.63166191600004	1301.594112
+btor2c-lazyMod.cambridge.5.prop1-back-serstep.yml	true	ERROR (portfolio error)	38.560295	22.371430809999993	1921.486848
+btor2c-lazyMod.extinction.4.prop1-func-interl.yml	true	ERROR (portfolio error)	44.024453	22.701044763000027	1921.159168
+btor2c-lazyMod.lup.2.prop1-func-interl.yml	true	ERROR (portfolio error)	33.093635	14.718472616999975	1634.861056
+btor2c-lazyMod.train-gate.6.prop1-func-interl.yml	true	ERROR (portfolio error)	31.962105	13.999170260000028	1292.787712
+btor2c-lazyMod.msmie.4.prop1-func-interl.yml	true	ERROR (portfolio error)	108.852779	80.48589560300002	2616.795136
+btor2c-lazyMod.protocols.5.prop1-func-interl.yml	false	ERROR (portfolio error)	17.910463	7.371982938999963	644.964352
+btor2c-lazyMod.pgm_protocol.4.prop5-func-interl.yml	true	ERROR (portfolio error)	78.692369	50.610501551000084	2611.228672
+btor2c-lazyMod.brp.1.prop1-func-interl.yml	true	ERROR (portfolio error)	23.207273	9.031770760999962	878.444544
+btor2c-lazyMod.brp2.5.prop3-back-serstep.yml	true	ERROR (portfolio error)	26.634092	10.690454205000037	1094.619136

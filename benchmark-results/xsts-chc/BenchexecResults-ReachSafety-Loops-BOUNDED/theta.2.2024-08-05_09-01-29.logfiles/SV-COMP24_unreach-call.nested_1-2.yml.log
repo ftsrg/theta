@@ -1,0 +1,673 @@
+Theta/theta-start.sh sv-benchmarks/c/loop-acceleration/nested_1-2.c --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --portfolio BOUNDED --input sv-benchmarks/c/loop-acceleration/nested_1-2.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/loop-acceleration/nested_1-2.c as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: using int(1) as a string constant
+Arithmetic: [NONLIN_INT]
+Frontend finished:   (in 369 ms)
+ParsingResult Success
+Alias graph size: 0 -> []
+Starting verification of UnnamedXcfa using PORTFOLIO
+Using bounded portfolio
+Current configuration: XcfaConfig(inputConfig=InputConfig(inputFile=null, catFile=null, parseCtx=null, xcfaWCtx=present, propertyFile=null, property=ERROR_LOCATION, frontendConfig=FrontendConfig(lbeLevel=LBE_SEQ, staticCoi=false, loopUnroll=1000, forceUnroll=-1, enableFew=false, inputType=C, specConfig=CFrontendConfig(arithmetic=efficient, architecture=LP64)), backendConfig=BackendConfig(backend=BOUNDED, solverHome=/home/runner/work/theta/theta/Theta/solvers, timeoutMs=30000, inProcess=true, specConfig=BoundedConfig(maxBound=0, bmcConfig=BMCConfig(disable=false, nonLfPath=false, bmcSolver=Z3, validateBMCSolver=false), indConfig=InductionConfig(disable=true, indSolver=Z3, validateIndSolver=false, indMinBound=0, indFreq=1), itpConfig=InterpolationConfig(disable=true, itpSolver=cvc5:1.0.8, validateItpSolver=false))), outputConfig=OutputConfig(versionInfo=false, enableOutput=false, resultFolder=., cOutputConfig=COutputConfig(disable=true, useArr=false, useExArr=false, useRange=false), xcfaOutputConfig=XcfaOutputConfig(disable=false), chcOutputConfig=ChcOutputConfig(disable=false), witnessConfig=WitnessConfig(disable=false, concretizerSolver=Z3, validateConcretizerSolver=false), argConfig=ArgConfig(disable=true)), debugConfig=DebugConfig(debug=false, stacktrace=false, logLevel=INFO, argdebug=false, argToFile=false))
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Starting verification of UnnamedXcfa using BOUNDED
+server: Registered Legacy-Z3 SolverManager
+server: Registered Z3 SolverManager
+server: Registered JavaSMT SolverManager
+server: Registered SMT-LIB SolverManager
+server: Starting verification of UnnamedXcfa using BOUNDED
+server: Starting iteration 1
+server: 	Starting BMC
+server: Starting iteration 2
+server: 	Starting BMC
+server: Starting iteration 3
+server: 	Starting BMC
+server: Starting iteration 4
+server: 	Starting BMC
+server: Starting iteration 5
+server: 	Starting BMC
+server: Starting iteration 6
+server: 	Starting BMC
+server: Starting iteration 7
+server: 	Starting BMC
+server: Starting iteration 8
+server: 	Starting BMC
+server: Starting iteration 9
+server: 	Starting BMC
+server: Starting iteration 10
+server: 	Starting BMC
+server: Starting iteration 11
+server: 	Starting BMC
+server: Starting iteration 12
+server: 	Starting BMC
+server: Starting iteration 13
+server: 	Starting BMC
+server: Starting iteration 14
+server: 	Starting BMC
+server: Starting iteration 15
+server: 	Starting BMC
+server: Starting iteration 16
+server: 	Starting BMC
+server: Starting iteration 17
+server: 	Starting BMC
+server: Starting iteration 18
+server: 	Starting BMC
+server: Starting iteration 19
+server: 	Starting BMC
+server: Starting iteration 20
+server: 	Starting BMC
+server: Starting iteration 21
+server: 	Starting BMC
+server: Starting iteration 22
+server: 	Starting BMC
+server: Starting iteration 23
+server: 	Starting BMC
+server: Starting iteration 24
+server: 	Starting BMC
+server: Starting iteration 25
+server: 	Starting BMC
+server: Starting iteration 26
+server: 	Starting BMC
+server: Starting iteration 27
+server: 	Starting BMC
+server: Starting iteration 28
+server: 	Starting BMC
+server: Starting iteration 29
+server: 	Starting BMC
+server: Starting iteration 30
+server: 	Starting BMC
+server: Starting iteration 31
+server: 	Starting BMC
+server: Starting iteration 32
+server: 	Starting BMC
+server: Starting iteration 33
+server: 	Starting BMC
+server: Starting iteration 34
+server: 	Starting BMC
+server: Starting iteration 35
+server: 	Starting BMC
+server: Starting iteration 36
+server: 	Starting BMC
+server: Starting iteration 37
+server: 	Starting BMC
+server: Starting iteration 38
+server: 	Starting BMC
+server: Starting iteration 39
+server: 	Starting BMC
+server: Starting iteration 40
+server: 	Starting BMC
+server: Starting iteration 41
+server: 	Starting BMC
+server: Starting iteration 42
+server: 	Starting BMC
+server: Starting iteration 43
+server: 	Starting BMC
+server: Starting iteration 44
+server: 	Starting BMC
+server: Starting iteration 45
+server: 	Starting BMC
+server: Starting iteration 46
+server: 	Starting BMC
+server: Starting iteration 47
+server: 	Starting BMC
+server: Starting iteration 48
+server: 	Starting BMC
+server: Starting iteration 49
+server: 	Starting BMC
+server: Starting iteration 50
+server: 	Starting BMC
+server: Starting iteration 51
+server: 	Starting BMC
+server: Starting iteration 52
+server: 	Starting BMC
+server: Starting iteration 53
+server: 	Starting BMC
+server: Starting iteration 54
+server: 	Starting BMC
+server: Starting iteration 55
+server: 	Starting BMC
+server: Starting iteration 56
+server: 	Starting BMC
+server: Starting iteration 57
+server: 	Starting BMC
+server: Starting iteration 58
+server: 	Starting BMC
+server: Starting iteration 59
+server: 	Starting BMC
+server: Starting iteration 60
+server: 	Starting BMC
+server: Starting iteration 61
+server: 	Starting BMC
+server: Starting iteration 62
+server: 	Starting BMC
+server: Starting iteration 63
+server: 	Starting BMC
+server: Starting iteration 64
+server: 	Starting BMC
+server: Starting iteration 65
+server: 	Starting BMC
+server: Starting iteration 66
+server: 	Starting BMC
+server: Starting iteration 67
+server: 	Starting BMC
+server: Starting iteration 68
+server: 	Starting BMC
+server: Starting iteration 69
+server: 	Starting BMC
+server: Starting iteration 70
+server: 	Starting BMC
+server: Starting iteration 71
+server: 	Starting BMC
+server: Starting iteration 72
+server: 	Starting BMC
+server: Starting iteration 73
+server: 	Starting BMC
+server: Starting iteration 74
+server: 	Starting BMC
+server: Starting iteration 75
+server: 	Starting BMC
+server: Starting iteration 76
+server: 	Starting BMC
+server: Starting iteration 77
+server: 	Starting BMC
+server: Starting iteration 78
+server: 	Starting BMC
+server: Starting iteration 79
+server: 	Starting BMC
+server: Starting iteration 80
+server: 	Starting BMC
+server: Starting iteration 81
+server: 	Starting BMC
+server: Starting iteration 82
+server: 	Starting BMC
+server: Starting iteration 83
+server: 	Starting BMC
+server: Starting iteration 84
+server: 	Starting BMC
+server: Starting iteration 85
+server: 	Starting BMC
+server: Starting iteration 86
+server: 	Starting BMC
+server: Starting iteration 87
+server: 	Starting BMC
+server: Starting iteration 88
+server: 	Starting BMC
+server: Starting iteration 89
+server: 	Starting BMC
+server: Starting iteration 90
+server: 	Starting BMC
+server: Starting iteration 91
+server: 	Starting BMC
+server: Starting iteration 92
+server: 	Starting BMC
+server: Starting iteration 93
+server: 	Starting BMC
+server: Starting iteration 94
+server: 	Starting BMC
+server: Starting iteration 95
+server: 	Starting BMC
+server: Starting iteration 96
+server: 	Starting BMC
+server: Starting iteration 97
+server: 	Starting BMC
+server: Starting iteration 98
+server: 	Starting BMC
+server: Starting iteration 99
+server: 	Starting BMC
+server: Starting iteration 100
+server: 	Starting BMC
+server: Starting iteration 101
+server: 	Starting BMC
+server: Starting iteration 102
+server: 	Starting BMC
+server: Starting iteration 103
+server: 	Starting BMC
+server: Starting iteration 104
+server: 	Starting BMC
+server: Starting iteration 105
+server: 	Starting BMC
+server: Starting iteration 106
+server: 	Starting BMC
+server: Starting iteration 107
+server: 	Starting BMC
+server: Starting iteration 108
+server: 	Starting BMC
+server: Starting iteration 109
+server: 	Starting BMC
+server: Starting iteration 110
+server: 	Starting BMC
+server: Starting iteration 111
+server: 	Starting BMC
+server: Starting iteration 112
+server: 	Starting BMC
+server: Starting iteration 113
+server: 	Starting BMC
+server: Starting iteration 114
+server: 	Starting BMC
+server: Starting iteration 115
+server: 	Starting BMC
+server: Starting iteration 116
+server: 	Starting BMC
+server: Starting iteration 117
+server: 	Starting BMC
+server: Starting iteration 118
+server: 	Starting BMC
+server: Starting iteration 119
+server: 	Starting BMC
+server: Starting iteration 120
+server: 	Starting BMC
+server: Starting iteration 121
+server: 	Starting BMC
+server: Starting iteration 122
+server: 	Starting BMC
+server: Starting iteration 123
+server: 	Starting BMC
+server: Starting iteration 124
+server: 	Starting BMC
+server: Starting iteration 125
+server: 	Starting BMC
+server: Starting iteration 126
+server: 	Starting BMC
+server: Starting iteration 127
+server: 	Starting BMC
+server: Starting iteration 128
+server: 	Starting BMC
+server: Starting iteration 129
+server: 	Starting BMC
+server: Starting iteration 130
+server: 	Starting BMC
+server: Starting iteration 131
+server: 	Starting BMC
+server: Starting iteration 132
+server: 	Starting BMC
+server: Starting iteration 133
+server: 	Starting BMC
+server: Starting iteration 134
+server: 	Starting BMC
+server: Starting iteration 135
+server: 	Starting BMC
+server: Starting iteration 136
+server: 	Starting BMC
+server: Starting iteration 137
+server: 	Starting BMC
+server: Starting iteration 138
+server: 	Starting BMC
+server: Starting iteration 139
+server: 	Starting BMC
+server: Starting iteration 140
+server: 	Starting BMC
+server: Starting iteration 141
+server: 	Starting BMC
+server: Starting iteration 142
+server: 	Starting BMC
+server: Starting iteration 143
+server: 	Starting BMC
+server: Starting iteration 144
+server: 	Starting BMC
+server: Starting iteration 145
+server: 	Starting BMC
+server: Starting iteration 146
+server: 	Starting BMC
+server: Starting iteration 147
+server: 	Starting BMC
+server: Starting iteration 148
+server: 	Starting BMC
+server: Starting iteration 149
+server: 	Starting BMC
+server: Starting iteration 150
+server: 	Starting BMC
+server: Starting iteration 151
+server: 	Starting BMC
+server: Starting iteration 152
+server: 	Starting BMC
+server: Starting iteration 153
+server: 	Starting BMC
+server: Starting iteration 154
+server: 	Starting BMC
+server: Starting iteration 155
+server: 	Starting BMC
+server: Starting iteration 156
+server: 	Starting BMC
+server: Starting iteration 157
+server: 	Starting BMC
+server: Starting iteration 158
+server: 	Starting BMC
+server: Starting iteration 159
+server: 	Starting BMC
+server: Starting iteration 160
+server: 	Starting BMC
+server: Starting iteration 161
+server: 	Starting BMC
+server: Starting iteration 162
+server: 	Starting BMC
+server: Starting iteration 163
+server: 	Starting BMC
+server: Starting iteration 164
+server: 	Starting BMC
+server: Starting iteration 165
+server: 	Starting BMC
+server: Starting iteration 166
+server: 	Starting BMC
+server: Starting iteration 167
+server: 	Starting BMC
+server: Starting iteration 168
+server: 	Starting BMC
+server: Starting iteration 169
+server: 	Starting BMC
+server: Starting iteration 170
+server: 	Starting BMC
+server: Starting iteration 171
+server: 	Starting BMC
+server: Starting iteration 172
+server: 	Starting BMC
+server: Starting iteration 173
+server: 	Starting BMC
+server: Starting iteration 174
+server: 	Starting BMC
+server: Starting iteration 175
+server: 	Starting BMC
+server: Starting iteration 176
+server: 	Starting BMC
+server: Starting iteration 177
+server: 	Starting BMC
+server: Starting iteration 178
+server: 	Starting BMC
+server: Starting iteration 179
+server: 	Starting BMC
+server: Starting iteration 180
+server: 	Starting BMC
+server: Starting iteration 181
+server: 	Starting BMC
+server: Starting iteration 182
+server: 	Starting BMC
+server: Starting iteration 183
+server: 	Starting BMC
+server: Starting iteration 184
+server: 	Starting BMC
+server: Starting iteration 185
+server: 	Starting BMC
+server: Starting iteration 186
+server: 	Starting BMC
+server: Starting iteration 187
+server: 	Starting BMC
+server: Starting iteration 188
+server: 	Starting BMC
+server: Starting iteration 189
+server: 	Starting BMC
+server: Starting iteration 190
+server: 	Starting BMC
+server: Starting iteration 191
+server: 	Starting BMC
+server: Starting iteration 192
+server: 	Starting BMC
+server: Starting iteration 193
+server: 	Starting BMC
+server: Starting iteration 194
+server: 	Starting BMC
+server: Starting iteration 195
+server: 	Starting BMC
+server: Starting iteration 196
+server: 	Starting BMC
+server: Starting iteration 197
+server: 	Starting BMC
+server: Starting iteration 198
+server: 	Starting BMC
+server: Starting iteration 199
+server: 	Starting BMC
+server: Starting iteration 200
+server: 	Starting BMC
+server: Starting iteration 201
+server: 	Starting BMC
+server: Starting iteration 202
+server: 	Starting BMC
+server: Starting iteration 203
+server: 	Starting BMC
+server: Starting iteration 204
+server: 	Starting BMC
+server: Starting iteration 205
+server: 	Starting BMC
+server: Starting iteration 206
+server: 	Starting BMC
+server: Starting iteration 207
+server: 	Starting BMC
+server: Starting iteration 208
+server: 	Starting BMC
+server: Starting iteration 209
+server: 	Starting BMC
+server: Starting iteration 210
+server: 	Starting BMC
+server: Starting iteration 211
+server: 	Starting BMC
+server: Starting iteration 212
+server: 	Starting BMC
+server: Starting iteration 213
+server: 	Starting BMC
+server: Starting iteration 214
+server: 	Starting BMC
+server: Starting iteration 215
+server: 	Starting BMC
+server: Starting iteration 216
+server: 	Starting BMC
+server: Starting iteration 217
+server: 	Starting BMC
+server: Starting iteration 218
+server: 	Starting BMC
+server: Starting iteration 219
+server: 	Starting BMC
+server: Starting iteration 220
+server: 	Starting BMC
+server: Starting iteration 221
+server: 	Starting BMC
+server: Starting iteration 222
+server: 	Starting BMC
+server: Starting iteration 223
+server: 	Starting BMC
+server: Starting iteration 224
+server: 	Starting BMC
+server: Starting iteration 225
+server: 	Starting BMC
+server: Starting iteration 226
+server: 	Starting BMC
+server: Starting iteration 227
+server: 	Starting BMC
+server: Starting iteration 228
+server: 	Starting BMC
+server: Starting iteration 229
+server: 	Starting BMC
+server: Starting iteration 230
+server: 	Starting BMC
+server: Starting iteration 231
+server: 	Starting BMC
+server: Starting iteration 232
+server: 	Starting BMC
+server: Starting iteration 233
+server: 	Starting BMC
+server: Starting iteration 234
+server: 	Starting BMC
+server: Starting iteration 235
+server: 	Starting BMC
+server: Starting iteration 236
+server: 	Starting BMC
+server: Starting iteration 237
+server: 	Starting BMC
+server: Starting iteration 238
+server: 	Starting BMC
+server: Starting iteration 239
+server: 	Starting BMC
+server: Starting iteration 240
+server: 	Starting BMC
+server: Starting iteration 241
+server: 	Starting BMC
+server: Starting iteration 242
+server: 	Starting BMC
+server: Starting iteration 243
+server: 	Starting BMC
+server: Starting iteration 244
+server: 	Starting BMC
+server: Starting iteration 245
+server: 	Starting BMC
+server: Starting iteration 246
+server: 	Starting BMC
+server: Starting iteration 247
+server: 	Starting BMC
+server: Starting iteration 248
+server: 	Starting BMC
+server: Starting iteration 249
+server: 	Starting BMC
+server: Starting iteration 250
+server: 	Starting BMC
+server: Starting iteration 251
+server: 	Starting BMC
+server: Starting iteration 252
+server: 	Starting BMC
+server: Starting iteration 253
+server: 	Starting BMC
+server: Starting iteration 254
+server: 	Starting BMC
+server: Starting iteration 255
+server: 	Starting BMC
+server: Starting iteration 256
+server: 	Starting BMC
+server: Starting iteration 257
+server: 	Starting BMC
+server: Starting iteration 258
+server: 	Starting BMC
+server: Starting iteration 259
+server: 	Starting BMC
+server: Starting iteration 260
+server: 	Starting BMC
+server: Starting iteration 261
+server: 	Starting BMC
+server: Starting iteration 262
+server: 	Starting BMC
+server: Starting iteration 263
+server: 	Starting BMC
+server: Starting iteration 264
+server: 	Starting BMC
+server: Starting iteration 265
+server: 	Starting BMC
+server: Starting iteration 266
+server: 	Starting BMC
+server: Starting iteration 267
+server: 	Starting BMC
+server: Starting iteration 268
+server: 	Starting BMC
+server: Starting iteration 269
+server: 	Starting BMC
+server: Starting iteration 270
+server: 	Starting BMC
+server: Starting iteration 271
+server: 	Starting BMC
+server: Starting iteration 272
+server: 	Starting BMC
+server: Starting iteration 273
+server: 	Starting BMC
+server: Starting iteration 274
+server: 	Starting BMC
+server: Starting iteration 275
+server: 	Starting BMC
+server: Starting iteration 276
+server: 	Starting BMC
+server: Starting iteration 277
+server: 	Starting BMC
+server: Starting iteration 278
+server: 	Starting BMC
+server: Starting iteration 279
+server: 	Starting BMC
+server: Starting iteration 280
+server: 	Starting BMC
+server: Starting iteration 281
+server: 	Starting BMC
+server: Starting iteration 282
+server: 	Starting BMC
+server: Starting iteration 283
+server: 	Starting BMC
+server: Starting iteration 284
+server: 	Starting BMC
+server: Starting iteration 285
+server: 	Starting BMC
+server: Starting iteration 286
+server: 	Starting BMC
+server: Starting iteration 287
+server: 	Starting BMC
+server: Starting iteration 288
+server: 	Starting BMC
+server: Starting iteration 289
+server: 	Starting BMC
+server: Starting iteration 290
+server: 	Starting BMC
+server: Starting iteration 291
+server: 	Starting BMC
+server: Starting iteration 292
+server: 	Starting BMC
+server: Starting iteration 293
+server: 	Starting BMC
+server: Starting iteration 294
+server: 	Starting BMC
+server: Starting iteration 295
+server: 	Starting BMC
+server: Starting iteration 296
+server: 	Starting BMC
+server: Starting iteration 297
+server: 	Starting BMC
+server: Starting iteration 298
+server: 	Starting BMC
+server: Starting iteration 299
+server: 	Starting BMC
+server: Starting iteration 300
+server: 	Starting BMC
+server: Starting iteration 301
+server: 	Starting BMC
+server: Starting iteration 302
+server: 	Starting BMC
+server: Starting iteration 303
+server: 	Starting BMC
+server: Starting iteration 304
+server: 	Starting BMC
+server: Starting iteration 305
+server: 	Starting BMC
+server: Starting iteration 306
+server: 	Starting BMC
+server: Starting iteration 307
+server: 	Starting BMC
+server: Starting iteration 308
+server: 	Starting BMC
+server: Starting iteration 309
+server: 	Starting BMC
+server: Starting iteration 310
+server: 	Starting BMC
+server: Starting iteration 311
+server: 	Starting BMC
+server: Starting iteration 312
+server: 	Starting BMC
+server: Starting iteration 313
+server: 	Starting BMC
+server: Starting iteration 314
+server: 	Starting BMC
+server: Starting iteration 315
+server: 	Starting BMC
+server: Starting iteration 316
+server: 	Starting BMC
+server: Starting iteration 317
+server: 	Starting BMC
+server: Starting iteration 318
+server: 	Starting BMC
+server: Starting iteration 319
+server: 	Starting BMC
+server: Starting iteration 320
+server: 	Starting BMC
+server: Starting iteration 321
+server: 	Starting BMC

@@ -1,0 +1,51 @@
+Theta/theta-start.sh sv-benchmarks/c/ntdrivers/diskperf.i.cil-1.c --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32
+
+
+--------------------------------------------------------------------------------
+
+
+LD_LIBRARY_PATH=/home/runner/work/theta/theta/Theta/lib /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Xss120m -Xmx14210m -jar /home/runner/work/theta/theta/Theta/theta.jar --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --loglevel INFO --property sv-benchmarks/c/properties/unreach-call.prp --architecture ILP32 --portfolio CEGAR --input sv-benchmarks/c/ntdrivers/diskperf.i.cil-1.c --smt-home /home/runner/work/theta/theta/Theta/solvers
+Registered Legacy-Z3 SolverManager
+Registered Z3 SolverManager
+Registered JavaSMT SolverManager
+Registered SMT-LIB SolverManager
+Parsing the input sv-benchmarks/c/ntdrivers/diskperf.i.cil-1.c as C
+WARNING: signedness of the type char is implementation specific. Right now it is interpreted as a signed char.
+WARNING: Unknown simple type union _LARGE_INTEGER
+WARNING: CompoundDefinitions are not yet implemented!
+WARNING: enums are not yet supported! Using int instead.
+WARNING: Unknown simple type enum _EVENT_TYPE
+WARNING: Unknown simple type enum _SECURITY_IMPERSONATION_LEVEL
+WARNING: Unknown simple type enum _FILE_INFORMATION_CLASS
+WARNING: Unknown simple type enum _FSINFOCLASS
+WARNING: Unknown simple type enum _INTERFACE_TYPE
+WARNING: Unknown simple type enum _SYSTEM_POWER_STATE
+WARNING: Unknown simple type enum __anonenum_POWER_ACTION_11
+WARNING: Unknown simple type enum _DEVICE_POWER_STATE
+WARNING: Unknown simple type union _POWER_STATE
+WARNING: Unknown simple type enum _POWER_STATE_TYPE
+WARNING: Unknown simple type enum _CONFIGURATION_TYPE
+WARNING: Unknown simple type enum _KWAIT_REASON
+WARNING: Unknown simple type enum _MEMORY_CACHING_TYPE
+WARNING: Unknown simple type enum _POOL_TYPE
+WARNING: Unknown simple type enum _MM_PAGE_PRIORITY
+WARNING: Unknown simple type enum _IO_ALLOCATION_ACTION
+WARNING: Unknown simple type enum _DEVICE_RELATION_TYPE
+WARNING: Unknown simple type enum _DEVICE_USAGE_NOTIFICATION_TYPE
+WARNING: Unknown simple type enum __anonenum_BUS_QUERY_ID_TYPE_53
+WARNING: Unknown simple type enum __anonenum_DEVICE_TEXT_TYPE_54
+WARNING: Unknown simple type enum __anonenum_WMIENABLEDISABLECONTROL_131
+WARNING: Unknown simple type enum __anonenum_SYSCTL_IRP_DISPOSITION_132
+WARNING: variable args are not supported!
+WARNING: Unknown simple type union __anonunion____missing_field_name_6
+WARNING: Unknown simple type union __anonunion_u_15
+WARNING: Unknown simple type union __anonunion_u_24
+WARNING: Unknown simple type union __anonunion____missing_field_name_38
+WARNING: Unknown simple type union __anonunion_Privileges_40
+WARNING: Unknown simple type union __anonunion_Queue_43
+WARNING: Unknown simple type union __anonunion_AssociatedIrp_44
+WARNING: Unknown simple type union __anonunion_Overlay_45
+WARNING: Unknown simple type union __anonunion_Tail_47
+WARNING: Unknown simple type union __anonunion_Parameters_55
+WARNING: using int(1) as a string constant
+Frontend failed! (hu.bme.mit.theta.frontend.transformation.grammar.expression.ExpressionVisitor$PostfixVisitor.lambda$visitPostfixExpressionMemberAccess$3(ExpressionVisitor.java:732), java.lang.IllegalStateException: Only structs expected here)

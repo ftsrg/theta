@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ConcurrencySafety-Main	SV-COMP24_unreach-call.ConcurrencySafety-Main	SV-COMP24_unreach-call.ConcurrencySafety-Main	SV-COMP24_unreach-call.ConcurrencySafety-Main
+../sv-benchmarks/c/		status	cputime (s)	walltime (s)	memory (MB)
+pthread-ext/18_read_write_lock-pthread.yml	true	ERROR (frontend failed)	3.768298	1.422503961000018	264.867840
+pthread-atomic/read_write_lock-1.yml	true	true	13.843586	5.427264854999976	556.392448
+pthread-wmm/rfi003_tso.yml	true	true	33.716497	14.621976166000024	662.974464
+pthread/lazy01.yml	false	false(unreach-call)	9.707715	4.368532992000041	461.910016
+pthread-wmm/mix000.oepc.yml	false	false(unreach-call)	15.319783	5.771575344000041	567.681024
+goblint-regression/13-privatized_41-traces-ex-7_unknown_1_pos.yml	false	false(unreach-call)	10.834803	4.6864326639999945	483.692544
+pthread-wmm/safe032_tso.yml	true	true	12.104185	5.058105826999963	548.757504
+goblint-regression/13-privatized_37-traces-ex-4_true.yml	true	true	9.802322	4.386102649999998	460.742656
+pthread-C-DAC/pthread-demo-datarace-3.yml	false	ERROR (frontend failed)	5.313955	1.946705307000002	326.795264
+goblint-regression/13-privatized_31-traces-mine-vs-mutex_true.yml	true	true	9.570768	4.333778131000031	442.441728

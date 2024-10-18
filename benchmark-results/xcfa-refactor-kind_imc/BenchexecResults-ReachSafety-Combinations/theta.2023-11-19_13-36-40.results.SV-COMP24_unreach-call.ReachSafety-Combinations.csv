@@ -1,0 +1,13 @@
+tool		Theta 5.0.0	Theta 5.0.0	Theta 5.0.0	Theta 5.0.0
+run set		SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations	SV-COMP24_unreach-call.ReachSafety-Combinations
+../sv-benchmarks/c/combinations/		status	cputime (s)	walltime (s)	memory (MB)
+pc_sfifo_3.cil+token_ring.02.cil-2.yml	false	TIMEOUT	120.807406	104.67423351399998	884.183040
+Problem05_label47+token_ring.02.cil-1.yml	false	TIMEOUT	120.299526	72.99596264299998	6621.999104
+pc_sfifo_3.cil+token_ring.11.cil-1.yml	false	TIMEOUT	120.233172	95.09455149899998	1465.815040
+Problem05_label45+token_ring.01.cil-2.yml	false	TIMEOUT	120.125208	69.01052165199997	7028.994048
+pals_lcr.3.1.ufo.UNBOUNDED.pals+Problem12_label04.yml	false	TIMEOUT	121.248016	55.036471035999966	3540.717568
+pals_lcr.6_overflow.ufo.UNBOUNDED.pals+Problem12_label04.yml	false	TIMEOUT	121.879105	55.02337274399997	4137.836544
+gcd_3+newton_3_8.yml	false	ERROR (portfolio error)	10.517065	5.159445441999992	362.795008
+pals_lcr.4_overflow.ufo.UNBOUNDED.pals+Problem12_label09.yml	false	TIMEOUT	120.875796	54.63726107399998	3851.968512
+gcd_2+newton_3_3.yml	true	ERROR (portfolio error)	10.578278	5.152463198000078	364.179456
+pals_lcr.7.ufo.BOUNDED-14.pals+Problem12_label09.yml	true	TIMEOUT	120.913331	84.90708227599998	4421.840896

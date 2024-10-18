@@ -1,0 +1,58 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call, SV-COMP24_no-data-race.NoDataRace-Main, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Mon, 2024-06-24 13:30:15 UTC
+tool:                    Theta 5.2.1
+tool executable:         Theta/theta-start.sh
+options:                 --disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO
+resource limits:
+- time:                  120 s
+hardware requirements:
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az1499-511
+os:                      Linux-6.5.0-1022-azure-x86_64-with-glibc2.35
+cpu:                     AMD EPYC 7763 64-Core Processor
+- cores:                 4
+- max frequency:         3129.272 MHz
+ram:                     16757.342208000002 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call
+Run set 1 of 4: skipped because it has no files
+
+
+SV-COMP24_no-data-race.NoDataRace-Main
+Run set 2 of 4 with options '--disable-xcfa-serialization --disable-c-serialization --disable-arg-generation --backend PORTFOLIO --portfolio COMPLEX --loglevel INFO' and propertyfile 'None'
+
+inputfile                                     status                       cpu time   wall time        host
+-----------------------------------------------------------------------------------------------------------
+pthread-ext/18_read_write_lock-pthread.yml    Parsing OK                      10.97        5.20        None
+pthread-atomic/read_write_lock-1.yml          true                            11.46        4.33        None
+pthread-wmm/rfi003_tso.yml                    true                            18.00        7.08        None
+pthread/lazy01.yml                            true                             7.30        3.12        None
+pthread-wmm/mix000.oepc.yml                   true                            17.70        6.97        None
+-----------------------------------------------------------------------------------------------------------
+Run set 2                                     done                            65.39       27.23           -
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:              5 Files
+  correct:               4
+    correct true:        4
+    correct false:       0
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               1
+  Score:                 8 (max: 10)

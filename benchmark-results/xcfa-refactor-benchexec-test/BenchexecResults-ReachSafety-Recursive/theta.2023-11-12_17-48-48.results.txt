@@ -1,0 +1,64 @@
+   BENCHMARK INFORMATION
+benchmark definition:    xml/theta.xml
+name:                    theta
+run sets:                SV-COMP24_unreach-call.ReachSafety-Recursive, SV-COMP24_no-data-race, SV-COMP24_no-overflow, SV-COMP24_valid-memsafety
+date:                    Sun, 2023-11-12 17:48:48 UTC
+tool:                    Theta 5.0.0
+tool executable:         theta/theta-start.sh
+options:                 --witness-only --portfolio COMPLEX --loglevel RESULT
+resource limits:
+- time:                  120 s
+hardware requirements:
+- cpu model:             Intel Xeon E3-1230 v5 @ 3.40 GHz
+------------------------------------------------------------
+
+   SYSTEM INFORMATION
+host:                    fv-az256-717
+os:                      Linux-6.2.0-1015-azure-x86_64-with-glibc2.35
+cpu:                     Intel Xeon Platinum 8272CL CPU @ 2.60GHz
+- cores:                 2
+- max frequency:         2593.906 MHz
+ram:                     7258.226688 MB
+------------------------------------------------------------
+
+
+
+SV-COMP24_unreach-call.ReachSafety-Recursive
+Run set 1 of 4 with options '--witness-only --portfolio COMPLEX --loglevel RESULT' and propertyfile 'None'
+
+inputfile                                   status                       cpu time   wall time        host
+---------------------------------------------------------------------------------------------------------
+recursive-simple/id_o100.yml                TIMEOUT                        120.21      117.21        None
+recursive-simple/id2_i5_o5-2.yml            true                             2.22        1.29        None
+recursive/recHanoi03-2.yml                  TIMEOUT                        121.11      104.58        None
+recursive-simple/id_b3_o2-2.yml             false(unreach-call)              2.75        1.61        None
+recursive-simple/afterrec-2.yml             TIMEOUT                        120.52      113.04        None
+recursive-simple/id_i10_o10-2.yml           true                             2.27        1.31        None
+recursive/EvenOdd03.yml                     false(unreach-call)              2.51        1.45        None
+recursive-simple/id_o200.yml                TIMEOUT                        120.31      114.26        None
+recursive/BallRajamani-SPIN2000-Fig1.yml    TIMEOUT                        121.23      101.68        None
+recursive-simple/id2_b3_o5.yml              ERROR (solver error)             5.37        4.29        None
+---------------------------------------------------------------------------------------------------------
+Run set 1                                   done                            15.77      564.29           -
+
+
+SV-COMP24_no-data-race
+Run set 2 of 4: skipped because it has no files
+
+
+SV-COMP24_no-overflow
+Run set 3 of 4: skipped because it has no files
+
+
+SV-COMP24_valid-memsafety
+Run set 4 of 4: skipped because it has no files
+
+Statistics:             10 Files
+  correct:               4
+    correct true:        2
+    correct false:       2
+  incorrect:             0
+    incorrect true:      0
+    incorrect false:     0
+  unknown:               6
+  Score:                 6 (max: 15)
