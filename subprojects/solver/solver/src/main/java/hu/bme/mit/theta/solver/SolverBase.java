@@ -84,5 +84,7 @@ public interface SolverBase extends AutoCloseable {
      *
      * @return Statistics
      */
-    default ImmutableMap<String, String> getStatistics() { return ImmutableMap.of(); }
+    default ImmutableMap<String, String> getStatistics() {
+        return ImmutableMap.of();
+    }
 }
