@@ -68,7 +68,8 @@ class HornChecker(
                 logger.write(Logger.Level.MAINSTEP, "Proof (model) found\n")
                 val model = solver.model.toMap()
                 SafetyResult.safe(
-                    Invariant(relations.associateWith { model[it.constDecl] as? Expr<BoolType> ?: True() }))
+                    Invariant(relations.associateWith { model[it.constDecl] as? Expr<BoolType> ?: True() })
+                )
             }
 
             SolverStatus.UNSAT -> {

@@ -89,8 +89,10 @@ class PredStateAdapter(val gsonSupplier: () -> Gson, val scope: Scope, val env: 
         check(reader.nextName() == "bottom")
         if (reader.nextBoolean()) ret = PredState.bottom()
         check(reader.nextName() == "preds")
-        val preds = gson.fromJson<Set<Expr<BoolType>>>(reader,
-            object : TypeToken<Set<Expr<BoolType>>>() {}.type)
+        val preds = gson.fromJson<Set<Expr<BoolType>>>(
+            reader,
+            object : TypeToken<Set<Expr<BoolType>>>() {}.type
+        )
         if (ret == null) ret = PredState.of(preds)
         reader.endObject()
         return ret!!

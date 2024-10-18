@@ -52,8 +52,10 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 
     fun apply(a: XcfaAction): Pair<XcfaState<S>, XcfaAction> {
         val changes: MutableList<(XcfaState<S>) -> XcfaState<S>> = ArrayList()
-        if (mutexes[""] != null && mutexes[""] != a.pid) return Pair(copy(bottom = true),
-            a.withLabel(SequenceLabel(listOf(NopLabel))))
+        if (mutexes[""] != null && mutexes[""] != a.pid) return Pair(
+            copy(bottom = true),
+            a.withLabel(SequenceLabel(listOf(NopLabel)))
+        )
 
         val processState = processes[a.pid]
         checkNotNull(processState)
@@ -101,12 +103,19 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
 
                 is InvokeLabel -> {
                     val proc = xcfa?.procedures?.find { proc -> proc.name == it.name } ?: error(
-                        "No such method ${it.name}.")
+                        "No such method ${it.name}."
+                    )
                     val returnStmt = SequenceLabel(
                         proc.params.withIndex().filter { it.value.second != ParamDirection.IN }.map { iVal ->
-                            StmtLabel(Assign(cast((it.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>,
-                                iVal.value.first.type), cast(iVal.value.first.ref, iVal.value.first.type)),
-                                metadata = it.metadata)
+                            StmtLabel(
+                                Assign(
+                                    cast(
+                                        (it.params[iVal.index] as RefExpr<*>).decl as VarDecl<*>,
+                                        iVal.value.first.type
+                                    ), cast(iVal.value.first.ref, iVal.value.first.type)
+                                ),
+                                metadata = it.metadata
+                            )
                         })
                     changes.add { state ->
                         state.invokeFunction(a.pid, proc, returnStmt, proc.params.toMap(), it.tempLookup)
@@ -161,20 +170,34 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         val pid = pidCnt++
         val lookup = XcfaProcessState.createLookup(procedure, "T$pid", "")
         newThreadLookup[startLabel.pidVar] = pid
-        newProcesses[pid] = XcfaProcessState(LinkedList(listOf(procedure.initLoc)), prefix = "T$pid",
+        newProcesses[pid] = XcfaProcessState(
+            LinkedList(listOf(procedure.initLoc)), prefix = "T$pid",
             varLookup = LinkedList(listOf(lookup)), returnStmts = LinkedList(listOf(returnStmt)),
-            paramStmts = LinkedList(listOf(Pair(
-                /* init */
-                SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
-                    StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
-                        cast(it.key.changeVars(tempLookup).ref, it.key.type)))
-                }),
-                /* deinit */
-                SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
-                    StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
-                        cast(it.key.changeVars(lookup).ref, it.key.type)))
-                }),
-            ))))
+            paramStmts = LinkedList(
+                listOf(
+                    Pair(
+                        /* init */
+                        SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
+                            StmtLabel(
+                                Assign(
+                                    cast(it.key.changeVars(lookup), it.key.type),
+                                    cast(it.key.changeVars(tempLookup).ref, it.key.type)
+                                )
+                            )
+                        }),
+                        /* deinit */
+                        SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
+                            StmtLabel(
+                                Assign(
+                                    cast(it.key.changeVars(tempLookup), it.key.type),
+                                    cast(it.key.changeVars(lookup).ref, it.key.type)
+                                )
+                            )
+                        }),
+                    )
+                )
+            )
+        )
         val newMutexes = LinkedHashMap(mutexes)
         newMutexes["$pid"] = pid
 
@@ -189,8 +212,10 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
         return copy(processes = newProcesses, mutexes = newMutexes)
     }
 
-    private fun invokeFunction(pid: Int, proc: XcfaProcedure, returnStmt: XcfaLabel,
-        paramList: Map<VarDecl<*>, ParamDirection>, tempLookup: Map<VarDecl<*>, VarDecl<*>>): XcfaState<S> {
+    private fun invokeFunction(
+        pid: Int, proc: XcfaProcedure, returnStmt: XcfaLabel,
+        paramList: Map<VarDecl<*>, ParamDirection>, tempLookup: Map<VarDecl<*>, VarDecl<*>>
+    ): XcfaState<S> {
         val newProcesses: MutableMap<Int, XcfaProcessState> = LinkedHashMap(processes)
         newProcesses[pid] = checkNotNull(processes[pid]?.enterFunction(proc, returnStmt, paramList, tempLookup))
         return copy(processes = newProcesses)
@@ -230,10 +255,12 @@ data class XcfaState<S : ExprState> @JvmOverloads constructor(
     }
 }
 
-data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
+data class XcfaProcessState(
+    val locs: LinkedList<XcfaLocation>, val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>>,
     val returnStmts: LinkedList<XcfaLabel> = LinkedList(listOf(NopLabel)),
     val paramStmts: LinkedList<Pair<XcfaLabel, XcfaLabel>> = LinkedList(listOf(Pair(NopLabel, NopLabel))),
-    val paramsInitialized: Boolean = false, val prefix: String = "") {
+    val paramsInitialized: Boolean = false, val prefix: String = ""
+) {
 
     internal var popped: XcfaLocation? = null // stores if the stack was popped due to abstract stack covering
 
@@ -250,8 +277,10 @@ data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: L
         else -> "${locs.peek()!!} [${locs.size}], initilized=$paramsInitialized"
     }
 
-    fun enterFunction(xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>,
-        tempLookup: Map<VarDecl<*>, VarDecl<*>>): XcfaProcessState {
+    fun enterFunction(
+        xcfaProcedure: XcfaProcedure, returnStmt: XcfaLabel, paramList: Map<VarDecl<*>, ParamDirection>,
+        tempLookup: Map<VarDecl<*>, VarDecl<*>>
+    ): XcfaProcessState {
         val deque: LinkedList<XcfaLocation> = LinkedList(locs)
         val varLookup: LinkedList<Map<VarDecl<*>, VarDecl<*>>> = LinkedList(varLookup)
         val returnStmts: LinkedList<XcfaLabel> = LinkedList(returnStmts)
@@ -260,20 +289,32 @@ data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: L
         val lookup = createLookup(xcfaProcedure, prefix, "P${procCnt++}")
         varLookup.push(lookup)
         returnStmts.push(returnStmt)
-        paramStmts.push(Pair(
-            /* init */
-            SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
-                StmtLabel(Assign(cast(it.key.changeVars(lookup), it.key.type),
-                    cast(it.key.changeVars(tempLookup).ref, it.key.type)))
-            }),
-            /* deinit */
-            SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
-                StmtLabel(Assign(cast(it.key.changeVars(tempLookup), it.key.type),
-                    cast(it.key.changeVars(lookup).ref, it.key.type)))
-            }),
-        ))
-        return copy(locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts,
-            paramsInitialized = false)
+        paramStmts.push(
+            Pair(
+                /* init */
+                SequenceLabel(paramList.filter { it.value != ParamDirection.OUT }.map {
+                    StmtLabel(
+                        Assign(
+                            cast(it.key.changeVars(lookup), it.key.type),
+                            cast(it.key.changeVars(tempLookup).ref, it.key.type)
+                        )
+                    )
+                }),
+                /* deinit */
+                SequenceLabel(paramList.filter { it.value != ParamDirection.IN }.map {
+                    StmtLabel(
+                        Assign(
+                            cast(it.key.changeVars(tempLookup), it.key.type),
+                            cast(it.key.changeVars(lookup).ref, it.key.type)
+                        )
+                    )
+                }),
+            )
+        )
+        return copy(
+            locs = deque, varLookup = varLookup, returnStmts = returnStmts, paramStmts = paramStmts,
+            paramsInitialized = false
+        )
     }
 
     fun exitFunction(): XcfaProcessState {
@@ -308,8 +349,10 @@ data class XcfaProcessState(val locs: LinkedList<XcfaLocation>, val varLookup: L
 
     companion object {
 
-        fun createLookup(proc: XcfaProcedure, threadPrefix: String,
-            procPrefix: String): Map<VarDecl<*>, VarDecl<*>> = listOf(proc.params.map { it.first }, proc.vars).flatten()
+        fun createLookup(
+            proc: XcfaProcedure, threadPrefix: String,
+            procPrefix: String
+        ): Map<VarDecl<*>, VarDecl<*>> = listOf(proc.params.map { it.first }, proc.vars).flatten()
             .associateWith {
                 val sj = StringJoiner("::")
                 if (threadPrefix != "") sj.add(threadPrefix)

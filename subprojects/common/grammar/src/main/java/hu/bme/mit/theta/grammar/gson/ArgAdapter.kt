@@ -26,9 +26,11 @@ import hu.bme.mit.theta.analysis.State
 import hu.bme.mit.theta.analysis.algorithm.arg.ARG
 import java.lang.reflect.Type
 
-class ArgAdapter(val gsonSupplier: () -> Gson,
+class ArgAdapter(
+    val gsonSupplier: () -> Gson,
     private val partialOrdSupplier: () -> PartialOrd<out State>,
-    private val argTypeSupplier: () -> Type) : TypeAdapter<ARG<*, *>>() {
+    private val argTypeSupplier: () -> Type
+) : TypeAdapter<ARG<*, *>>() {
 
     private lateinit var gson: Gson
     private lateinit var partialOrd: PartialOrd<State>

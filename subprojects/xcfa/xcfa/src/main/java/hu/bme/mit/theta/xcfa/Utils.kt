@@ -453,27 +453,35 @@ fun XcfaLabel.simplify(valuation: MutableValuation, parseContext: ParseContext):
         is MemoryAssignStmt<*, *, *> -> {
             simplified as MemoryAssignStmt<*, *, *>
             if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-                parseContext.metadata.create(simplified.expr, "cType",
-                    CComplexType.getType(stmt.expr, parseContext))
+                parseContext.metadata.create(
+                    simplified.expr, "cType",
+                    CComplexType.getType(stmt.expr, parseContext)
+                )
             if (parseContext.metadata.getMetadataValue(stmt.deref, "cType").isPresent)
-                parseContext.metadata.create(simplified.deref, "cType",
-                    CComplexType.getType(stmt.deref, parseContext))
+                parseContext.metadata.create(
+                    simplified.deref, "cType",
+                    CComplexType.getType(stmt.deref, parseContext)
+                )
             StmtLabel(simplified, metadata = metadata)
         }
 
         is AssignStmt<*> -> {
             simplified as AssignStmt<*>
             if (parseContext.metadata.getMetadataValue(stmt.expr, "cType").isPresent)
-                parseContext.metadata.create(simplified.expr, "cType",
-                    CComplexType.getType(stmt.expr, parseContext))
+                parseContext.metadata.create(
+                    simplified.expr, "cType",
+                    CComplexType.getType(stmt.expr, parseContext)
+                )
             StmtLabel(simplified, metadata = metadata)
         }
 
         is AssumeStmt -> {
             simplified as AssumeStmt
             if (parseContext.metadata.getMetadataValue(stmt.cond, "cType").isPresent) {
-                parseContext.metadata.create(simplified.cond, "cType",
-                    CComplexType.getType(stmt.cond, parseContext))
+                parseContext.metadata.create(
+                    simplified.cond, "cType",
+                    CComplexType.getType(stmt.cond, parseContext)
+                )
             }
             parseContext.metadata.create(simplified, "cTruth", stmt.cond is NeqExpr<*>)
             StmtLabel(simplified, metadata = metadata, choiceType = choiceType)
@@ -520,8 +528,10 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
                                 .filter { (i, pair) -> pair.second != ParamDirection.IN && it.params[i] is RefExpr<*> }
                                 .map { (i, pair) ->
                                     val (param, _) = pair
-                                    Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
-                                        cast(param.ref, param.type))
+                                    Assign(
+                                        cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                        cast(param.ref, param.type)
+                                    )
                                 }
                     } ?: listOf()
                 }
@@ -534,8 +544,10 @@ val XCFA.lazyPointsToGraph: Lazy<Map<VarDecl<*>, Set<LitExpr<*>>>>
                             Assign(cast(param, param.type), cast(it.params[i], param.type))
                         } +
                             proc.params.filter { it.second != ParamDirection.IN }.mapIndexed { i, (param, _) ->
-                                Assign(cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
-                                    cast(param.ref, param.type))
+                                Assign(
+                                    cast((it.params[i] as RefExpr<*>).decl as VarDecl<*>, param.type),
+                                    cast(param.ref, param.type)
+                                )
                             }
                     } ?: listOf()
                 }

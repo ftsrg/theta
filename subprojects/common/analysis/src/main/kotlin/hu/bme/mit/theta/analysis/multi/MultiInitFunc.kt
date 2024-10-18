@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.State
 class MultiInitFunc<DataState : State, LControl : State, RControl : State,
     LPrec : Prec, RPrec : Prec, LControlPrec : Prec, RControlPrec : Prec, DataPrec : Prec,
     MState : MultiState<LControl, RControl, DataState>>
-(
+    (
     private val createInitialState: (LControl, RControl, DataState) -> MState,
     private val dataInitFunc: InitFunc<DataState, DataPrec>,
     private val extractLeftControlPrec: (LPrec) -> LControlPrec,

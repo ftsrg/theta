@@ -52,8 +52,10 @@ open class MemoryEvent(protected val type: MemoryEventType, protected val tag: S
         throw UnsupportedOperationException("Not memory IO!")
     }
 
-    abstract class MemoryIO(id: Int, private val `var`: VarDecl<*>, private val localVar: VarDecl<*>,
-        type: MemoryEventType, tag: String) :
+    abstract class MemoryIO(
+        id: Int, private val `var`: VarDecl<*>, private val localVar: VarDecl<*>,
+        type: MemoryEventType, tag: String
+    ) :
         MemoryEvent(type, tag, id) {
 
         override fun asMemoryIO(): MemoryIO {
@@ -86,8 +88,10 @@ open class MemoryEvent(protected val type: MemoryEventType, protected val tag: S
         }
     }
 
-    class Write(id: Int, `var`: VarDecl<*>, localVar: VarDecl<*>, private val dependencies: Set<VarDecl<*>>,
-        tag: String) :
+    class Write(
+        id: Int, `var`: VarDecl<*>, localVar: VarDecl<*>, private val dependencies: Set<VarDecl<*>>,
+        tag: String
+    ) :
         MemoryIO(id, `var`, localVar, MemoryEventType.WRITE, tag) {
 
         override fun asWrite(): Write {

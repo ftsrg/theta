@@ -36,8 +36,10 @@ fun determineProperty(config: XcfaConfig<*, *>, logger: Logger): ErrorDetection 
         }
 
         else -> {
-            logger.write(Logger.Level.INFO,
-                "Unknown property $propertyFile, using full state space exploration (no refinement)\n")
+            logger.write(
+                Logger.Level.INFO,
+                "Unknown property $propertyFile, using full state space exploration (no refinement)\n"
+            )
             ErrorDetection.NO_ERROR
         }
     }

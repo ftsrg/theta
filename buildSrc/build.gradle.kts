@@ -44,7 +44,8 @@ dependencies {
 // https://github.com/gradle/kotlin-dsl/issues/1207
 configurations.all {
     val isKotlinCompiler = name == "embeddedKotlin" || name.startsWith("kotlin") || name.startsWith(
-        "kapt")
+        "kapt"
+    )
     if (!isKotlinCompiler) {
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlin" && requested.module.name == "kotlin-compiler-embeddable") {

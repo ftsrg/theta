@@ -26,11 +26,8 @@ import hu.bme.mit.theta.core.type.bvtype.BvType;
 import hu.bme.mit.theta.core.type.fptype.FpType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.frontend.ParseContext;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CArray;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CCompound;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CFunction;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CPointer;
-import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.CStruct;
+import hu.bme.mit.theta.frontend.UnsupportedFrontendElementException;
+import hu.bme.mit.theta.frontend.transformation.model.types.complex.compound.*;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.CInteger;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.Fitsall;
 import hu.bme.mit.theta.frontend.transformation.model.types.complex.integer.c128.C128;
@@ -62,12 +59,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getCastVisitor;
-import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getLimitVisitor;
-import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getNullValueVisitor;
-import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getTypeVisitor;
-import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getUnitValueVisitor;
-import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.getValueVisitor;
+import static hu.bme.mit.theta.frontend.transformation.ArchitectureConfig.*;
 
 public abstract class CComplexType {
     private final CSimpleType origin;
@@ -208,7 +200,7 @@ public abstract class CComplexType {
             if (longDoubleType.equals(type)) {
                 return new CFloat(null, parseContext);
             }
-            throw new RuntimeException("No suitable size found for type: " + type);
+            throw new UnsupportedFrontendElementException("No suitable size found for type: " + type);
         } else if (type instanceof BvType) {
             for (Entry<String, Integer> entry : parseContext.getArchitecture().standardTypeSizes.entrySet()) {
                 String s = entry.getKey();
@@ -230,9 +222,9 @@ public abstract class CComplexType {
                     }
                 }
             }
-            throw new RuntimeException("No suitable width found for type: " + type);
+            throw new UnsupportedFrontendElementException("No suitable width found for type: " + type);
         } else {
-            throw new RuntimeException("Not yet implemented for type: " + type);
+            throw new UnsupportedFrontendElementException("Not yet implemented for type: " + type);
         }
     }
 
@@ -307,7 +299,7 @@ public abstract class CComplexType {
 
     public static class CComplexTypeVisitor<T, R> {
         public R visit(CComplexType type, T param) {
-            throw new UnsupportedOperationException("Not (yet) implemented (" + type.getClass().getSimpleName() + " in " + this.getClass().getName() + ")");
+            throw new UnsupportedFrontendElementException("Not (yet) implemented (" + type.getClass().getSimpleName() + " in " + this.getClass().getName() + ")");
         }
 
         public R visit(CVoid type, T param) {

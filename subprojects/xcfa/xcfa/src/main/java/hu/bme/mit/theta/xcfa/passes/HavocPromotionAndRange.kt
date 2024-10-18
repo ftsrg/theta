@@ -75,7 +75,8 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
 //                            val type = CComplexType.getType(((edge.label.labels[index + 1] as StmtLabel).stmt as AssignStmt<*>).expr, parseContext)
                             val havoc = Havoc(varDecl)
                             newLabels.add(
-                                StmtLabel(havoc, metadata = edge.label.labels[index].metadata))
+                                StmtLabel(havoc, metadata = edge.label.labels[index].metadata)
+                            )
 //                            newLabels.add(StmtLabel(type.limit(varDecl.ref)))
                         } else if (index == indices[offset] + 1) {
                             offset++
@@ -98,11 +99,15 @@ class HavocPromotionAndRange(val parseContext: ParseContext) : ProcedurePass {
                 for ((index, value) in reversed) {
                     val varDecl = ((value as StmtLabel).stmt as HavocStmt<*>).varDecl
                     if (parseContext.metadata.getMetadataValue(varDecl.ref, "cType").isPresent) {
-                        val type = CComplexType.getType(varDecl.ref,
-                            parseContext) // TODO: what to do when no info is available?
+                        val type = CComplexType.getType(
+                            varDecl.ref,
+                            parseContext
+                        ) // TODO: what to do when no info is available?
                         if (type !is CVoid) {
-                            list.add(index + 1,
-                                StmtLabel(type.limit(varDecl.ref), metadata = value.metadata))
+                            list.add(
+                                index + 1,
+                                StmtLabel(type.limit(varDecl.ref), metadata = value.metadata)
+                            )
                         }
                     }
                 }

@@ -52,8 +52,10 @@ class TypeTest {
                 arrayOf(BvType(32), "(Bv 32)"),
                 arrayOf(FpType(12, 45), "(Fp 12 45)"),
 
-                arrayOf(Func(Int(), ArrayExprs.Array(Int(), Rat())),
-                    "(Func Int (Array ([Int] -> Rat)))"),
+                arrayOf(
+                    Func(Int(), ArrayExprs.Array(Int(), Rat())),
+                    "(Func Int (Array ([Int] -> Rat)))"
+                ),
             )
         }
     }

@@ -108,7 +108,8 @@ class StatementWrapper(val content: String, scope: Scope) {
 
         override fun visitMemAssignStmt(ctx: MemAssignStmtContext): Stmt {
             val derefExpr: Dereference<*, *, *> = ExpressionWrapper(scope, ctx.derefExpr().textWithWS()).instantiate(
-                env) as Dereference<*, *, *>
+                env
+            ) as Dereference<*, *, *>
             val value = ExpressionWrapper(scope, ctx.value.textWithWS())
             val valueE: Expr<*> = value.instantiate(env)
             return if (derefExpr.type == valueE.type) {

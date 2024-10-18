@@ -52,12 +52,16 @@ fun XCFA.toMonolithicExpr(): MonolithicExpr {
     }
     val locVar = Decls.Var("__loc_", IntExprs.Int())
     val tranList = proc.edges.map { (source, target, label): XcfaEdge ->
-        SequenceStmt.of(listOf(
-            AssumeStmt.of(Eq(locVar.ref, IntExprs.Int(map[source]!!))),
-            label.toStmt(),
-            AssignStmt.of(locVar,
-                IntExprs.Int(map[target]!!))
-        ))
+        SequenceStmt.of(
+            listOf(
+                AssumeStmt.of(Eq(locVar.ref, IntExprs.Int(map[source]!!))),
+                label.toStmt(),
+                AssignStmt.of(
+                    locVar,
+                    IntExprs.Int(map[target]!!)
+                )
+            )
+        )
     }.toList()
     val trans = NonDetStmt.of(tranList)
     val transUnfold = StmtUtils.toExpr(trans, VarIndexingFactory.indexing(0))
@@ -95,16 +99,24 @@ fun XCFA.valToState(val1: Valuation): XcfaState<PtrState<ExplState>> {
     }
     return XcfaState(
         xcfa = this,
-        processes = mapOf(Pair(0, XcfaProcessState(
-            locs = LinkedList(
-                listOf(map[(valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()])),
-            varLookup = LinkedList(),
-        ))),
+        processes = mapOf(
+            Pair(
+                0, XcfaProcessState(
+                    locs = LinkedList(
+                        listOf(map[(valMap[valMap.keys.first { it.name == "__loc_" }] as IntLitExpr).value.toInt()])
+                    ),
+                    varLookup = LinkedList(),
+                )
+            )
+        ),
         PtrState(ExplState.of(
             ImmutableValuation.from(
                 val1.toMap()
                     .filter { it.key.name != "__loc_" && !it.key.name.startsWith("__temp_") }
-                    .map { Pair(Decls.Var("_" + "_" + it.key.name, it.key.type), it.value) }.toMap()))),
+                    .map { Pair(Decls.Var("_" + "_" + it.key.name, it.key.type), it.value) }.toMap()
+            )
+        )
+        ),
         mutexes = emptyMap(),
         threadLookup = emptyMap(),
         bottom = false

@@ -45,7 +45,8 @@ class PassTests {
         global: VarContext.() -> Unit,
         input: XcfaProcedureBuilderContext.() -> Unit,
         output: (XcfaProcedureBuilderContext.() -> Unit)?,
-        val passes: List<ProcedurePass>) : Arguments {
+        val passes: List<ProcedurePass>
+    ) : Arguments {
 
         private val builder = XcfaBuilder("").also { it.global(global) }
         private val inputBuilder = builder.procedure("", input).builder
@@ -332,11 +333,13 @@ class PassTests {
                     }
                     (init to final) {
                         "y".assign(
-                            "(ite (isinfinite x) #b00000000000000000000000000000001 #b00000000000000000000000000000000)")
+                            "(ite (isinfinite x) #b00000000000000000000000000000001 #b00000000000000000000000000000000)"
+                        )
                     }
                     (init to final) {
                         "y".assign(
-                            "(ite (or (isinfinite x) (fpisnan x)) #b00000000000000000000000000000000 #b00000000000000000000000000000001)")
+                            "(ite (or (isinfinite x) (fpisnan x)) #b00000000000000000000000000000000 #b00000000000000000000000000000001)"
+                        )
                     }
                 },
             ),
@@ -372,7 +375,8 @@ class PassTests {
                         "y".assign("x").also {
                             parseContext.metadata.create(
                                 ((it.labels.last() as StmtLabel).stmt as AssignStmt<*>).varDecl.ref, "cType",
-                                CSignedInt(null, parseContext))
+                                CSignedInt(null, parseContext)
+                            )
                         }
                     }
                 },
@@ -531,8 +535,10 @@ class PassTests {
 
     @ParameterizedTest
     @MethodSource("getData")
-    fun testPass(input: XcfaProcedureBuilder, output: XcfaProcedureBuilder?,
-        passes: List<ProcedurePass>) {
+    fun testPass(
+        input: XcfaProcedureBuilder, output: XcfaProcedureBuilder?,
+        passes: List<ProcedurePass>
+    ) {
         println("Trying to run $passes on input...")
         val actualOutput = passes.fold(input) { acc, procedurePass -> procedurePass.run(acc) }
             .build(dummyXcfa)
@@ -562,10 +568,15 @@ class PassTests {
     @Test
     fun testInline() {
         val xcfaSource = xcfa("example") {
-            procedure("main", ProcedurePassManager(listOf(
-                NormalizePass(),
-                DeterministicPass(),
-                InlineProceduresPass(parseContext)))) {
+            procedure(
+                "main", ProcedurePassManager(
+                    listOf(
+                        NormalizePass(),
+                        DeterministicPass(),
+                        InlineProceduresPass(parseContext)
+                    )
+                )
+            ) {
                 (init to final) {
                     "proc1"()
                 }

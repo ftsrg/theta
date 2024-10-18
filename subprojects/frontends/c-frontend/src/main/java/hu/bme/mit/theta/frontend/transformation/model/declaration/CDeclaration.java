@@ -25,6 +25,8 @@ import hu.bme.mit.theta.frontend.transformation.model.types.simple.CSimpleType;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class CDeclaration {
 
     private CSimpleType type;
@@ -37,7 +39,7 @@ public class CDeclaration {
     private CStatement initExpr;
 
     public CDeclaration(CSimpleType cSimpleType) {
-        this.name = null;
+        this.name = checkNotNull(cSimpleType).getAssociatedName();
         this.type = cSimpleType;
         this.derefCounter = cSimpleType.getPointerLevel();
         this.varDecls = new ArrayList<>();

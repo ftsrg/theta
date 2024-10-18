@@ -31,14 +31,18 @@ import hu.bme.mit.theta.xcfa.cli.params.OcConfig
 import hu.bme.mit.theta.xcfa.cli.params.XcfaConfig
 import hu.bme.mit.theta.xcfa.model.XCFA
 
-fun getOcChecker(xcfa: XCFA, mcm: MCM,
+fun getOcChecker(
+    xcfa: XCFA, mcm: MCM,
     config: XcfaConfig<*, *>,
-    logger: Logger): SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
+    logger: Logger
+): SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
     val ocChecker = XcfaOcChecker(xcfa, (config.backendConfig.specConfig as OcConfig).decisionProcedure, logger)
     return object : SafetyChecker<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>, XcfaPrec<*>> {
         override fun check(
-            prec: XcfaPrec<*>?): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = check()
+            prec: XcfaPrec<*>?
+        ): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = check()
 
-        override fun check(): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> = ocChecker.check()
+        override fun check(): SafetyResult<EmptyWitness, Trace<XcfaState<out PtrState<*>>, XcfaAction>> =
+            ocChecker.check()
     }
 }

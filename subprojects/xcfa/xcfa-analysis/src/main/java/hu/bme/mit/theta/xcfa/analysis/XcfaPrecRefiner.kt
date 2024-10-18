@@ -37,8 +37,10 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
 
     private val refToPrec: RefutationToPrec<PtrPrec<P>, R> = Preconditions.checkNotNull(refToPrec)
 
-    override fun refine(prec: XcfaPrec<PtrPrec<P>>, trace: Trace<XcfaState<S>, XcfaAction>,
-        refutation: R): XcfaPrec<PtrPrec<P>> {
+    override fun refine(
+        prec: XcfaPrec<PtrPrec<P>>, trace: Trace<XcfaState<S>, XcfaAction>,
+        refutation: R
+    ): XcfaPrec<PtrPrec<P>> {
         Preconditions.checkNotNull(trace)
         Preconditions.checkNotNull<Any>(prec)
         Preconditions.checkNotNull<R>(refutation)
@@ -48,7 +50,8 @@ class XcfaPrecRefiner<S : ExprState, P : Prec, R : Refutation>(refToPrec: Refuta
                 it.foldVarLookup().map { Pair(it.value, it.key) }
             }.flatten().toMap()
             val reverseTempLookup = if (i > 0) getTempLookup(
-                trace.actions[i - 1].edge.label).entries.associateBy(
+                trace.actions[i - 1].edge.label
+            ).entries.associateBy(
                 { it.value }) { it.key } else emptyMap()
             val precFromRef = refToPrec.toPrec(refutation, i).changeVars(reverseVarLookup + reverseTempLookup)
             runningPrec = refToPrec.join(runningPrec, precFromRef)
@@ -83,10 +86,12 @@ fun <P : Prec> P.addVars(lookups: Collection<Map<VarDecl<*>, VarDecl<*>>>): P =
     else
         when (this) {
             is ExplPrec -> ExplPrec.of(
-                vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+                vars.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()
+            ) as P
 
             is PredPrec -> PredPrec.of(
-                preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()) as P
+                preds.map { lookups.map { lookup -> it.changeVars(lookup) } }.flatten()
+            ) as P
 
             is PtrPrec<*> -> PtrPrec(innerPrec.addVars(lookups)) as P
 

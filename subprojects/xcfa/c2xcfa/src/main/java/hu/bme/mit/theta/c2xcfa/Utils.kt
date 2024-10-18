@@ -30,8 +30,10 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.InputStream
 
-fun getXcfaFromC(stream: InputStream, parseContext: ParseContext, collectStatistics: Boolean,
-    checkOverflow: Boolean, warningLogger: Logger): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
+fun getXcfaFromC(
+    stream: InputStream, parseContext: ParseContext, collectStatistics: Boolean,
+    checkOverflow: Boolean, warningLogger: Logger
+): Triple<XCFA, CStatistics?, Pair<XcfaStatistics, XcfaStatistics>?> {
     val input = CharStreams.fromStream(stream)
     val lexer = CLexer(input)
     val tokens = CommonTokenStream(lexer)

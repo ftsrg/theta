@@ -65,7 +65,9 @@ class NormalizePass : ProcedurePass {
 
             is NopLabel -> {}
             is StmtLabel -> if (!(label.stmt is AssumeStmt && label.stmt.cond.equals(
-                    True()))) collector.forEach { it.add(label) }
+                    True()
+                ))
+            ) collector.forEach { it.add(label) }
 
             else -> collector.forEach { it.add(label) }
         }

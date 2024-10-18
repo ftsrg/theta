@@ -52,7 +52,8 @@ private fun <S : ExprState> S.getState(varLookup: Map<VarDecl<*>, VarDecl<*>>): 
         is PredState -> PredState.of(preds.map { p -> p.changeVars(varLookup) })
         is PtrState<*> -> PtrState(innerState.getState(varLookup))
         else -> throw NotImplementedError(
-            "Generalizing variable instances is not implemented for data states that are not explicit or predicate.")
+            "Generalizing variable instances is not implemented for data states that are not explicit or predicate."
+        )
     } as S
 
 class LazyDelegate<T, P : Any>(val getProperty: T.() -> P) {

@@ -75,8 +75,10 @@ internal class XcfaOcTraceExtractor(
 
                 val nextEdge = eventTrace.getOrNull(index + 1)?.edge
                 if (nextEdge != lastEdge) {
-                    extend(stateList.last(), event.pid, lastEdge.source,
-                        explState.innerState)?.let { (midActions, midStates) ->
+                    extend(
+                        stateList.last(), event.pid, lastEdge.source,
+                        explState.innerState
+                    )?.let { (midActions, midStates) ->
                         actionList.addAll(midActions)
                         stateList.addAll(midStates)
                     }
@@ -86,9 +88,9 @@ internal class XcfaOcTraceExtractor(
                     stateList.add(state.copy(processes = state.processes.toMutableMap().apply {
                         put(
                             event.pid, XcfaProcessState(
-                            locs = LinkedList(listOf(lastEdge.target)),
-                            varLookup = LinkedList(emptyList())
-                        )
+                                locs = LinkedList(listOf(lastEdge.target)),
+                                varLookup = LinkedList(emptyList())
+                            )
                         )
                     }, sGlobal = explState, mutexes = state.mutexes.update(lastEdge, event.pid)))
                     lastEdge = nextEdge ?: break
@@ -96,8 +98,10 @@ internal class XcfaOcTraceExtractor(
             }
 
             if (!stateList.last().processes[violation.pid]!!.locs.peek().error) {
-                extend(stateList.last(), violation.pid, violation.errorLoc,
-                    explState.innerState)?.let { (midActions, midStates) ->
+                extend(
+                    stateList.last(), violation.pid, violation.errorLoc,
+                    explState.innerState
+                )?.let { (midActions, midStates) ->
                     actionList.addAll(midActions)
                     stateList.addAll(midStates)
                 }
@@ -163,9 +167,9 @@ internal class XcfaOcTraceExtractor(
             currentState = currentState.copy(processes = currentState.processes.toMutableMap().apply {
                 put(
                     stepPid, XcfaProcessState(
-                    locs = LinkedList(listOf(edge.target)),
-                    varLookup = LinkedList(emptyList())
-                )
+                        locs = LinkedList(listOf(edge.target)),
+                        varLookup = LinkedList(emptyList())
+                    )
                 )
             }, sGlobal = PtrState(explState), mutexes = currentState.mutexes.update(edge, stepPid))
             states.add(currentState)

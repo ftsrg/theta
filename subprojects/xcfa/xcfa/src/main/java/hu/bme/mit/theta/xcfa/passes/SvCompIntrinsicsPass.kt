@@ -40,7 +40,8 @@ class SvCompIntrinsicsPass : ProcedurePass {
                 builder.addEdge(outgoingEdge.withLabel(SequenceLabel(labels)))
             }
             for (incomingEdge in ArrayList(
-                builder.finalLoc.getOrNull()?.incomingEdges ?: listOf())) {
+                builder.finalLoc.getOrNull()?.incomingEdges ?: listOf()
+            )) {
                 builder.removeEdge(incomingEdge)
                 val labels = ArrayList((incomingEdge.label as SequenceLabel).labels)
                 labels.add(FenceLabel(setOf("ATOMIC_END"), metadata = incomingEdge.metadata))
@@ -50,18 +51,24 @@ class SvCompIntrinsicsPass : ProcedurePass {
         for (edge in ArrayList(builder.getEdges())) {
             val edges = edge.splitIf(this::predicate)
             if (edges.size > 1 || (edges.size == 1 && predicate(
-                    (edges[0].label as SequenceLabel).labels[0]))) {
+                    (edges[0].label as SequenceLabel).labels[0]
+                ))
+            ) {
                 builder.removeEdge(edge)
                 val labels: MutableList<XcfaLabel> = ArrayList()
                 edges.forEach {
                     if (predicate((it.label as SequenceLabel).labels[0])) {
                         val invokeLabel = it.label.labels[0] as InvokeLabel
                         val fence = when (invokeLabel.name) {
-                            "__VERIFIER_atomic_begin" -> FenceLabel(setOf("ATOMIC_BEGIN"),
-                                metadata = invokeLabel.metadata)
+                            "__VERIFIER_atomic_begin" -> FenceLabel(
+                                setOf("ATOMIC_BEGIN"),
+                                metadata = invokeLabel.metadata
+                            )
 
-                            "__VERIFIER_atomic_end" -> FenceLabel(setOf("ATOMIC_END"),
-                                metadata = invokeLabel.metadata)
+                            "__VERIFIER_atomic_end" -> FenceLabel(
+                                setOf("ATOMIC_END"),
+                                metadata = invokeLabel.metadata
+                            )
 
                             else -> invokeLabel
                         }
